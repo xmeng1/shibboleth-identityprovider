@@ -48,6 +48,10 @@ public class EchoDirContext extends InitialDirContext{
 		// return uid
 		attrs.put(new BasicAttribute("eduPersonPrincipalName", uid));
 	    }
+		if(ids[i].equalsIgnoreCase("eduPersonEntitlement")){
+		// return uid
+		attrs.put(new BasicAttribute("eduPersonEntitlement", "urn:mace:example.edu:exampleEntitlement"));
+		}
 	}
 	return attrs;
     }
