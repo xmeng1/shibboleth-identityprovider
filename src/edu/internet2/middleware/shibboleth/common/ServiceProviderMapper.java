@@ -36,6 +36,8 @@ import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AARelyingParty;
 import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
+import edu.internet2.middleware.shibboleth.metadata.Metadata;
+import edu.internet2.middleware.shibboleth.metadata.Provider;
 
 /**
  * Base class for determining the effective relying party from the unique id of the service provider. Checks first for
@@ -48,6 +50,14 @@ public abstract class ServiceProviderMapper {
 
 	private static Logger	log				= Logger.getLogger(ServiceProviderMapper.class.getName());
 	protected Map			relyingParties	= new HashMap();
+	private Metadata		metaData;
+
+	/**
+	 * @param metaData
+	 */
+	public ServiceProviderMapper(Metadata metaData) {
+		this.metaData = metaData;
+	}
 
 	protected abstract ShibbolethOriginConfig getOriginConfig();
 
@@ -93,11 +103,20 @@ public abstract class ServiceProviderMapper {
 
 	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
 
-		// TODO This is totally a stub and needs to be based on target metadata
-		// lookup
-		if (providerIdFromTarget.startsWith("urn:mace:inqueue:")) {
-			if (relyingParties.containsKey("urn:mace:inqueue")) {
-				return (RelyingParty) relyingParties.get("urn:mace:inqueue");
+		Provider provider = metaData.lookup(providerIdFromTarget);
+		if (provider != null) {
+			String[] groups = provider.getGroups();
+			for (int i = 0; groups.length > i; i++) {
+				//We need to iterate backward because the groups go from least to most specific
+				String group = groups[groups.length - 1 - i];
+				if (relyingParties.containsKey(group)) {
+					log.info("Found matching Relying Party for group (" + group + ").");
+					return (RelyingParty) relyingParties.get(group);
+				} else {
+					log
+							.debug("Provider is a member of group (" + group
+									+ "), but no matching Relying Party was found.");
+				}
 			}
 		}
 		return null;
@@ -264,7 +283,7 @@ public abstract class ServiceProviderMapper {
 	protected class UnknownProviderWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
 
 		protected RelyingParty	wrapped;
-		protected String providerId;
+		protected String		providerId;
 
 		protected UnknownProviderWrapper(RelyingParty wrapped, String providerId) {
 			this.wrapped = wrapped;

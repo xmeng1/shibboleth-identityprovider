@@ -81,12 +81,13 @@ import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
 
 /**
  * @author Walter Hoehn
  */
 
-public class AAServlet extends HttpServlet {
+public class AAServlet extends TargetFederationComponent {
 
 	private AAConfig				configuration;
 	protected AAResponder			responder;
@@ -149,10 +150,21 @@ public class AAServlet extends HttpServlet {
 			log.error("Multiple Credentials specifications found, using first.");
 		}
 		Credentials credentials = new Credentials((Element) itemElements.item(0));
+		
+		//Load metadata
+		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
+				ShibbolethOriginConfig.originConfigNamespace, "FederationProvider");
+		for (int i = 0; i < itemElements.getLength(); i++) {
+			addFederationProvider((Element) itemElements.item(i));
+		}
+		if (providerCount() < 1) {
+			log.error("No Federation Provider metadata loaded.");
+			throw new ShibbolethConfigurationException("Could not load federation metadata.");
+		}
 
 		//Load relying party config
 		try {
-			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials);
+			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials, this);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");

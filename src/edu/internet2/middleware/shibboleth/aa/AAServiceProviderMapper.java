@@ -36,6 +36,7 @@ import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.metadata.Metadata;
 
 /**
  * Class for determining the effective relying party for the Shibboleth attribute authority from the unique id of the
@@ -59,9 +60,9 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 	 * @throws ServiceProviderMapperException
 	 *             if the configuration is invalid
 	 */
-	public AAServiceProviderMapper(Element rawConfig, AAConfig configuration, Credentials credentials)
+	public AAServiceProviderMapper(Element rawConfig, AAConfig configuration, Credentials credentials, Metadata metaData)
 			throws ServiceProviderMapperException {
-
+		super(metaData);
 		this.configuration = configuration;
 		this.credentials = credentials;
 

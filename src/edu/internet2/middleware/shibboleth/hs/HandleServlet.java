@@ -115,16 +115,7 @@ public class HandleServlet extends TargetFederationComponent {
 				log.error("Name Identifier mapping could not be loaded: " + e);
 			}
 		}
-
-		//Load relying party config
-		try {
-			targetMapper = new HSServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
-					nameMapper);
-		} catch (ServiceProviderMapperException e) {
-			log.error("Could not load origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Could not load origin configuration.");
-		}
-
+		
 		//Load metadata
 		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
 				ShibbolethOriginConfig.originConfigNamespace, "FederationProvider");
@@ -135,6 +126,17 @@ public class HandleServlet extends TargetFederationComponent {
 			log.error("No Federation Provider metadata loaded.");
 			throw new ShibbolethConfigurationException("Could not load federation metadata.");
 		}
+
+		//Load relying party config
+		try {
+			targetMapper = new HSServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
+					nameMapper, this);
+		} catch (ServiceProviderMapperException e) {
+			log.error("Could not load origin configuration: " + e);
+			throw new ShibbolethConfigurationException("Could not load origin configuration.");
+		}
+
+
 	}
 
 	public void init() throws ServletException {
