@@ -1,38 +1,27 @@
 /*
  * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
- * following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
- * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
- * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
- * software itself, if and wherever such third-party acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
- * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
- * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
- * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
- * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
+ * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
+ * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2
+ * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
+ * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please
+ * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
+ * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
+ * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
+ * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
+ * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.hs;
@@ -74,15 +63,15 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 
 public class HandleServlet extends HttpServlet {
 
-	private static Logger log = Logger.getLogger(HandleServlet.class.getName());
-	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
+	private static Logger			log				= Logger.getLogger(HandleServlet.class.getName());
+	private static Logger			transactionLog	= Logger.getLogger("Shibboleth-TRANSACTION");
 
-	private Semaphore throttle;
-	private HSConfig configuration;
-	private Credentials credentials;
-	private HSNameMapper nameMapper;
-	private ShibPOSTProfile postProfile = new ShibPOSTProfile();
-	private HSServiceProviderMapper targetMapper;
+	private Semaphore				throttle;
+	private HSConfig				configuration;
+	private Credentials				credentials;
+	private HSNameMapper			nameMapper;
+	private ShibPOSTProfile			postProfile		= new ShibPOSTProfile();
+	private HSServiceProviderMapper	targetMapper;
 
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
@@ -92,13 +81,12 @@ public class HandleServlet extends HttpServlet {
 		configuration = new HSConfig(originConfig.getDocumentElement());
 
 		//Load signing credentials
-		NodeList itemElements =
-			originConfig.getDocumentElement().getElementsByTagNameNS(
-				Credentials.credentialsNamespace,
-				"Credentials");
+		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
+				Credentials.credentialsNamespace, "Credentials");
 		if (itemElements.getLength() < 1) {
 			log.error("Credentials not specified.");
-			throw new ShibbolethConfigurationException("The Handle Service requires that signing credentials be supplied in the <Credentials> configuration element.");
+			throw new ShibbolethConfigurationException(
+					"The Handle Service requires that signing credentials be supplied in the <Credentials> configuration element.");
 		}
 
 		if (itemElements.getLength() > 1) {
@@ -108,9 +96,7 @@ public class HandleServlet extends HttpServlet {
 		credentials = new Credentials((Element) itemElements.item(0));
 
 		//Load name mappings
-		itemElements =
-			originConfig.getDocumentElement().getElementsByTagNameNS(
-				NameIdentifierMapping.mappingNamespace,
+		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(NameIdentifierMapping.mappingNamespace,
 				"NameMapping");
 
 		for (int i = 0; i < itemElements.getLength(); i++) {
@@ -123,11 +109,7 @@ public class HandleServlet extends HttpServlet {
 
 		//Load relying party config
 		try {
-			targetMapper =
-				new HSServiceProviderMapper(
-					originConfig.getDocumentElement(),
-					configuration,
-					credentials,
+			targetMapper = new HSServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
 					nameMapper);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
@@ -171,53 +153,37 @@ public class HandleServlet extends HttpServlet {
 
 			HSRelyingParty relyingParty = targetMapper.getRelyingParty(req.getParameter("providerId"));
 
-			String username =
-				configuration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER")
+			String username = configuration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER")
 					? req.getRemoteUser()
 					: req.getHeader(configuration.getAuthHeaderName());
 
-			SAMLNameIdentifier nameId =
-				nameMapper.getNameIdentifierName(
-					relyingParty.getHSNameFormatId(),
-					new AuthNPrincipal(username),
-					relyingParty,
-					relyingParty.getIdentityProvider());
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(relyingParty.getHSNameFormatId(),
+					new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
 
 			String authenticationMethod = req.getHeader("SAMLAuthenticationMethod");
 			if (authenticationMethod == null || authenticationMethod.equals("")) {
 				authenticationMethod = relyingParty.getDefaultAuthMethod().toString();
-				log.debug(
-					"User was authenticated via the default method for this relying party ("
-						+ authenticationMethod
-						+ ").");
+				log.debug("User was authenticated via the default method for this relying party ("
+						+ authenticationMethod + ").");
 			} else {
 				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
 			}
 
-			byte[] buf =
-				generateAssertion(
-					relyingParty,
-					nameId,
-					req.getParameter("shire"),
-					req.getRemoteAddr(),
+			byte[] buf = generateAssertion(relyingParty, nameId, req.getParameter("shire"), req.getRemoteAddr(),
 					authenticationMethod);
 
 			createForm(req, res, buf);
 
-			transactionLog.info(
-				"Authentication assertion issued to SHIRE ("
-					+ req.getParameter("shire")
-					+ ") providerId ("
-					+ req.getParameter("providerId")
-					+ ") on behalf of principal ("
-					+ username
-					+ ") for resource ("
-					+ req.getParameter("target")
-					+ "). Name Identifier: ("
-					+ nameId.getName()
-					+ "). Name Identifier Format: ("
-					+ nameId.getFormat()
-					+ ").");
+			if (relyingParty.isLegacyProvider()) {
+				transactionLog.info("Authentication assertion issued to legacy provider (SHIRE: " + req.getParameter("shire")
+						+ ") on behalf of principal (" + username
+						+ ") for resource (" + req.getParameter("target") + "). Name Identifier: (" + nameId.getName()
+						+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+			} else {
+				transactionLog.info("Authentication assertion issued to provider (" + req.getParameter("providerId")
+						+ ") on behalf of principal (" + username + "). Name Identifier: (" + nameId.getName()
+						+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+			}
 
 		} catch (NameIdentifierMappingException ex) {
 			log.error(ex);
@@ -239,50 +205,33 @@ public class HandleServlet extends HttpServlet {
 			throttle.exit();
 		}
 	}
-	
+
 	public void destroy() {
 		log.info("Cleaning up resources.");
 		nameMapper.destroy();
 	}
 
-	protected byte[] generateAssertion(
-		HSRelyingParty relyingParty,
-		SAMLNameIdentifier nameId,
-		String shireURL,
-		String clientAddress,
-		String authType)
-		throws SAMLException, IOException {
+	protected byte[] generateAssertion(HSRelyingParty relyingParty, SAMLNameIdentifier nameId, String shireURL,
+			String clientAddress, String authType) throws SAMLException, IOException {
 
-		SAMLAuthorityBinding binding =
-			new SAMLAuthorityBinding(
-				SAMLBinding.SAML_SOAP_HTTPS,
-				relyingParty.getAAUrl().toString(),
-				new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
+		SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, relyingParty.getAAUrl()
+				.toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
 
-		SAMLResponse r =
-			postProfile.prepare(
-				shireURL,
-				relyingParty,
-				nameId,
-				clientAddress,
-				authType,
-				new Date(System.currentTimeMillis()),
-				Collections.singleton(binding));
+		SAMLResponse r = postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType, new Date(System
+				.currentTimeMillis()), Collections.singleton(binding));
 
 		return r.toBase64();
 	}
 
-	protected void createForm(HttpServletRequest req, HttpServletResponse res, byte[] buf)
-		throws IOException, ServletException {
+	protected void createForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,
+			ServletException {
 
 		//Hardcoded to ASCII to ensure Base64 encoding compatibility
 		req.setAttribute("assertion", new String(buf, "ASCII"));
 
 		if (log.isDebugEnabled()) {
 			try {
-				log.debug(
-					"Dumping generated SAML Response:"
-						+ System.getProperty("line.separator")
+				log.debug("Dumping generated SAML Response:" + System.getProperty("line.separator")
 						+ new String(new BASE64Decoder().decodeBuffer(new String(buf, "ASCII")), "UTF8"));
 			} catch (IOException e) {
 				log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
@@ -293,8 +242,8 @@ public class HandleServlet extends HttpServlet {
 		rd.forward(req, res);
 	}
 
-	protected void handleError(HttpServletRequest req, HttpServletResponse res, Exception e)
-		throws ServletException, IOException {
+	protected void handleError(HttpServletRequest req, HttpServletResponse res, Exception e) throws ServletException,
+			IOException {
 
 		req.setAttribute("errorText", e.toString());
 		req.setAttribute("requestURL", req.getRequestURI().toString());
@@ -320,13 +269,15 @@ public class HandleServlet extends HttpServlet {
 	}
 
 	class InvalidClientDataException extends Exception {
+
 		public InvalidClientDataException(String message) {
 			super(message);
 		}
 	}
 
 	private class Semaphore {
-		private int value;
+
+		private int	value;
 
 		public Semaphore(int value) {
 			this.value = value;
