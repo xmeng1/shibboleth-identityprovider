@@ -48,15 +48,41 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.apache.log4j.Logger;
+import org.w3c.dom.Element;
 
 /**
  * @author Walter Hoehn
  */
-public interface NameIdentifierMapping {
+public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping {
 
-	public URI getNameIdentifierFormat();
+	private static Logger log = Logger.getLogger(BaseNameIdentifierMapping.class.getName());
+	private URI format;
 
-	public AuthNPrincipal getPrincipal(String nameIdentifier)
-		throws NameIdentifierMappingException, InvalidNameIdentifierMappingException;
+	public BaseNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
+
+		if (!config.getTagName().equals("NameMapping")) {
+			throw new IllegalArgumentException();
+		}
+
+		String rawFormat = ((Element) config).getAttribute("format");
+		if (rawFormat == null || rawFormat.equals("")) {
+			log.error("Name Mapping requires a \"format\" attribute.");
+			throw new NameIdentifierMappingException("Invalid mapping information specified.");
+		}
+
+		try {
+			format = new URI(rawFormat);
+		} catch (URISyntaxException e) {
+			log.error("Name Mapping attribute \"format\" is not a valid URI: " + e);
+			throw new NameIdentifierMappingException("Invalid mapping information specified.");
+		}
+	}
+
+	public URI getNameIdentifierFormat() {
+		return format;
+	}
 
 }

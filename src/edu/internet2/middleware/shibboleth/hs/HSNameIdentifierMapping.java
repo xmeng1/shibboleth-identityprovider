@@ -37,8 +37,6 @@
 
 package edu.internet2.middleware.shibboleth.hs;
 
-import java.net.URI;
-
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
@@ -48,7 +46,7 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
  */
 public interface HSNameIdentifierMapping extends NameIdentifierMapping {
 	
-	public URI getNameIdentifierFormat();
+	public String getId();
 	
 	public String getNameIdentifierName(AuthNPrincipal principal) throws NameIdentifierMappingException;
 
