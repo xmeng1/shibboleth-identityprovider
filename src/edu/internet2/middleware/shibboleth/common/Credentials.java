@@ -520,7 +520,7 @@ class FileCredentialResolver implements CredentialResolver {
 						
 			} else if (str.matches("^.*-----BEGIN ENCRYPTED PRIVATE KEY-----.*$")) {
 				in.close();
-				log.debug("Key appears to be DSA in raw format.");
+				log.debug("Key appears to be in encrypted PKCS8 format.");
 				return getEncryptedPkcs8Key(
 					singleDerFromPEM(
 						inputBytes.toByteArray(),
