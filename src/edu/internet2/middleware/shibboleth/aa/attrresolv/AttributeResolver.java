@@ -519,7 +519,7 @@ public class AttributeResolver {
 		} catch (ResolutionPlugInException e) {
 			// Something went wrong, so check for a fail-over...
 			if (currentDefinition.getFailoverDependencyId() != null) {
-				log.info("Connector (" + currentDefinition.getId() + ") failed, invoking failover dependency");
+				log.warn("Connector (" + currentDefinition.getId() + ") failed, invoking failover dependency");
 				resolvedAttributes =
 					resolveConnector(
 						currentDefinition.getFailoverDependencyId(),
