@@ -412,4 +412,9 @@ class BasicIdentityProvider implements IdentityProvider {
 }
 class BasicServiceProvider implements ServiceProvider {
 
+	public String getProviderId() {
+
+		return null;
+	}
+
 }
