@@ -39,8 +39,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletException;
