@@ -16,13 +16,13 @@
 
 <body>
 <div class="head">
-<img src="images/internet2.gif" alt="Logo" />
+<img src="images/logo.jpg" alt="Logo" />
 <h1>Shibboleth Handle Service Failure</h1>
 </div>
 
 <p>The inter-institutional access system experienced a technical failure.</p>
 
-<p>Please email <a href="mailto:mace-shib-users@internet2.edu">mace-shib-users@internet2.edu</a> and include the following error message:</p>
+<p>Please email <a href="mailto:root@localhost">root@localhost</a> and include the following error message:</p>
 
 <p class="error">Handle Service failure at (<bean:write name="requestURL" />)</p>
 
