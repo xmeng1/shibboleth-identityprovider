@@ -57,7 +57,8 @@ import java.security.Principal;
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-
+//TODO this name probably becomes less intuitive as name identifiers
+// don't necessarily come from the HS, change it
 public class AuthNPrincipal implements Principal, Serializable {
 
 	static final long serialVersionUID = 1L;

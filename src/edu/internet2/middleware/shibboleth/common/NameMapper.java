@@ -68,15 +68,15 @@ public class NameMapper {
 		try {
 			registeredMappingTypes.put(
 				"CryptoHandleGenerator",
-				Class.forName("edu.internet2.middleware.shibboleth.common.CryptoHandleGenerator"));
+				Class.forName("edu.internet2.middleware.shibboleth.hs.provider.CryptoShibHandle"));
 
 			registeredMappingTypes.put(
-				"MemoryHandleGenerator",
-				Class.forName("edu.internet2.middleware.shibboleth.common.MemoryHandleGenerator"));
+				"SharedMemoryShibHandle",
+				Class.forName("edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle"));
 
 			registeredMappingTypes.put(
 				"PassThruNameIdentifier",
-				Class.forName("edu.internet2.middleware.shibboleth.common.PassThruNameIdentifier"));
+				Class.forName("edu.internet2.middleware.shibboleth.common.PrincipalNameIdentifier"));
 
 		} catch (ClassNotFoundException e) {
 			log.error("Unable to pre-register Name mapping implementation types.");
@@ -131,15 +131,9 @@ public class NameMapper {
 
 	public void addNameMapping(NameIdentifierMapping mapping) {
 		byFormat.put(mapping.getNameIdentifierFormat(), mapping);
-
-		/* Will probably bump this into an HS specific base class
-		if (mapping.getId() != null && (!mapping.getId().equals(""))) {
-			byId.put(mapping.getId(), mapping);
-		}
-		*/
 	}
 
-	public NameIdentifierMapping getNameIdentifierMappingByFormat(String format) {
+	public NameIdentifierMapping getNameIdentifierMapping(String format) {
 		return (NameIdentifierMapping) byFormat.get(format);
 	}
 

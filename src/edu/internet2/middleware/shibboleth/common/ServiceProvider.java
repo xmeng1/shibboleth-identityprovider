@@ -47,51 +47,9 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import org.apache.log4j.Logger;
-import org.w3c.dom.Element;
-
-import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
-
 /**
  * @author Walter Hoehn
  */
-public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping {
-
-	private static Logger log = Logger.getLogger(BaseNameIdentifierMapping.class.getName());
-	private URI format;
-
-	public BaseNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
-
-		if (!config.getTagName().equals("NameMapping")) {
-			throw new IllegalArgumentException();
-		}
-
-		String rawFormat = ((Element) config).getAttribute("format");
-		if (rawFormat == null || rawFormat.equals("")) {
-			log.error("Name Mapping requires a \"format\" attribute.");
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
-		}
-
-		try {
-			format = new URI(rawFormat);
-		} catch (URISyntaxException e) {
-			log.error("Name Mapping attribute \"format\" is not a valid URI: " + e);
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
-		}
-
-		String id = ((Element) config).getAttribute("id");
-		if (id != null && (!(this instanceof HSNameIdentifierMapping))) {
-			log.error(
-				"\"id\" attribute is not valid for Name Mapping implementations that do are not used for Name Identifer Creation.");
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
-		}
-	}
-
-	public URI getNameIdentifierFormat() {
-		return format;
-	}
+public interface ServiceProvider {
 
 }

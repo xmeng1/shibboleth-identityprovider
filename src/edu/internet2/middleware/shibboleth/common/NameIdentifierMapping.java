@@ -49,6 +49,8 @@ package edu.internet2.middleware.shibboleth.common;
 
 import java.net.URI;
 
+import org.opensaml.SAMLNameIdentifier;
+
 /**
  * @author Walter Hoehn
  */
@@ -56,7 +58,7 @@ public interface NameIdentifierMapping {
 
 	public URI getNameIdentifierFormat();
 
-	public AuthNPrincipal getPrincipal(String nameIdentifier)
-		throws NameIdentifierMappingException, InvalidNameIdentifierMappingException;
+	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+		throws NameIdentifierMappingException, InvalidNameIdentifierException;
 
 }

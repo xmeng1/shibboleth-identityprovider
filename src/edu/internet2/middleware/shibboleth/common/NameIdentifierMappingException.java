@@ -58,9 +58,3 @@ public class NameIdentifierMappingException extends Exception {
 		super(message);
 	}
 }
-
-class InvalidNameIdentifierMappingException extends NameIdentifierMappingException {
-	public InvalidNameIdentifierMappingException(String message) {
-		super(message);
-	}
-}

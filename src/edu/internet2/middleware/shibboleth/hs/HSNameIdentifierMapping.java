@@ -37,9 +37,13 @@
 
 package edu.internet2.middleware.shibboleth.hs;
 
+import org.opensaml.SAMLNameIdentifier;
+
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
+import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
  * @author Walter Hoehn
@@ -48,6 +52,6 @@ public interface HSNameIdentifierMapping extends NameIdentifierMapping {
 	
 	public String getId();
 	
-	public String getNameIdentifierName(AuthNPrincipal principal) throws NameIdentifierMappingException;
+	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv, IdentityProvider idProv) throws NameIdentifierMappingException;
 
 }
