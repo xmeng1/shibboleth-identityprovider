@@ -246,7 +246,6 @@ public class HandleServlet extends HttpServlet {
 	}
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-		log.debug("Recieved a request.");
 		MDC.put("serviceId", "[HS] " + UUIDGenerator.getInstance().generateRandomBasedUUID());
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
