@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ShibbolethOriginConfig xmlns="urn:mace:shibboleth:origin:1.0" xmlns:cred="urn:mace:shibboleth:credentials:1.0" xmlns:name="urn:mace:shibboleth:namemapper:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:origin:1.0 origin.xsd" 
+	AAUrl="http://snc.cc.columbia.edu/shibboleth/AA" providerId="urn:mace:inqueue:shibdev.edu">
+	<RelyingPartyGroup name="urn:mace:inqueue" signingCredentials="foo">
+		<HSNameFormat nameMapping="crypto"/>
+	</RelyingPartyGroup>
+	<RelyingPartyGroup name="urn:x-fed1" signingCredentials="bar" passThruErrors="true">
+		<HSNameFormat nameMapping="crypto"/>
+	</RelyingPartyGroup>
+	<RelyingParty name="urn:x-columbia-intranet" signingCredentials="foo" providerId="urn:x-columbia-intranet.columbia">
+		<HSNameFormat nameMapping="uni"/>
+	</RelyingParty>
+	<ReleasePolicyEngine/>
+	<name:NameMapping xmlns="urn:mace:shibboleth:namemapper:1.0" id="cryptotest" format="urn:mace:shibboleth:1.0:nameIdentifier" type="CryptoHandleGenerator" handleTTL="1800">
+		<KeyStorePath>/conf/handle.jks</KeyStorePath>
+		<KeyStorePassword>shibhs</KeyStorePassword>
+		<KeyStoreKeyAlias>handlekey</KeyStoreKeyAlias>
+		<KeyStoreKeyPassword>shibhs</KeyStoreKeyPassword>
+	</name:NameMapping>
+	<cred:Credentials>
+		<cred:KeyStoreResolver Id="foo" storeType="JKS">
+			<cred:Path>/conf/keystore.jks</cred:Path>
+			<cred:KeyAlias>shibhs</cred:KeyAlias>
+			<cred:CertAlias>shibhs</cred:CertAlias>
+			<cred:StorePassword>shibhs</cred:StorePassword>
+			<cred:KeyPassword>shibhs</cred:KeyPassword>
+		</cred:KeyStoreResolver>
+	</cred:Credentials>
+</ShibbolethOriginConfig>
