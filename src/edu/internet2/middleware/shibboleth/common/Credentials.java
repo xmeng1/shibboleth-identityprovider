@@ -502,6 +502,12 @@ class FileCredentialResolver implements CredentialResolver {
 						"-----END PRIVATE KEY-----"));
 
 			} else if (str.matches("^.*-----BEGIN RSA PRIVATE KEY-----.*$")) {
+				String nextStr = in.readLine();
+				if (nextStr != null && nextStr.matches("^.*Proc-Type: 4,ENCRYPTED.*$")) {
+					log.debug("Key appears to be encrypted RSA in raw format.");
+					return getRSARawEncryptedPemKey(inputBytes.toByteArray());
+				}
+				
 				in.close();
 				log.debug("Key appears to be RSA in raw format.");
 				return getRSARawDerKey(
@@ -509,6 +515,7 @@ class FileCredentialResolver implements CredentialResolver {
 						inputBytes.toByteArray(),
 						"-----BEGIN RSA PRIVATE KEY-----",
 						"-----END RSA PRIVATE KEY-----"));
+						
 			} else if (str.matches("^.*-----BEGIN DSA PRIVATE KEY-----.*$")) {
 				in.close();
 				log.debug("Key appears to be DSA in raw format.");
@@ -517,7 +524,7 @@ class FileCredentialResolver implements CredentialResolver {
 						inputBytes.toByteArray(),
 						"-----BEGIN DSA PRIVATE KEY-----",
 						"-----END DSA PRIVATE KEY-----"));
-						
+
 			} else if (str.matches("^.*-----BEGIN ENCRYPTED PRIVATE KEY-----.*$")) {
 				in.close();
 				log.debug("Key appears to be in encrypted PKCS8 format.");
@@ -525,7 +532,8 @@ class FileCredentialResolver implements CredentialResolver {
 					singleDerFromPEM(
 						inputBytes.toByteArray(),
 						"-----BEGIN ENCRYPTED PRIVATE KEY-----",
-						"-----END ENCRYPTED PRIVATE KEY-----"), password.toCharArray());
+						"-----END ENCRYPTED PRIVATE KEY-----"),
+					password.toCharArray());
 			}
 		}
 		in.close();
@@ -625,6 +633,86 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Unable to load private key.");
 		}
 
+	}
+	private PrivateKey getRSARawEncryptedPemKey(byte[] bytes) throws CredentialFactoryException {
+
+		try {
+
+			String algorithm = null;
+			String algParams = null;
+
+			BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes)));
+			String str;
+			boolean insideBase64 = false;
+			StringBuffer base64Key = null;
+			while ((str = in.readLine()) != null) {
+
+				if (insideBase64) {
+					if (str.matches("^.*Proc-Type: 4,ENCRYPTED.*$")) {
+						continue;
+					}
+
+					if (str.matches("^.*DEK-Info:.*$")) {
+						String[] components = str.split(":\\s");
+						if (components.length != 2) {
+							log.error("Encrypted key did not contain DEK-Info specification.");
+							throw new CredentialFactoryException("Unable to load private key.");
+						}
+						String[] cryptData = components[1].split(",");
+						if (cryptData.length != 2
+							|| cryptData[0] == null
+							|| cryptData[0].equals("")
+							|| cryptData[1] == null
+							|| cryptData[1].equals("")) {
+							log.error("Encrypted key did not contain a proper DEK-Info specification.");
+							throw new CredentialFactoryException("Unable to load private key.");
+						}
+						algorithm = cryptData[0];
+						algParams = cryptData[1];
+						continue;
+					}
+					if (str.equals("")) {
+						continue;
+					}
+
+					if (str.matches("^.*-----END RSA PRIVATE KEY-----.*$")) {
+						break;
+					}
+					{
+						base64Key.append(str);
+					}
+				} else if (str.matches("^.*-----BEGIN RSA PRIVATE KEY-----.*$")) {
+					insideBase64 = true;
+					base64Key = new StringBuffer();
+				}
+			}
+			in.close();
+			if (base64Key == null || base64Key.length() == 0) {
+				log.error("Could not find Base 64 encoded entity.");
+				throw new IOException("Could not find Base 64 encoded entity.");
+			}
+
+			try {
+				BASE64Decoder decoder = new BASE64Decoder();
+				byte[] encryptedBytes = decoder.decodeBuffer(base64Key.toString());
+				
+				//TODO This needs to come from the file
+				Cipher cipher = Cipher.getInstance("DESede");
+				//cipher.in
+
+				return null;
+
+			} catch (IOException ioe) {
+				log.error("Could not decode Base 64: " + ioe);
+				throw new IOException("Could not decode Base 64.");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			//TODO change these errors
+			log.error("Could not load resource from specified location: " + e);
+			throw new CredentialFactoryException("Could not load resource from specified location.");
+		}
 	}
 
 	private PrivateKey getDSARawDerKey(byte[] bytes) throws CredentialFactoryException {
