@@ -139,8 +139,14 @@ April 14, 2004<br>
 <h3>This version of the deploy guide is for Shibboleth v1.2. For documentation 
 related to prior versions of Shibboleth, please consult the appropriate branch 
 in the Shibboleth CVS.</h3>
-<h3>The default configuration of Shibboleth is <b>not</b> secure and should not be used for protection of production content.  The example private key bundled with the distribution is publically available, widely circulated, and well-known; also, the default federation
-and trust metadata is for testing purposes only.  For information about securing a Shibboleth deployment, please refer to the production guide.  Shibboleth should only be used to protect sensitive content when deployed carefully in conjunction with proper trust settings and policies.</h3>
+<h3>The default configuration of Shibboleth is <b>not</b> secure and should not
+be used for protection of production content.  The example private key bundled
+with the distribution is publically available, widely circulated, and
+well-known; also, the default federation and trust metadata is for testing
+purposes only.  For information about securing a Shibboleth deployment, please
+refer to the production guide.  Shibboleth should only be used to protect
+sensitive content when deployed carefully in conjunction with proper trust
+settings and policies.</h3>
 
 <p>Insert features here.</p>
 
@@ -172,6 +178,8 @@ that arises. Please ensure that you have the
         <li><a href="#1.b."><font color="black">Target</font></a></li>
         <li><a href="#1.c."><font color="black">WAYF</font></a></li>
         <li><a href="#1.d."><font color="black">Federations</font></a></li>
+        <li><a href="#1.e."><font color="black">Relying Parties and Applications</font></a></li>
+        <li><a href="#1.f."><font color="black">Sessions</font></a></li>
     </ol>
     </li>
     <li>
@@ -367,13 +375,70 @@ requesting attributes.</p>
     information on local authentication and authorization practices for 
     federation members.</p>
 </blockquote>
-<p><br>
-<br>
-<br>
-</p>
+<h4><a name="1.e."></a>1.e. Relying Parties and Applications</h4>
+<blockquote>
+    <p>A Shibboleth relying party represents a target or set of targets that
+    operate under one trust agreement and share common key, certificate, and
+    certificate authority guidelines.  This could include any number of
+    individual SHAR's and applications.  Frequently, an entire federation will
+    be viewed by an origin or target as a single relying party; however, there
+    is no necessary binding between these.  An individual site with which an
+    origin or target exchanges information may sometimes be part of multiple
+    relying parties if there are multiple trust agreements under which these
+    transactions are performed.</p>
+    <p>Applications as viewed from Shibboleth are not necessarily defined by the
+    same metrics as in other contexts.  An individual application represents a
+    service or set of services that operates using the same attribute and trust
+    features and shares common <a href="#1.f.">Shibboleth sessions</a>. 
+    Attributes are released to targets on the basis of individual applications
+    within the context of its containing relying party.  An application may span
+    multiple URL trees, servers, or SHAR's, depending on the architecture of the
+    service.  However, every application must be contained within a single
+    relying party; applications cannot span relying parties.  Each application
+    is assigned an individual application identifier URN which must be
+    recognized by both the origin and the target.</p>
+</blockquote>
+<h4><a name="1.f."></a>1.f. Sessions</h4>
+<blockquote>
+    <p>There are many different types of sessions that can be established within
+    the context of the access of a Shibboleth-protected resource.  It is
+    important to note that these are all independent and distinct: any session
+    can exist with or without any other session, and the expiration of any one
+    session does not imply the expiration of any other session.  Shibboleth does
+    not support any logout functionality.</p>
+    <p>The successful access of a Shibboleth-protected resource by a browser
+    user may have two outcomes.  The standard session establishment mechanism in
+    which Shibboleth protects the resource in all circumstances results in the
+    establishment of two sessions. Shibboleth 1.2 also supports so-called lazy
+    session establishment, in which the resource may be accessed without first
+    providing a home institution or obtaining attributes.  This means the
+    application must be intelligent enough to determine whether an attribute
+    request or any other aspect of Shibboleth functionality is necessary, and
+    then construct proper URL's to initiate these flows; if the application
+    determines none is necessary or uses other authorization mechanisms, then an
+    attribute request does not need to be triggered.  This complex functionality
+    is mostly useful to protect a single URL with different access mechanisms,
+    or to require attribute requests only in the instance where the application
+    deems it necessary.</p>
+    <p>In either situation, before the resource is presented, a Shibboleth
+    session is established between the browser and the Shibboleth module,
+    represented by a cookie.  A separate session for the attribute release
+    interaction with the origin results in the caching of a set of attributes
+    pertaining to that browser user.  The expiration of either session implies
+    the need to re-initiate only that session and does not imply the
+    re-initiation of the other; for example, although a browser user's
+    Shibboleth session has expired, if there is a valid set of cached
+    attributes, there need not be another attribute query when they next access
+    this resource.</p>
+    <p>Independently of this, a web-based application protected by Shibboleth
+    may have a need to establish its own session with the user.  This session
+    may persist well beyond either Shibboleth session, and logouts from this
+    session, if supported, will not terminate Shibboleth sessions initiated to
+    access the resource.  Application administrators should carefully evaluate
+    the expiration of all sessions to limit vulnerability to attacks or user
+    negligence.</p>
+</blockquote>
 <hr>
-<p><br>
-</p>
 <h3><a name="2."></a>2. Planning</h3>
 <p>There are several essential elements that must be present in the environment 
 to ensure Shibboleth functions well, both political and technical. Shibboleth is 
@@ -678,7 +743,10 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
     <span class="fixed">$TOMCAT_HOME/webapps/shibboleth/WEB-INF/classes/</span>. 
     To specify files outside of the webapp, specify a full URI, such as
     <span class="fixed">file:///usr/local/shibboleth/</span>.</p>
-    <p>The following is a hyperlinked version of the basic configuration file, followed by a list of elements and attributes that must be modified.  Click on any attribute or element for more information on its population and definition.</p>
+    <p>The following is a hyperlinked version of the basic configuration file,
+    followed by a list of elements and attributes that must be modified.  Click
+    on any attribute or element for more information on its population and
+    definition.</p>
 
 <blockquote><span class="fixed">
 &lt;?xml version=&quot;1.0&quot;encoding=&quot;UTF-8&quot;?&gt;<br>
@@ -735,7 +803,8 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
 <a href="#confShibbolethOriginConfig" class="fixedlink">&lt;/ShibbolethOriginConfig&gt;</a>
 </span></blockquote>
 
-<p>The following changes must be made to the default configuration before the origin will interoperate in a federation.</p>
+<p>The following changes must be made to the default configuration before the
+origin will interoperate in a federation.</p>
     <ol type="1">
         <li> 
         <p>Attributes within the <a href="#confShibbolethOriginConfig"><span
@@ -751,22 +820,46 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
             </li>
             <li><a href="#confShibbolethOriginConfig"><span class="fixed">providerID=<i>URN</i></span></a>
             <blockquote>
-                <p>This will be the URN assigned to this origin by the federation.</p>
+                <p>This will be the URN assigned to this origin by the
+                federation.</p>
             </blockquote>
             </li>
             <li><a href="#confShibbolethOriginConfig"><span class="fixed">defaultRelyingParty=<i>URN</i></span></a>
             <blockquote>
-                <p>This is the URN of the primary federation that the origin operates within.</p>
+                <p>This is the URN of the primary federation that the origin
+                operates within.</p>
             </blockquote>
             </li>
             </ol>
         </li>
         <li> 
-        <p>Although not explicitly necessary, it's highly recommended for initial installation and testing that logging be activated at the <span class="fixed">DEBUG</span> level by uncommenting the second <a href="#confLogging"><span class="fixed">Logging</span></a> element and ensuring that the pathnames for <a href="#confTransactionLog"><span class="fixed">TransactionLog</span></a> and <a href="#confErrorLog"><span class="fixed">ErrorLog</span></a> are appropriate.  However, in production, this will slow the operation of the origin considerably.</p>
+        <p>Although not explicitly necessary, it's highly recommended for
+        initial installation and testing that logging be activated at the <span
+        class="fixed">DEBUG</span> level by uncommenting the second <a
+        href="#confLogging"><span class="fixed">Logging</span></a> element and
+        ensuring that the pathnames for <a href="#confTransactionLog"><span
+        class="fixed">TransactionLog</span></a> and <a
+        href="#confErrorLog"><span class="fixed">ErrorLog</span></a> are
+        appropriate.  However, in production, this will slow the operation of
+        the origin considerably.</p>
         </li>
         <li>
-        <p>The default configuration file informs Shibboleth to load its key and certificate from flat files.  The <a href="#confKey"><span class="fixed">Key</span></a> element specifies a key in <span class="fixed">DER</span> format located at <span class="fixed">/conf/shib2.key</span>, while the <a href="#confCertificate"><span class="fixed">Certificate</span></a> element specifies the corresponding certificate in <span class="fixed">PEM</span> format located at <span class="fixed">/conf/shib2.crt</span>.  If any of these values is inconsistent with your deployment, change it accordingly.  Note that keys are supported in a variety of formats: DER, PEM, encrypted PEM, PKCS8, and encrypted PKCS8.  If a keystore must be used instead, consult <a href="#5.a.">section 5.a</a> for appropriate structure and details on population.</p>
-        <p>To create proper keys and certificates for production use, please refer to <a href="#4.b.">section 4.b</a>.</p>
+        <p>The default configuration file informs Shibboleth to load its key and
+        certificate from flat files.  The <a href="#confKey"><span
+        class="fixed">Key</span></a> element specifies a key in <span
+        class="fixed">DER</span> format located at <span
+        class="fixed">/conf/shib2.key</span>, while the <a
+        href="#confCertificate"><span class="fixed">Certificate</span></a>
+        element specifies the corresponding certificate in <span
+        class="fixed">PEM</span> format located at <span
+        class="fixed">/conf/shib2.crt</span>.  If any of these values is
+        inconsistent with your deployment, change it accordingly.  Note that
+        keys are supported in a variety of formats: DER, PEM, encrypted PEM,
+        PKCS8, and encrypted PKCS8.  If a keystore must be used instead, consult
+        <a href="#5.a.">section 5.a</a> for appropriate structure and details on
+        population.</p>
+        <p>To create proper keys and certificates for production use, please
+        refer to <a href="#4.b.">section 4.b</a>.</p>
         </li>
     </ol>
 </blockquote>
@@ -814,10 +907,11 @@ configuration</h4>
     process.</p>
 
     <p>The following text suggests a way to generate a key and certificate in
-    flat-file PEM format, which will be simplest for most deployments.  On Unix,
-    OpenSSL must be installed to perform this process.  On Windows, OpenSSL
-    libraries and the command line tool are included in the package and can be
-    used directly, if not otherwise available.</p>
+    flat-file PEM format, which will be simplest for most deployments.  Once the
+    key pair is generated, the public key must be sent to a certificate
+    authority recognized by relying parties with which this origin will interact
+    to be signed into a certificate. OpenSSL must be installed to perform this
+    process.</p>
 
     <p>The certificate and key file location should be based on whether they
     will also be used for Apache.  If they will be used as a server certificate
@@ -942,8 +1036,22 @@ configuration</h4>
 <h3><a name="5."></a>5. Advanced Configuration</h3>
 <h4><a name="5.a."></a>5.a. <span class="fixed">origin.xml</span></h4>
 <blockquote>
-    <p>Shibboleth 1.2 origins are configured using the <span class="fixed">origin.xml</span> file located in
-    <span class="fixed">/webapps/shibboleth/WEB-INF/classes/conf/origin.xml</span>.  The XML consists of a set of individual elements that describe how the origin should operate, which may each have their own attributes or appear within other elements.  This structure is represented through cross-references in the definitions and the examples presented in <a href="#4.a.">section 4.a</a>, below, and through the <a href="http://marsalis.internet2.edu/cgi-bin/viewcvs.cgi/shibboleth/java/data/">examples in CVS</a>.  The following is an example <span class="fixed">origin.xml</span> file which contains all possible configuration parameters and values. The configuration must be consistent with values elsewhere in the deployment or access errors may occur.  For a more basic example, consult <a href="#4.a.">section 4.a</a>.  This is useful to demonstrate the structure that other types of configurations have.  Few deployments will need configuration files this complex.</p>
+    <p>Shibboleth 1.2 origins are configured using the <span
+    class="fixed">origin.xml</span> file located in <span
+    class="fixed">/webapps/shibboleth/WEB-INF/classes/conf/origin.xml</span>. 
+    The XML consists of a set of individual elements that describe how the
+    origin should operate, which may each have their own attributes or appear
+    within other elements.  This structure is represented through
+    cross-references in the definitions and the examples presented in <a
+    href="#4.a.">section 4.a</a>, below, and through the <a
+    href="http://marsalis.internet2.edu/cgi-bin/viewcvs.cgi/shibboleth/java/data/">examples
+    in CVS</a>.  The following is an example <span
+    class="fixed">origin.xml</span> file which contains all possible
+    configuration parameters and values. The configuration must be consistent
+    with values elsewhere in the deployment or access errors may occur.  For a
+    more basic example, consult <a href="#4.a.">section 4.a</a>.  This is useful
+    to demonstrate the structure that other types of configurations have.  Few
+    deployments will need configuration files this complex.</p>
 
 <blockquote><span class="fixed">
 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
@@ -1024,13 +1132,18 @@ configuration</h4>
 <a href="#confShibbolethOriginConfig" class="fixedlink">&lt;/ShibbolethOriginConfig&gt;</a>
 </span></blockquote>
 
-    <p>The following is a complete, alphabetical list of all configuration elements and their valid attributes and population.  Each element also has a description of the elements it may contain and the elements that may contain it.</p>
+    <p>The following is a complete, alphabetical list of all configuration
+    elements and their valid attributes and population.  Each element also has a
+    description of the elements it may contain and the elements that may contain
+    it.</p>
 
-    <p>All pathnames are relative, and have an effective root path of
-    <span class="fixed">$TOMCAT_HOME/webapps/shibboleth/WEB-INF/classes/</span>. 
-    To specify files outside of the webapp, specify a full URI, such as
-    <span class="fixed">file:///usr/local/shibboleth/</span>.</p>
-    <p>All elements are optional unless otherwise specified.  All attributes of an element are optional unless designated <span class="mandatory">mandatory</span> by a purple background.</p>
+    <p>All pathnames are relative, and have an effective root path of <span
+    class="fixed">$TOMCAT_HOME/webapps/shibboleth/WEB-INF/classes/</span>. To
+    specify files outside of the webapp, specify a full URI, such as <span
+    class="fixed">file:///usr/local/shibboleth/</span>.</p>
+    <p>All elements are optional unless otherwise specified.  All attributes of
+    an element are optional unless designated <span
+    class="mandatory">mandatory</span> by a purple background.</p>
 
     <dl>
         <dd class="attribute"><a name="confArpRepository"><span class="fixed">&lt;ArpRepository implementation =&quot;edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository&quot;&gt;</span></dd>
@@ -1111,70 +1224,182 @@ configuration</h4>
         class="fixed">Logging</span></a> element.</dd>
 
         <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;confFederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;/&gt;</span></dd>
-        <dd class="value">Individual sets of targets in the form of a <span class="fixed">sites.xml</span> file that this origin will trust to make requests may be specified by adding <span class="fixed">FederationProvider</span> elements to the main <a href="#confShibbolethOriginConfig"><span class="fixed">ShibbolethOriginConfig</span></a> element for each.  The <span class="fixed">URI</span> points to a <span class="fixed">sites.xml</span> file, which is generally distributed by federations.</dd>
+        <dd class="value">Individual sets of targets in the form of a <span
+        class="fixed">sites.xml</span> file that this origin will trust to make
+        requests may be specified by adding <span
+        class="fixed">FederationProvider</span> elements to the main <a
+        href="#confShibbolethOriginConfig"><span
+        class="fixed">ShibbolethOriginConfig</span></a> element for each.  The
+        <span class="fixed">URI</span> points to a <span
+        class="fixed">sites.xml</span> file, which is generally distributed by
+        federations.</dd>
 
         <dd class="attribute"><a name="confFileResolver"><span class="fixed">&lt;FileResolver Id=&quot;<i>string</i>&quot;&gt;</span></dd>
-        <dd class="value">This element defines a pair of files used to store a private key and certificate associated with a given identifier and is contained by the <a href="#confCredentials"><span class="fixed">Credentials</span></a> element.  <a href="#confRelyingParty"><span class="fixed">RelyingParty</span></a> elements will refer to these identifiers allowing multiple resolver elements to be used to specify different credential storage for different federations or target sites.  It must contain one <a href="#confKey"><span class="fixed">Key</span></a> element and should contain one <a href="#confCertificate"><span class="fixed">Certificate</span></a> element.</dd>
+        <dd class="value">This element defines a pair of files used to store a
+        private key and certificate associated with a given identifier and is
+        contained by the <a href="#confCredentials"><span
+        class="fixed">Credentials</span></a> element.  <a
+        href="#confRelyingParty"><span class="fixed">RelyingParty</span></a>
+        elements will refer to these identifiers allowing multiple resolver
+        elements to be used to specify different credential storage for
+        different federations or target sites.  It must contain one <a
+        href="#confKey"><span class="fixed">Key</span></a> element and should
+        contain one <a href="#confCertificate"><span
+        class="fixed">Certificate</span></a> element.</dd>
 
         <dd class="attribute"><a name="confHSNameFormat"><span class="fixed">&lt;HSNameFormat <span class="mandatory">nameMapping=&quot;<i>id</i>&quot;</span>/&gt;</span></dd>
-        <dd class="value">Individual <a href="#confRelyingParty"><span class="fixed">RelyingParty</span></a> elements may contain this element to specify the <a href="#confNameMapping"><span class="fixed">NameMapping</span></a> element referenced by <span class="fixed">id</span> to be used in generating subject names for this relying party.  If this element is not present, default Shibboleth handles will be used.</dd>
+        <dd class="value">Individual <a href="#confRelyingParty"><span
+        class="fixed">RelyingParty</span></a> elements may contain this element
+        to specify the <a href="#confNameMapping"><span
+        class="fixed">NameMapping</span></a> element referenced by <span
+        class="fixed">id</span> to be used in generating subject names for this
+        relying party.  If this element is not present, default Shibboleth
+        handles will be used.</dd>
 
         <dd class="attribute"><a name="confKey"><span class="fixed">&lt;Key format=&quot;<i>type</i>&quot;&gt;</span></dd>
-        <dd class="value">This specifies the file containing a private key to be used by a set of credentials.  Valid encodings are <span class="fixed">PEM</span> and <span class="fixed">DER</span>.  Keys are supported in a variety of formats: DER, PEM, encrypted PEM, PKCS8, and encrypted PKCS8.  It resides within the <a href="#confFileResolver"><span class="fixed">FileResolver</span> element, should be paired with a <a href="#confCertificate"><span class="fixed">Certificate</span></a> element, and contain a <a href="#confPath"><span class="fixed">Path</span></a> element.</dd>
+        <dd class="value">This specifies the file containing a private key to be
+        used by a set of credentials.  Valid encodings are <span
+        class="fixed">PEM</span> and <span class="fixed">DER</span>.  Keys are
+        supported in a variety of formats: DER, PEM, encrypted PEM, PKCS8, and
+        encrypted PKCS8.  It resides within the <a
+        href="#confFileResolver"><span class="fixed">FileResolver</span>
+        element, should be paired with a <a href="#confCertificate"><span
+        class="fixed">Certificate</span></a> element, and contain a <a
+        href="#confPath"><span class="fixed">Path</span></a> element.</dd>
 
         <dd class="attribute"><a name="confKeyAlias"><span class="fixed">&lt;KeyAlias&gt;<i>string</i>&lt;/KeyAlias&gt;</span></dd>
-        <dd class="value">Specifies the alias used for accessing the private 
-        key.  Contained by the <a href="#confKeyStoreResolver"><span class="fixed">KeyStoreResolver</span></a> element.</dd>
+        <dd class="value">Specifies the alias used for accessing the private
+        key.  Contained by the <a href="#confKeyStoreResolver"><span
+        class="fixed">KeyStoreResolver</span></a> element.</dd>
 
         <dd class="attribute"><a name="confKeyPassword"><span class="fixed">&lt;KeyPassword&gt;<i>string</i>&lt;/KeyPassword&gt;</span></dd>
-        <dd class="value">Specifies the password used to retrieve the private 
-        key.  Contained by the <a href="#confKeyStoreResolver"><span class="fixed">KeyStoreResolver</span></a> element.</dd>
+        <dd class="value">Specifies the password used to retrieve the private
+        key.  Contained by the <a href="#confKeyStoreResolver"><span
+        class="fixed">KeyStoreResolver</span></a> element.</dd>
 
         <dd class="attribute"><a name="confKeyStoreKeyAlias"><span class="fixed">&lt;KeyStoreKeyAlias&gt;<i>string</i>&lt;/KeyStoreKeyAlias&gt;</span></dd>
-        <dd class="value">Specifies the alias used for accessing the private 
-        key.  Contained by the <a href="#confNameMapping"><span class="fixed">NameMapping</span></a> element when a <span class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
+        <dd class="value">Specifies the alias used for accessing the private
+        key.  Contained by the <a href="#confNameMapping"><span
+        class="fixed">NameMapping</span></a> element when a <span
+        class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
         <dd class="attribute"><a name="confKeyStoreKeyPassword"><span class="fixed">&lt;KeyStoreKeyPassword&gt;<i>string</i>&lt;/KeyStoreKeyPassword&gt;</span></dd>
-        <dd class="value">Specifies the password used to retrieve the private 
-        key.  Contained by the <a href="#confNameMapping"><span class="fixed">NameMapping</span></a> element when a <span class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
+        <dd class="value">Specifies the password used to retrieve the private
+        key.  Contained by the <a href="#confNameMapping"><span
+        class="fixed">NameMapping</span></a> element when a <span
+        class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
         <dd class="attribute"><a name="confKeyStorePassword"><span class="fixed">&lt;KeyStorePassword&gt;<i>string</i>&lt;/KeyStorePassword&gt;</span></dd>
-        <dd class="value">Specifies the password to access the keystore containing the private key to be used for symmetric encryption.  Contained by the <a href="#confNameMapping"><span class="fixed">NameMapping</span></a> element when a <span class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
+        <dd class="value">Specifies the password to access the keystore
+        containing the private key to be used for symmetric encryption. 
+        Contained by the <a href="#confNameMapping"><span
+        class="fixed">NameMapping</span></a> element when a <span
+        class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
         <dd class="attribute"><a name="confKeyStorePath"><span class="fixed">&lt;KeyStorePath&gt;<i>string</i>&lt;/KeyStorePath&gt;</span></dd>
-        <dd class="value">Specifies the location of the keystore containing the private key to be used for symmetric encryption to pass handles between the HS and AA.  Contained by the <a href="#confNameMapping"><span class="fixed">NameMapping</span></a> element when a <span class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
+        <dd class="value">Specifies the location of the keystore containing the
+        private key to be used for symmetric encryption to pass handles between
+        the HS and AA.  Contained by the <a href="#confNameMapping"><span
+        class="fixed">NameMapping</span></a> element when a <span
+        class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
         <dd class="attribute"><a name="confKeyStoreResolver"><span class="fixed">&lt;KeyStoreResolver Id=&quot;<i>string</i>&quot; storeType=&quot;<i>type</i>&quot;&gt;</span></dd>
-        <dd class="value">This element is contained by the <a href="#confCredentials"><span class="fixed">Credentials</span></a> element and to specify a keystore that contains both the certificate and private key for a given set of credentials.  Typically, this will be a Java keystore, with a corresponding type of <span class="fixed">JKS</span>.  <a href="#confRelyingParty"><span class="fixed">RelyingParty</span></a> elements will refer to the <span class="fixed">Id</span> allowing multiple resolver elements to be used to specify different credential storage for different federations or target sites.  It must contain one <a href="#confPath"><span class="fixed">Path</span></a> element, one <a href="#confKeyAlias"><span class="fixed">KeyAlias</span></a> element, and one <a href="#confStorePassword"><span class="fixed">StorePassword</span></a> element; it may optionally contain a <a href="#confKeyPassword"><span class="fixed">KeyPassword</span></a> element or a <a href="#confCertAlias"><span class="fixed">CertAlias</span></a> element.</dd>
+        <dd class="value">This element is contained by the <a
+        href="#confCredentials"><span class="fixed">Credentials</span></a>
+        element and to specify a keystore that contains both the certificate and
+        private key for a given set of credentials.  Typically, this will be a
+        Java keystore, with a corresponding type of <span
+        class="fixed">JKS</span>.  <a href="#confRelyingParty"><span
+        class="fixed">RelyingParty</span></a> elements will refer to the <span
+        class="fixed">Id</span> allowing multiple resolver elements to be used
+        to specify different credential storage for different federations or
+        target sites.  It must contain one <a href="#confPath"><span
+        class="fixed">Path</span></a> element, one <a href="#confKeyAlias"><span
+        class="fixed">KeyAlias</span></a> element, and one <a
+        href="#confStorePassword"><span class="fixed">StorePassword</span></a>
+        element; it may optionally contain a <a href="#confKeyPassword"><span
+        class="fixed">KeyPassword</span></a> element or a <a
+        href="#confCertAlias"><span class="fixed">CertAlias</span></a>
+        element.</dd>
 
         <dd class="attribute"><a name="confLog4JConfig"><span class="fixed">&lt;Log4JConfig location=&quot;<i>pathname</i>&quot;/&gt;</span></dd>
-        <dd class="value">This element informs Shibboleth to utilize Log4J as a logging system and points to the relevant configuration file using the <span class="fixed">location</span> attribute.  A basic configuration is included with the distribution at <span class="fixed">/WEB-INF/classes/conf/log4j.properties</span>.  This is set up to log to the console of the servlet container with a level of WARN, but there is also a commented-out example in the file to give a possible alternate configuration.  This element must be contained by a <a href="#confLogging"><span class="fixed">Logging</span></a> element and may not be paired with a <a href="#confTransactionLog"><span class="fixed">TransactionLog</span></a> or <a href="#confErrorLog"><span class="fixed">ErrorLog</span></a> element.</dd>
+        <dd class="value">This element informs Shibboleth to utilize Log4J as a
+        logging system and points to the relevant configuration file using the
+        <span class="fixed">location</span> attribute.  A basic configuration is
+        included with the distribution at <span
+        class="fixed">/WEB-INF/classes/conf/log4j.properties</span>.  This is
+        set up to log to the console of the servlet container with a level of
+        WARN, but there is also a commented-out example in the file to give a
+        possible alternate configuration.  This element must be contained by a
+        <a href="#confLogging"><span class="fixed">Logging</span></a> element
+        and may not be paired with a <a href="#confTransactionLog"><span
+        class="fixed">TransactionLog</span></a> or <a href="#confErrorLog"><span
+        class="fixed">ErrorLog</span></a> element.</dd>
 
         <dd class="attribute"><a name="confLogging"><span class="fixed">&lt;Logging&gt;</span></dd>
-        <dd class="value">This container element identifies a logging method for both the HS and AA to use and may not occur more than once.  Three different logging methods may be specified depending on what is placed inside this element.  If nothing is specified, then all logs go to the container console.  If <a href="#confErrorLog"><span class="fixed">ErrorLog</span></a> and <a href="#confTransactionLog"><span class="fixed">TransactionLog</span></a> elements are present, more traditional logging flatfiles will be generated at the locations specified.  A <a href="#confLog4JConfig"><span class="fixed">Log4JConfig</span></a> element instructs the origin to use Log4J logging.</dd>
+        <dd class="value">This container element identifies a logging method for
+        both the HS and AA to use and may not occur more than once.  Three
+        different logging methods may be specified depending on what is placed
+        inside this element.  If nothing is specified, then all logs go to the
+        container console.  If <a href="#confErrorLog"><span
+        class="fixed">ErrorLog</span></a> and <a
+        href="#confTransactionLog"><span class="fixed">TransactionLog</span></a>
+        elements are present, more traditional logging flatfiles will be
+        generated at the locations specified.  A <a
+        href="#confLog4JConfig"><span class="fixed">Log4JConfig</span></a>
+        element instructs the origin to use Log4J logging.</dd>
 
         <dd class="attribute"><a name="confNameMapping"><span class="fixed">&lt;NameMapping xmlns=&quot;urn:mace:shibboleth:namemapper:1.0&quot;<br>
 format=&quot;<i>URN</i>&quot;<br>
 handleTTL=&quot;<i>seconds</i>&quot;<br>
 id=&quot;<i>string</i>&quot;<br>
 type=&quot;<i>type</i>&quot;/&gt;</span></dd>
-        <dd class="value">This element defines a name mapping system to create SAML assertion subject names for users; in standard Shibboleth, this will be the creation of a handle to be given to the SHAR and shared with the AA.
+        <dd class="value">This element defines a name mapping system to create
+        SAML assertion subject names for users; in standard Shibboleth, this
+        will be the creation of a handle to be given to the SHAR and shared with
+        the AA.
 <ul>
-<li><span class="fixed">format</span> should be populated with the URN <span class="fixed">urn:mace:shibboleth:1.0:nameIdentifier</span> if traditional Shibboleth handles are used.</li>
-<li><span class="fixed">handleTTL</span> specifies in seconds how long a given handle will be considered valid; an expired handle will require the user to obtain a new handle and possibly re-authenticate.  This field is only valid if Shibboleth handles are being used, e.g. <span class="fixed">format</span> is <span class="fixed">urn:mace:shibboleth:1.0:nameIdentifier</span>.  Consult your federation guidelines for guidance on the population of this field.</li>
-<li><span class="fixed">id</span> is used by <a href="#confHSNameFormat"><span class="fixed">HSNameFormat</span></a> elements to refer to this element and must be unique.</li>
-<li><span class="fixed">type</span> dictates how handles are passed to the AA.  The valid types are:<ul type="circle">
-<li><span class="fixed">CryptoHandleGenerator</span>: Shibboleth handles will be passed using symmetric encryption.  If this is specified, keystore information must be specified using one <a href="#confKeyStorePath"><span class="fixed">KeyStorePath</span></a> element, one <a href="#confKeyStoreKeyAlias"><span class="fixed">KeyStoreKeyAlias</span></a> element, one <a href="#confKeyStorePassword"><span class="fixed">KeyStorePassword</span></a> element, and optionally a <a href="#confKeyStoreKeyPassword"><span class="fixed">KeyStoreKeyPassword</span></a> element.</li>
-<li><span class="fixed">Principal</span>: Shibboleth will use the primary unique identifier for the individual and not generate a handle.</li>
-<li><span class="fixed">SharedMemoryShibHandle</span>: Shibboleth will use a shared in-memory repository.</li>
+<li><span class="fixed">format</span> should be populated with the URN <span
+class="fixed">urn:mace:shibboleth:1.0:nameIdentifier</span> if traditional
+Shibboleth handles are used.</li>
+<li><span class="fixed">handleTTL</span> specifies in seconds how long a given
+handle will be considered valid; an expired handle will require the user to
+obtain a new handle and possibly re-authenticate.  This field is only valid if
+Shibboleth handles are being used, e.g. <span class="fixed">format</span> is
+<span class="fixed">urn:mace:shibboleth:1.0:nameIdentifier</span>.  Consult your
+federation guidelines for guidance on the population of this field.</li>
+<li><span class="fixed">id</span> is used by <a href="#confHSNameFormat"><span
+class="fixed">HSNameFormat</span></a> elements to refer to this element and must
+be unique.</li>
+<li><span class="fixed">type</span> dictates how handles are passed to the AA. 
+The valid types are:<ul type="circle">
+<li><span class="fixed">CryptoHandleGenerator</span>: Shibboleth handles will be
+passed using symmetric encryption.  If this is specified, keystore information
+must be specified using one <a href="#confKeyStorePath"><span
+class="fixed">KeyStorePath</span></a> element, one <a
+href="#confKeyStoreKeyAlias"><span class="fixed">KeyStoreKeyAlias</span></a>
+element, one <a href="#confKeyStorePassword"><span
+class="fixed">KeyStorePassword</span></a> element, and optionally a <a
+href="#confKeyStoreKeyPassword"><span
+class="fixed">KeyStoreKeyPassword</span></a> element.</li>
+<li><span class="fixed">Principal</span>: Shibboleth will use the primary unique
+identifier for the individual and not generate a handle.</li>
+<li><span class="fixed">SharedMemoryShibHandle</span>: Shibboleth will use a
+shared in-memory repository.</li>
 </ul></li>
 </ul></dd>
 
         <dd class="attribute"><a name="confPath"><span class="fixed">&lt;Path&gt;<i>pathname</i>&lt;/Path&gt;</span></dd>
-        <dd class="value">This mandatory element specifies the path to a file or directory utilized by other elements of the configuration.  It may be contained by various elements to point to different types of files required by the origin.</dd>
+        <dd class="value">This mandatory element specifies the path to a file or
+        directory utilized by other elements of the configuration.  It may be
+        contained by various elements to point to different types of files
+        required by the origin.</dd>
 
         <dd class="attribute"><a name="confReleasePolicyEngine"><span class="fixed">&lt;ReleasePolicyEngine&gt;</span></dd>
-        <dd class="value">The <span class="fixed">ReleasePolicyEngine</span> element is used to specify a class of release policy processing and enforcement and is not mandatory, defaulting to ???.  This should contain one <a href="#confArpRepository"><span class="fixed">ArpRepository</span></a> element.</dd>
+        <dd class="value">The <span class="fixed">ReleasePolicyEngine</span>
+        element is used to specify a class of release policy processing.  This
+        should contain one <a href="#confArpRepository"><span
+        class="fixed">ArpRepository</span></a> element.</dd>
 
         <dd class="attribute"><a name="confRelyingParty"><span class="fixed">&lt;RelyingParty <span class="mandatory">name=&quot;<i>URN</i>&quot;</span><br>
 AAsigningCredential=&quot;<i>string</i>&quot;<br>
@@ -1187,28 +1412,115 @@ signAttrResponses=&quot;<i>true/false</i>&quot;<br>
 signAuthAssertions=&quot;<i>true/false</i>&quot;<br>
 signAuthResponses=&quot;<i>true/false</i>&quot;<br>
 signingCredential=&quot;<i>string</i>&quot;&gt;</span></dd>
-        <dd class="value"><p>The <span class="fixed">RelyingParty</span> element is used to specify one or more relying parties that this origin must recognize.  This includes any federations the origin is a member of, any targets that have established bilateral agreements with the origin, or any other trust structure that origin must be aware of.  In addition to its attributes, this element may contain a <a href="#confHSNameMapping"><span class="fixed">HSNameMapping</span></a> element to specify a naming mechanism for assertions sent to this relying party.  The HS and AA both perform validation against federation metadata to ensure that targets cannot construct requests that cause another target's relying party information to be used.</p>
-<p>The proper <span class="fixed">RelyingParty</span> element to handle a given attribute request is selected by the following algorithm.  If at any point a match is found, processing is complete; only one relying party will be used for any given request.</p>
-<ol type="1">
-<li>If the requesting provider is unauthenticated -- due to a lack of SSL client authentication because the AA is not protected by an <span class="fixed">https://</span> URL -- the default relying party is always used.</li>
-<li>If the requesting provider is Shibboleth 1.1 or less, the default relying party is used.</li>
-<li>If a <span class="fixed">RelyingParty</span> element's <span class="fixed">providerId</span> attribute matches the name sent by the target, then that element is used.</li>
-<li>A metadata lookup is performed using the <span class="fixed">sites.xml</span> files supplied by <a href="#confFederationProvider"><span class="fixed">FederationProvider</span></a> elements to determine whether the target is a member of a common federation.  If there is a <span class="fixed">RelyingParty</span> element that has the same providerId as the URN of the the federation, it is used.  If not, the default relying party handles the request.</li>
-</ol>
-<ul>
-<li class="mandatory"><span class="fixed">name</span>: Each <span class="fixed">RelyingParty</span> element is differentiated by a URN specified in the <span class="fixed">name</span> attribute.  A target will send a value for this attribute with the attribute request; if the URN sent matches the <span class="fixed">name</span>, this element will be used in the transaction.  If there is no direct match, the origin uses metadata to try to find a federation that the service provider is a member of.</li>
-<li><span class="fixed">AAsigningCredential</span>: This attribute must equal the identifier of one of the <a href="#confFileResolver><span class="fixed">FileResolver</span></a> Id's.  A separate set of credentials may be specified for the AA's signing of assertions/SSL session identification using this attribute, as opposed to the HS' signing of assertions.  If this is not specified for this <span class="fixed">RelyingParty</span> element, but a <span class="fixed">signingCredential</span> attribute is, that set of credentials will be used instead.  Ensure that the appropriate signing key is selected for each; an incorrect signing key will lead to trust failures.</li>
-<li><span class="fixed">AAUrl</span>: Different AA's may be specified for different relying parties using this attribute.  It over-rides, is populated, and operates in the same manner as the <span class="fixed">AAUrl</span> attribute of the <a href="#confShibbolethOriginConfig"><span class="fixed">ShibbolethOriginConfig</span></a> element.</li>
-<li><span class="fixed">defaultAuthMethod</span>: The value of this attribute represents the mechanism by which the user's authentication was performed.  It is used to populate <span class="fixed">authenticationMethod</span> in SAML assertions passed to this relying party if no other authentication method is passed to the HS.  For a brief list of authentication methods, consult the same attribute as part of the <a href="#confShibbolethOriginConfig"><span class="fixed">ShibbolethOriginConfig</span></a> element.</li>
-<li><span class="fixed">passThruErrors</span>: This boolean attribute determines whether the origin will relay errors in flows to this target for use in displaying these errors to the browser in the case of an unsuccessful transaction.</li>
-<li><span class="fixed">providerId</span>: If the origin must assert under a different name to this relying party, specify a <span class="fixed">providerId</span> attribute which will over-ride the one specified in <a href="#confShibbolethOriginConfig"><span class="fixed">ShibbolethOriginConfig</span></a>.</li>
-<li><span class="fixed">signAttrAssertions</span>: If this boolean attribute has a value of <span class="fixed">true</span>, the attribute assertion within the SAML response will be signed.  This is mostly useful for using the attribute assertion in contexts outside of the response and defaults to <span class="fixed">false</span>.</li>
-<li><span class="fixed">signAttrResponses</span>: If this boolean attribute has a value of <span class="fixed">true</span>, the attribute response itself will be signed in addition to the security and authentication provided by the SSL session.  SAML responses contain one or more assertions.  Defaults to <span class="fixed">false</span>; if true, an <span class="fixed">https://</span> AAUrl may be redundant.</li>
-<li><span class="fixed">signAuthAssertions</span>: If this boolean attribute has a value of <span class="fixed">true</span>, the authentication assertion within the SAML response will be signed.  This is mostly useful for using the authentication assertion in contexts outside of the response and defaults to <span class="fixed">false</span>.</li>
-<li><span class="fixed">signAuthResponses</span>: If this boolean attribute has a value of <span class="fixed">false</span>, the authentication response will not be signed.  SAML responses contain one or more assertions.  Defaults to <span class="fixed">true</span>.</li>
-<li><span class="fixed">signingCredential</span>: This attribute must equal the identifier of one of the <a href="#confFileResolver><span class="fixed">FileResolver</span></a> Id's.  This allows the origin to use different signing keys and certificates for exchanges with different federations or targets.  Ensure that the appropriate signing key is selected for each; an incorrect signing key will lead to trust failures.</li>
-</ul>
-</dd>
+        <dd class="value"><p>The <span class="fixed">RelyingParty</span> element
+        is used to specify one or more relying parties that this origin must
+        recognize.  This includes any federations the origin is a member of, any
+        targets that have established bilateral agreements with the origin, or
+        any other trust structure that origin must be aware of.  In addition to
+        its attributes, this element may contain a <a
+        href="#confHSNameMapping"><span class="fixed">HSNameMapping</span></a>
+        element to specify a naming mechanism for assertions sent to this
+        relying party.  The HS and AA both perform validation against federation
+        metadata to ensure that targets cannot construct requests that cause
+        another target's relying party information to be used.</p>
+        <p>The proper <span class="fixed">RelyingParty</span> element to handle
+        a given attribute request is selected by the following algorithm.  If at
+        any point a match is found, processing is complete; only one relying
+        party will be used for any given request.</p>
+        <ol type="1">
+          <li>If the requesting provider is unauthenticated -- due to a lack of
+          SSL client authentication because the AA is not protected by an <span
+          class="fixed">https://</span> URL -- the default relying party is
+          always used.</li>
+          <li>If the requesting provider is Shibboleth 1.1 or less, the default
+          relying party is used.</li>
+          <li>If a <span class="fixed">RelyingParty</span> element's <span
+          class="fixed">providerId</span> attribute matches the name sent by the
+          target, then that element is used.</li>
+          <li>A metadata lookup is performed using the <span
+          class="fixed">sites.xml</span> files supplied by <a
+          href="#confFederationProvider"><span
+          class="fixed">FederationProvider</span></a> elements to determine
+          whether the target is a member of a common federation.  If there is a
+          <span class="fixed">RelyingParty</span> element that has the same
+          providerId as the URN of the the federation, it is used.  If not, the
+          default relying party handles the request.</li>
+        </ol>
+        <ul>
+          <li class="mandatory"><span class="fixed">name</span>: Each <span
+          class="fixed">RelyingParty</span> element is differentiated by a URN
+          specified in the <span class="fixed">name</span> attribute.  A target
+          will send a value for this attribute with the attribute request; if
+          the URN sent matches the <span class="fixed">name</span>, this element
+          will be used in the transaction.  If there is no direct match, the
+          origin uses metadata to try to find a federation that the service
+          provider is a member of.</li>
+          <li><span class="fixed">AAsigningCredential</span>: This attribute
+          must equal the identifier of one of the <a
+          href="#confFileResolver><span class="fixed">FileResolver</span></a>
+          Id's.  A separate set of credentials may be specified for the AA's
+          signing of assertions/SSL session identification using this attribute,
+          as opposed to the HS' signing of assertions.  If this is not specified
+          for this <span class="fixed">RelyingParty</span> element, but a <span
+          class="fixed">signingCredential</span> attribute is, that set of
+          credentials will be used instead.  Ensure that the appropriate signing
+          key is selected for each; an incorrect signing key will lead to trust
+          failures.</li>
+          <li><span class="fixed">AAUrl</span>: Different AA's may be specified
+          for different relying parties using this attribute.  It over-rides, is
+          populated, and operates in the same manner as the <span
+          class="fixed">AAUrl</span> attribute of the <a
+          href="#confShibbolethOriginConfig"><span
+          class="fixed">ShibbolethOriginConfig</span></a> element.</li>
+          <li><span class="fixed">defaultAuthMethod</span>: The value of this
+          attribute represents the mechanism by which the user's authentication
+          was performed.  It is used to populate <span
+          class="fixed">authenticationMethod</span> in SAML assertions passed to
+          this relying party if no other authentication method is passed to the
+          HS.  For a brief list of authentication methods, consult the same
+          attribute as part of the <a href="#confShibbolethOriginConfig"><span
+          class="fixed">ShibbolethOriginConfig</span></a> element.</li>
+          <li><span class="fixed">passThruErrors</span>: This boolean attribute
+          determines whether the origin will relay errors in flows to this
+          target for use in displaying these errors to the browser in the case
+          of an unsuccessful transaction.</li>
+          <li><span class="fixed">providerId</span>: If the origin must assert
+          under a different name to this relying party, specify a <span
+          class="fixed">providerId</span> attribute which will over-ride the one
+          specified in <a href="#confShibbolethOriginConfig"><span
+          class="fixed">ShibbolethOriginConfig</span></a>.</li>
+          <li><span class="fixed">signAttrAssertions</span>: If this boolean
+          attribute has a value of <span class="fixed">true</span>, the
+          attribute assertion within the SAML response will be signed.  This is
+          mostly useful for using the attribute assertion in contexts outside of
+          the response and defaults to <span class="fixed">false</span>.</li>
+          <li><span class="fixed">signAttrResponses</span>: If this boolean
+          attribute has a value of <span class="fixed">true</span>, the
+          attribute response itself will be signed in addition to the security
+          and authentication provided by the SSL session.  SAML responses
+          contain one or more assertions.  Defaults to <span
+          class="fixed">false</span>; if true, an <span
+          class="fixed">https://</span> AAUrl may be redundant.</li>
+          <li><span class="fixed">signAuthAssertions</span>: If this boolean
+          attribute has a value of <span class="fixed">true</span>, the
+          authentication assertion within the SAML response will be signed. 
+          This is mostly useful for using the authentication assertion in
+          contexts outside of the response and defaults to <span
+          class="fixed">false</span>.</li>
+          <li><span class="fixed">signAuthResponses</span>: If this boolean
+          attribute has a value of <span class="fixed">false</span>, the
+          authentication response will not be signed.  SAML responses contain
+          one or more assertions.  Defaults to <span
+          class="fixed">true</span>.</li>
+          <li><span class="fixed">signingCredential</span>: This attribute must
+          equal the identifier of one of the <a href="#confFileResolver><span
+          class="fixed">FileResolver</span></a> Id's.  This allows the origin to
+          use different signing keys and certificates for exchanges with
+          different federations or targets.  Ensure that the appropriate signing
+          key is selected for each; an incorrect signing key will lead to trust
+          failures.</li>
+        </ul>
+        </dd>
 
         <dd class="attribute"><a name="confShibbolethOriginConfig"><span class="fixed">&lt;ShibbolethOriginConfig<br>
 <span class="mandatory">xmlns=&quot;urn:mace:shibboleth:origin:1.0&quot;<br>
@@ -1284,15 +1596,19 @@ resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></dd>
     <span class="fixed">arp.user.$PRINCIPALNAME.xml</span>. Up to two ARP&#39;s 
     will apply to a principal: the site ARP, and the user ARP for that 
     principal.</p>
-    <p>Each ARP acts as a container that holds a set of ARP rules that are 
-    applicable to the principals that ARP is effective for. Each ARP rule 
-    specifies a single release policy within the ARP container pertaining to a 
-    specific set of targets, known collectively as a relying party.  For 1.2 targets, this is a single URI matching a <span class="fixed">providerId</span> attribute as defined in a <a href="#confRelyingParty"><span class="fixed">RelyingParty</span></a> element.  Prior to 1.2, URI's for targets were not registered; this means that the SHAR name must be used in release policies for 1.1 targets accessed by users from this origin.  Each ARP rule may contain specifications regarding the 
-    release of any number of attribute values to requests matching that ARP rule 
-    for that user. ARP rules may be flagged as default, implying that they are 
-    always applied to any user matched by the ARP container. Note that ARP&#39;s may 
-    also be used to restrict specific attribute/value pairs in addition to 
-    restricting or releasing individual attributes.</p>
+    <p>Each ARP acts as a container that holds a set of ARP rules that are
+    applicable to the principals that ARP is effective for. Each ARP rule
+    specifies a single release policy within the ARP container pertaining to a
+    particular target application.  For 1.2 targets, this is a single URI
+    matching a <span class="fixed">providerId</span>.  Prior to 1.2, URI's for
+    targets were not registered; this means that the SHAR name must be used in
+    release policies for 1.1 targets accessed by users from this origin.  Each
+    ARP rule may contain specifications regarding the release of any number of
+    attribute values to requests matching that ARP rule for that user. ARP rules
+    may be flagged as default, implying that they are always applied to any user
+    matched by the ARP container. Note that ARP&#39;s may also be used to
+    restrict specific attribute/value pairs in addition to restricting or
+    releasing individual attributes.</p>
     <p>When a query is received, the AA generates an effective ARP, which is the 
     fully evaluated set of ARP rules regarding that relying party based on all ARP 
     containers applicable to the principal. This effective ARP is then applied 
