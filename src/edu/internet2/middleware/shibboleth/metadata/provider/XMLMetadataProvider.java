@@ -315,6 +315,35 @@ public class XMLMetadataProvider implements Metadata {
         }
     }
 
+    class XMLKeyAuthority implements KeyAuthority {
+        private int depth = 1;
+        private ArrayList /* <KeyInfo> */ keys = new ArrayList();
+        
+        XMLKeyAuthority(Element e) {
+            if (e.hasAttributeNS(null,"VerifyDepth"))
+                depth = Integer.parseInt(e.getAttributeNS(null,"VerifyDepth"));
+            e = XML.getFirstChildElement(e, XML.XMLSIG_NS, "KeyInfo");
+            while (e != null) {
+                try {
+                    keys.add(new KeyInfo(e, null));
+                }
+                catch (XMLSecurityException e1) {
+                    log.error("unable to process ds:KeyInfo element: " + e1.getMessage());
+                }
+                e = XML.getNextSiblingElement(e, XML.XMLSIG_NS, "KeyInfo");
+            }
+        }
+        
+        public int getVerifyDepth() {
+            return depth;
+        }
+
+        public Iterator getKeyInfos() {
+            return keys.iterator();
+        }
+        
+    }
+        
     class XMLOrganization implements Organization {
         private Element root = null;
         private HashMap /* <String,String> */ names = new HashMap();
@@ -899,7 +928,6 @@ public class XMLMetadataProvider implements Metadata {
         
         public SPRole(XMLEntityDescriptor provider, long validUntil, Element e) throws MetadataException {
             super(provider, validUntil, e);
-            // TODO Auto-generated constructor stub
 
             // Check the root element namespace. If SAML2, assume it's the std schema.
             if (edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS.equals(e.getNamespaceURI())) {
@@ -991,7 +1019,7 @@ public class XMLMetadataProvider implements Metadata {
         }
     }
     
-    class XMLEntityDescriptor implements EntityDescriptor {
+    class XMLEntityDescriptor implements ExtendedEntityDescriptor {
         private Element root = null;
         private EntitiesDescriptor parent = null;
         private String id = null;
@@ -1001,7 +1029,8 @@ public class XMLMetadataProvider implements Metadata {
         private ArrayList /* <RoleDescriptor> */ roles = new ArrayList();
         private AffiliationDescriptor affiliation = null;
         private HashMap /* <String,String> */ locs = new HashMap();
-        private long validUntil = 0;
+        private long validUntil = Long.MAX_VALUE;
+        private ArrayList /* <KeyAuthority> */ keyauths = new ArrayList();
         
         public XMLEntityDescriptor(Element e, XMLMetadataProvider wrapper, long validUntil, EntitiesDescriptor parent) throws SAMLException {
             root = e;
@@ -1032,7 +1061,14 @@ public class XMLMetadataProvider implements Metadata {
                 Element child=XML.getFirstChildElement(e);
                 while (child != null) {
                     // Process the various kinds of children that we care about...
-                    if (XML.isElementNamed(child,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"ContactPerson")) {
+                    if (XML.isElementNamed(child,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"Extensions")) {
+                        Element ext = XML.getFirstChildElement(child,edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"KeyAuthority");
+                        while (ext != null) {
+                            keyauths.add(new XMLKeyAuthority(ext));
+                            ext = XML.getNextSiblingElement(ext,edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"KeyAuthority");
+                        }
+                    }
+                    else if (XML.isElementNamed(child,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"ContactPerson")) {
                         contacts.add(new XMLContactPerson(child));
                     }
                     else if (XML.isElementNamed(child,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"Organization")) {
@@ -1229,15 +1265,20 @@ public class XMLMetadataProvider implements Metadata {
         public URL getErrorURL() {
             return errorURL;
         }
+
+        public Iterator getKeyAuthorities() {
+            return keyauths.iterator();
+        }
     }
     
-    class XMLEntitiesDescriptor implements EntitiesDescriptor {
+    class XMLEntitiesDescriptor implements ExtendedEntitiesDescriptor {
         private Element root = null;
         private EntitiesDescriptor parent = null;
         private String name = null;
         private ArrayList /* <EntitiesDescriptor> */ groups = new ArrayList();
         private ArrayList /* <EntityDescriptor> */ providers = new ArrayList();
         private long validUntil = Long.MAX_VALUE;
+        private ArrayList /* <KeyAuthority> */ keyauths = new ArrayList();
         
         public XMLEntitiesDescriptor(Element e, XMLMetadataProvider wrapper, long validUntil, EntitiesDescriptor parent) throws SAMLException {
             root = e;
@@ -1267,7 +1308,14 @@ public class XMLMetadataProvider implements Metadata {
 
                 e = XML.getFirstChildElement(e);
                 while (e != null) {
-                    if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"EntitiesDescriptor"))
+                    if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"Extensions")) {
+                        Element ext = XML.getFirstChildElement(e,edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"KeyAuthority");
+                        while (ext != null) {
+                            keyauths.add(new XMLKeyAuthority(ext));
+                            ext = XML.getNextSiblingElement(ext,edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"KeyAuthority");
+                        }
+                    }
+                    else if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"EntitiesDescriptor"))
                         groups.add(new XMLEntitiesDescriptor(e, wrapper, this.validUntil, this));
                     else if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"EntityDescriptor"))
                         providers.add(new XMLEntityDescriptor(e, wrapper, this.validUntil, this));
@@ -1310,6 +1358,10 @@ public class XMLMetadataProvider implements Metadata {
 
         public Element getElement() {
             return root;
+        }
+
+        public Iterator getKeyAuthorities() {
+            return keyauths.iterator();
         }
     }
 }
