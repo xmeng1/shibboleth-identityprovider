@@ -234,27 +234,27 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 		InitialDirContext context = null;
 		try {
 			context = new InitialDirContext(properties);
-			NamingEnumeration enum = null;
+			NamingEnumeration nEnumeration = null;
 
 			try {
-				enum = context.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
+				nEnumeration = context.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
 			} catch (CommunicationException e) {
 				log.debug(e);
 				log.warn(
 					"Encountered a connection problem while querying for attributes.  Re-initializing JNDI context and retrying...");
 				context = new InitialDirContext(context.getEnvironment());
-				enum = context.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
+				nEnumeration = context.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
 			}
 
-			if (enum == null || !enum.hasMore()) {
+			if (nEnumeration == null || !nEnumeration.hasMore()) {
 				log.error("Could not locate a principal with the name (" + principal.getName() + ").");
 				throw new ResolutionPlugInException("No data available for this principal.");
 			}
 
-			SearchResult result = (SearchResult) enum.next();
+			SearchResult result = (SearchResult) nEnumeration.next();
 			Attributes attributes = result.getAttributes();
 
-			if (enum.hasMore()) {
+			if (nEnumeration.hasMore()) {
 				log.error("Unable to disambiguate date for principal (" + principal.getName() + ") in search.");
 				throw new ResolutionPlugInException("Cannot disambiguate data for this principal.");
 			}
