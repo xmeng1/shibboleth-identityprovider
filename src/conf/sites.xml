@@ -1,5 +1,22 @@
-<SiteGroup Name="https://localhost/shibboleth" xmlns="urn:mace:shibboleth:1.0">
-	<OriginSite Name="https://localhost/shibboleth/origin">
+<SiteGroup Name="https://example.org/shibboleth" xmlns="urn:mace:shibboleth:1.0">
+
+	<!--
+	The following are origin and target definitions for example installations
+	that can be run together on the same box after installation.
+	
+	The Name attributes that contain what look like URLs are just identifiers.
+	The reserved "example.org" value will only work in private testing or against
+	sample installations.
+	
+	The Location attributes have to be valid for your installation so if you want
+	to use actual hostnames or change where your software lives, just modify as needed.
+	
+	Once you join a federation or establish trust with another installation, you will
+	use (or be given in signed form) similar metadata to describe and locate sites
+	and services.
+	-->
+
+	<OriginSite Name="https://example.org/shibboleth/origin">
 		<Alias>Localhost Test Deployment</Alias>
 		<Contact Type="technical" Name="Your Name Here" Email="root@localhost"/>
 		<HandleService Location="https://localhost/shibboleth/HS" Name="CN=localhost,O=Shibboleth Project,C=US"/>
@@ -7,7 +24,7 @@
 		<Domain>localhost</Domain>
 	</OriginSite>
 
-	<DestinationSite Name="https://localhost/shibboleth/target">
+	<DestinationSite Name="https://example.org/shibboleth/target">
 		<Alias>Localhost Test Deployment</Alias>
 		<Contact Type="technical" Name="Your Name Here" Email="root@localhost"/>
 		<AssertionConsumerServiceURL Location="https://localhost/Shibboleth.shire"/>
