@@ -62,7 +62,9 @@ import java.net.URL;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Properties;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import junit.framework.TestCase;
 
@@ -72,6 +74,9 @@ import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
 import org.apache.xml.serialize.OutputFormat;
 import org.apache.xml.serialize.XMLSerializer;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -81,6 +86,7 @@ import org.xml.sax.SAXParseException;
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
 import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
  * Validation suite for <code>Arp</code> processing.
@@ -91,6 +97,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 public class ArpTests extends TestCase {
 
 	private DOMParser parser = new DOMParser();
+	Element memoryRepositoryElement;
 	private String[] arpExamples =
 		{
 			"data/example1.xml",
@@ -124,6 +131,8 @@ public class ArpTests extends TestCase {
 	 */
 	protected void setUp() throws Exception {
 		super.setUp();
+
+		// Setup an xml parser
 		try {
 			parser.setFeature("http://xml.org/sax/features/validation", true);
 			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
@@ -162,6 +171,22 @@ public class ArpTests extends TestCase {
 			fail("Failed to setup xml parser: " + e);
 		}
 
+		//Setup a dummy xml config for a Memory-based repository
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		docFactory.setNamespaceAware(true);
+		Document placeHolder;
+		try {
+			placeHolder = docFactory.newDocumentBuilder().newDocument();
+
+			memoryRepositoryElement =
+				placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+			memoryRepositoryElement.setAttributeNS(
+				ShibbolethOriginConfig.originConfigNamespace,
+				"implementation",
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
+		} catch (ParserConfigurationException e) {
+			fail("Failed to create memory-based Arp Repository configuration" + e);
+		}
 	}
 
 	public void testArpMarshalling() {
@@ -375,21 +400,35 @@ public class ArpTests extends TestCase {
 		 * Test the Factory
 		 */
 
-		//Make sure we fail if no Repository is specified
-		Properties props = new Properties();
+		//Make sure we fail if an unavailable Repository implementation is specified
+		ArpRepository repository = null;
+
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		docFactory.setNamespaceAware(true);
+		Document placeHolder;
 		try {
-			ArpRepositoryFactory.getInstance(props);
+			placeHolder = docFactory.newDocumentBuilder().newDocument();
+
+			Element repositoryElement =
+				placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+			repositoryElement.setAttributeNS(
+				ShibbolethOriginConfig.originConfigNamespace,
+				"implementation",
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.Foo");
+
+			ArpRepositoryFactory.getInstance(repositoryElement);
+
+		} catch (ParserConfigurationException e) {
+			fail("Failed to create bogus Arp Repository configuration" + e);
+
 		} catch (ArpRepositoryException e) {
 			//This is supposed to fail
 		}
 
 		// Make sure we can create an Arp Repository
-		props.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
-		ArpRepository repository = null;
+		repository = null;
 		try {
-			repository = ArpRepositoryFactory.getInstance(props);
+			repository = ArpRepositoryFactory.getInstance(memoryRepositoryElement);
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create memory-based Arp Repository" + e);
 		}
@@ -442,24 +481,34 @@ public class ArpTests extends TestCase {
 			fail("Error adding User ARP to Memory Repository.");
 		}
 
-		/*
-		 * Exercise the Memory Arp Repository
-		 */
-
 		//create a repository
-		props.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-		props.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
-			new File("data/").toURI().toString());
-		props.setProperty("edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL", "65535");
 		repository = null;
+
 		try {
-			repository = ArpRepositoryFactory.getInstance(props);
+			placeHolder = docFactory.newDocumentBuilder().newDocument();
+
+			Element repositoryElement =
+				placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+			repositoryElement.setAttributeNS(
+				ShibbolethOriginConfig.originConfigNamespace,
+				"implementation",
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
+			repositoryElement.setAttributeNS(ShibbolethOriginConfig.originConfigNamespace, "arpTTL", "65535");
+
+			Element path = placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "Path");
+			Text text = placeHolder.createTextNode(new File("data/").toURI().toString());
+			path.appendChild(text);
+
+			repositoryElement.appendChild(path);
+
+			repository = ArpRepositoryFactory.getInstance(repositoryElement);
+
 		} catch (ArpRepositoryException e) {
-			fail("Failed to create file-based Arp Repository" + e.getMessage());
+			fail("Failed to create file-based Arp Repository" + e);
+		} catch (ParserConfigurationException e) {
+			fail("Failed to create file-based Arp Repository configuration" + e);
 		}
+
 		assertNotNull("Failed to create file-based Arp Repository: Factory returned null.", repository);
 
 		try {
@@ -504,13 +553,10 @@ public class ArpTests extends TestCase {
 	}
 
 	public void testPossibleReleaseSetComputation() {
-		Properties props = new Properties();
-		props.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
+
 		ArpRepository repository = null;
 		try {
-			repository = ArpRepositoryFactory.getInstance(props);
+			repository = ArpRepositoryFactory.getInstance(memoryRepositoryElement);
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create memory-based Arp Repository" + e);
 		}
@@ -531,7 +577,7 @@ public class ArpTests extends TestCase {
 			Arp arp1 = new Arp();
 			arp1.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp1);
-			ArpEngine engine = new ArpEngine(repository, props);
+			ArpEngine engine = new ArpEngine(repository);
 			URI[] possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertEquals(
 				"Incorrectly computed possible release set (1).",
@@ -573,44 +619,41 @@ public class ArpTests extends TestCase {
 
 	public void testArpApplication() {
 
-		//Setup a test ARP repository
-		Properties props = new Properties();
-		props.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
+		//Construct an engine with a memory-based repository
 		ArpRepository repository = null;
 		try {
-			repository = ArpRepositoryFactory.getInstance(props);
+			repository = ArpRepositoryFactory.getInstance(memoryRepositoryElement);
+
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create memory-based Arp Repository" + e);
 		}
 
 		try {
 
-			arpApplicationTest1(repository, props, parser);
-			arpApplicationTest2(repository, props, parser);
-			arpApplicationTest3(repository, props, parser);
-			arpApplicationTest4(repository, props, parser);
-			arpApplicationTest5(repository, props, parser);
-			arpApplicationTest6(repository, props, parser);
-			arpApplicationTest7(repository, props, parser);
-			arpApplicationTest8(repository, props, parser);
-			arpApplicationTest9(repository, props, parser);
-			arpApplicationTest10(repository, props, parser);
-			arpApplicationTest11(repository, props, parser);
-			arpApplicationTest12(repository, props, parser);
-			arpApplicationTest13(repository, props, parser);
-			arpApplicationTest14(repository, props, parser);
-			arpApplicationTest15(repository, props, parser);
-			arpApplicationTest16(repository, props, parser);
-			arpApplicationTest17(repository, props, parser);
-			arpApplicationTest18(repository, props, parser);
-			arpApplicationTest19(repository, props, parser);
-			arpApplicationTest20(repository, props, parser);
-			arpApplicationTest21(repository, props, parser);
-			arpApplicationTest22(repository, props, parser);
-			arpApplicationTest23(repository, props, parser);
-			arpApplicationTest24(repository, props, parser);
+			arpApplicationTest1(repository, parser);
+			arpApplicationTest2(repository, parser);
+			arpApplicationTest3(repository, parser);
+			arpApplicationTest4(repository, parser);
+			arpApplicationTest5(repository, parser);
+			arpApplicationTest6(repository, parser);
+			arpApplicationTest7(repository, parser);
+			arpApplicationTest8(repository, parser);
+			arpApplicationTest9(repository, parser);
+			arpApplicationTest10(repository, parser);
+			arpApplicationTest11(repository, parser);
+			arpApplicationTest12(repository, parser);
+			arpApplicationTest13(repository, parser);
+			arpApplicationTest14(repository, parser);
+			arpApplicationTest15(repository, parser);
+			arpApplicationTest16(repository, parser);
+			arpApplicationTest17(repository, parser);
+			arpApplicationTest18(repository, parser);
+			arpApplicationTest19(repository, parser);
+			arpApplicationTest20(repository, parser);
+			arpApplicationTest21(repository, parser);
+			arpApplicationTest22(repository, parser);
+			arpApplicationTest23(repository, parser);
+			arpApplicationTest24(repository, parser);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -650,7 +693,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest1(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest1(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -685,7 +728,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -698,7 +741,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release, implicit deny
 	 */
-	void arpApplicationTest2(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest2(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -740,7 +783,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -753,7 +796,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: One value release
 	 */
-	void arpApplicationTest3(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest3(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -778,14 +821,16 @@ public class ArpTests extends TestCase {
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
-				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[] { "member@example.edu" }));
+				new AAAttribute(
+					"urn:mace:dir:attribute-def:eduPersonAffiliation",
+					new Object[] { "member@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -798,7 +843,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, canonical representation
 	 */
-	void arpApplicationTest4(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest4(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -833,7 +878,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -846,7 +891,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, expanded representation
 	 */
-	void arpApplicationTest5(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest5(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -883,7 +928,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -896,7 +941,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except two release, expanded representation
 	 */
-	void arpApplicationTest6(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest6(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -936,7 +981,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -949,7 +994,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, canonical representation
 	 */
-	void arpApplicationTest7(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest7(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -984,7 +1029,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -997,7 +1042,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, expanded representation
 	 */
-	void arpApplicationTest8(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest8(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1034,7 +1079,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1047,7 +1092,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny
 	 */
-	void arpApplicationTest9(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest9(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1076,7 +1121,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1089,7 +1134,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny trumps explicit permit expanded representation
 	 */
-	void arpApplicationTest10(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest10(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1121,7 +1166,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1134,7 +1179,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny trumps explicit permit canonical representation
 	 */
-	void arpApplicationTest11(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest11(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1164,7 +1209,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1177,7 +1222,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Any Resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest12(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest12(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1212,7 +1257,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1225,7 +1270,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Any Resource (another example)
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest13(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest13(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1260,7 +1305,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1273,7 +1318,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar (no match), Any Resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest14(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest14(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1303,7 +1348,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "www.example.edu", url1);
@@ -1316,7 +1361,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest15(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest15(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1351,7 +1396,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1364,7 +1409,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource (no match)
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest16(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest16(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1394,7 +1439,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1407,7 +1452,7 @@ public class ArpTests extends TestCase {
 	 * Target: Multiple matching rules
 	 * Attribute: various
 	 */
-	void arpApplicationTest17(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest17(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1470,7 +1515,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar1.example.edu", url1);
@@ -1483,7 +1528,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release of two attributes in one rule
 	 */
-	void arpApplicationTest18(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest18(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1531,7 +1576,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1544,7 +1589,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest19(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest19(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1579,7 +1624,7 @@ public class ArpTests extends TestCase {
 		userArp.setPrincipal(principal1);
 		userArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(userArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1592,7 +1637,7 @@ public class ArpTests extends TestCase {
 	 * Target: various
 	 * Attribute: various combinations
 	 */
-	void arpApplicationTest20(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest20(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawSiteArp =
@@ -1716,7 +1761,7 @@ public class ArpTests extends TestCase {
 		userArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(userArp);
 
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "www.example.edu", url1);
@@ -1729,7 +1774,7 @@ public class ArpTests extends TestCase {
 	 * Target: various
 	 * Attribute: various combinations (same ARPs as 20, different requester)
 	 */
-	void arpApplicationTest21(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest21(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawSiteArp =
@@ -1850,7 +1895,7 @@ public class ArpTests extends TestCase {
 		userArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(userArp);
 
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "www.external.com", url1);
@@ -1862,7 +1907,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: Release values by regex
 	 */
-	void arpApplicationTest22(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest22(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1897,7 +1942,7 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
@@ -1909,7 +1954,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: Deny specific values by regex
 	 */
-	void arpApplicationTest23(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest23(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1945,20 +1990,20 @@ public class ArpTests extends TestCase {
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
 		assertEquals("ARP application test 23: ARP not applied as expected.", inputSet, releaseSet);
 	}
-	
+
 	/**
 	 * ARPs: A site ARP only
 	 * Target: Specific shar, Specific resource
 	 * Attribute: No matches on specific values should yield no attribute
 	 */
-	void arpApplicationTest24(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest24(ArpRepository repository, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1985,23 +2030,19 @@ public class ArpTests extends TestCase {
 				new AAAttribute[] {
 					new AAAttribute(
 						"urn:mace:dir:attribute-def:eduPersonEntitlement",
-						new Object[] { "urn:x:bar", "urn:x:adagio"}),
-					new AAAttribute(
-						"urn:mace:dir:attribute-def:eduPersonAffiliation",
-						new Object[] { "member" })
+						new Object[] { "urn:x:bar", "urn:x:adagio" }),
+					new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[] { "member" })
 		});
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
-				new AAAttribute(
-					"urn:mace:dir:attribute-def:eduPersonAffiliation",
-					new Object[] { "member" }));
+				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[] { "member" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
 		Arp siteArp = new Arp();
 		siteArp.marshall(parser.getDocument().getDocumentElement());
 		repository.update(siteArp);
-		ArpEngine engine = new ArpEngine(repository, props);
+		ArpEngine engine = new ArpEngine(repository);
 
 		//Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
