@@ -284,9 +284,6 @@ public class HandleServlet extends HttpServlet {
 	    || (req.getRemoteUser().equals(""))) {
 	    throw new HandleException("Unable to authenticate remote user");
 	}
-	if ((req.getAuthType() == null) || (req.getAuthType().equals(""))) {
-	    throw new HandleException("Unable to obtain authentication type of user.");
-	}
 	if ((req.getRemoteAddr() == null)
 	    || (req.getRemoteAddr().equals(""))) {
 	    throw new HandleException("Unable to obtain client address.");
