@@ -1,0 +1,7 @@
+<Attribute xmlns="urn:oasis:names:tc:SAML:1.0:assertion"
+		AttributeName="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"
+		AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+	<AttributeValue Scope="example.edu">Member</AttributeValue>
+	<AttributeValue Scope="example.edu">Member1</AttributeValue>
+	<AttributeValue Scope="example.org">Member</AttributeValue>
+</Attribute>
