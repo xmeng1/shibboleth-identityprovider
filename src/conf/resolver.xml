@@ -4,9 +4,11 @@
 		<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	
+	
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonAffiliation">
 		<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
+
 
 	<!-- To use these attributes, you should change the smartScope value to match your site's domain name. -->
 
@@ -19,6 +21,19 @@
     	<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	-->
+	
+	
+	<!-- Example persistent id attribute.  You should change the scope value to match your site's domain 
+		 name.  Since this configuration is permanent, some thought is required before deploying in 
+		 production. -->
+		 
+	<!--
+	<PersistentIDAttributeDefinition id="urn:mace:dir:attribute-def:persistentID" scope="shibdev.edu" sourceName="guid">
+		<DataConnectorDependency requires="echo"/>
+		<Salt keyStorePath="/conf/persistent.jks" keyStoreKeyAlias="handleKey" keyStorePassword="shibhs" keyStoreKeyPassword="shibhs"/>
+	</PersistentIDAttributeDefinition>
+	-->
+	
 	
 	<CustomDataConnector id="echo"
 		class="edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SampleConnector" />
