@@ -59,7 +59,7 @@ import org.opensaml.SAMLNameIdentifier;
  */
 public interface NameIdentifierMapping {
 
-	public static final String mappingNamespace = "urn:mace:shibboleth:origin.config:1.0";
+	public static final String mappingNamespace = "urn:mace:shibboleth:namemapper:1.0";
 
 	/**
 	 * Returns the Name Identifier format for this mapping.

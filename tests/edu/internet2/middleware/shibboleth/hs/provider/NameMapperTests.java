@@ -103,15 +103,15 @@ public class NameMapperTests extends TestCase {
 		try {
 
 			//TODO turn on validation
-			parser.setFeature("http://xml.org/sax/features/validation", false);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", false);
+			parser.setFeature("http://xml.org/sax/features/validation", true);
+			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
 			parser.setEntityResolver(new EntityResolver() {
 				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
 
-					if (systemId.endsWith("shibboleth-arp-1.0.xsd")) {
+					if (systemId.endsWith("namemapper.xsd")) {
 						InputStream stream;
 						try {
-							stream = new FileInputStream("src/schemas/shibboleth-arp-1.0.xsd");
+							stream = new FileInputStream("src/schemas/namemapper.xsd");
 							if (stream != null) {
 								return new InputSource(stream);
 							}
@@ -150,8 +150,11 @@ public class NameMapperTests extends TestCase {
 
 			String rawConfig =
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping id=\"cryptotest\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
-					+ "		type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""
+					+ "		xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+					+ "		xsi:schemaLocation=\"urn:mace:shibboleth:namemapper:1.0 namemapper.xsd\" "
+					+ " 			id=\"cryptotest\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\" "
+					+ "			type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
 					+ "		<KeyStorePath>"
 					+ file.toURL().toString()
 					+ "</KeyStorePath>"
@@ -218,7 +221,10 @@ public class NameMapperTests extends TestCase {
 
 			String rawConfig =
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""
+					+ "		xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+					+ "		xsi:schemaLocation=\"urn:mace:shibboleth:namemapper:1.0 namemapper.xsd\" "
+					+ "			format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
 					+ "		type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
 					+ "		<KeyStorePath>"
 					+ file.toURL().toString()
@@ -265,7 +271,10 @@ public class NameMapperTests extends TestCase {
 
 			String rawConfig =
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""
+					+ "		xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+					+ "		xsi:schemaLocation=\"urn:mace:shibboleth:namemapper:1.0 namemapper.xsd\" "
+					+ "			format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
 					+ "		type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
 					+ "		<KeyStorePath>"
 					+ file.toURL().toString()
@@ -318,7 +327,11 @@ public class NameMapperTests extends TestCase {
 
 			String rawConfig =
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping id=\"memorytest\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""
+					+ "		xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+					+ "		xsi:schemaLocation=\"urn:mace:shibboleth:namemapper:1.0 namemapper.xsd\" "
+					+ "			id=\"memorytest\" "
+					+ "		format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
 					+ "		type=\"SharedMemoryShibHandle\" handleTTL=\"1800\"/>";
 
 			parser.parse(new InputSource(new StringReader(rawConfig)));
@@ -354,7 +367,10 @@ public class NameMapperTests extends TestCase {
 			String format = "urn-x:test:NameIdFormat1";
 			String rawConfig =
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping format=\""
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""
+					+ "		xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+					+ "		xsi:schemaLocation=\"urn:mace:shibboleth:namemapper:1.0 namemapper.xsd\" "
+					+ "			format=\""
 					+ format
 					+ "\""
 					+ "		type=\"Principal\"/>";
