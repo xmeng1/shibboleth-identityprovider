@@ -170,11 +170,8 @@ public class IdPResponder extends HttpServlet {
 			protocolSupport = new IdPProtocolSupport(configuration, transactionLog, nameMapper, spMapper, arpEngine,
 					resolver);
 			log.debug("Starting with Shibboleth v1 protocol handling enabled.");
-			try {
-				protocolHandlers.put(new URI("https://wraith.memphis.edu/shibboleth/HS"), new ShibbolethV1SSOHandler());
-			} catch (URISyntaxException e1) {
-				// TODO get rid of this
-			}
+
+			protocolHandlers.put("https://wraith.memphis.edu/shibboleth/SSO", new ShibbolethV1SSOHandler());
 
 			// Load metadata
 			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.originConfigNamespace,
@@ -206,16 +203,17 @@ public class IdPResponder extends HttpServlet {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via GET for endpoint (" + request.getRequestURI() + ").");
+		log.debug("Recieved a request via GET for endpoint (" + request.getRequestURL() + ").");
 
 		try {
 			// TODO this throttle should probably just wrap signing operations...
 			throttle.enter();
 
 			// Determine which protocol we are responding to (at this point normally Shibv1 vs. EAuth)
-			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURI());
+			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURL()
+					.toString());
 			if (activeHandler == null) {
-				log.error("No protocol handler registered for endpoint (" + request.getRequestURI() + ").");
+				log.error("No protocol handler registered for endpoint (" + request.getRequestURL() + ").");
 				throw new SAMLException("Request submitted to an invalid endpoint.");
 			}
 
