@@ -175,14 +175,15 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 			attribute.setLifetime(lifeTime);
 		}
 
+		if (smartScope != null) {
+			attribute.registerValueHandler(new ScopedStringValueHandler(smartScope));
+		}
+		if (smartScope == null && valueHandler != null) {
+			attribute.registerValueHandler(valueHandler);
+		}
+		
 		Iterator resultsIt = results.iterator();
 		while (resultsIt.hasNext()) {
-			if (smartScope != null) {
-				attribute.registerValueHandler(new ScopedStringValueHandler(smartScope));
-			}
-			if (smartScope == null && valueHandler != null) {
-				attribute.registerValueHandler(valueHandler);
-			}
 			attribute.addValue(resultsIt.next());
 		}
 		attribute.setResolved();
