@@ -45,7 +45,7 @@
 		 name.  Since this configuration is permanent, some thought is required before deploying in 
 		 production. -->
 	<!--
-	<PersistentIDAttributeDefinition id="urn:mace:dir:attribute-def:persistentID" scope="shibdev.edu" sourceName="guid">
+	<PersistentIDAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonTargetedID" scope="shibdev.edu" sourceName="guid">
 		<DataConnectorDependency requires="echo"/>
 		<Salt keyStorePath="/conf/persistent.jks" keyStoreKeyAlias="handleKey" keyStorePassword="shibhs" keyStoreKeyPassword="shibhs"/>
 	</PersistentIDAttributeDefinition>
