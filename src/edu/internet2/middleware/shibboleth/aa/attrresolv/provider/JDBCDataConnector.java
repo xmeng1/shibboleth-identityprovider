@@ -365,20 +365,3 @@ class DefaultAE implements JDBCAttributeExtractor {
 		return attributes;
 	}
 }
-
-/**
- * The interface for the attribute extractor. 
- *
- * Built at the Canada Institute for Scientific and Technical Information (CISTI 
- * <ahref="http://www.cisti-icist.nrc-cnrc.gc.ca/">http://www.cisti-icist.nrc-cnrc.gc.ca/</a>, 
- * the National Research Council Canada 
- * (NRC <a href="http://www.nrc-cnrc.gc.ca/">http://www.nrc-cnrc.gc.ca/</a>)
- *
- * by David Dearman, COOP student from Dalhousie University,
- * under the direction of Glen Newton, Head research (IT)
- * <ahref="mailto:glen.newton@nrc-cnrc.gc.ca">glen.newton@nrc-cnrc.gc.ca</a>. 
- *
- * @author David Dearman (dearman@cs.dal.ca)
- * @version 1.0 July 24, 2003
- *
- */
