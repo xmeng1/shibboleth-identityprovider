@@ -56,7 +56,6 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.w3c.dom.Element;
 
-import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
@@ -292,17 +291,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			}
 
 			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
-				try {
-					log.debug("Dumping generated SAML Response:"
-							+ System.getProperty("line.separator")
-							+ new String(
-									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
-									"UTF8"));
-				} catch (SAMLException e) {
-					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-				} catch (IOException e) {
-					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-				}
+				log.debug("Dumping generated SAML Response:" + System.getProperty("line.separator")
+						+ samlResponse.toString());
 			}
 
 			log.info("Successfully created response for principal (" + principal.getName() + ").");

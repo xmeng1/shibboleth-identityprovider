@@ -363,15 +363,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 						now, then, Collections.singleton(condition), null, Collections.singleton(statement));
 
 				if (log.isDebugEnabled()) {
-					try {
-						log.debug("Dumping generated Attribute Assertion:"
-								+ System.getProperty("line.separator")
-								+ new String(new BASE64Decoder().decodeBuffer(new String(attrAssertion.toBase64(),
-										"ASCII")), "UTF8"));
-
-					} catch (Exception e) {
-						log.error("Unable to dump assertion to debug log: " + e);
-					}
+					log.debug("Dumping generated Attribute Assertion:" + System.getProperty("line.separator")
+							+ attrAssertion.toString());
 				}
 				return attrAssertion;
 			}
@@ -437,7 +430,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 		if (log.isDebugEnabled()) {
 			log.debug("Dumping generated AuthN Assertion:" + System.getProperty("line.separator")
-					+ new String(new BASE64Decoder().decodeBuffer(new String(assertion.toBase64(), "ASCII")), "UTF8"));
+					+ assertion.toString());
 		}
 
 		return assertion;

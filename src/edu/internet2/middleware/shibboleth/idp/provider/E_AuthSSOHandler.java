@@ -51,7 +51,6 @@ import org.opensaml.SAMLSubject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
@@ -190,10 +189,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			SAMLAssertion[] assertions = {new SAMLAssertion(issuer, new Date(System.currentTimeMillis()), new Date(
 					System.currentTimeMillis() + 300000), conditions, null, Arrays.asList(statements))};
 			if (log.isDebugEnabled()) {
-				log.debug("Dumping generated SAML Assertions:"
-						+ System.getProperty("line.separator")
-						+ new String(new BASE64Decoder().decodeBuffer(new String(assertions[0].toBase64(), "ASCII")),
-								"UTF8"));
+				log.debug("Dumping generated SAML Assertions:" + System.getProperty("line.separator")
+						+ assertions[0].toString());
 			}
 			return null;
 		} catch (CloneNotSupportedException e) { // TODO handle return null; } }

@@ -43,7 +43,6 @@ import org.opensaml.SAMLResponse;
 import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Element;
 
-import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
@@ -160,16 +159,8 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 		// The spec says that we should send "success" in the case where no artifacts match
 		SAMLResponse samlResponse = new SAMLResponse(samlRequest.getId(), null, assertions, null);
 		if (log.isDebugEnabled()) {
-			try {
-				log.debug("Dumping generated SAML Response:"
-						+ System.getProperty("line.separator")
-						+ new String(new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
-								"UTF8"));
-			} catch (SAMLException e) {
-				log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-			} catch (IOException e) {
-				log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-			}
+			log.debug("Dumping generated SAML Response:" + System.getProperty("line.separator")
+					+ samlResponse.toString());
 		}
 
 		support.getTransactionLog().info(

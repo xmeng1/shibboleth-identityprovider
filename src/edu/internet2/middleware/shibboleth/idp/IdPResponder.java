@@ -50,7 +50,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
@@ -300,16 +299,8 @@ public class IdPResponder extends HttpServlet {
 			// If we have DEBUG logging turned on, dump out the request to the log
 			// This takes some processing, so only do it if we need to
 			if (log.isDebugEnabled()) {
-				try {
-					log.debug("Dumping generated SAML Request:"
-							+ System.getProperty("line.separator")
-							+ new String(new BASE64Decoder().decodeBuffer(new String(samlRequest.toBase64(), "ASCII")),
-									"UTF8"));
-				} catch (SAMLException e) {
-					log.error("Encountered an error while decoding SAMLRequest for logging purposes.");
-				} catch (IOException e) {
-					log.error("Encountered an error while decoding SAMLRequest for logging purposes.");
-				}
+				log.debug("Dumping generated SAML Request:" + System.getProperty("line.separator")
+						+ samlRequest.toString());
 			}
 
 			// Determine which protocol handler is active for this endpoint
@@ -344,15 +335,8 @@ public class IdPResponder extends HttpServlet {
 			SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
 					null, exception);
 			if (log.isDebugEnabled()) {
-				try {
-					log.debug("Dumping generated SAML Error Response:"
-							+ System.getProperty("line.separator")
-							+ new String(
-									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
-									"UTF8"));
-				} catch (IOException e) {
-					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-				}
+				log.debug("Dumping generated SAML Error Response:" + System.getProperty("line.separator")
+						+ samlResponse.toString());
 			}
 			binding.respond(httpResponse, samlResponse, null);
 			log.debug("Returning SAML Error Response.");
