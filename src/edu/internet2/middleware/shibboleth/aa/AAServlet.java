@@ -122,8 +122,13 @@ public class AAServlet extends HttpServlet {
 
 	    Hashtable env = new Hashtable(11);
 	    env.put(Context.INITIAL_CONTEXT_FACTORY, ctxFactory);
-
 	    env.put(Context.PROVIDER_URL, dirUrl);
+	    
+	    if (getInitParameter("ctxPrincipal") != null && getInitParameter("ctxCredentials")  != null) {
+	    	env.put(Context.SECURITY_PRINCIPAL, getInitParameter("ctxPrincipal"));
+	    	env.put(Context.SECURITY_CREDENTIALS, getInitParameter("ctxCredentials"));
+	    }
+	    
 	    DirContext ctx = new InitialDirContext(env);
 	    
 	    responder = new AAResponder(arpFactory, ctx, myName);
