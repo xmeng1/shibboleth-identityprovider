@@ -79,10 +79,9 @@ public class SiteSigner
             printUsage();
 
         String keystore = null;
-        String ks_pass = null;
+        String ks_pass = "";
         String key_alias = null;
-        String cert_alias = null;
-        String key_pass = null;
+        String key_pass = "";
         String outfile = null;
         String arg = null;
 
@@ -123,16 +122,6 @@ public class SiteSigner
                     key_alias = argv[i];
                     continue;
                 }
-                else if (option.equals("c"))
-                {
-                    if (++i == argv.length)
-                    {
-                        System.err.println("error: Missing argument to -c option");
-                        System.exit(1);
-                    }
-                    cert_alias = argv[i];
-                    continue;
-                }
                 else if (option.equals("p"))
                 {
                     if (++i == argv.length)
@@ -158,16 +147,15 @@ public class SiteSigner
             }
         }
 
-        if (keystore == null || keystore.length() == 0 || ks_pass == null || ks_pass.length() == 0 ||
-            key_alias == null || key_alias.length() == 0 || key_pass == null || key_pass.length() == 0 ||
-            cert_alias == null || cert_alias.length() == 0)
+        if (keystore == null || keystore.length() == 0 ||
+            key_alias == null || key_alias.length() == 0)
             printUsage();
 
         KeyStore ks = KeyStore.getInstance("JKS");
         FileInputStream fis = new FileInputStream(keystore);
         ks.load(fis, ks_pass.toCharArray());
         PrivateKey privateKey = (PrivateKey)ks.getKey(key_alias, key_pass.toCharArray());
-        X509Certificate cert = (X509Certificate)ks.getCertificate(cert_alias);
+        X509Certificate cert = (X509Certificate)ks.getCertificate(key_alias);
         if (privateKey == null || cert == null)
         {
             System.err.println("error: couldn't load key or certificate");
@@ -220,11 +208,10 @@ public class SiteSigner
         System.err.println("required options:");
         System.err.println("  -k keystore   pathname of Java keystore file");
         System.err.println("  -a key alias  alias of signing key");
-        System.err.println("  -P password   keystore password");
-        System.err.println("  -p password   private key password");
-        System.err.println("  -c cert alias alias of signing cert");
         System.err.println();
         System.err.println("optional options:");
+        System.err.println("  -P password   keystore password");
+        System.err.println("  -p password   private key password");
         System.err.println("  -o outfile    write signed copy to this file instead of stdout");
         System.err.println("  -h            print this message");
         System.err.println();
