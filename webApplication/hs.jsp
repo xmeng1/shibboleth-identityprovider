@@ -27,15 +27,29 @@ response.setHeader("Pragma","no-cache");
 
 <h1>Shibboleth Handle Request Processed</h1>
 
-<p><bean:write name="hs_helpText" /></p>
-<p>
+<!-- <p><bean:write name="hs_helpText" /></p> -->
+
+<p>You are automatically being redirected to the requested site. Please wait
+a few seconds before pressing the Continue button, if the browser appears to
+be hung up.</p>
+
+<noscript>
+<blockquote>
+<b>Note:</b> Since you have disabled JavaScript in your browser, you must press the
+Continue button once to proceed to the requested site.
+</blockquote>
+</noscript>
+
+<p align="center">
 <form name="shib"  action="<bean:write name="shire" />" method="POST">
 <input type="hidden" name="TARGET" value="<bean:write name="target" />">
 <input type="hidden" name="SAMLResponse" value="<bean:write name="assertion" />">
-<input type="submit" value="Transmit">
+<input type="submit" value="Continue">
 </form>
 </p>
-<p><a href="<bean:write name="hs_detailedHelpURL" />">Detailed information</a> explaining this process.</p>
+<!--
+<p><a target="help" href="<bean:write name="hs_detailedHelpURL" />">Detailed information</a> explaining this process.</p>
+-->
 
 </body>
 </html>
