@@ -46,32 +46,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+ 
 package edu.internet2.middleware.shibboleth.hs;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
-
 /**
- * Defines a mechanism for communicating identities between the Shibboleth Handle
- * Service and Attribute Authority.  Implementations must be thread-safe.
+ * Indicates that the<code>HandleRepository</code> could not retrieve an <code>AuthNPrincipal</code>
+ * for the given handle.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public interface HandleRepository {
-
-	/**
-	 * Creates an opaque identifier that may be shared with target sites and subsequently 
-	 * used in attribute requests for the given <code>AuthNPrincipal</code>.
-	 * @throws HandleRepositoryException if a Attribute Query Handle could not be created.
-	 */
-	public String getHandle(AuthNPrincipal principal) throws HandleRepositoryException;
-
-	/**
-	 * Finds the <code>AuthNPrincipal</code> associated with a given opaque identifier.
-	 * @throws InvalidHandleException if the specified handle is expired, unknown, or cannot 
-	 * be resolved to a <code>AuthNPrincipal</code>
-	 * @throws HandleRepositoryException if the <code>HandleRepository</code> encounters an internal error
-	 */
-	public AuthNPrincipal getPrincipal(String handle) throws HandleRepositoryException, InvalidHandleException;
+public class InvalidHandleException extends HandleRepositoryException {
+	
+		public InvalidHandleException(String message) {
+		super(message);
+	}
 
 }

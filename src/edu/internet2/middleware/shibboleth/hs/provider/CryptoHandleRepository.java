@@ -51,12 +51,12 @@ package edu.internet2.middleware.shibboleth.hs.provider;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -68,6 +68,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import org.apache.log4j.Logger;
@@ -78,6 +79,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
+import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 
 /**
  * <code>HandleRepository</code> implementation that employs the use of a shard secret
@@ -111,6 +113,9 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 					properties
 						.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStoreKeyPassword")
 						.toCharArray());
+						
+			//Before we finish initilization, make sure that things are working
+			testEncryption();
 
 		} catch (KeyStoreException e) {
 			log.error(
@@ -182,22 +187,66 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
-	public AuthNPrincipal getPrincipal(String handle) {
+	public AuthNPrincipal getPrincipal(String handle) throws HandleRepositoryException, InvalidHandleException {
 
 		try {
 			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, secret);
+
 			byte[] objectArray = cipher.doFinal(new BASE64Decoder().decodeBuffer(handle));
 
 			ObjectInputStream objectStream =
 				new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(objectArray)));
 			HandleEntry handleEntry = (HandleEntry) objectStream.readObject();
 			objectStream.close();
-			return handleEntry.principal;
 
+			if (handleEntry.isExpired()) {
+				log.debug("Attribute Query Handle is expired.");
+				throw new InvalidHandleException("Attribute Query Handle is expired.");
+			} else {
+				log.debug("Attribute Query Handle recognized.");
+				return handleEntry.principal;
+			}
+		} catch (NoSuchAlgorithmException e) {
+			log.error("Appropriate JCE provider not found in the java environment.  Could not load Algorithm: " + e);
+			throw new HandleRepositoryException("Appropriate JCE provider not found in the java environment.  Could not load Algorithm.");
+		} catch (NoSuchPaddingException e) {
+			log.error(
+				"Appropriate JCE provider not found in the java environment.  Could not load Padding method: " + e);
+			throw new HandleRepositoryException("Appropriate JCE provider not found in the java environment.  Could not load Padding method.");
+		} catch (InvalidKeyException e) {
+			log.error("Could not use the supplied secret key for Triple DES decryption: " + e);
+			throw new HandleRepositoryException("Could not use the supplied secret key for Triple DES decryption.");
+		} catch (GeneralSecurityException e) {
+			log.warn("Unable to decrypt the supplied Attribute Query Handle: " + e);
+			throw new InvalidHandleException("Unable to decrypt the supplied Attribute Query Handle.");
+		} catch (ClassNotFoundException e) {
+			log.warn("The supplied Attribute Query Handle does not represent a serialized AuthNPrincipal: " + e);
+			throw new InvalidHandleException("The supplied Attribute Query Handle does not represent a serialized AuthNPrincipal.");
+		} catch (IOException e) {
+			log.warn("The AuthNPrincipal could not be de-serialized from the supplied Attribute Query Handle: " + e);
+			throw new InvalidHandleException("The AuthNPrincipal could not be de-serialized from the supplied Attribute Query Handle.");
+		}
+	}
+	
+	private void testEncryption() throws HandleRepositoryException {
+
+		String decrypted;
+		try {
+			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, secret);
+			byte[] cipherText = cipher.doFinal("test".getBytes());
+			cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
+			cipher.init(Cipher.DECRYPT_MODE, secret);
+			decrypted = new String(cipher.doFinal(cipherText));
 		} catch (Exception e) {
-			System.err.println(e);
-			return null;
+			log.error("Round trip encryption/decryption test unsuccessful: " + e);
+			throw new HandleRepositoryException("Round trip encryption/decryption test unsuccessful.");
+		}
+
+		if (decrypted == null || !decrypted.equals("test")) {
+			log.error("Round trip encryption/decryption test unsuccessful.  Decrypted text did not match.");
+			throw new HandleRepositoryException("Round trip encryption/decryption test unsuccessful.");
 		}
 	}
 

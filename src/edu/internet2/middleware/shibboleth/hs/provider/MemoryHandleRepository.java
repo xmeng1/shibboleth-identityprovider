@@ -63,6 +63,7 @@ import org.doomdark.uuid.UUIDGenerator;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
+import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 
 /**
  * <code>HandleRepository</code> implementation that uses a static cache.  This requires
@@ -100,11 +101,11 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
-	public AuthNPrincipal getPrincipal(String handle) {
+	public AuthNPrincipal getPrincipal(String handle) throws InvalidHandleException {
 		synchronized (cache.handleEntries) {
 			if (!cache.handleEntries.containsKey(handle)) {
-				log.debug("Repository does not contain an entry for this Attribute Query Handle.");
-				return null;
+				log.debug("The Repository does not contain an entry for this Attribute Query Handle.");
+				throw new InvalidHandleException("The Repository does not contain an entry for this Attribute Query Handle.");
 			}
 		}
 		HandleEntry handleEntry;
@@ -116,7 +117,7 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 			synchronized (cache.handleEntries) {
 				cache.handleEntries.remove(handle);
 			}
-			return null;
+			throw new InvalidHandleException("Attribute Query Handle is expired.");
 		} else {
 			log.debug("Attribute Query Handle recognized.");
 			return handleEntry.principal;
