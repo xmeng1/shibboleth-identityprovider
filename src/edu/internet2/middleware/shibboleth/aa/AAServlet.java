@@ -54,6 +54,7 @@ public class AAServlet extends HttpServlet {
 	    DirContext ctx = new InitialDirContext(env);
 	    
 	    responder = new AAResponder(arpFactory, ctx, myName);
+	    System.out.println("AA all initialized at "+new Date());
 
 	}catch(NamingException ne){
 	    throw new ServletException("Init failed: "+ne);
