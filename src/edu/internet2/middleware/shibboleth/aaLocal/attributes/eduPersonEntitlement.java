@@ -1,3 +1,5 @@
+package edu.internet2.middleware.shibboleth.aaLocal.attributes;
+
 
 /**
  *  Attribute Authority & Release Policy

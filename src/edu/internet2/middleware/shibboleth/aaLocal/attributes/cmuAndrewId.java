@@ -1,3 +1,5 @@
+package edu.internet2.middleware.shibboleth.aaLocal.attributes;
+
 import edu.internet2.middleware.eduPerson.*;
 import edu.internet2.middleware.shibboleth.common.Constants; 
 import org.opensaml.*;
