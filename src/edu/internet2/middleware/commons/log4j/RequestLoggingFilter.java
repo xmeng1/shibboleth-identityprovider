@@ -101,6 +101,7 @@ public class RequestLoggingFilter implements Filter {
         }
         HttpServletRequest request = (HttpServletRequest) arg0; 
         HttpServletResponse response = (HttpServletResponse) arg1;
+        HttpSession session = request.getSession();
         
         if (ctx==null) {
             chain.doFilter(arg0,arg1); // do the request while logging
@@ -116,7 +117,6 @@ public class RequestLoggingFilter implements Filter {
             
             // Now put the data in a Session attribute
             if (log!=null) {
-                HttpSession session = request.getSession();
                 if (session!=null) {
                     session.setAttribute(REQUESTLOG_ATTRIBUTE, log);
                 }
