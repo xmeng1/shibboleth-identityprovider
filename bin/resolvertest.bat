@@ -24,9 +24,6 @@ if not defined SHIB_HOME (
 
 set ENDORSED=%SHIB_HOME%\endorsed
 
-REM Where log4j config file is
-set LOG_CONFIG=%SHIB_HOME%\conf\log4j.properties
-
 if not exist %SHIB_HOME%\lib\shib-util.jar (
   echo Error: Cannot find shib-util.jar
   echo 		If you downloaded the shibboleth source, you need to run "ant build-util"
@@ -47,4 +44,4 @@ for %%i in (%SHIB_HOME%\webApplication\WEB-INF\lib\*.jar) do (
 )
 
 REM Here we go
-%JAVACMD% -Djava.endorsed.dirs="%ENDORSED%" -Dlog4j.configuration="%LOG_CONFIG%" -cp "%LOCALCLASSPATH%" edu.internet2.middleware.shibboleth.utils.ResolverTest %*
+%JAVACMD% -Djava.endorsed.dirs="%ENDORSED%" -cp "%LOCALCLASSPATH%" edu.internet2.middleware.shibboleth.utils.ResolverTest %*
