@@ -69,7 +69,6 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandlerException;
-import edu.internet2.middleware.shibboleth.common.Constants;
 
 /**
  * An attribute for which the Shibboleth Attribute Authority has been asked
@@ -82,6 +81,8 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	private static Logger log = Logger.getLogger(AAAttribute.class.getName());
 	private boolean resolved = false;
 	
+	public final static String SHIB_ATTRIBUTE_NAMESPACE_URI = "urn:mace:shibboleth:1.0:attributeNamespace:uri";
+	
 	/** Default lifetime, in seconds **/
 	private static long defaultLifetime = 300;
 	private ValueHandler valueHandler = new StringValueHandler();
@@ -89,7 +90,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	public AAAttribute(String name) throws SAMLException {
 		super(
 			name,
-			Constants.SHIB_ATTRIBUTE_NAMESPACE_URI,
+			SHIB_ATTRIBUTE_NAMESPACE_URI,
 			new QName("urn:mace:shibboleth:1.0", "AttributeValueType"),
 			defaultLifetime,
 			null);
