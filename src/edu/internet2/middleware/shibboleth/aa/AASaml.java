@@ -123,7 +123,15 @@ public class AASaml {
 
     public void fail(HttpServletResponse resp, SAMLException exception)
 	throws IOException{
-
-	binding.respond(resp, null, exception);
+	try{
+	    SAMLResponse sResp = new SAMLResponse(reqID,
+						  /* recipient URL*/ null,
+						  /* sig */ null,
+						  /* ano assersion*/ null,
+						  exception);	
+	    binding.respond(resp, sResp, null);
+	}catch(SAMLException se){
+	    binding.respond(resp, null, exception);
+	}
     }
 }
