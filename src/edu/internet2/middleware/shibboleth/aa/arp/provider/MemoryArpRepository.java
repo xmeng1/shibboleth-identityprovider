@@ -58,6 +58,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
@@ -70,8 +72,9 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 
 public class MemoryArpRepository implements ArpRepository {
 
-	Map userPolicies = Collections.synchronizedMap(new HashMap());
-	Arp sitePolicy;
+	private Map userPolicies = Collections.synchronizedMap(new HashMap());
+	private Arp sitePolicy;
+	private static Logger log = Logger.getLogger(MemoryArpRepository.class.getName());
 
 	public MemoryArpRepository(Properties props) {
 	}
@@ -81,13 +84,20 @@ public class MemoryArpRepository implements ArpRepository {
 	 */
 
 	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
-
-		if (sitePolicy == null) {
-			return (Arp[]) userPolicies.values().toArray(new Arp[0]);
-		}
+		log.debug(
+			"Received a query for all policies applicable to principal: (" + principal.getName() + ").");
 		Set allPolicies = new HashSet();
-		allPolicies.add(sitePolicy);
-		allPolicies.addAll(userPolicies.values());
+		if (sitePolicy != null) {
+			log.debug("Returning site policy.");
+			allPolicies.add(sitePolicy);
+		}
+		if (userPolicies.containsKey(principal)) {
+			allPolicies.add(userPolicies.get(principal));
+			log.debug("Returning user policy.");
+		}
+		if (allPolicies.isEmpty()) {
+			log.debug("No policies found.");
+		}
 		return (Arp[]) allPolicies.toArray(new Arp[0]);
 	}
 
