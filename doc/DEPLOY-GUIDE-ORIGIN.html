@@ -378,59 +378,60 @@ requesting attributes.</p>
 </blockquote>
 <h4><a name="1.e."></a>1.e. Relying Parties and Applications</h4>
 <blockquote>
-    <p>A Shibboleth relying party represents a target or set of targets that
-    operate under one trust agreement and share common key, certificate, and
-    certificate authority guidelines.  This could include any number of
-    individual SHAR's and applications.  Frequently, an entire federation will
-    be viewed by an origin or target as a single relying party; however, there
-    is no necessary binding between these.  An individual site with which an
-    origin or target exchanges information may sometimes be part of multiple
-    relying parties if there are multiple trust agreements under which these
-    transactions are performed.</p>
+    <p>A Shibboleth relying party allows a deployment to select a particular
+    configuration to use when processing a request.  Certificates, policies, and
+    other aspects of an interaction are specified on a relying party basis, and
+    may or may not vary between relying parties depending on the deployment's
+    needs.  Each relying party may support a number of different
+    applications.</p>
+    <p>Frequently, an entire federation will be viewed by an origin or target as
+    a single relying party; however, there is no necessary binding between
+    these.  An individual origin or target with which this deployment exchanges
+    information may sometimes be part of multiple relying parties if there are
+    multiple trust agreements under which these transactions are performed.</p>
     <p>Applications as viewed from Shibboleth are not necessarily defined by the
     same metrics as in other contexts.  An individual application represents a
     service or set of services that operates using the same attribute and trust
-    features and shares common <a href="#1.f.">Shibboleth sessions</a>. 
-    Attributes are released to targets on the basis of individual applications
-    within the context of its containing relying party.  An application may span
-    multiple URL trees, servers, or SHAR's, depending on the architecture of the
-    service.  However, every application must be contained within a single
-    relying party; applications cannot span relying parties.  Each application
-    is assigned an individual application identifier URN which must be
-    recognized by both the origin and the target.</p>
+    features and shares common <a href="#1.f.">Shibboleth sessions</a>.
+    Attributes are released to targets on the basis of individual applications,
+    while other transactional details such as certificates and timeouts will be
+    specified by relying party.  An application may span multiple URL trees and
+    servers depending on the architecture of the service.  Each application is
+    assigned an individual application identifier URN which must be recognized
+    by both the origin and the target.  In any individual request, both the
+    relying party and application are consulted to acquire a complete set of
+    configuration to ensure proper release.</p>
 </blockquote>
 <h4><a name="1.f."></a>1.f. Sessions</h4>
 <blockquote>
     <p>There are many different types of sessions that can be established within
-    the context of the access of a Shibboleth-protected resource.  It is
-    important to note that these are all independent and distinct: any session
-    can exist with or without any other session, and the expiration of any one
-    session does not imply the expiration of any other session.  Shibboleth does
-    not support any logout functionality.</p>
+    the context of the access of Shibboleth-protected webspace.  This webspace
+    is subdivided by the target into individual <a
+    href="#1.e.">applications</a>, each of which maintains separate sessions
+    with the user's browser using cookies.  However, the HS never interacts with
+    these applications; it views the webspace partitioned by providerId.  It is
+    important to note that all sessions in this section are all independent and
+    distinct: any session can exist with or without any other session, and the
+    expiration of any one session does not imply the expiration of any other
+    session.  Shibboleth does not support any logout functionality beyond the
+    termination of individual application sessions by deletion of respective
+    cookies; there is no way for the target to cause origin-side sessions, such
+    as a user's SSO login, to expire.</p>
     <p>The successful access of a Shibboleth-protected resource by a browser
-    user may have two outcomes.  The standard session establishment mechanism in
-    which Shibboleth protects the resource in all circumstances results in the
-    establishment of two sessions. Shibboleth 1.2 also supports so-called lazy
-    session establishment, in which the resource may be accessed without first
-    providing a home institution or obtaining attributes.  This means the
-    application must be intelligent enough to determine whether an attribute
-    request or any other aspect of Shibboleth functionality is necessary, and
-    then construct proper URL's to initiate these flows; if the application
-    determines none is necessary or uses other authorization mechanisms, then an
-    attribute request does not need to be triggered.  This complex functionality
-    is mostly useful to protect a single URL with different access mechanisms,
-    or to require attribute requests only in the instance where the application
-    deems it necessary.</p>
-    <p>In either situation, before the resource is presented, a Shibboleth
-    session is established between the browser and the Shibboleth module,
-    represented by a cookie.  A separate session for the attribute release
-    interaction with the origin results in the caching of a set of attributes
-    pertaining to that browser user.  The expiration of either session implies
-    the need to re-initiate only that session and does not imply the
-    re-initiation of the other; for example, although a browser user's
-    Shibboleth session has expired, if there is a valid set of cached
-    attributes, there need not be another attribute query when they next access
-    this resource.</p>
+    user may have two outcomes: standard session establishment, and lazy session
+    establishment.  The standard session establishment mechanism in which
+    Shibboleth protects the resource in all circumstances results in the
+    establishment of a cookie-based browser session and a set of attributes
+    cached for that application. Shibboleth 1.2 also supports so-called lazy
+    session establishment, in which the resource may be accessed without prior
+    authentication.  This means the application must be intelligent enough to
+    determine whether authentication necessary, and then construct proper URL's
+    to initiate the browser redirect to request authentication; if the
+    application determines none is necessary or uses other authorization
+    mechanisms, then an attribute request does not need to be triggered.  This
+    complex functionality is mostly useful to protect a single URL with
+    different access mechanisms, or to require attribute requests only in the
+    instance where the application deems it necessary.</p>
     <p>Independently of this, a web-based application protected by Shibboleth
     may have a need to establish its own session with the user.  This session
     may persist well beyond either Shibboleth session, and logouts from this
@@ -469,16 +470,13 @@ requirements for a successful implementation of a Shibboleth origin.</p>
     relationships. Each federation will have a different application process. 
     When an origin is accepted into a federation, its information is added to 
     the sites file used by the WAYF and target sites.</p>
-    <p><b>It may be necessary to join multiple federations depending on the 
-    sites with whom you wish to exchange attributes and the terms under which 
-    these interactions will take place. An origin site exists within the context 
-    of a single federation, while a single target may accept assertions issued 
-    by multiple federations if they are all recognized by the SHAR.</b></p>
-    <p>Attribute release and acceptance policies, the use and caching of 
-    attributes, and definition of commonly traded attributes are examples of 
-    specifications a federation may make. For more information on federations, 
-    please refer to the Deployer&#39;s Guide to Federations and the Shibboleth v1.0 
-    architectural document.</p>
+    <p>Attribute release and acceptance policies, the use and caching of
+    attributes, and definition of commonly traded attributes are examples of
+    specifications a federation may make.  <b>The default configuration that
+    ships with Shibboleth is intended for use in testing against a <span
+    class="fixed">localhost</span> target.  In order to interoperate with other
+    relying parties, such as a federation, consult the steps provided by the
+    guidelines of that relying party.</b></p>
 </blockquote>
 <h4><a name="2.c."></a>2.c. Security Considerations</h4>
 <blockquote>
@@ -727,23 +725,28 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
 <h3><a name="4."></a>4. Getting Running</h3>
 <h4><a name="4.a."></a>4.a. Basic Configuration</h4>
 <blockquote>
-    <p><b>This section of the deploy guide describes only the default <span
+    <p>This section of the deploy guide describes only the default <span
     class="fixed">origin.xml</span> file and enumerates the essential
     changes that need to be made to the configuration defaults for the origin to
     function successfully in a federated environment. More complex configuration
     will likely be required for many applications and federations; for a fully
     defined example <span class="fixed">origin.xml</span> and definition of
     every element and attribute that may be used, please refer to <a
-    href="#5.a.">section 5.a</a>.</b></p>
-    <p>The main configuration file for Shibboleth&#39;s origin side is located in
-    <span class="fixed">/webapps/shibboleth/WEB-INF/classes/conf/origin.xml</span>.
-    The configuration must be consistent with values elsewhere in the 
-    deployment, such as the <a href="#4.c.">HS&#39; certificate</a> and with 
-    directory access bindings, etc., or access errors may occur.</p>
-    <p>All pathnames are relative, and have an effective root path of
-    <span class="fixed">$TOMCAT_HOME/webapps/shibboleth/WEB-INF/classes/</span>. 
-    To specify files outside of the webapp, specify a full URI, such as
-    <span class="fixed">file:///usr/local/shibboleth/</span>.</p>
+    href="#5.a.">section 5.a</a>.</p>
+    <p><b>The default configuration that ships with Shibboleth is intended for
+    use in testing against a <span class="fixed">localhost</span> target.  In
+    order to interoperate with other relying parties, such as a federation,
+    consult the steps provided by the guidelines of that relying party.</b></p>
+    <p>The main configuration file for Shibboleth&#39;s origin side is located
+    in <span
+    class="fixed">/webapps/shibboleth/WEB-INF/classes/conf/origin.xml</span>.
+    The configuration must be consistent with values elsewhere in the
+    deployment, such as the <a href="#4.c.">HS&#39; certificate</a> and with
+    directory access bindings, etc., or access errors may occur.  All pathnames
+    are relative, and have an effective root path of <span
+    class="fixed">$TOMCAT_HOME/webapps/shibboleth/WEB-INF/classes/</span>. To
+    specify files outside of the webapp, specify a full URI, such as <span
+    class="fixed">file:///usr/local/shibboleth/</span>.</p>
     <p>The following is a hyperlinked version of the basic configuration file,
     followed by a list of elements and attributes that must be modified.  Click
     on any attribute or element for more information on its population and
@@ -819,15 +822,15 @@ origin will interoperate in a federation.</p>
                 authenticate the requesting SHAR.</p>
             </blockquote>
             </li>
-            <li><a href="#confShibbolethOriginConfig"><span class="fixed">providerID=<i>URN</i></span></a>
+            <li><a href="#confShibbolethOriginConfig"><span class="fixed">providerID=<i>URI</i></span></a>
             <blockquote>
-                <p>This will be the URN assigned to this origin by the
+                <p>This will be the URI assigned to this origin by the
                 federation.</p>
             </blockquote>
             </li>
-            <li><a href="#confShibbolethOriginConfig"><span class="fixed">defaultRelyingParty=<i>URN</i></span></a>
+            <li><a href="#confShibbolethOriginConfig"><span class="fixed">defaultRelyingParty=<i>URI</i></span></a>
             <blockquote>
-                <p>This is the URN of the primary federation that the origin
+                <p>This is the URI of the primary federation that the origin
                 operates within.</p>
             </blockquote>
             </li>
@@ -1033,11 +1036,15 @@ configuration</h4>
 <blockquote>
     <p>The Shibboleth origin leverages metadata distributed by relying parties and federations to validate the identity of requesters and the resource providers on whose behalf the request is being made.  This metadata is cached locally in the form of <span class="fixed">sites.xml</span> files.  Shibboleth includes a simple utility called <span class="fixed">metadatatool</span> which can be used to refresh a <span class="fixed">sites.xml</span> file.  These files are then pointed to by <a href="#confFederationProvider"><span class="fixed">FederationProvider</span></a> elements in <a href="#5.a."><span class="fixed">shibboleth.xml</span></a>.</p>
 <p>The following command is appropriate for most deployments and is run from the $SHIB_HOME directory.  This should be frequently run by adding it to a <span class="fixed">crontab</span> to ensure that the data is fresh.</p>
-<blockquote><span class="fixed">bin/metadatatool -i https://wayf.internet2.edu/InQueue/sites.xml -k conf/internet2.jks -p shib123 -a sitesigner  -o /your_path_here/sites.xml</span></blockquote>
+
+<blockquote><span class="fixed">bin/metadatatool -i https://wayf.internet2.edu/InQueue/sites.xml -k conf/internet2.jks -p shib123 -a sitesigner -o /your_path_here/sites.xml</span></blockquote>
+
 <p>This is a list of all the command-line parameters that may be specified:</p>
-<blockquote><span class="fixed">when signing:   -i &lt;uri&gt; -s -k &lt;keystore&gt; -a &lt;alias&gt; -p &lt;pass&gt; [-o
+
+<blockquote><span class="fixed">when signing:&nbsp;&nbsp;&nbsp;&nbsp;-i &lt;uri&gt; -s -k &lt;keystore&gt; -a &lt;alias&gt; -p &lt;pass&gt; [-o
 &lt;outfile&gt;]<br>
-when updating:  -i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; OR -N ] [-o &lt;outfile&gt;]<br>
+when updating:&nbsp;&nbsp;-i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; OR -N ] [-o &lt;outfile&gt;]<br>
+
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td width="150">-i,--in</td><td>input file or url</td></tr>
 <tr><td width="150">-k,--keystore</td><td>pathname of Java keystore file</td></tr>
@@ -1219,7 +1226,7 @@ when updating:  -i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; OR -N ] [-o
         href="#confPath"><span class="fixed">CAPath</span></a> elements.  Valid
         encodings are <span class="fixed">PEM</span> and <span
         class="fixed">DER</span>.  It resides within the <a
-        href="#confFileResolver"><span class="fixed">FileResolver</span> element
+        href="#confFileResolver"><span class="fixed">FileResolver</span></a> element
         and must be paired with the corresponding private key using the <a
         href="#confKey"><span class="fixed">Key</span></a> element.</dd>
 
@@ -1227,8 +1234,7 @@ when updating:  -i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; OR -N ] [-o
         <dd class="value">This element is the container for credentials used by
         the credential mechanism specified by the <a
         href="#confShibbolethOriginConfig"><span
-        class="fixed">ShibbolethOriginConfig</span></a> element.  For most
-        deployments, the URN should be <span class="fixed"></span>.  It must
+        class="fixed">ShibbolethOriginConfig</span></a> element.  It must
         contain one <a href="#confFileResolver"><span
         class="fixed">FileResolver</span></a> element for flat key and
         certificate files or one <a href="#confKeyStoreResolver"><span
@@ -1248,7 +1254,7 @@ when updating:  -i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; OR -N ] [-o
         Must be contained by a <a href="#confLogging"><span
         class="fixed">Logging</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;FederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;/&gt;</span></a></dd>
+        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;FederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;</span>/&gt;</span></a></dd>
         <dd class="value">Individual sets of targets in the form of a <span
         class="fixed">sites.xml</span> file that this origin will trust to make
         requests may be specified by adding <span
@@ -1288,7 +1294,7 @@ when updating:  -i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; OR -N ] [-o
         class="fixed">PEM</span> and <span class="fixed">DER</span>.  Keys are
         supported in a variety of formats: DER, PEM, encrypted PEM, PKCS8, and
         encrypted PKCS8.  It resides within the <a
-        href="#confFileResolver"><span class="fixed">FileResolver</span>
+        href="#confFileResolver"><span class="fixed">FileResolver</span></a>
         element, should be paired with a <a href="#confCertificate"><span
         class="fixed">Certificate</span></a> element, and contain a <a
         href="#confPath"><span class="fixed">Path</span></a> element.</dd>
@@ -1415,19 +1421,19 @@ shared in-memory repository.</li>
 </ul></li>
 </ul></dd>
 
-        <dd class="attribute"><a name="confPath"></a><span class="fixed">&lt;Path&gt;<i>pathname</i>&lt;/Path&gt;</span></a></dd>
+        <dd class="attribute"><a name="confPath"><span class="fixed">&lt;Path&gt;<i>pathname</i>&lt;/Path&gt;</span></a></dd>
         <dd class="value">This mandatory element specifies the path to a file or
         directory utilized by other elements of the configuration.  It may be
         contained by various elements to point to different types of files
         required by the origin.</dd>
 
-        <dd class="attribute"><a name="confReleasePolicyEngine"></a><span class="fixed">&lt;ReleasePolicyEngine&gt;</span></a></dd>
+        <dd class="attribute"><a name="confReleasePolicyEngine"><span class="fixed">&lt;ReleasePolicyEngine&gt;</span></a></dd>
         <dd class="value">The <span class="fixed">ReleasePolicyEngine</span>
         element is used to specify a class of release policy processing.  This
         should contain one <a href="#confArpRepository"><span
         class="fixed">ArpRepository</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confRelyingParty"><span class="fixed">&lt;RelyingParty <span class="mandatory">name=&quot;<i>URN</i>&quot;</span></a><br>
+        <dd class="attribute"><a name="confRelyingParty"><span class="fixed">&lt;RelyingParty <span class="mandatory">name=&quot;<i>URI</i>&quot;</span><br>
 AAsigningCredential=&quot;<i>string</i>&quot;<br>
 AAUrl=&quot;<i>URL</i>&quot;<br>
 defaultAuthMethod=&quot;<i>URN</i>&quot;<br>
@@ -1469,15 +1475,15 @@ signingCredential=&quot;<i>string</i>&quot;&gt;</span></a></dd>
           class="fixed">FederationProvider</span></a> elements to determine
           whether the target is a member of a common federation.  If there is a
           <span class="fixed">RelyingParty</span> element that has the same
-          providerId as the URN of the the federation, it is used.  If not, the
+          providerId as the URI of the the federation, it is used.  If not, the
           default relying party handles the request.</li>
         </ol>
         <ul>
           <li class="mandatory"><span class="fixed">name</span>: Each <span
-          class="fixed">RelyingParty</span> element is differentiated by a URN
+          class="fixed">RelyingParty</span> element is differentiated by a URI
           specified in the <span class="fixed">name</span> attribute.  A target
           will send a value for this attribute with the attribute request; if
-          the URN sent matches the <span class="fixed">name</span>, this element
+          the URI sent matches the <span class="fixed">name</span>, this element
           will be used in the transaction.  If there is no direct match, the
           origin uses metadata to try to find a federation that the service
           provider is a member of.</li>
@@ -1555,7 +1561,7 @@ xmlns:name=&quot;urn:mace:shibboleth:namemapper:1.0&quot;<br>
 xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;<br>
 xsi:schemaLocation=&quot;urn:mace:shibboleth:origin:1.0 origin.xml&quot;</span><br>
 <span class="mandatory">defaultRelyingParty=&quot;<i>URI</i>&quot;<br>
-providerID=&quot;<i>URN</i>&quot;</span><br>
+providerID=&quot;<i>URI</i>&quot;</span><br>
 AAUrl=&quot;<i>URL</i>&quot;<br>
 authHeaderName=&quot;<i>string</i>&quot;<br>
 defaultAuthMethod=&quot;<i>URN</i>&quot;<br>
@@ -1564,7 +1570,7 @@ passThruErrors=&quot;<i>true/false</i>&quot;<br>
 resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></a></dd>
         <dd class="value"><p>This is the primary element that defines an <span class="fixed">origin.xml</span> file and is the container for every other element and must appear once and only once.  For most deployments, all the <span class="fixed">xmlns</span> attributes, which specify the handlers for different aspects of origin operation, should remain unchanged.  The mandatory attributes must be changed before operating the origin.</p>
 <ul>
-<li class="mandatory"><span class="fixed">defaultRelyingParty</span>: This specifies the relying party to use for a request when no <a href="#confRelyingParty"><span class="fixed">RelyingParty</span></a> element's <span class="fixed">name</span> attribute matches the policy URN of an incoming request.  Typically, this will be populated with the URN of a federation.</li>
+<li class="mandatory"><span class="fixed">defaultRelyingParty</span>: This specifies the relying party to use for a request when no <a href="#confRelyingParty"><span class="fixed">RelyingParty</span></a> element's <span class="fixed">name</span> attribute matches the policy URI of an incoming request.  Typically, this will be populated with the URI of a federation.</li>
 <li class="mandatory"><span class="fixed">providerID</span>: The origin uses this unique name to identify assertions it issues.  This will usually be assigned by a federation.</li>
 <li><span class="fixed">AAUrl</span> specifies the URL where the AA for this HS resides, which must be consistent with how it is defined in Tomcat.  Note that this <b>must</b> be an <span class="fixed">https://</span> URL in order for the AA to know which SHAR is requesting attributes for ARP purposes.</li>
 <li><span class="fixed">authHeaderName</span>: If authentication methods are passed to the HS using an HTTP header variable other than the default, <span class="fixed">SAMLAuthenticationMethod</span>, the name of the variable may be specified here.</li>
