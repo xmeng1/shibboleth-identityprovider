@@ -111,6 +111,10 @@ public class AASaml {
         aquery = (SAMLAttributeQuery)q;
     }
 
+    public String getNameQualifier(){
+        return aquery.getSubject().getNameQualifier();
+    }
+
     public String getHandle(){
         return aquery.getSubject().getName();
     }

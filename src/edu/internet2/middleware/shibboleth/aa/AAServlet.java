@@ -168,6 +168,7 @@ public class AAServlet extends HttpServlet {
 			StringBuffer missingProperties = new StringBuffer();
 			String[] requiredProperties =
 				{
+                    "edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName",
 					"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
 					"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 					"edu.internet2.middleware.shibboleth.audiences" };
@@ -237,6 +238,11 @@ public class AAServlet extends HttpServlet {
 						"").split(
 						","));
 			saml.receive(req);
+
+            if (!configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName").equals(saml.getNameQualifier())) {
+                log.error("The name qualifier on this handle (" + saml.getNameQualifier() + ") does not match this site name.");
+                throw new InvalidHandleException("The name qualifier on this handle (" + saml.getNameQualifier() + ") does not match this site name.");
+            }
 
 			log.info("Attribute Query Handle for this request: (" + saml.getHandle() + ").");
 			Principal principal = null;
