@@ -332,19 +332,27 @@ public class AttributeResolver {
 	 * @param requester the name of the requesting entity
 	 * @param attributes the set of attributes to be resolved
 	 */
-	public void resolveAttributes(Principal principal, String requester, ResolverAttributeSet attributes) {
+	public void resolveAttributes(
+		Principal principal,
+		String requester,
+		ResolverAttributeSet attributes) {
 
 		HashMap requestCache = new HashMap();
-		ResolverAttributeIterator iterator = attributes.resolverAttributeIterator();
+		ResolverAttributeIterator iterator =
+			attributes.resolverAttributeIterator();
 
 		while (iterator.hasNext()) {
 			ResolverAttribute attribute = iterator.nextResolverAttribute();
 			try {
 				if (lookupPlugIn(attribute.getName()) == null) {
-					log.warn("No PlugIn registered for attribute: (" + attribute.getName() + ")");
+					log.warn(
+						"No PlugIn registered for attribute: ("
+							+ attribute.getName()
+							+ ")");
 					iterator.remove();
 				} else {
-					log.info("Resolving attribute: (" + attribute.getName() + ")");
+					log.info(
+						"Resolving attribute: (" + attribute.getName() + ")");
 					if (attribute.resolved()) {
 						log.debug(
 							"Attribute ("
@@ -352,7 +360,12 @@ public class AttributeResolver {
 								+ ") already resolved for this request.  No need for further resolution.");
 
 					} else {
-						resolveAttribute(attribute, principal, requester, requestCache, attributes);
+						resolveAttribute(
+							attribute,
+							principal,
+							requester,
+							requestCache,
+							attributes);
 					}
 
 					if (!attribute.hasValues()) {
@@ -360,10 +373,35 @@ public class AttributeResolver {
 					}
 				}
 			} catch (ResolutionPlugInException rpe) {
-				log.error("Problem encountered while resolving attribute: (" + attribute.getName() + "): " + rpe);
+				log.error(
+					"Problem encountered while resolving attribute: ("
+						+ attribute.getName()
+						+ "): "
+						+ rpe);
 				iterator.remove();
 			}
 		}
+	}
+
+	public String[] listRegisteredAttributeDefinitionPlugIns() {
+
+		log.debug("Listing available Attribute Definition PlugIns.");
+		Set found = new HashSet();
+		Iterator registered = plugIns.keySet().iterator();
+
+		while (registered.hasNext()) {
+			ResolutionPlugIn plugIn = lookupPlugIn((String) registered.next());
+			if (plugIn instanceof AttributeDefinitionPlugIn) {
+				found.add(((AttributeDefinitionPlugIn) plugIn).getId());
+			}
+		}
+
+		if (log.isDebugEnabled()) {
+			for (Iterator iterator = found.iterator(); iterator.hasNext();) {
+				log.debug("Found registered Attribute Definition: " + (String) iterator.next());
+			}
+		}
+		return (String[]) found.toArray(new String[0]);
 	}
 
 	private void resolveAttribute(
