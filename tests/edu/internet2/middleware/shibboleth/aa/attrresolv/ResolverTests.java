@@ -107,14 +107,14 @@ public class ResolverTests extends TestCase {
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
 					new AAAttribute[] {
-						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonNickName"),
-						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement")});
+						new AAAttribute("urn:mace:dir:eduperson#eduPersonNickName"),
+						new AAAttribute("urn:mace:dir:eduperson#eduPersonEntitlement")});
 
 			AAAttributeSet outputAttributes =
 				new AAAttributeSet(
 					new AAAttribute[] {
 						 new AAAttribute(
-							"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+							"urn:mace:dir:eduperson#eduPersonEntitlement",
 							new Object[] { "urn:mace:example.edu:exampleEntitlement" })
 						});
 
@@ -145,13 +145,13 @@ public class ResolverTests extends TestCase {
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
 					new AAAttribute[] {
-						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName"),
+						new AAAttribute("urn:mace:dir:eduperson#eduPersonPrincipalName"),
 						new AAAttribute("foo")});
 
 			AAAttributeSet outputAttributes = new AAAttributeSet(new AAAttribute[] {
 				//Attribute should have scope appended to connector output
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+					"urn:mace:dir:eduperson#eduPersonPrincipalName",
 					new Object[] { "mytestuser@example.edu" },
 					new ScopedStringValueHandler("example.edu")),
 				//Attribute should retain scope from connector output
@@ -288,20 +288,20 @@ public class ResolverTests extends TestCase {
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
 					new AAAttribute[] {
-						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName"),
-						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
-						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement")});
+						new AAAttribute("urn:mace:dir:eduperson#eduPersonPrincipalName"),
+						new AAAttribute("urn:mace:dir:eduperson#eduPersonAffiliation"),
+						new AAAttribute("urn:mace:dir:eduperson#eduPersonEntitlement")});
 
 			AAAttributeSet outputAttributes =
 				new AAAttributeSet(
 					new AAAttribute[] {
 						new AAAttribute(
-							"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+							"urn:mace:dir:eduperson#eduPersonPrincipalName",
 							new Object[] { "mytestuser@example.edu" },
 							new ScopedStringValueHandler("example.edu")),
-						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation", new Object[] { "member" }),
+						new AAAttribute("urn:mace:dir:eduperson#eduPersonAffiliation", new Object[] { "member" }),
 						new AAAttribute(
-							"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+							"urn:mace:dir:eduperson#eduPersonEntitlement",
 							new Object[] { "urn:mace:example.edu:exampleEntitlement" })
 						});
 
@@ -331,13 +331,13 @@ public class ResolverTests extends TestCase {
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
-					new AAAttribute[] { new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")});
+					new AAAttribute[] { new AAAttribute("urn:mace:dir:eduperson#eduPersonScopedAffiliation")});
 
 			AAAttributeSet outputAttributes =
 				new AAAttributeSet(
 					new AAAttribute[] {
 						 new AAAttribute(
-							"urn:mace:eduPerson:1.0:eduPersonScopedAffiliation",
+							"urn:mace:dir:eduperson#eduPersonScopedAffiliation",
 							new Object[] { "member@example.edu" },
 							new ScopedStringValueHandler("example.edu"))
 						});
@@ -368,7 +368,7 @@ public class ResolverTests extends TestCase {
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
-					new AAAttribute[] { new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")});
+					new AAAttribute[] { new AAAttribute("urn:mace:dir:eduperson#eduPersonScopedAffiliation")});
 
 			AAAttributeSet outputAttributes = new AAAttributeSet();
 
@@ -398,7 +398,7 @@ public class ResolverTests extends TestCase {
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
-					new AAAttribute[] { new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")});
+					new AAAttribute[] { new AAAttribute("urn:mace:dir:eduperson#eduPersonScopedAffiliation")});
 
 			AAAttributeSet outputAttributes = new AAAttributeSet();
 
