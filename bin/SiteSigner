@@ -1,14 +1,16 @@
 #!/bin/sh
 
+TOMCAT_HOME=/usr/local/tomcat
+
 #Where log4j config file is
-LOG_CONFIG=../webApplication/WEB-INF/conf/log4j.properties
+LOG_CONFIG=$TOMCAT_HOME/webapps/shibboleth/WEB-INF/conf/log4j.properties
 
 #Where to find jar files...
-LIB=../webApplication/WEB-INF/lib
+LIB=$TOMCAT_HOME/webapps/shibboleth/WEB-INF/lib
 CP=$LIB/../classes:$LIB/bc-jce-jdk13-114.jar:$LIB/log4j-1.2.5.jar:$LIB/opensaml.jar:$LIB/xalan.jar:$LIB/xercesImpl.jar:$LIB/xml-apis.jar:$LIB/xmlParserAPIs.jar:$LIB/xmlsec.jar
 
 #Where Registry directory is
-REG_DIR=../webApplication
+REG_DIR=$TOMCAT_HOME/webapps/shibboleth
 
 if [ -n JAVA_HOME ]
 	then
