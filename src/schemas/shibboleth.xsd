@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<schema targetNamespace="urn:mace:shibboleth:1.0" xmlns:shib="urn:mace:shibboleth:1.0" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+    <!-- Used by AA in samlp:StatusDetail to signal user wants real-time attribute release. -->  
+    <element name="RealTimeReleaseURL" type="anyURI"/>
+
+    <!--
+    The following SAML sub-status codes are defined in this namespace:
+    
+        "RealTimeRelease"
+            Used with samlp:Responder, signals user wants real-time attribute release
+        
+        "InvalidHandle"
+            Used with samlp:Requester, signals AA did not recognize handle as valid
+    -->
+    
+</schema>
