@@ -147,6 +147,8 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSName
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
+		verifyQualifier(nameId, idProv);
+		
 		try {
 			//Separate the IV and handle
 			byte[] in = new BASE64Decoder().decodeBuffer(nameId.getName());
@@ -214,6 +216,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSName
 
 	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException {
+
 		try {
 			if (principal == null) {
 				log.error("A principal must be supplied for Attribute Query Handle creation.");

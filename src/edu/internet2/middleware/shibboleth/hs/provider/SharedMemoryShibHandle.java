@@ -85,6 +85,8 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
+		
+		verifyQualifier(nameId, idProv);
 
 		synchronized (cache.handleEntries) {
 			if (!cache.handleEntries.containsKey(nameId.getName())) {

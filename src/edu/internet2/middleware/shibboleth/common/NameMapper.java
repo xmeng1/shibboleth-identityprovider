@@ -110,9 +110,7 @@ public class NameMapper {
 	 */
 	public void addNameMapping(Element e) throws NameIdentifierMappingException {
 
-		if (!e.getLocalName().equals("NameMapping")) {
-			throw new IllegalArgumentException();
-		}
+		if (!e.getLocalName().equals("NameMapping")) { throw new IllegalArgumentException(); }
 
 		log.info("Found Name Mapping. Loading...");
 
@@ -178,15 +176,11 @@ public class NameMapper {
 	 * @return the mapping or <code>null</code> if no mapping is registered for the given format
 	 */
 	public NameIdentifierMapping getNameIdentifierMapping(URI format) {
-		
-		if (format.toString().equals("urn:mace:shibboleth:test:nameIdentifier")) {
-			return new TestNameIdentifierMapping();
-		}
-		
-		if (!initialized) {
-			return defaultMapping;
-		}
-		
+
+		if (format.toString().equals("urn:mace:shibboleth:test:nameIdentifier")) { return new TestNameIdentifierMapping(); }
+
+		if (!initialized) { return defaultMapping; }
+
 		return (NameIdentifierMapping) byFormat.get(format);
 	}
 
@@ -233,14 +227,13 @@ public class NameMapper {
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 		NameIdentifierMapping mapping = null;
+		log.debug("Name Identifier format: (" + nameId.getFormat() + ").");
 		try {
 			mapping = getNameIdentifierMapping(new URI(nameId.getFormat()));
 		} catch (URISyntaxException e) {
 			log.error("Invalid Name Identifier format.");
 		}
-		if (mapping == null) {
-			throw new NameIdentifierMappingException("Name Identifier format not registered.");
-		}
+		if (mapping == null) { throw new NameIdentifierMappingException("Name Identifier format not registered."); }
 		return mapping.getPrincipal(nameId, sProv, idProv);
 	}
 
@@ -255,15 +248,16 @@ public class NameMapper {
 	}
 
 	/**
-	 * <code>NameIdentifierMapping</code> implement that always maps to the same principal name.  Used for testing.
+	 * <code>NameIdentifierMapping</code> implement that always maps to the same principal name. Used for testing.
 	 */
 	public class TestNameIdentifierMapping implements NameIdentifierMapping {
 
 		private TestNameIdentifierMapping() {
-			//Constructor to prevent others from creating this class
+		//Constructor to prevent others from creating this class
 		}
-		
-		/* (non-Javadoc)
+
+		/*
+		 * (non-Javadoc)
 		 * 
 		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifierFormat()
 		 */
@@ -283,8 +277,18 @@ public class NameMapper {
 		 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 		 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 		 */
-		public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv) throws NameIdentifierMappingException, InvalidNameIdentifierException {
+		public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+				throws NameIdentifierMappingException, InvalidNameIdentifierException {
+			
 			log.info("Request references built-in test principal.");
+
+			if (idProv.getProviderId() == null || !idProv.getProviderId().equals(nameId.getNameQualifier())) {
+				log.error("The name qualifier (" + nameId.getNameQualifier()
+						+ ") for the referenced subject is not valid for this identity provider.");
+				throw new NameIdentifierMappingException("The name qualifier (" + nameId.getNameQualifier()
+						+ ") for the referenced subject is not valid for this identity provider.");
+			}
+
 			return new AuthNPrincipal("test-handle");
 		}
 
@@ -294,7 +298,7 @@ public class NameMapper {
 		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#destroy()
 		 */
 		public void destroy() {
-			//Nothing to do
-			}
+		//Nothing to do
 		}
+	}
 }

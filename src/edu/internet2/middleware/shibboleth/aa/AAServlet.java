@@ -283,16 +283,6 @@ public class AAServlet extends TargetFederationComponent {
 			}
 
 			//Map Subject to local principal
-			if (relyingParty.getIdentityProvider().getProviderId() != null
-					&& !relyingParty.getIdentityProvider().getProviderId().equals(
-							attributeQuery.getSubject().getName().getNameQualifier())) {
-				log.error("The name qualifier (" + attributeQuery.getSubject().getName().getNameQualifier()
-						+ ") for the referenced subject is not valid for this identity provider.");
-				throw new NameIdentifierMappingException("The name qualifier ("
-						+ attributeQuery.getSubject().getName().getNameQualifier()
-						+ ") for the referenced subject is not valid for this identity provider.");
-			}
-
 			Principal principal = null;
 			try {
 				principal = nameMapper.getPrincipal(attributeQuery.getSubject().getName(), relyingParty,

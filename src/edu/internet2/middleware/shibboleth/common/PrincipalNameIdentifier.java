@@ -64,7 +64,8 @@ public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {
 
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 		throws NameIdentifierMappingException, InvalidNameIdentifierException {
-
+		
+		verifyQualifier(nameId, idProv);
 		return new AuthNPrincipal(nameId.getName());
 	}
 }

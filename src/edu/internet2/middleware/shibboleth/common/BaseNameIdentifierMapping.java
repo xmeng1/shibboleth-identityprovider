@@ -41,6 +41,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
@@ -88,5 +89,15 @@ public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping
 
 	public void destroy() {
 		//nothing to do
+	}
+	
+	protected void verifyQualifier(SAMLNameIdentifier nameId, IdentityProvider idProv) throws NameIdentifierMappingException {
+		
+		if (idProv.getProviderId() == null || !idProv.getProviderId().equals(nameId.getNameQualifier())) {
+			log.error("The name qualifier (" + nameId.getNameQualifier()
+					+ ") for the referenced subject is not valid for this identity provider.");
+			throw new NameIdentifierMappingException("The name qualifier (" + nameId.getNameQualifier()
+					+ ") for the referenced subject is not valid for this identity provider.");
+		}
 	}
 }
