@@ -70,6 +70,7 @@ import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
 import org.w3c.dom.*;
 import org.opensaml.*;
+import org.apache.log4j.Logger;
 
 public class AAResponder{
 
@@ -77,6 +78,7 @@ public class AAResponder{
     Arp adminArp;
     DirContext ctx;
     String domain;
+    private static Logger log = Logger.getLogger(AAResponder.class.getName());    
 
     public AAResponder(ArpFactory arpFactory, DirContext ctx, String domain)
 	throws AAException{
@@ -160,7 +162,7 @@ public class AAResponder{
 	    if(userSet.contains(aAttr)){
 		// in both. Combine filters
 		ArpFilter f = combineFilters(aAttr, getAttr(userSet, aAttr));
-		System.out.println("debug: Combine filters: "+
+		log.info("Combining filters: "+
 				   aAttr.getFilter()+ " AND "+
 				   getAttr(userSet, aAttr).getFilter()+
 				   " = " + f);
@@ -180,7 +182,7 @@ public class AAResponder{
 
 	boolean usingDefault = false;
 
-	System.out.println("debug: using ARP: "+arp);
+	log.info("using ARP: "+arp);
 
 	ArpShar shar = arp.getShar(sharName);
 	if(shar == null){
@@ -190,14 +192,14 @@ public class AAResponder{
 	if(shar == null)
 	    throw new AAException("No default SHAR.");
 
-	System.out.println("debug:\t using shar: "+shar+(usingDefault?"(default)":""));
-	System.out.println("debug:\t using url: "+url);
+	log.info("\t using shar: "+shar+(usingDefault?"(default)":""));
+	log.info("\t using url: "+url);
 
 	if(url == null || url.length() == 0)
 	    throw new AAException("Given url to AA is null or blank");
 
 	ArpResource resource = shar.bestFit(url);
-	System.out.println("debug:\t\t best fit is: "+resource);
+	log.info("\t\t best fit is: "+resource);
 	if(resource == null){
 	    if(usingDefault)
 		return new HashSet(); // empty set
@@ -213,7 +215,7 @@ public class AAResponder{
 	Set s = new HashSet();
 	ArpAttribute[] attrs = resource.getAttributes();
 	for(int i=0; i<attrs.length; i++){
-	    System.out.println("debug:\t\t\t attribute: "+attrs[i]+" FILTER: "+attrs[i].getFilter());
+	    log.info("\t\t\t attribute: "+attrs[i]+" FILTER: "+attrs[i].getFilter());
 	    s.add(attrs[i]);
 	}
 	return s;
@@ -272,11 +274,7 @@ public class AAResponder{
 
 	try{
 	    Class attrClass = Class.forName(id);
-	    //	    Constructor[] cons = attrClass.getConstructors();
-	    System.out.println("Got constructors for "+attrClass);
-	    //	    System.out.println("number of constructors "+cons.length);
-	    //	    System.out.println("first constructor is "+cons[0]);
-	    //	    System.out.println("Make a Shib attribute with: "+scopes[0]+", "+vals.get(0));
+	    log.info("Got the class for "+attrClass);
 	    ShibAttribute sa = (ShibAttribute)attrClass.newInstance();
 	    return sa.toSamlAttribute(this.domain, vals.toArray());
 	}catch(Exception e){

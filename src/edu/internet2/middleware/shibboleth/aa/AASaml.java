@@ -65,9 +65,9 @@ import javax.servlet.http.*;
 import edu.internet2.middleware.shibboleth.*;
 import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
-
 import org.w3c.dom.*;
 import org.opensaml.*;
+import org.apache.log4j.Logger;
 
 
 public class AASaml {
@@ -80,7 +80,7 @@ public class AASaml {
     String reqID;
     SAMLSubject sub;
     SAMLBinding binding;
-    
+    private static Logger log = Logger.getLogger(AASaml.class.getName());        
 
     public AASaml(String myName){
 	
@@ -188,10 +188,10 @@ public class AASaml {
 						  /* an assersion*/ null,
 						  exception);	
 	    binding.respond(resp, sResp, null);
-	    System.out.println("AA Successfully made and Error message :-))");
+	    log.debug("AA Successfully made an error message :)");
 	}catch(SAMLException se){
 	    binding.respond(resp, null, exception);
-	    System.out.println("AA failed to make and Error message: "+se);
+	    log.info("AA failed to make an error message: "+se);
 	}
     }
 }
