@@ -29,18 +29,11 @@ import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.security.Principal;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
@@ -50,8 +43,8 @@ import org.apache.commons.dbcp.ConnectionFactory;
 import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
-import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.pool.impl.StackKeyedObjectPoolFactory;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Priority;
 import org.w3c.dom.Element;
@@ -62,7 +55,6 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
-import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 
 /*
  * Built at the Canada Institute for Scientific and Technical Information (CISTI 
@@ -78,48 +70,135 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
  * Data Connector that uses JDBC to access user attributes stored in databases.
  *
  * @author David Dearman (dearman@cs.dal.ca)
+ * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Scott Cantor
  */
 
 public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
 
 	private static Logger log = Logger.getLogger(JDBCDataConnector.class.getName());
-	protected Properties props = new Properties();
 	protected String searchVal;
 	protected DataSource dataSource;
 	protected JDBCAttributeExtractor extractor;
+	protected JDBCStatementCreator statementCreator;
 
 	public JDBCDataConnector(Element element) throws ResolutionPlugInException {
 
 		super(element);
 
 		//Get the query string
-		NodeList searchNode = element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
-		searchVal = ((Element) searchNode.item(0)).getAttribute("query");
-
+		NodeList queryNodes = element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Query");
+		Node tnode = queryNodes.item(0).getFirstChild();
+		if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+			searchVal = tnode.getNodeValue();
+		}
 		if (searchVal == null || searchVal.equals("")) {
-			Node tnode = searchNode.item(0).getFirstChild();
-			if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
-				searchVal = tnode.getNodeValue();
-			}
-			if (searchVal == null || searchVal.equals("")) {
-				log.error("Search requires a specified query field");
-				//TODO stinky error message
-				throw new ResolutionPlugInException("mySQLDataConnection requires a \"Search\" specification");
-			}
-		} else {
-			log.debug("Search Query: (" + searchVal + ")");
+			log.error("Database query must be specified.");
+			throw new ResolutionPlugInException("Database query must be specified.");
 		}
 
-		//Instantiate an attribute extractor, using the default if none is specified
-		String aeClassName = ((Element) searchNode.item(0)).getAttribute("attributeExtractor");
-		if (aeClassName == null || aeClassName.equals("")) {
-			aeClassName = DefaultAE.class.getName();
+		//Load the supplied JDBC driver
+		String dbDriverName = element.getAttribute("dbDriver");
+		if (dbDriverName != null && (!dbDriverName.equals(""))) {
+			loadDriver(dbDriverName);
+		}
+
+		//Load site-specific implementation classes	
+		setupAttributeExtractor(
+			(Element) element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "AttributeExtractor").item(
+				0));
+		setupStatementCreator(
+			(Element) element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "StatementCreator").item(0));
+
+		//Initialize a pooling Data Source
+		int maxActive = 0;
+		int maxIdle = 0;
+		try {
+			if (element.getAttribute("maxActive") != null) {
+				maxActive = Integer.parseInt(element.getAttribute("maxActive"));
+			}
+			if (element.getAttribute("maxIdle") != null) {
+				maxIdle = Integer.parseInt(element.getAttribute("maxIdle"));
+			}
+		} catch (NumberFormatException e) {
+			log.error("Malformed pooling limits: using defaults.");
+		}
+		if (element.getAttribute("dbURL") == null || element.getAttribute("dbURL").equals("")) {
+			log.error("JDBC connection requires a dbURL property");
+			throw new ResolutionPlugInException("JDBCDataConnection requires a \"dbURL\" property");
+		}
+		setupDataSource(element.getAttribute("dbURL"), maxActive, maxIdle);
+	}
+
+	/**
+	 * Initialize a Pooling Data Source
+	 */
+	private void setupDataSource(String dbURL, int maxActive, int maxIdle) throws ResolutionPlugInException {
+
+		GenericObjectPool objectPool = new GenericObjectPool(null);
+
+		if (maxActive > 0) {
+			objectPool.setMaxActive(maxActive);
+		}
+		if (maxIdle > 0) {
+			objectPool.setMaxIdle(maxIdle);
+		}
+
+		objectPool.setWhenExhaustedAction(GenericObjectPool.WHEN_EXHAUSTED_BLOCK);
+
+		ConnectionFactory connFactory = null;
+		PoolableConnectionFactory poolConnFactory = null;
+
+		try {
+			connFactory = new DriverManagerConnectionFactory(dbURL, null);
+			log.debug("Connection factory initialized.");
+		} catch (Exception ex) {
+			log.error(
+				"Connection factory couldn't be initialized, ensure database URL, username and password are correct.");
+			throw new ResolutionPlugInException("Connection facotry couldn't be initialized: " + ex.getMessage());
+		}
+
+		try {
+			new StackKeyedObjectPoolFactory();
+			poolConnFactory =
+				new PoolableConnectionFactory(
+					connFactory,
+					objectPool,
+					new StackKeyedObjectPoolFactory(),
+					null,
+					false,
+					true);
+		} catch (Exception ex) {
+			log.debug("Poolable connection factory error");
+		}
+
+		dataSource = new PoolingDataSource(objectPool);
+		log.info("Data Source initialized.");
+		try {
+			dataSource.setLogWriter(
+				new Log4jPrintWriter(Logger.getLogger(JDBCDataConnector.class.getName() + ".Pool"), Priority.DEBUG));
+		} catch (SQLException e) {
+			log.error("Coudn't setup logger for database connection pool.");
+		}
+	}
+
+	/**
+	 * Instantiate an Attribute Extractor, using the default if none was configured
+	 */
+	private void setupAttributeExtractor(Element config) throws ResolutionPlugInException {
+
+		String className = null;
+		if (config != null) {
+			className = config.getAttribute("class");
+		}
+		if (className == null || className.equals("")) {
+			log.debug("Using default Attribute Extractor.");
+			className = DefaultAE.class.getName();
 		}
 		try {
-			Class aeClass = Class.forName(aeClassName);
-			Constructor constructor = aeClass.getConstructor(null);
-			extractor = (JDBCAttributeExtractor) constructor.newInstance(null);
-			log.debug("Supplied attributeExtractor class loaded.");
+			Class aeClass = Class.forName(className);
+			extractor = (JDBCAttributeExtractor) aeClass.newInstance();
+			log.debug("Attribute Extractor implementation loaded.");
 
 		} catch (ClassNotFoundException e) {
 			log.error("The supplied Attribute Extractor class could not be found: " + e);
@@ -130,162 +209,57 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 			throw new ResolutionPlugInException(
 				"Unable to instantiate Attribute Extractor implementation: " + e.getMessage());
 		}
-
-		//Grab all other properties
-		NodeList propertiesNode = element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
-		for (int i = 0; propertiesNode.getLength() > i; i++) {
-			Element property = (Element) propertiesNode.item(i);
-			String propertiesName = property.getAttribute("name");
-			String propertiesValue = property.getAttribute("value");
-
-			if (propertiesName != null
-				&& !propertiesName.equals("")
-				&& propertiesValue != null
-				&& !propertiesValue.equals("")) {
-				props.setProperty(propertiesName, propertiesValue);
-				log.debug("Property: (" + propertiesName + ")");
-				log.debug("   Value: (" + propertiesValue + ")");
-			} else {
-				log.error("Property is malformed.");
-				throw new ResolutionPlugInException("Property is malformed.");
-			}
-		}
-
-		if (props.getProperty("dbURL") == null) {
-			log.error("JDBC connection requires a dbURL property");
-			throw new ResolutionPlugInException("JDBCDataConnection requires a \"dbURL\" property");
-		}
-
-		//Load the supplied JDBC driver
-		loadDriver((String) props.get("dbDriver"));
-		
-		//Setup the Pool
-		GenericObjectPool genericObjectPool = new GenericObjectPool(null);
-
-		try {
-			if (props.getProperty("maxActiveConnections") != null) {
-				genericObjectPool.setMaxActive(Integer.parseInt(props.getProperty("maxActiveConnections")));
-			}
-			if (props.getProperty("maxIdleConnections") != null) {
-				genericObjectPool.setMaxIdle(Integer.parseInt(props.getProperty("maxIdleConnections")));
-			}
-		} catch (NumberFormatException e) {
-			log.error("Malformed pooling configuration settings: using defaults.");
-		}
-		genericObjectPool.setWhenExhaustedAction(GenericObjectPool.WHEN_EXHAUSTED_BLOCK);
-
-		ObjectPool connPool = genericObjectPool;
-		ConnectionFactory connFactory = null;
-		PoolableConnectionFactory poolConnFactory = null;
-
-		try {
-			connFactory = new DriverManagerConnectionFactory(props.getProperty("dbURL"), null);
-			log.debug("Connection factory initialized.");
-		} catch (Exception ex) {
-			log.error(
-				"Connection factory couldn't be initialized, ensure database URL, username and password are correct.");
-			throw new ResolutionPlugInException("Connection facotry couldn't be initialized: " + ex.getMessage());
-		}
-
-		try {
-			poolConnFactory = new PoolableConnectionFactory(connFactory, connPool, null, null, false, true);
-		} catch (Exception ex) {
-			log.debug("Poolable connection factory error");
-		}
-
-		dataSource = new PoolingDataSource(connPool);
-		try {
-			dataSource.setLogWriter(
-				new Log4jPrintWriter(Logger.getLogger(JDBCDataConnector.class.getName() + ".Pool"), Priority.DEBUG));
-		} catch (SQLException e) {
-			log.error("Coudn't setup logger for database connection pool.");
-		}
 	}
 
-	protected String substitute(String source, String pattern, boolean quote, Dependencies depends) {
-		Matcher m = Pattern.compile(pattern).matcher(source);
-		while (m.find()) {
-			String field = source.substring(m.start() + 1, m.end() - 1);
-			if (field != null && field.length() > 0) {
-				StringBuffer buf = new StringBuffer();
+	/**
+	 * Instantiate a Statement Creator, using the default if none was configured
+	 */
+	private void setupStatementCreator(Element config) throws ResolutionPlugInException {
 
-				//Look for an attribute dependency.
-				ResolverAttribute dep = depends.getAttributeResolution(field);
-				if (dep != null) {
-					Iterator iter = dep.getValues();
-					while (iter.hasNext()) {
-						if (buf.length() > 0)
-							buf = buf.append(',');
-						if (quote)
-							buf = buf.append("'");
-						buf = buf.append(iter.next());
-						if (quote)
-							buf = buf.append("'");
-					}
-				}
-
-				//If no values found, cycle over the connectors.
-				Iterator connDeps = connectorDependencyIds.iterator();
-				while (buf.length() == 0 && connDeps.hasNext()) {
-					Attributes attrs = depends.getConnectorResolution((String) connDeps.next());
-					if (attrs != null) {
-						Attribute attr = attrs.get(field);
-						if (attr != null) {
-							try {
-								NamingEnumeration vals = attr.getAll();
-								while (vals.hasMore()) {
-									if (buf.length() > 0)
-										buf = buf.append(',');
-									if (quote)
-										buf = buf.append("'");
-									buf = buf.append(vals.next());
-									if (quote)
-										buf = buf.append("'");
-								}
-							} catch (NamingException e) {
-								// Auto-generated catch block
-							}
-						}
-					}
-				}
-
-				if (buf.length() == 0) {
-					log.warn(
-						"Unable to find any values to substitute in query for "
-							+ field
-							+ ", so using the empty string");
-				}
-				source = source.replaceAll(m.group(), buf.toString());
-				m.reset(source);
-			}
+		String scClassName = null;
+		if (config != null) {
+			scClassName = config.getAttribute("class");
 		}
-		return source;
+		if (scClassName == null || scClassName.equals("")) {
+			log.debug("Using default Statement Creator.");
+			scClassName = DefaultStatementCreator.class.getName();
+		}
+		try {
+			Class scClass = Class.forName(scClassName);
+
+			Class[] params = new Class[1];
+			params[0] = Class.forName("org.w3c.dom.Element");
+			try {
+				Constructor implementorConstructor = scClass.getConstructor(params);
+				Object[] args = new Object[1];
+				args[0] = config;
+				log.debug("Initializing Statement Creator of type (" + scClass.getName() + ").");
+				statementCreator = (JDBCStatementCreator) implementorConstructor.newInstance(args);
+			} catch (NoSuchMethodException nsme) {
+				log.debug(
+					"Implementation constructor does have a parameterized constructor, attempting to load default.");
+				statementCreator = (JDBCStatementCreator) scClass.newInstance();
+			}
+
+			log.debug("Statement Creator implementation loaded.");
+
+		} catch (ClassNotFoundException e) {
+			log.error("The supplied Statement Creator class could not be found: " + e);
+			throw new ResolutionPlugInException(
+				"The supplied Statement Creator class could not be found: " + e.getMessage());
+		} catch (Exception e) {
+			log.error("Unable to instantiate Statement Creator implementation: " + e);
+			throw new ResolutionPlugInException(
+				"Unable to instantiate Statement Creator implementation: " + e.getMessage());
+		}
 	}
 
 	public Attributes resolve(Principal principal, String requester, Dependencies depends)
 		throws ResolutionPlugInException {
 
 		log.debug("Resolving connector: (" + getId() + ")");
-		log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");
-		log.debug("The query string before inserting substitutions: " + searchVal);
 
-		//Replaces %PRINCIPAL% in the query string with its value
-		String convertedSearchVal = searchVal.replaceAll("%PRINCIPAL%", principal.getName());
-		convertedSearchVal = convertedSearchVal.replaceAll("@PRINCIPAL@", "'" + principal.getName() + "'");
-
-		//Find all delimited substitutions and replace with the named attribute value(s).
-		convertedSearchVal = substitute(convertedSearchVal, "%.+%", false, depends);
-		convertedSearchVal = substitute(convertedSearchVal, "@.+@", true, depends);
-
-		//Replace any escaped substitution delimiters.
-		convertedSearchVal = convertedSearchVal.replaceAll("\\%", "%");
-		convertedSearchVal = convertedSearchVal.replaceAll("\\@", "@");
-
-		log.debug("The query string after inserting substitutions: " + convertedSearchVal);
-
-		/**
-		 * Retrieves a connection from the connection pool
-		 */
+		//Retrieve a connection from the connection pool
 		Connection conn = null;
 		try {
 			conn = dataSource.getConnection();
@@ -299,18 +273,27 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 			throw new ResolutionPlugInException("Pool didn't return a propertly initialized connection.");
 		}
 
+		//Setup and execute a (pooled) prepared statement
 		ResultSet rs = null;
 		try {
-			//Gets the results set for the query
-			rs = executeQuery(conn, convertedSearchVal);
-			if (!rs.next())
-				return new BasicAttributes();
+			PreparedStatement preparedStatement = conn.prepareStatement(searchVal);
+			statementCreator.create(preparedStatement, principal, requester, depends);
+			rs = preparedStatement.executeQuery();
+			preparedStatement.close();
 
+			if (!rs.next()) {
+				return new BasicAttributes();
+			}
+
+		} catch (JDBCStatementCreatorException e) {
+			log.error("An ERROR occured while constructing the query");
+			throw new ResolutionPlugInException("An ERROR occured while constructing the query: " + e.getMessage());
 		} catch (SQLException e) {
 			log.error("An ERROR occured while executing the query");
 			throw new ResolutionPlugInException("An ERROR occured while executing the query: " + e.getMessage());
 		}
 
+		//Extract attributes from the ResultSet
 		try {
 			return extractor.extractAttributes(rs);
 
@@ -350,19 +333,6 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 				"An IllegalAccessException occured while loading database driver: " + e.getMessage());
 		}
 		log.debug("Driver loaded.");
-	}
-
-	/**
-	 * Execute the users query
-	 * @param query The query the user wishes to execute
-	 * @return The result of the users <code>query</code>
-	 * @return null if an error occurs during execution
-	 * @throws SQLException If an error occurs while executing the query
-	*/
-	public ResultSet executeQuery(Connection conn, String query) throws SQLException {
-		log.debug("Users Query: " + query);
-		Statement stmt = conn.createStatement();
-		return stmt.executeQuery(query);
 	}
 
 	private class Log4jPrintWriter extends PrintWriter {
@@ -486,7 +456,6 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		}
 	}
 }
-
 /**
  * The default attribute extractor. 
  */
@@ -494,10 +463,6 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 class DefaultAE implements JDBCAttributeExtractor {
 
 	private static Logger log = Logger.getLogger(DefaultAE.class.getName());
-
-	// Constructor
-	public DefaultAE() {
-	}
 
 	/**
 	 * Method of extracting the attributes from the supplied result set.
@@ -508,8 +473,6 @@ class DefaultAE implements JDBCAttributeExtractor {
 	 */
 	public BasicAttributes extractAttributes(ResultSet rs) throws JDBCAttributeExtractorException {
 		BasicAttributes attributes = new BasicAttributes();
-
-		log.debug("Using default Attribute Extractor");
 
 		try {
 			ResultSetMetaData rsmd = rs.getMetaData();
@@ -548,3 +511,30 @@ class DefaultAE implements JDBCAttributeExtractor {
 		return attributes;
 	}
 }
+
+class DefaultStatementCreator implements JDBCStatementCreator {
+
+	private static Logger log = Logger.getLogger(DefaultStatementCreator.class.getName());
+
+	public void create(
+		PreparedStatement preparedStatement,
+		Principal principal,
+		String requester,
+		Dependencies depends)
+		throws JDBCStatementCreatorException {
+
+		try {
+			log.debug("Creating prepared statement.  Substituting principal: (" + principal.getName() + ")");
+			preparedStatement.setString(1, principal.getName());
+		} catch (SQLException e) {
+			log.error("Encountered an error while creating prepared statement: " + e);
+			throw new JDBCStatementCreatorException(
+				"Encountered an error while creating prepared statement: " + e.getMessage());
+		}
+	}
+}
+
+
+
+
+

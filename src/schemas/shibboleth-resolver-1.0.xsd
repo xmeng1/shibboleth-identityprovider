@@ -103,25 +103,32 @@
 						<xs:complexContent>
 							<xs:extension base="resolver:BaseResolutionPlugIn">
 								<xs:sequence>
-									<xs:element name="Search">
+									<xs:element name="Query">
 										<xs:complexType>
 											<xs:simpleContent>
-												<xs:extension base="xs:string">
-													<xs:attribute name="query" type="xs:string" use="optional"/>
-													<xs:attribute name="attributeExtractor" type="xs:string" use="optional"/>
-												</xs:extension>
+												<xs:extension base="xs:string"/>
 											</xs:simpleContent>
 										</xs:complexType>
 									</xs:element>
-									<xs:sequence>
-										<xs:element name="Property" maxOccurs="unbounded">
-											<xs:complexType>
-												<xs:attribute name="name" type="xs:string" use="required"/>
-												<xs:attribute name="value" type="xs:string" use="required"/>
-											</xs:complexType>
-										</xs:element>
-									</xs:sequence>
+									<xs:element name="AttributeExtractor" minOccurs="0">
+										<xs:complexType>
+											<xs:attribute name="class" type="xs:string" use="required"/>
+										</xs:complexType>
+									</xs:element>
+									<xs:element name="StatementCreator" minOccurs="0">
+										<xs:complexType>
+											<xs:sequence minOccurs="0" maxOccurs="unbounded">
+												<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+											</xs:sequence>
+											<xs:attribute name="class" type="xs:string" use="required"/>
+											<xs:anyAttribute namespace="##any" processContents="lax"/>
+										</xs:complexType>
+									</xs:element>
 								</xs:sequence>
+								<xs:attribute name="dbURL" type="xs:string" use="required"/>
+								<xs:attribute name="dbDriver" type="xs:string" use="optional"/>
+								<xs:attribute name="maxActive" type="xs:integer" use="optional"/>
+								<xs:attribute name="maxIdle" type="xs:integer" use="optional"/>
 							</xs:extension>
 						</xs:complexContent>
 					</xs:complexType>
