@@ -7,6 +7,16 @@
         <Alias>Brown University</Alias>
         <HandleService Location="http://dilbert2.cis.brown.edu:1080/shibboleth/HS" Name="dilbert2.cis.brown.edu"></HandleService>
     </OriginSite>
+    <OriginSite Name="washington.edu">
+        <Alias>UDub</Alias>
+        <HandleService Location="https://abajo.cac.washington.edu/shibboleth/HS" Name="abajo.cac.washington.edu"></HandleService>
+    </OriginSite>
+    <OriginSite Name="wisc.edu">
+        <Alias>UW - Madison</Alias>
+        <Alias>University of Wisconsin</Alias>
+        <Alias>Wisc</Alias>
+        <HandleService Location="https://gari.doit.wisc.edu/shibboleth/HS" Name="gari.doit.wisc.edu"></HandleService>
+    </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
@@ -16,15 +26,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>IQtrvHBOZcplOCN3kNsXG9x0Kf8=</ds:DigestValue>
+<ds:DigestValue>HOLb+VWVDUG4PWi4JBhCtQLCjPA=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-X11N/z/3Xk9rUI6tJPpd9uAADUS4yGESDXz8HTxbxOKeK+ossCI4dhQzi764keQSEbW5kdySRZcG
-JhKApB901vvVBkjiXHc+FMQmoNGMouex0fIO9jLWdivusE1wWJnRAvdkbVUkP4ilyy3cUASecizf
-jQnfDuk6XbEmNdsCZNNT3cuZC/xEUqIPNED9zihZ0aRVn92Un0tCdozF6r4J1uYzPzCJlJyjEJf1
-wINN6oYp6KXrHSGHne4CZK2ztUkZ5yQ+i6UbH2sJucZ6Z4eogWvjxmKoFoSfBPr6nFVkNADFzVLz
-gxOslQnmIYDX1yWIjAPEIKB83VnfHvCWQ9MBog==
+D1owNA0GHTzbmij11beBZAlWYE81vO8WdFZRdSeuzwvnaw14KrIT7u/Ll+u6IglyzdcyejAitMIC
+5Zmjq6p46wKoiuTvISEOdhOgu336JP5SPEm2SZbdq6EFtn4WhcZxAP6pH/GFf9+Nr5eWRCa4INwU
++LKJ4pcATDVLlko2/o5PDuVIhDVJNKcRqEwc15qDM8V2cndYZEahDHjCLO8+8AZeNT3rsGziecEO
+qJ6IhZGCa17IThXylIVZOuuTT7Vh8lFCPMh+vsKlpx+ervHWAJikxzgXzKp6fOTC/0oPZTjJDNcS
+yek4sdU4HKRcGv48Iws5SCqDwTB1Z5Vuyammtw==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>

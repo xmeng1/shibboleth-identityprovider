@@ -7,4 +7,14 @@
         <Alias>Brown University</Alias>
         <HandleService Location="http://dilbert2.cis.brown.edu:1080/shibboleth/HS" Name="dilbert2.cis.brown.edu"/>
     </OriginSite>
+    <OriginSite Name="washington.edu">
+        <Alias>UDub</Alias>
+        <HandleService Location="https://abajo.cac.washington.edu/shibboleth/HS" Name="abajo.cac.washington.edu"/>
+    </OriginSite>
+    <OriginSite Name="wisc.edu">
+        <Alias>UW - Madison</Alias>
+        <Alias>University of Wisconsin</Alias>
+        <Alias>Wisc</Alias>
+        <HandleService Location="https://gari.doit.wisc.edu/shibboleth/HS" Name="gari.doit.wisc.edu"/>
+    </OriginSite>
 </Sites>
