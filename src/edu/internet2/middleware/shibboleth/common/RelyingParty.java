@@ -47,9 +47,41 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
+import java.util.Properties;
+
+import org.w3c.dom.Element;
+
 /**
  * @author Walter Hoehn
  */
-public interface ServiceProvider {
-	public String getProviderId();
+public class RelyingParty implements ServiceProvider {
+
+	private ShibbolethOriginConfig originConfig;
+	private Properties partyOverrides;
+	private String id;
+	private String signingCredentialId;
+	
+	public RelyingParty(Element partyConfig, ShibbolethOriginConfig globalConfig) {
+		this.originConfig = globalConfig;
+		//TODO setup things
+	}
+
+	public String getProviderId() {
+		return id;
+	}
+
+	public String getName() {
+		return id;
+	}
+
+	String getSigingCredentialId() {
+		return signingCredentialId;
+	}
+
+	public String getConfigProperty(String key) {
+		if (partyOverrides.containsKey(key)) {
+			return partyOverrides.getProperty(key);
+		}
+		return originConfig.getConfigProperty(key);
+	}
 }

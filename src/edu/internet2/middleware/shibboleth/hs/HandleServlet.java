@@ -74,119 +74,103 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.apache.xerces.parsers.DOMParser;
 import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.QName;
 import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLException;
+import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLResponse;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.AuditLevel;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.Credentials;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
+import edu.internet2.middleware.shibboleth.common.NameMapper;
+import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
+import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 
 public class HandleServlet extends HttpServlet {
 
-	protected Properties configuration;
-	protected HandleRepository handleRepository;
-	protected ShibPOSTProfile postProfile;
+
 	private static Logger log = Logger.getLogger(HandleServlet.class.getName());
-	private Certificate[] certificates;
-	private PrivateKey privateKey;
 	private Semaphore throttle;
+	private ShibbolethOriginConfig configuration;
+	private Credentials credentials;
+	private HSNameMapper nameMapper = new HSNameMapper();
 	
-	protected Properties loadConfiguration() throws HSConfigurationException {
+	//TODO this is temporary, until we have the mapper
+	private RelyingParty relyingParty;
+	
+	protected void loadConfiguration() throws HSConfigurationException {
 
-		//Set defaults
-		Properties defaultProps = new Properties();
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username", "REMOTE_USER");
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads", "5");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation",
-			"edu.internet2.middleware.shibboleth.hs.provider.MemoryHandleRepository");
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL", "1800000");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
-			"/conf/handle.jks");
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:inqueue");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
-			SAMLAuthenticationStatement.AuthenticationMethod_Unspecified);
-
-		//Load from file
-		Properties properties = new Properties(defaultProps);
-		String propertiesFileLocation = getInitParameter("OriginPropertiesFile");
-		if (propertiesFileLocation == null) {
-			propertiesFileLocation = "/conf/origin.properties";
-		}
+		//TODO This should be setup to do schema checking
+		DOMParser parser = new DOMParser();
+		String originConfigFile = getInitParameter("OriginConfigFile");
+		log.debug("Loading Configuration from (" + originConfigFile + ").");
 		try {
-			log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
-			properties.load(new ShibResource(propertiesFileLocation, this.getClass()).getInputStream());
+			parser.parse(new InputSource(new ShibResource(originConfigFile, this.getClass()).getInputStream()));
 
-			//Make sure we have all required parameters
-			StringBuffer missingProperties = new StringBuffer();
-			String[] requiredProperties =
-				{
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
-					"edu.internet2.middleware.shibboleth.audiences" };
-
-			for (int i = 0; i < requiredProperties.length; i++) {
-				if (properties.getProperty(requiredProperties[i]) == null) {
-					missingProperties.append("\"");
-					missingProperties.append(requiredProperties[i]);
-					missingProperties.append("\" ");
-				}
-			}
-			if (missingProperties.length() > 0) {
-				log.error(
-					"Missing configuration data.  The following configuration properites have not been set: "
-						+ missingProperties.toString());
-				throw new HSConfigurationException("Missing configuration data.");
-			}
-
+		} catch (ResourceNotAvailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} catch (IOException e) {
-			log.error("Could not load HS servlet configuration: " + e);
-			throw new HSConfigurationException("Could not load HS servlet configuration.");
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
-		if (log.isDebugEnabled()) {
-			ByteArrayOutputStream debugStream = new ByteArrayOutputStream();
-			PrintStream debugPrinter = new PrintStream(debugStream);
-			properties.list(debugPrinter);
-			log.debug(
-				"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
+		//Load global configuration properties
+		configuration = new ShibbolethOriginConfig(parser.getDocument().getDocumentElement());
+
+		//Load signing credentials
+		NodeList itemElements =
+			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+				Credentials.credentialsNamespace,
+				"Credentials");
+		if (itemElements.getLength() < 1) {
+			log.error("Credentials not specified.");
+			throw new HSConfigurationException("The Handle Service requires that signing credentials be supplied in the <Credentials> configuration element.");
+		}
+
+		if (itemElements.getLength() > 1) {
+			log.error("Multiple Credentials specifications, using first.");
+		}
+
+		credentials = new Credentials((Element) itemElements.item(0));
+
+		//Load name mappings
+		itemElements =
+			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+				NameIdentifierMapping.mappingNamespace,
+				"NameMapping");
+
+		for (int i = 0; i < itemElements.getLength(); i++) {
 			try {
-				debugStream.close();
-			} catch (IOException e) {
-				log.error("Encountered a problem cleaning up resources: could not close debug stream.");
-			}
-		}
-		
-		//Be nice and trim "extra" whitespace from config properties
-		Enumeration propNames = properties.propertyNames();
-		while (propNames.hasMoreElements()) {
-			String propName = (String) propNames.nextElement();
-			if (properties.getProperty(propName, "").matches(".+\\s$")) {
-				log.debug(
-					"The configuration property ("
-						+ propName
-						+ ") contains trailing whitespace.  Trimming... ");
-				properties.setProperty(propName, properties.getProperty(propName).trim());
+				nameMapper.addNameMapping((Element) itemElements.item(i));
+			} catch (NameIdentifierMappingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
 		}
 
-		return properties;
+		//TODO this is temporary, until we have the mapper
+		relyingParty = new RelyingParty(null, configuration);
+		
 	}
 
 	public void init() throws ServletException {
@@ -194,106 +178,23 @@ public class HandleServlet extends HttpServlet {
 		MDC.put("serviceId", "[HS] Core");
 		try {
 			log.info("Initializing Handle Service.");
-			configuration = loadConfiguration();
-
-			initPKI();
-
-			postProfile =
-				ShibPOSTProfileFactory.getInstance(
-					Arrays.asList(
-						configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll(
-							"\\s",
-							"").split(
-							",")),
-					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"));
-
-			handleRepository = HandleRepositoryFactory.getInstance(configuration);
 			
-			throttle = new Semaphore(
-				Integer.parseInt(configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads"))
-				);
-			
+			loadConfiguration();
+
+			throttle =
+				new Semaphore(
+					Integer.parseInt(
+						configuration.getConfigProperty(
+							"edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads")));
+
 			log.info("Handle Service initialization complete.");
 
-		} catch (SAMLException ex) {
-			log.fatal("Error initializing SAML libraries: " + ex);
-			throw new UnavailableException("Handle Service failed to initialize.");
 		} catch (HSConfigurationException ex) {
 			log.fatal("Handle Service runtime configuration error.  Please fix and re-initialize. Cause: " + ex);
 			throw new UnavailableException("Handle Service failed to initialize.");
-		} catch (HandleRepositoryException ex) {
-			log.fatal("Unable to load Handle Repository: " + ex);
-			throw new UnavailableException("Handle Service failed to initialize.");
 		}
 	}
 
-	protected void initPKI() throws HSConfigurationException {
-		try {
-			KeyStore keyStore = KeyStore.getInstance("JKS");
-
-			keyStore.load(
-				new ShibResource(
-					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath"),
-					this.getClass())
-					.getInputStream(),
-				configuration
-					.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword")
-					.toCharArray());
-
-			privateKey =
-				(PrivateKey) keyStore.getKey(
-					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias"),
-					configuration
-						.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword")
-						.toCharArray());
-			
-			if (privateKey == null) {
-				throw new HSConfigurationException(
-					"No key entry was found with an alias of ("
-						+ configuration.getProperty(
-							"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias")
-						+ ").");
-			}
-			
-
-			if (configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias") != null) {
-				certificates =
-					keyStore.getCertificateChain(
-						configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias"));
-				if (certificates == null) {
-					throw new HSConfigurationException(
-						"An error occurred while reading the java keystore: No certificate found with the specified alias ("
-							+ configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias")
-							+ ").");
-				}
-			} else {
-				certificates =
-					keyStore.getCertificateChain(
-						configuration.getProperty(
-							"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias"));
-				if (certificates == null) {
-					throw new HSConfigurationException(
-						"An error occurred while reading the java keystore: No certificate found with the specified alias ("
-							+ configuration.getProperty(
-								"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias")
-							+ ").");
-				}
-			}
-
-		} catch (KeyStoreException e) {
-			throw new HSConfigurationException("An error occurred while accessing the java keystore: " + e);
-		} catch (NoSuchAlgorithmException e) {
-			throw new HSConfigurationException("Appropriate JCE provider not found in the java environment: " + e);
-		} catch (CertificateException e) {
-			throw new HSConfigurationException(
-				"The java keystore contained a certificate that could not be loaded: " + e);
-		} catch (IOException e) {
-			throw new HSConfigurationException("An error occurred while reading the java keystore: " + e);
-		} catch (UnrecoverableKeyException e) {
-			throw new HSConfigurationException(
-				"An error occurred while attempting to load the key from the java keystore: " + e);
-		}
-	}
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
 		MDC.put("serviceId", "[HS] " + UUIDGenerator.getInstance().generateRandomBasedUUID());
@@ -307,36 +208,29 @@ public class HandleServlet extends HttpServlet {
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
 
-			String header = configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
+			//TODO this is temporary, the first thing to do here is to lookup the relyingParty
+
+			String header =
+				relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
 			String username = header.equalsIgnoreCase("REMOTE_USER") ? req.getRemoteUser() : req.getHeader(header);
 
-			StringBuffer format = new StringBuffer();
-			String handle = handleRepository.getHandle(new AuthNPrincipal(username), format);
-			log.info("Issued Handle (" + handle + ") to (" + username + ")");
+			//TODO get right data in here
+			SAMLNameIdentifier nameId =
+				nameMapper.getNameIdentifierName(null, new AuthNPrincipal(username), relyingParty, null);
+
+			//Print out something better here
+			//log.info("Issued Handle (" + handle + ") to (" + username + ")");
 
 			byte[] buf =
 				generateAssertion(
-					handle,
-					format.toString(),
+					nameId,
 					req.getParameter("shire"),
 					req.getRemoteAddr(),
-					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod"));
-
-			log.log(
-				AuditLevel.AUDIT,
-				"Authentication assertion issued to SHIRE ("
-					+ req.getParameter("shire")
-					+ ") on behalf of principal ("
-					+ username
-					+ ") for resource ("
-					+ req.getParameter("target")
-					+ "). Attribue Query Handle: ("
-					+ handle
-					+ ").");
+					relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod"));
 
 			createForm(req, res, buf);
 
-		} catch (HandleRepositoryException ex) {
+		} catch (NameIdentifierMappingException ex) {
 			log.error(ex);
 			handleError(req, res, ex);
 			return;
@@ -352,33 +246,48 @@ public class HandleServlet extends HttpServlet {
 			log.error(ex);
 			handleError(req, res, ex);
 			return;
-		}
-		finally {
+		} finally {
 			throttle.exit();
 		}
 	}
 
-	protected byte[] generateAssertion(String handle, String format, String shireURL, String clientAddress, String authType)
+	protected byte[] generateAssertion(
+		SAMLNameIdentifier nameId,
+		String shireURL,
+		String clientAddress,
+		String authType)
 		throws SAMLException, IOException {
+
+//TODO hmmm... maybe audiences should change here based on relying party
+		ShibPOSTProfile postProfile =
+			ShibPOSTProfileFactory.getInstance(
+				Arrays.asList(
+					relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll(
+						"\\s",
+						"").split(
+						",")),
+				relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"));
 
 		SAMLAuthorityBinding binding =
 			new SAMLAuthorityBinding(
 				SAMLBinding.SAML_SOAP_HTTPS,
-				configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl"),
+				relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl"),
 				new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
+
+		//Find out right property name  for provider id and credential
 
 		SAMLResponse r =
 			postProfile.prepare(
 				shireURL,
-				handle,
-				configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName"),
-                format,
+				nameId,
+				//TODO Scott mentioned this should be optional at some point
 				clientAddress,
 				authType,
 				new Date(System.currentTimeMillis()),
 				Collections.singleton(binding),
-				privateKey,
-				Arrays.asList(certificates),
+				credentials.getCredential(
+					relyingParty.getConfigProperty(
+						"edu.internet2.middleware.shibboleth.hs.HandleServlet.credentialName")),
 				null,
 				null);
 

@@ -51,5 +51,5 @@ package edu.internet2.middleware.shibboleth.common;
  * @author Walter Hoehn
  */
 public interface IdentityProvider {
-	String getId();
+	public String getId();
 }
