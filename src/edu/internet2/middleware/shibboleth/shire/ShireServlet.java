@@ -69,6 +69,7 @@ import org.opensaml.*;
  */
 public class ShireServlet extends HttpServlet
 {
+    private String shireLocation = null;
     private String cookieName = null;
     private String sessionDir = null;
     private boolean sslOnly = true;
@@ -96,6 +97,8 @@ public class ShireServlet extends HttpServlet
      *
      *
      *  <DL>
+     *    <DT> shire-location <I>(optional)</I> </DT>
+     *    <DD> The URL of the SHIRE if not derivable from requests</DD>
      *    <DT> keystore-path <I>(required)</I> </DT>
      *    <DD> A pathname to the trusted CA roots to accept</DD>
      *    <DT> keystore-password <I>(required)</I> </DT>
@@ -127,6 +130,8 @@ public class ShireServlet extends HttpServlet
         edu.internet2.middleware.shibboleth.common.Init.init();
 
         ServletConfig conf = getServletConfig();
+
+        shireLocation = conf.getInitParameter("shire-location");
 
         cookieName = conf.getInitParameter("cookie-name");
         if (cookieName == null)
@@ -245,7 +250,9 @@ public class ShireServlet extends HttpServlet
             // Get a profile object using our specifics.
             String[] policies = {Constants.POLICY_CLUBSHIB};
             ShibPOSTProfile profile =
-                ShibPOSTProfileFactory.getInstance(policies, mapper, HttpUtils.getRequestURL(request).toString(), 300);
+                ShibPOSTProfileFactory.getInstance(policies, mapper,
+                    (shireLocation!=null) ? shireLocation : HttpUtils.getRequestURL(request).toString(),
+                    300);
 
             // Try and accept the response...
             SAMLResponse r = profile.accept(responseData.getBytes());
@@ -315,7 +322,7 @@ public class ShireServlet extends HttpServlet
             fout.println("PBinding0=" + bindings[0].getBinding());
             fout.println("LBinding0=" + bindings[0].getLocation());
             fout.println("Time=" + System.currentTimeMillis()/1000);
-	    fout.println("ClientAddress=" + request.getRemoteAddr());
+            fout.println("ClientAddress=" + request.getRemoteAddr());
             fout.println("EOF");
             fout.close();
 
