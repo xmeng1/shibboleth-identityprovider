@@ -75,6 +75,8 @@ public class ShireServlet extends HttpServlet
     public void init()
         throws ServletException
     {
+        edu.internet2.middleware.shibboleth.common.Init.init();
+
         ServletConfig conf = getServletConfig();
 
         cookieName = conf.getInitParameter("cookie-name");
@@ -137,7 +139,7 @@ public class ShireServlet extends HttpServlet
         }
         catch (org.xml.sax.SAXException e)
         {
-            throw new ServletException("ShireServlet.init() unable to load origin site registry");
+            throw new ServletException("ShireServlet.init() unable to load origin site registry: " + e.getMessage());
         }
     }
 
