@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -108,7 +109,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 			log.debug("Returning site policy.");
 			allPolicies.add(sitePolicy);
 		}
-		
+
 		Arp userPolicy = getUserPolicy(principal);
 		if (userPolicy != null) {
 			allPolicies.add(userPolicy);
@@ -216,11 +217,13 @@ class ArpCache {
 	private static ArpCache instance = null;
 	private long cacheLength;
 	private Map cache = new HashMap();
+	private static Logger log = Logger.getLogger(ArpCache.class.getName());
+	private ArpCacheCleaner cleaner = new ArpCacheCleaner();
 
 	protected ArpCache() {
 	}
 
-	static ArpCache instance() {
+	static synchronized ArpCache instance() {
 		if (instance == null) {
 			return new ArpCache();
 		}
@@ -233,9 +236,13 @@ class ArpCache {
 
 	void cache(Arp arp) {
 		if (arp.isSitePolicy() == false) {
-			cache.put(arp.getPrincipal(), new CachedArp(arp, System.currentTimeMillis()));
+			synchronized (cache) {
+				cache.put(arp.getPrincipal(), new CachedArp(arp, System.currentTimeMillis()));
+			}
 		} else {
-			cache.put(new SiteCachePrincipal(), new CachedArp(arp, System.currentTimeMillis()));
+			synchronized (cache) {
+				cache.put(new SiteCachePrincipal(), new CachedArp(arp, System.currentTimeMillis()));
+			}
 		}
 	}
 
@@ -248,7 +255,12 @@ class ArpCache {
 	}
 
 	private Arp retrieveArpFromCache(Principal principal) {
-		CachedArp cachedArp = (CachedArp) cache.get(principal);
+
+		CachedArp cachedArp;
+		synchronized (cache) {
+			cachedArp = (CachedArp) cache.get(principal);
+		}
+
 		if (cachedArp == null) {
 			return null;
 		}
@@ -256,11 +268,25 @@ class ArpCache {
 		if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) < cacheLength) {
 			return cachedArp.arp;
 		}
-		cache.remove(principal);
+
+		synchronized (cache) {
+			cache.remove(principal);
+		}
 		return null;
 	}
 
-	class CachedArp {
+	/**
+	 * @see java.lang.Object#finalize()
+	 */
+	protected void finalize() throws Throwable {
+		super.finalize();
+		synchronized (cleaner) {
+			cleaner.shutdown = true;
+			cleaner.interrupt();
+		}
+	}
+
+	private class CachedArp {
 		Arp arp;
 		long creationTimeMillis;
 
@@ -270,7 +296,7 @@ class ArpCache {
 		}
 	}
 
-	class SiteCachePrincipal implements Principal {
+	private class SiteCachePrincipal implements Principal {
 
 		public String getName() {
 			return "ARP admin";
@@ -294,4 +320,55 @@ class ArpCache {
 				.hashCode();
 		}
 	}
+
+	private class ArpCacheCleaner extends Thread {
+
+		private boolean shutdown = false;
+
+		public ArpCacheCleaner() {
+			super();
+			log.debug("Starting ArpCache Cleanup Thread.");
+			start();
+		}
+
+		public void run() {
+			try {
+				sleep(5 * 60 * 1000);
+			} catch (InterruptedException e) {
+				log.debug("ArpCache Cleanup interrupted.");
+			}
+			while (true) {
+				try {
+					if (shutdown) {
+						log.debug("Stopping ArpCache Cleanup Thread.");
+						return;
+					}
+					Set needsDeleting = new HashSet();
+					synchronized (cache) {
+						Iterator iterator = cache.values().iterator();
+						while (iterator.hasNext()) {
+							CachedArp cachedArp = (CachedArp) iterator.next();
+							if ((cachedArp.creationTimeMillis - System.currentTimeMillis())
+								> cacheLength) {
+								needsDeleting.add(cachedArp);
+							}
+						}
+						//release the lock to be friendly
+						Iterator deleteIterator = needsDeleting.iterator();
+						while (deleteIterator.hasNext()) {
+							synchronized (cache) {
+								log.debug("Expiring an ARP from the Cache.");
+								cache.remove(
+									((CachedArp) deleteIterator.next()).arp.getPrincipal());
+							}
+						}
+					}
+					sleep(5 * 60 * 1000);
+				} catch (InterruptedException e) {
+					log.debug("ArpCache Cleanup interrupted.");
+				}
+			}
+		}
+	}
+
 }
