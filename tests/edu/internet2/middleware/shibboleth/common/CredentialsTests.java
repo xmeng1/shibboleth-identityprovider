@@ -146,7 +146,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -181,7 +181,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -208,7 +208,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -239,7 +239,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -266,7 +266,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -297,7 +297,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -328,7 +328,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -359,7 +359,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -390,7 +390,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -421,7 +421,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -452,7 +452,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -479,7 +479,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -506,7 +506,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -533,7 +533,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -564,7 +564,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -595,7 +595,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -626,7 +626,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
@@ -657,7 +657,7 @@ public class CredentialsTests extends TestCase {
 
 			assertTrue(
 				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.X509);
+				credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
 			assertEquals(
 				"Unexpected X509 certificate found.",
