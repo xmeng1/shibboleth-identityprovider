@@ -100,6 +100,7 @@ public class CookieWayfCache extends WayfCacheBase implements WayfCache {
 		HttpServletResponse res) {
 
 		Cookie[] cookies = req.getCookies();
+		if (cookies == null) { return; }
 		for (int i = 0; i < cookies.length; i++) {
 			if (cookies[i]
 				.getName()
