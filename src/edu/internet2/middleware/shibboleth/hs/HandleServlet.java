@@ -20,9 +20,11 @@ public class HandleServlet extends HttpServlet {
     {
 	super.init(conf);
 	getInitParams();
+	ServletConfig sc = getServletConfig();
+	ServletContext sctx = sc.getServletContext();
 
 	try {
-	    InputStream is = getServletContext().getResourceAsStream
+	    InputStream is = sctx.getResourceAsStream
 		(getInitParameter("KSpath"));
 	    hsSAML = new HandleServiceSAML( getInitParameter("domain"), 
 					    getInitParameter("AAurl"),
@@ -51,6 +53,9 @@ public class HandleServlet extends HttpServlet {
 	catch (Exception ex) {
 	    throw new ServletException( "Error initializing private KeyStore: " +ex );
 	}
+
+	sctx.setAttribute("HandleRepository", hrf);
+
 	if (hsSAML == null) {
 	    throw new ServletException( "Error initializing SAML libraries: No Profile created." );
 	}  
