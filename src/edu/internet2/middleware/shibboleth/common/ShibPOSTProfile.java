@@ -223,10 +223,10 @@ public class ShibPOSTProfile
             if (assertion.isSigned())
             {
                 log.info("verifying assertion signature");
-                verifySignature(assertion, handleService, ks, hsKey, false);
+                verifySignature(assertion, handleService, ks, hsKey);
             }
             log.info("verifying response signature");
-            verifySignature(r, handleService, ks, hsKey, true);
+            verifySignature(r, handleService, ks, hsKey);
         }
         finally
         {
@@ -292,8 +292,8 @@ public class ShibPOSTProfile
         r.toDOM(doc);
 
         if (assertionKey != null)
-            ((SAMLAssertion)r.getAssertions().next()).sign(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,assertionKey,assertionCerts,false);
-        r.sign(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,responseKey,responseCerts,true);
+            ((SAMLAssertion)r.getAssertions().next()).sign(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,assertionKey,assertionCerts);
+        r.sign(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,responseKey,responseCerts);
         
         return r;
     }
@@ -329,7 +329,7 @@ public class ShibPOSTProfile
      * 
      * @throws SAMLException    Thrown if the signature cannot be verified
      */
-    protected void verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey, boolean simple)
+    protected void verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey)
         throws SAMLException
     {
         try
@@ -345,12 +345,12 @@ public class ShibPOSTProfile
             if (knownKey != null)
             {
                 log.info("verifying signature with known key value, ignoring signature KeyInfo");
-                obj.verify(knownKey,simple);
+                obj.verify(knownKey);
                 return;
             }
             
             log.info("verifying signature with embedded KeyInfo");
-            obj.verify(simple);
+            obj.verify();
             
             // This is pretty painful, and this is leveraging the supposedly automatic support in JDK 1.4.
             // First we have to extract the certificates from the object.
