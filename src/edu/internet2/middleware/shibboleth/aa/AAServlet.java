@@ -260,7 +260,7 @@ public class AAServlet extends HttpServlet {
 						+ "handle request without one.");
 			}
 
-			if (saml.getShar() == null) {
+			if (saml.getShar() == null || saml.getShar().equals("")) {
 				log.info("Request is from an unauthenticated SHAR.");
 			} else {
 				log.info("Request is from SHAR: (" + saml.getShar() + ").");
