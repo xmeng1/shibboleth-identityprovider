@@ -70,4 +70,11 @@
         <HandleService Location="https://python.ifs.umich.edu/shibboleth/HS" Name="python.ifs.umich.edu"/>
         <Domain>umich.edu</Domain>
     </OriginSite>
+    <OriginSite Name="columbia.edu">
+        <Alias>Columbia University</Alias>
+        <Alias>Columbia University in the City of New York</Alias>
+        <Alias>Lions</Alias>
+        <HandleService Location="https://shibboleth.cc.columbia.edu/accounts/login" Name="shibboleth.cc.columbia.edu"/>
+        <Domain>columbia.edu</Domain>
+    </OriginSite>
 </Sites>
