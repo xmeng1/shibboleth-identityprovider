@@ -179,10 +179,10 @@ public class ShibbolethTrust extends Trust {
 				PKIXParameters params = new PKIXParameters(anchors);
 				//TODO hmm... what about this
 				params.setRevocationEnabled(false);
-				
+				//TODO todo do we care about usage bits at all?
 				PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(path, params);
 
-				//System.err.println(result.getPolicyTree().getDepth());
+				System.err.println(result.getPolicyTree());
 				// TODO honor verify depth
 				log.debug("Path successfully validated.");
 				return true;
