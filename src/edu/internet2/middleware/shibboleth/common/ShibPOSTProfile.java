@@ -338,8 +338,27 @@ public class ShibPOSTProfile {
 
 		String issuer;
 		if (relyingParty.isLegacyProvider()) {
-			//TODO must resolve this
-			issuer = "fooIssuer";
+			log.debug("Service Provider is running Shibboleth <= 1.1.  Using old style issuer.");
+
+			if (relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate() == null) {
+				throw new SAMLException("Cannot serve old style assertions without an X509 certificate");
+			}
+
+			String[] splitDN =
+				relyingParty
+					.getIdentityProvider()
+					.getResponseSigningCredential()
+					.getX509Certificate()
+					.getSubjectDN()
+					.getName()
+					.split(
+					"([Cc][Nn]=|,)");
+			if (splitDN != null && !(splitDN.equals(""))) {
+				issuer = splitDN[1];
+			} else {
+				throw new SAMLException("Error parsing certificate DN while determining legacy issuer name.");
+			}
+
 		} else {
 			issuer = relyingParty.getProviderId();
 		}
