@@ -1,6 +1,8 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import javax.servlet.ServletContext;
@@ -8,6 +10,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.digester.Digester;
+import org.apache.log4j.Logger;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -23,8 +26,9 @@ import org.xml.sax.XMLReader;
 
 public class ServletDigester extends Digester {
 
+	private static Logger log =
+		Logger.getLogger(ServletDigester.class.getName());
 	private ServletContext context;
-
 	public ServletDigester() {
 		super();
 		configure();
@@ -52,8 +56,9 @@ public class ServletDigester extends Digester {
 	/**
 	 * @see org.xml.sax.EntityResolver#resolveEntity(String, String)
 	 */
-	public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-
+	public InputSource resolveEntity(String publicId, String systemId)
+		throws SAXException {
+		log.debug("Resolving entity for System ID: " + systemId);
 		if (context != null && systemId != null) {
 			StringTokenizer tokenString = new StringTokenizer(systemId, "/");
 			String xsdFile = "";
@@ -61,7 +66,9 @@ public class ServletDigester extends Digester {
 				xsdFile = tokenString.nextToken();
 			}
 			if (xsdFile.endsWith(".xsd")) {
-				InputStream stream = context.getResourceAsStream("/WEB-INF/classes/schemas/" + xsdFile);
+				InputStream stream =
+					context.getResourceAsStream(
+						"/WEB-INF/classes/schemas/" + xsdFile);
 				if (stream != null) {
 					return new InputSource(stream);
 				}
@@ -91,16 +98,45 @@ public class ServletDigester extends Digester {
 				factory.setNamespaceAware(namespaceAware);
 				factory.setValidating(validating);
 				if (validating) {
-					factory.setFeature("http://xml.org/sax/features/namespaces", true);
-					factory.setFeature("http://xml.org/sax/features/validation", true);
-					factory.setFeature("http://apache.org/xml/features/validation/schema", true);
+					factory.setFeature(
+						"http://xml.org/sax/features/namespaces",
+						true);
+					factory.setFeature(
+						"http://xml.org/sax/features/validation",
+						true);
+					factory.setFeature(
+						"http://apache.org/xml/features/validation/schema",
+						true);
 					factory.setFeature(
 						"http://apache.org/xml/features/validation/schema-full-checking",
 						true);
 				}
 				parser = factory.newSAXParser();
+				if (validating) {
+
+					Properties schemaProps = new Properties();
+					schemaProps.load(
+						context.getResourceAsStream(
+							"/WEB-INF/conf/schemas.properties"));
+					String schemaLocations = "";
+					Enumeration schemas = schemaProps.propertyNames();
+					while (schemas.hasMoreElements()) {
+						String ns = (String) schemas.nextElement();
+						schemaLocations += ns
+							+ " "
+							+ schemaProps.getProperty(ns)
+							+ " ";
+					}
+					log.debug(
+						"Overriding schema locations for the following namespace: "
+							+ schemaLocations);
+					parser.setProperty(
+						"http://apache.org/xml/properties/schema/external-schemaLocation",
+						schemaLocations);
+				}
 				return (parser);
 			} catch (Exception e) {
+				log.error("Error during Digester initialization", e);
 				return (null);
 			}
 		}

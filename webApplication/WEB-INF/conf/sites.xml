@@ -1,28 +1,45 @@
-<Sites xmlns="urn:mace:shibboleth:1.0" 
-	xmlns:ds="http://www.w3.org/2000/09/xmldsig#" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xsi:schemaLocation="urn:mace:shibboleth:1.0 http://shibboleth.internet2.edu/wayf/alpha-2/shibboleth.xsd">
-<SiteGroup Name="Test">
-	<OriginSite Name="demo.edu">
-		<Alias>Demo State University</Alias>
-		<HandleService Name="shib2.internet2.edu" Location="https://shib2.internet2.edu/shibboleth-origin/servlet/HS"/>
-	</OriginSite>
-</SiteGroup>
-	<OriginSite Name="cmu.edu">
-		<Alias>Carnegie Mellon University</Alias>
-		<Alias>cmu</Alias>
-		<Alias>Tartans</Alias>
-		<HandleService Name="nada.andrew.cmu.edu" Location="https://nada.andrew.cmu.edu/shibb/servlet/HandleServlet"/>
-	</OriginSite>
-	<OriginSite Name="osu.edu">
-		<Alias>Ohio State University</Alias>
-		<Alias>osu</Alias>
-		<Alias>Buckeyes</Alias>
-		<HandleService Name="usfs2.us.ohio-state.edu" Location="https://usfs2.us.ohio-state.edu/webdev/Shibboleth/secure/servlet/HandleServlet"/>
-	</OriginSite>
-	<OriginSite Name="brown.edu">
-		<Alias>Brown University</Alias>
-		<Alias>Bears</Alias>
-		<HandleService Name="dilbert2.cis.brown.edu" Location="http://dilbert2.cis.brown.edu:1080/shibb/servlet/HandleServlet"/>
-	</OriginSite>
-</Sites>
+<Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <OriginSite Name="demo.edu">
+        <Alias>Demo State University</Alias>
+        <HandleService Location="https://shib2.internet2.edu/shibboleth-origin/servlet/HS" Name="shib2.internet2.edu"></HandleService>
+    </OriginSite>
+<ds:Signature>
+<ds:SignedInfo>
+<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
+<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+<ds:Reference URI="">
+<ds:Transforms>
+<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
+</ds:Transforms>
+<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+<ds:DigestValue>FlTtww9Zm1RZVJ8XhMi+8EMGU98=</ds:DigestValue>
+</ds:Reference>
+</ds:SignedInfo>
+<ds:SignatureValue>cJY60WaFZ9HGeoyFsb7DRazHa9b5oPTQ0jfHe17Dq9KKZV2M+hLacefT8fGpmUM+PB9FvFqswY+c
+YgWNwONYJWSWxje/9OtywphvZ280JJPF88glrWiOT4tWqODDec+LcIiZx+rWqOjqUdLgYhbiEOsy
+SeLo+jKbY3z4UQ54QC04Y1Mx2vosuo1eizCYkmKwfdUoiG3PbF2bG62lFv7KJgSYPEUqb2kN4KYV
+n+2LMYRfXnIpHGbIo5Y2y479ASNIJZCqDUU3jqQzSEBEa5MzmjVSQvtrh93VNNzFlMQeMLFWsNcf
+GX+oi6z1ZLvMhBzXLlI/ZmowY+uWYYQ4hrg+LA==</ds:SignatureValue>
+<ds:KeyInfo>
+<ds:X509Data>
+<ds:X509Certificate>
+MIIDWzCCAkMCBD0GtNgwDQYJKoZIhvcNAQEEBQAwcjELMAkGA1UEBhMCVVMxDTALBgNVBAgTBE9o
+aW8xETAPBgNVBAcTCENvbHVtYnVzMRIwEAYDVQQKEwlJbnRlcm5ldDIxDTALBgNVBAsTBE1BQ0Ux
+HjAcBgNVBAMTFUludGVybmV0MiBTaXRlIFNpZ25lcjAeFw0wMjA2MTIwMjQxMjhaFw0wMzA2MTIw
+MjQxMjhaMHIxCzAJBgNVBAYTAlVTMQ0wCwYDVQQIEwRPaGlvMREwDwYDVQQHEwhDb2x1bWJ1czES
+MBAGA1UEChMJSW50ZXJuZXQyMQ0wCwYDVQQLEwRNQUNFMR4wHAYDVQQDExVJbnRlcm5ldDIgU2l0
+ZSBTaWduZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCWEJOtB/Pvy3R4dLDgQaJj
+r2Aque3IPmH82SIpANBtzkpvshPIyB7cJo+e1DuAoR5/HgRHUamM8IYbWD4Pg4BpUl64FqvB4xzp
+OrsMkEecewGIAXu9WzFjLmmJ3J9V+TC764+gvK26d1kaE/F2AjHTPlXFNvPXIWfVFwWyQlrMNvkt
+AwxoCvyzAAzhtVN1up/UX8y+kw2r1mxvWl6MY6OGveb3MEhnJ/SijG8K263HzEwH0jKQfXcFes2B
+N6CWjzwUc6RdemwoRQGIu7Xo58WCtu3b6jgxutbep3Xqc3INpRGNtlfbQv+9+F03645k2lIqlt2e
+J4jYOzU5f0dM2eiZAgMBAAEwDQYJKoZIhvcNAQEEBQADggEBACDvM9aMDTSreXMflg1GvJTtV6f1
+Uu2utEPVcJH0T2/AtUvXwmKgt9xnEQNpjkBfPfYauOFeR3Z3zAWSW17W6sI4I8mN+JDArCd08vWQ
+RHE+OxrhNn590u+eCzd5Gu1Gyg2N5bZNAG2VRnuaXOiX+rHjPMOdkbMGteGaHZC/hlac04z1BHmx
+QqpA526mSXUPC+BSLCAJno57csm1a+Of3xtfTo1y3p0UgQ+d1FfxiBTzIgPyb5LKW9CwC4OjqwgH
+jNj4VCaskafexO4MkduIcFTMb+0SxuCmixl+P96jehEINYNOg6BRtCzJvMEPZJkBOL9rkE1Pdc7t
+3Oljukm2cxw=
+</ds:X509Certificate>
+</ds:X509Data>
+</ds:KeyInfo>
+</ds:Signature></Sites>
