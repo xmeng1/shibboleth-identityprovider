@@ -49,11 +49,15 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Properties;
 
-import org.apache.log4j.BasicConfigurator;
-
 import junit.framework.TestCase;
+
+import org.apache.log4j.BasicConfigurator;
+import org.apache.xerces.parsers.DOMParser;
+import org.xml.sax.InputSource;
 
 /**
  * Validation suite for <code>Arp</code> processing.
@@ -71,6 +75,48 @@ public class ArpTests extends TestCase {
 	public static void main(String[] args) {
 		junit.textui.TestRunner.run(ArpTests.class);
 		BasicConfigurator.configure();
+	}
+
+	public void testArpMarshalling() {
+
+		//Test ARP description
+		try {
+			InputStream inStream = new FileInputStream("test/arp1.xml");
+			DOMParser parser = new DOMParser();
+			parser.parse(new InputSource(inStream));
+			Arp arp1 = new Arp();
+			arp1.marshall(parser.getDocument().getDocumentElement());
+			assertEquals(
+				"ARP Description not marshalled properly",
+				arp1.getDescription(),
+				"Simplest possible ARP.");
+
+			//Test Rule description
+			assertEquals(
+				"ARP Rule Description not marshalled properly",
+				arp1.getAllRules()[0].getDescription(),
+				"Example Rule Description.");
+		} catch (Exception e) {
+			fail("Failed to marshall ARP.");
+		}
+
+		//Test case where ARP description does not exist
+		try {
+			InputStream inStream = new FileInputStream("test/arp2.xml");
+			DOMParser parser = new DOMParser();
+			parser.parse(new InputSource(inStream));
+			Arp arp2 = new Arp();
+			arp2.marshall(parser.getDocument().getDocumentElement());
+			assertNull("ARP Description not marshalled properly", arp2.getDescription());
+
+			//Test case where ARP Rule description does not exist	
+			assertNull(
+				"ARP Rule Description not marshalled properly",
+				arp2.getAllRules()[0].getDescription());
+		} catch (Exception e) {
+			fail("Failed to marshall ARP.");
+		}
+
 	}
 
 	public void testRepositories() {

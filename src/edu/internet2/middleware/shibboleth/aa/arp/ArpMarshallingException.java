@@ -49,82 +49,17 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
-import org.apache.xerces.parsers.DOMParser;
-import org.w3c.dom.CharacterData;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 /**
- *  An Attribute Release Policy Rule.
- *
+ * Indicates an error occurred while marshalling/unmarshalling an ARP construct.
+ * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public class Rule {
+public class ArpMarshallingException extends Exception {
 
-	private String description;
-
-	/**
-	 * Returns the description for this <code>Rule</code>.
-	 * @return String
-	 */
-
-	public String getDescription() {
-		return description;
-	}
-
-	/**
-	 * Sets the description for this <code>Rule</code>.
-	 * @param description The description to set
-	 */
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	/**
-	 * Unmarshalls the <code>Rule</code> into an xml <code>Element</code>.
-	 * @return the xml <code>Element</code>
-	 */
-
-	public Element unmarshall() {
-
-		DOMParser parser = new DOMParser();
-		Document placeHolder = parser.getDocument();
-		Element ruleNode = placeHolder.createElement("Rule");
-
-		if (description != null) {
-			Element descriptionNode = placeHolder.createElement("Description");
-			descriptionNode.appendChild(placeHolder.createTextNode(description));
-			ruleNode.appendChild(descriptionNode);
-		}
-
-		return ruleNode;
-	}
-
-	/**
-	 * Creates an ARP Rule from an xml representation.
-	 * @param the xml <code>Element</code> containing the ARP Rule.
-	 */
-	
-	public void marshall(Element element) throws ArpMarshallingException {
-
-		//Make sure we are deling with a Rule
-		if (!element.getTagName().equals("Rule")) {
-			throw new ArpMarshallingException("Element data does not represent an ARP Rule.");
-		}
-
-		//Grab the description
-		NodeList descriptionNodes = element.getElementsByTagName("Description");
-		if (descriptionNodes.getLength() > 0) {
-			Element descriptionNode = (Element) descriptionNodes.item(0);
-			if (descriptionNode.hasChildNodes()
-				&& descriptionNode.getFirstChild().getNodeType() == Node.TEXT_NODE) {
-				description = ((CharacterData) descriptionNode.getFirstChild()).getData();
-			}
-		}
+	public ArpMarshallingException(String message) {
+		super(message);
 	}
 
 }
+

@@ -52,6 +52,13 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 import java.security.Principal;
 import java.util.HashSet;
 
+import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.CharacterData;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 /**
  *  An Attribute Release Policy.
  *
@@ -61,7 +68,7 @@ import java.util.HashSet;
 public class Arp {
 
 	private Principal principal;
-	private HashSet rules;
+	private HashSet rules = new HashSet();
 	private String description;
 	private boolean sitePolicy = false;
 
@@ -109,6 +116,68 @@ public class Arp {
 	}
 
 	/**
+	 * Creates an ARP structure from an xml representation.
+	 * @param the xml <code>Element</code> containing the ARP structure.
+	 */
+
+	void marshall(Element xmlElement) throws ArpMarshallingException {
+
+		//Make sure we are deling with an ARP
+		if (!xmlElement.getTagName().equals("AttributeReleasePolicy")) {
+			throw new ArpMarshallingException("Element data does not represent an ARP.");
+		}
+
+		//Grab the description
+		NodeList descriptionNodes = xmlElement.getElementsByTagName("Description");
+		if (descriptionNodes.getLength() > 0) {
+			Element descriptionNode = (Element) descriptionNodes.item(0);
+			if (descriptionNode.hasChildNodes()
+				&& descriptionNode.getFirstChild().getNodeType() == Node.TEXT_NODE) {
+				description = ((CharacterData) descriptionNode.getFirstChild()).getData();
+			}
+		}
+
+		//Grab all of the Rule Elements and marshall them
+		NodeList ruleNodes = xmlElement.getElementsByTagName("Rule");
+		if (ruleNodes.getLength() > 0) {
+			for (int i = 0; i < ruleNodes.getLength(); i++) {
+				Rule rule = new Rule();
+				try {
+					rule.marshall((Element) ruleNodes.item(i));
+				} catch (ArpMarshallingException me) {
+					throw new ArpMarshallingException("Encountered a problem marshalling ARP Rules: " + me);
+				}
+				rules.add(rule);
+			}
+		}
+	}
+
+	/**
+	 * Unmarshalls the <code>Arp</code> into an xml <code>Element</code>.
+	 * @return the xml <code>Element</code>
+	 */
+
+	Element unmarshall() {
+
+		DOMParser parser = new DOMParser();
+		Document placeHolder = parser.getDocument();
+		Element policyNode = placeHolder.createElement("AttributeReleasePolicy");
+
+		if (description != null) {
+			Element descriptionNode = placeHolder.createElement("Description");
+			descriptionNode.appendChild(placeHolder.createTextNode(description));
+			policyNode.appendChild(descriptionNode);
+		}
+
+		Rule[] rules = getAllRules();
+		for (int i = 0; rules.length > i; i++) {
+			policyNode.appendChild(rules[i].unmarshall());
+		}
+
+		return policyNode;
+	}
+
+	/**
 	 * Returns all of the <code>Rule</code> objects that make up this policy.
 	 * @return the rules 
 	 */
@@ -119,7 +188,7 @@ public class Arp {
 	}
 
 	/**
-	 * Returns the description for this <code>Arp</code>.
+	 * Returns the description for this <code>Arp</code> or null if no description is set.
 	 * @return String
 	 */
 
