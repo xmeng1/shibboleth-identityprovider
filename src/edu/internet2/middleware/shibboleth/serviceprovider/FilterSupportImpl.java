@@ -23,8 +23,8 @@ import org.opensaml.SAMLException;
 
 import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
 
-import edu.internet2.middleware.shibboleth.common.AAP;
-import edu.internet2.middleware.shibboleth.common.AttributeRule;
+import edu.internet2.middleware.shibboleth.aap.AAP;
+import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.resource.FilterSupport;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 

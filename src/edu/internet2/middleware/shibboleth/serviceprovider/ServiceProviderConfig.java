@@ -147,6 +147,7 @@ import org.apache.xmlbeans.XmlOptions;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLObject;
 import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Document;
@@ -164,8 +165,8 @@ import x0.maceShibbolethTargetConfig1.HostDocument.Host;
 import x0.maceShibbolethTargetConfig1.PathDocument.Path;
 import x0.maceShibbolethTargetConfig1.SHIREDocument.SHIRE;
 import x0.maceShibbolethTargetConfig1.ShibbolethTargetConfigDocument.ShibbolethTargetConfig;
-import edu.internet2.middleware.shibboleth.common.AAP;
-import edu.internet2.middleware.shibboleth.common.AttributeRule;
+import edu.internet2.middleware.shibboleth.aap.AAP;
+import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.XML;
@@ -1007,59 +1008,76 @@ public class ServiceProviderConfig {
 		 * Empty SAML elements get removed from the assertion.
 		 * This can yield an AttributeAssertion with no attributes. 
 		 * 
-		 * @param entity     Origin site that sent the assertion
 		 * @param assertion  SAML Attribute Assertion
+         * @param role     Role that issued the assertion
+		 * @throws SAMLException  Raised if assertion is mangled beyond repair
 		 */
-		void applyAAP(EntityDescriptor entity, SAMLAssertion assertion) {
+		void applyAAP(SAMLAssertion assertion, RoleDescriptor role) throws SAMLException {
 		    
 		    // Foreach AAP in the collection
 			AAP[] providers = getAAPProviders();
+            if (providers.length == 0) {
+                log.info("no filters specified, accepting entire assertion");
+                return;
+            }
 			for (int i=0;i<providers.length;i++) {
 				AAP aap = providers[i];
-				if (aap.isAnyAttribute())
+				if (aap.anyAttribute()) {
+                    log.info("any attribute enabled, accepting entire assertion");
 					continue;
-				
-				// Foreach Statement in the Assertion
-				Iterator statements = assertion.getStatements();
-				int istatement=0;
-				while (statements.hasNext()) {
-					Object statement = statements.next();
-					if (statement instanceof SAMLAttributeStatement) {
-						SAMLAttributeStatement attributeStatement = 
-							(SAMLAttributeStatement) statement;
-						
-						// Foreach Attribute in the AttributeStatement
-						Iterator attributes = attributeStatement.getAttributes();
-						int iattribute=0;
-						while (attributes.hasNext()) {
-							SAMLAttribute attribute = 
-								(SAMLAttribute) attributes.next();
-							String name = attribute.getName();
-							String namespace = attribute.getNamespace();
-							AttributeRule rule = aap.lookup(name,namespace);
-							if (rule==null) {
-								// TODO Not sure, but code appears to keep unknown attributes
-								log.warn("No rule found for attribute "+name);
-								iattribute++;
-								continue;
-							}
-							rule.apply(entity,attribute);
-							if (!attribute.getValues().hasNext())
-								attributeStatement.removeAttribute(iattribute);
-							else
-								iattribute++;
-								
-						}
-						if (!attributeStatement.getAttributes().hasNext())
-							assertion.removeStatement(istatement);
-						else
-							istatement++;
-					} else {
-						istatement++;
+                }
+            }
+            
+			// Foreach Statement in the Assertion
+			Iterator statements = assertion.getStatements();
+			int istatement=0;
+			while (statements.hasNext()) {
+				Object statement = statements.next();
+				if (statement instanceof SAMLAttributeStatement) {
+					SAMLAttributeStatement attributeStatement =	(SAMLAttributeStatement) statement;
+					
+                    // Check each attribute, applying any matching rules.
+					Iterator attributes = attributeStatement.getAttributes();
+					int iattribute=0;
+					while (attributes.hasNext()) {
+						SAMLAttribute attribute = (SAMLAttribute) attributes.next();
+                        boolean ruleFound = false;
+                        for (int i=0;i<providers.length;i++) {
+    						AttributeRule rule = providers[i].lookup(attribute.getName(),attribute.getNamespace());
+    						if (rule!=null) {
+    						    ruleFound = true;
+                                try {
+                                    rule.apply(attribute,role);
+                                }
+                                catch (SAMLException ex) {
+                                    log.info("no values remain, removing attribute");
+        							attributeStatement.removeAttribute(iattribute--);
+                                    break;
+                                }
+                            }
+                        }
+                        if (!ruleFound) {
+                            log.warn("no rule found for attribute (" + attribute.getName() + "), filtering it out");
+                            attributeStatement.removeAttribute(iattribute--);
+                        }
+                        iattribute++;
+					}
+                    
+                    try {
+                        attributeStatement.checkValidity();
+                        istatement++;
+					}
+                    catch (SAMLException ex) {
+                        // The statement is now defunct.
+                        log.info("no attributes remain, removing statement");
+						assertion.removeStatement(istatement);
 					}
 				}
 			}
-		}
+
+            // Now see if we trashed it irrevocably.
+            assertion.checkValidity();
+        }
 		
 		
 		/**

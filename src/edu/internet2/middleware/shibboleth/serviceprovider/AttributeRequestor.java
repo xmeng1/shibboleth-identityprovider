@@ -169,20 +169,23 @@ public class AttributeRequestor {
 		}
 		
 		// Check each assertion in the response.
+        int acount = 0;
 		Iterator assertions = response.getAssertions();
 		while (assertions.hasNext()) {
 			SAMLAssertion assertion = (SAMLAssertion) assertions.next();
-			if (signedAssertions && 
-		       !assertion.isSigned()) {
+			if (signedAssertions && !assertion.isSigned()) {
 			        log.warn("AttributeRequestor has removed unsigned assertion from response from "+session.getEntityId());
-				assertions.remove();
+				response.removeAssertion(acount);
 				continue;
 			}
 			
-			appinfo.applyAAP(entity,assertion); // apply each AAP to this assertion
-			
-			if (!assertion.getStatements().hasNext())
-				assertions.remove(); // AAP rejected all statements for this assertion
+            try {
+                appinfo.applyAAP(assertion,aa); // apply each AAP to this assertion
+                acount++;
+            }
+			catch (SAMLException ex) {
+                response.removeAssertion(acount); // AAP rejected all statements for this assertion
+            }
 		}
 
 		// A response may end up with no attributes, but that is not an error.
