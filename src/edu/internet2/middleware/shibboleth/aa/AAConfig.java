@@ -56,6 +56,15 @@ public class AAConfig extends ShibbolethOriginConfig {
 		if (attribute != null && !attribute.equals("")) {
 			passThruErrors = Boolean.valueOf(attribute).booleanValue();
 		}
+		
+		//xsi:type hack
+		attribute = ((Element) config).getAttribute("typeHack");
+		if (attribute != null && !attribute.equals("")) {
+			if(Boolean.valueOf(attribute).booleanValue()) {
+				AAAttribute.typeHack = true;
+				log.debug("Enabling xsi:type hack.");
+			}
+		}
 
 		log.debug("Global config: (resolverConfig) = (" + getResolverConfigLocation() + ").");
 		log.debug("Global config: (passThruErrors) = (" + passThruErrors() + ").");
