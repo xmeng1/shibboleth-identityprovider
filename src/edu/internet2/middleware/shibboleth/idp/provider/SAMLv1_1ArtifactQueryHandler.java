@@ -26,12 +26,9 @@
 package edu.internet2.middleware.shibboleth.idp.provider;
 
 import java.io.IOException;
-import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletException;
@@ -39,8 +36,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
-import org.apache.xml.security.exceptions.XMLSecurityException;
-import org.apache.xml.security.keys.KeyInfo;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
@@ -50,14 +45,11 @@ import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
 import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
-import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * @author Walter Hoehn
@@ -65,9 +57,9 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
 
 	// TODO figure out how to refactor this
-	private ArtifactMapper artifactMapper;
+	private ArtifactMapper	artifactMapper;
 
-	private static Logger log = Logger.getLogger(SAMLv1_1ArtifactQueryHandler.class.getName());
+	private static Logger	log	= Logger.getLogger(SAMLv1_1ArtifactQueryHandler.class.getName());
 
 	SAMLv1_1ArtifactQueryHandler() throws ShibbolethConfigurationException {
 
@@ -85,8 +77,6 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 	}
 
 	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see edu.internet2.middleware.shibboleth.idp.ProtocolHandler#processRequest(javax.servlet.http.HttpServletRequest,
 	 *      javax.servlet.http.HttpServletResponse, edu.internet2.middleware.shibboleth.idp.ProtocolSupport)
 	 */
@@ -94,11 +84,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, InvalidClientDataException,
 			IOException, ServletException {
 
-		// TODO make this jsut test for artifacts... or something
-		/*
-		 * Iterator artifacts = samlRequest.getArtifacts(); if (artifacts.hasNext()) { artifacts = null; // get rid of
-		 * the iterator log.info("Recieved a request to dereference an assertion artifact."); }
-		 */
+		log.info("Recieved a request to dereference an assertion artifact.");
 
 		// TODO how about signatures on artifact dereferencing
 		// Pull credential from request
@@ -167,73 +153,6 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 		support.getTransactionLog().info(
 				"Succesfully dereferenced the following artifacts: " + dereferencedArtifacts.toString());
 		return samlResponse;
-	}
-
-	private static boolean isValidCredential(EntityDescriptor provider, X509Certificate certificate) {
-
-		SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
-		if (sp == null) {
-			log.info("Inappropriate metadata for provider.");
-			return false;
-		}
-		// TODO figure out what to do about this role business here
-		Iterator descriptors = sp.getKeyDescriptors();
-		while (descriptors.hasNext()) {
-			KeyInfo keyInfo = ((KeyDescriptor) descriptors.next()).getKeyInfo();
-			for (int l = 0; keyInfo.lengthKeyName() > l; l++) {
-				try {
-
-					// First, try to match DN against metadata
-					try {
-						if (certificate.getSubjectX500Principal().getName(X500Principal.RFC2253).equals(
-								new X500Principal(keyInfo.itemKeyName(l).getKeyName()).getName(X500Principal.RFC2253))) {
-							log.debug("Matched against DN.");
-							return true;
-						}
-					} catch (IllegalArgumentException iae) {
-						// squelch this runtime exception, since
-						// this might be a valid case
-					}
-
-					// If that doesn't work, we try matching against
-					// some Subject Alt Names
-					try {
-						Collection altNames = certificate.getSubjectAlternativeNames();
-						if (altNames != null) {
-							for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
-								List altName = (List) nameIterator.next();
-								if (altName.get(0).equals(new Integer(2)) || altName.get(0).equals(new Integer(6))) { // 2 is
-									// DNS,
-									// 6 is
-									// URI
-									if (altName.get(1).equals(keyInfo.itemKeyName(l).getKeyName())) {
-										log.debug("Matched against SubjectAltName.");
-										return true;
-									}
-								}
-							}
-						}
-					} catch (CertificateParsingException e1) {
-						log
-								.error("Encountered an problem trying to extract Subject Alternate Name from supplied certificate: "
-										+ e1);
-					}
-
-					// If that doesn't work, try to match using
-					// SSL-style hostname matching
-					if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
-							keyInfo.itemKeyName(l).getKeyName())) {
-						log.debug("Matched against hostname.");
-						return true;
-					}
-
-				} catch (XMLSecurityException e) {
-					log.error("Encountered an error reading federation metadata: " + e);
-				}
-			}
-		}
-		log.info("Supplied credential not found in metadata.");
-		return false;
 	}
 
 }

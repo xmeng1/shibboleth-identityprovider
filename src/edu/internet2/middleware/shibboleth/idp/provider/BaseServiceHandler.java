@@ -25,22 +25,106 @@
 
 package edu.internet2.middleware.shibboleth.idp.provider;
 
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
+import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.log4j.Logger;
+import org.apache.xml.security.exceptions.XMLSecurityException;
+import org.apache.xml.security.keys.KeyInfo;
+
+import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
+import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * @author Walter Hoehn
  */
 public abstract class BaseServiceHandler implements IdPProtocolHandler {
 
+	private static Logger	log	= Logger.getLogger(BaseServiceHandler.class.getName());
+
 	protected static X509Certificate getCredentialFromProvider(HttpServletRequest req) {
 
 		X509Certificate[] certArray = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
 		if (certArray != null && certArray.length > 0) { return certArray[0]; }
 		return null;
+	}
+
+	protected static boolean isValidCredential(EntityDescriptor provider, X509Certificate certificate) {
+
+		SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+		if (sp == null) {
+			log.info("Inappropriate metadata for provider.");
+			return false;
+		}
+		// TODO figure out what to do about this role business here
+		Iterator descriptors = sp.getKeyDescriptors();
+		while (descriptors.hasNext()) {
+			KeyInfo keyInfo = ((KeyDescriptor) descriptors.next()).getKeyInfo();
+			for (int l = 0; keyInfo.lengthKeyName() > l; l++) {
+				try {
+
+					// First, try to match DN against metadata
+					try {
+						if (certificate.getSubjectX500Principal().getName(X500Principal.RFC2253).equals(
+								new X500Principal(keyInfo.itemKeyName(l).getKeyName()).getName(X500Principal.RFC2253))) {
+							log.debug("Matched against DN.");
+							return true;
+						}
+					} catch (IllegalArgumentException iae) {
+						// squelch this runtime exception, since
+						// this might be a valid case
+					}
+
+					// If that doesn't work, we try matching against
+					// some Subject Alt Names
+					try {
+						Collection altNames = certificate.getSubjectAlternativeNames();
+						if (altNames != null) {
+							for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
+								List altName = (List) nameIterator.next();
+								if (altName.get(0).equals(new Integer(2)) || altName.get(0).equals(new Integer(6))) { // 2 is
+									// DNS,
+									// 6 is
+									// URI
+									if (altName.get(1).equals(keyInfo.itemKeyName(l).getKeyName())) {
+										log.debug("Matched against SubjectAltName.");
+										return true;
+									}
+								}
+							}
+						}
+					} catch (CertificateParsingException e1) {
+						log
+								.error("Encountered an problem trying to extract Subject Alternate Name from supplied certificate: "
+										+ e1);
+					}
+
+					// If that doesn't work, try to match using
+					// SSL-style hostname matching
+
+					//TODO stop relying on this class
+					if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
+							keyInfo.itemKeyName(l).getKeyName())) {
+						log.debug("Matched against hostname.");
+						return true;
+					}
+
+				} catch (XMLSecurityException e) {
+					log.error("Encountered an error reading federation metadata: " + e);
+				}
+			}
+		}
+		log.info("Supplied credential not found in metadata.");
+		return false;
 	}
 
 	protected class InvalidProviderCredentialException extends Exception {
