@@ -49,7 +49,20 @@
 
 package edu.internet2.middleware.shibboleth.hs.provider;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
@@ -63,22 +76,65 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
  */
 public class CryptoHandleRepository extends BaseHandleRepository implements HandleRepository {
 
-	protected CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
+	SecretKey secret;
+
+	public CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
+		KeyGenerator keyGen;
+		try {
+			keyGen = KeyGenerator.getInstance("DESede");
+		} catch (NoSuchAlgorithmException e) {
+			System.err.println(e);
+			return;
+		}
+        secret = keyGen.generateKey();
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
 	public String getHandle(AuthNPrincipal principal) {
-		return null;
+		try {
+
+			HandleEntry handleEntry = createHandleEntry(principal);
+			ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+			ObjectOutput objectStream = new ObjectOutputStream(outStream);
+			objectStream.writeObject(handleEntry);
+			objectStream.flush();
+			objectStream.close();
+
+			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, secret);
+			byte[] cipherTextHandle = cipher.doFinal(outStream.toByteArray());
+
+			String handle = new BASE64Encoder().encode(cipherTextHandle);
+			return handle.replaceAll(System.getProperty("line.separator"), "");
+
+		} catch (Exception e) {
+			System.err.println(e);
+			return null;
+		}
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
 	public AuthNPrincipal getPrincipal(String handle) {
-		return null;
+		
+		try {
+			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
+			cipher.init(Cipher.DECRYPT_MODE, secret);
+			byte[] objectArray = cipher.doFinal(new BASE64Decoder().decodeBuffer(handle));
+
+			ObjectInputStream objectStream = new ObjectInputStream(new ByteArrayInputStream(objectArray));
+			HandleEntry handleEntry = (HandleEntry) objectStream.readObject();
+			System.err.println(handleEntry.principal.getName());
+			return handleEntry.principal;
+			
+		} catch (Exception e) {
+			System.err.println(e);
+			return null;
+		}
 	}
 
 }

@@ -49,6 +49,7 @@
 
 package edu.internet2.middleware.shibboleth.hs.provider;
 
+import java.io.Serializable;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -100,7 +101,7 @@ public abstract class BaseHandleRepository implements HandleRepository {
 		
 }
 
-class HandleEntry {
+class HandleEntry implements Serializable {
 	protected AuthNPrincipal principal;
 	protected long expirationTime;
 
