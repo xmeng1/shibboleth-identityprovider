@@ -58,6 +58,7 @@ import java.util.Iterator;
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttributeQuery;
+import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
@@ -122,20 +123,35 @@ public class AttributeRequestor {
 		
 		// Build the Attribute Query 
 		SAMLAttributeQuery query = null;
-		SAMLSubject subject = session.getAuthenticationStatement().getSubject();
+		SAMLSubject subject;
+		try {
+			SAMLAuthenticationStatement authenticationStatement = session.getAuthenticationStatement();
+			if (authenticationStatement==null) {
+			    log.error("Session contains no Authentication Statement." );
+			    return false;
+			}
+			SAMLSubject subject2 = authenticationStatement.getSubject();
+			if (subject2==null) {
+			    log.error("Session Authentication Statement contains no Subject." );
+			    return false;
+			}
+			subject = (SAMLSubject) subject2.clone();
+		} catch (Exception e) {
+		    log.error("Unable to generate the query SAMLSubject from the Authenticaiton." );
+		    return false;
+		}
 		log.debug("Subject (Handle) is "+subject.getName());
 		Collection attributeDesignators = appinfo.getAttributeDesignators();
 		try {
             query = 
                 new SAMLAttributeQuery(
-            		subject,             // Subject (i.e. Handle) from authentication
+            		subject,     		 // Subject (i.e. Handle) from authentication
             		entity.getId(),      // ID of user's Entity (i.e. Origin Site)
             		attributeDesignators // Attributes to request, null for everything
             		);
 
             // Wrap the Query in a request
-            request = new SAMLRequest();
-            request.setQuery(query);
+            request = new SAMLRequest(query);
         } catch (SAMLException e) {
             log.error("AttributeRequestor unable to build SAML Query for Session "+session.getKey());
             return false;
