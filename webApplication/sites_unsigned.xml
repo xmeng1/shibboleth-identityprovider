@@ -5,6 +5,6 @@
     </OriginSite>
     <OriginSite Name="brown.edu">
         <Alias>Brown University</Alias>
-        <HandleService Location="http://dilbert2.cis.brown.edu/shibboleth/servlet/AA" Name="dilbert2.cis.brown.edu"/>
+        <HandleService Location="http://dilbert2.cis.brown.edu/shibboleth/HS" Name="dilbert2.cis.brown.edu"/>
     </OriginSite>
 </Sites>
