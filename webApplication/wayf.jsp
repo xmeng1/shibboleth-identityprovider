@@ -32,7 +32,6 @@
 
 				<h2>Choose from a list:</h2>
 				<logic:iterate id="originset" name="originsets">
-				<h3><jsp:getProperty name="originset" property="name" /></h3>
 				<form method="get" action="<bean:write name="requestURL" />">
 					<p>
 					<input type="hidden" name="shire" value="<bean:write name="shire" />" />

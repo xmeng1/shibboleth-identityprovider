@@ -66,7 +66,6 @@ import edu.internet2.middleware.shibboleth.common.ServletDigester;
 public class OriginSitesDigester extends ServletDigester {
 
 	protected String originClass = "edu.internet2.middleware.shibboleth.wayf.Origin";
-	protected String wayfDataClass = "edu.internet2.middleware.shibboleth.wayf.WayfOrigins";
 	protected String originSetClass = "edu.internet2.middleware.shibboleth.wayf.OriginSet";
 
 	private boolean configured = false;
@@ -102,35 +101,33 @@ public class OriginSitesDigester extends ServletDigester {
 		if (configured == true) {
 			return;
 		}
-		//Create data container
-		addObjectCreate("Sites", wayfDataClass);
-
+		push(new WayfOrigins());
 		//Digest sites that are nested in a group
-		addObjectCreate("Sites/SiteGroup", originSetClass);
-		addSetNext("Sites/SiteGroup", "addOriginSet", originSetClass);
-		addCallMethod("Sites/SiteGroup", "setName", 1);
-		addCallParam("Sites/SiteGroup", 0, "Name");
+		addObjectCreate("SiteGroup", originSetClass);
+		addSetNext("SiteGroup", "addOriginSet", originSetClass);
+		addCallMethod("SiteGroup", "setName", 1);
+		addCallParam("SiteGroup", 0, "Name");
 
-		addObjectCreate("Sites/SiteGroup/OriginSite", originClass);
-		addSetNext("Sites/SiteGroup/OriginSite", "addOrigin", originClass);
-		addCallMethod("Sites/SiteGroup/OriginSite", "setName", 1);
-		addCallParam("Sites/SiteGroup/OriginSite", 0, "Name");
-		addSetProperties("Sites/SiteGroup/OriginSite");
-		addCallMethod("Sites/SiteGroup/OriginSite/Alias", "addAlias", 0);
-		addCallMethod("Sites/SiteGroup/OriginSite", "setHandleService", 1);
-		addCallParam("Sites/SiteGroup/OriginSite/HandleService", 0, "Location");
+		addObjectCreate("SiteGroup/OriginSite", originClass);
+		addSetNext("SiteGroup/OriginSite", "addOrigin", originClass);
+		addCallMethod("SiteGroup/OriginSite", "setName", 1);
+		addCallParam("SiteGroup/OriginSite", 0, "Name");
+		addSetProperties("SiteGroup/OriginSite");
+		addCallMethod("SiteGroup/OriginSite/Alias", "addAlias", 0);
+		addCallMethod("SiteGroup/OriginSite", "setHandleService", 1);
+		addCallParam("SiteGroup/OriginSite/HandleService", 0, "Location");
 
 		//Digest sites without nesting and add them to the default group
-		addObjectCreate("Sites/OriginSite", originSetClass);
-		addSetNext("Sites/OriginSite", "addOriginSet", originSetClass);
-		addObjectCreate("Sites/OriginSite", originClass);
-		addSetNext("Sites/OriginSite", "addOrigin", originClass);
-		addCallMethod("Sites/OriginSite", "setName", 1);
-		addCallParam("Sites/OriginSite", 0, "Name");
-		addSetProperties("Sites/OriginSite");
-		addCallMethod("Sites/OriginSite/Alias", "addAlias", 0);
-		addCallMethod("Sites/OriginSite", "setHandleService", 1);
-		addCallParam("Sites/OriginSite/HandleService", 0, "Location");
+		addObjectCreate("OriginSite", originSetClass);
+		addSetNext("OriginSite", "addOriginSet", originSetClass);
+		addObjectCreate("OriginSite", originClass);
+		addSetNext("OriginSite", "addOrigin", originClass);
+		addCallMethod("OriginSite", "setName", 1);
+		addCallParam("OriginSite", 0, "Name");
+		addSetProperties("OriginSite");
+		addCallMethod("OriginSite/Alias", "addAlias", 0);
+		addCallMethod("OriginSite", "setHandleService", 1);
+		addCallParam("OriginSite/HandleService", 0, "Location");
 
 		configured = true;
 
