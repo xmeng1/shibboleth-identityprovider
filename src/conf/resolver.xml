@@ -1,0 +1,48 @@
+<AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonPrincipalName" smartScope="columbia.edu" cacheTime="1800000">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonNickName" lifeTime="1800000" cacheTime="1800000">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonEntitlement" lifeTime="300000" cacheTime="300000">
+		<DataConnectorDependency requires="echo"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonAffiliation" lifeTime="1800000" cacheTime="1800000">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonPrimaryAffiliation" cacheTime="1800000">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonScopedAffiliation" smartScope="example.com" cacheTime="1800000">
+		<AttributeDependency requires="urn:mace:eduPerson:1.0:eduPersonAffiliation"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:rfc2079:labeledURI" cacheTime="1800000">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<CustomAttributeDefinition id="urn:mace:example:homepage" 
+			class="edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SimpleAttributeDefinition" 
+			cacheTime="1800000" 
+			sourceName="labeledURI">
+		<DataConnectorDependency requires="directory"/>
+	</CustomAttributeDefinition>
+	
+	<CustomDataConnector id="echo" cacheTime="1800000"
+		class="edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SampleConnector" />
+	
+	<JNDIDirectoryDataConnector id="directory" cacheTime="1800000">
+		<Search filter="cn=%PRINCIPAL%">
+			<Controls />
+		</Search>
+		<Property name="java.naming.factory.initial" value="com.sun.jndi.ldap.LdapCtxFactory" />
+		<Property name="java.naming.provider.url" value="ldap://therock.cc.columbia.edu/dc=test,dc=com" />
+	</JNDIDirectoryDataConnector>
+</AttributeResolver>

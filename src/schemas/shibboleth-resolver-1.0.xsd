@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="urn:mace:shibboleth:resolver:1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:resolver="urn:mace:shibboleth:resolver:1.0" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="AttributeResolver">
+		<xs:complexType>
+			<xs:choice minOccurs="1" maxOccurs="unbounded">
+				<xs:element name="SimpleAttributeDefinition" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="resolver:BaseAttributeDefinition">
+								<xs:attribute name="sourceName" type="xs:string" use="optional"/>
+								<xs:attribute name="smartScope" type="xs:string" use="optional"/>
+								<xs:attribute name="valueHandler" type="xs:string" use="optional"/>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="CustomAttributeDefinition" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="resolver:BaseAttributeDefinition">
+								<xs:sequence minOccurs="0" maxOccurs="unbounded">
+									<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+								</xs:sequence>
+								<xs:attribute name="class" type="xs:string" use="required"/>
+								<xs:anyAttribute namespace="##any" processContents="lax"/>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="CustomDataConnector" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="resolver:BaseResolutionPlugIn">
+								<xs:sequence minOccurs="0" maxOccurs="unbounded">
+									<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+								</xs:sequence>
+								<xs:attribute name="class" type="xs:string" use="required"/>
+								<xs:anyAttribute namespace="##any" processContents="lax"/>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="JNDIDirectoryDataConnector" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="resolver:BaseResolutionPlugIn">
+								<xs:sequence>
+									<xs:element name="Search">
+										<xs:complexType>
+											<xs:sequence minOccurs="0">
+												<xs:element name="Controls">
+													<xs:complexType>
+														<xs:attribute name="searchScope" type="xs:string" use="optional"/>
+														<xs:attribute name="timeLimit" type="xs:int" use="optional"/>
+														<xs:attribute name="returningObjects" type="xs:boolean" use="optional"/>
+														<xs:attribute name="linkDereferencing" type="xs:boolean" use="optional"/>
+														<xs:attribute name="countLimit" type="xs:long" use="optional"/>
+													</xs:complexType>
+												</xs:element>
+											</xs:sequence>
+											<xs:attribute name="filter" type="xs:string" use="required"/>
+										</xs:complexType>
+									</xs:element>
+									<xs:sequence>
+										<xs:element name="Property" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="name" type="xs:string" use="required"/>
+												<xs:attribute name="value" type="xs:string" use="required"/>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:sequence>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="BaseAttributeDefinition">
+		<xs:complexContent>
+			<xs:extension base="resolver:BaseResolutionPlugIn">
+				<xs:choice minOccurs="0" maxOccurs="unbounded">
+					<xs:element name="DataConnectorDependency">
+						<xs:complexType>
+							<xs:attribute name="requires" type="xs:string" use="required"/>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="AttributeDependency">
+						<xs:complexType>
+							<xs:attribute name="requires" type="xs:string" use="optional"/>
+						</xs:complexType>
+					</xs:element>
+				</xs:choice>
+				<xs:attribute name="lifeTime" type="xs:long" use="optional"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="BaseResolutionPlugIn">
+		<xs:attribute name="id" type="xs:string" use="required"/>
+		<xs:attribute name="cacheTime" type="xs:string" use="optional"/>
+	</xs:complexType>
+</xs:schema>
