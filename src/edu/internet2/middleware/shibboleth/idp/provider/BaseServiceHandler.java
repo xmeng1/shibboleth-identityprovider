@@ -37,8 +37,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
+import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
@@ -47,9 +49,17 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 /**
  * @author Walter Hoehn
  */
-public abstract class BaseServiceHandler implements IdPProtocolHandler {
+public abstract class BaseServiceHandler extends BaseHandler implements IdPProtocolHandler {
 
-	private static Logger	log	= Logger.getLogger(BaseServiceHandler.class.getName());
+	/**
+	 * Required DOM-based constructor.
+	 */
+	public BaseServiceHandler(Element config) throws ShibbolethConfigurationException {
+
+		super(config);
+	}
+
+	private static Logger log = Logger.getLogger(BaseServiceHandler.class.getName());
 
 	protected static X509Certificate getCredentialFromProvider(HttpServletRequest req) {
 
@@ -111,7 +121,7 @@ public abstract class BaseServiceHandler implements IdPProtocolHandler {
 					// If that doesn't work, try to match using
 					// SSL-style hostname matching
 
-					//TODO stop relying on this class
+					// TODO stop relying on this class
 					if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
 							keyInfo.itemKeyName(l).getKeyName())) {
 						log.debug("Matched against hostname.");

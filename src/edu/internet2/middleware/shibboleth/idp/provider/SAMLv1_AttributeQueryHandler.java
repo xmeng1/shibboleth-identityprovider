@@ -54,6 +54,7 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
+import org.w3c.dom.Element;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.aa.AAException;
@@ -61,6 +62,7 @@ import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
@@ -71,6 +73,14 @@ import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(SAMLv1_AttributeQueryHandler.class.getName());
+
+	/**
+	 * Required DOM-based constructor.
+	 */
+	public SAMLv1_AttributeQueryHandler(Element config) throws ShibbolethConfigurationException {
+
+		super(config);
+	}
 
 	/*
 	 * @see edu.internet2.middleware.shibboleth.idp.ProtocolHandler#getHandlerName()

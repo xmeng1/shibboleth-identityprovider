@@ -26,6 +26,7 @@
 package edu.internet2.middleware.shibboleth.idp;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -60,7 +61,6 @@ import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.idp.provider.ShibbolethV1SSOHandler;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
@@ -170,14 +170,30 @@ public class IdPResponder extends HttpServlet {
 			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"ProtocolHandler");
 
-			//TODO Default if no handlers are specified
+			// Default if no handlers are specified
+			if (itemElements.getLength() < 1) {
+				// TODO work out defaulting
 
-			for (int i = 0; i < itemElements.getLength(); i++) {
-				IdPProtocolHandler handler = ProtocolHandlerFactory.getInstance((Element) itemElements.item(i));
+				// If handlers were specified, load them and register them against their locations
+			} else {
+				EACHHANDLER : for (int i = 0; i < itemElements.getLength(); i++) {
+					IdPProtocolHandler handler = ProtocolHandlerFactory.getInstance((Element) itemElements.item(i));
+					URI[] locations = handler.getLocations();
+					EACHLOCATION : for (int j = 0; j < locations.length; j++) {
+						if (protocolHandlers.containsKey(locations[j].toString())) {
+							log.error("Multiple protocol handlers are registered to listen at ("
+									+ locations[j]
+									+ ").  Ignoring all except ("
+									+ ((IdPProtocolHandler) protocolHandlers.get(locations[j].toString()))
+											.getHandlerName() + ").");
+							continue EACHLOCATION;
+						}
+						log.info("Registering handler (" + handler.getHandlerName() + ") to listen at (" + locations[j]
+								+ ").");
+						protocolHandlers.put(locations[j].toString(), handler);
+					}
+				}
 			}
-			//TODO finish fleshing this out
-			log.debug("Starting with Shibboleth v1 protocol handling enabled.");
-			protocolHandlers.put("https://wraith.memphis.edu/shibboleth/SSO", new ShibbolethV1SSOHandler());
 
 			// Load metadata
 			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
@@ -209,7 +225,7 @@ public class IdPResponder extends HttpServlet {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via GET for endpoint (" + request.getRequestURL() + ").");
+		log.debug("Recieved a request via GET for location (" + request.getRequestURL() + ").");
 
 		try {
 			// TODO this throttle should probably just wrap signing operations...
@@ -219,8 +235,8 @@ public class IdPResponder extends HttpServlet {
 			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURL()
 					.toString());
 			if (activeHandler == null) {
-				log.error("No protocol handler registered for endpoint (" + request.getRequestURL() + ").");
-				throw new SAMLException("Request submitted to an invalid endpoint.");
+				log.error("No protocol handler registered for location (" + request.getRequestURL() + ").");
+				throw new SAMLException("Request submitted to an invalid location.");
 			}
 
 			// Pass request to the appropriate handler
@@ -248,7 +264,7 @@ public class IdPResponder extends HttpServlet {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via POST for endpoint (" + request.getRequestURL() + ").");
+		log.debug("Recieved a request via POST for location (" + request.getRequestURL() + ").");
 
 		// Parse SOAP request and marshall SAML request object
 		SAMLRequest samlRequest = null;
@@ -279,8 +295,8 @@ public class IdPResponder extends HttpServlet {
 			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURL()
 					.toString());
 			if (activeHandler == null) {
-				log.error("No protocol handler registered for endpoint (" + request.getRequestURL() + ").");
-				throw new SAMLException("Request submitted to an invalid endpoint.");
+				log.error("No protocol handler registered for location (" + request.getRequestURL() + ").");
+				throw new SAMLException("Request submitted to an invalid location.");
 			}
 
 			// Pass request to the appropriate handler and respond

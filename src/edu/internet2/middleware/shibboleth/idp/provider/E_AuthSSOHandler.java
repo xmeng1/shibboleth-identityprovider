@@ -49,9 +49,11 @@ import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
@@ -59,7 +61,7 @@ import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
 /**
  * @author Walter Hoehn
  */
-public class E_AuthSSOHandler implements IdPProtocolHandler {
+public class E_AuthSSOHandler extends BaseHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(E_AuthSSOHandler.class.getName());
 	private final String name = "EAuth";
@@ -67,10 +69,17 @@ public class E_AuthSSOHandler implements IdPProtocolHandler {
 	private final String eAuthFed = "urn:mace:shibboleth:eAuthFed";
 	private String csid;
 
-	//TODO validate that the target wants artifact, since it is required for this profile
-	//TODO validate that we aren't using signatures
-	//TODO validate that we are using the right nameIdentifier format
-	//TODO more robust attribute values before we ship
+	// TODO validate that the target wants artifact, since it is required for this profile
+	// TODO validate that we aren't using signatures
+	// TODO validate that we are using the right nameIdentifier format
+	// TODO more robust attribute values before we ship
+	/**
+	 * Required DOM-based constructor.
+	 */
+	public E_AuthSSOHandler(Element config) throws ShibbolethConfigurationException {
+
+		super(config);
+	}
 
 	/*
 	 * @see edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler#getHandlerName()
@@ -94,7 +103,7 @@ public class E_AuthSSOHandler implements IdPProtocolHandler {
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
 		}
 
-		//If no aaid is specified, redirect to the eAuth portal
+		// If no aaid is specified, redirect to the eAuth portal
 		if (request.getParameter("aaid") == null || request.getParameter("aaid").equals("")) {
 			log.debug("Received an E-Authentication request with no (aaid) parameter.  "
 					+ "Redirecting to the E-Authentication portal.");
@@ -102,9 +111,9 @@ public class E_AuthSSOHandler implements IdPProtocolHandler {
 			return null;
 		}
 
-		//FUTURE at some point this needs to be integrated with SAML2 session reset
-		//If session reset was requested, delete the session and re-direct back
-		//Note, this only works with servler form-auth
+		// FUTURE at some point this needs to be integrated with SAML2 session reset
+		// If session reset was requested, delete the session and re-direct back
+		// Note, this only works with servler form-auth
 		String reAuth = request.getParameter("sessionreset");
 		if (reAuth != null && reAuth.equals("1")) {
 			log.debug("E-Authebtication session reset requested.");
@@ -124,7 +133,7 @@ public class E_AuthSSOHandler implements IdPProtocolHandler {
 			// TODO Auto-generated catch block
 		}
 
-		//TODO figure this out
+		// TODO figure this out
 		RelyingParty relyingParty = null;
 		SAMLNameIdentifier nameId = null;
 		String authenticationMethod = null;
@@ -144,15 +153,15 @@ public class E_AuthSSOHandler implements IdPProtocolHandler {
 			conditions.add(new SAMLAudienceRestrictionCondition(audiences));
 		}
 
-		//TODO need to pull this out into the generic artifact handling
+		// TODO need to pull this out into the generic artifact handling
 		String[] confirmationMethods = {SAMLSubject.CONF_ARTIFACT};
 		SAMLSubject subject = new SAMLSubject(nameId, Arrays.asList(confirmationMethods), null, null);
-		//TODO pull from authN system? or make configurable
+		// TODO pull from authN system? or make configurable
 		ArrayList attributes = new ArrayList();
 		attributes.add(new SAMLAttribute("assuranceLevel", "http://eauthentication.gsa.gov/federated/attribute", null,
 				0, Arrays.asList(new String[]{"2"})));
 
-		//TODO Hack Alert!!!
+		// TODO Hack Alert!!!
 		// Pull attributes from AA
 		String hackFullName = null;
 		if (nameId.getName().startsWith("uid=tomcat")) {
@@ -187,7 +196,7 @@ public class E_AuthSSOHandler implements IdPProtocolHandler {
 								"UTF8"));
 			}
 			return null;
-		} catch (CloneNotSupportedException e) { //TODO handle return null; } }
+		} catch (CloneNotSupportedException e) { // TODO handle return null; } }
 
 		}
 

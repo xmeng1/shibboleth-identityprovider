@@ -40,6 +40,7 @@ import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
+import org.w3c.dom.Element;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
@@ -56,12 +57,14 @@ import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
 
 	// TODO figure out how to refactor this
-	private ArtifactMapper	artifactMapper;
+	private ArtifactMapper artifactMapper;
 
-	private static Logger	log	= Logger.getLogger(SAMLv1_1ArtifactQueryHandler.class.getName());
+	private static Logger log = Logger.getLogger(SAMLv1_1ArtifactQueryHandler.class.getName());
 
-	SAMLv1_1ArtifactQueryHandler() throws ShibbolethConfigurationException {
-		//TODO move the mapper out into protocol support
+	public SAMLv1_1ArtifactQueryHandler(Element config) throws ShibbolethConfigurationException {
+
+		super(config);
+		// TODO move the mapper out into protocol support
 		artifactMapper = new MemoryArtifactMapper();
 	}
 

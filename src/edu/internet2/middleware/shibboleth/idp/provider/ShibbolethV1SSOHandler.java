@@ -53,6 +53,7 @@ import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import sun.misc.BASE64Decoder;
 
@@ -60,6 +61,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
@@ -71,9 +73,17 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 /**
  * @author Walter Hoehn
  */
-public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
+public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(ShibbolethV1SSOHandler.class.getName());
+
+	/**
+	 * Required DOM-based constructor.
+	 */
+	public ShibbolethV1SSOHandler(Element config) throws ShibbolethConfigurationException {
+
+		super(config);
+	}
 
 	/*
 	 * @see edu.internet2.middleware.shibboleth.idp.IdPResponder.ProtocolHandler#processRequest(javax.servlet.http.HttpServletRequest,

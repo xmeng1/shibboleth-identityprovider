@@ -23,47 +23,76 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.idp;
+package edu.internet2.middleware.shibboleth.idp.provider;
 
-import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashSet;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.apache.log4j.Logger;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import org.opensaml.SAMLException;
-import org.opensaml.SAMLRequest;
-import org.opensaml.SAMLResponse;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 
 /**
- * Defines the processing for an IdP-supported protocol. A particular <code>IdPProtocolHandler</code> implementation
- * is registered to process requests delivered from one or more URL locations. Core IdP functionality is delivered
- * through the <code>IdPProtocolSupport</code> class.
+ * Functionality common to all <code>IdPProtocolHandler</code> implementation.
  * 
  * @author Walter Hoehn
  */
-public interface IdPProtocolHandler {
+public abstract class BaseHandler implements IdPProtocolHandler {
+
+	private static Logger log = Logger.getLogger(BaseHandler.class.getName());
+	private HashSet locations = new HashSet();
 
 	/**
-	 * Retreives a textual name for the handler for display purposes.
+	 * Required DOM-based constructor.
 	 */
-	public String getHandlerName();
+	public BaseHandler(Element config) throws ShibbolethConfigurationException {
 
-	/**
-	 * Runs the protocol-specific request processing.
-	 * 
-	 * @param samlRequest
-	 *            the request that inititiated the transaction or null
-	 * @param support
-	 * @return a <code>SAMLResponse</code> object that should be delivered to the binding upon which the request was
-	 *         received or null
-	 */
-	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException;
+		// Make sure we have at least one location
+		NodeList locations = config.getElementsByTagNameNS(IdPConfig.configNameSpace, "Location");
+		if (locations.getLength() < 1) {
+			log.error("The <ProtocolHandler/> element must contain at least one <Location/> element.");
+			throw new ShibbolethConfigurationException("Unable to load ProtocolHandler.");
+		}
 
-	/**
-	 * Returns the locations for which this handler should process requests.
+		// Parse the locations
+		for (int i = 0; i < locations.getLength(); i++) {
+			Node tnode = ((Element) locations.item(i)).getFirstChild();
+			if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+				String rawURI = tnode.getNodeValue();
+
+				if (rawURI == null || rawURI.equals("")) {
+					log.error("The <Location/> element inside the <ProtocolHandler/> element must contain a URI.");
+					throw new ShibbolethConfigurationException("Unable to load ProtocolHandler.");
+				}
+
+				try {
+					URI location = new URI(rawURI);
+					this.locations.add(location);
+				} catch (URISyntaxException e) {
+					log.error("The <Location/> element inside the <ProtocolHandler/> element contains "
+							+ "an improperly formatted URI: " + e);
+					throw new ShibbolethConfigurationException("Unable to load ProtocolHandler.");
+				}
+
+			} else {
+				log.error("The <Location/> element inside the <ProtocolHandler/> element must contain a URI.");
+				throw new ShibbolethConfigurationException("Unable to load ProtocolHandler.");
+			}
+		}
+	}
+
+	/*
+	 * @see edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler#getLocations()
 	 */
-	public URI[] getLocations();
+	public URI[] getLocations() {
+
+		return (URI[]) locations.toArray(new URI[0]);
+	}
+
 }
