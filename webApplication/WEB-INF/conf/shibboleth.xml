@@ -40,18 +40,5 @@
 			<String>School</String>
 		</SearchIgnore>
 	</WayfConfig>
-	
-	<HsConfig 
-		supportContact="mailto:shib-test@internet2.org"
-		logoLocation="images/internet2.gif"
-		validityPeriod = "1400000"
-		domain = "internet2.edu"
-		issuer = "shib2.internet2.edu"
-		aaURL = "https://shib2.internet2.edu/shibb/servlet/AAServlet"
-		detailedHelpURL = "http://foo.bar"
-		handleRepositoryImplementation = "edu.internet2.middleware.shibboleth.common.provider.MemoryHandleRepository">
-			<HelpText>In order to fulfill the request for the web resource you have just chosen, information must be sent from your home institution to the provider of the resource.  The web resource should load automatically.  If it does not load within five seconds, click on the Transmit button.</HelpText>
-			<SecretKey>npsHVB/3OALcE+ydFtxAKp6bB1Qf9zgC</SecretKey>
-	</HsConfig>
 
 </ShibbolethConfig>

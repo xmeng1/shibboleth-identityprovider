@@ -94,7 +94,7 @@ public class HandleService extends HttpServlet {
 		hsConfigFileLocation =
 			getServletConfig().getInitParameter("HSConfigFileLocation");
 		if (hsConfigFileLocation == null) {
-			hsConfigFileLocation = "/WEB-INF/conf/shibboleth.xml";
+			hsConfigFileLocation = "/WEB-INF/conf/hsconfig.xml";
 		}
 		log4jConfigFileLocation =
 			getServletConfig().getInitParameter("log4jConfigFileLocation");

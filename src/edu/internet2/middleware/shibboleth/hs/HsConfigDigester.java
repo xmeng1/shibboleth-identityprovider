@@ -49,10 +49,10 @@ public class HsConfigDigester extends Digester {
 		if (configured == true) {
 			return;
 		}
-		addObjectCreate("ShibbolethConfig", hsConfigClass);
-		addSetProperties("ShibbolethConfig/HsConfig");
-		addCallMethod("ShibbolethConfig/HsConfig/HelpText", "setHelpText", 0);
-		addCallMethod("ShibbolethConfig/HsConfig/SecretKey", "setSecretKey", 0);
+		addObjectCreate("HandleServiceConfig", hsConfigClass);
+		addSetProperties("HandleServiceConfig");
+		addCallMethod("HandleServiceConfig/HelpText", "setHelpText", 0);
+		addCallMethod("HandleServiceConfig/SecretKey", "setSecretKey", 0);
 
 		configured = true;
 
