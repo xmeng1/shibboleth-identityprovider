@@ -54,6 +54,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -288,7 +289,7 @@ public class ArpEngine {
 			}
 
 			//Handle "Permit All-Except" and "Permit Specific"
-			Set releaseValues = new HashSet();
+			ArrayList releaseValues = new ArrayList();
 			for (Iterator valueIterator = arpAttribute.getValues();valueIterator.hasNext();) {
 				Object value = valueIterator.next();
 				if (attribute.isValuePermitted(value)) {
