@@ -63,14 +63,14 @@ public class NameMapperTests extends TestCase {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	public static void main(String[] args) {
 
 		junit.textui.TestRunner.run(NameMapperTests.class);
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	protected void setUp() throws Exception {
@@ -142,7 +142,7 @@ public class NameMapperTests extends TestCase {
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			log.debug("Waiting 11 seconds for the handle to expire.");
-			Thread.sleep(22000);
+			Thread.sleep(11000);
 
 			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
