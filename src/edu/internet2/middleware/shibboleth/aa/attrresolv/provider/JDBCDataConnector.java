@@ -679,13 +679,14 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 					throw new JDBCStatementCreatorException("Cannot parameterize prepared statement: missing dependency value.");
 				}
 
-				if (attribute.size() < 1) {
+				if (attribute.size() > 1) {
 					log.error("Statement Creator encountered a multivalued dependent attribute.");
 					throw new JDBCStatementCreatorException("Statement Creator encountered a multivalued dependent attribute.");
 				}
 
 				try {
 					setSpecificParameter(preparedStatement, valueIndex, attribute.get());
+					return;
 				} catch (NamingException e) {
 					log.error(
 						"Statement Creator encountered an error while extracting attributes from a Data Conector: "
