@@ -136,6 +136,7 @@
             <classpath refid="build.path" />
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
+			<test name="edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverTests" />
         </junit>
     </target>
     
