@@ -54,6 +54,7 @@ import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.CustomAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.CustomDataConnector;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.JDBCDataConnector;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.JNDIDirectoryDataConnector;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.PersistentIDAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SimpleAttributeDefinition;
@@ -89,6 +90,10 @@ public class ResolutionPlugInFactory {
 
 		if (e.getTagName().equals("JNDIDirectoryDataConnector")) {
 			return new JNDIDirectoryDataConnector(e);
+		}
+
+		if (e.getTagName().equals("JDBCDataConnector")) {
+			return new JDBCDataConnector(e);
 		}
 
 		log.error("Unrecognized PlugIn type: " + e.getTagName());
