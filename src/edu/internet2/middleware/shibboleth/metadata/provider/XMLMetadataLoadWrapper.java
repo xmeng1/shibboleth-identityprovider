@@ -27,11 +27,16 @@
 package edu.internet2.middleware.shibboleth.metadata.provider;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
@@ -51,21 +56,65 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 	private DOMParser		parser;
 
 	public XMLMetadataLoadWrapper(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
-		super(new ShibResource(sitesFileLocation), 5000);
+		super(new ShibResource(sitesFileLocation));
 
-		//TODO make validating
 		parser = new DOMParser();
 		try {
-			////parser.setFeature("http://xml.org/sax/features/validation", false);
-			//parser.setFeature("http://apache.org/xml/features/validation/schema", false);
+			parser.setFeature("http://xml.org/sax/features/validation", true);
+			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
+
+			parser.setEntityResolver(new EntityResolver() {
+
+				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
+					log.debug("Resolving entity for System ID: " + systemId);
+					if (systemId != null) {
+						StringTokenizer tokenString = new StringTokenizer(systemId, "/");
+						String xsdFile = "";
+						while (tokenString.hasMoreTokens()) {
+							xsdFile = tokenString.nextToken();
+						}
+						if (xsdFile.endsWith(".xsd")) {
+							InputStream stream;
+							try {
+								stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
+							} catch (IOException ioe) {
+								log.error("Error loading schema: " + xsdFile + ": " + ioe);
+								return null;
+							}
+							if (stream != null) {
+								return new InputSource(stream);
+							}
+						}
+					}
+					return null;
+				}
+			});
+
+			parser.setErrorHandler(new ErrorHandler() {
+
+				public void error(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+
+				public void fatalError(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+
+				public void warning(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+			});
+
 			parser.parse(new InputSource(resource.getInputStream()));
+
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Encountered a problem parsing federation metadata source: " + e);
+			throw new MetadataException("Unable to parse federation metadata.");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Encountered a problem reading federation metadata source: " + e);
+			throw new MetadataException("Unable to read federation metadata.");
 		}
+
 		currentMeta = new XMLMetadata(parser.getDocument().getDocumentElement());
 
 		//Start checking for metadata updates
