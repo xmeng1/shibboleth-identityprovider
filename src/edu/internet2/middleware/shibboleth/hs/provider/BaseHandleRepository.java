@@ -69,13 +69,12 @@ public abstract class BaseHandleRepository implements HandleRepository {
 
 	protected BaseHandleRepository(Properties properties) throws HandleRepositoryException {
 		try {
-			if (properties.getProperty("edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL", null)
+			if (properties.getProperty("edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL")
 				!= null) {
-
 				handleTTL =
 					Long.parseLong(
 						properties.getProperty(
-							"edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL",
+							"edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL",
 							null));
 				if (handleTTL < 30000) {
 					log.warn(
@@ -83,10 +82,12 @@ public abstract class BaseHandleRepository implements HandleRepository {
 							+ "value.  It is recommended that you increase it.");
 				}
 			}
+			log.debug("Attribute Query Handle TTL set to (" + handleTTL + ") milliseconds.");
+			
 		} catch (NumberFormatException nfe) {
 			log.error(
-				"Value for (edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL) must be a long integer.");
-			throw new HandleRepositoryException("Value for (edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL) must be a long integer.");
+				"Value for (edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL) must be a long integer.");
+			throw new HandleRepositoryException("Value for (edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL) must be a long integer.");
 		}
 
 	}

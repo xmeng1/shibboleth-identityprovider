@@ -54,10 +54,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
 import org.doomdark.uuid.UUIDGenerator;
 
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
+import edu.internet2.middleware.shibboleth.hs.HandleServlet;
 
 /**
  * <code>HandleRepository</code> implementation that uses a static cache.  This requires
@@ -68,6 +70,9 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 public class MemoryHandleRepository extends BaseHandleRepository implements HandleRepository {
 
 	protected static Map handleEntries = new HashMap();
+		private static Logger log = Logger.getLogger(MemoryHandleRepository.class.getName());
+
+
 
 	public MemoryHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
@@ -78,6 +83,7 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 	 */
 	public String getHandle(Principal principal) {
 		String handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
+		log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
 		synchronized (handleEntries) {
 			handleEntries.put(handle, new HandleEntry(principal));
 		}
@@ -90,6 +96,7 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 	public Principal getPrincipal(String handle) {
 		synchronized (handleEntries) {
 			if (!handleEntries.containsKey(handle)) {
+				log.debug("Repository does not contain an entry for this Attribute Query Handle.");
 				return null;
 			}
 		}
@@ -98,11 +105,13 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 			handleEntry = (HandleEntry) handleEntries.get(handle);
 		}
 		if (handleEntry.isExpired()) {
+			log.debug("Attribute Query Handle is expired.");
 			synchronized (handleEntries) {
 				handleEntries.remove(handle);
 			}
 			return null;
 		} else {
+			log.debug("Attribute Query Handle recognized.");
 			return handleEntry.principal;
 		}
 	}
