@@ -27,6 +27,7 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import javax.servlet.ServletContext;
+
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 
@@ -64,20 +65,25 @@ public class OriginConfig {
 	 */
 	public static synchronized Document getOriginConfig(String configFileLocation)
 			throws ShibbolethConfigurationException {
+
 		if (configFileLocation.equals(originConfigFile)) {
 			return originConfig;
+			
 		} else if (originConfigFile == null) {
 			originConfigFile = configFileLocation;
+			
 		} else {
 			log.error("Previously read origin configuration from (" + originConfigFile + "), re-reading from ("
 					+ configFileLocation + "). This probably indicates a bug in shibboleth.");
 			originConfigFile = configFileLocation;
 		}
-		
-		originConfig = Parser.loadDom(configFileLocation, true);
-		if (originConfig==null)
-		    throw new ShibbolethConfigurationException("Problem in "+XML.ORIGIN_SHEMA_ID+" see log");
 
+		try {
+			originConfig = Parser.loadDom(configFileLocation, true);
+		} catch (Exception e) {
+			log.error("Encountered an error while parsing Shibboleth Identity Provider configuration file: " + e);
+			throw new ShibbolethConfigurationException("Unable to parse IdP configuration file.");
+		}
 		return originConfig;
 	}
 

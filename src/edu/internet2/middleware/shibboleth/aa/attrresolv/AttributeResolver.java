@@ -52,6 +52,7 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -111,6 +112,9 @@ public class AttributeResolver {
 		} catch (IOException e) {
 			log.error("Error reading Attribute Resolver Configuration file: " + e);
 			throw new AttributeResolverException("Error reading Attribute Resolver Configuration file.");
+		} catch (SAMLException e) {
+			log.error("Error parsing Attribute Resolver Configuration file: " + e);
+			throw new AttributeResolverException("Error parsing Attribute Resolver Configuration file.");
 		}
 	}
 

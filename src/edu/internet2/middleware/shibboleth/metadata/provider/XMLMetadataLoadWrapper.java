@@ -59,7 +59,7 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 		try {
 			Document doc = Parser.loadDom(new InputSource(resource.getInputStream()),true);
 			currentMeta = new XMLMetadata(doc.getDocumentElement());
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.error("Encountered a problem reading federation metadata source: " + e);
 			throw new MetadataException("Unable to read federation metadata.");
 		}
@@ -89,7 +89,7 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 		//Load new, but keep the old in place
 		try {
             newDoc = Parser.loadDom(new InputSource(resource.getInputStream()),true);
-        } catch (IOException e) {
+        } catch (Exception e) {
 			log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy.");
 			return;
 		}

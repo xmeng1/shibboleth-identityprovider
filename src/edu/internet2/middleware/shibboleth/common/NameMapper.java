@@ -89,7 +89,7 @@ public class NameMapper {
 			String rawConfig = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\"" + "		handleTTL=\"1800\"/>";
 			Parser.DOMParser parser = new Parser.DOMParser(false);
-			parser.parse(new InputSource(new StringReader(rawConfig)));
+			parser.parse(new InputSource(new StringReader(rawConfig)));			
 			defaultMapping = new SharedMemoryShibHandle(parser.getDocument().getDocumentElement());
 
 		} catch (Exception e) {

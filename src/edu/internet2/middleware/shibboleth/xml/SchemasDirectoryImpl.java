@@ -8,6 +8,7 @@
 package edu.internet2.middleware.shibboleth.xml;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -98,7 +100,13 @@ public class SchemasDirectoryImpl implements Schemas {
             InputSource insrc = new InputSource(inputStream);
            
             // Non-validating parse to DOM
-            Document xsddom = Parser.loadDom(insrc,false);
+            Document xsddom;
+			try {
+				xsddom = Parser.loadDom(insrc,false);
+			} catch (Exception e) {
+				log.error("Error parsing XML schema (" + filename + "): " + e);
+				continue;
+			}
             
             // Get the target namespace from the root element
             Element ele = xsddom.getDocumentElement();

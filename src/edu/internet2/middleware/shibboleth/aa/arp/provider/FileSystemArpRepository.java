@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.security.Principal;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -153,7 +154,11 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 			}
 
 			Parser.DOMParser parser = new Parser.DOMParser(true);
-			parser.parse(new InputSource(resource.getInputStream()));
+			try {
+				parser.parse(new InputSource(resource.getInputStream()));
+			} catch (SAMLException e) {
+				throw new SAXException(e);
+			}
 			return parser.getDocument().getDocumentElement();
 
 		} catch (ShibResource.ResourceNotAvailableException e) {

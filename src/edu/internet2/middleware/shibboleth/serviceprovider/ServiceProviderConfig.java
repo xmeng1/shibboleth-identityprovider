@@ -133,6 +133,7 @@
 
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -147,10 +148,12 @@ import org.apache.xmlbeans.XmlOptions;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 import x0.maceShibboleth1.AttributeAcceptancePolicyDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument;
@@ -320,8 +323,9 @@ public class ServiceProviderConfig {
 		}
 
 		Document configDoc;
-        configDoc = Parser.loadDom(configFilePath, true);
-        if (configDoc==null) {
+        try {
+			configDoc = Parser.loadDom(configFilePath, true);
+		} catch (Exception e) {
             throw new ShibbolethConfigurationException("XML error in "+configFilePath);
         }
         loadConfigBean(configDoc);
