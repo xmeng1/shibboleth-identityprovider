@@ -109,6 +109,11 @@
         <HandleService Location="https://oac37.hsc.uth.tmc.edu/shibboleth/HS" Name="oac37.hsc.uth.tmc.edu"></HandleService>
         <Domain>uth.tmc.edu</Domain>
     </OriginSite>
+    <OriginSite Name="gsu.edu">
+        <Alias>Georgia State University</Alias>
+        <HandleService Location="http://art12.gsu.edu:8080/shibboleth/HS" Name="art12.gsu.edu"></HandleService>
+        <Domain>gsu.edu</Domain>
+    </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
@@ -118,15 +123,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>LVQizuZ8VBo8liHcBwMZS6EF9j8=</ds:DigestValue>
+<ds:DigestValue>QSzycPJei0h2KN3omHM7f04cc/o=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-NuMKif+AQ7F8L0tKPEn2ZgvwpLrEUtv/X7fngG+lpe5g0e1t1UBYvCY1N+ZOq0hz/ZTech+s1bE7
-yBn99qmRdEk0CCIOpK9TjCBVcvkBU7KLOF10b5HYUXXRcaAxhwgVkxjMvbvxDbXg3BgeQ8ugrFmi
-MDP8V79ddeqMYoVjp/akVlRjgQEK6pCC+aTn50tnXVNu/AjEXAEIJDtqK91UciSkeW7EOXZr08wr
-XTZKathB4DDjHXcBBlJGnzVJpJSImR1/jCqJTAI64ywKWybKPS80uE5/iswD7FFtT8KsYD5e+cwK
-u/dCCAQ+udTlBl8kUE/VPwu8cdeP7c86RzZRlA==
+S7Hq1sj3r3k/o5ZZz6ukfcr9vcNE5a8XsQMyRBEdyXlmiivKQhExjfqf/+5hC+zD+LyiQbae5gI/
+I9iFjOJZjm1h6Ahwsvv1KWV9sykAV1tLOFxgPSWa4ESRGb8cFrBlC5TYR3WcNFn1XXpH5zlkQ3tw
+DXa7jNxQWPpdpxtCSxQbBS+EUQIVB9rWiujezKRaH/f7LOtn+CzP3YMcLq+OqMk3QYEzjeY/beXJ
+3djAf+ExdIoItbV+y+A5mpDa/m/dp+9sNXdquvP83jhNbZkZFIl1BexsmF8O31WJJ124gYERHyf3
+cRiQd706nogC5y0DRimxlb2PlGy5afeGy7l11A==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>

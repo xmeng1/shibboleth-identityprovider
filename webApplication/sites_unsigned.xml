@@ -109,4 +109,9 @@
         <HandleService Location="https://oac37.hsc.uth.tmc.edu/shibboleth/HS" Name="oac37.hsc.uth.tmc.edu"/>
         <Domain>uth.tmc.edu</Domain>
     </OriginSite>
+    <OriginSite Name="gsu.edu">
+        <Alias>Georgia State University</Alias>
+        <HandleService Location="http://art12.gsu.edu:8080/shibboleth/HS" Name="art12.gsu.edu"/>
+        <Domain>gsu.edu</Domain>
+    </OriginSite>
 </Sites>
