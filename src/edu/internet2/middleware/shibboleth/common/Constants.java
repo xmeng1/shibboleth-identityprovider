@@ -59,5 +59,8 @@ public final class Constants
 {
     /**  Shibboleth AttributeNamespace indicating URI-based naming of Attributes */
     public final static String SHIB_ATTRIBUTE_NAMESPACE_URI = "urn:mace:shibboleth:1.0:attributeNamespace:uri";
+
+    /**  Shibboleth NameIdentifier Format URI for Shibboleth handles */
+    public final static String SHIB_NAMEID_FORMAT_URI = "urn:mace:shibboleth:1.0:nameIdentifier";
 }
 
