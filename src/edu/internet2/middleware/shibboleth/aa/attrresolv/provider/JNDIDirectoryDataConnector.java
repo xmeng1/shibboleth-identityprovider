@@ -120,13 +120,19 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			String propName = property.getAttribute("name");
 			String propValue = property.getAttribute("value");
 
-			if (propName != null && !propName.equals("") && propValue != null && !propValue.equals("")) {
-				properties.setProperty(propName, propValue);
-				log.debug("Property: (" + propName + ").");
-				log.debug("   Value: (" + propValue + ").");
-			} else {
+			log.debug("Property: (" + propName + ").");
+			log.debug("   Value: (" + propValue + ").");
+
+			if (propName == null || propName.equals("")) {
 				log.error("Property is malformed.");
-				throw new ResolutionPlugInException("Property is malformed.");
+				throw new ResolutionPlugInException("Property (" + propName
+						+ ") is malformed.  Connot accept empty property name.");
+			} else if (propValue == null || propValue.equals("")) {
+				log.error("Property is malformed.");
+				throw new ResolutionPlugInException("Property (" + propName
+						+ ") is malformed.  Cannot accept empty property value.");
+			} else {
+				properties.setProperty(propName, propValue);
 			}
 		}
 
