@@ -1,0 +1,24 @@
+<AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonPrincipalName" smartScope="example.edu">
+		<DataConnectorDependency requires="echo"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonEntitlement">
+		<DataConnectorDependency requires="echo2"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+		<DataConnectorDependency requires="echo3"/>
+	</SimpleAttributeDefinition>
+	
+	<CustomDataConnector id="echo" cacheTime="1800000"
+		class="edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SampleConnector" />
+	
+	<CustomDataConnector id="echo2" cacheTime="1800000"
+		class="edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SampleConnector" />
+		
+	<CustomDataConnector id="echo3" cacheTime="1800000"
+		class="edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SampleConnector" />
+
+</AttributeResolver>

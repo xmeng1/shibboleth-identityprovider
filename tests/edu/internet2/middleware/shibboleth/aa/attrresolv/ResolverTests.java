@@ -274,4 +274,86 @@ public class ResolverTests extends TestCase {
 		}
 	}
 
+	public void testMultipleDataConnectors() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver8.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+
+			AAAttributeSet inputAttributes =
+				new AAAttributeSet(
+					new AAAttribute[] {
+						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName"),
+						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
+						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement")});
+
+			AAAttributeSet outputAttributes =
+				new AAAttributeSet(
+					new AAAttribute[] {
+						new AAAttribute(
+							"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+							new Object[] { "mytestuser@example.edu" },
+							new ScopedStringValueHandler("example.edu")),
+						new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation", new Object[] { "member" }),
+						new AAAttribute(
+							"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+							new Object[] { "urn:mace:example.edu:exampleEntitlement" })
+						});
+
+			ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", inputAttributes);
+
+			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
+
+		} catch (AttributeResolverException e) {
+			fail("Couldn't load attribute resolver: " + e.getMessage());
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		} catch (SAMLException e) {
+			fail("Error creating SAML Attribute: " + e.getMessage());
+		}
+	}
+	
+	public void testAttributeDependency() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver9.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+
+			AAAttributeSet inputAttributes =
+				new AAAttributeSet(
+					new AAAttribute[] { new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")});
+
+			AAAttributeSet outputAttributes =
+				new AAAttributeSet(
+					new AAAttribute[] {
+						 new AAAttribute(
+							"urn:mace:eduPerson:1.0:eduPersonScopedAffiliation",
+							new Object[] { "member@example.edu" },
+							new ScopedStringValueHandler("example.edu"))
+						});
+
+			ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", inputAttributes);
+
+			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
+
+		} catch (AttributeResolverException e) {
+			fail("Couldn't load attribute resolver: " + e.getMessage());
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		} catch (SAMLException e) {
+			fail("Error creating SAML Attribute: " + e.getMessage());
+		}
+	}
+
+
 }
