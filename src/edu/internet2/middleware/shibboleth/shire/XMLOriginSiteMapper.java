@@ -209,11 +209,11 @@ public class XMLOriginSiteMapper implements OriginSiteMapper {
 			}
 			throw new OriginSiteMapperException("Unable to verify signature on registry file: no signature found.");
 		} catch (SAXException e) {
-			throw new OriginSiteMapperException("Problem parsing site configuration" + e.getMessage());
+			throw new OriginSiteMapperException("Problem parsing site configuration" + e);
 		} catch (IOException e) {
-			throw new OriginSiteMapperException("Problem accessing site configuration" + e.getMessage());
+			throw new OriginSiteMapperException("Problem accessing site configuration" + e);
 		} catch (ParserConfigurationException pce) {
-			throw new OriginSiteMapperException("Parser configuration error" + pce.getMessage());
+			throw new OriginSiteMapperException("Parser configuration error" + pce);
 		} finally {
 			if (builder != null)
 				org.opensaml.XML.parserPool.put(builder);

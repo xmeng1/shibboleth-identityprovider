@@ -171,20 +171,20 @@ public class ShireServlet extends HttpServlet {
 			log.info("Completed SHIRE initialization");
 
 		} catch (OriginSiteMapperException e) {
-			log.fatal("Unable load shibboleth site information." + e.getMessage());
-			throw new UnavailableException("Unable load shibboleth site information." + e.getMessage());
+			log.fatal("Unable load shibboleth site information." + e);
+			throw new UnavailableException("Unable load shibboleth site information." + e);
 		} catch (KeyStoreException e) {
-			log.fatal("Unable supplied keystore." + e.getMessage());
-			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+			log.fatal("Unable supplied keystore." + e);
+			throw new UnavailableException("Unable load supplied keystore." + e);
 		} catch (NoSuchAlgorithmException e) {
-			log.fatal("Unable supplied keystore." + e.getMessage());
-			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+			log.fatal("Unable supplied keystore." + e);
+			throw new UnavailableException("Unable load supplied keystore." + e);
 		} catch (CertificateException e) {
-			log.fatal("Unable supplied keystore." + e.getMessage());
-			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+			log.fatal("Unable supplied keystore." + e);
+			throw new UnavailableException("Unable load supplied keystore." + e);
 		} catch (IOException e) {
-			log.fatal("Unable supplied keystore." + e.getMessage());
-			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+			log.fatal("Unable supplied keystore." + e);
+			throw new UnavailableException("Unable load supplied keystore." + e);
 		}
 
 	}
@@ -344,7 +344,7 @@ public class ShireServlet extends HttpServlet {
 			return s;
 
 		} catch (SAMLException e) {
-			throw new ShireException("Error processing SAML assertion: " + e.getMessage());
+			throw new ShireException("Error processing SAML assertion: " + e);
 		}
 	}
 
@@ -403,7 +403,7 @@ public class ShireServlet extends HttpServlet {
 
 		} catch (IOException e) {
 			throw new ShireException(
-				"Unable to write session to file (" + filename + ") : " + e.getMessage());
+				"Unable to write session to file (" + filename + ") : " + e);
 		}
 	}
 
@@ -438,9 +438,9 @@ public class ShireServlet extends HttpServlet {
 	 */
 
 	private void handleError(ShireException se, HttpServletRequest req, HttpServletResponse res) {
-		log.error(se.getMessage());
+		log.error(se);
 		log.debug("Displaying error page.");
-		req.setAttribute("errorText", se.getMessage());
+		req.setAttribute("errorText", se.toString());
 		req.setAttribute("requestURL", req.getRequestURI().toString());
 		RequestDispatcher rd = req.getRequestDispatcher("/wayferror.jsp");
 
