@@ -103,12 +103,16 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 		// for transaction log
 		StringBuffer dereferencedArtifacts = new StringBuffer();
 
+		// TODO make sure we don't work on artifacts that are expired
+
 		while (artifacts.hasNext()) {
 			queriedArtifacts++;
 			Artifact artifact = (Artifact) artifacts.next();
-			log.debug("Attempting to dereference artifact: (" + artifact.toString() + ").");
+			log.info("Dereferencing artifact: (" + artifact.toString() + ").");
 			ArtifactMapping mapping = support.getArtifactMapper().recoverAssertion(artifact);
-			if (mapping != null) {
+			if (mapping == null) {
+				log.info("Could not map artifact to a SAML Assertion.");
+			} else {
 				SAMLAssertion assertion = mapping.getAssertion();
 				// See if we have metadata for this provider
 				EntityDescriptor provider = support.lookup(mapping.getServiceProviderId());
