@@ -68,6 +68,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
@@ -405,8 +406,16 @@ class BasicIdentityProvider implements IdentityProvider {
 		this.id = id;
 	}
 
-	public String getId() {
+	public String getProviderId() {
 		return id;
+	}
+
+	public Credential getResponseSigningCredential() {
+		return null;
+	}
+
+	public Credential getAssertionSigningCredential() {
+		return null;
 	}
 
 }

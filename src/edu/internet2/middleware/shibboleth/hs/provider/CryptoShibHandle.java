@@ -268,7 +268,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSName
 			try {
 				return new SAMLNameIdentifier(
 					handle.replaceAll(System.getProperty("line.separator"), ""),
-					idProv.getId(),
+					idProv.getProviderId(),
 					getNameIdentifierFormat().toString());
 			} catch (SAMLException e) {
 				throw new NameIdentifierMappingException("Unable to generate Attribute Query Handle: " + e);
@@ -288,8 +288,8 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSName
 
 	private String getElementConfigData(Element e, String itemName) throws NameIdentifierMappingException {
 
-		NodeList itemElements =e.getElementsByTagNameNS(NameIdentifierMapping.mappingNamespace, itemName);
-		
+		NodeList itemElements = e.getElementsByTagNameNS(NameIdentifierMapping.mappingNamespace, itemName);
+
 		if (itemElements.getLength() < 1) {
 			log.error(itemName + " not specified.");
 			throw new NameIdentifierMappingException(
