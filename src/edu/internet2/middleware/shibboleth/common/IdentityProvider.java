@@ -42,10 +42,9 @@ public interface IdentityProvider {
 	public String getProviderId();
 
 	/**
-	 * Returns the credential that this provider uses to sign SAML responses and assertions, or <code>null</code> if
-	 * responses should not be signed.
+	 * Returns the credential that this provider uses to sign SAML responses and assertions.
 	 * 
-	 * @return the credential or <code>null</code>
+	 * @return the credential
 	 */
 	public Credential getSigningCredential();
 

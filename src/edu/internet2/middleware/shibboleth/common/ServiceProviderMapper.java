@@ -226,6 +226,7 @@ public class ServiceProviderMapper {
 		private boolean forceAttributePush = false;
 		private boolean forceAttributeNoPush = false;
 		private boolean defaultToPOST = true;
+		private boolean wantsAssertionsSigned = false;
 
 		public RelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials,
 				NameMapper nameMapper) throws ServiceProviderMapperException {
@@ -285,6 +286,17 @@ public class ServiceProviderMapper {
 				log.debug("Relying party defaults to POST profile.");
 			} else {
 				log.debug("Relying party defaults to Artifact profile.");
+			}
+
+			// Relying Party wants assertions signed?
+			attribute = ((Element) partyConfig).getAttribute("signAssertions");
+			if (attribute != null && !attribute.equals("")) {
+				wantsAssertionsSigned = Boolean.valueOf(attribute).booleanValue();
+			}
+			if (wantsAssertionsSigned) {
+				log.debug("Relying party wants SAML Assertions to be signed.");
+			} else {
+				log.debug("Relying party does not want SAML Assertions to be signed.");
 			}
 
 			// Determine whether or not we are forcing attribute push on or off
@@ -423,6 +435,11 @@ public class ServiceProviderMapper {
 			return defaultToPOST;
 		}
 
+		public boolean wantsAssertionsSigned() {
+
+			return wantsAssertionsSigned;
+		}
+
 		/**
 		 * Default identity provider implementation.
 		 * 
@@ -528,6 +545,11 @@ public class ServiceProviderMapper {
 
 			return wrapped.defaultToPOSTProfile();
 		}
+
+		public boolean wantsAssertionsSigned() {
+
+			return wrapped.wantsAssertionsSigned();
+		}
 	}
 
 	/**
@@ -599,6 +621,11 @@ public class ServiceProviderMapper {
 		public boolean defaultToPOSTProfile() {
 
 			return true;
+		}
+
+		public boolean wantsAssertionsSigned() {
+
+			return wrapped.wantsAssertionsSigned();
 		}
 	}
 

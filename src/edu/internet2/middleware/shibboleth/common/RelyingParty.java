@@ -103,4 +103,10 @@ public interface RelyingParty extends ServiceProvider {
 	 * and "false" indicates Artifact.
 	 */
 	public boolean defaultToPOSTProfile();
+
+	/**
+	 * A boolean indication of whether assertions issued to this Relying Party should be digitall signed (This is in
+	 * addition to profile-specific signing).
+	 */
+	public boolean wantsAssertionsSigned();
 }

@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.RequestDispatcher;
@@ -136,19 +137,19 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			}
 
 			// Grab the metadata for the provider
-			EntityDescriptor provider = support.lookup(relyingParty.getProviderId());
+			EntityDescriptor descriptor = support.lookup(relyingParty.getProviderId());
 
 			// Make sure that the selected relying party configuration is appropriate for this
 			// acceptance URL
 			String acceptanceURL = request.getParameter("shire");
 			if (!relyingParty.isLegacyProvider()) {
 
-				if (provider == null) {
+				if (descriptor == null) {
 					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
 					relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
 
 				} else {
-					if (isValidAssertionConsumerURL(provider, acceptanceURL)) {
+					if (isValidAssertionConsumerURL(descriptor, acceptanceURL)) {
 						log.info("Supplied consumer URL validated for this provider.");
 					} else {
 						log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
@@ -184,9 +185,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			ArrayList assertions = new ArrayList();
 
 			// Is this artifact or POST?
-			boolean artifactProfile = useArtifactProfile(provider, acceptanceURL, relyingParty);
-
-			// TODO make sure we support adding signatures to attribute assertion
+			boolean artifactProfile = useArtifactProfile(descriptor, acceptanceURL, relyingParty);
 
 			// Package attributes for push, if necessary - don't attempt this for legacy providers (they don't support
 			// it)
@@ -200,16 +199,14 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 				}
 			}
 
-			// TODO do assertion signing for artifact stuff
-
 			// SAML Artifact profile - don't even attempt this for legacy providers (they don't support it)
 			if (!relyingParty.isLegacyProvider() && artifactProfile) {
-				respondWithArtifact(request, response, support, principal, relyingParty, provider, acceptanceURL,
+				respondWithArtifact(request, response, support, principal, relyingParty, descriptor, acceptanceURL,
 						nameId, authenticationMethod, authNSubject, assertions);
 
 				// SAML POST profile
 			} else {
-				respondWithPOST(request, response, support, principal, relyingParty, provider, acceptanceURL, nameId,
+				respondWithPOST(request, response, support, principal, relyingParty, descriptor, acceptanceURL, nameId,
 						authenticationMethod, authNSubject, assertions);
 			}
 		} catch (InvalidClientDataException e) {
@@ -219,15 +216,29 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 	}
 
 	private void respondWithArtifact(HttpServletRequest request, HttpServletResponse response,
-			IdPProtocolSupport support, AuthNPrincipal principal, RelyingParty relyingParty, EntityDescriptor provider,
-			String acceptanceURL, SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject,
-			ArrayList assertions) throws SAMLException, IOException, UnsupportedEncodingException {
+			IdPProtocolSupport support, AuthNPrincipal principal, RelyingParty relyingParty,
+			EntityDescriptor descriptor, String acceptanceURL, SAMLNameIdentifier nameId, String authenticationMethod,
+			SAMLSubject authNSubject, List assertions) throws SAMLException, IOException, UnsupportedEncodingException {
 
 		log.debug("Responding with Artifact profile.");
 
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
-		assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod, new Date(
-				System.currentTimeMillis()), authNSubject));
+		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
+				new Date(System.currentTimeMillis()), authNSubject));
+
+		// Sign the assertions, if necessary
+		boolean metaDataIndicatesSignAssertions = false;
+		if (descriptor != null) {
+			SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+			if (sp != null) {
+				if (sp.getWantAssertionsSigned()) {
+					metaDataIndicatesSignAssertions = true;
+				}
+			}
+		}
+		if (relyingParty.wantsAssertionsSigned() || metaDataIndicatesSignAssertions) {
+			IdPProtocolSupport.signAssertions((SAMLAssertion[]) assertions.toArray(new SAMLAssertion[0]), relyingParty);
+		}
 
 		// Create artifacts for each assertion
 		ArrayList artifacts = new ArrayList();
@@ -261,15 +272,29 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 	}
 
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
-			AuthNPrincipal principal, RelyingParty relyingParty, EntityDescriptor provider, String acceptanceURL,
-			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject, ArrayList assertions)
+			AuthNPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
+			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject, List assertions)
 			throws SAMLException, IOException, ServletException {
 
 		log.debug("Responding with POST profile.");
 
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
-		assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod, new Date(
-				System.currentTimeMillis()), authNSubject));
+		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
+				new Date(System.currentTimeMillis()), authNSubject));
+
+		// Sign the assertions, if necessary
+		boolean metaDataIndicatesSignAssertions = false;
+		if (descriptor != null) {
+			SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+			if (sp != null) {
+				if (sp.getWantAssertionsSigned()) {
+					metaDataIndicatesSignAssertions = true;
+				}
+			}
+		}
+		if (relyingParty.wantsAssertionsSigned() || metaDataIndicatesSignAssertions) {
+			IdPProtocolSupport.signAssertions((SAMLAssertion[]) assertions.toArray(new SAMLAssertion[0]), relyingParty);
+		}
 
 		// Set attributes needed by form
 		request.setAttribute("acceptanceURL", acceptanceURL);
@@ -277,7 +302,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 		SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, assertions, null);
 
-		IdPProtocolSupport.addSignatures(samlResponse, relyingParty, provider, true);
+		IdPProtocolSupport.signResponse(samlResponse, relyingParty);
 
 		createPOSTForm(request, response, samlResponse.toBase64());
 
@@ -361,7 +386,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 	}
 
 	private SAMLAssertion generateAuthNAssertion(HttpServletRequest request, RelyingParty relyingParty,
-			EntityDescriptor provider, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime,
+			EntityDescriptor descriptor, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime,
 			SAMLSubject subject) throws SAMLException, IOException {
 
 		Document doc = org.opensaml.XML.parserPool.newDocument();
@@ -457,14 +482,15 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 	/**
 	 * Boolean indication of which browser profile is in effect. "true" indicates Artifact and "false" indicates POST.
 	 */
-	private static boolean useArtifactProfile(EntityDescriptor provider, String acceptanceURL, RelyingParty relyingParty) {
+	private static boolean useArtifactProfile(EntityDescriptor descriptor, String acceptanceURL,
+			RelyingParty relyingParty) {
 
 		boolean artifactMeta = false;
 		boolean postMeta = false;
 
 		// Look at the metadata bindings, if we can find them
-		if (provider != null) {
-			SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+		if (descriptor != null) {
+			SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 
 			if (sp != null) {
 
@@ -530,10 +556,10 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 	/**
 	 * Boolean indication of whethere or not a given assertion consumer URL is valid for a given SP.
 	 */
-	private static boolean isValidAssertionConsumerURL(EntityDescriptor provider, String shireURL)
+	private static boolean isValidAssertionConsumerURL(EntityDescriptor descriptor, String shireURL)
 			throws InvalidClientDataException {
 
-		SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+		SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 		if (sp == null) {
 			log.info("Inappropriate metadata for provider.");
 			return false;

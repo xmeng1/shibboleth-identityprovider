@@ -66,6 +66,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * @author Walter Hoehn
@@ -262,9 +263,22 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				SAMLAssertion sAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(), now,
 						then, Collections.singleton(condition), null, Collections.singleton(statement));
 
+				// Sign the assertions, if necessary
+				boolean metaDataIndicatesSignAssertions = false;
+				EntityDescriptor descriptor = support.lookup(relyingParty.getProviderId());
+				if (descriptor != null) {
+					SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+					if (sp != null) {
+						if (sp.getWantAssertionsSigned()) {
+							metaDataIndicatesSignAssertions = true;
+						}
+					}
+				}
+				if (relyingParty.wantsAssertionsSigned() || metaDataIndicatesSignAssertions) {
+					IdPProtocolSupport.signAssertions(new SAMLAssertion[]{sAssertion}, relyingParty);
+				}
+
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), null);
-				IdPProtocolSupport.addSignatures(samlResponse, relyingParty, support.lookup(relyingParty
-						.getProviderId()), false);
 			}
 
 			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
