@@ -97,11 +97,14 @@ public class HandleServlet extends HttpServlet {
 	private static Logger log = Logger.getLogger(HandleServlet.class.getName());
 	private Certificate[] certificates;
 	private PrivateKey privateKey;
+	private Semaphore throttle;
+	
 	protected Properties loadConfiguration() throws HSConfigurationException {
 
 		//Set defaults
 		Properties defaultProps = new Properties();
 		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username", "REMOTE_USER");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads", "5");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation",
 			"edu.internet2.middleware.shibboleth.hs.provider.MemoryHandleRepository");
@@ -205,6 +208,11 @@ public class HandleServlet extends HttpServlet {
 					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"));
 
 			handleRepository = HandleRepositoryFactory.getInstance(configuration);
+			
+			throttle = new Semaphore(
+				Integer.parseInt(configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads"))
+				);
+			
 			log.info("Handle Service initialization complete.");
 
 		} catch (SAMLException ex) {
@@ -293,6 +301,7 @@ public class HandleServlet extends HttpServlet {
 		log.info("Handling request.");
 
 		try {
+			throttle.enter();
 			checkRequestParams(req);
 
 			req.setAttribute("shire", req.getParameter("shire"));
@@ -339,8 +348,14 @@ public class HandleServlet extends HttpServlet {
 			log.error(ex);
 			handleError(req, res, ex);
 			return;
+		} catch (InterruptedException ex) {
+			log.error(ex);
+			handleError(req, res, ex);
+			return;
 		}
-
+		finally {
+			throttle.exit();
+		}
 	}
 
 	protected byte[] generateAssertion(String handle, String format, String shireURL, String clientAddress, String authType)
@@ -399,7 +414,6 @@ public class HandleServlet extends HttpServlet {
 		RequestDispatcher rd = req.getRequestDispatcher("/hserror.jsp");
 
 		rd.forward(req, res);
-
 	}
 
 	protected void checkRequestParams(HttpServletRequest req) throws InvalidClientDataException {
@@ -421,6 +435,26 @@ public class HandleServlet extends HttpServlet {
 	class InvalidClientDataException extends Exception {
 		public InvalidClientDataException(String message) {
 			super(message);
+		}
+	}
+
+	private class Semaphore {
+		private int value;
+
+		public Semaphore(int value) {
+			this.value = value;
+		}
+
+		public synchronized void enter() throws InterruptedException {
+			--value;
+			if (value < 0) {
+				wait();
+			}
+		}
+
+		public synchronized void exit() {
+			++value;
+			notify();
 		}
 	}
 }
