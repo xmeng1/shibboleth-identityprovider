@@ -80,7 +80,7 @@ public class AQHTest extends TestCase {
 	public void testExpiration() {
 		try {
 			AttributeQueryHandle aqh = new AttributeQueryHandle("Walter", goodKey, 1l, testHs);
-			Thread.sleep(2);
+			Thread.sleep(50);
 			assertTrue("AttributeQueryHandle failed to expire appropriately", aqh.isExpired());
 		} catch (InterruptedException e) {
 		} catch (HandleException e) {
@@ -100,5 +100,37 @@ public class AQHTest extends TestCase {
 		} catch (HandleException e) {
 			fail("Failed to create AttributeQueryHandle" + e);
 		}
+	}
+	
+	/**
+	 * Make sure that it is works to create an AQH where the username contains
+	 * the character that is used for field separation during serialization
+	 */
+	
+	public void testSeparator() {
+		
+		try {
+			
+		String userName = "Test||Test";
+		
+		//Create an AQH
+		AttributeQueryHandle originalAQH =
+			new AttributeQueryHandle(userName, goodKey, 300000l, testHs);
+			
+		//Ensure that the principal was set correctly
+		assertEquals("Principal incorrect", userName, originalAQH.getPrincipal());
+		
+		//Create a new AQH from the serialized first AQH
+		AttributeQueryHandle secondAQH =
+			new AttributeQueryHandle(originalAQH.serialize(), goodKey);
+			
+		//Ensure that the principal was set correctly
+		assertEquals("Principal incorrect", userName, secondAQH.getPrincipal());
+		
+		} catch (HandleException e) {
+			fail("Failed to create AttributeQueryHandle" + e);
+		}
+		
+		
 	}
 }

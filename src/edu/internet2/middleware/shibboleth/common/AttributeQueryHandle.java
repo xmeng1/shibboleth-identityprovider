@@ -37,10 +37,13 @@ public class AttributeQueryHandle {
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			StringTokenizer tokenizer =
 				new StringTokenizer(
-					new String(cipher.doFinal(Base64.decode(handle))),
+					new String(cipher.doFinal(Base64.decode(handle)), "UTF-8"),
 					"||",
 					false);
-			principal = tokenizer.nextToken();
+			principal =
+				new String(
+					Base64.decode(tokenizer.nextToken().getBytes("ASCII")),
+					"UTF-8");
 			expirationTime = new Long(tokenizer.nextToken()).longValue();
 			handleID = tokenizer.nextToken();
 		} catch (Exception e) {
@@ -74,14 +77,23 @@ public class AttributeQueryHandle {
 			UUIDGenerator uuidGen = UUIDGenerator.getInstance();
 			UUID nameSpaceUUID = new UUID(UUID.NAMESPACE_URL);
 			handleID =
-			uuidGen.generateNameBasedUUID(nameSpaceUUID, hsLocation)+ ":" + uuidGen.generateTimeBasedUUID();
-			
+				uuidGen.generateNameBasedUUID(nameSpaceUUID, hsLocation)
+					+ ":"
+					+ uuidGen.generateTimeBasedUUID();
+
 			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			cipherTextHandle =
 				cipher.doFinal(
-					(principal + "||" + expirationTime + "||" + handleID)
-						.getBytes("UTF-8"));
+					(
+						new String(
+							Base64.encode(principal.getBytes("UTF-8")),
+							"ASCII")
+							+ "||"
+							+ expirationTime
+							+ "||"
+							+ handleID).getBytes(
+						"UTF-8"));
 
 		} catch (Exception e) {
 			throw new HandleException("Error creating handle: " + e);
@@ -114,7 +126,7 @@ public class AttributeQueryHandle {
 
 	public boolean isExpired() {
 
-		if (System.currentTimeMillis() > expirationTime) {
+		if (System.currentTimeMillis() >= expirationTime) {
 			return true;
 		} else {
 			return false;
@@ -125,7 +137,7 @@ public class AttributeQueryHandle {
 	/**
 	 * Returns a <code>String</code> representation of the unique identifier for this handle.
 	 */
-	
+
 	public String getHandleID() {
 		return handleID;
 	}
