@@ -75,6 +75,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.QName;
+import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLException;
@@ -98,7 +99,7 @@ public class HandleServlet extends HttpServlet {
 
 		//Set defaults
 		Properties defaultProps = new Properties();
-        defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username","REMOTE_USER");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username", "REMOTE_USER");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation",
 			"edu.internet2.middleware.shibboleth.hs.provider.MemoryHandleRepository");
@@ -107,6 +108,9 @@ public class HandleServlet extends HttpServlet {
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
 		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:InCommon:pilot:2003");
+		defaultProps.setProperty(
+			"edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
+			SAMLAuthenticationStatement.AuthenticationMethod_Unspecified);
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);
@@ -129,6 +133,7 @@ public class HandleServlet extends HttpServlet {
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword",
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias",
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
 					"edu.internet2.middleware.shibboleth.audiences" };
 
 			for (int i = 0; i < requiredProperties.length; i++) {
@@ -268,14 +273,19 @@ public class HandleServlet extends HttpServlet {
 
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
-            
-            String header=configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
-            String username=header.equalsIgnoreCase("REMOTE_USER") ? req.getRemoteUser() : req.getHeader(header);
+
+			String header = configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
+			String username = header.equalsIgnoreCase("REMOTE_USER") ? req.getRemoteUser() : req.getHeader(header);
 
 			String handle = handleRepository.getHandle(new AuthNPrincipal(username));
 			log.info("Issued Handle (" + handle + ") to (" + username + ")");
 
-			byte[] buf = generateAssertion(handle, req.getParameter("shire"), req.getRemoteAddr(), req.getAuthType());
+			byte[] buf =
+				generateAssertion(
+					handle,
+					req.getParameter("shire"),
+					req.getRemoteAddr(),
+					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod"));
 
 			createForm(req, res, buf);
 
