@@ -92,6 +92,9 @@ public class ArpEngine {
 			matchFunctions.put(
 				new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"),
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexMatchFunction");
+			matchFunctions.put(
+				new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"),
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
 		} catch (URISyntaxException e) {
 			log.error("Error mapping standard match functions: " + e);
 		}

@@ -103,7 +103,8 @@ public class ArpTests extends TestCase {
 			"data/example8.xml",
 			"data/example9.xml",
 			"data/example10.xml",
-			"data/example11.xml" };
+			"data/example11.xml",
+			"data/example12.xml" };
 
 	public ArpTests(String name) {
 		super(name);
@@ -607,6 +608,8 @@ public class ArpTests extends TestCase {
 			arpApplicationTest19(repository, props, parser);
 			arpApplicationTest20(repository, props, parser);
 			arpApplicationTest21(repository, props, parser);
+			arpApplicationTest22(repository, props, parser);
+			arpApplicationTest23(repository, props, parser);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1852,6 +1855,101 @@ public class ArpTests extends TestCase {
 		engine.filterAttributes(inputSet, principal1, "www.external.com", url1);
 
 		assertEquals("ARP application test 21: ARP not applied as expected.", inputSet, releaseSet);
+	}
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Specific shar, Specific resource
+	 * Attribute: Release values by regex
+	 */
+	void arpApplicationTest22(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<Requester>shar.example.edu</Requester>"
+				+ "					<Resource>http://www.example.edu/</Resource>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:dir:attribute-def:eduPersonEntitlement\">"
+				+ "					<Value release=\"permit\" matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">^urn:x:a.+$</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AuthNPrincipal("Test2Principal");
+		URL url1 = new URL("http://www.example.edu/index.html");
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:dir:attribute-def:eduPersonEntitlement",
+					new Object[] { "urn:x:a", "urn:x:foo", "urn:x:bar", "urn:x:adagio", "urn:x:awol" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:dir:attribute-def:eduPersonEntitlement",
+					new Object[] { "urn:x:adagio", "urn:x:awol" }));
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
+
+		assertEquals("ARP application test 22: ARP not applied as expected.", inputSet, releaseSet);
+	}
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Specific shar, Specific resource
+	 * Attribute: Deny specific values by regex
+	 */
+	void arpApplicationTest23(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<Requester>shar.example.edu</Requester>"
+				+ "					<Resource>http://www.example.edu/</Resource>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:dir:attribute-def:eduPersonEntitlement\">"
+				+ "					<AnyValue release=\"permit\" />"
+				+ "					<Value release=\"deny\" matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">^urn:x:a.+$</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AuthNPrincipal("Test2Principal");
+		URL url1 = new URL("http://www.example.edu/index.html");
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:dir:attribute-def:eduPersonEntitlement",
+					new Object[] { "urn:x:a", "urn:x:foo", "urn:x:bar", "urn:x:adagio", "urn:x:awol" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:dir:attribute-def:eduPersonEntitlement",
+					new Object[] { "urn:x:a", "urn:x:foo", "urn:x:bar" }));
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
+
+		assertEquals("ARP application test 23: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AttributeReleasePolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:arp:1.0" xsi:schemaLocation="urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd" >
+	<Description>Rule with matching functions set for values.</Description>
+	<Rule>
+		<Target>
+			<AnyTarget/>
+		</Target>
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
+			<AnyValue release="permit"/>
+			<Value release="deny" matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^.+@example.edu$</Value>
+		</Attribute>
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonEntitlement">
+			<Value release="permit" matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^urn:x:1:.+$</Value>
+		</Attribute>
+	</Rule>
+</AttributeReleasePolicy>

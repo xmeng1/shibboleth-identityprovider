@@ -495,6 +495,7 @@ public class Rule {
 	}
 
 	class Attribute {
+		
 		private URI name;
 		private boolean anyValue = false;
 		private String anyValueRelease = "permit";
@@ -542,10 +543,33 @@ public class Rule {
 			Iterator iterator = values.iterator();
 			while (iterator.hasNext()) {
 				AttributeValue valueSpec = (AttributeValue) iterator.next();
-				if (valueSpec.getValue().equals(value) && valueSpec.getRelease().equals("deny")) {
+
+				MatchFunction resourceFunction;
+				try {
+					resourceFunction = ArpEngine.lookupMatchFunction(valueSpec.getMatchFunctionIdentifier());
+					// For safety, err on the side of caution
+					if (resourceFunction == null) {
+						log.warn(
+							"Could not locate matching function for ARP value. Function: "
+								+ valueSpec.getMatchFunctionIdentifier().toString());
+						return false;
+					}
+
+				} catch (ArpException e) {
+					log.error("Error while attempting to find referenced matching function for ARP values: " + e);
+					return false;
+				}
+
+				try {
+					if (valueSpec.getRelease().equals("deny") && resourceFunction.match(valueSpec.getValue(), value)) {
+						return false;
+					}
+				} catch (MatchingException e) {
+					log.error("Could not apply referenced matching function to ARP value: " + e);
 					return false;
 				}
 			}
+
 			//Handle Permit All with no relevant specific denies
 			if (releaseAnyValue()) {
 				return true;
@@ -555,11 +579,33 @@ public class Rule {
 			iterator = values.iterator();
 			while (iterator.hasNext()) {
 				AttributeValue valueSpec = (AttributeValue) iterator.next();
-				if (valueSpec.getValue().equals(value) && valueSpec.getRelease().equals("permit")) {
-					return true;
+
+				MatchFunction resourceFunction;
+				try {
+					resourceFunction = ArpEngine.lookupMatchFunction(valueSpec.getMatchFunctionIdentifier());
+					// Ignore non-functional permits
+					if (resourceFunction == null) {
+						log.warn(
+							"Could not locate matching function for ARP value. Function: "
+								+ valueSpec.getMatchFunctionIdentifier().toString());
+						continue;
+					}
+
+				} catch (ArpException e) {
+					log.error("Error while attempting to find referenced matching function for ARP values: " + e);
+					continue;
+				}
+
+				try {
+					if (valueSpec.getRelease().equals("permit")
+						&& resourceFunction.match(valueSpec.getValue(), value)) {
+						return true;
+					}
+				} catch (MatchingException e) {
+					log.error("Could not apply referenced matching function to ARP value: " + e);
+					continue;
 				}
 			}
-
 			return false;
 		}
 
@@ -608,22 +654,17 @@ public class Rule {
 		Element unmarshall() throws ArpMarshallingException {
 
 			try {
-				Document placeHolder =
-					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 				Element attributeNode = placeHolder.createElementNS(Arp.arpNamespace, "Attribute");
 
 				attributeNode.setAttributeNS(Arp.arpNamespace, "name", name.toString());
 
 				if (identifier != null) {
-					attributeNode.setAttributeNS(
-						Arp.arpNamespace,
-						"identifier",
-						identifier.toString());
+					attributeNode.setAttributeNS(Arp.arpNamespace, "identifier", identifier.toString());
 				}
 
 				if (anyValue) {
-					Element anyValueNode =
-						placeHolder.createElementNS(Arp.arpNamespace, "AnyValue");
+					Element anyValueNode = placeHolder.createElementNS(Arp.arpNamespace, "AnyValue");
 					anyValueNode.setAttributeNS(Arp.arpNamespace, "release", anyValueRelease);
 					attributeNode.appendChild(anyValueNode);
 				}
@@ -632,12 +673,23 @@ public class Rule {
 					AttributeValue value = (AttributeValue) valueIterator.next();
 					Element valueNode = placeHolder.createElementNS(Arp.arpNamespace, "Value");
 					valueNode.setAttributeNS(Arp.arpNamespace, "release", value.getRelease());
+					if (!value
+						.getMatchFunctionIdentifier()
+						.equals(new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"))) {
+						valueNode.setAttributeNS(
+							Arp.arpNamespace,
+							"matchFunction",
+							value.getMatchFunctionIdentifier().toString());
+					}
 					Text valueTextNode = placeHolder.createTextNode(value.getValue());
 					valueNode.appendChild(valueTextNode);
 					attributeNode.appendChild(valueNode);
 				}
 				return attributeNode;
 
+			} catch (URISyntaxException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule Resource: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Resource.");
 			} catch (ParserConfigurationException e) {
 				log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
 				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule.");
@@ -679,8 +731,7 @@ public class Rule {
 			}
 
 			//Handle <AnyValue/> definitions
-			NodeList anyValueNodeList =
-				element.getElementsByTagNameNS(Arp.arpNamespace, "AnyValue");
+			NodeList anyValueNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "AnyValue");
 			if (anyValueNodeList.getLength() == 1) {
 				anyValue = true;
 				if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
@@ -694,20 +745,32 @@ public class Rule {
 				for (int i = 0; valueNodeList.getLength() > i; i++) {
 					String release = null;
 					String value = null;
+					URI matchFunctionIdentifier = null;
 					if (((Element) valueNodeList.item(i)).hasAttribute("release")) {
 						release = ((Element) valueNodeList.item(i)).getAttribute("release");
 					}
+
+					//Grab the match function
+					try {
+						if (((Element) valueNodeList.item(i)).hasAttribute("matchFunction")) {
+							matchFunctionIdentifier =
+								new URI(((Element) valueNodeList.item(i)).getAttribute("matchFunction"));
+						}
+					} catch (URISyntaxException e) {
+						log.error(
+							"ARP match function not identified by a proper URI: "
+								+ ((Element) valueNodeList.item(i)).getAttribute("matchFunction"));
+						throw new ArpMarshallingException("ARP match function not identified by a proper URI.");
+					}
+
 					if (((Element) valueNodeList.item(i)).hasChildNodes()
-						&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType()
-							== Node.TEXT_NODE) {
-						value =
-							((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild())
-								.getData();
+						&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType() == Node.TEXT_NODE) {
+						value = ((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild()).getData();
 					}
 					if (releaseAnyValue() && release.equals("permit")) {
 						continue;
 					}
-					AttributeValue aValue = new AttributeValue(release, value);
+					AttributeValue aValue = new AttributeValue(release, matchFunctionIdentifier, value);
 					values.add(aValue);
 				}
 			}
@@ -715,12 +778,23 @@ public class Rule {
 		}
 	}
 	class AttributeValue {
+
 		private String release = "permit";
 		private String value;
+		private URI matchFunctionIdentifier;
 
-		AttributeValue(String release, String value) {
+		AttributeValue(String release, URI matchFunctionIdentifier, String value) throws ArpMarshallingException {
 			setRelease(release);
 			this.value = value;
+			if (matchFunctionIdentifier != null) {
+				this.matchFunctionIdentifier = matchFunctionIdentifier;
+			} else {
+				try {
+					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:stringValue");
+				} catch (URISyntaxException e) {
+					throw new ArpMarshallingException("ARP Engine internal error: could not set default matching function for attribute value.");
+				}
+			}
 		}
 
 		String getRelease() {
@@ -729,6 +803,10 @@ public class Rule {
 
 		String getValue() {
 			return value;
+		}
+
+		URI getMatchFunctionIdentifier() {
+			return matchFunctionIdentifier;
 		}
 
 		void setRelease(String release) {
