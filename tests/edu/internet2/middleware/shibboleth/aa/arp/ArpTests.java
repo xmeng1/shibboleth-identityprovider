@@ -76,6 +76,14 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import edu.internet2.middleware.shibboleth.aa.arp.Arp;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryFactory;
+import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
 import edu.internet2.middleware.shibboleth.common.*;
 
 /**
@@ -162,7 +170,7 @@ public class ArpTests extends TestCase {
 
 		//Test ARP description
 		try {
-			InputStream inStream = new FileInputStream("test/arp1.xml");
+			InputStream inStream = new FileInputStream("data/arp1.xml");
 			parser.parse(new InputSource(inStream));
 			Arp arp1 = new Arp();
 			arp1.marshall(parser.getDocument().getDocumentElement());
@@ -182,7 +190,7 @@ public class ArpTests extends TestCase {
 
 		//Test case where ARP description does not exist
 		try {
-			InputStream inStream = new FileInputStream("test/arp2.xml");
+			InputStream inStream = new FileInputStream("data/arp2.xml");
 			parser.parse(new InputSource(inStream));
 			Arp arp2 = new Arp();
 			arp2.marshall(parser.getDocument().getDocumentElement());
@@ -549,7 +557,7 @@ public class ArpTests extends TestCase {
 			URI[] list3 = new URI[0];
 
 			//Test with just a site ARP
-			InputStream inStream = new FileInputStream("test/arp1.xml");
+			InputStream inStream = new FileInputStream("data/arp1.xml");
 			parser.parse(new InputSource(inStream));
 			Arp arp1 = new Arp();
 			arp1.marshall(parser.getDocument().getDocumentElement());
@@ -563,7 +571,7 @@ public class ArpTests extends TestCase {
 				new HashSet(Arrays.asList(list1)));
 
 			//Test with site and user ARPs
-			inStream = new FileInputStream("test/arp7.xml");
+			inStream = new FileInputStream("data/arp7.xml");
 			parser.parse(new InputSource(inStream));
 			Arp arp7 = new Arp();
 			arp7.setPrincipal(principal1);
@@ -577,7 +585,7 @@ public class ArpTests extends TestCase {
 				new HashSet(Arrays.asList(list2)));
 
 			//Ensure that explicit denies on any value are not in the release set
-			inStream = new FileInputStream("test/arp6.xml");
+			inStream = new FileInputStream("data/arp6.xml");
 			parser.parse(new InputSource(inStream));
 			Arp arp6 = new Arp();
 			arp6.setPrincipal(principal1);

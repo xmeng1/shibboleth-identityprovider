@@ -6,6 +6,7 @@
     <property name="distname" value="shibboleth" />
     <property name="root" value="." />
     <property name="src" value="${root}/src/" />
+    <property name="tests" value="${root}/tests/" />
     <property name="approot" value="${root}/webApplication/" />
     <property name="appconfig" value="${src}/conf/" />
     <property name="configroot" value="${root}/webAppConfig/" />
@@ -42,11 +43,11 @@
 
 
     <!-- This target should be run before checking code into the repository -->
-    <target name="pre-checkin" depends="compile-all, test-all, clean-all" />
+    <target name="pre-checkin" depends="compile, test-all, clean-all" />
 
 
     <!-- Compile classes and move them to ${build} -->
-    <target name="compile-all" depends="init">
+    <target name="compile" depends="init">
         <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
             <classpath refid="build.path" />
         </javac>
@@ -56,6 +57,12 @@
         <copy todir="${build}/conf">
             <fileset dir="${src}/conf"/>
         </copy>
+    </target>
+    
+        <target name="compile-tests" depends="compile">
+        <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on">
+            <classpath refid="build.path" />
+        </javac>
     </target>
 
 
@@ -74,22 +81,22 @@
 
     <!-- Create various product distributions and move them to ${dist} -->
     <target name="dist" depends="dist-all" />
-    <target name="dist-all" depends="compile-all, test-all, package-all, clean-build" />
+    <target name="dist-all" depends="compile, test-all, package-all, clean-build" />
     <target name="package-all">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/all.xml" basedir="${approot}" update="no" />
     </target>
 
-    <target name="dist-origin" depends="compile-all, test-origin, package-origin, clean-build" />
+    <target name="dist-origin" depends="compile, test-origin, package-origin, clean-build" />
     <target name="package-origin">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
     </target>
 
     <!-- Build utilities -->
-    <target name="build-util" depends="compile-all">
+    <target name="build-util" depends="compile">
         <jar jarfile="${distlibs}/shib-util.jar" basedir="${build}" />
     </target>
 
-    <target name="dist-wayf" depends="compile-all, test-wayf, package-wayf, clean-build" />
+    <target name="dist-wayf" depends="compile, test-wayf, package-wayf, clean-build" />
     <target name="package-wayf">
         <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
     </target>
@@ -132,9 +139,9 @@
         </junit>
     </target>
     <target name="test-wayf" depends="test-common" />
-    <target name="test-common" depends="compile-all"/>
+    <target name="test-common" depends="compile-tests"/>
     
-	<target name="genSecret" depends="compile-all">
+	<target name="genSecret" depends="compile">
     	<taskdef name="genSecret" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
 		<genSecret keyStorePath="${appconfig}/handle.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
 	</target>
