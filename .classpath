@@ -28,5 +28,6 @@
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmltypes.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean_xpath.jar"/>
+	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
