@@ -1,48 +1,38 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation
- * for Advanced Internet Development, Inc. All rights reserved
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
+ * All rights reserved
  * 
  * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+ * following conditions are met:
  * 
- * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+ * disclaimer.
  * 
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, if any, must include
- * the following acknowledgment: "This product includes software developed by
- * the University Corporation for Advanced Internet Development
- * <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement
- * may appear in the software itself, if and wherever such third-party
- * acknowledgments normally appear.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
+ * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
+ * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
+ * software itself, if and wherever such third-party acknowledgments normally appear.
  * 
- * Neither the name of Shibboleth nor the names of its contributors, nor
- * Internet2, nor the University Corporation for Advanced Internet Development,
- * Inc., nor UCAID may be used to endorse or promote products derived from this
- * software without specific prior written permission. For written permission,
- * please contact shibboleth@shibboleth.org
+ * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
+ * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
+ * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
  * 
- * Products derived from this software may not be called Shibboleth, Internet2,
- * UCAID, or the University Corporation for Advanced Internet Development, nor
- * may Shibboleth appear in their name, without prior written permission of the
+ * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
+ * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
  * University Corporation for Advanced Internet Development.
  * 
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE.
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
+ * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
+ * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.common;
@@ -218,7 +208,6 @@ class FileCredentialResolver implements CredentialResolver {
 		log.debug("Key Format: (" + keyFormat + ").");
 		log.debug("Key Path: (" + keyPath + ").");
 
-		//TODO encrypted keys
 		//TODO maybe more info statements
 
 		PrivateKey key = null;
@@ -325,7 +314,6 @@ class FileCredentialResolver implements CredentialResolver {
 				}
 			}
 
-			//TODO probably don't want to require a full chain
 			log.debug("Attempting to construct a certificate chain.");
 			walkChain((X509Certificate[]) allCerts.toArray(new X509Certificate[0]), certChain);
 
@@ -1139,11 +1127,9 @@ class FileCredentialResolver implements CredentialResolver {
 
 	/**
 	 * 
-	 * Loads a specified bundle of certs individually and returns an array of
-	 * <code>Certificate</code> objects. This is needed because the standard
-	 * <code>CertificateFactory.getCertificates(InputStream)</code> method
-	 * bails out when it has trouble loading any cert and cannot handle
-	 * "comments".
+	 * Loads a specified bundle of certs individually and returns an array of <code>Certificate</code> objects. This
+	 * is needed because the standard <code>CertificateFactory.getCertificates(InputStream)</code> method bails out
+	 * when it has trouble loading any cert and cannot handle "comments".
 	 */
 	private Certificate[] loadCertificates(InputStream inStream, String certType) throws CredentialFactoryException {
 
@@ -1199,17 +1185,15 @@ class FileCredentialResolver implements CredentialResolver {
 	}
 
 	/**
-	 * Given an ArrayList containing a base certificate and an array of
-	 * unordered certificates, populates the ArrayList with an ordered
-	 * certificate chain, based on subject and issuer.
+	 * Given an ArrayList containing a base certificate and an array of unordered certificates, populates the ArrayList
+	 * with an ordered certificate chain, based on subject and issuer.
 	 * 
 	 * @param chainSource
 	 *            array of certificates to pull from
 	 * @param chainDest
 	 *            ArrayList containing base certificate
 	 * @throws InvalidCertificateChainException
-	 *             thrown if a chain cannot be constructed from the specified
-	 *             elements
+	 *             thrown if a chain cannot be constructed from the specified elements
 	 */
 
 	protected void walkChain(X509Certificate[] chainSource, ArrayList chainDest) throws CredentialFactoryException {
@@ -1219,7 +1203,6 @@ class FileCredentialResolver implements CredentialResolver {
 			log.debug("Found self-signed root cert: " + currentCert.getSubjectDN());
 			return;
 		} else {
-			//TODO maybe this should check more than the DN...
 			for (int i = 0; chainSource.length > i; i++) {
 				if (currentCert.getIssuerDN().equals(chainSource[i].getSubjectDN())) {
 					chainDest.add(chainSource[i]);
@@ -1227,14 +1210,12 @@ class FileCredentialResolver implements CredentialResolver {
 					return;
 				}
 			}
-			log.error("Incomplete certificate chain.");
-			throw new CredentialFactoryException("Incomplete cerficate chain.");
+			log.debug("Certificate chain is incomplete.");
 		}
 	}
 
 	/**
-	 * Boolean indication of whether a given private key and public key form a
-	 * valid keypair.
+	 * Boolean indication of whether a given private key and public key form a valid keypair.
 	 * 
 	 * @param pubKey
 	 *            the public key
