@@ -51,8 +51,8 @@ package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
 import java.security.Principal;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.naming.NamingEnumeration;
@@ -160,14 +160,14 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
 		throws ResolutionPlugInException {
 		log.debug("Resolving attribute: (" + getId() + ")");
-		Set results = new HashSet();
+		Set results = new LinkedHashSet();
 		if (!connectorDependencyIds.isEmpty()) {
 			results.addAll(Arrays.asList(getValuesFromConnectors(depends)));
 		}
 
-		if (!attributeDependencyIds.isEmpty()) {
-			results.addAll(Arrays.asList(getValuesFromAttributes(depends)));
-		}
+		//if (!attributeDependencyIds.isEmpty()) {
+			//results.addAll(Arrays.asList(getValuesFromAttributes(depends)));
+		//}
 
 		if (lifeTime != -1) {
 			attribute.setLifetime(lifeTime);
@@ -189,7 +189,7 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 
 	protected Object[] getValuesFromAttributes(Dependencies depends) {
 
-		Set results = new HashSet();
+		Set results = new LinkedHashSet();
 
 		Iterator attrDependIt = attributeDependencyIds.iterator();
 		while (attrDependIt.hasNext()) {
@@ -213,7 +213,7 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 
 	protected Object[] getValuesFromConnectors(Dependencies depends) {
 
-		Set results = new HashSet();
+		Set results = new LinkedHashSet();
 
 		Iterator connectorDependIt = connectorDependencyIds.iterator();
 		while (connectorDependIt.hasNext()) {
