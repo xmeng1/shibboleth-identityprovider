@@ -171,14 +171,13 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
      * @param  ks          A keystore containing trusted root certificates
      * @param  knownKey    An explicit key to use if a certificate cannot be
      *      found
-     * @param  simple      Verify according to simple SAML signature profile?
      *
      * @throws SAMLException    Thrown if the signature cannot be verified
      */
-    protected void verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey, boolean simple)
+    protected void verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey)
         throws SAMLException
     {
-        super.verifySignature(obj, signerName, ks, knownKey, simple);
+        super.verifySignature(obj, signerName, ks, knownKey);
         if (!obj.getSignatureAlgorithm().equals(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1))
             throw new TrustException(SAMLException.RESPONDER, "ClubShibPOSTProfile.verifySignature() requires the RSA-SHA1 signature algorithm");
     }
