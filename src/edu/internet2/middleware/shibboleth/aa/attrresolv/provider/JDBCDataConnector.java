@@ -307,8 +307,8 @@ class DefaultAE implements JDBCAttributeExtractor {
 		log.debug("Using default Attribute Extractor");
 
 		try {
-            // No rows returned...
-			if (!rs.first())
+                // No rows returned...
+                if (!rs.next())
                 return attributes;
 		}
         catch (SQLException e) {
@@ -339,9 +339,8 @@ class DefaultAE implements JDBCAttributeExtractor {
 
         // Check for multiple rows.
         try {
-            rs.last();
-            if (rs.getRow() > 1)
-                throw new JDBCAttributeExtractorException("Query returned more than one result set.");
+            if (rs.next())
+                throw new JDBCAttributeExtractorException("Query returned more than one row.");
         }
         catch (SQLException e) {
         }
