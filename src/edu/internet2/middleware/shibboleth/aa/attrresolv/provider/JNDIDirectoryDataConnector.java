@@ -133,7 +133,7 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 					context.close();
 				}
 			} catch (NamingException ne) {
-				//Squelch
+				log.error("An error occured while closing the JNDI context: " + e);
 			}
 
 		}
@@ -258,7 +258,7 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 					context.close();
 				}
 			} catch (NamingException e) {
-				//Squelch
+				log.error("An error occured while closing the JNDI context: " + e);
 			}
 		}
 	}
