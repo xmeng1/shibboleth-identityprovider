@@ -253,7 +253,7 @@ public class AAServlet extends HttpServlet {
 						principal,
 						saml.getShar(),
 						resource));
-			log.info("Got " + attrs.size() + " attributes for " + principal.getName());
+			log.info("Found " + attrs.size() + " attribute(s) for " + principal.getName());
 			saml.respond(resp, attrs, null);
 			log.info("Successfully responded about " + principal.getName());
 
