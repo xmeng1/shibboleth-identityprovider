@@ -106,7 +106,7 @@ public class HandleServlet extends HttpServlet {
 		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer", "shib2.internet2.edu");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
-			getServletContext().getRealPath("/WEB-INF/conf/handle.jks"));
+			"/conf/handle.jks");
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);

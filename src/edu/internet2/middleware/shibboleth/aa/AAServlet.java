@@ -166,7 +166,7 @@ public class AAServlet extends HttpServlet {
 			"edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
-			getServletContext().getRealPath("/conf/handle.jks"));
+			"/conf/handle.jks");
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);

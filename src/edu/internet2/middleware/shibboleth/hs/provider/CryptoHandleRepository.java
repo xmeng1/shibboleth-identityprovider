@@ -75,6 +75,7 @@ import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 
@@ -95,9 +96,11 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			KeyStore keyStore = KeyStore.getInstance("JCEKS");
 
 			keyStore.load(
-				new FileInputStream(
+				new ShibResource(
 					properties.getProperty(
-						"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath")),
+						"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath"),
+					this.getClass())
+					.getInputStream(),
 				properties
 					.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePassword")
 					.toCharArray());
