@@ -49,15 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.aa;
 
-/**
- *  Attribute Authority & Release Policy
- *  Handles Initialization and incoming requests to AA
- *
- * @author     Parviz Dousti (dousti@cmu.edu)
- * @created    June, 2002
- */
-
-
 import java.io.*;
 import java.util.*;
 import javax.servlet.*;
@@ -74,7 +65,13 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.doomdark.uuid.UUIDGenerator;
 
-
+/**
+ *  Attribute Authority & Release Policy
+ *  Handles Initialization and incoming requests to AA
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
 
 public class AAServlet extends HttpServlet {
 
