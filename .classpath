@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
     <classpathentry kind="var" path="JRE_LIB" rootpath="JRE_SRCROOT" sourcepath="JRE_SRC"/>
-    <classpathentry kind="src" path="source"/>
-    <classpathentry kind="lib" path="buildlibs/servlet.jar" sourcepath="/shib-java/buildlibs/servlet-src.jar"/>
+    <classpathentry kind="src" path="src"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/log4j-1.2.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
-    <classpathentry kind="lib" path="buildlibs/junit.jar" sourcepath="/shib-java/buildlibs/junit-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug.jar" sourcepath="/shib-java/webApplication/WEB-INF/lib/jug-src.jar"/>
-    <classpathentry kind="lib" path="buildlibs/xercesImpl.jar" sourcepath="/shib-java/buildlibs/xerces-src.jar"/>
-    <classpathentry kind="lib" path="buildlibs/xmlParserAPIs.jar" sourcepath="/shib-java/buildlibs/xerces-src.jar"/>
-    <classpathentry kind="lib" path="buildlibs/xalan.jar"/>
-    <classpathentry kind="lib" path="buildlibs/xml-apis.jar"/>
     <classpathentry kind="lib"
-        path="webApplication/WEB-INF/lib/bc-jce-jdk13-112.jar"
-        rootpath="" sourcepath="/Shibboleth/buildlibs/jce-bc-src.jar"/>
+        path="webApplication/WEB-INF/lib/bc-jce-jdk13-112.jar" sourcepath="/Shibboleth/buildlibs/jce-bc-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlsec.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
+    <classpathentry kind="lib" path="lib/junit.jar"/>
+    <classpathentry kind="lib" path="lib/servlet.jar"/>
+    <classpathentry kind="lib" path="lib/xalan.jar"/>
+    <classpathentry kind="lib" path="lib/xercesImpl.jar"/>
+    <classpathentry kind="lib" path="lib/xml-apis.jar"/>
+    <classpathentry kind="lib" path="lib/xmlParserAPIs.jar"/>
     <classpathentry kind="output" path="webApplication\WEB-INF\classes"/>
 </classpath>
