@@ -137,6 +137,12 @@ public class Credentials {
 	}
 
 	public Credential getCredential(String identifier) {
+
+		// Default if there is only one credential
+		if ((identifier == null || identifier.equals("")) && data.size() == 1) {
+			return (Credential) data.values().iterator().next();
+		}
+
 		return (Credential) data.get(identifier);
 	}
 
