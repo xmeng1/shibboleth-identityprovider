@@ -3,7 +3,11 @@
 <Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <OriginSite Name="example.edu">
         <Alias>Example State University</Alias>
-        <HandleService Location="https://shib2.internet2.edu/shibboleth-origin/servlet/HS" Name="shib2.internet2.edu"/>
+        <HandleService Location="https://shibprod0.internet2.edu/shibboleth/HS" Name="shibprod0.internet2.edu"/>
+    </OriginSite>
+    <OriginSite Name="shibdev.edu">
+        <Alias>Shibboleth Development Origin</Alias>
+        <HandleService Location="https://shib2.internet2.edu/shibboleth/HS" Name="shib2.internet2.edu"/>
     </OriginSite>
     <OriginSite Name="brown.edu">
         <Alias>Brown University</Alias>
@@ -26,6 +30,10 @@
     <OriginSite Name="osu.edu">
         <Alias>Ohio State University</Alias>
         <Alias>Buckeyes</Alias> 
-        <HandleService Location="https://trotsky.uts.ohio-state.edu/shibboleth/HS" Name="trotsky.uts.ohio-state.edu"/>
+        <HandleService Location="https://trotsky.uts.ohio-state.edu:444/shibboleth/HS" Name="trotsky.uts.ohio-state.edu"/>
+    </OriginSite>
+    <OriginSite Name="virginia.edu">
+        <Alias>UVa</Alias>  
+        <HandleService Location="https://shib.itc.virginia.edu/shibboleth/HS" Name="shib.itc.virginia.edu"/>
     </OriginSite>
 </Sites>
