@@ -55,7 +55,12 @@
 					<xs:complexType>
 						<xs:complexContent>
 							<xs:extension base="resolver:BaseResolutionPlugIn">
-								<xs:sequence minOccurs="0" maxOccurs="unbounded">
+								<xs:sequence>
+									<xs:element name="FailoverDependency" minOccurs="0">
+										<xs:complexType>
+											<xs:attribute name="requires" type="xs:string" use="required"/>
+										</xs:complexType>
+									</xs:element>
 									<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 								</xs:sequence>
 								<xs:attribute name="class" type="xs:string" use="required"/>
@@ -69,6 +74,11 @@
 						<xs:complexContent>
 							<xs:extension base="resolver:BaseResolutionPlugIn">
 								<xs:sequence>
+									<xs:element name="FailoverDependency" minOccurs="0">
+										<xs:complexType>
+											<xs:attribute name="requires" type="xs:string" use="required"/>
+										</xs:complexType>
+									</xs:element>
 									<xs:element name="Search">
 										<xs:complexType>
 											<xs:sequence minOccurs="0">
@@ -85,14 +95,12 @@
 											<xs:attribute name="filter" type="xs:string" use="required"/>
 										</xs:complexType>
 									</xs:element>
-									<xs:sequence>
-										<xs:element name="Property" maxOccurs="unbounded">
-											<xs:complexType>
-												<xs:attribute name="name" type="xs:string" use="required"/>
-												<xs:attribute name="value" type="xs:string" use="required"/>
-											</xs:complexType>
-										</xs:element>
-									</xs:sequence>
+									<xs:element name="Property" maxOccurs="unbounded">
+										<xs:complexType>
+											<xs:attribute name="name" type="xs:string" use="required"/>
+											<xs:attribute name="value" type="xs:string" use="required"/>
+										</xs:complexType>
+									</xs:element>
 								</xs:sequence>
 							</xs:extension>
 						</xs:complexContent>
@@ -103,6 +111,11 @@
 						<xs:complexContent>
 							<xs:extension base="resolver:BaseResolutionPlugIn">
 								<xs:sequence>
+									<xs:element name="FailoverDependency" minOccurs="0">
+										<xs:complexType>
+											<xs:attribute name="requires" type="xs:string" use="required"/>
+										</xs:complexType>
+									</xs:element>
 									<xs:element name="Query" type="xs:string"/>
 									<xs:element name="AttributeExtractor" minOccurs="0">
 										<xs:complexType>
@@ -116,6 +129,12 @@
 											</xs:sequence>
 											<xs:attribute name="class" type="xs:string" use="required"/>
 											<xs:anyAttribute namespace="##any" processContents="lax"/>
+										</xs:complexType>
+									</xs:element>
+									<xs:element name="Property" minOccurs="0" maxOccurs="unbounded">
+										<xs:complexType>
+											<xs:attribute name="name" type="xs:string" use="required"/>
+											<xs:attribute name="value" type="xs:string" use="required"/>
 										</xs:complexType>
 									</xs:element>
 								</xs:sequence>
@@ -146,7 +165,7 @@
 			</xs:element>
 			<xs:element name="AttributeDependency">
 				<xs:complexType>
-					<xs:attribute name="requires" type="xs:string" use="optional"/>
+					<xs:attribute name="requires" type="xs:string" use="required"/>
 				</xs:complexType>
 			</xs:element>
 		</xs:choice>
