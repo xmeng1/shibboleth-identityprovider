@@ -17,4 +17,8 @@
         <Alias>Wisc</Alias>
         <HandleService Location="https://gari.doit.wisc.edu/shibboleth/HS" Name="gari.doit.wisc.edu"/>
     </OriginSite>
+    <OriginSite Name="psu.edu">
+        <Alias>Penn State University</Alias>
+        <HandleService Location="https://aistest02.aset.psu.edu/shibboleth/HS" Name="aistest02.aset.psu.edu"/>
+    </OriginSite>
 </Sites>
