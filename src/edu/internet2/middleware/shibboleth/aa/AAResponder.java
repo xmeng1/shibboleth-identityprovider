@@ -314,6 +314,10 @@ public class AAResponder{
 			log.debug("Loaded the class for " + attrClass);
 			ShibAttribute sa = (ShibAttribute) attrClass.newInstance();
 			return sa.toSamlAttribute(this.domain, vals.toArray());
+			
+		} catch (SAMLException e) {
+			log.error("Error converting attribute to SAML (" + jAttr.getID() + ") :" + e.getMessage());
+			return null;
 		} catch (Exception e) {
 			log.error("Failed to load the class for attribute (" + jAttr.getID() + ") :" + e);
 			return null;
