@@ -109,8 +109,9 @@ public abstract class ResourceWatchdog extends Thread {
 
 	protected void checkAndRun() {
 
+		URLConnection connection = null;
 		try {
-			URLConnection connection = resource.getURL().openConnection();
+			connection = resource.getURL().openConnection();
 			connection.connect();
 
 			log.debug("Checking for updates to resource (" + resource.getURL().toString() + ")");
@@ -152,6 +153,15 @@ public abstract class ResourceWatchdog extends Thread {
 						+ "Resource cannot be reloaded.");
 				interrupted = true;
 				return;
+			}
+		} finally {
+			//Silliness to avoid file descriptor leaks
+			if (connection != null) {
+				try {
+					connection.getInputStream().close();
+				} catch (IOException e1) {
+					// ignore
+				}
 			}
 		}
 
