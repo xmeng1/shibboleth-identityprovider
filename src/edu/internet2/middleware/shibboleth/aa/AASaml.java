@@ -101,6 +101,7 @@ public class AASaml {
     public AASaml(String myName, String[] policies) throws SAMLException {
         binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
         this.myName = myName;
+        this.policies = policies;
     }
 
     public void receive(HttpServletRequest req) throws SAMLException {
