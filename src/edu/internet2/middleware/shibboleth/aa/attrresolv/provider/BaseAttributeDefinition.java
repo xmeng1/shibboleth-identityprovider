@@ -116,7 +116,7 @@ public abstract class BaseAttributeDefinition extends BaseResolutionPlugIn imple
 		}
 
 		if (connectorNodes.getLength() == 0 && attributeNodes.getLength() == 0) {
-			log.warn("Attribute " + getId() + " has no registered dependencies.");
+			log.debug("Attribute " + getId() + " has no registered dependencies.");
 		}
 
 	}
