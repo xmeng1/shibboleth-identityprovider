@@ -74,7 +74,7 @@ public class SessionManager {
 	    do {
 	        rand.nextBytes(trash);
 	        for (int i=0;i<16;i++) {
-	            trash[i]|=0x3f;
+	            trash[i]&=0x3f;
 	            ctrash[i]=(char)table.charAt(trash[i]);
 	        }
 	    } while (null!=sessions.get(ctrash));
@@ -292,6 +292,8 @@ public class SessionManager {
 	    Map /*<String,String>*/attributeMap = new HashMap/*<String,String>*/();
 	    StringBuffer sb = new StringBuffer();
         SAMLResponse attributeResponse = session.getAttributeResponse();
+		if (attributeResponse==null)
+			return attributeMap;
         Iterator assertions = attributeResponse.getAssertions();
         while (assertions.hasNext()) {
             SAMLAssertion assertion = (SAMLAssertion) assertions.next();
