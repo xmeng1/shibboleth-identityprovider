@@ -39,7 +39,11 @@ public class AAResponder{
 
 	DirContext userCtx = null;
 	//HandleEntry he = hrf.getHandleEntry(handle);
-	String userName = "foo"; //he.getUsername();
+	// temp for testing
+	String userName = null;
+	if(handle.equalsIgnoreCase("foo"))
+	   userName = "dousti"; //he.getUsername();
+	    
 	if(userName == null)
 	    throw new AAException("user name is null");
 
