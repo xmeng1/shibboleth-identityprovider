@@ -171,6 +171,9 @@ class FileCredentialResolver implements CredentialResolver {
 
 	private static Logger log = Logger.getLogger(FileCredentialResolver.class.getName());
 
+	private static String DSAKey_OID = "1.2.840.10040.4.1";
+	private static String RSAKey_OID = "1.2.840.113549.1.1.1";
+
 	public Credential loadCredential(Element e) throws CredentialFactoryException {
 
 		if (!e.getTagName().equals("FileResolver")) {
@@ -191,7 +194,6 @@ class FileCredentialResolver implements CredentialResolver {
 		log.debug("Key Path: (" + keyPath + ").");
 
 		//TODO support DER, PEM, DER-PKCS8, and PEM-PKCS8?
-		//TODO DSA
 
 		PrivateKey key = null;
 
@@ -333,6 +335,7 @@ class FileCredentialResolver implements CredentialResolver {
 		} while (i > -1);
 
 		//TODO switch to examining the DER, so we don't get failure messages
+		//TODO support DSA when switching
 		try {
 			return getRSAPkcs8DerKey(inputBytes.toByteArray());
 
@@ -367,8 +370,9 @@ class FileCredentialResolver implements CredentialResolver {
 		while ((str = in.readLine()) != null) {
 
 			if (str.matches("^.*-----BEGIN PRIVATE KEY-----.*$")) {
+				log.debug("Key appears to be in PKCS8 format.");
 				in.close();
-				return getPkcs8PemKey(
+				return getPkcs8Key(
 					singleDerFromPEM(
 						inputBytes.toByteArray(),
 						"-----BEGIN PRIVATE KEY-----",
@@ -376,6 +380,7 @@ class FileCredentialResolver implements CredentialResolver {
 
 			} else if (str.matches("^.*-----BEGIN RSA PRIVATE KEY-----.*$")) {
 				in.close();
+				log.debug("Key appears to be RSA in raw format.");
 				return getRSARawDERKey(
 					singleDerFromPEM(
 						inputBytes.toByteArray(),
@@ -383,6 +388,7 @@ class FileCredentialResolver implements CredentialResolver {
 						"-----END RSA PRIVATE KEY-----"));
 			} else if (str.matches("^.*-----BEGIN DSA PRIVATE KEY-----.*$")) {
 				in.close();
+				log.debug("Key appears to be DSA in raw format.");
 				return getDSARawDERKey(
 					singleDerFromPEM(
 						inputBytes.toByteArray(),
@@ -407,7 +413,19 @@ class FileCredentialResolver implements CredentialResolver {
 			log.error("Unable to load private key: " + e);
 			throw new CredentialFactoryException("Unable to load private key.");
 		}
+	}
 
+	private PrivateKey getDSAPkcs8DerKey(byte[] bytes) throws CredentialFactoryException {
+
+		try {
+			KeyFactory keyFactory = KeyFactory.getInstance("DSA");
+			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(bytes);
+			return keyFactory.generatePrivate(keySpec);
+
+		} catch (Exception e) {
+			log.error("Unable to load private key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		}
 	}
 
 	private PrivateKey getRSARawDERKey(byte[] bytes) throws CredentialFactoryException {
@@ -530,10 +548,46 @@ class FileCredentialResolver implements CredentialResolver {
 
 	}
 
-	private PrivateKey getPkcs8PemKey(byte[] bytes) throws CredentialFactoryException {
+	private PrivateKey getPkcs8Key(byte[] bytes) throws CredentialFactoryException {
 
-		//TODO Needs to work for DSA as well
-		return getRSAPkcs8DerKey(bytes);
+		try {
+			DerValue root = new DerValue(bytes);
+			if (root.tag != DerValue.tag_Sequence) {
+				log.error("Unexpected data type.  Unable to load data as a PKCS8 formatted key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			DerValue[] childValues = new DerValue[2];
+			childValues[0] = root.data.getDerValue();
+			childValues[1] = root.data.getDerValue();
+
+			if (childValues[0].tag != DerValue.tag_Integer || childValues[1].tag != DerValue.tag_Sequence) {
+				log.error("Unexpected data type.  Unable to load data as a PKCS8 formatted key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			DerValue grandChild = childValues[1].data.getDerValue();
+			if (grandChild.tag != DerValue.tag_ObjectId) {
+				log.error("Unexpected data type.  Unable to load data as a PKCS8 formatted key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			String keyOID = grandChild.getOID().toString();
+			if (keyOID.equals(FileCredentialResolver.RSAKey_OID)) {
+				log.debug("Found RSA key in PKCS8.");
+				return getRSAPkcs8DerKey(bytes);
+			} else if (keyOID.equals(FileCredentialResolver.DSAKey_OID)) {
+				log.debug("Found DSA key in PKCS8.");
+				return getDSAPkcs8DerKey(bytes);
+			} else {
+				log.error("Unexpected key type.  Only RSA and DSA keys are supported in PKCS8 format.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+		} catch (IOException e) {
+			log.error("Invalid DER encoding for PKCS8 formatted key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		}
 	}
 
 	private byte[] singleDerFromPEM(byte[] bytes, String beginToken, String endToken) throws IOException {
