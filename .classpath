@@ -23,6 +23,6 @@
     <classpathentry kind="var" path="JRE_LIB" sourcepath="JRE_SRC"/>
     <classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-dbcp-1.0.jar"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-pool-1.0.1.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-pool-1.1.jar"/>
     <classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
