@@ -55,8 +55,10 @@ import java.net.URL;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -90,11 +92,15 @@ public class ArpEngine {
 
 	public ArpEngine(Properties properties) throws ArpException {
 		try {
-			this.repository = ArpRepositoryFactory.getInstance(properties);
+			repository = ArpRepositoryFactory.getInstance(properties);
 		} catch (ArpRepositoryException e) {
 			log.error("Could not start Arp Engine: " + e);
 			throw new ArpException("Could not start Arp Engine.");
 		}
+	}
+
+	public ArpEngine(ArpRepository repository, Properties properties) throws ArpException {
+		this.repository = repository;
 	}
 
 	public static MatchFunction lookupMatchFunction(URI functionIdentifier) throws ArpException {
@@ -135,8 +141,8 @@ public class ArpEngine {
 			for (int i = 0; userPolicies.length > i; i++) {
 				Rule[] rules = userPolicies[i].getMatchingRules(requester, resource);
 
-				for (int j = 0; rules.length > i; j++) {
-					effectiveArp.addRule(rules[i]);
+				for (int j = 0; rules.length > j; j++) {
+					effectiveArp.addRule(rules[j]);
 				}
 			}
 
@@ -145,6 +151,29 @@ public class ArpEngine {
 			log.error("Error creating effective policy: " + e);
 			throw new ArpProcessingException("Error creating effective policy.");
 		}
+	}
+
+	URI[] listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
+		throws ArpProcessingException {
+		Set possibleReleaseSet = new HashSet();
+		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
+		for (int i = 0; rules.length > i; i++) {
+			Rule.Attribute[] attributes = rules[i].getAttributes();
+			for (int j = 0; attributes.length > j; j++) {
+				if (attributes[j].releaseAnyValue()) {
+					possibleReleaseSet.add(attributes[j].getName());
+				} else {
+					Rule.AttributeValue[] values = attributes[j].getValues();
+					for (int k = 0; values.length > k; k++) {
+						if (values[k].getRelease().equals("permit")) {
+							possibleReleaseSet.add(attributes[j].getName());
+							break;
+						}
+					}
+				}
+			}
+		}
+		return (URI[]) possibleReleaseSet.toArray(new URI[0]);
 	}
 
 }

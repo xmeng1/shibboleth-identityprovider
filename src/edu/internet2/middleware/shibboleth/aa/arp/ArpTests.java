@@ -55,6 +55,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.Principal;
+import java.util.Arrays;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -80,6 +82,8 @@ public class ArpTests extends TestCase {
 		junit.textui.TestRunner.run(ArpTests.class);
 		BasicConfigurator.configure();
 	}
+	
+
 
 	public void testArpMarshalling() {
 
@@ -370,6 +374,55 @@ public class ArpTests extends TestCase {
 				repository.getUserPolicy(userArp2.getPrincipal()));
 		} catch (ArpRepositoryException e) {
 			fail("Error adding User ARP to Memory Repository.");
+		}
+
+	}
+
+	public void testPossibleReleaseSetComputation() {
+		Properties props = new Properties();
+		props.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
+		ArpRepository repository = null;
+		try {
+			repository = ArpRepositoryFactory.getInstance(props);
+		} catch (ArpRepositoryException e) {
+			fail("Failed to create memory-based Arp Repository" + e);
+		}
+
+		try {
+			Principal principal1 = new AAPrincipal("TestPrincipal");
+			URL url1 = new URL("http://www.example.edu/");
+			URI[] list1 = { new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation")};
+			URI[] list2 =
+				{
+					new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
+					new URI("urn:mace:eduPerson:1.0:eduPersonPrincipalName")};
+					
+			//Test with just a site ARP
+			InputStream inStream = new FileInputStream("test/arp1.xml");
+			DOMParser parser = new DOMParser();
+			parser.parse(new InputSource(inStream));
+			Arp arp1 = new Arp();
+			arp1.marshall(parser.getDocument().getDocumentElement());
+			repository.update(arp1);
+			ArpEngine engine = new ArpEngine(repository, props);
+			URI[] possibleAttributes =
+				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
+			assertTrue("Incorrectly computed possible release set.", Arrays.equals(possibleAttributes, list1));
+
+			//Test with site and user ARPs
+			inStream = new FileInputStream("test/arp7.xml");
+			parser.parse(new InputSource(inStream));
+			Arp arp7 = new Arp();
+			arp7.setPrincipal(principal1);
+			arp7.marshall(parser.getDocument().getDocumentElement());
+			repository.update(arp7);
+			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
+			assertTrue("Incorrectly computed possible release set.", Arrays.equals(possibleAttributes, list2));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Failed to marshall ARP: " + e);
 		}
 
 	}

@@ -99,6 +99,10 @@ public class Rule {
 	 * Unmarshalls the <code>Rule</code> into an xml <code>Element</code>.
 	 * @return the xml <code>Element</code>
 	 */
+	
+	public Attribute[] getAttributes() {
+		return (Attribute[]) attributes.toArray(new Attribute[0]);	
+	}
 
 	public Element unmarshall() {
 
@@ -339,39 +343,66 @@ public class Rule {
 		private String anyValueRelease = "permit";
 		private Set values = new HashSet();
 
+		boolean releaseAnyValue() {
+			if (anyValueRelease.equals("permit")) {
+				return anyValue;
+			}
+			return false;
+		}
+		
+		URI getName() {
+			return name;	
+		}
+		AttributeValue[] getValues() {
+			return (AttributeValue[]) values.toArray(new AttributeValue[0]);	
+		}
+
 		void marshall(Element element) throws ArpMarshallingException {
 			//Make sure we are dealing with an Attribute
 			if (!element.getTagName().equals("Attribute")) {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
-			//Handle <AnyValue/> definitions
-			NodeList anyValueNodeList = element.getElementsByTagName("AnyValue");
-			if (anyValueNodeList.getLength() == 1) {
-				anyValue = true;
-				if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
-					anyValueRelease = ((Element) anyValueNodeList.item(0)).getAttribute("release");
+
+			//Get the attribute name
+			try {
+				if (element.hasAttribute("name")) {
+					name = new URI(element.getAttribute("name"));
+				} else {
+					log.error("Attribute name not specified.");
+					throw new ArpMarshallingException("Attribute name not specified.");
 				}
+			} catch (URISyntaxException e) {
+				log.error("Attribute name not identified by a proper URI: " + e);
+				throw new ArpMarshallingException("Attribute name not identified by a proper URI.");
 			}
 
-			//Handle Value definitions
-			NodeList valueNodeList = element.getElementsByTagName("Value");
-			for (int i = 0; valueNodeList.getLength() > i; i++) {
-				String release = null;
-				String value = null;
-				if (((Element) valueNodeList.item(i)).hasAttribute("release")) {
-					release = ((Element) valueNodeList.item(i)).getAttribute("release");
+				//Handle <AnyValue/> definitions
+				NodeList anyValueNodeList = element.getElementsByTagName("AnyValue");
+				if (anyValueNodeList.getLength() == 1) {
+					anyValue = true;
+					if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
+						anyValueRelease = ((Element) anyValueNodeList.item(0)).getAttribute("release");
+					}
 				}
-				if (((Element) valueNodeList.item(i)).hasChildNodes()
-					&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType() == Node.TEXT_NODE) {
-					value =
-						((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild()).getData();
-				}
-				AttributeValue aValue = new AttributeValue(release, value);
-				values.add(aValue);
-			}
 
-		}
+				//Handle Value definitions
+				NodeList valueNodeList = element.getElementsByTagName("Value");
+				for (int i = 0; valueNodeList.getLength() > i; i++) {
+					String release = null;
+					String value = null;
+					if (((Element) valueNodeList.item(i)).hasAttribute("release")) {
+						release = ((Element) valueNodeList.item(i)).getAttribute("release");
+					}
+					if (((Element) valueNodeList.item(i)).hasChildNodes()
+						&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType() == Node.TEXT_NODE) {
+						value = ((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild()).getData();
+					}
+					AttributeValue aValue = new AttributeValue(release, value);
+					values.add(aValue);
+				}
+
+			}
 	}
 	class AttributeValue {
 		private String release = "permit";

@@ -50,8 +50,10 @@
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
 import java.security.Principal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -80,8 +82,12 @@ public class MemoryArpRepository implements ArpRepository {
 
 	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
 
-		Set allPolicies = userPolicies.entrySet();
+		if (sitePolicy == null) {
+			return (Arp[]) userPolicies.values().toArray(new Arp[0]);
+		}
+		Set allPolicies = new HashSet();
 		allPolicies.add(sitePolicy);
+		allPolicies.addAll(userPolicies.values());
 		return (Arp[]) allPolicies.toArray(new Arp[0]);
 	}
 

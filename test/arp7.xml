@@ -1,0 +1,15 @@
+<AttributeReleasePolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ARP.xsd">
+	<Description>A specific SHAR and a regex resource.</Description>
+	<Rule>
+		<Target>
+			<Requester>shar.example.edu</Requester>
+			<Resource matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^https?://.+\.example\.edu/.*$</Resource>
+		</Target>
+		<Attribute name="urn:mace:eduPerson:1.0:eduPersonPrincipalName">
+			<AnyValue release="permit"/>
+		</Attribute>
+		<Attribute name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+			<Value release="permit">member@example.edu</Value>
+		</Attribute>
+	</Rule>
+</AttributeReleasePolicy>
