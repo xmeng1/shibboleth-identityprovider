@@ -7,17 +7,17 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="urn:mace:shibboleth:origin:1.0 origin.xsd" 
 	AAUrl="https://localhost/shibboleth/AA" 
-	defaultRelyingParty="https://localhost/shibboleth/target" 
-	providerId="https://localhost/shibboleth/origin">
+	defaultRelyingParty="https://example.org/shibboleth/target" 
+	providerId="https://example.org/shibboleth/origin">
 
-	<RelyingParty name="https://localhost/shibboleth/target" signingCredential="foo">
-		<HSNameFormat nameMapping="crypto"/>
+	<RelyingParty name="https://example.org/shibboleth/target" signingCredential="foo">
+		<HSNameFormat nameMapping="shm"/>
 	</RelyingParty>
 
 	<!-- You'll need to get a test credential from an InQueue CA -->
 	<!--
 	<RelyingParty name="urn:mace:inqueue" signingCredential="inqueue_cred">
-		<HSNameFormat nameMapping="crypto"/>
+		<HSNameFormat nameMapping="shm"/>
 	</RelyingParty>
 	-->
 	
@@ -39,7 +39,7 @@
 
 	<NameMapping 
 		xmlns="urn:mace:shibboleth:namemapper:1.0" 
-		id="crypto" 
+		id="shm" 
 		format="urn:mace:shibboleth:1.0:nameIdentifier" 
 		type="SharedMemoryShibHandle" 
 		handleTTL="1800"/>
