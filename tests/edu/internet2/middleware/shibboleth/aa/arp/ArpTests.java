@@ -134,9 +134,9 @@ public class ArpTests extends TestCase {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			memoryRepositoryElement =
-				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.configNameSpace, "ArpRepository");
 			memoryRepositoryElement.setAttributeNS(
-				IdPConfig.originConfigNamespace,
+				IdPConfig.configNameSpace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
 		} catch (ParserConfigurationException e) {
@@ -410,9 +410,9 @@ public class ArpTests extends TestCase {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			Element repositoryElement =
-				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.configNameSpace, "ArpRepository");
 			repositoryElement.setAttributeNS(
-				IdPConfig.originConfigNamespace,
+				IdPConfig.configNameSpace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.Foo");
 
@@ -488,14 +488,14 @@ public class ArpTests extends TestCase {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			Element repositoryElement =
-				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.configNameSpace, "ArpRepository");
 			repositoryElement.setAttributeNS(
-				IdPConfig.originConfigNamespace,
+				IdPConfig.configNameSpace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-			repositoryElement.setAttributeNS(IdPConfig.originConfigNamespace, "arpTTL", "65535");
+			repositoryElement.setAttributeNS(IdPConfig.configNameSpace, "arpTTL", "65535");
 
-			Element path = placeHolder.createElementNS(IdPConfig.originConfigNamespace, "Path");
+			Element path = placeHolder.createElementNS(IdPConfig.configNameSpace, "Path");
 			Text text = placeHolder.createTextNode(new File("data/").toURI().toString());
 			path.appendChild(text);
 

@@ -113,7 +113,7 @@ public class ArpEngine {
 		}
 
 		NodeList itemElements =
-			config.getElementsByTagNameNS(IdPConfig.originConfigNamespace, "ArpRepository");
+			config.getElementsByTagNameNS(IdPConfig.configNameSpace, "ArpRepository");
 
 		if (itemElements.getLength() > 1) {
 			log.warn(
@@ -152,13 +152,13 @@ public class ArpEngine {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			Element defRepository =
-				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.configNameSpace, "ArpRepository");
 			defRepository.setAttributeNS(
-				IdPConfig.originConfigNamespace,
+				IdPConfig.configNameSpace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
 
-			Element path = placeHolder.createElementNS(IdPConfig.originConfigNamespace, "Path");
+			Element path = placeHolder.createElementNS(IdPConfig.configNameSpace, "Path");
 			Text text = placeHolder.createTextNode("/conf/arps/");
 			path.appendChild(text);
 

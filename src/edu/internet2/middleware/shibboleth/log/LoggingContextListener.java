@@ -96,7 +96,7 @@ public class LoggingContextListener implements ServletContextListener {
 
 	protected void loadConfiguration(Document originConfig) throws ShibbolethConfigurationException {
 		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
-				IdPConfig.originConfigNamespace, "Logging");
+				IdPConfig.configNameSpace, "Logging");
 		Node errorLogNode = null;
 		boolean encounteredLog4JConfig = false;
 

@@ -226,7 +226,7 @@ public class ResolverTest
 
 				NodeList itemElements =
 					originConfig.getDocumentElement().getElementsByTagNameNS(
-							IdPConfig.originConfigNamespace,
+							IdPConfig.configNameSpace,
 							"ReleasePolicyEngine");
 
 				if (itemElements.getLength() > 1) {

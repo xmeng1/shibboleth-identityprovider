@@ -64,7 +64,7 @@ public class ServiceProviderMapper {
 		this.credentials = credentials;
 		this.nameMapper = nameMapper;
 
-		NodeList itemElements = rawConfig.getElementsByTagNameNS(IdPConfig.originConfigNamespace, "RelyingParty");
+		NodeList itemElements = rawConfig.getElementsByTagNameNS(IdPConfig.configNameSpace, "RelyingParty");
 
 		for (int i = 0; i < itemElements.getLength(); i++) {
 			addRelyingParty((Element) itemElements.item(i));
@@ -274,7 +274,7 @@ public class ServiceProviderMapper {
 
 			// Load and verify the name format that the HS should use in
 			// assertions for this RelyingParty
-			NodeList hsNameFormats = ((Element) partyConfig).getElementsByTagNameNS(IdPConfig.originConfigNamespace,
+			NodeList hsNameFormats = ((Element) partyConfig).getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"HSNameFormat");
 			// If no specification. Make sure we have a default mapping
 			if (hsNameFormats.getLength() < 1) {

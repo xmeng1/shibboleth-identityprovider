@@ -82,7 +82,7 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 	public FileSystemArpRepository(Element config) throws ArpRepositoryException {
 		super(config);
 
-		NodeList itemElements = config.getElementsByTagNameNS(IdPConfig.originConfigNamespace, "Path");
+		NodeList itemElements = config.getElementsByTagNameNS(IdPConfig.configNameSpace, "Path");
 
 		if (itemElements.getLength() > 1) {
 			log.warn(

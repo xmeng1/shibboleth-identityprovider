@@ -42,7 +42,7 @@ public class IdPConfig {
 
 	private String defaultRelyingPartyName;
 	private String providerId;
-	public static final String originConfigNamespace = "urn:mace:shibboleth:idp:config:1.0";
+	public static final String configNameSpace = "urn:mace:shibboleth:idp:config:1.0";
 	private String resolverConfig = "/conf/resolver.xml";
 	private boolean passThruErrors = false;
 	private int maxThreads = 5;
