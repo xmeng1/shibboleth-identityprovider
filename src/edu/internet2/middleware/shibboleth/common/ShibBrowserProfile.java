@@ -223,7 +223,7 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
         issuer.setLength(0);
         
         // Let SAML do all the decoding and parsing
-        BrowserProfileResponse bpr = profile.receive(issuer, reqContext, providerId, supportedProfiles, replayCache, artifactMapper);
+        BrowserProfileResponse bpr = profile.receive(issuer, reqContext, recipient, supportedProfiles, replayCache, artifactMapper);
         
         /*
          * Now find the Metadata for the Entity that send this assertion.
