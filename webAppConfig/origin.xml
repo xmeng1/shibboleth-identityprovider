@@ -11,7 +11,7 @@
 		<servlet-class>edu.internet2.middleware.shibboleth.hs.HandleServlet</servlet-class>
 		<init-param>
 			<param-name>domain</param-name>
-			<param-value>internet2.edu</param-value>
+			<param-value>demo.edu</param-value>
 		</init-param>
 		<init-param>
 		        <param-name>HSname</param-name>
@@ -23,7 +23,7 @@
 		</init-param>
 		<init-param>
 		          <param-name>AAurl</param-name>
-		          <param-value>https://shib2.internet2.edu/shibb/servlet/AAServlet</param-value>
+		          <param-value>https://shib2.internet2.edu/shibboleth-origin/servlet/AA</param-value>
 		</init-param>
 		<init-param>
 			<param-name>DBdriver</param-name>
