@@ -49,6 +49,7 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -66,12 +67,12 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.xerces.parsers.DOMParser;
+import org.apache.xml.serialize.OutputFormat;
+import org.apache.xml.serialize.XMLSerializer;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.SAXParseException;
 
 /**
@@ -82,7 +83,18 @@ import org.xml.sax.SAXParseException;
 
 public class ArpTests extends TestCase {
 
-	DOMParser parser = new DOMParser();
+	private DOMParser parser = new DOMParser();
+	private String[] arpExamples =
+		{
+			"data/example1.xml",
+			"data/example2.xml",
+			"data/example3.xml",
+			"data/example4.xml",
+			"data/example5.xml",
+			"data/example6.xml",
+			"data/example7.xml",
+			"data/example8.xml",
+			"data/example9.xml" };
 
 	public ArpTests(String name) {
 		super(name);
@@ -557,6 +569,35 @@ public class ArpTests extends TestCase {
 			e.printStackTrace();
 			fail("Failed to apply filter to ARPs: " + e);
 		}
+	}
+
+	public void testRoundtripMarshalling() {
+
+		try {
+			for (int i = 0; i < arpExamples.length; i++) {
+
+				InputStream inStream = new FileInputStream(arpExamples[i]);
+				parser.parse(new InputSource(inStream));
+				ByteArrayOutputStream directXML = new ByteArrayOutputStream();
+				new XMLSerializer(directXML, new OutputFormat()).serialize(
+					parser.getDocument().getDocumentElement());
+
+				Arp arp1 = new Arp();
+				arp1.marshall(parser.getDocument().getDocumentElement());
+
+				ByteArrayOutputStream processedXML = new ByteArrayOutputStream();
+				new XMLSerializer(processedXML, new OutputFormat()).serialize(arp1.unmarshall());
+
+				assertTrue(
+					"Round trip marshall/unmarshall failed for file (" + arpExamples[i] + ")",
+					directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
+						processedXML.toString().replaceAll("\n|\r|\t", "")));
+			}
+
+		} catch (Exception e) {
+			fail("Failed to marshall ARP: " + e);
+		}
+
 	}
 	/**
 	 * ARPs: A site ARP only
