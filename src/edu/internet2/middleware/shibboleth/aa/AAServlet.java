@@ -78,7 +78,6 @@ import edu.internet2.middleware.eduPerson.Init;
 import edu.internet2.middleware.shibboleth.aa.arp.AAPrincipal;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
-import edu.internet2.middleware.shibboleth.hs.HandleException;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
@@ -87,8 +86,8 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
  *  Attribute Authority & Release Policy
  *  Handles Initialization and incoming requests to AA
  *
- * @author     Parviz Dousti (dousti@cmu.edu)
- * @created    June, 2002
+ * @author Parviz Dousti (dousti@cmu.edu)
+ * @author	Walter Hoehn (wassa@columbia.edu)
  */
 
 public class AAServlet extends HttpServlet {
@@ -192,25 +191,47 @@ public class AAServlet extends HttpServlet {
 		return properties;
 	}
 
-	public void doPost(HttpServletRequest req, HttpServletResponse resp)
-		throws ServletException, IOException {
+	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		log.debug("Recieved a request.");
 		MDC.put("serviceId", new SAMLIdentifier().toString());
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
 
-		List attrs = null;
-		SAMLException ourSE = null;
 		AASaml saml = null;
-		Principal principal = null;
 
 		try {
 			saml =
-				new AASaml(
-					configuration.getProperty(
-						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
+				new AASaml(configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
 			saml.receive(req);
+
+			log.info("Attribute Query Handle for this request: (" + saml.getHandle() + ").");
+			Principal principal = null;
+			if (saml.getHandle().equalsIgnoreCase("foo")) {
+				// for testing
+				principal = new AAPrincipal("test-handle");
+			} else {
+				principal = handleRepository.getPrincipal(saml.getHandle());
+				if (principal == null) {
+					log.info("Could not associate the Attribute Query Handle with a principal.");
+					try {
+						QName[] codes =
+							{
+								SAMLException.REQUESTER,
+								new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
+						saml.fail(
+							resp,
+							new SAMLException(
+								Arrays.asList(codes),
+								"The supplied Attribute Query Handle was unrecognized or expired."));
+						return;
+					} catch (Exception ee) {
+						log.fatal("Could not construct a SAML error response: " + ee);
+						throw new ServletException("Attribute Authority response failure.");
+					}
+				}
+				throw new Exception("asdf");
+			}
 
 			URL resource = null;
 			try {
@@ -223,81 +244,35 @@ public class AAServlet extends HttpServlet {
 
 			String shar = saml.getShar();
 			log.info("AA: shar:" + shar);
-			String handle = saml.getHandle();
-			log.info("AA: handle:" + handle);
-			if (handle.equalsIgnoreCase("foo")) {
-				// for testing only
-				new AAPrincipal("dummy");
-			} else {
-				principal = handleRepository.getPrincipal(handle);
-				if (principal == null) {
-					throw new HandleException("Received a request for an invalid/unknown handle.");
-				}
-			}
 
-			attrs =
+			List attrs =
 				Arrays.asList(
 					responder.getReleaseAttributes(
 						principal,
-						configuration.getProperty(
-							"edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
+						configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
 						shar,
 						resource));
 			log.info("Got " + attrs.size() + " attributes for " + principal.getName());
 			saml.respond(resp, attrs, null);
 			log.info("Successfully responded about " + principal.getName());
 
-		} catch (org.opensaml.SAMLException se) {
-			log.error("AA failed for " + principal.getName() + " because of: " + se);
-			try {
+		} catch (SAMLException se) {
+			//log.error("AA failed for " + principal.getName() + " because of: " + se);
+			try { 
 				saml.fail(resp, se);
+				return;
 			} catch (Exception ee) {
-				throw new ServletException(
-					"AA failed to even make a SAML Failure message because "
-						+ ee
-						+ "  Origianl problem: "
-						+ se);
-			}
-		} catch (HandleException he) {
-			log.error("AA failed for " + principal.getName() + " because of: " + he);
-			try {
-				QName[] codes = new QName[2];
-				codes[0] = SAMLException.REQUESTER;
-				codes[1] =
-					new QName(
-						edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,
-						"InvalidHandle");
-				saml.fail(
-					resp,
-					new SAMLException(Arrays.asList(codes), "AA got a HandleException: " + he));
-			} catch (Exception ee) {
-				throw new ServletException(
-					"AA failed to even make a SAML Failure message because "
-						+ ee
-						+ "  Original problem: "
-						+ he);
+				log.fatal("Could not construct a SAML error response: " + ee);
+				throw new ServletException("Attribute Authority response failure.");
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(
-				"Attribute Authority Error for principal ("
-					+ principal.getName()
-					+ ") : "
-					+ e.getClass().getName()
-					+ " : "
-					+ e.getMessage());
+			log.error("Error while processing request: " + e);
 			try {
-				saml.fail(
-					resp,
-					new SAMLException(
-						SAMLException.RESPONDER,
-						"Attribute Authority Error: " + e.getMessage()));
+				saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+				return;
 			} catch (Exception ee) {
-				throw new ServletException(
-					"AA failed to even make a SAML Failure message because "
-						+ ee
-						+ "  Original problem: "
-						+ e);
+				log.fatal("Could not construct a SAML error response: " + ee);
+				throw new ServletException("Attribute Authority response failure.");
 			}
 
 		}

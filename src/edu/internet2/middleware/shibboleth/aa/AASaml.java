@@ -58,16 +58,34 @@ package edu.internet2.middleware.shibboleth.aa;
  */
 
 
-import java.util.*;
 import java.io.IOException;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import edu.internet2.middleware.shibboleth.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.opensaml.SAMLAssertion;
+import org.opensaml.SAMLAttribute;
+import org.opensaml.SAMLAttributeQuery;
+import org.opensaml.SAMLAttributeStatement;
+import org.opensaml.SAMLAudienceRestrictionCondition;
+import org.opensaml.SAMLBinding;
+import org.opensaml.SAMLCondition;
+import org.opensaml.SAMLException;
+import org.opensaml.SAMLQuery;
+import org.opensaml.SAMLRequest;
+import org.opensaml.SAMLResponse;
+import org.opensaml.SAMLStatement;
+import org.opensaml.SAMLSubject;
+import sun.misc.BASE64Decoder;
+
 import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
-import org.w3c.dom.*;
-import org.opensaml.*;
-import org.apache.log4j.Logger;
 
 
 public class AASaml {
@@ -178,9 +196,19 @@ public class AASaml {
 	    SAMLResponse sResp = new SAMLResponse((sreq!=null) ? sreq.getRequestId() : null,
 						  /* recipient URL*/ null,
 						  /* an assersion*/ null,
-						  exception);	
+						  exception);
+		if (log.isDebugEnabled()) {
+			try {
+				log.debug(
+					"Dumping generated SAML Error Response:"
+					+ System.getProperty("line.separator")
+					+ new String(new BASE64Decoder().decodeBuffer(new String(sResp.toBase64(), "ASCII")), "UTF8"));
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+				}
+			}
 	    binding.respond(resp, sResp, null);
-	    log.debug("AA Successfully made an error message :)");
+	    log.debug("Returning SAML Error Response.");
 	}catch(SAMLException se){
 	    binding.respond(resp, null, exception);
 	    log.info("AA failed to make an error message: "+se);
