@@ -42,6 +42,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -55,6 +56,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -65,6 +67,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import sun.misc.BASE64Decoder;
+import sun.security.util.DerValue;
 
 /**
  * @author Walter Hoehn
@@ -164,6 +167,7 @@ class KeyInfoCredentialResolver implements CredentialResolver {
 }
 
 class FileCredentialResolver implements CredentialResolver {
+
 	private static Logger log = Logger.getLogger(FileCredentialResolver.class.getName());
 
 	public Credential loadCredential(Element e) throws CredentialFactoryException {
@@ -180,56 +184,47 @@ class FileCredentialResolver implements CredentialResolver {
 		}
 
 		//Load the key
-
 		String keyFormat = getKeyFormat(e);
 		String keyPath = getKeyPath(e);
 		log.debug("Key Format: (" + keyFormat + ").");
 		log.debug("Key Path: (" + keyPath + ").");
 
-		String keyAlgorithm = "RSA";
-
-		//TODO providers?
 		//TODO support DER, PEM, DER-PKCS8, and PEM-PKCS8?
 		//TODO DSA
 
 		PrivateKey key = null;
 
-		if (keyAlgorithm.equals("RSA")) {
-
-			if (keyFormat.equals("DER")) {
-				try {
-					key = getRSADERKey(new ShibResource(keyPath, this.getClass()).getInputStream());
-				} catch (IOException ioe) {
-					log.error("Could not load resource from specified location (" + keyPath + "): " + e);
-					throw new CredentialFactoryException("Unable to load private key.");
-				}
-			} else if (keyFormat.equals("PEM")) {
-				try {
-					key = getRSAPEMKey(new ShibResource(keyPath, this.getClass()).getInputStream());
-				} catch (IOException ioe) {
-					log.error("Could not load resource from specified location (" + keyPath + "): " + e);
-					throw new CredentialFactoryException("Unable to load private key.");
-				}
-			} else {
-				log.error("File credential resolver only supports (DER) and (PEM) formats.");
-				throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+		if (keyFormat.equals("DER")) {
+			try {
+				key = getDERKey(new ShibResource(keyPath, this.getClass()).getInputStream());
+			} catch (IOException ioe) {
+				log.error("Could not load resource from specified location (" + keyPath + "): " + e);
+				throw new CredentialFactoryException("Unable to load private key.");
 			}
-
+		} else if (keyFormat.equals("PEM")) {
+			try {
+				key = getPEMKey(new ShibResource(keyPath, this.getClass()).getInputStream());
+			} catch (IOException ioe) {
+				log.error("Could not load resource from specified location (" + keyPath + "): " + e);
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
 		} else {
-			log.error("File credential resolver only supports the RSA keys.");
+			log.error("File credential resolver only supports (DER) and (PEM) formats.");
+			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+		}
+
+		if (key == null) {
+			log.error("Failed to load private key.");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
 		String certFormat = getCertFormat(e);
 		String certPath = getCertPath(e);
-		//A placeholder in case we ever want to make this configurable
+		//A placeholder in case we want to make this configurable
 		String certType = "X.509";
 
 		log.debug("Certificate Format: (" + certFormat + ").");
 		log.debug("Certificate Path: (" + certPath + ").");
-
-		//TODO provider optional
-		//TODO provide a way to specify a separate CA bundle
 
 		//The loading code should work for other types, but the chain construction code
 		//would break
@@ -324,23 +319,77 @@ class FileCredentialResolver implements CredentialResolver {
 		return new Credential(((X509Certificate[]) certChain.toArray(new X509Certificate[0])), key);
 	}
 
-	private PrivateKey getRSADERKey(InputStream inStream) throws CredentialFactoryException {
+	private PrivateKey getDERKey(InputStream inStream) throws CredentialFactoryException, IOException {
+
+		byte[] inputBuffer = new byte[8];
+		int i;
+		ByteContainer inputBytes = new ByteContainer(800);
+		do {
+			i = inStream.read(inputBuffer);
+			for (int j = 0; j < i; j++) {
+				inputBytes.append(inputBuffer[j]);
+			}
+		} while (i > -1);
 
 		try {
+			return getRSAPkcs8DerKey(inputBytes.toByteArray());
 
+		} catch (CredentialFactoryException e) {
+			log.debug("Unable to load private key as PKCS8, attempting raw RSA.");
+			return getRSARawDERKey(inputBytes.toByteArray());
+		}
+
+	}
+
+	private PrivateKey getPEMKey(InputStream inStream) throws CredentialFactoryException, IOException {
+
+		byte[] inputBuffer = new byte[8];
+		int i;
+		ByteContainer inputBytes = new ByteContainer(800);
+		do {
+			i = inStream.read(inputBuffer);
+			for (int j = 0; j < i; j++) {
+				inputBytes.append(inputBuffer[j]);
+			}
+		} while (i > -1);
+
+		BufferedReader in =
+			new BufferedReader(new InputStreamReader(new ByteArrayInputStream(inputBytes.toByteArray())));
+		String str;
+		while ((str = in.readLine()) != null) {
+
+			if (str.matches("^.*-----BEGIN PRIVATE KEY-----.*$")) {
+				in.close();
+				return getPkcs8PemKey(
+					singleDerFromPEM(
+						inputBytes.toByteArray(),
+						"-----BEGIN PRIVATE KEY-----",
+						"-----END PRIVATE KEY-----"));
+
+			} else if (str.matches("^.*-----BEGIN RSA PRIVATE KEY-----.*$")) {
+				in.close();
+				return getRSARawDERKey(
+					singleDerFromPEM(
+						inputBytes.toByteArray(),
+						"-----BEGIN RSA PRIVATE KEY-----",
+						"-----END RSA PRIVATE KEY-----"));
+			} else if (str.matches("^.*-----BEGIN DSA PRIVATE KEY-----.*$")) {
+				in.close();
+				log.error("No Support for DSA PEM keys.");
+				throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+			}
+		}
+		in.close();
+		log.error("Unsupported formatting.  Available PEM types are PKCS8, Raw RSA, and Raw DSA.");
+		throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+
+	}
+
+	private PrivateKey getRSAPkcs8DerKey(byte[] bytes) throws CredentialFactoryException {
+
+		try {
 			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			byte[] inputBuffer = new byte[8];
-			int i;
-			ByteContainer inputBytes = new ByteContainer(400);
-			do {
-				i = inStream.read(inputBuffer);
-				for (int j = 0; j < i; j++) {
-					inputBytes.append(inputBuffer[j]);
-				}
-			} while (i > -1);
-
-			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(inputBytes.toByteArray());
-
+			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(bytes);
 			return keyFactory.generatePrivate(keySpec);
 
 		} catch (Exception e) {
@@ -350,50 +399,120 @@ class FileCredentialResolver implements CredentialResolver {
 
 	}
 
-	private PrivateKey getRSAPEMKey(InputStream inStream) throws CredentialFactoryException {
+	private PrivateKey getRSARawDERKey(byte[] bytes) throws CredentialFactoryException {
+
+		try {
+			DerValue root = new DerValue(bytes);
+			if (root.tag != DerValue.tag_Sequence) {
+				log.error("Unexpected data type.  Unable to load data as an RSA key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			DerValue[] childValues = new DerValue[10];
+			childValues[0] = root.data.getDerValue();
+			childValues[1] = root.data.getDerValue();
+			childValues[2] = root.data.getDerValue();
+			childValues[3] = root.data.getDerValue();
+			childValues[4] = root.data.getDerValue();
+			childValues[5] = root.data.getDerValue();
+			childValues[6] = root.data.getDerValue();
+			childValues[7] = root.data.getDerValue();
+			childValues[8] = root.data.getDerValue();
+
+			//This data is optional.
+			if (root.data.available() != 0) {
+				childValues[9] = root.data.getDerValue();
+				if (root.data.available() != 0) {
+					log.error("Data overflow.  Unable to load data as an RSA key.");
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+			}
+
+			if (childValues[0].tag != DerValue.tag_Integer
+				|| childValues[1].tag != DerValue.tag_Integer
+				|| childValues[2].tag != DerValue.tag_Integer
+				|| childValues[3].tag != DerValue.tag_Integer
+				|| childValues[4].tag != DerValue.tag_Integer
+				|| childValues[5].tag != DerValue.tag_Integer
+				|| childValues[6].tag != DerValue.tag_Integer
+				|| childValues[7].tag != DerValue.tag_Integer
+				|| childValues[8].tag != DerValue.tag_Integer) {
+				log.error("Unexpected data type.  Unable to load data as an RSA key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			RSAPrivateCrtKeySpec keySpec =
+				new RSAPrivateCrtKeySpec(
+					childValues[1].getBigInteger(),
+					childValues[2].getBigInteger(),
+					childValues[3].getBigInteger(),
+					childValues[4].getBigInteger(),
+					childValues[5].getBigInteger(),
+					childValues[6].getBigInteger(),
+					childValues[7].getBigInteger(),
+					childValues[8].getBigInteger());
+
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+			return keyFactory.generatePrivate(keySpec);
+
+		} catch (IOException e) {
+			log.error("Invalid DER encoding: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		} catch (GeneralSecurityException e) {
+			log.error("Unable to marshall private key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		}
+
+	}
+
+	private PrivateKey getPkcs8PemKey(byte[] bytes) throws CredentialFactoryException {
+
+		//Needs to work for DSA as well
+		return getRSAPkcs8DerKey(bytes);
+	}
+
+	private byte[] singleDerFromPEM(byte[] bytes, String beginToken, String endToken) throws IOException {
 
 		try {
 
-			BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
+			BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes)));
 			String str;
 			boolean insideBase64 = false;
 			StringBuffer base64Key = null;
 			while ((str = in.readLine()) != null) {
 
 				if (insideBase64) {
-					if (str.matches("^.*-----END PRIVATE KEY-----.*$")) {
+					if (str.matches("^.*" + endToken + ".*$")) {
 						break;
 					}
 					{
 						base64Key.append(str);
 					}
-				} else if (str.matches("^.*-----BEGIN PRIVATE KEY-----.*$")) {
+				} else if (str.matches("^.*" + beginToken + ".*$")) {
 					insideBase64 = true;
 					base64Key = new StringBuffer();
 				}
 			}
 			in.close();
 			if (base64Key == null || base64Key.length() == 0) {
-				log.error("Did not find BASE 64 encoded private key in file.");
-				throw new CredentialFactoryException("Unable to load private key.");
+				log.error("Could not find Base 64 encoded entity.");
+				throw new IOException("Could not find Base 64 encoded entity.");
 			}
 
-			BASE64Decoder decoder = new BASE64Decoder();
-			//Probably want to give a different error for this exception
-			byte[] pkcs8Bytes = decoder.decodeBuffer(base64Key.toString());
 			try {
-				PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
-				KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-				return keyFactory.generatePrivate(keySpec);
-
-			} catch (Exception e) {
-				log.error("Unable to load private key: " + e);
-				throw new CredentialFactoryException("Unable to load private key.");
+				BASE64Decoder decoder = new BASE64Decoder();
+				return decoder.decodeBuffer(base64Key.toString());
+			} catch (IOException ioe) {
+				log.error("Could not decode Base 64: " + ioe);
+				throw new IOException("Could not decode Base 64.");
 			}
-		} catch (IOException p) {
-			log.error("Could not load resource from specified location: " + p);
-			throw new CredentialFactoryException("Unable to load key.");
+
+		} catch (IOException e) {
+			log.error("Could not load resource from specified location: " + e);
+			throw new IOException("Could not load resource from specified location.");
 		}
+
 	}
 
 	private String getCertFormat(Element e) throws CredentialFactoryException {
@@ -437,11 +556,11 @@ class FileCredentialResolver implements CredentialResolver {
 			log.debug("No format specified for certificate, using default (PEM) format.");
 			format = "PEM";
 		}
-		//TODO smarter
-		/*
-		 * if (!format.equals("DER-PKCS8")) { log.error("File credential resolver currently only supports (DER-PKCS8)
-		 * format."); throw new CredentialFactoryException("Failed to initialize Credential Resolver."); }
-		 */
+
+		if (!((format.equals("DER")) || (format.equals("PEM")))) {
+			log.error("File credential resolver currently only supports (DER) and (PEM) formats.");
+			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+		}
 		return format;
 	}
 
