@@ -77,4 +77,10 @@
         <HandleService Location="https://shibboleth.cc.columbia.edu/accounts/login" Name="shibboleth.cc.columbia.edu"/>
         <Domain>columbia.edu</Domain>
     </OriginSite>
+    <OriginSite Name="cmu.edu">
+        <Alias>Carnegie Mellon University</Alias>
+        <Alias>CMU</Alias>
+        <HandleService Location="https://shib-test.andrew.cmu.edu/shibboleth/HS" Name="shib-test.andrew.cmu.edu"/>
+        <Domain>cmu.edu</Domain>
+    </OriginSite>
 </Sites>

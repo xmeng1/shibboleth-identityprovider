@@ -77,6 +77,12 @@
         <HandleService Location="https://shibboleth.cc.columbia.edu/accounts/login" Name="shibboleth.cc.columbia.edu"></HandleService>
         <Domain>columbia.edu</Domain>
     </OriginSite>
+    <OriginSite Name="cmu.edu">
+        <Alias>Carnegie Mellon University</Alias>
+        <Alias>CMU</Alias>
+        <HandleService Location="https://shib-test.andrew.cmu.edu/shibboleth/HS" Name="shib-test.andrew.cmu.edu"></HandleService>
+        <Domain>cmu.edu</Domain>
+    </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
@@ -86,15 +92,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>sEbLliqhNpNirvWUTG0VQwsBzO0=</ds:DigestValue>
+<ds:DigestValue>+Tvg/6cK0z9IYu3rDSFir5tuPPc=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-DEdnxrZ40QVGOVkux+46NZsfX6R+uBCh7BTo2UwgFJL1+1wdUccBn4RdUlQvFJZF2K8WA4ig1FBd
-JiU9Ykf1uHY0vnshmkVLN1wQ1YwTWFU5ceDQYoswLY1fhZUVKTkXz1j36rccDSJ9IJx+0/sR6c47
-B3p0eLuVks1po8IIRYLp6tK4dOTFX5XzCnisqoR89zjeDvh9uXH/aRTK/DAIIjhn/jw49qnuZi6o
-pkWREMG9BQa2yB/Pv4FjVGP8OnJM/lU3R6HBTUnAcPToUguETYLN88OLQ8F3wlar3FTx80fjcNw4
-oM6RvUNNhzy7WUTpx5akByzS0+lc7QPn6gv9Mg==
+0DJrfPOFYyGvs8hh3tMWSFf2M11uSQWrWIpirlpntaxxjsLuAjqtEdpF+H/t1B/ohk8MgZY2iONE
+1yMapYuPiJ9ky4biTMfPYXpJAMywkdCCGUya4bN8cvUq9v7eSi+x9s+zlGawemn90Yhfii66N5RU
+r3GGlaM4Aji60Up41UfuxGYxgyeCiPkY9cmg/3UNlfB//0oIoWAdHt9YP7i/8WZ5xlt5pkvcxEZg
+39ZxAqcaoLPvUhl3gbx0IALeJIImhlatg/d6kcKUIIpPrkAJH9GxFv6V0w4Bm5Gbnp+EkCDBLhZ8
+qCIRBWRT3PpFBOAkaNWAUCRCELg8vs1E1c9ATA==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
