@@ -66,6 +66,7 @@ import org.xml.sax.SAXException;
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
+import edu.internet2.middleware.shibboleth.common.ShibResource;
 
 /**
  * Simple <code>ArpRepository</code> implementation that uses a filesystem for storage.
@@ -82,33 +83,43 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 
 	public FileSystemArpRepository(Properties props) throws ArpRepositoryException {
 		super(props);
-		if (props
-			.getProperty(
-				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
-				null)
+		if (props.getProperty("edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path", null)
 			== null) {
 			log.error(
 				"Cannot initialize FileSystemArpRepository: attribute (edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path) not specified");
 			throw new ArpRepositoryException("Cannot initialize FileSystemArpRepository");
 		}
 
-		File givenPath =
-			new File(
-				props.getProperty(
-					"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path"));
-		if (!givenPath.isDirectory()) {
+		try {
+			File givenPath =
+				new ShibResource(
+					props.getProperty(
+						"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path"),
+					this.getClass())
+					.getFile();
+
+			if (!givenPath.isDirectory()) {
+				log.error(
+					"Cannot initialize FileSystemArpRepository: specified path is not a directory: ("
+						+ givenPath.getPath()
+						+ ").");
+				throw new ArpRepositoryException("Cannot initialize FileSystemArpRepository");
+			}
+
+			dataStorePath =
+				props.getProperty("edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path");
+			if (!dataStorePath.endsWith("/")) {
+				dataStorePath += "/";
+			}
+			log.info("Initializing File System Arp Repository with a root of (" + dataStorePath + ").");
+		} catch (IOException e) {
 			log.error(
-				"Cannot initialize FileSystemArpRepository: specified path is not a directory: ("
-					+ givenPath.getPath()
+				"Cannot initialize FileSystemArpRepository: error accessing path: ("
+					+ props.getProperty(
+						"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path")
 					+ ").");
 			throw new ArpRepositoryException("Cannot initialize FileSystemArpRepository");
 		}
-
-		log.info(
-			"Initializing File System Arp Repository with a root of (" + givenPath.getAbsolutePath() + ").");
-		dataStorePath =
-			props.getProperty(
-				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path");
 	}
 
 	/**
@@ -130,16 +141,15 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 	 */
 	protected Element retrieveSiteArpXml() throws IOException, SAXException {
 
-		String fileName = dataStorePath + System.getProperty("file.separator") + siteArpFileName;
+		String fileName = dataStorePath + siteArpFileName;
 		log.debug("Attempting to load site ARP from: (" + fileName + ").");
 		return retrieveArpXml(fileName);
 
 	}
 
-	private Element retrieveArpXml(String fileName)
-		throws FileNotFoundException, SAXException, IOException {
+	private Element retrieveArpXml(String fileName) throws FileNotFoundException, SAXException, IOException {
 
-		File arpFile = new File(fileName);
+		File arpFile = new ShibResource(fileName, this.getClass()).getFile();
 		if (!arpFile.exists()) {
 			log.debug("No ARP found.");
 			return null;
@@ -157,7 +167,6 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 	protected Element retrieveUserArpXml(Principal principal) throws IOException, SAXException {
 		String fileName =
 			dataStorePath
-				+ System.getProperty("file.separator")
 				+ "arp.user."
 				+ principal.getName()
 				+ ".xml";

@@ -153,7 +153,7 @@ public class AAServlet extends HttpServlet {
 		Properties defaultProps = new Properties();
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
-			getServletContext().getRealPath("/WEB-INF/conf/arps/"));
+			"/conf/arps/");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
@@ -172,7 +172,7 @@ public class AAServlet extends HttpServlet {
 		Properties properties = new Properties(defaultProps);
 		String propertiesFileLocation = getInitParameter("OriginPropertiesFile");
 		if (propertiesFileLocation == null) {
-			propertiesFileLocation = "/WEB-INF/conf/origin.properties";
+			propertiesFileLocation = "/conf/origin.properties";
 		}
 		try {
 			log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
