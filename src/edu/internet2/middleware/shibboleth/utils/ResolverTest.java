@@ -54,7 +54,6 @@ import jargs.gnu.CmdLineParser;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Properties;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -124,13 +123,8 @@ public class ResolverTest {
 		configureLogging(debug);
 		checkRequired();
 
-		Properties configuration = new Properties();
-		configuration.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-			file);
-
 		try {
-			AttributeResolver resolver = new AttributeResolver(configuration);
+			AttributeResolver resolver = new AttributeResolver(file);
 			String[] attributes = resolver.listRegisteredAttributeDefinitionPlugIns();
 
 			AAAttributeSet attributeSet = new AAAttributeSet();
