@@ -5,16 +5,17 @@
     <!-- Set global properties for this build -->
     <property name="distname" value="shibboleth" />
     <property name="root" value="." />
-    <property name="src" value="${root}/src" />
-    <property name="approot" value="${root}/webApplication" />
-    <property name="configroot" value="${root}/webAppConfig" />
-    <property name="build" value="${approot}/WEB-INF/classes" />
-    <property name="libdir" value="${approot}/WEB-INF/lib" />
-    <property name="buildlibs" value="${root}/lib" />
-    <property name="distlibs" value="${root}/lib" />
-    <property name="dist" value="${root}/dist" />
-    <property name="docs" value="${root}/docs" />
-    <property name="javadocs" value="${docs}/api" />
+    <property name="src" value="${root}/src/" />
+    <property name="approot" value="${root}/webApplication/" />
+    <property name="appconfig" value="${src}/conf/" />
+    <property name="configroot" value="${root}/webAppConfig/" />
+    <property name="build" value="${approot}/WEB-INF/classes/" />
+    <property name="libdir" value="${approot}/WEB-INF/lib/" />
+    <property name="buildlibs" value="${root}/lib/" />
+    <property name="distlibs" value="${root}/lib/" />
+    <property name="dist" value="${root}/dist/" />
+    <property name="docs" value="${root}/docs/" />
+    <property name="javadocs" value="${docs}/api/" />
 
     <property name="year" value="2002"/>
     <property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
@@ -121,7 +122,6 @@
         </delete>
     </target>
 
-    
     <!-- Run automated tests on compiled code -->
     <target name="test-all" depends="test-origin, test-wayf" />
     <target name="test-origin" depends="test-common">
@@ -133,5 +133,10 @@
     </target>
     <target name="test-wayf" depends="test-common" />
     <target name="test-common" depends="compile-all"/>
+    
+	<target name="genSecret" depends="compile-all">
+    	<taskdef name="genSecret" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
+		<genSecret keyStorePath="${appconfig}/handle.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
+	</target>
 
 </project>

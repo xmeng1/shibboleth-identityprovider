@@ -49,22 +49,17 @@
  
 package edu.internet2.middleware.shibboleth.utils;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESedeKeySpec;
 
-import sun.misc.BASE64Encoder;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 
@@ -76,11 +71,10 @@ import org.apache.tools.ant.Task;
  */
 public class HandleRepositorySecretGenerator extends Task {
 
-	private String keyStorePath;
+	private File keyStorePath;
 	private String keyStorePassword;
 	private String keyStoreKeyAlias;
 	private String keyStoreKeyPassword;
-
 	public void execute() throws BuildException {
 		try {
 			if (keyStorePath == null
@@ -136,7 +130,7 @@ public class HandleRepositorySecretGenerator extends Task {
 	 * Sets the keyStorePath.
 	 * @param keyStorePath The keyStorePath to set
 	 */
-	public void setKeyStorePath(String keyStorePath) {
+	public void setKeyStorePath(File keyStorePath) {
 		this.keyStorePath = keyStorePath;
 	}
 
