@@ -72,7 +72,7 @@ public class ResourceTreeMatchFunction implements MatchFunction {
 	public boolean match(Object arpComponent, Object requestComponent)
 		throws MatchingException
 	{
-		if (!(arpComponent instanceof String) && !(requestComponent instanceof URL)) {
+		if (!(arpComponent instanceof String) || !(requestComponent instanceof URL)) {
 			log.error("Invalid use of ARP matching function (ResourceTreeMatchFunction).");
 			throw new MatchingException(
 				"Invalid use of ARP matching function (ResourceTreeMatchFunction).");

@@ -68,7 +68,7 @@ public class ExactSharMatchFunction implements MatchFunction {
 	public boolean match(Object arpComponent, Object requestComponent)
 		throws MatchingException
 	{
-		if (!(arpComponent instanceof String) && !(requestComponent instanceof String)) {
+		if (!(arpComponent instanceof String) || !(requestComponent instanceof String)) {
 			log.error("Invalid use of ARP matching function (ExacthSharMatchFunction).");
 			throw new MatchingException("Invalid use of ARP matching function (ExacthSharMatchFunction).");
 		}
