@@ -554,8 +554,8 @@ class DefaultAE implements JDBCAttributeExtractor {
 
 	private static Logger log = Logger.getLogger(DefaultAE.class.getName());
 
-	public BasicAttributes extractAttributes(ResultSet rs, int minResultSet, int maxResultSet) throws JDBCAttributeExtractorException {
-		BasicAttributes attributes = new BasicAttributes();
+	public Attributes extractAttributes(ResultSet rs, int minResultSet, int maxResultSet) throws JDBCAttributeExtractorException {
+		BasicAttributes attributes = new BasicAttributes(true);
         int row = 0;
         
 		try {

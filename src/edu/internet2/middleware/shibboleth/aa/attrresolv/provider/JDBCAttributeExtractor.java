@@ -27,7 +27,7 @@ package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
 import java.sql.ResultSet;
 
-import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.Attributes;
 
 /*
  * Built at the Canada Institute for Scientific and Technical Information (CISTI 
@@ -58,6 +58,6 @@ public interface JDBCAttributeExtractor {
 	 * @return BasicAttributes as objects containing all the attributes
 	 * @throws JDBCAttributeExtractorException If there is a complication in retrieving the attributes
 	 */
-	public BasicAttributes extractAttributes(ResultSet rs, int minResultSet, int maxResultSet)
+	public Attributes extractAttributes(ResultSet rs, int minResultSet, int maxResultSet)
         throws JDBCAttributeExtractorException;
 }
