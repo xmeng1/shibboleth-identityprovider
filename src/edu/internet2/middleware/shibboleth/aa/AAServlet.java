@@ -139,14 +139,6 @@ public class AAServlet extends HttpServlet {
 	}
     }
 
-    public void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        resp.setContentType("text/html");
-        PrintWriter out = resp.getWriter();
-	out.println("<HTML><BODY> Sorry! GET is not supported. </BODY></HTML>");
-	return;
-    }
-	
     public void doPost(HttpServletRequest req, HttpServletResponse resp)
         throws ServletException, IOException {
 
