@@ -401,7 +401,8 @@ public class ArpTests extends TestCase {
 		try {
 			Principal principal1 = new AAPrincipal("TestPrincipal");
 			URL url1 = new URL("http://www.example.edu/");
-			URI[] list1 = { new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation")};
+			URI[] list1 =
+				{ new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation")};
 			URI[] list2 =
 				{
 					new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
@@ -417,10 +418,14 @@ public class ArpTests extends TestCase {
 			repository.update(arp1);
 			ArpEngine engine = new ArpEngine(repository, props);
 			URI[] possibleAttributes =
-				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertTrue(
-				"Incorrectly computed possible release set.",
-				Arrays.equals(possibleAttributes, list1));
+				engine.listPossibleReleaseAttributes(
+					principal1,
+					"shar.example.edu",
+					url1);
+			assertEquals(
+				"Incorrectly computed possible release set (1).",
+				new HashSet(Arrays.asList(possibleAttributes)),
+				new HashSet(Arrays.asList(list1)));
 
 			//Test with site and user ARPs
 			inStream = new FileInputStream("test/arp7.xml");
@@ -429,10 +434,15 @@ public class ArpTests extends TestCase {
 			arp7.setPrincipal(principal1);
 			arp7.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp7);
-			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertTrue(
-				"Incorrectly computed possible release set.",
-				Arrays.equals(possibleAttributes, list2));
+			possibleAttributes =
+				engine.listPossibleReleaseAttributes(
+					principal1,
+					"shar.example.edu",
+					url1);
+			assertEquals(
+				"Incorrectly computed possible release set (2).",
+				new HashSet(Arrays.asList(possibleAttributes)),
+				new HashSet(Arrays.asList(list2)));
 
 			//Ensure that explicit denies on any value are not in the release set
 			inStream = new FileInputStream("test/arp6.xml");
@@ -441,10 +451,15 @@ public class ArpTests extends TestCase {
 			arp6.setPrincipal(principal1);
 			arp6.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp6);
-			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertTrue(
-				"Incorrectly computed possible release set.",
-				Arrays.equals(possibleAttributes, list3));
+			possibleAttributes =
+				engine.listPossibleReleaseAttributes(
+					principal1,
+					"shar.example.edu",
+					url1);
+			assertEquals(
+				"Incorrectly computed possible release set (3).",
+				new HashSet(Arrays.asList(possibleAttributes)),
+				new HashSet(Arrays.asList(list3)));
 
 		} catch (Exception e) {
 			e.printStackTrace();
