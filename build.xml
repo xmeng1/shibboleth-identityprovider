@@ -1,9 +1,9 @@
-<project name="AA" default="dist" basedir=".">
+<project name="shibboleth" default="dist" basedir=".">
 
   <!-- set global properties for this build -->
   <property name="src" value="."/>
   <property name="build" value="build"/>
-  <property name="dist"  value="/var/tomcat3/webapps/"/>
+  <property name="dist"  value="dist"/>
  
   <target name="init">
     <!-- Create the time stamp -->
@@ -20,7 +20,7 @@
     <war warfile="shibb.war" webxml="web.xml">
       <classes dir="build"/>
     </war>
-    <copy file="shibb.war" tofile="${dist}/shibb.war">
+    <copy file="shibboleth.war" tofile="${dist}/shibboleth.war">
     </copy>
   </target>
 
