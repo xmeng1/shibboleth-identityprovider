@@ -333,8 +333,9 @@ public class ShibPOSTProfile {
 
 		ArrayList audiences = new ArrayList();
 		audiences.add(relyingParty.getProviderId());
-		if (!relyingParty.getProviderId().equals(relyingParty.getName()))
+		if (!relyingParty.getProviderId().equals(relyingParty.getName())) {
 			audiences.add(relyingParty.getName());
+		}
 
 		String issuer;
 		if (relyingParty.isLegacyProvider()) {
@@ -360,7 +361,7 @@ public class ShibPOSTProfile {
 			}
 
 		} else {
-			issuer = relyingParty.getProviderId();
+			issuer = relyingParty.getIdentityProvider().getProviderId();
 		}
 
 		SAMLResponse r =
