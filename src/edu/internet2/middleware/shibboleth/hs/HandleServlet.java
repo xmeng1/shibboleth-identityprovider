@@ -237,6 +237,15 @@ public class HandleServlet extends HttpServlet {
 					configuration
 						.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword")
 						.toCharArray());
+			
+			if (privateKey == null) {
+				throw new HSConfigurationException(
+					"No key entry was found with an alias of ("
+						+ configuration.getProperty(
+							"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias")
+						+ ").");
+			}
+			
 
 			if (configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias") != null) {
 				certificates =
