@@ -320,7 +320,21 @@ public class AAServlet extends TargetFederationComponent {
 			sendResponse(resp, attrs, samlRequest, relyingParty, null);
 			log.info("Successfully responded about " + principal.getName());
 
-			//TODO place transaction log statement here
+			if (effectiveName == null) {
+				if (fromLegacyProvider(req)) {
+					transactionLog.info("Attribute assertion issued to anonymous legacy provider at ("
+							+ req.getRemoteAddr() + ").");
+				} else {
+					transactionLog.info("Attribute assertion issued to anonymous provider at (" + req.getRemoteAddr()
+							+ ").");
+				}
+			} else {
+				if (fromLegacyProvider(req)) {
+					transactionLog.info("Attribute assertion issued to legacy provider: (" + effectiveName + ").");
+				} else {
+					transactionLog.info("Attribute assertion issued to provider: (" + effectiveName + ").");
+				}
+			}
 
 		} catch (Exception e) {
 			log.error("Error while processing request: " + e);
