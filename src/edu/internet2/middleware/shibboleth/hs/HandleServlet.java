@@ -8,15 +8,15 @@ import javax.servlet.http.*;
 import edu.internet2.middleware.shibboleth.*;
 import edu.internet2.middleware.shibboleth.common.*;
 import org.opensaml.*;
-import org.apache.log4j.*;
+import org.apache.log4j.Logger;
 
 public class HandleServlet extends HttpServlet {
 
     private HandleRepositoryFactory hrf;
     private long ticketExp; 
     private HandleServiceSAML hsSAML;
-    private static Logger log; 
-    private String log4jConfigFileLocation;
+    private String rep;
+    private static Logger log = Logger.getLogger(HandleServlet.class.getName());; 
 
     public void init(ServletConfig conf)
 	throws ServletException
@@ -26,7 +26,8 @@ public class HandleServlet extends HttpServlet {
 	ServletContext sctx = sc.getServletContext();
 
 	getInitParams();
-	initLogger();
+	log.info("HS: Loading init params");
+	System.err.println("HS: initializing");
 
 	try {
 	    edu.internet2.middleware.eduPerson.Init.init();
@@ -41,41 +42,41 @@ public class HandleServlet extends HttpServlet {
 					    getInitParameter("certalias"),
 					    is );
 	    
+	    log.info("HS: Initializing Handle Repository with "+rep+" repository type.");
+	    System.err.println("HS: Initializing Handle Repository with "+rep+" repository type.");
 	    hrf = HandleRepositoryFactory.getInstance
 		( Constants.POLICY_CLUBSHIB, 
-		  getInitParameter("repository"),
+		  rep,
 		  this );
 	}
 	catch (SAMLException ex) {
-	    log.fatal("Error initializing SAML libraries.", ex);
+	    log.fatal("Error initializing SAML libraries: "+ ex);
 	    throw new ServletException( "Error initializing SAML libraries: " + ex );
 	}
 	catch (java.security.KeyStoreException ex) {
+	    log.fatal("Error initializing private KeyStore: "+ex);
 	    throw new ServletException( "Error initializing private KeyStore: " + ex );
 	}
 	catch (RuntimeException ex) {
+	    log.fatal("Error initializing eduPerson.Init: "+ ex); 
 	    throw new ServletException( "Error initializing eduPerson.Init: "+ ex); 
 	}
 	catch (HandleException ex) {
+	    log.fatal("Error initializing Handle Service: " +ex );
 	    throw new ServletException( "Error initializing Handle Service: " +ex );
 	}
 	catch (Exception ex) {
+	    log.fatal("Error in initialization: " +ex );
 	    throw new ServletException( "Error in initialization: " +ex );
 	}
 
 	sctx.setAttribute("HandleRepository", hrf);
-
+	
 	if (hsSAML == null) {
+	    log.fatal("Error initializing SAML libraries: No Profile created." );
 	    throw new ServletException( "Error initializing SAML libraries: No Profile created." );
 	}  
     }
-    private void initLogger() {
-	log = Logger.getLogger(HandleServlet.class.getName());
-	PropertyConfigurator.configure
-	    ( getServletContext().getRealPath("/") + log4jConfigFileLocation);
-	log.info("Logger initialized.");
-        }
-
 
 
     private void getInitParams() throws ServletException {
@@ -86,11 +87,6 @@ public class HandleServlet extends HttpServlet {
 	}
 	ticketExp = Long.parseLong(ticket);
 
-	log4jConfigFileLocation = getInitParameter("logConfig");
-	if ( log4jConfigFileLocation == null || 
-	     log4jConfigFileLocation.equals("")) {
-	    log4jConfigFileLocation = "/WEB-INF/conf/log4j.properties";
-	}
 	if ( getInitParameter("domain") == null || 
 	     getInitParameter("domain").equals("")) {
 	    throw new ServletException("Cannot find host domain in init parameters");
@@ -123,9 +119,9 @@ public class HandleServlet extends HttpServlet {
 	     getInitParameter("certalias").equals("")) {
 	    throw new ServletException("Cannot find certificate alias in init parameters");
 	}
-	if ( getInitParameter("repository") == null ||
-	     getInitParameter("repository").equals("")) {
-	    throw new ServletException("Cannot find repository specification in init parameters.");
+	rep = getInitParameter("repository");
+	if ( rep == null || rep.equals("")) {
+	    rep = "MEMORY"; 
 	}
     }
 
@@ -147,8 +143,8 @@ public class HandleServlet extends HttpServlet {
 
 	    he = new HandleEntry( req.getRemoteUser(), req.getAuthType(), 
 				  ticketExp );
-	    log.info("Got Handle: "+ he.getHandle());
-	    System.out.println("Got Handle: "+ he.getHandle());
+	    log.info("HS: Got Handle: "+ he.getHandle());
+	    System.err.println("HS: Got Handle: "+ he.getHandle());
 	    hrf.insertHandleEntry( he );
 	    
 	    byte[] buf = hsSAML.prepare
@@ -171,21 +167,7 @@ public class HandleServlet extends HttpServlet {
 	throws HandleException {
 	try {
 
-	    /*   res.setContentType("text/html");
-	    PrintWriter out = res.getWriter();
-	    out.println("<HTML><HEAD><TITLE>Handle Service</TITLE></HEAD>");
-	    out.println("<BODY onLoad=\"document.forms[0].submit()\">");
-	    out.println("<p><form name=\"shib\" " + "action=\"" +
-			req.getParameter("shire")+"\" method=\"POST\">");
-	    out.println("<input type=\"hidden\" name=\"TARGET\"" +
-			" value=\"" + req.getParameter("target") + "\">");
-	    out.println("<input type=\"hidden\" name=\"SAMLResponse\""+
-			"value=\"" + buf + "\">");
-	    out.println("<input type=\"submit\" value=\"Transmit\">");
-	    out.println("</form>");
-	    */
 	    /**
-	     * uncomment the following to implement 
 	     * forwarding to hs.jsp for submission
              */
 	    //Hardcoded to ASCII to ensure Base64 encoding compatibility
