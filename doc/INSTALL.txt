@@ -1,5 +1,5 @@
-6/1/03
-Version 1.0
+7/31/03
+Version 1.1
 
 Binary distributions of the Shibboleth code are available.
 Information on obtaining and installing binaries can be found at
@@ -18,12 +18,12 @@ source. The binaries can also be built easily using Ant, which is also included.
 The following commands will build this release of Shibboleth
 
 $ cd shibboleth/java
-$ ant build-util
-$ ant
+$ ./ant build-util
+$ ./ant
 
 The JavaDocs can be generated with the following command:
 
-$ ant javadocs
+$ ./ant javadocs
 
 The origin code is largely contained in a Java webapp (shibboleth.war) that
 you would deploy with a J2EE engine like Tomcat. From this point, refer to
