@@ -49,25 +49,40 @@
 
 package edu.internet2.middleware.shibboleth.aa;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import javax.naming.*;
-import javax.naming.directory.*;
-import org.opensaml.*;
-import org.w3c.dom.*;
-import edu.internet2.middleware.shibboleth.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.UnavailableException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+import org.opensaml.QName;
+import org.opensaml.SAMLException;
+import org.opensaml.SAMLIdentifier;
+
+import edu.internet2.middleware.eduPerson.Init;
 import edu.internet2.middleware.shibboleth.aa.arp.AAPrincipal;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
-import edu.internet2.middleware.shibboleth.common.*;
-import edu.internet2.middleware.shibboleth.hs.*;
-import edu.internet2.middleware.eduPerson.*;
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
+import edu.internet2.middleware.shibboleth.common.Constants;
+import edu.internet2.middleware.shibboleth.hs.HandleEntry;
+import edu.internet2.middleware.shibboleth.hs.HandleException;
+import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
 
 /**
  *  Attribute Authority & Release Policy
@@ -79,8 +94,8 @@ import org.apache.log4j.MDC;
 
 public class AAServlet extends HttpServlet {
 
-    AAResponder responder;
-    HandleRepositoryFactory hrf;
+    protected AAResponder responder;
+    protected HandleRepositoryFactory hrf;
     protected Properties configuration;
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
@@ -94,7 +109,7 @@ public class AAServlet extends HttpServlet {
 			configuration = loadConfiguration();
 
 			ArpEngine arpEngine = new ArpEngine(configuration);
-			edu.internet2.middleware.eduPerson.Init.init();
+			
 			hrf = getHandleRepository();
 
 			log.info(
@@ -103,7 +118,7 @@ public class AAServlet extends HttpServlet {
 					+ ") for attribute retrieval.");
 
 			DirContext ctx = new InitialDirContext(configuration);
-
+			Init.init();
 			responder =
 				new AAResponder(
 					arpEngine,
@@ -114,19 +129,22 @@ public class AAServlet extends HttpServlet {
 			log.info("Attribute Authority initialization complete.");
 
 		} catch (NamingException ne) {
-			log.fatal("AA init failed: " + ne);
-			throw new ServletException("Init failed: " + ne);
+			log.fatal(
+				"The AA could not be initialized due to a problem with the JNDI context configuration: "
+					+ ne);
+			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (ArpException ae) {
 			log.fatal(
-				"Attribute Authority could not be initialized due to a problem with the ARP Engine configuration: "
-					+ ae);
+				"The AA could not be initialized due to a problem with the ARP Engine configuration: " + ae);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (AAException ae) {
-			log.fatal("AA init failed: " + ae);
-			throw new ServletException("Init failed: " + ae);
+			log.fatal("The AA could not be initialized: " + ae);
+			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (HandleException he) {
-			log.fatal("AA init failed: " + he);
-			throw new ServletException("Init failed: " + he);
+			log.fatal(
+				"The AA could not be initialized due to a problem with the Handle Repository configuration: "
+					+ he);
+			throw new UnavailableException("Attribute Authority failed to initialize.");
 		}
 	}
 	protected Properties loadConfiguration() throws AAException {
