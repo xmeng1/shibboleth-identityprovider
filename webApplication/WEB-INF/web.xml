@@ -41,7 +41,7 @@
 		<servlet-class>edu.internet2.middleware.shibboleth.hs.HandleServlet</servlet-class>
 		<init-param>
 			<param-name>domain</param-name>
-			<param-value>demo.edu</param-value>
+			<param-value>example.edu</param-value>
 		</init-param>
 		<init-param>
 		        <param-name>HSname</param-name>
