@@ -85,7 +85,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 /**
  * Validation suite for <code>Arp</code> processing.
  * 
- * @ author Walter Hoehn(wassa@columbia.edu)
+ * @author Walter Hoehn(wassa@columbia.edu)
  */
 
 public class ArpTests extends TestCase {
