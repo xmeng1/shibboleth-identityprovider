@@ -80,7 +80,6 @@ public class ShibResource {
 		if (resource == null) {
 			throw new ResourceNotAvailableException("ShibResource could not be found at the specified location.");
 		}
-		System.err.println(resource);
 	}
 
 	/**
