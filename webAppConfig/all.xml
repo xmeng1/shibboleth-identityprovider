@@ -114,61 +114,11 @@
                     <param-value>/sites.xml</param-value>
                 </init-param>
 	</servlet>
-	<servlet>
-		<servlet-name>WAYFTester</servlet-name>
-		<display-name>Simple servlet for testing WAYF functionality</display-name>
-		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfTester</servlet-class>
-	</servlet>
-	<servlet>
-		<servlet-name>SHIRE</servlet-name>
-		<display-name>Shibboleth SHIRE Component</display-name>
-		<servlet-class>edu.internet2.middleware.shibboleth.shire.ShireServlet</servlet-class>
-	<init-param>
-		<param-name>cookie-name</param-name>
-		<param-value>shib_shib1</param-value>
-	</init-param>
-	<init-param>
-		<param-name>session-dir</param-name>
-		<param-value>/tmp/shiresessions</param-value>
-	</init-param>
-	<init-param>
-		<param-name>ssl-only</param-name>
-		<param-value>true</param-value>
-	</init-param>
-	<init-param>
-		<param-name>check-address</param-name>
-		<param-value>true</param-value>
-	</init-param>
-	<init-param>
-		<param-name>verbose</param-name>
-		<param-value>true</param-value>
-	</init-param>
-	<init-param>
-		<param-name>keystore-path</param-name>
-		<param-value>/WEB-INF/conf/roots.jks</param-value>
-	</init-param>
-	<init-param>
-		<param-name>keystore-alias</param-name>
-		<param-value>internet2</param-value>
-	</init-param>
-	<init-param>
-		<param-name>keystore-password</param-name>
-		<param-value>shibboleth</param-value>
-	</init-param>
-	<init-param>
-		<param-name>registry-uri</param-name>
-		<param-value>http://shib1.internet2.edu:8000/shibboleth-target/sites.xml</param-value>
-	</init-param>
-	</servlet>
 	
      <servlet-mapping>
 		<servlet-name>WAYF</servlet-name>
 		<url-pattern>/WAYF</url-pattern>
 	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>WAYFTester</servlet-name>
-		<url-pattern>/WAYFTester</url-pattern>
-	</servlet-mapping>  
      <servlet-mapping>
 		<servlet-name>HS</servlet-name>
 		<url-pattern>/HS</url-pattern>
@@ -176,10 +126,6 @@
 	<servlet-mapping>
 		<servlet-name>AA</servlet-name>
 		<url-pattern>/AA</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>SHIRE</servlet-name>
-		<url-pattern>/SHIRE</url-pattern>
 	</servlet-mapping>
 	
 	<mime-mapping>

@@ -46,7 +46,6 @@
     <!-- Compile classes and move them to ${build} -->
     <target name="compile-all" depends="init">
         <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
-            <exclude name="edu/internet2/middleware/shibboleth/hs-cmu/**" />
             <classpath refid="build.path" />
         </javac>
         <copy todir="${build}/schemas">
@@ -72,22 +71,12 @@
     <target name="dist" depends="dist-all" />
     <target name="dist-all" depends="compile-all, test-all, package-all, clean-build" />
     <target name="package-all">
-        <war warfile="${dist}/${distname}.war" webxml="${approot}/WEB-INF/web.xml" basedir="${approot}" update="no" />
+        <war warfile="${dist}/${distname}.war" webxml="${configroot}/all.xml" basedir="${approot}" update="no" />
     </target>
 
     <target name="dist-origin" depends="compile-all, test-origin, package-origin, clean-build" />
     <target name="package-origin">
         <war warfile="${dist}/${distname}-origin.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
-    </target>
-
-    <target name="dist-target" depends="compile-all, test-target, package-target, clean-build" />
-    <target name="package-target">
-        <war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target.xml" basedir="${approot}" update="no" />
-    </target>
-
-    <target name="dist-target-includewayf" depends="compile-all, test-target, test-wayf, package-target-includewayf, clean-build" />
-    <target name="package-target-includewayf">
-        <war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target-includewayf.xml" basedir="${approot}" update="no" />
     </target>
 
     <!-- Build utilities -->
@@ -123,9 +112,8 @@
 
     
     <!-- Run automated tests on compiled code -->
-    <target name="test-all" depends="test-origin, test-target, test-wayf" />
+    <target name="test-all" depends="test-origin, test-wayf" />
     <target name="test-origin" depends="test-common" />
-    <target name="test-target" depends="test-common" />
     <target name="test-wayf" depends="test-common" />
     <target name="test-common" depends="compile-all">
         <junit printsummary="no" fork="no" haltonfailure="yes" haltonerror="no">
