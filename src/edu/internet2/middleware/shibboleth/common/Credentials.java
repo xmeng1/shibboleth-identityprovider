@@ -64,6 +64,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import sun.misc.BASE64Decoder;
+
 /**
  * @author Walter Hoehn
  *  
@@ -192,15 +194,29 @@ class FileCredentialResolver implements CredentialResolver {
 
 		PrivateKey key = null;
 
-		if (keyAlgorithm.equals("RSA") && keyFormat.equals("DER-PKCS8")) {
-			try {
-				key = getRSADERKey(new ShibResource(keyPath, this.getClass()).getInputStream());
-			} catch (IOException ioe) {
-				log.error("Could not load resource from specified location (" + keyPath + "): " + e);
-				throw new CredentialFactoryException("Unable to load private key.");
+		if (keyAlgorithm.equals("RSA")) {
+
+			if (keyFormat.equals("DER")) {
+				try {
+					key = getRSADERKey(new ShibResource(keyPath, this.getClass()).getInputStream());
+				} catch (IOException ioe) {
+					log.error("Could not load resource from specified location (" + keyPath + "): " + e);
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+			} else if (keyFormat.equals("PEM")) {
+				try {
+					key = getRSAPEMKey(new ShibResource(keyPath, this.getClass()).getInputStream());
+				} catch (IOException ioe) {
+					log.error("Could not load resource from specified location (" + keyPath + "): " + e);
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+			} else {
+				log.error("File credential resolver only supports (DER) and (PEM) formats.");
+				throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 			}
+
 		} else {
-			log.error("File credential resolver only supports the RSA keys in DER-encoded PKCS8 format (DER-PKCS8).");
+			log.error("File credential resolver only supports the RSA keys.");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
@@ -215,7 +231,7 @@ class FileCredentialResolver implements CredentialResolver {
 		//TODO provider optional
 		//TODO provide a way to specify a separate CA bundle
 
-		//The loading code should work for other types, but the chain construction code 
+		//The loading code should work for other types, but the chain construction code
 		//would break
 		if (!certType.equals("X.509")) {
 			log.error("File credential resolver only supports the X.509 certificates.");
@@ -334,6 +350,52 @@ class FileCredentialResolver implements CredentialResolver {
 
 	}
 
+	private PrivateKey getRSAPEMKey(InputStream inStream) throws CredentialFactoryException {
+
+		try {
+
+			BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
+			String str;
+			boolean insideBase64 = false;
+			StringBuffer base64Key = null;
+			while ((str = in.readLine()) != null) {
+
+				if (insideBase64) {
+					if (str.matches("^.*-----END PRIVATE KEY-----.*$")) {
+						break;
+					}
+					{
+						base64Key.append(str);
+					}
+				} else if (str.matches("^.*-----BEGIN PRIVATE KEY-----.*$")) {
+					insideBase64 = true;
+					base64Key = new StringBuffer();
+				}
+			}
+			in.close();
+			if (base64Key == null || base64Key.length() == 0) {
+				log.error("Did not find BASE 64 encoded private key in file.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			BASE64Decoder decoder = new BASE64Decoder();
+			//Probably want to give a different error for this exception
+			byte[] pkcs8Bytes = decoder.decodeBuffer(base64Key.toString());
+			try {
+				PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
+				KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+				return keyFactory.generatePrivate(keySpec);
+
+			} catch (Exception e) {
+				log.error("Unable to load private key: " + e);
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+		} catch (IOException p) {
+			log.error("Could not load resource from specified location: " + p);
+			throw new CredentialFactoryException("Unable to load key.");
+		}
+	}
+
 	private String getCertFormat(Element e) throws CredentialFactoryException {
 
 		NodeList certificateElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Certificate");
@@ -375,12 +437,11 @@ class FileCredentialResolver implements CredentialResolver {
 			log.debug("No format specified for certificate, using default (PEM) format.");
 			format = "PEM";
 		}
-
-		if (!format.equals("DER-PKCS8")) {
-			log.error("File credential resolver currently only supports (DER-PKCS8) format.");
-			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
-		}
-
+		//TODO smarter
+		/*
+		 * if (!format.equals("DER-PKCS8")) { log.error("File credential resolver currently only supports (DER-PKCS8)
+		 * format."); throw new CredentialFactoryException("Failed to initialize Credential Resolver."); }
+		 */
 		return format;
 	}
 
@@ -484,10 +545,9 @@ class FileCredentialResolver implements CredentialResolver {
 
 	/**
 	 * 
-	 * Loads a specified bundle of certs individually and returns an array of 
-	 * <code>Certificate</code> objects.  This is needed because the standard 
-	 * <code>CertificateFactory.getCertificates(InputStream)</code> method bails 
-	 * out when it has trouble loading any cert and cannot handle "comments".
+	 * Loads a specified bundle of certs individually and returns an array of <code>Certificate</code> objects. This
+	 * is needed because the standard <code>CertificateFactory.getCertificates(InputStream)</code> method bails out
+	 * when it has trouble loading any cert and cannot handle "comments".
 	 */
 	private Certificate[] loadCertificates(InputStream inStream, String certType) throws CredentialFactoryException {
 
@@ -543,13 +603,15 @@ class FileCredentialResolver implements CredentialResolver {
 	}
 
 	/**
-	 * Given an ArrayList containing a base certificate and an array of unordered certificates, 
-	 * populates the ArrayList with an ordered certificate chain, based on subject and issuer.
+	 * Given an ArrayList containing a base certificate and an array of unordered certificates, populates the ArrayList
+	 * with an ordered certificate chain, based on subject and issuer.
 	 * 
-	 * @param	chainSource array of certificates to pull from
-	 * @param	chainDest ArrayList containing base certificate
-	 * @throws InvalidCertificateChainException thrown if a chain cannot be constructed from 
-	 * 			the specified elements
+	 * @param chainSource
+	 *            array of certificates to pull from
+	 * @param chainDest
+	 *            ArrayList containing base certificate
+	 * @throws InvalidCertificateChainException
+	 *             thrown if a chain cannot be constructed from the specified elements
 	 */
 
 	protected void walkChain(X509Certificate[] chainSource, ArrayList chainDest) throws CredentialFactoryException {
@@ -575,8 +637,10 @@ class FileCredentialResolver implements CredentialResolver {
 	/**
 	 * Boolean indication of whether a given private key and public key form a valid keypair.
 	 * 
-	 * @param pubKey the public key
-	 * @param privKey the private key
+	 * @param pubKey
+	 *            the public key
+	 * @param privKey
+	 *            the private key
 	 */
 
 	protected boolean isMatchingKey(PublicKey pubKey, PrivateKey privKey) {
@@ -640,8 +704,9 @@ class FileCredentialResolver implements CredentialResolver {
 			buffer = b;
 		}
 
-		/** 
-		 * Returns an array of the bytes in the container. <p>
+		/**
+		 * Returns an array of the bytes in the container.
+		 * <p>
 		 */
 
 		private byte[] toByteArray() {
@@ -652,7 +717,7 @@ class FileCredentialResolver implements CredentialResolver {
 			return b;
 		}
 
-		/** 
+		/**
 		 * Add one byte to the end of the container.
 		 */
 
