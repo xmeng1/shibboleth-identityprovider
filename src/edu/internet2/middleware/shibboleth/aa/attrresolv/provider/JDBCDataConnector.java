@@ -320,6 +320,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = conn.prepareStatement(searchVal);
+            preparedStatement.clearParameters();
 			statementCreator.create(preparedStatement, principal, requester, depends);
 			rs = preparedStatement.executeQuery();
 			if (!rs.next()) {
