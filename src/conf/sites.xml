@@ -14,8 +14,18 @@
 	Once you join a federation or establish trust with another installation, you will
 	use (or be given in signed form) similar metadata to describe and locate sites
 	and services.
-	-->
 
+    <OriginSite> elements are used by all versions of the Shibboleth target software
+    and WAYF to determine the set of origins to accept users from and related information
+    about the names of certificates they will use.
+    
+    <DestinationSite> elements are used by Shibboleth 1.2 origin site software to
+    "verify" incoming requests from 1.2 targets. 1.1 targets are handled in a
+    compatibility mode by treating the request in accordance with the
+    defaultRelyingParty value. Additionally, 1.2 targets that cannot be matched to
+    a known DestinationSite are also treated in this fashion.
+    -->
+    
 	<OriginSite Name="https://example.org/shibboleth/origin">
 		<Alias>Localhost Test Deployment</Alias>
 		<Contact Type="technical" Name="Your Name Here" Email="root@localhost"/>
