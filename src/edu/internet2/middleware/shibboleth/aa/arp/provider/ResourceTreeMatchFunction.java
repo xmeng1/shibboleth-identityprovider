@@ -73,9 +73,9 @@ public class ResourceTreeMatchFunction implements MatchFunction {
 		throws MatchingException
 	{
 		if (!(arpComponent instanceof String) && !(requestComponent instanceof URL)) {
-			log.error("Invalid use of ARP matching function (ExacthSharMatchFunction).");
+			log.error("Invalid use of ARP matching function (ResourceTreeMatchFunction).");
 			throw new MatchingException(
-				"Invalid use of ARP matching function (ExacthSharMatchFunction).");
+				"Invalid use of ARP matching function (ResourceTreeMatchFunction).");
 		}
 
 		URL arpURL = null;
