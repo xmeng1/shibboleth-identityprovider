@@ -3,6 +3,10 @@
         <Alias>Demo State University</Alias>
         <HandleService Location="https://shib2.internet2.edu/shibboleth-origin/servlet/HS" Name="shib2.internet2.edu"></HandleService>
     </OriginSite>
+    <OriginSite Name="brown.edu">
+        <Alias>Brown University</Alias>
+        <HandleService Location="http://dilbert2.cis.brown.edu/shibboleth/servlet/AA" Name="dilbert2.cis.brown.edu"></HandleService>
+    </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
@@ -12,15 +16,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>FlTtww9Zm1RZVJ8XhMi+8EMGU98=</ds:DigestValue>
+<ds:DigestValue>IfMpmbGDYovvUBfl/V4vcOQqtl4=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-S9AJt7aeJV7Zt+jPUjvR++efo6UREveeueIBCjXIY40NACs1EmPv/84zQoAa51/NguPynyFF4VqM
-G+kreYYPkRdUifNKZ4HAkJA0/NyYWErohlCyIZDvWEvWvND8RBKTtg0eR9TdI8Ql2XUE+9LLpBEC
-6ApU4WqxqegaKznyn0QjhWTMolECxfalo3Zelhh4IghaLhbBo9RxirMYI/ksfgGNYXgivsctZFOe
-MQ1bBhh5/tfd3ODfge2/huj0o06w+0KcsIT7l01NZcS4TCDHvILPIqB1kNjWUPwf7G5LTsNHSvTL
-KmfS5rt1EgLt2FFqqfszPQJO992LrXH6Adhv3Q==
+wYKT6owJ/ZhNNVdVhxo08oHzVoHomtZmoNJCzjwME3OAOxYYsSAiYSPCFSCh7x4tFtCsHvC5PbV3
+81ZP/YfzQfAiBjnNXFWLSYtnNFFjVD+1qDyro9qW0VORTFOKc/UrBMxlBAQfOVB88yMxlusygaq+
+KCbt7XlyOsbjh3gK8hIDn9MX/PYnsll7LuXnkHU5CkZABgUr2ZUCmqgIBVfa/aD13krL/0dAmS72
+8qpP5E7ro+2MkUutOv7HiEAq8wAqV9v+9hNYL1IVpicwctEKseVs2kMiUVpVgKnhEhmH13Ksmadm
+mhrxIh41F+UZ65Ytp1Uyx+VQzg5DgUm75ck3NA==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
