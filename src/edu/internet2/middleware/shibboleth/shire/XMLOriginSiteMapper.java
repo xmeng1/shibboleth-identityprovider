@@ -15,7 +15,6 @@ import org.apache.xml.security.signature.*;
 import org.apache.xml.security.transforms.Transform;
 import org.apache.xml.security.transforms.Transforms;
 import org.w3c.dom.*;
-import org.xml.sax.SAXException;
 
 /**
  *  OriginSiteMapper implementation using an XML file to populate an in-memory
@@ -39,15 +38,15 @@ public class XMLOriginSiteMapper implements OriginSiteMapper
      * @param  verifyKey                 Optional key to verify signature with
      * @param  ks                        Key store containing the trusted roots
      *      to be used by SHIRE
-     * @exception  SAXException          Raised if the registry file cannot be
+     * @exception  Exception             Raised if the registry file cannot be
      *      parsed and loaded
-     * @exception  java.io.IOException   Description of Exception
-     * @exception  XMLSecurityException  Description of Exception
      */
     public XMLOriginSiteMapper(String registryURI, Key verifyKey, KeyStore ks)
-        throws SAXException, java.io.IOException, XMLSecurityException
+        throws Exception
     {
         this.ks = ks;
+	originSites = new HashMap();
+	hsKeys = new HashMap();
 
         DocumentBuilder builder = null;
         try
@@ -56,7 +55,7 @@ public class XMLOriginSiteMapper implements OriginSiteMapper
             Document doc = builder.parse(registryURI);
             Element e = doc.getDocumentElement();
             if (!XML.SHIB_NS.equals(e.getNamespaceURI()) || !"Sites".equals(e.getLocalName()))
-                throw new SAXException("XMLOriginSiteMapper() requires shib:Sites as root element");
+                throw new Exception("XMLOriginSiteMapper() requires shib:Sites as root element");
 
             // Loop over the OriginSite elements.
             NodeList nlist = e.getElementsByTagNameNS(XML.SHIB_NS,"OriginSite");
@@ -116,42 +115,41 @@ public class XMLOriginSiteMapper implements OriginSiteMapper
                 }
             }
 
+	    if (verifyKey == null)
+                return;
+
             Node n=e.getLastChild();
             while (n!=null && n.getNodeType()!=Node.ELEMENT_NODE)
                 n=n.getPreviousSibling();
 
-            boolean verified = false;
             if (n!=null && org.opensaml.XML.XMLSIG_NS.equals(n.getNamespaceURI()) && "Signature".equals(n.getLocalName()))
             {
                 XMLSignature sig = new XMLSignature((Element)n, null);
-
-                // First, we verify that what is signed is what we expect.
-                SignedInfo sinfo = sig.getSignedInfo();
-                if (sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS) ||
-                    sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS))
+                if (sig.checkSignatureValue(verifyKey))
+		{
+                    // Now we verify that what is signed is what we expect.
+                    SignedInfo sinfo = sig.getSignedInfo();
+                    if (sinfo.getLength()==1 && (
+                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS) ||
+                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS)))
 //                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS) ||
 //                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS))
-                {
-                    Reference ref = sinfo.item(0);
-                    if (ref.getURI() == null || ref.getURI().equals(""))
                     {
-                        Transforms trans = ref.getTransforms();
-                        if (trans.getLength() == 1 && trans.item(0).getURI().equals(Transforms.TRANSFORM_ENVELOPED_SIGNATURE))
+                        Reference ref = sinfo.item(0);
+                        if (ref.getURI() == null || ref.getURI().equals(""))
                         {
-                            // Lastly, we check the signature value.
-                            if (sig.checkSignatureValue(verifyKey))
-                                verified = true;
+                            Transforms trans = ref.getTransforms();
+                            if (trans.getLength() == 1 && trans.item(0).getURI().equals(Transforms.TRANSFORM_ENVELOPED_SIGNATURE))
+                                return;
                         }
                     }
                 }
             }
-
-            if (verifyKey != null && !verified)
-                throw new XMLSecurityException("XMLOriginSiteMapper() unable to verify signature on registry file");
+            throw new Exception("XMLOriginSiteMapper() unable to verify signature on registry file");
         }
         catch (ParserConfigurationException pce)
         {
-            throw new DOMException(DOMException.NOT_SUPPORTED_ERR, "XMLOriginSiteMapper() parser configuration error");
+            throw new Exception("XMLOriginSiteMapper() parser configuration error");
         }
         finally
         {
