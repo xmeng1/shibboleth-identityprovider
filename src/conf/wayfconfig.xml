@@ -3,9 +3,9 @@
 	cacheType="COOKIES" 
 	supportContact="mailto:shib-test@internet2.org" 
 	logoLocation="images/internet2.gif">
-<!--	<HelpText>This is the help text.</HelpText>
-	<SearchResultEmptyText>This is the search result empty text.</SearchResultEmptyText>
--->
+	<HelpText>In order to fulfill the request for a web resource you have just attempted to access, information must be obtained from your identify provider. Please select the provider with which you are affiliated.</HelpText>
+	<SearchResultEmptyText>No provider was found that matches your search criteria, please try again.</SearchResultEmptyText>
+
 	<SearchIgnore>
 		<IgnoreText>Institution</IgnoreText>
 		<IgnoreText>University</IgnoreText>

@@ -252,8 +252,8 @@ public class WayfService extends HttpServlet {
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
-			if ((req.getParameter("noCache") == null)
-				|| !(req.getParameter("noCache").equalsIgnoreCase("TRUE"))) {
+			if ((req.getParameter("cache") != null)
+				&& req.getParameter("cache").equalsIgnoreCase("TRUE")) {
 				WayfCacheFactory.getInstance(config.getCacheType(), wOptions).addHsToCache(handleService, req, res);
 			}
 			forwardToHS(req, res, handleService);
