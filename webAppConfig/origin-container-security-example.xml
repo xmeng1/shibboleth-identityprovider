@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+	<servlet>
+		<servlet-name>Logging Service</servlet-name>
+		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
+		<init-param>
+			<param-name>log4jConfigFileLocation</param-name>
+			<param-value>/conf/log4j.properties</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>HS</servlet-name>
+		<display-name>Shibboleth Handle Service</display-name>
+		<servlet-class>edu.internet2.middleware.shibboleth.hs.HandleServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>AA</servlet-name>
+		<display-name>Shibboleth Attribute Authority</display-name>
+		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
+	</servlet>
+	
+     <servlet-mapping>
+		<servlet-name>HS</servlet-name>
+		<url-pattern>/HS</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>AA</servlet-name>
+		<url-pattern>/AA</url-pattern>
+	</servlet-mapping>
+	
+	<mime-mapping>
+		<extension>css</extension>
+		<mime-type>text/css</mime-type>
+	</mime-mapping>
+	
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Shibboleth Handle Service</web-resource-name>
+			<url-pattern>/HS</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>tomcat</role-name>
+		</auth-constraint>
+	</security-constraint>
+	<login-config>
+		<auth-method>BASIC</auth-method>
+		<realm-name>Shibboleth Handle Service</realm-name>
+	</login-config>
+
+</web-app>
