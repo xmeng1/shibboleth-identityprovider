@@ -75,6 +75,13 @@ public class XML
     /**  Shibboleth trust metadata XML schema identifier */
     public final static String TRUST_SCHEMA_ID = "shibboleth-trust-1.0.xsd";
     
+    public final static String MAIN_SHEMA_ID = "shibboleth-targetconfig-1.0.xsd";
+    
+	public final static String XMLSIG_RETMETHOD_RAWX509    = "http://www.w3.org/2000/09/xmldsig#rawX509Certificate";
+    public final static String XMLSIG_RETMETHOD_RAWX509CRL = "http://www.w3.org/2000/09/xmldsig-more#rawX509CRL";
+    public final static String SHIB_RETMETHOD_PEMX509      = "urn:mace:shibboleth:RetrievalMethod:pemX509Certificate";
+    public final static String SHIB_RETMETHOD_PEMX509CRL   = "urn:mace:shibboleth:RetrievalMethod:pemX509CRL";
+    
     private static byte[] Shib_schema;
     private static byte[] Trust_schema;
 
