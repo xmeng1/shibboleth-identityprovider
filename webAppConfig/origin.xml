@@ -70,6 +70,36 @@
 		<servlet-name>AA</servlet-name>
 		<display-name>Shibboleth Attribute Authority</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
+		
+		<init-param>
+		    <param-name>domain</param-name>
+		    <param-value>shib2.internet2.edu</param-value>
+		</init-param>
+
+		<init-param>
+		    <param-name>dirUrl</param-name>
+		    <param-value>ldap://shib2.internet2.edu/ou=People,dc=internet2,dc=edu</param-value>
+		</init-param>
+
+		<init-param>
+		    <param-name>ldapUserDnPhrase</param-name>
+		    <param-value>uid=</param-value>
+		</init-param>
+
+		<init-param>
+		    <param-name>ctxFactoryClass</param-name>
+		    <param-value>edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory</param-value>
+		</init-param>
+
+		<init-param>
+		    <param-name>arpFactoryMethod</param-name>
+		    <param-value>file</param-value>
+		</init-param>
+
+		<init-param>
+		    <param-name>arpFactoryData</param-name>
+		    <param-value>/tmp/shib2/</param-value>
+		</init-param>
 	</servlet>
       
      <servlet-mapping>
