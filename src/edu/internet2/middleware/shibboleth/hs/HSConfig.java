@@ -63,7 +63,6 @@ public class HSConfig extends ShibbolethOriginConfig {
 	public HSConfig(Element config) throws ShibbolethConfigurationException {
 		super(config);
 
-		//Set defaults
 		//TODO need a way to set this
 		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username", "REMOTE_USER");
 		//TODO need a way to set this, remember to test for number format

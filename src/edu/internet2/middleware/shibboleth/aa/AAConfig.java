@@ -47,6 +47,7 @@
 
 package edu.internet2.middleware.shibboleth.aa;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -57,9 +58,32 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
  */
 public class AAConfig extends ShibbolethOriginConfig {
 
+	private static Logger log = Logger.getLogger(AAConfig.class.getName());
+
 	public AAConfig(Element config) throws ShibbolethConfigurationException {
 
 		super(config);
+
+		String attribute = ((Element) config).getAttribute("resolverConfig");
+		if (attribute == null || attribute.equals("")) {
+			log.error(
+				"Attribute Resolver config file not specified.  Add a (resolverConfig) attribute to <ShibbolethOriginConfig>.");
+			throw new ShibbolethConfigurationException("Required configuration not specified.");
+		}
+		properties.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+			attribute);
+
+		attribute = ((Element) config).getAttribute("passThruErros");
+		if (attribute == null || attribute.equals("")) {
+			properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
+		}
+		if (!attribute.equalsIgnoreCase("TRUE") && !attribute.equalsIgnoreCase("FALSE")) {
+			log.error("passThrue errors is a boolean property.");
+			properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
+		} else {
+			properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", attribute);
+		}
 
 		dumpPropertiesToLog();
 

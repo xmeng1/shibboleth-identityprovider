@@ -76,6 +76,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import edu.internet2.middleware.shibboleth.aa.AAConfig;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet.ResolverAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
@@ -96,18 +97,35 @@ public class AttributeResolver {
 	private ResolverCache resolverCache = new ResolverCache();
 	public static final String resolverNamespace = "urn:mace:shibboleth:resolver:1.0";
 
-	public AttributeResolver(Properties properties) throws AttributeResolverException {
-		if (properties
-			.getProperty("edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig")
-			== null) {
+	public AttributeResolver(AAConfig configuration) throws AttributeResolverException {
+		if (configuration == null
+			|| configuration.getConfigProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig")
+				== null) {
 			log.error("No Attribute Resolver configuration file specified.");
 			throw new AttributeResolverException("No Attribute Resolver configuration file specified.");
 		}
 
-		String configFile =
-			properties.getProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig");
+		loadConfig(
+			configuration.getConfigProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig"));
+	}
+	
+	public AttributeResolver(Properties properties) throws AttributeResolverException {
+		if (properties == null
+			|| properties.getProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig")
+				== null) {
+			log.error("No Attribute Resolver configuration file specified.");
+			throw new AttributeResolverException("No Attribute Resolver configuration file specified.");
+		}
 
+		loadConfig(
+			properties.getProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig"));
+	}
+
+	private void loadConfig(String configFile) throws AttributeResolverException {
 		try {
 			ShibResource config = new ShibResource(configFile, this.getClass());
 			DOMParser parser = new DOMParser();

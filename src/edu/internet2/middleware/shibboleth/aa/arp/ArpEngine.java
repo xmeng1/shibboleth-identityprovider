@@ -66,8 +66,11 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.apache.xml.serialize.OutputFormat;
 import org.apache.xml.serialize.XMLSerializer;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.arp.ArpAttributeSet.ArpAttributeIterator;
+import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
  *  Defines a processing engine for Attribute Release Policies.
@@ -100,24 +103,36 @@ public class ArpEngine {
 		}
 	}
 
-	public ArpEngine(Properties properties) throws ArpException {
+	public ArpEngine(Element config) throws ArpException {
+
+		if (!config.getLocalName().equals("ReleasePolicyEngine")) {
+			throw new IllegalArgumentException();
+		}
+
+		NodeList itemElements =
+			config.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+
+		if (itemElements.getLength() > 1) {
+			log.warn(
+				"Encountered multiple <ArpRepository> configuration elements.  Arp Engine currently only supports one.  Using first...");
+		}
+		
+		if (itemElements.getLength() == 0) {
+			//TODO setup a default
+		}
+
+		String implementation = ((Element) itemElements.item(0)).getAttribute("implementation");
+
+		//TODO make this work
+		//TODO pass in arpTTL
+		
 		try {
-			repository = ArpRepositoryFactory.getInstance(properties);
+			repository = ArpRepositoryFactory.getInstance(null);
 		} catch (ArpRepositoryException e) {
 			log.error("Could not start Arp Engine: " + e);
 			throw new ArpException("Could not start Arp Engine.");
 		}
 	}
-
-	public ArpEngine(ArpRepository repository, Properties properties) throws ArpException {
-		this.repository = repository;
-	}
-
-	/**
-	 * Lookup by identifier a function for matching ARP Target Components .
-	 * @param functionIdentifier the identifier for the function
-	 * @return the <code>Matchfunction</code> or null if not registered
-	 */
 
 	public static MatchFunction lookupMatchFunction(URI functionIdentifier) throws ArpException {
 		String className = null;

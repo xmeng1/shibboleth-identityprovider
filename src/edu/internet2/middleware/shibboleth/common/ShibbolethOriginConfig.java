@@ -68,8 +68,6 @@ public abstract class ShibbolethOriginConfig {
 
 	public ShibbolethOriginConfig(Element config) throws ShibbolethConfigurationException {
 
-		//TODO more generic
-
 		if (!config.getTagName().equals("ShibbolethOriginConfig")) {
 			throw new ShibbolethConfigurationException("Unexpected configuration data.  <ShibbolethOriginConfig> is needed.");
 		}

@@ -47,23 +47,16 @@
 
 package edu.internet2.middleware.shibboleth.aa;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
 import java.util.StringTokenizer;
 
 import javax.servlet.ServletException;
@@ -112,7 +105,6 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
  * @author Walter Hoehn
@@ -136,27 +128,13 @@ public class AAServlet extends HttpServlet {
 		log.info("Initializing Attribute Authority.");
 
 		try {
-
 			nameMapper = new NameMapper();
 			loadConfiguration();
-
-			//TODO pass in real config
-			ArpEngine arpEngine = new ArpEngine(null);
-			AttributeResolver resolver = new AttributeResolver(null);
-
-			responder = new AAResponder(arpEngine, resolver);
 
 			binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
 
 			log.info("Attribute Authority initialization complete.");
 
-		} catch (ArpException ae) {
-			log.fatal("The AA could not be initialized due to a problem with the ARP Engine configuration: " + ae);
-			throw new UnavailableException("Attribute Authority failed to initialize.");
-		} catch (AttributeResolverException ne) {
-			log.fatal(
-				"The AA could not be initialized due to a problem with the Attribute Resolver configuration: " + ne);
-			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (ShibbolethConfigurationException ae) {
 			log.fatal("The AA could not be initialized: " + ae);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
@@ -164,7 +142,6 @@ public class AAServlet extends HttpServlet {
 			log.fatal("SAML SOAP binding could not be loaded: " + se);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
 		}
-
 	}
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
@@ -209,45 +186,39 @@ public class AAServlet extends HttpServlet {
 
 		//Load relying party config
 		try {
-			targetMapper =
-				new ServiceProviderMapper(
-					parser.getDocument().getDocumentElement(),
-					configuration);
+			targetMapper = new ServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
 		}
 
-		/*
-		 * //Set defaults Properties defaultProps = new Properties();
-		 * defaultProps.setProperty(
-		 * "edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
-		 * "/conf/arps/"); defaultProps.setProperty(
-		 * "edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-		 * "/conf/resolver.xml"); defaultProps.setProperty(
-		 * "edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-		 * "edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-		 * defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences",
-		 * "urn:mace:inqueue");
-		 * defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors",
-		 * "false");
-		 * 
-		 * //Load from file Properties properties = new
-		 * Properties(defaultProps); String propertiesFileLocation =
-		 * getInitParameter("OriginPropertiesFile"); if (propertiesFileLocation ==
-		 * null) { propertiesFileLocation = "/conf/origin.properties"; } try {
-		 * log.debug("Loading Configuration from (" + propertiesFileLocation +
-		 * ")."); properties.load(new ShibResource(propertiesFileLocation,
-		 * this.getClass()).getInputStream());
-		 * 
-		 * //Make sure we have all required parameters StringBuffer
-		 * missingProperties = new StringBuffer(); String[] requiredProperties = {
-		 * "edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName",
-		 * "edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
-		 * "edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-		 * "edu.internet2.middleware.shibboleth.audiences" };
-		 * 
-		 */
+		try {
+			//Startup Attribute Resolver
+			AttributeResolver resolver = new AttributeResolver(configuration);
+
+			//Startup ARP Enginee
+			itemElements =
+				parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+					NameIdentifierMapping.mappingNamespace,
+					"ReleasePolicyEngine");
+
+			if (itemElements.getLength() > 1) {
+				log.warn("Encountered multiple <ReleasePolicyEngine> configuration elements.  Using first...");
+			}
+			ArpEngine arpEngine = new ArpEngine((Element) itemElements.item(0));
+
+			//Startup responder
+			responder = new AAResponder(arpEngine, resolver);
+
+		} catch (ArpException ae) {
+			log.fatal("The AA could not be initialized due to a problem with the ARP Engine configuration: " + ae);
+			throw new ShibbolethConfigurationException("Could not load ARP Engine.");
+		} catch (AttributeResolverException ne) {
+			log.fatal(
+				"The AA could not be initialized due to a problem with the Attribute Resolver configuration: " + ne);
+			throw new ShibbolethConfigurationException("Could not load Attribute Resolver.");
+		}
+
 	}
 	private DOMParser loadParser(boolean schemaChecking) throws ShibbolethConfigurationException {
 

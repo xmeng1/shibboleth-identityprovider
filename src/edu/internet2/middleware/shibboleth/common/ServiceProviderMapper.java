@@ -217,6 +217,9 @@ public class ServiceProviderMapper {
 		protected String name;
 		protected String hsNameFormatId;
 
+		/**
+		* Constructor for use by Handle Service
+		*/
 		public RelyingPartyImpl(
 			Element partyConfig,
 			ShibbolethOriginConfig globalConfig,
@@ -276,12 +279,31 @@ public class ServiceProviderMapper {
 					throw new ServiceProviderMapperException("Required configuration not specified.");
 				}
 			}
+
+			//Global overrides
+			String attribute = ((Element) partyConfig).getAttribute("AAUrl");
+			if (attribute != null && !attribute.equals("")) {
+				log.debug("Overriding AAUrl for Relying Pary (" + name + ") with (" + attribute + ").");
+				partyOverrides.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl", attribute);
+			}
+
+			attribute = ((Element) partyConfig).getAttribute("defaultAuthMethod");
+			if (attribute != null && !attribute.equals("")) {
+				log.debug("Overriding defaultAuthMethod for Relying Pary (" + name + ") with (" + attribute + ").");
+				partyOverrides.setProperty(
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod",
+					attribute);
+			}
+
 			identityProvider =
 				new RelyingPartyIdentityProvider(
 					getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId"),
 					credential);
 		}
 
+		/**
+		 * Shared constructor
+		 */
 		public RelyingPartyImpl(Element partyConfig, ShibbolethOriginConfig globalConfig)
 			throws ServiceProviderMapperException {
 
@@ -305,18 +327,16 @@ public class ServiceProviderMapper {
 					attribute);
 			}
 
-			attribute = ((Element) partyConfig).getAttribute("AAUrl");
+			attribute = ((Element) partyConfig).getAttribute("passThruErrors");
 			if (attribute != null && !attribute.equals("")) {
-				log.debug("Overriding AAUrl for Relying Pary (" + name + ") with (" + attribute + ").");
-				partyOverrides.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl", attribute);
-			}
-
-			attribute = ((Element) partyConfig).getAttribute("defaultAuthMethod");
-			if (attribute != null && !attribute.equals("")) {
-				log.debug("Overriding defaultAuthMethod for Relying Pary (" + name + ") with (" + attribute + ").");
-				partyOverrides.setProperty(
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod",
-					attribute);
+				if (!attribute.equalsIgnoreCase("TRUE") && !attribute.equalsIgnoreCase("FALSE")) {
+					log.error("passThrue errors is a boolean property.");
+				} else {
+					log.debug("Overriding passThruErrors for Relying Pary (" + name + ") with (" + attribute + ").");
+					partyOverrides.setProperty(
+						"edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors",
+						attribute);
+				}
 			}
 
 			identityProvider =
@@ -325,7 +345,6 @@ public class ServiceProviderMapper {
 					null);
 
 		}
-
 		public String getProviderId() {
 			return name;
 		}
