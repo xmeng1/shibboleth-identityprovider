@@ -85,6 +85,7 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
+import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
@@ -154,25 +155,14 @@ public class HandleServlet extends HttpServlet {
 		}
 
 		//Load relying party config
-		targetMapper = new ServiceProviderMapper(configuration, credentials);
-		
-		itemElements =
-			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
-				ShibbolethOriginConfig.originConfigNamespace,
-				"RelyingParty");
-
-		for (int i = 0; i < itemElements.getLength(); i++) {
-			targetMapper.addRelyingParty((Element) itemElements.item(i));
+		try {
+			targetMapper =
+				new ServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration, credentials);
+		} catch (ServiceProviderMapperException e) {
+			log.error("Could not load origin configuration: " + e);
+			throw new HSConfigurationException("Could not load origin configuration.");
 		}
 
-		itemElements =
-			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
-				ShibbolethOriginConfig.originConfigNamespace,
-				"RelyingPartyGroup");
-
-		for (int i = 0; i < itemElements.getLength(); i++) {
-			targetMapper.addRelyingParty((Element) itemElements.item(i));
-		}
 	}
 
 	private DOMParser loadParser(boolean schemaChecking) throws HSConfigurationException {

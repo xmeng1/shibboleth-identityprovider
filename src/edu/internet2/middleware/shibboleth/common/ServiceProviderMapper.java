@@ -50,7 +50,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * @author Walter Hoehn
@@ -58,82 +60,174 @@ import org.w3c.dom.Element;
  */
 public class ServiceProviderMapper {
 
-	ShibbolethOriginConfig configuration;
-	Credentials credentials;
-	Map relyingParties = new HashMap();
-	Map relyingPartyGroups = new HashMap();
+	private static Logger log = Logger.getLogger(ShibbolethOriginConfig.class.getName());
+	private ShibbolethOriginConfig configuration;
+	private Credentials credentials;
+	private Map relyingParties = new HashMap();
 
-	public ServiceProviderMapper(ShibbolethOriginConfig configuration, Credentials credentials) {
+	public ServiceProviderMapper(Element rawConfig, ShibbolethOriginConfig configuration, Credentials credentials)
+		throws ServiceProviderMapperException {
+
 		this.configuration = configuration;
 		this.credentials = credentials;
-	}
 
-	public void addRelyingParty(Element e) {
-		if (e.getLocalName().equals("RelyingParty")) {
-			RelyingParty party = new RelyingPartyImpl(e, configuration, credentials);
-			relyingParties.put(party.getName(), party);
-		} else if (e.getLocalName().equals("RelyingPartyGroup")) {
-			RelyingParty party = new RelyingPartyImpl(e, configuration, credentials);
-			relyingPartyGroups.put(party.getName(), party);
-		} else {
-			//TODO throw exception here
+		NodeList itemElements =
+			rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "RelyingParty");
+
+		for (int i = 0; i < itemElements.getLength(); i++) {
+			addRelyingParty((Element) itemElements.item(i));
+		}
+
+		//Verify we have a proper default party
+		String defaultParty =
+			configuration.getConfigProperty(
+				"edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty");
+		if (defaultParty == null || defaultParty.equals("")) {
+			if (relyingParties.size() != 1) {
+				log.error(
+					"Default Relying Party not specified.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
+				throw new ServiceProviderMapperException("Required configuration not specified.");
+			} else {
+				log.debug("Only one Relying Party loaded.  Using this as the default.");
+			}
+		}
+		log.debug("Default Relying Party set to: (" + defaultParty + ").");
+		if (!relyingParties.containsKey(defaultParty)) {
+			log.error("Default Relying Party refers to a Relying Party that has not been loaded.");
+			throw new ServiceProviderMapperException("Invalid configuration (Default Relying Party).");
 		}
 	}
 
+	private void addRelyingParty(Element e) throws ServiceProviderMapperException {
+
+		log.debug("Found a Relying Party.");
+		//TODO catch these individually and don't totally fail for one bad
+		if (e.getLocalName().equals("RelyingParty")) {
+			RelyingParty party = new RelyingPartyImpl(e, configuration, credentials);
+			log.debug("Relying Party (" + party.getName() + ") loaded.");
+			relyingParties.put(party.getName(), party);
+		}
+	}
 	public RelyingParty getRelyingParty(String providerIdFromTarget) {
 
 		//If the target did not send a Provider Id, then assume it is a Shib
 		// 1.1 or older target
 		if (providerIdFromTarget == null || providerIdFromTarget.equals("")) {
+			log.info("Request is from legacy shib target.  Selecting default Relying Party.");
 			return new LegacyWrapper(getDefaultRelyingPatry());
 		}
 
-		if (!relyingParties.containsKey(providerIdFromTarget)) {
-			return getDefaultRelyingPatry();
+		//Look for a configuration for the specific relying party
+		if (relyingParties.containsKey(providerIdFromTarget)) {
+			log.info("Found Relying Party for (" + providerIdFromTarget + ").");
+			return (RelyingParty) relyingParties.get(providerIdFromTarget);
 		}
-		//TODO do secondary lookup for groups (metadata)
-		return (RelyingParty) relyingParties.get(providerIdFromTarget);
+
+		//Next, check to see if the relying party is in any groups
+		RelyingParty groupParty = findRelyingPartyByGroup(providerIdFromTarget);
+		if (groupParty != null) {
+			log.info("Provider is a member of Relying Party (" + groupParty.getName() + ").");
+			return new RelyingPartyGroupWrapper(groupParty, providerIdFromTarget);
+		}
+
+		//OK, just send the default
+		log.info(
+			"Could not locate Relying Party configuration for ("
+				+ providerIdFromTarget
+				+ ").  Using default Relying Party.");
+		return new UnknownProviderWrapper(getDefaultRelyingPatry());
+	}
+
+	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
+
+		// TODO This is totally a stub and needs to be based on target metadata lookup
+		if (providerIdFromTarget.startsWith("urn:mace:inqueue:")) {
+			if (relyingParties.containsKey("urn:mace:inqueue")) {
+				return (RelyingParty) relyingParties.get("urn:mace:inqueue");
+			}
+		}
+		return null;
 	}
 
 	private RelyingParty getDefaultRelyingPatry() {
 
-		return (RelyingParty) relyingParties.get(
+		//If there is no explicit default, pick the single configured Relying Party
+		String defaultParty =
 			configuration.getConfigProperty(
-				"edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty"));
-		// TODO look for groups too, probably first
+				"edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty");
+		if (defaultParty == null || defaultParty.equals("")) {
+			return (RelyingParty) relyingParties.values().iterator().next();
+		}
+
+		//If we do have a default specified, use it...
+		return (RelyingParty) relyingParties.get(defaultParty);
 	}
+
 	class RelyingPartyImpl implements RelyingParty {
 
 		protected ShibbolethOriginConfig originConfig;
 		protected Properties partyOverrides = new Properties();
 		protected RelyingPartyIdentityProvider identityProvider;
-		protected String id = "test:id";
+		protected String name;
 
-		public RelyingPartyImpl(Element partyConfig, ShibbolethOriginConfig globalConfig, Credentials credentials) {
+		public RelyingPartyImpl(Element partyConfig, ShibbolethOriginConfig globalConfig, Credentials credentials)
+			throws ServiceProviderMapperException {
 
+			//Use global config for defaults
 			this.originConfig = globalConfig;
-			
-			
-			//TODO this is just a stub... has to come from configuration
-			partyOverrides.setProperty(
-				"edu.internet2.middleware.shibboleth.hs.HandleServlet.responseSigningCredential",
-				"foo");
+
+			//Get party name
+			name = ((Element) partyConfig).getAttribute("name");
+			if (name == null || name.equals("")) {
+				log.error("Relying Party name not set.  Add a (name) attribute to <RelyingParty>.");
+				throw new ServiceProviderMapperException("Required configuration not specified.");
+			}
+			log.debug("Loading Relying Party: (" + name + ").");
+
+			//Load an credential for signing
+			String credentialName = ((Element) partyConfig).getAttribute("signingCredential");
+			Credential credential = credentials.getCredential(credentialName);
+
+			if (credential == null) {
+				if (credentialName == null || credentialName.equals("")) {
+					log.error(
+						"Relying Party credential not set.  Add a (signingCredential) attribute to <RelyingParty>.");
+					throw new ServiceProviderMapperException("Required configuration not specified.");
+				} else {
+					log.error(
+						"Relying Party credential not set.  Add a (signingCredential) attribute to <RelyingParty>.");
+					throw new ServiceProviderMapperException("Required configuration not specified.");
+				}
+			}
+
+			//TODO HSNameFormat
+
+			String attribute = ((Element) partyConfig).getAttribute("providerId");
+			if (attribute != null && !attribute.equals("")) {
+				log.debug("Overriding providerId for Relying Pary (" + name + ") with (" + attribute + ").");
+				partyOverrides.setProperty(
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId",
+					attribute);
+			}
+
+			attribute = ((Element) partyConfig).getAttribute("AAUrl");
+			if (attribute != null && !attribute.equals("")) {
+				log.debug("Overriding AAUrl for Relying Pary (" + name + ") with (" + attribute + ").");
+				partyOverrides.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl", attribute);
+			}
 
 			identityProvider =
 				new RelyingPartyIdentityProvider(
 					getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId"),
-					credentials.getCredential(
-						getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.responseSigningCredential")));
-			//TODO stub
-
+					credential);
 		}
 
 		public String getProviderId() {
-			return id;
+			return name;
 		}
 
 		public String getName() {
-			return id;
+			return name;
 		}
 
 		public boolean isLegacyProvider() {
@@ -150,9 +244,11 @@ public class ServiceProviderMapper {
 		public String getHSNameFormatId() {
 			return null;
 		}
+
 		public IdentityProvider getIdentityProvider() {
 			return identityProvider;
 		}
+
 		class RelyingPartyIdentityProvider implements IdentityProvider {
 
 			private String providerId;
@@ -162,7 +258,7 @@ public class ServiceProviderMapper {
 				this.providerId = providerId;
 				this.responseSigningCredential = responseSigningCred;
 			}
-			
+
 			public String getProviderId() {
 				return providerId;
 			}
@@ -177,12 +273,13 @@ public class ServiceProviderMapper {
 
 		}
 	}
+
 	class RelyingPartyGroupWrapper implements RelyingParty {
 
 		private RelyingParty wrapped;
 		private String providerId;
 
-		RelyingPartyGroupWrapper(RelyingPartyImpl wrapped, String providerId) {
+		RelyingPartyGroupWrapper(RelyingParty wrapped, String providerId) {
 			this.wrapped = wrapped;
 			this.providerId = providerId;
 		}
@@ -196,7 +293,7 @@ public class ServiceProviderMapper {
 		}
 
 		public boolean isLegacyProvider() {
-			return true;
+			return false;
 		}
 
 		public String getHSNameFormatId() {
@@ -212,10 +309,10 @@ public class ServiceProviderMapper {
 		}
 	}
 
-	class LegacyWrapper implements RelyingParty {
+	class UnknownProviderWrapper implements RelyingParty {
 		private RelyingParty wrapped;
 
-		LegacyWrapper(RelyingParty wrapped) {
+		UnknownProviderWrapper(RelyingParty wrapped) {
 			this.wrapped = wrapped;
 		}
 
@@ -228,7 +325,7 @@ public class ServiceProviderMapper {
 		}
 
 		public boolean isLegacyProvider() {
-			return true;
+			return wrapped.isLegacyProvider();
 		}
 
 		public String getHSNameFormatId() {
@@ -240,7 +337,18 @@ public class ServiceProviderMapper {
 		}
 
 		public String getProviderId() {
-			return wrapped.getProviderId();
+			return null;
+		}
+	}
+
+	class LegacyWrapper extends UnknownProviderWrapper {
+
+		LegacyWrapper(RelyingParty wrapped) {
+			super(wrapped);
+		}
+		public boolean isLegacyProvider() {
+			return true;
 		}
 	}
 }
+
