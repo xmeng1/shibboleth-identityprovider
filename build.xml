@@ -81,12 +81,12 @@
 
     <!-- Create various product distributions and move them to ${dist} -->
 
-    <target name="dist-all" depends="compile, genSecret, test-all, package-all, clean-build" />
+    <target name="dist-all" depends="compile, test-all, package-all, clean-build" />
     <target name="package-all">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/all.xml" basedir="${approot}" update="no" />
     </target>
 
-    <target name="dist-origin" depends="compile, genSecret, test-origin, package-origin, clean-build" />
+    <target name="dist-origin" depends="compile, test-origin, package-origin, clean-build" />
     <target name="package-origin">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
     </target>
