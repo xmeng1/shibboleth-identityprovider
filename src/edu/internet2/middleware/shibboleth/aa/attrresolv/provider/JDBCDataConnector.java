@@ -209,8 +209,8 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
     				objectPool,
     				new StackKeyedObjectPoolFactory(),
     				validationQuery,
-    				false,
-				true);
+    				true,
+					false);
 		} catch (Exception ex) {
 			log.debug("Poolable connection factory error");
 		}
