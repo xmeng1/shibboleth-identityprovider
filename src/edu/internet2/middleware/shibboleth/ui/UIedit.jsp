@@ -14,6 +14,8 @@
 	<jsp:useBean id="allAttrs" scope="request" class="java.lang.String[]"/>
 	<jsp:useBean id="userCtx" scope="request" class="javax.naming.directory.DirContext"/>
 	<jsp:useBean id="isNew" scope="request" class="java.lang.String"/>
+	<jsp:useBean id="adminArp" scope="request" class="edu.internet2.middleware.shibboleth.aa.Arp"/>
+
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
         <link rel="stylesheet" type="text/css" href="main.css" />
@@ -88,7 +90,10 @@ function formCancel()
       </tr>
 
 <%
+   Set s = getReleaseSet(adminArp, resource, resource, adminArp);
+
       for (int i=0; i<allAttrs.length; i++) {
+	ArpAttribute adminAttr = getAttr(s, allAttrs[i]);
 	ArpAttribute aAttr = new ArpAttribute(allAttrs[i], false);
 	Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
 	if (dAttr != null && dAttr.size() > 0) {
@@ -120,7 +125,14 @@ function formCancel()
 
 	  out.println("</td><td>");
 
-
+	  if (adminAttr != null) {
+	    if (adminAttr.mustExclude)
+	      String checkoption = "NO";
+	    else 
+	      String checkoption = "YES";
+	  } else
+	    String checkoption = "<input type=\"checkbox\" name=\"attr\" value=\""+a.getName()+"\" "+checkbool+" Yes>";
+	
 	  if (dAttr.size() > 1) {
 	  String filtStr="add";
 	  if (a.hasFilter())
@@ -132,8 +144,7 @@ function formCancel()
 <% } %>
 	</td>
 	<td>
-	  <input type="checkbox" name="attr" value="<%=a.getName()%>" 
-	  <%=checkbool%>>&nbsp;Yes
+	  <%=checkoption%>
 	</td>
 
       </tr>

@@ -12,7 +12,9 @@
         <jsp:useBean id="userCtx" scope="request" class="javax.naming.directory.DirContext"/>
 	<jsp:useBean id="shars" scope="request" class="edu.internet2.middleware.shibboleth.aa.ArpShar[]"/>
 	<jsp:useBean id="debug" scope="request" class="java.lang.String"/>
-<jsp:useBean id="defaultRes" scope="request" class="edu.internet2.middleware.shibboleth.aa.ArpResource"/>
+	<jsp:useBean id="adminArp" scope="request" class="edu.internet2.middleware.shibboleth.aa.Arp"/>
+	<jsp:useBean id="responder scope="request" class="edu.internet2.middleware.shibboleth.aa.AAResponder"/>
+
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
         <link rel="stylesheet" type="text/css" href="main.css" />
@@ -39,9 +41,18 @@
 	  <td><i>Default release policy</i></td>
 	  <td>
 <%
-  ArpAttribute []aa= defaultRes.getAttributes();
-  for (int i = 0; i < aa.length; i++) 
-    out.println(aa[i].getName() + "<br>");
+  Set adminSet = responder.getReleaseSet(adminArp, resouce, resource, adminArp);
+  Iterator it = adminSet.iterator();
+  while (it.hasNext()) {
+    ArpAttribute attr = (ArpAttribute) it.next();
+    if (attr.mustExclude())
+	adminSet.remove(attr);
+  }
+  it = 	adminSet.iterator();
+  while (it.hasNext()) {
+    ArpAttribute aAttr = (ArpAttribute)it.next();
+    out.println(aAttr.getName() + "<br>");
+  }
 %>
 	  </td>
 	  <td></td>
@@ -68,14 +79,19 @@
     <form name="list<jsp:getProperty name="resource" property="name" />" action="<bean:write name="requestURL"/>" method="post">
 	<td><a href="http://<%=resourceUrl%>"><jsp:getProperty name="resource" property="name" /></a></td>
 	<td><jsp:getProperty name="resource" property="comment" /></td>
-<!--	<td><logic:iterate id="attr" name="resource" property="attributes">
-	  <jsp:getProperty name="attr" property="name" />, 
-	  </logic:iterate></td> -->
 	<td>
 <%
-  String[] nvals = getAttrVals((ArpResource)resource, userCtx);
-    for (int i = 0; i < nvals.length; i++)
-	out.println(nvals[i]);
+  Set attrSet = responder.getCombinedReleaseSet(adminArp, resource, resource, username);
+    Iterator it = s.iterator();
+    while(it.hasNext()){
+	ArpAttribute aAttr = (ArpAttribute)it.next();
+	Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
+        if (dAttr != null && dAttr.size() > 0) {
+	  for (int j=0; j < dAttr.size(); j++)  {	
+	    out.println(dAttr.get(j) + "<br>");
+	  }
+  	}
+    }
 %>
 	</td>
 	<input type=hidden name="username" value="<bean:write name="username"/>">

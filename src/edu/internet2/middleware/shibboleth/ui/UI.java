@@ -63,15 +63,16 @@ import edu.internet2.middleware.shibboleth.aa.*;
 
 public class UI extends HttpServlet {
 
-    private String adminArpName = "#ADMIN#";
-    private String defaultArpName = "#DEFAULT#";
+    private String adminArpName = "admin";
     private String debug = "true";
 
     private String arpDir;
     private String ldapUrl;
     private String attrFile;
 
-    private ArpRepository arpFactory;
+    AAResponder responder;
+    ArpRepository arpFactory;
+    Arp adminArp;
 
     private static Logger log = 
 	Logger.getLogger(UI.class.getName());; 
@@ -86,7 +87,13 @@ public class UI extends HttpServlet {
 	    Properties props = new Properties();
 	    props.setProperty("arpFactoryRealpath", arpDir);
 	    arpFactory = ArpRepositoryFactory.getInstance("edu.internet2.middleware.shibboleth.aa.FileArpRepository", props);
-
+	    adminArp = arpFactory.lookupArp("adminArpName", true);
+	    if(adminArp ==  null) {
+		log.error("Admin ARP not found in Arp Repository (" + arpFactory + ").");
+		throw new ServletException("Unable to load admin ARP.");
+	    }
+	    responder = new AAResponder(arpFactory, getDirCtx(), 
+					getInitParameter("domain"));
 	} catch (Exception ex) {
 	    throw new ServletException(ex);
 	}
@@ -116,6 +123,7 @@ public class UI extends HttpServlet {
 	req.setAttribute("requestURL", req.getRequestURI().toString());
 	req.setAttribute("attrFile", attrFile);
 	req.setAttribute("ldapUrl", ldapUrl);
+	req.setAttribute("responder", responder);
 
 	String action = req.getParameter("Submit");
 	String resource = req.getParameter("Resource");
@@ -202,10 +210,8 @@ public class UI extends HttpServlet {
     {
 	try{
 	    Arp arp = arpFactory.lookupArp(username, false);
-	    Arp defaultArp = getDefault();
-	    ArpResource r = (defaultArp.getShar("*")).getResource("*");
 	    req.setAttribute("shars", arp.getShars());
-	    req.setAttribute("defaultRes", r);
+	    req.setAttribute("adminArp", adminArp);
 	    req.setAttribute("debug", debug);
 	    req.setAttribute("userCtx", getUserCtx(username));
 	} catch (Exception ex) {
@@ -215,23 +221,6 @@ public class UI extends HttpServlet {
 	loadJsp("/UIlist.jsp", req, res);
     } 
     
-    private Arp getDefault() {
-	try{
-	    Arp defaultArp = arpFactory.lookupArp("#DEFAULT", true);
-	    ArpShar s = defaultArp.getShar("*");
-	    if (s==null)
-		s = new ArpShar("*", true);
-	    ArpResource r = s.getResource("*");
-	    if (r==null)
-		r = new ArpResource("*");
-	    s.addAResource(r);
-	    defaultArp.addAShar(s);
-	    arpFactory.update(defaultArp);
-	    return defaultArp;
-	}catch (Exception e)
-	    {}
-	return null;
-    }
 
     private void editArp(String username,
 			 String resource,
@@ -243,14 +232,15 @@ public class UI extends HttpServlet {
 	try{
 	Arp arp = arpFactory.lookupArp(username, false);
 	ArpShar s = arp.getShar(resource);
-	Arp adminArp = arpFactory.lookupArp("#ADMIN#", true);
 
 	AAAttributes aaa = new AAAttributes(attrFile);
 
+	req.setAttribute("adminArp", adminArp);
 	req.setAttribute("userCtx", getUserCtx(username));
 	req.setAttribute("allAttrs", aaa.list());
 	req.setAttribute("resource", (s==null) ? new ArpResource("", "") : s.getResource(resource));
 	req.setAttribute("isNew", isNew);
+
 	} catch (Exception ex) {
 	    throw new UIException("Error retrieving filter." +ex);
 	}
@@ -281,12 +271,11 @@ public class UI extends HttpServlet {
 	    a = r.getAttribute(attr);
 	if (a == null)
 	    a = new ArpAttribute(attr, false);
-	ArpFilter f = a.getFilter();
 
 	req.setAttribute("userCtx", getUserCtx(username));
 	req.setAttribute("resource", resource);
 	req.setAttribute("attr", new ArpAttribute(attr, false));
-	req.setAttribute("filter", f);
+	req.setAttribute("userAttr", a);
 	req.setAttribute("close", close);
 	} catch (Exception ex) {
 	    throw new UIException("Error retrieving filter." +ex);
@@ -294,16 +283,28 @@ public class UI extends HttpServlet {
 	loadJsp("/UIfilter.jsp", req, res);
     }
 
-    private DirContext getUserCtx(String username) 
+    private DirContext getDirCtx() 
 	throws UIException
     {
-	DirContext userCtx = null;
+	DirContext ctx = null;
 	Hashtable env = new Hashtable(11);
 	env.put(Context.INITIAL_CONTEXT_FACTORY,
 		"com.sun.jndi.ldap.LdapCtxFactory");
 	env.put(Context.PROVIDER_URL, ldapUrl);
 	try { 
-	    DirContext ctx = new InitialDirContext(env);
+	    ctx = new InitialDirContext(env);
+	} catch (Exception ex) {
+	    throw new UIException
+		("Error getting context. "+ex);
+	}
+	return ctx;
+    }
+    private DirContext getUserCtx(String username) 
+	throws UIException
+    {
+	DirContext userCtx = null;
+	try { 
+	    DirContext ctx = getDirCtx();
 	    userCtx = (DirContext)ctx.lookup("uid="+username);
 	} catch (Exception ex) {
 	    throw new UIException

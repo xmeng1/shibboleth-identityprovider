@@ -12,10 +12,10 @@
         <jsp:useBean id="username" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="userCtx" scope="request" class="javax.naming.directory.DirContext"/>
 	<jsp:useBean id="attr" scope="request" class="edu.internet2.middleware.shibboleth.aa.ArpAttribute"/>
-	<jsp:useBean id="filter" scope="request" class="edu.internet2.middleware.shibboleth.aa.ArpFilter"/>
+	<jsp:useBean id="userAttr" scope="request" class="edu.internet2.middleware.shibboleth.aa.ArpAttribute"/>
 	<jsp:useBean id="resource" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="close" scope="request" class="java.lang.String"/>
-
+	<jsp:useBean id="adminArp" scope="request" class="edu.internet2.middleware.shibboleth.aa.Arp"/>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
         <link rel="stylesheet" type="text/css" href="main.css" />
@@ -38,6 +38,11 @@
 	<table>
 	
 <% 
+    Set s = getReleaseSet(adminArp, resource, resource, adminArp);
+    ArpAttribute adminAttr = getAttr(s, attr);
+    ArpFilter filter = combineFilters(userAttr.getFilter(), 
+ 				      adminAttr.getFilter());
+
     Attribute dAttr = attr.getDirAttribute(userCtx, true);
 
     if (dAttr != null && dAttr.size() > 0) {
