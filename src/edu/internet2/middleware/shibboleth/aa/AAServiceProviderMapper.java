@@ -44,54 +44,89 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package edu.internet2.middleware.shibboleth.common;
+package edu.internet2.middleware.shibboleth.aa;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
+import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
+import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
  * @author Walter Hoehn
- *  
  */
-public abstract class ShibbolethOriginConfig {
+public class AAServiceProviderMapper extends ServiceProviderMapper {
 
-	private String defaultRelyingPartyName;
-	private String providerId;
-	public static final String originConfigNamespace = "urn:mace:shibboleth:origin:1.0";
+	private static Logger log = Logger.getLogger(AAServiceProviderMapper.class.getName());
+	private AAConfig configuration;
 
-	private static Logger log = Logger.getLogger(ShibbolethOriginConfig.class.getName());
+	public AAServiceProviderMapper(Element rawConfig, AAConfig configuration) throws ServiceProviderMapperException {
 
-	public ShibbolethOriginConfig(Element config) throws ShibbolethConfigurationException {
+		this.configuration = configuration;
 
-		if (!config.getTagName().equals("ShibbolethOriginConfig")) {
-			throw new ShibbolethConfigurationException("Unexpected configuration data.  <ShibbolethOriginConfig> is needed.");
+		NodeList itemElements =
+			rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "RelyingParty");
+
+		for (int i = 0; i < itemElements.getLength(); i++) {
+			addRelyingParty((Element) itemElements.item(i));
 		}
 
-		log.debug("Loading global configuration properties.");
+		verifyDefaultParty(configuration);
+	}
 
-		//Global providerId
-		String providerId = ((Element) config).getAttribute("providerId");
-		if (providerId == null || providerId.equals("")) {
-			log.error("Global providerId not set.  Add a (providerId) attribute to <ShibbolethOriginConfig>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
+	private void addRelyingParty(Element e) throws ServiceProviderMapperException {
+
+		log.debug("Found a Relying Party.");
+		try {
+			if (e.getLocalName().equals("RelyingParty")) {
+				RelyingParty party = new AARelyingPartyImpl(e, configuration);
+				log.debug("Relying Party (" + party.getName() + ") loaded.");
+				relyingParties.put(party.getName(), party);
+			}
+		} catch (ServiceProviderMapperException exc) {
+			log.error("Encountered an error while attempting to load Relying Party configuration.  Skipping...");
+		}
+	}
+
+	public AARelyingParty getRelyingParty(String providerIdFromTarget) {
+		return (AARelyingParty) getRelyingPartyImpl(providerIdFromTarget);
+	}
+
+	class AARelyingPartyImpl extends BaseRelyingPartyImpl {
+
+		private AAConfig aaConfig;
+		private boolean overridenPassThruErrors;
+		private boolean passThruIsOverriden;
+
+		public AARelyingPartyImpl(Element partyConfig, AAConfig globalConfig) throws ServiceProviderMapperException {
+			super(partyConfig);
+
+			aaConfig = globalConfig;
+
+			String attribute = ((Element) partyConfig).getAttribute("passThruErros");
+			if (attribute != null && !attribute.equals("")) {
+				log.debug("Overriding passThruErrors for Relying Pary (" + name + ") with (" + attribute + ").");
+				overridenPassThruErrors = Boolean.getBoolean(attribute);
+				passThruIsOverriden = true;
+			}
+
+			identityProvider = new RelyingPartyIdentityProvider(overridenOriginProviderId, null);
 		}
 
-		//Default Relying Party
-		String defaultRelyingPartyName = ((Element) config).getAttribute("defaultRelyingParty");
-		if (defaultRelyingPartyName == null || defaultRelyingPartyName.equals("")) {
-			log.error("Default Relying Party not set.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
+		public boolean passThruErrors() {
+			if (passThruIsOverriden) {
+				return overridenPassThruErrors;
+			} else {
+				return aaConfig.passThruErrors();
+			}
 		}
-		log.debug("Default Relying Party: (" + getDefaultRelyingPartyName() + ").");
+
 	}
 
-	public String getProviderId() {
-		return providerId;
+	protected ShibbolethOriginConfig getOriginConfig() {
+		return configuration;
 	}
-
-	public String getDefaultRelyingPartyName() {
-		return defaultRelyingPartyName;
-	}
-
 }

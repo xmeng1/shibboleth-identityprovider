@@ -37,6 +37,11 @@
 
 package edu.internet2.middleware.shibboleth.hs;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
@@ -52,6 +57,8 @@ public class HSConfig extends ShibbolethOriginConfig {
 
 	private int maxThreads = 5;
 	private String authHeaderName = "REMOTE_USER";
+	private URI defaultAuthMethod;
+	private URL AAUrl;
 
 	public HSConfig(Element config) throws ShibbolethConfigurationException {
 		super(config);
@@ -61,19 +68,31 @@ public class HSConfig extends ShibbolethOriginConfig {
 
 		String attribute = ((Element) config).getAttribute("AAUrl");
 		if (attribute == null || attribute.equals("")) {
-			log.error("Global providerId not set.  Add a (AAUrl) attribute to <ShibbolethOriginConfig>.");
+			log.error("Global Attribute Authority URL not set.  Add an (AAUrl) attribute to <ShibbolethOriginConfig>.");
 			throw new ShibbolethConfigurationException("Required configuration not specified.");
 		}
-		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl", attribute);
+		try {
+			AAUrl = new URL(attribute);
+		} catch (MalformedURLException e) {
+			log.error("(AAUrl) attribute to is not a valid URL.");
+			throw new ShibbolethConfigurationException("Required configuration is invalid.");
+		}
 
 		attribute = ((Element) config).getAttribute("defaultAuthMethod");
 		if (attribute == null || attribute.equals("")) {
-			properties.setProperty(
-				"edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod",
-				"urn:oasis:names:tc:SAML:1.0:am:unspecified");
+			try {
+				defaultAuthMethod = new URI("urn:oasis:names:tc:SAML:1.0:am:unspecified");
+			} catch (URISyntaxException e1) {
+				//Shouldn't happen
+				throw new ShibbolethConfigurationException("Default Auth Method URI could not be constructed.");
+			}
 		}
-		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod", attribute);
-
+		try {
+			defaultAuthMethod = new URI(attribute);
+		} catch (URISyntaxException e1) {
+			log.error("(defaultAuthMethod) attribute to is not a valid URI.");
+			throw new ShibbolethConfigurationException("Required configuration is invalid.");
+		}
 	}
 
 	public int getMaxThreads() {
@@ -82,5 +101,13 @@ public class HSConfig extends ShibbolethOriginConfig {
 
 	public String getAuthHeaderName() {
 		return authHeaderName;
+	}
+	
+	public URI getDefaultAuthMethod() {
+		return defaultAuthMethod;
+	}
+	
+	public URL getAAUrl() {
+		return AAUrl;
 	}
 }

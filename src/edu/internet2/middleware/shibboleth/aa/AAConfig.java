@@ -51,6 +51,7 @@ public class AAConfig extends ShibbolethOriginConfig {
 	private static Logger log = Logger.getLogger(AAConfig.class.getName());
 
 	private String resolverConfig = "/conf/resolver.xml";
+	private boolean passThruErrors = false;
 
 	public AAConfig(Element config) throws ShibbolethConfigurationException {
 
@@ -65,20 +66,17 @@ public class AAConfig extends ShibbolethOriginConfig {
 
 		//Global Pass thru error setting
 		String attribute = ((Element) config).getAttribute("passThruErros");
-		if (attribute == null || attribute.equals("")) {
-			properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
-		} else {
-			if (!attribute.equalsIgnoreCase("TRUE") && !attribute.equalsIgnoreCase("FALSE")) {
-				log.error("passThrue errors is a boolean property.");
-				properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
-			} else {
-				properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", attribute);
-			}
+		if (attribute != null && !attribute.equals("")) {
+			passThruErrors = Boolean.getBoolean(attribute);
 		}
 	}
 
 	public String getResolverConfigLocation() {
 		return resolverConfig;
+	}
+
+	public boolean passThruErrors() {
+		return passThruErrors;
 	}
 
 }

@@ -69,8 +69,6 @@ import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.OriginComponent;
-import edu.internet2.middleware.shibboleth.common.RelyingParty;
-import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
@@ -86,7 +84,7 @@ public class HandleServlet extends OriginComponent {
 	private Credentials credentials;
 	private HSNameMapper nameMapper;
 	private ShibPOSTProfile postProfile = new ShibPOSTProfile();
-	private ServiceProviderMapper targetMapper;
+	private HSServiceProviderMapper targetMapper;
 
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
@@ -111,6 +109,7 @@ public class HandleServlet extends OriginComponent {
 
 		//Load global configuration properties
 		configuration = new HSConfig(parser.getDocument().getDocumentElement());
+		System.out.println("Walter 3: " + configuration.getDefaultRelyingPartyName());
 
 		//Load signing credentials
 		NodeList itemElements =
@@ -145,7 +144,7 @@ public class HandleServlet extends OriginComponent {
 		//Load relying party config
 		try {
 			targetMapper =
-				new ServiceProviderMapper(
+				new HSServiceProviderMapper(
 					parser.getDocument().getDocumentElement(),
 					configuration,
 					credentials,
@@ -190,7 +189,7 @@ public class HandleServlet extends OriginComponent {
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
 
-			RelyingParty relyingParty = targetMapper.getRelyingParty(req.getParameter("providerId"));
+			HSRelyingParty relyingParty = targetMapper.getRelyingParty(req.getParameter("providerId"));
 
 			String username =
 				configuration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER")
@@ -206,9 +205,7 @@ public class HandleServlet extends OriginComponent {
 
 			String authenticationMethod = req.getHeader("SAMLAuthenticationMethod");
 			if (authenticationMethod == null || authenticationMethod.equals("")) {
-				authenticationMethod =
-					relyingParty.getConfigProperty(
-						"edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod");
+				authenticationMethod = relyingParty.getDefaultAuthMethod().toString();
 				log.debug(
 					"User was authenticated via the default method for this relying party ("
 						+ authenticationMethod
@@ -264,7 +261,7 @@ public class HandleServlet extends OriginComponent {
 	}
 
 	protected byte[] generateAssertion(
-		RelyingParty relyingParty,
+		HSRelyingParty relyingParty,
 		SAMLNameIdentifier nameId,
 		String shireURL,
 		String clientAddress,
@@ -274,7 +271,7 @@ public class HandleServlet extends OriginComponent {
 		SAMLAuthorityBinding binding =
 			new SAMLAuthorityBinding(
 				SAMLBinding.SAML_SOAP_HTTPS,
-				relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl"),
+				relyingParty.getAAUrl().toString(),
 				new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
 
 		//TODO Scott mentioned the clientAddress should be optional at some

@@ -53,12 +53,6 @@ package edu.internet2.middleware.shibboleth.common;
 public interface RelyingParty extends ServiceProvider {
 
 	public String getName();
-
-	public String getConfigProperty(String key);
-
-	public boolean isLegacyProvider();
-
-	public String getHSNameFormatId();
-
+	public String getProviderId();
 	public IdentityProvider getIdentityProvider();
 }

@@ -86,7 +86,6 @@ import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.OriginComponent;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
-import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -103,7 +102,7 @@ public class AAServlet extends OriginComponent {
 	private NameMapper nameMapper;
 	private SAMLBinding binding;
 	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
-	private ServiceProviderMapper targetMapper;
+	private AAServiceProviderMapper targetMapper;
 
 	private static Logger log = Logger.getLogger(AAServlet.class.getName());
 
@@ -170,7 +169,7 @@ public class AAServlet extends OriginComponent {
 
 		//Load relying party config
 		try {
-			targetMapper = new ServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration);
+			targetMapper = new AAServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
@@ -215,7 +214,7 @@ public class AAServlet extends OriginComponent {
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
 
-		RelyingParty relyingParty = null;
+		AARelyingParty relyingParty = null;
 
 		//Parse SOAP request
 		SAMLRequest samlRequest = null;
@@ -280,9 +279,7 @@ public class AAServlet extends OriginComponent {
 						{
 							SAMLException.REQUESTER,
 							new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
-					if (relyingParty
-						.getConfigProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors")
-						.equals("true")) {
+					if (relyingParty.passThruErrors()) {
 						sendFailure(
 							resp,
 							samlRequest,
@@ -344,18 +341,12 @@ public class AAServlet extends OriginComponent {
 		} catch (Exception e) {
 			log.error("Error while processing request: " + e);
 			try {
-				if (relyingParty != null
-					&& relyingParty.getConfigProperty(
-						"edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors").equals(
-						"true")) {
+				if (relyingParty != null && relyingParty.passThruErrors()) {
 					sendFailure(
 						resp,
 						samlRequest,
 						new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
-				} else if (
-					configuration.getConfigProperty(
-						"edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors").equals(
-						"true")) {
+				} else if (configuration.passThruErrors()) {
 					sendFailure(
 						resp,
 						samlRequest,

@@ -82,6 +82,8 @@ import org.opensaml.SAMLSubject;
 import org.opensaml.TrustException;
 import org.w3c.dom.Document;
 
+import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
+
 /**
  * Basic Shibboleth POST browser profile implementation with basic support for
  * signing
@@ -302,7 +304,7 @@ public class ShibPOSTProfile {
 	 */
 	public SAMLResponse prepare(
 		String recipient,
-		RelyingParty relyingParty,
+		HSRelyingParty relyingParty,
 		SAMLNameIdentifier nameId,
 		String subjectIP,
 		String authMethod,

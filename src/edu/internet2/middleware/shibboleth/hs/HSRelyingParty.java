@@ -44,54 +44,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package edu.internet2.middleware.shibboleth.common;
+package edu.internet2.middleware.shibboleth.hs;
 
-import org.apache.log4j.Logger;
-import org.w3c.dom.Element;
+import java.net.URI;
+import java.net.URL;
 
+import edu.internet2.middleware.shibboleth.common.RelyingParty;
 
 /**
  * @author Walter Hoehn
- *  
  */
-public abstract class ShibbolethOriginConfig {
+public interface HSRelyingParty extends RelyingParty {
 
-	private String defaultRelyingPartyName;
-	private String providerId;
-	public static final String originConfigNamespace = "urn:mace:shibboleth:origin:1.0";
-
-	private static Logger log = Logger.getLogger(ShibbolethOriginConfig.class.getName());
-
-	public ShibbolethOriginConfig(Element config) throws ShibbolethConfigurationException {
-
-		if (!config.getTagName().equals("ShibbolethOriginConfig")) {
-			throw new ShibbolethConfigurationException("Unexpected configuration data.  <ShibbolethOriginConfig> is needed.");
-		}
-
-		log.debug("Loading global configuration properties.");
-
-		//Global providerId
-		String providerId = ((Element) config).getAttribute("providerId");
-		if (providerId == null || providerId.equals("")) {
-			log.error("Global providerId not set.  Add a (providerId) attribute to <ShibbolethOriginConfig>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
-		}
-
-		//Default Relying Party
-		String defaultRelyingPartyName = ((Element) config).getAttribute("defaultRelyingParty");
-		if (defaultRelyingPartyName == null || defaultRelyingPartyName.equals("")) {
-			log.error("Default Relying Party not set.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
-		}
-		log.debug("Default Relying Party: (" + getDefaultRelyingPartyName() + ").");
-	}
-
-	public String getProviderId() {
-		return providerId;
-	}
-
-	public String getDefaultRelyingPartyName() {
-		return defaultRelyingPartyName;
-	}
-
+	public String getHSNameFormatId();
+	public boolean isLegacyProvider();
+	public URL getAAUrl();
+	public URI getDefaultAuthMethod();
 }
