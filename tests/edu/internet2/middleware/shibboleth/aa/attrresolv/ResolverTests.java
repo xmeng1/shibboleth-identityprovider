@@ -51,7 +51,6 @@ package edu.internet2.middleware.shibboleth.aa.attrresolv;
 
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 
@@ -96,13 +95,8 @@ public class ResolverTests extends TestCase {
 	public void testBasic() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver1.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
@@ -134,13 +128,9 @@ public class ResolverTests extends TestCase {
 	public void testSmartScoping() {
 
 		try {
-			Properties props = new Properties();
-			File file = new File("data/resolver2.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
 
-			AttributeResolver ar = new AttributeResolver(props);
+			File file = new File("data/resolver2.xml");
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
@@ -176,13 +166,9 @@ public class ResolverTests extends TestCase {
 	public void testExceptionForNoPlugIns() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver3.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			new AttributeResolver(file.toURL().toString());
+			
 			fail("Attribute Resolver loaded even when no PlugIns were configured.");
 		} catch (AttributeResolverException e) {
 			//This exception should be thrown, ignoring
@@ -194,13 +180,8 @@ public class ResolverTests extends TestCase {
 	public void testExceptionForNoValidPlugIns() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver4.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			new AttributeResolver(file.toURL().toString());
 			fail("Attribute Resolver loaded even when no PlugIns were successfully registered.");
 		} catch (AttributeResolverException e) {
 			//This exception should be thrown, ignoring
@@ -212,13 +193,8 @@ public class ResolverTests extends TestCase {
 	public void testFailToLoadCircularDependencies() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver5.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			new AttributeResolver(file.toURL().toString());
 			fail("Attribute Resolver loaded even when no only PlugIns with circular dependencies were configured.");
 		} catch (AttributeResolverException e) {
 			//This exception should be thrown, ignoring
@@ -230,13 +206,8 @@ public class ResolverTests extends TestCase {
 	public void testFailToLoadCircularDependenciesDeeper() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver6.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			new AttributeResolver(file.toURL().toString());
 			fail("Attribute Resolver loaded even when no only PlugIns with circular dependencies were configured.");
 		} catch (AttributeResolverException e) {
 			//This exception should be thrown, ignoring
@@ -248,13 +219,8 @@ public class ResolverTests extends TestCase {
 	public void testSourceNameMapping() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver7.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[] { new AAAttribute("myAffiliation")});
 
@@ -277,13 +243,8 @@ public class ResolverTests extends TestCase {
 	public void testMultipleDataConnectors() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver8.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
@@ -321,13 +282,8 @@ public class ResolverTests extends TestCase {
 	public void testAttributeDependency() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver9.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
@@ -358,13 +314,8 @@ public class ResolverTests extends TestCase {
 	public void testMisLabeledDataConnector() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver11.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
@@ -388,13 +339,8 @@ public class ResolverTests extends TestCase {
 	public void testMisLabeledAttributeDefinition() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver10.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
@@ -418,13 +364,8 @@ public class ResolverTests extends TestCase {
 	public void testMultiLevelAttributeDependency() {
 
 		try {
-			Properties props = new Properties();
 			File file = new File("data/resolver12.xml");
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-
-			AttributeResolver ar = new AttributeResolver(props);
+			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
 			AAAttributeSet inputAttributes =
 				new AAAttributeSet(
