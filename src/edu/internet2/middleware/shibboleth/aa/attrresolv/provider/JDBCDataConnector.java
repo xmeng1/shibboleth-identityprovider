@@ -113,6 +113,11 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			loadDriver(dbDriverName);
 		}
 
+		String validationQuery = e.getAttribute("validationQuery");
+		if (validationQuery == null || validationQuery.equals("")) {
+			validationQuery = "select 1";
+		}
+
 		//Load site-specific implementation classes	
 		setupAttributeExtractor(
 			(Element) e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "AttributeExtractor").item(
@@ -162,13 +167,13 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			log.error("JDBC connection requires a dbURL property");
 			throw new ResolutionPlugInException("JDBCDataConnection requires a \"dbURL\" property");
 		}
-		setupDataSource(e.getAttribute("dbURL"), props, maxActive, maxIdle, maxWait);
+		setupDataSource(e.getAttribute("dbURL"), props, maxActive, maxIdle, maxWait, validationQuery);
 	}
 
 	/**
 	 * Initialize a Pooling Data Source
 	 */
-	private void setupDataSource(String dbURL, Properties props, int maxActive, int maxIdle, int maxWait) throws ResolutionPlugInException {
+	private void setupDataSource(String dbURL, Properties props, int maxActive, int maxIdle, int maxWait, String validationQuery) throws ResolutionPlugInException {
 
 		GenericObjectPool objectPool = new GenericObjectPool(null);
 
@@ -203,7 +208,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
     				connFactory,
     				objectPool,
     				new StackKeyedObjectPoolFactory(),
-    				"select 1",
+    				validationQuery,
     				false,
 				true);
 		} catch (Exception ex) {
