@@ -245,7 +245,7 @@ public class AAServlet extends HttpServlet {
 				// for testing
 				principal = new AuthNPrincipal("test-handle");
 			} else {
-				principal = handleRepository.getPrincipal(saml.getHandle());
+				principal = handleRepository.getPrincipal(saml.getHandle(),saml.getFormat());
 			}
 
 			URL resource = null;

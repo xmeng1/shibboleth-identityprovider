@@ -91,7 +91,6 @@ public abstract class BaseHandleRepository implements HandleRepository {
 				"Value for (edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL) must be a long integer.");
 			throw new HandleRepositoryException("Value for (edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL) must be a long integer.");
 		}
-
 	}
 	
 	protected HandleEntry createHandleEntry(AuthNPrincipal principal) {

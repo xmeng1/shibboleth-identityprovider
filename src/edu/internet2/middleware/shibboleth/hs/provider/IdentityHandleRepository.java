@@ -47,31 +47,67 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.hs;
+package edu.internet2.middleware.shibboleth.hs.provider;
+
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.Constants;
+import edu.internet2.middleware.shibboleth.hs.HandleRepository;
+import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
+import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 
 /**
- * Defines a mechanism for communicating identities between the Shibboleth Handle
- * Service and Attribute Authority.  Implementations must be thread-safe.
+ * <code>HandleRepository</code> implementation that employs the use of a shard secret
+ * in order to transmit identity information.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public interface HandleRepository {
+public class IdentityHandleRepository extends BaseHandleRepository implements HandleRepository {
+
+	private static Logger log = Logger.getLogger(IdentityHandleRepository.class.getName());
+    
+    private String format;
+
+	public IdentityHandleRepository(Properties properties) throws HandleRepositoryException {
+		super(properties);
+        if (properties.getProperty("edu.internet2.middleware.shibboleth.hs.IdentityHandleRepository.formatURI")
+            != null) {
+            format = properties.getProperty(
+                        "edu.internet2.middleware.shibboleth.hs.IdentityHandleRepository.formatURI",
+                        null);
+            if (format == null)
+                format = Constants.SHIB_NAMEID_FORMAT_URI;
+        }
+        log.debug("Attribute Query Handle TTL set to (" + handleTTL + ") milliseconds.");
+	}
 
 	/**
-	 * Creates an opaque identifier that may be shared with target sites and subsequently 
-	 * used in attribute requests for the given <code>AuthNPrincipal</code>.
-	 * @throws HandleRepositoryException if a Attribute Query Handle could not be created.
+	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
-	public String getHandle(AuthNPrincipal principal, StringBuffer format) throws HandleRepositoryException;
+	public String getHandle(AuthNPrincipal principal, StringBuffer format) throws HandleRepositoryException {
+		if (principal == null || format == null) {
+			log.error("A principal and format buffer must be supplied for Attribute Query Handle creation.");
+			throw new IllegalArgumentException("A principal and format buffer must be supplied for Attribute Query Handle creation.");
+		}
+
+        format.setLength(0);
+        format.append(this.format);
+
+		return principal.getName();
+	}
 
 	/**
-	 * Finds the <code>AuthNPrincipal</code> associated with a given opaque identifier.
-	 * @throws InvalidHandleException if the specified handle is expired, unknown, or cannot 
-	 * be resolved to a <code>AuthNPrincipal</code>
-	 * @throws HandleRepositoryException if the <code>HandleRepository</code> encounters an internal error
+	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
-	public AuthNPrincipal getPrincipal(String handle, String format) throws HandleRepositoryException, InvalidHandleException;
-
+	public AuthNPrincipal getPrincipal(String handle, String format) throws HandleRepositoryException, InvalidHandleException {
+        if (!this.format.equals(format)) {
+            log.debug("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
+            throw new InvalidHandleException("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
+        }
+        
+        return new AuthNPrincipal(handle);
+	}
 }

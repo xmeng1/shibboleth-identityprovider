@@ -114,6 +114,7 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
      * @param  recipient          URL of intended consumer
      * @param  name               Name of subject
      * @param  nameQualifier      Federates or qualifies subject name (optional)
+     * @param  nameFormat         Format URI of name (optional)
      * @param  subjectIP          Client address of subject (optional)
      * @param  authMethod         URI of authentication method being asserted
      * @param  authInstant        Date and time of authentication being asserted
@@ -134,6 +135,7 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
     public SAMLResponse prepare(String recipient,
                                 String name,
                                 String nameQualifier,
+                                String nameFormat,
                                 String subjectIP,
                                 String authMethod,
                                 Date authInstant,
@@ -152,6 +154,7 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
             recipient,
             name,
             nameQualifier,
+            nameFormat,
             subjectIP,
             authMethod,
             authInstant,

@@ -281,6 +281,7 @@ public class ShibPOSTProfile
      * @param  recipient          URL of intended consumer
      * @param  name               Name of subject
      * @param  nameQualifier      Federates or qualifies subject name (optional)
+     * @param  nameFormat         URI identifying format of name
      * @param  subjectIP          Client address of subject (optional)
      * @param  authMethod         URI of authentication method being asserted
      * @param  authInstant        Date and time of authentication being asserted
@@ -301,6 +302,7 @@ public class ShibPOSTProfile
     public SAMLResponse prepare(String recipient,
                                 String name,
                                 String nameQualifier,
+                                String nameFormat,
                                 String subjectIP,
                                 String authMethod,
                                 Date authInstant,
@@ -323,7 +325,7 @@ public class ShibPOSTProfile
             policies,
             name,
             nameQualifier,
-            Constants.SHIB_NAMEID_FORMAT_URI,
+            nameFormat,
             subjectIP,
             authMethod,
             authInstant,

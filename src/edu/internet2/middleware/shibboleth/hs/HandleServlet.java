@@ -300,12 +300,14 @@ public class HandleServlet extends HttpServlet {
 			String header = configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
 			String username = header.equalsIgnoreCase("REMOTE_USER") ? req.getRemoteUser() : req.getHeader(header);
 
-			String handle = handleRepository.getHandle(new AuthNPrincipal(username));
+            StringBuffer format = new StringBuffer();
+			String handle = handleRepository.getHandle(new AuthNPrincipal(username), format);
 			log.info("Issued Handle (" + handle + ") to (" + username + ")");
 
 			byte[] buf =
 				generateAssertion(
 					handle,
+                    format.toString(),
 					req.getParameter("shire"),
 					req.getRemoteAddr(),
 					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod"));
@@ -328,7 +330,7 @@ public class HandleServlet extends HttpServlet {
 
 	}
 
-	protected byte[] generateAssertion(String handle, String shireURL, String clientAddress, String authType)
+	protected byte[] generateAssertion(String handle, String format, String shireURL, String clientAddress, String authType)
 		throws SAMLException, IOException {
 
 		SAMLAuthorityBinding binding =
@@ -342,6 +344,7 @@ public class HandleServlet extends HttpServlet {
 				shireURL,
 				handle,
 				configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName"),
+                format,
 				clientAddress,
 				authType,
 				new Date(System.currentTimeMillis()),

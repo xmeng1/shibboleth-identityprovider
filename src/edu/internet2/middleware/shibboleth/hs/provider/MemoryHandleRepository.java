@@ -61,6 +61,7 @@ import org.apache.log4j.Logger;
 import org.doomdark.uuid.UUIDGenerator;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
@@ -83,11 +84,11 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
-	public String getHandle(AuthNPrincipal principal) throws HandleRepositoryException {
+	public String getHandle(AuthNPrincipal principal, StringBuffer format) throws HandleRepositoryException {
 
-		if (principal == null) {
-			log.error("A principal must be supplied for Attribute Query Handle creation.");
-			throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
+		if (principal == null || format == null) {
+			log.error("A principal and format buffer must be supplied for Attribute Query Handle creation.");
+			throw new IllegalArgumentException("A principal and format buffer must be supplied for Attribute Query Handle creation.");
 		}
 
 		String handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
@@ -95,13 +96,21 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 		synchronized (cache.handleEntries) {
 			cache.handleEntries.put(handle, createHandleEntry(principal));
 		}
+        
+        format.setLength(0);
+        format.append(Constants.SHIB_NAMEID_FORMAT_URI);
+
 		return handle;
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
-	public AuthNPrincipal getPrincipal(String handle) throws InvalidHandleException {
+	public AuthNPrincipal getPrincipal(String handle, String format) throws InvalidHandleException {
+        if (!Constants.SHIB_NAMEID_FORMAT_URI.equals(format)) {
+            log.debug("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
+            throw new InvalidHandleException("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
+        }
 		synchronized (cache.handleEntries) {
 			if (!cache.handleEntries.containsKey(handle)) {
 				log.debug("The Repository does not contain an entry for this Attribute Query Handle.");

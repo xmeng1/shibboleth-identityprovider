@@ -112,19 +112,23 @@ public class AASaml {
     }
 
     public String getHandle(){
-	return aquery.getSubject().getName();
+        return aquery.getSubject().getName();
+    }
+
+    public String getFormat(){
+        return aquery.getSubject().getFormat();
     }
 
     public String getResource(){
-	return aquery.getResource();
+        return aquery.getResource();
     }
 
     public String getShar(){
-	return sharName.toString();
+        return sharName.toString();
     }
     
     public Iterator getDesignators() {
-    	return aquery.getDesignators();
+        return aquery.getDesignators();
     }
 
  
