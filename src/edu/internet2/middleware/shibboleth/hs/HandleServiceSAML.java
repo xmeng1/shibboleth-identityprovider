@@ -2,10 +2,11 @@ package edu.internet2.middleware.shibboleth.hs;
 
 import java.io.*;
 import java.util.*;
+import java.security.*;
+import java.security.cert.*;
 import edu.internet2.middleware.shibboleth.*;
 import edu.internet2.middleware.shibboleth.common.*;
 import org.opensaml.*;
-
 
 public class HandleServiceSAML {
 
@@ -13,14 +14,25 @@ public class HandleServiceSAML {
     protected String AAurl;
     public String[] policies = { Constants.POLICY_CLUBSHIB };
     private ShibPOSTProfile spp;
+    PrivateKey privateKey;
+    X509Certificate cert;
 
-    public HandleServiceSAML( String domain, String AAurl, String issuer) 
-	throws SAMLException 
+    public HandleServiceSAML( String domain, String AAurl, String HSname,
+			      String KSpath, String KSpass, String KSkeyalias,
+			      String KSkeypass, String certalias ) 
+	throws SAMLException, KeyStoreException, Exception
     {
 	this.domain = domain;
 	this.AAurl = AAurl;
 	
-	spp = ShibPOSTProfileFactory.getInstance( policies, issuer );
+	KeyStore ks = KeyStore.getInstance("JKS");
+	FileInputStream fis = new FileInputStream(KSpath);
+	ks.load( fis, KSpass.toCharArray());
+	privateKey = (PrivateKey)ks.getKey(KSkeyalias, KSkeypass.toCharArray());
+	cert =(X509Certificate)ks.getCertificate(certalias);
+
+	
+	spp = ShibPOSTProfileFactory.getInstance( policies, HSname );
     }
     
     public byte[] prepare ( String handle, String shireURL, 

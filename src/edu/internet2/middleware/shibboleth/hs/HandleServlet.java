@@ -24,15 +24,27 @@ public class HandleServlet extends HttpServlet {
 	try {
 	    hsSAML = new HandleServiceSAML( getInitParameter("domain"), 
 					    getInitParameter("AAurl"),
-					    getInitParameter("issuer") );
+					    getInitParameter("HSname"),
+					    getInitParameter("KSpath"),
+					    getInitParameter("KSpass"),
+					    getInitParameter("KSkeyalias"),
+					    getInitParameter("KSkeypass"),
+					    getInitParameter("certalias") );
 	    hrf = HandleRepositoryFactory.getInstance
 		( Constants.POLICY_CLUBSHIB, this );
 	}
 	catch (SAMLException ex) {
 	    throw new ServletException( "Error initializing SAML libraries: " + ex );
 	}
+	catch (java.security.KeyStoreException ex) {
+	    throw new ServletException( "Error initializing private KeyStore: " + ex );
+	}
+	
 	catch (HandleException ex) {
 	    throw new ServletException( "Error initializing Handle Service: " +ex );
+	}
+	catch (Exception ex) {
+	    throw new ServletException( "Error initializing private KeyStore: " +ex );
 	}
 	if (hsSAML == null) {
 	    throw new ServletException( "Error initializing SAML libraries: No Profile created." );
@@ -54,7 +66,31 @@ public class HandleServlet extends HttpServlet {
 	     getInitParameter("AAurl").equals("")) {
 	    throw new ServletException("Cannot find host Attribute Authority location in init parameters");
 	}
-	
+	if ( getInitParameter("HSname") == null || 
+	     getInitParameter("HSname").equals("")) {
+	    throw new ServletException("Cannot find Handle Service name in init parameters");
+	}
+	if ( getInitParameter("KSpath") == null || 
+	     getInitParameter("AAurl").equals("")) {
+	    throw new ServletException("Cannot find path to KeyStore file in init parameters");
+	}
+	if ( getInitParameter("KSpass") == null || 
+	     getInitParameter("KSpass").equals("")) {
+	    throw new ServletException("Cannot find password to KeyStore in init parameters");
+	}
+	if ( getInitParameter("KSkeyalias") == null || 
+	     getInitParameter("AAurl").equals("")) {
+	    throw new ServletException("Cannot find private key alias to KeyStore in init parameters");
+	}
+	if ( getInitParameter("KSkeypass") == null || 
+	     getInitParameter("KSkeypass").equals("")) {
+	    throw new ServletException("Cannot find private key password to Keystore in init parameters");
+	}
+	if ( getInitParameter("certalias") == null || 
+	     getInitParameter("certalias").equals("")) {
+	    throw new ServletException("Cannot find certificate alias in init parameters");
+	}
+
 
     }
 
@@ -110,7 +146,8 @@ public class HandleServlet extends HttpServlet {
 	    out.println("</form>");
 	    
 	    /**
-	     * soon to implement forwarding to hs.jsp for submission
+	     * uncomment the following to implement 
+	     * forwarding to hs.jsp for submission
              * 
 	    //Hardcoded to ASCII to ensure Base64 encoding compatibility
 	    req.setAttribute("assertion", new String(buf, "ASCII"));
@@ -135,7 +172,7 @@ public class HandleServlet extends HttpServlet {
 	throws ServletException, IOException {
 
 	req.setAttribute("errorText", e.toString());
-	//	req.setAttribute("requestURL", req.getRequestURL().toString());
+	req.setAttribute("requestURL", req.getRequestURI().toString());
 	RequestDispatcher rd = req.getRequestDispatcher("/hserror.jsp");
 	
 	rd.forward(req, res);
