@@ -1,5 +1,5 @@
-6/1/03
-Version 1.0
+7/31/03
+Version 1.1
 
 Welcome to Internet2's Shibboleth
 
