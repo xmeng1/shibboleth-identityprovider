@@ -60,6 +60,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+import org.w3c.dom.Document;
 
 /**
  * @author Walter Hoehn
@@ -67,62 +68,85 @@ import org.xml.sax.SAXParseException;
 public abstract class OriginComponent extends HttpServlet {
 
 	private static Logger log = Logger.getLogger(OriginComponent.class.getName());
+        private static Document originConfig = null;
 
-	protected DOMParser loadParser(boolean schemaChecking) throws ShibbolethConfigurationException {
+        /* synchronized to make sure only one thread attempts to parse the config file */
+        protected synchronized Document getOriginConfig () throws ShibbolethConfigurationException
+        {
+            if (originConfig != null)
+            {
+                return originConfig;
+            }
 
-		DOMParser parser = new DOMParser();
+            DOMParser parser = new DOMParser();
 
-		if (!schemaChecking) {
-			return parser;
-		}
+            try {
+                parser.setFeature("http://xml.org/sax/features/validation", true);
+                parser.setFeature("http://apache.org/xml/features/validation/schema", true);
 
-		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
+                parser.setEntityResolver(
+                        new EntityResolver() {
+                            public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
+                                log.debug("Resolving entity for System ID: " + systemId);
+                                if (systemId != null) {
+                                    StringTokenizer tokenString = new StringTokenizer(systemId, "/");
+                                    String xsdFile = "";
+                                    while (tokenString.hasMoreTokens()) {
+                                        xsdFile = tokenString.nextToken();
+                                    }
+                                    if (xsdFile.endsWith(".xsd")) {
+                                        InputStream stream;
+                                        try {
+                                            stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
+                                        } catch (IOException ioe) {
+                                            log.error("Error loading schema: " + xsdFile + ": " + ioe);
+                                            return null;
+                                        }
+                                        if (stream != null) {
+                                            return new InputSource(stream);
+                                        }
+                                    }
+                                }
+                                return null;
+                            }
+                        });
 
-			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-					log.debug("Resolving entity for System ID: " + systemId);
-					if (systemId != null) {
-						StringTokenizer tokenString = new StringTokenizer(systemId, "/");
-						String xsdFile = "";
-						while (tokenString.hasMoreTokens()) {
-							xsdFile = tokenString.nextToken();
-						}
-						if (xsdFile.endsWith(".xsd")) {
-							InputStream stream;
-							try {
-								stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
-							} catch (IOException ioe) {
-								log.error("Error loading schema: " + xsdFile + ": " + ioe);
-								return null;
-							}
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-						}
-					}
-					return null;
-				}
-			});
+                parser.setErrorHandler(new ErrorHandler() {
+                    public void error(SAXParseException arg0) throws SAXException {
+                        throw new SAXException("Error parsing xml file: " + arg0);
+                    }
+                    public void fatalError(SAXParseException arg0) throws SAXException {
+                        throw new SAXException("Error parsing xml file: " + arg0);
+                    }
+                    public void warning(SAXParseException arg0) throws SAXException {
+                        throw new SAXException("Error parsing xml file: " + arg0);
+                    }
+                });
 
-			parser.setErrorHandler(new ErrorHandler() {
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
+            } catch (SAXException e) {
+                log.error("Unable to setup a workable XML parser: " + e);
+                throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
+            }
 
-		} catch (SAXException e) {
-			log.error("Unable to setup a workable XML parser: " + e);
-			throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
-		}
-		return parser;
-	}
+            String originConfigFile = getInitParameter("OriginConfigFile");
+            if (originConfigFile == null) {
+                originConfigFile = "/conf/origin.xml";
+            }
 
+            log.debug("Loading Configuration from (" + originConfigFile + ").");
+
+            try {
+                parser.parse(new InputSource(new ShibResource(originConfigFile, this.getClass()).getInputStream()));
+            } catch (SAXException e) {
+                log.error("Error while parsing origin configuration: " + e);
+                throw new ShibbolethConfigurationException("Error while parsing origin configuration.");
+            } catch (IOException e) {
+                log.error("Could not load origin configuration: " + e);
+                throw new ShibbolethConfigurationException("Could not load origin configuration.");
+            }
+
+            originConfig = parser.getDocument();
+
+            return originConfig;
+        }
 }

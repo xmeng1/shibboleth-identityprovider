@@ -60,6 +60,7 @@ import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLResponse;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -88,31 +89,14 @@ public class HandleServlet extends OriginComponent {
 
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
-		DOMParser parser = loadParser(true);
-
-		String originConfigFile = getInitParameter("OriginConfigFile");
-		if (originConfigFile == null) {
-			originConfigFile = "/conf/origin.xml";
-		}
-		log.debug("Loading Configuration from (" + originConfigFile + ").");
-
-		try {
-			parser.parse(new InputSource(new ShibResource(originConfigFile, this.getClass()).getInputStream()));
-
-		} catch (SAXException e) {
-			log.error("Error while parsing origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Error while parsing origin configuration.");
-		} catch (IOException e) {
-			log.error("Could not load origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Could not load origin configuration.");
-		}
+		Document originConfig = getOriginConfig();
 
 		//Load global configuration properties
-		configuration = new HSConfig(parser.getDocument().getDocumentElement());
+		configuration = new HSConfig(originConfig.getDocumentElement());
 
 		//Load signing credentials
 		NodeList itemElements =
-			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+			originConfig.getDocumentElement().getElementsByTagNameNS(
 				Credentials.credentialsNamespace,
 				"Credentials");
 		if (itemElements.getLength() < 1) {
@@ -128,7 +112,7 @@ public class HandleServlet extends OriginComponent {
 
 		//Load name mappings
 		itemElements =
-			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+			originConfig.getDocumentElement().getElementsByTagNameNS(
 				NameIdentifierMapping.mappingNamespace,
 				"NameMapping");
 
@@ -144,7 +128,7 @@ public class HandleServlet extends OriginComponent {
 		try {
 			targetMapper =
 				new HSServiceProviderMapper(
-					parser.getDocument().getDocumentElement(),
+					originConfig.getDocumentElement(),
 					configuration,
 					credentials,
 					nameMapper);

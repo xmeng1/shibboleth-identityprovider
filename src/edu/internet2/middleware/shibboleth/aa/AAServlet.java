@@ -71,6 +71,7 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -128,34 +129,17 @@ public class AAServlet extends OriginComponent {
 			throw new UnavailableException("Attribute Authority failed to initialize.");
 		}
 	}
+
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
-		DOMParser parser = loadParser(true);
-
-		String originConfigFile = getInitParameter("OriginConfigFile");
-		if (originConfigFile == null) {
-			originConfigFile = "/conf/origin.xml";
-		}
-
-		log.debug("Loading Configuration from (" + originConfigFile + ").");
-
-		try {
-			parser.parse(new InputSource(new ShibResource(originConfigFile, this.getClass()).getInputStream()));
-
-		} catch (SAXException e) {
-			log.error("Error while parsing origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Error while parsing origin configuration.");
-		} catch (IOException e) {
-			log.error("Could not load origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Could not load origin configuration.");
-		}
+		Document originConfig = getOriginConfig();
 
 		//Load global configuration properties
-		configuration = new AAConfig(parser.getDocument().getDocumentElement());
+		configuration = new AAConfig(originConfig.getDocumentElement());
 
 		//Load name mappings
 		NodeList itemElements =
-			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+			originConfig.getDocumentElement().getElementsByTagNameNS(
 				NameIdentifierMapping.mappingNamespace,
 				"NameMapping");
 
@@ -169,7 +153,7 @@ public class AAServlet extends OriginComponent {
 
 		//Load relying party config
 		try {
-			targetMapper = new AAServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration);
+			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
@@ -182,7 +166,7 @@ public class AAServlet extends OriginComponent {
 			//Startup ARP Engine
 			ArpEngine arpEngine = null;
 			itemElements =
-				parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+				originConfig.getDocumentElement().getElementsByTagNameNS(
 					ShibbolethOriginConfig.originConfigNamespace,
 					"ReleasePolicyEngine");
 
