@@ -146,7 +146,7 @@ public class LoggingContextListener implements ServletContextListener {
 			RollingFileAppender appender = new RollingFileAppender(new PatternLayout(pattern), logPath);
 
 			appender.setMaximumFileSize(1024 * 1024); // 1 megabyte
-			appender.setMaxBackupIndex(Integer.MAX_VALUE); // imho we should not delete any log files
+			appender.setMaxBackupIndex(30);           // imho we should not delete any log files
 
 			return appender;
 		} catch (IOException e) {
@@ -164,7 +164,7 @@ public class LoggingContextListener implements ServletContextListener {
 		RollingFileAppender appender = makeRollingFileAppender(location, "%d{ISO8601} %-5p %-41X{serviceId} - %m%n");
 
 		appender.setName("error");
-		appender.setMaxBackupIndex(Integer.MAX_VALUE); // imho we should not delete any log files
+		appender.setMaxBackupIndex(30); // imho we should not delete any log files
 
 		Level level = (Level) Level.WARN;
 		if (attributes.getNamedItem("level") != null) {
