@@ -74,7 +74,7 @@ public class ShibResource {
 			resource = requester.getResource(name);
 		}
 		if (resource == null) {
-			throw new ResourceNotAvailableException("ShibResource could not be found at the specified location.");
+			throw new ResourceNotAvailableException("ShibResource could not be found at the specified location: " + name);
 		}
 	}
 
