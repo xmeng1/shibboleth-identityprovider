@@ -11,6 +11,7 @@
     <property name="build" value="${approot}/WEB-INF/classes" />
     <property name="libdir" value="${approot}/WEB-INF/lib" />
     <property name="buildlibs" value="${root}/lib" />
+    <property name="distlibs" value="${root}/lib" />
     <property name="dist" value="${root}/dist" />
     <property name="docs" value="${root}/docs" />
     <property name="javadocs" value="${docs}/api" />
@@ -81,7 +82,7 @@
 
     <!-- Build utilities -->
     <target name="build-util" depends="compile-all">
-        <jar jarfile="${dist}/shib-util.jar" basedir="${build}" />
+        <jar jarfile="${distlibs}/shib-util.jar" basedir="${build}" />
     </target>
 
     <target name="dist-wayf" depends="compile-all, test-wayf, package-wayf, clean-build" />
@@ -92,7 +93,7 @@
 
     <!-- Cleanup after the build, test, and distribution processes -->
     <target name="clean" depends="clean-all" />
-    <target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs" />
+    <target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util" />
     <target name="clean-build">
         <delete dir="${build}" />
     </target>
@@ -109,6 +110,13 @@
 	<target name="clean-javadocs">
 		<delete dir="${javadocs}" />
 	</target>
+    <target name="clean-util">
+        <delete>
+            <fileset dir="${buildlibs}">
+                <include name="shib-util.jar" />
+            </fileset>
+        </delete>
+    </target>
 
     
     <!-- Run automated tests on compiled code -->
