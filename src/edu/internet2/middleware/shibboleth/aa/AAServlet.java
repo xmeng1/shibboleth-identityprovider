@@ -120,12 +120,20 @@ public class AAServlet extends HttpServlet {
 	    DirContext ctx = new InitialDirContext(env);
 	    
 	    responder = new AAResponder(arpFactory, ctx, myName);
+
+	    hrf = getHandleRepository();
+
 	    log.info("AA all initialized at "+new Date());
 
 	}catch(NamingException ne){
+	    log.fatal("AA init failed: "+ne);
 	    throw new ServletException("Init failed: "+ne);
 	}catch(AAException ae){
+	    log.fatal("AA init failed: "+ae);
 	    throw new ServletException("Init failed: "+ae);
+	}catch(HandleException he){
+	    log.fatal("AA init failed: "+he);
+	    throw new ServletException("Init failed: "+he);
 	}
     }
 
@@ -157,7 +165,6 @@ public class AAServlet extends HttpServlet {
 	    log.info("AA: issuer:"+issuedBy);
 	    log.info("AA: shar:"+shar);
 
-	    hrf = getHandleRepository();
 
 	    if(handle.equalsIgnoreCase("foo")){
 		// for testing only
@@ -210,7 +217,7 @@ public class AAServlet extends HttpServlet {
 
 
     private synchronized HandleRepositoryFactory getHandleRepository()
-	throws HandleException{
+	throws HandleException, AAException{
 
 	ServletConfig sc = getServletConfig();
 	ServletContext sctx = sc.getServletContext(); 
@@ -222,9 +229,14 @@ public class AAServlet extends HttpServlet {
 	if(hrf == null){
 	    // make one
 	    String repositoryType = this.getServletContext().getInitParameter("repository");
+	    if(repositoryType == null)
+		throw new AAException("repository parameter not set. Unknown Handle repository type");
 	    hrf = HandleRepositoryFactory.getInstance(						      Constants.POLICY_CLUBSHIB, 
 												      repositoryType,
 												      this );
+	    sctx.setAttribute("HandleRepository", hrf);
+	    log.info("A new HandleRepository created by AA: "+hrf);
+	    
 	}
 	return hrf;
     }
