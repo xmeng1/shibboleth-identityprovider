@@ -223,7 +223,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
     				new StackKeyedObjectPoolFactory(),
     				validationQuery,
     				true,
-					false);
+					true);
 		} catch (Exception ex) {
 			log.debug("Poolable connection factory error");
 		}
