@@ -418,7 +418,7 @@ public class XMLAAPProvider implements AAP {
     }
 
     public AttributeRule lookup(String name, String namespace) {
-        return (AttributeRule)attrmap.get(name + "||" + namespace);
+        return (AttributeRule)attrmap.get(name + "!!" + namespace);
     }
 
     public AttributeRule lookup(String alias) {
