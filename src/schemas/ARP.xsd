@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XML Spy v4.2 U (http://www.xmlspy.com) by Test (Test) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<xs:simpleType name="RequireType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="deny"/>
+			<xs:enumeration value="permit"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="AttributeType">
+		<xs:sequence>
+			<xs:element name="AnyValue" minOccurs="0">
+				<xs:complexType>
+					<xs:attribute name="release" type="RequireType" use="required"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Value" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType mixed="true">
+					<xs:sequence minOccurs="0">
+						<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+					</xs:sequence>
+					<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:stringValue"/>
+					<xs:attribute name="release" type="RequireType" use="required"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:anyURI" use="required"/>
+		<xs:attribute name="identifier" type="xs:anyURI"/>
+	</xs:complexType>
+	<xs:element name="AttributeReleasePolicy">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Description" type="xs:string" minOccurs="0"/>
+				<xs:element name="Rule" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Description" type="xs:string" minOccurs="0"/>
+							<xs:element name="Target">
+								<xs:complexType>
+									<xs:choice>
+										<xs:element name="AnyTarget">
+											<xs:complexType/>
+										</xs:element>
+										<xs:sequence>
+											<xs:element name="Requester">
+												<xs:complexType>
+													<xs:simpleContent>
+														<xs:extension base="xs:string">
+															<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:exactShar"/>
+														</xs:extension>
+													</xs:simpleContent>
+												</xs:complexType>
+											</xs:element>
+											<xs:choice>
+												<xs:element name="Resource">
+													<xs:complexType>
+														<xs:simpleContent>
+															<xs:extension base="xs:string">
+																<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:resourceTree"/>
+															</xs:extension>
+														</xs:simpleContent>
+													</xs:complexType>
+												</xs:element>
+												<xs:element name="AnyResource">
+													<xs:complexType/>
+												</xs:element>
+											</xs:choice>
+										</xs:sequence>
+									</xs:choice>
+								</xs:complexType>
+							</xs:element>
+							<xs:sequence>
+								<xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+								<xs:element name="AttributeReference" minOccurs="0" maxOccurs="unbounded">
+									<xs:complexType>
+										<xs:attribute name="identifier" type="xs:anyURI" use="required"/>
+									</xs:complexType>
+								</xs:element>
+							</xs:sequence>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
