@@ -77,9 +77,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(E_AuthSSOHandler.class.getName());
 	private String eAuthPortal = "http://eauth.firstgov.gov/service/select";
+	private String eAuthError = "http://eauth.firstgov.gov/service/error";
 	private String csid;
-
-	// TODO profile-specific error handling
 
 	/**
 	 * Required DOM-based constructor.
@@ -92,9 +91,15 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			log.error("(csid) attribute is required for the " + getHandlerName() + "protocol handler.");
 			throw new ShibbolethConfigurationException("Unable to initialize protocol handler.");
 		}
+
 		String portal = config.getAttribute("eAuthPortal");
 		if (portal != null && !portal.equals("")) {
 			eAuthPortal = portal;
+		}
+
+		String error = config.getAttribute("eAuthError");
+		if (error != null && !error.equals("")) {
+			eAuthError = portal;
 		}
 	}
 
@@ -166,19 +171,22 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 		if (relyingParty == null || relyingParty.isLegacyProvider()) {
 			log.error("Unable to identify appropriate relying party configuration.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			eAuthError(response, 30, remoteProviderId, csid);
+			return null;
 		}
 
 		// Lookup the provider in the metadata
 		EntityDescriptor entity = support.lookup(relyingParty.getProviderId());
 		if (entity == null) {
 			log.error("No metadata found for EAuth provider.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			eAuthError(response, 30, remoteProviderId, csid);
+			return null;
 		}
 		SPSSODescriptor role = entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 		if (role == null) {
 			log.error("Inappropriate metadata for EAuth provider.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			eAuthError(response, 30, remoteProviderId, csid);
+			return null;
 		}
 
 		// The EAuth profile requires metadata, since the assertion consumer is not supplied as a request parameter
@@ -186,7 +194,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		Iterator endpoints = role.getAttributeConsumingServices();
 		if (!endpoints.hasNext()) {
 			log.error("Inappropriate metadata for provider: no roles specified.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			eAuthError(response, 30, remoteProviderId, csid);
+			return null;
 		}
 		String consumerURL = ((Endpoint) endpoints.next()).getLocation();
 		log.debug("Assertion Consumer URL provider: " + consumerURL);
@@ -199,7 +208,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 					relyingParty.getIdentityProvider());
 		} catch (NameIdentifierMappingException e) {
 			log.error("Error converting principal to SAML Name Identifier: " + e);
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			eAuthError(response, 60, remoteProviderId, csid);
+			return null;
 		}
 
 		String[] confirmationMethods = {SAMLSubject.CONF_ARTIFACT};
@@ -236,7 +246,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			attributes = Arrays.asList(support.getReleaseAttributes(principal, relyingParty.getProviderId(), null));
 		} catch (AAException e1) {
 			log.error("Error resolving attributes: " + e1);
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			eAuthError(response, 90, remoteProviderId, csid);
+			return null;
 		}
 		log.info("Found " + attributes.size() + " attribute(s) for " + principal.getName());
 
@@ -244,7 +255,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		if (attributes == null || attributes.size() < 1) {
 			log.error("Attribute resolver did not return any attributes. "
 					+ " The E-Authentication profile's minimum attribute requirements were not met.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			eAuthError(response, 60, remoteProviderId, csid);
+			return null;
 
 			// OK, we got attributes back, package them as required for eAuth and combine them with the authN data in an
 			// assertion
@@ -266,12 +278,19 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 				}
 
 				// Redirect to agency application
-				respondWithArtifact(response, support, consumerURL, principal, assertion, nameId, role, relyingParty);
-				return null;
+				try {
+					respondWithArtifact(response, support, consumerURL, principal, assertion, nameId, role,
+							relyingParty);
+					return null;
+				} catch (SAMLException e) {
+					eAuthError(response, 90, remoteProviderId, csid);
+					return null;
+				}
 
 			} catch (CloneNotSupportedException e) {
 				log.error("An error was encountered while generating assertion: " + e);
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+				eAuthError(response, 90, remoteProviderId, csid);
+				return null;
 			}
 		}
 	}
@@ -345,5 +364,11 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			if (attribute.getName().equals(name)) { return attribute; }
 		}
 		return null;
+	}
+
+	private void eAuthError(HttpServletResponse response, int code, String aaid, String csid) throws IOException {
+
+		log.info("Redirecting to E-Authentication error page.");
+		response.sendRedirect(eAuthError + "?aaid=" + aaid + "&csid=" + csid + "&errcode=" + code);
 	}
 }
