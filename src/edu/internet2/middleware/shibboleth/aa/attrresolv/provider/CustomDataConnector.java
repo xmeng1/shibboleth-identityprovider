@@ -88,8 +88,10 @@ public class CustomDataConnector implements DataConnectorPlugIn {
 				Object[] passElement = { e };
 				custom = (DataConnectorPlugIn) Class.forName(className).getConstructor(params).newInstance(passElement);
 			} catch (Exception loaderException) {
-				log.error(
-					"Failed to load Custom Connector PlugIn implementation class: " + loaderException.getMessage());
+				//Try to be a little smart about logging errors
+				//For some reason the message is not set on ClassNotFoundException
+				log.error("Failed to load Custom Connector PlugIn implementation class: "
+						 + ((loaderException.getCause() != null) ? loaderException.getCause().getMessage() : loaderException.toString()));
 				throw new ResolutionPlugInException("Failed to initialize Connector PlugIn.");
 			}
 		}
