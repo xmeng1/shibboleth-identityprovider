@@ -121,14 +121,14 @@
     
     <!-- Run automated tests on compiled code -->
     <target name="test-all" depends="test-origin, test-wayf" />
-    <target name="test-origin" depends="test-common" />
-    <target name="test-wayf" depends="test-common" />
-    <target name="test-common" depends="compile-all">
+    <target name="test-origin" depends="test-common">
         <junit printsummary="no" fork="no" haltonfailure="yes" haltonerror="no">
             <classpath refid="build.path" />
             <formatter type="plain" />
-        <!-- <test name="edu.internet2.middleware.shibboleth.common.AQHTest" /> -->
+            <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
         </junit>
     </target>
+    <target name="test-wayf" depends="test-common" />
+    <target name="test-common" depends="compile-all"/>
 
 </project>
