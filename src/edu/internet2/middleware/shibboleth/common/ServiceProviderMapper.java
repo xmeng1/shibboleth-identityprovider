@@ -46,11 +46,16 @@
  */
 package edu.internet2.middleware.shibboleth.common;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
+
+import edu.internet2.middleware.shibboleth.aa.AARelyingParty;
+import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
 
 /**
  * @author Walter Hoehn
@@ -169,7 +174,7 @@ public abstract class ServiceProviderMapper {
 		public IdentityProvider getIdentityProvider() {
 			return identityProvider;
 		}
-		
+
 		protected class RelyingPartyIdentityProvider implements IdentityProvider {
 
 			private String providerId;
@@ -195,8 +200,7 @@ public abstract class ServiceProviderMapper {
 		}
 	}
 
-	//TODO this will break because it doesn't implement both interfaces
-	class RelyingPartyGroupWrapper implements RelyingParty {
+	class RelyingPartyGroupWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
 
 		private RelyingParty wrapped;
 		private String providerId;
@@ -221,10 +225,36 @@ public abstract class ServiceProviderMapper {
 		public String getProviderId() {
 			return providerId;
 		}
+		public String getHSNameFormatId() {
+			if (!(wrapped instanceof HSRelyingParty)) {
+				return null;
+			}
+			return ((HSRelyingParty) wrapped).getHSNameFormatId();
+		}
+
+		public URL getAAUrl() {
+			if (!(wrapped instanceof HSRelyingParty)) {
+				return null;
+			}
+			return ((HSRelyingParty) wrapped).getAAUrl();
+		}
+
+		public URI getDefaultAuthMethod() {
+			if (!(wrapped instanceof HSRelyingParty)) {
+				return null;
+			}
+			return ((HSRelyingParty) wrapped).getDefaultAuthMethod();
+		}
+
+		public boolean passThruErrors() {
+			if (!(wrapped instanceof AARelyingParty)) {
+				return false;
+			}
+			return ((AARelyingParty) wrapped).passThruErrors();
+		}
 	}
 
-	//TODO this will break because it doesn't implement both interfaces
-	protected class UnknownProviderWrapper implements RelyingParty {
+	protected class UnknownProviderWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
 		protected RelyingParty wrapped;
 
 		protected UnknownProviderWrapper(RelyingParty wrapped) {
@@ -241,6 +271,41 @@ public abstract class ServiceProviderMapper {
 
 		public String getProviderId() {
 			return null;
+		}
+
+		public String getHSNameFormatId() {
+			if (!(wrapped instanceof HSRelyingParty)) {
+				return null;
+			}
+			return ((HSRelyingParty) wrapped).getHSNameFormatId();
+		}
+
+		public boolean isLegacyProvider() {
+			if (!(wrapped instanceof HSRelyingParty)) {
+				return false;
+			}
+			return ((HSRelyingParty) wrapped).isLegacyProvider();
+		}
+
+		public URL getAAUrl() {
+			if (!(wrapped instanceof HSRelyingParty)) {
+				return null;
+			}
+			return ((HSRelyingParty) wrapped).getAAUrl();
+		}
+
+		public URI getDefaultAuthMethod() {
+			if (!(wrapped instanceof HSRelyingParty)) {
+				return null;
+			}
+			return ((HSRelyingParty) wrapped).getDefaultAuthMethod();
+		}
+
+		public boolean passThruErrors() {
+			if (!(wrapped instanceof AARelyingParty)) {
+				return false;
+			}
+			return ((AARelyingParty) wrapped).passThruErrors();
 		}
 	}
 
