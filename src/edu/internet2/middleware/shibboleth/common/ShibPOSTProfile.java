@@ -128,23 +128,11 @@ public class ShibPOSTProfile {
 		this.ttlSeconds = ttlSeconds;
 		this.policies.addAll(policies);
 	}
-
 	/**
-	 * HS-side constructor for a ShibPOSTProfile object
-	 * 
-	 * @param policies
-	 *            Set of policy URIs that the implementation must support
-	 * @param issuer
-	 *            "Official" name of issuing origin site
-	 * @exception SAMLException
-	 *                Raised if a profile implementation cannot be constructed
-	 *                from the supplied information
+	 * HS-side constructor for a ShibPOSTProfile object.
+	 *  
 	 */
-	public ShibPOSTProfile(Collection policies, String issuer) throws SAMLException {
-		if (policies == null || policies.size() == 0 || issuer == null || issuer.length() == 0)
-			throw new SAMLException(SAMLException.REQUESTER, "ShibPOSTProfile() found a null or invalid argument");
-		this.issuer = issuer;
-		this.policies.addAll(policies);
+	public ShibPOSTProfile() {
 	}
 
 	/**
@@ -293,7 +281,9 @@ public class ShibPOSTProfile {
 	 * <P>
 	 * 
 	 * @param recipient
-	 *            URL of intended consumer
+	 *            URL of the assertion consumer
+	 * @param relyingParty
+	 *            the intended recipient of the response
 	 * @param nameId
 	 *            Name Identifier for the response
 	 * @param subjectIP
@@ -317,6 +307,7 @@ public class ShibPOSTProfile {
 	 */
 	public SAMLResponse prepare(
 		String recipient,
+		RelyingParty relyingParty,
 		SAMLNameIdentifier nameId,
 		String subjectIP,
 		String authMethod,
@@ -326,32 +317,62 @@ public class ShibPOSTProfile {
 		Credential assertionCredential)
 		throws SAMLException {
 
-		//TODO This typing is only a strawman... will definitely need to revist as
-		// we support additional types
-		if ((responseCredential != null && responseCredential.getCredentialType() != Credential.X509)
-			|| (assertionCredential != null && assertionCredential.getCredentialType() != Credential.X509)) {
-
-		}
-
-		if (responseCredential == null || responseCredential.getPrivateKey() == null)
+		if (responseCredential == null || responseCredential.getPrivateKey() == null) {
 			throw new InvalidCryptoException(
 				SAMLException.RESPONDER,
 				"ShibPOSTProfile.prepare() requires a response key.");
+		}
+		
+		String responseAlgorithm;
+		if (responseCredential.getCredentialType() == Credential.RSA) {
+			responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
+		} else if (responseCredential.getCredentialType() == Credential.DSA) {
+			responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
+		} else {
+			throw new InvalidCryptoException(
+				SAMLException.RESPONDER,
+				"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
+		}
 
 		Document doc = org.opensaml.XML.parserPool.newDocument();
 
+		ArrayList audiences = new ArrayList();
+		audiences.add(relyingParty.getProviderId());
+		audiences.add(relyingParty.getName());
+
 		SAMLResponse r =
-			SAMLPOSTProfile.prepare(recipient, issuer, policies, nameId, subjectIP, authMethod, authInstant, bindings);
+			SAMLPOSTProfile.prepare(
+				recipient,
+				relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"),
+				audiences,
+				nameId,
+				subjectIP,
+				authMethod,
+				authInstant,
+				bindings);
 		r.toDOM(doc);
 
-		if (assertionCredential != null & assertionCredential.getPrivateKey() != null)
+		if (assertionCredential != null & assertionCredential.getPrivateKey() != null) {
+
+			String assertionAlgorithm;
+			if (assertionCredential.getCredentialType() == Credential.RSA) {
+				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
+			} else if (assertionCredential.getCredentialType() == Credential.DSA) {
+				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
+			} else {
+				throw new InvalidCryptoException(
+					SAMLException.RESPONDER,
+					"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
+			}
+
 			((SAMLAssertion) r.getAssertions().next()).sign(
-				XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,
+				assertionAlgorithm,
 				assertionCredential.getPrivateKey(),
 				Arrays.asList(assertionCredential.getX509CertificateChain()));
+		}
 
 		r.sign(
-			XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,
+			responseAlgorithm,
 			responseCredential.getPrivateKey(),
 			Arrays.asList(responseCredential.getX509CertificateChain()));
 
