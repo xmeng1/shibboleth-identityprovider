@@ -71,7 +71,7 @@ public class SAMLBindingFactory
     public static SAMLBinding getInstance(String protocol)
         throws SAMLException
     {
-        // Current version only knows about SOAP binding and Club Shib...
+        // Current version only knows about the SOAP binding
         if (protocol == null || !protocol.equals(SAMLBinding.SAML_SOAP_HTTPS))
             throw new UnsupportedProtocolException("SAMLBindingFactory.getInstance() unable to find binding implementation for specified protocol");            
         return new SAMLSOAPBinding();
