@@ -119,15 +119,24 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 				throw new ResolutionPlugInException("Property is malformed.");
 			}
 		}
+		InitialDirContext context = null;
 		try {
-			InitialDirContext context = new InitialDirContext(properties);
-			context.close();
+			context = new InitialDirContext(properties);
 			log.debug("JNDI Directory context activated.");
+			
 		} catch (NamingException e1) {
 			log.error("Failed to startup directory context: " + e1);
 			throw new ResolutionPlugInException("Failed to startup directory context.");
-		}
+		} finally {
+			try {
+				if (context != null) {
+					context.close();
+				}
+			} catch (NamingException ne) {
+				//Squelch
+			}
 
+		}
 	}
 
 	protected void defineSearchControls(Element searchNode) {
@@ -203,10 +212,12 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(java.security.Principal)
 	 */
-	public Attributes resolve(Principal principal, String requester, Dependencies depends) throws ResolutionPlugInException {
+	public Attributes resolve(Principal principal, String requester, Dependencies depends)
+		throws ResolutionPlugInException {
 
+		InitialDirContext context = null;
 		try {
-			InitialDirContext context = new InitialDirContext(properties);
+			context = new InitialDirContext(properties);
 			NamingEnumeration enum = null;
 
 			try {
@@ -232,7 +243,6 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 				throw new ResolutionPlugInException("Cannot disambiguate data for this principal.");
 			}
 
-			context.close();
 			return attributes;
 
 		} catch (NamingException e) {
@@ -242,6 +252,14 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 					+ ") :"
 					+ e.getMessage());
 			throw new ResolutionPlugInException("Error retrieving data for principal.");
+		} finally {
+			try {
+				if (context != null) {
+					context.close();
+				}
+			} catch (NamingException e) {
+				//Squelch
+			}
 		}
 	}
 
