@@ -90,7 +90,7 @@ import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 
 public class AASaml {
 
-    String[] policies = { Constants.POLICY_CLUBSHIB };
+    String[] policies = { Constants.POLICY_INCOMMON };
     String myName;
     StringBuffer sharName;
     SAMLRequest sreq;

@@ -145,7 +145,7 @@ public class HandleServlet extends HttpServlet {
 
 			postProfile =
 				ShibPOSTProfileFactory.getInstance(
-					Arrays.asList(new String[] { Constants.POLICY_CLUBSHIB }),
+					Arrays.asList(new String[] { Constants.POLICY_INCOMMON }),
 					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"));
 
 			handleRepository = HandleRepositoryFactory.getInstance(configuration);
