@@ -144,8 +144,8 @@ public class ScopedAttribute extends SAMLAttribute
         for (int i = 0; i < nlist.getLength(); i++)
         {
             ((Element)nlist.item(i)).removeAttributeNS(null, "Scope");
-            String scope=scopes.get(i).toString();
-            if (scope != null && !scope.equals(defaultScope))
+            String scope=(i<scopes.size() ? scopes.get(i).toString() : null);
+            if (scope != null && scope.length()>0 && !scope.equals(defaultScope))
                 ((Element)nlist.item(i)).setAttributeNS(null, "Scope", scope);
         }
 
