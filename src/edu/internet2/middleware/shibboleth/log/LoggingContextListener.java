@@ -145,8 +145,8 @@ public class LoggingContextListener implements ServletContextListener {
 			String logPath = new ShibResource(location, LoggingContextListener.class).getFile().getCanonicalPath();
 			RollingFileAppender appender = new RollingFileAppender(new PatternLayout(pattern), logPath);
 
-			appender.setMaximumFileSize(1024 * 1024); // 1 megabyte
-			appender.setMaxBackupIndex(30);           // imho we should not delete any log files
+			appender.setMaximumFileSize(2 * 1024 * 1024); // 2 megs
+			appender.setMaxBackupIndex(50);
 
 			return appender;
 		} catch (IOException e) {
@@ -162,9 +162,7 @@ public class LoggingContextListener implements ServletContextListener {
 		/* schema check should catch if location is missing, NullPointerException here if not */
 		String location = attributes.getNamedItem("location").getNodeValue();
 		RollingFileAppender appender = makeRollingFileAppender(location, "%d{ISO8601} %-5p %-41X{serviceId} - %m%n");
-
 		appender.setName("error");
-		appender.setMaxBackupIndex(30); // imho we should not delete any log files
 
 		Level level = (Level) Level.WARN;
 		if (attributes.getNamedItem("level") != null) {
