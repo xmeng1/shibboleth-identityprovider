@@ -82,6 +82,9 @@
         <Alias>CMU</Alias>
         <HandleService Location="https://shib-test1.andrew.cmu.edu/shibboleth/HS" Name="shib-test1.andrew.cmu.edu"></HandleService>
         <Domain>cmu.edu</Domain>
+        <Domain>andrew.cmu.edu</Domain>
+        <Domain>cs.cmu.edu</Domain>
+        <Domain>ece.cmu.edu</Domain>
     </OriginSite>
     <OriginSite Name="muohio.edu">
         <Alias>Miami University</Alias>
@@ -110,15 +113,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>wZjh3SKkEYxyLwknNC3YgQXej9g=</ds:DigestValue>
+<ds:DigestValue>lMzBENyEW/ta3fhfydNikYV/ozY=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-loe8qbZwfH01r4o2agIouzNUYTRKwq8xGCGFbmYvMJlpBeX8ZXHcyVBqiNJapDqx6eW2B8qn45SH
-z8EvXbOXi6meuQc/udDER+zzcEd5KMUHwN4DTaahP6qMI8XM8Tolhw2hGbLb4eJ+9oMzjplA6RDy
-eYIwHarRtNmbR74zmHOAa3JZfyxzt4JQsYVwFdg8va0/y3ogCzPXlwGvtxaw5xsa5lmk18y2R3tJ
-axsN+zK/+BLdjUD8F+LkqE9ALEQ4tOwgVAQ2V+tF7BBSEiFmOT/CihbUCFcbuAEiibiYiX7OPY0m
-ed3aXgh9yJE5/Xx+w3Lh4NwIM0WYBKJEdXM7kQ==
+sQoD2ABTojJ29Iqf+TU2OhdsTrDiv2CT+Tyinki4oXOndT0grb1seLBMWso0/qbTQJBB0SzwOQX/
+iE6Upu1RpaGSm/r1dOfRJzif+4PE0Hg5JxE1QkvutYp6PVxYBSV4u3GosEwGInDh0qOUYZoKmuu+
+yNLi2uAm4kMcWLJ/CeFLwKDlAkHZAXY7rbFCz2PHOfG2QlXPBAeV6u3BSnsJm9LjkXrN+CmtXEQW
+nt/QKcD2FU/L5UdUjsh5nkmuTayl3WCeRfy7Q5k2vH+zbc41psT9YzUgYFAkqApqpSWzrsgxuJJ5
++LuZdD7bbkcvhpt+oKrOCKrrWj7AuWrmmFffyA==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
