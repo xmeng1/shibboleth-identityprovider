@@ -166,6 +166,28 @@ public class ShibPOSTProfile
     }
 
     /**
+     *  Examines a response to determine the source site name
+     *  
+     * @param r     
+     * @return
+     */
+    String getOriginSite(SAMLResponse r)
+    {
+        Iterator ia=r.getAssertions();
+        while (ia.hasNext())
+        {
+            Iterator is=((SAMLAssertion)ia.next()).getStatements();
+            while (is.hasNext())
+            {
+                SAMLStatement s=(SAMLStatement)is.next();
+                if (s instanceof SAMLAuthenticationStatement)
+                    return ((SAMLAuthenticationStatement)s).getSubject().getNameQualifier();
+            }
+        }
+        return null;
+    }
+
+    /**
      *  Parse a Base-64 encoded buffer back into a SAML response and test its
      *  validity against the POST profile, including use of the default replay
      *  cache<P>
@@ -176,35 +198,52 @@ public class ShibPOSTProfile
      *
      * @param  buf                A Base-64 encoded buffer containing a SAML
      *      response
+     * @param  originSite         
      * @return                    SAML response sent by origin site
      * @exception  SAMLException  Thrown if the response cannot be understood or
      *      accepted
      */
-    public SAMLResponse accept(byte[] buf)
+    public SAMLResponse accept(byte[] buf, StringBuffer originSite)
         throws SAMLException
     {
         // The built-in SAML functionality will do most of the basic non-crypto checks.
         // Note that if the response only contains a status error, it gets tossed out
         // as an exception.
-        SAMLResponse r = SAMLPOSTProfile.accept(buf, receiver, ttlSeconds);
+        SAMLResponse r = SAMLPOSTProfile.accept(buf, receiver, ttlSeconds, false);
+
+        if (originSite == null)
+            originSite = new StringBuffer();
 
         // Now we do some more non-crypto (ie. cheap) work to match up the origin site
         // with its associated data. If we can't even find a SSO statement in the response
         // we just return the response to the caller, who will presumably notice this.
-        SAMLAssertion assertion = getSSOAssertion(r);
-        SAMLAuthenticationStatement sso = getSSOStatement(assertion);
+        SAMLAssertion assertion = null;
+        SAMLAuthenticationStatement sso = null;
+
+        try
+        {
+            assertion = getSSOAssertion(r);
+            sso = getSSOStatement(assertion);
+        }
+        catch (SAMLException e)
+        {
+            originSite.setLength(0);
+            originSite.append(getOriginSite(r));
+            throw e;
+        }
 
         // Examine the subject information.
         SAMLSubject subject = sso.getSubject();
         if (subject.getNameQualifier() == null)
             throw new InvalidAssertionException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() requires subject name qualifier");
 
-        String originSite = subject.getNameQualifier();
+        originSite.setLength(0);
+        originSite.append(subject.getNameQualifier());
         String handleService = assertion.getIssuer();
 
         // Is this a trusted HS?
         OriginSiteMapper mapper=Init.getMapper();
-        Iterator hsNames = mapper.getHandleServiceNames(originSite);
+        Iterator hsNames = mapper.getHandleServiceNames(originSite.toString());
         boolean bFound = false;
         while (!bFound && hsNames.hasNext())
             if (hsNames.next().equals(handleService))
