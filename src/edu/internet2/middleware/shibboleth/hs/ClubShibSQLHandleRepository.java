@@ -1,3 +1,5 @@
+package edu.internet2.middleware.shibboleth.hs
+
 import java.util.*;
 import java.sql.*;
 import javax.servlet.http.*;

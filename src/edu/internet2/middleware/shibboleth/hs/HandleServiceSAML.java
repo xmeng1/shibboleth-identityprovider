@@ -1,3 +1,5 @@
+package edu.internet2.middleware.shibboleth.hs
+
 import java.io.*;
 import java.util.*;
 import edu.internet2.middleware.shibboleth.*;
