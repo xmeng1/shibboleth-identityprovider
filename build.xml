@@ -85,9 +85,9 @@
         <war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target.xml" basedir="${approot}" update="no" />
     </target>
 
-    <target name="dist-target-includeswayf" depends="compile-all, test-target, test-wayf, package-target-includeswayf, clean-build" />
-    <target name="package-target-includeswayf">
-        <war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target-includeswayf.xml" basedir="${approot}" update="no" />
+    <target name="dist-target-includewayf" depends="compile-all, test-target, test-wayf, package-target-includewayf, clean-build" />
+    <target name="package-target-includewayf">
+        <war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target-includewayf.xml" basedir="${approot}" update="no" />
     </target>
 
     <target name="dist-wayf" depends="compile-all, test-wayf, package-wayf, clean-build" />
