@@ -56,6 +56,7 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import edu.internet2.middleware.shibboleth.common.*;
 import org.opensaml.*;
+import sun.misc.BASE64Decoder;
 import org.apache.log4j.Logger;
 
 public class HandleServlet extends HttpServlet {
@@ -217,6 +218,21 @@ public class HandleServlet extends HttpServlet {
              */
 	    //Hardcoded to ASCII to ensure Base64 encoding compatibility
 	    req.setAttribute("assertion", new String(buf, "ASCII"));
+	    
+	    if (log.isDebugEnabled()) {
+				try {
+					log.debug(
+						"Dumping generated SAML Response:"
+							+ System.getProperty("line.separator")
+							+ new String(
+								new BASE64Decoder().decodeBuffer(new String(buf, "ASCII")),
+								"UTF8"));
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+				}
+			}
+	    
+	    
 	    RequestDispatcher rd = req.getRequestDispatcher("/hs.jsp");
 	    rd.forward(req, res);
 	    
