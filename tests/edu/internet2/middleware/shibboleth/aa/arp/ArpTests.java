@@ -256,10 +256,10 @@ public class ArpTests extends TestCase {
 				"Exact SHAR function: false negative",
 				exactSharFunction.match("shar.example.edu", "shar.example.edu"));
 			assertTrue(
-				"Exact SHAR function: false negative",
+				"Exact SHAR function: false positive",
 				!exactSharFunction.match("shar.example.edu", "www.example.edu"));
 			assertTrue(
-				"Exact SHAR function: false negative",
+				"Exact SHAR function: false positive",
 				!exactSharFunction.match("example.edu", "shar.example.edu"));
 
 			//Make sure we properly handle bad input
