@@ -3,8 +3,9 @@
 	cacheType="COOKIES" 
 	supportContact="mailto:shib-test@internet2.org" 
 	logoLocation="images/internet2.gif">
-	<HelpText>This is the help text.</HelpText>
+<!--	<HelpText>This is the help text.</HelpText>
 	<SearchResultEmptyText>This is the search result empty text.</SearchResultEmptyText>
+-->
 	<SearchIgnore>
 		<IgnoreText>Institution</IgnoreText>
 		<IgnoreText>University</IgnoreText>
