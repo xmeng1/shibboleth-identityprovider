@@ -64,7 +64,7 @@ public class XMLAAP extends ResourceWatchdog implements AAP {
             InputSource src = new InputSource(resource.getInputStream());
             src.setSystemId(resource.getURL().toString());
 			Document doc = Parser.loadDom(src,true);
-			currentAAP = new XMLAAP(doc.getDocumentElement());
+			currentAAP = new XMLAAPProvider(doc.getDocumentElement());
 		} catch (IOException e) {
 			log.error("Encountered a problem reading AAP source: " + e);
 			throw new MalformedException("Unable to read AAP: " + e);
