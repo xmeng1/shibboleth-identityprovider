@@ -80,6 +80,7 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 	private String connectorMapping;
 	private String smartScope;
 	private ValueHandler valueHandler;
+	private boolean allowEmpty = false;
 
 	/**
 	 * Constructor for SimpleAttributeDefinition.  Creates a PlugIn based on configuration
@@ -89,6 +90,7 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 
 		super(e);
 
+		//Parse source name
 		String sourceName = e.getAttribute("sourceName");
 		if (sourceName == null || sourceName.equals("")) {
 			int index = getId().lastIndexOf("#");
@@ -106,6 +108,7 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 
 		log.debug("Mapping attribute to name (" + connectorMapping + ") in connector.");
 
+		//Configure smart scoping
 		String smartScopingSpec = e.getAttribute("smartScope");
 		if (smartScopingSpec != null && !smartScopingSpec.equals("")) {
 			smartScope = smartScopingSpec;
@@ -116,6 +119,7 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 			log.debug("Smart Scoping disabled for attribute (" + getId() + ").");
 		}
 
+		//Load a value handler
 		String valueHandlerSpec = e.getAttribute("valueHandler");
 
 		if (valueHandlerSpec != null && !valueHandlerSpec.equals("")) {
@@ -151,7 +155,16 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 		if (valueHandler != null) {
 			log.debug("Custom Value Handler enabled for attribute (" + getId() + ").");
 		}
-
+		
+		//Decide whethere or not to allow empty string values
+		String rawAllowEmpty = e.getAttribute("allowEmpty");
+		if (rawAllowEmpty != null) {
+			if (rawAllowEmpty.equalsIgnoreCase("TRUE")) {
+				allowEmpty = true;
+			}
+		}
+		log.debug("Allowal of empty string values is set to (" + allowEmpty + ") for attribute (" + getId() + ").");
+	
 	}
 
 	/**
@@ -182,7 +195,12 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 		
 		Iterator resultsIt = results.iterator();
 		while (resultsIt.hasNext()) {
-			attribute.addValue(resultsIt.next());
+			Object value = resultsIt.next();
+			if (!allowEmpty && value.equals("")) {
+				log.debug("Skipping empty string value.");
+				continue;
+			}
+			attribute.addValue(value);
 		}
 		attribute.setResolved();
 	}
