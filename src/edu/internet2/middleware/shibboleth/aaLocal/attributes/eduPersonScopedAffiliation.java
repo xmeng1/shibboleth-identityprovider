@@ -3,7 +3,7 @@ package edu.internet2.middleware.shibboleth.aaLocal.attributes;
 
 /**
  *  Attribute Authority & Release Policy
- *  A specific class for eduPersonAffiliation attribute
+ *  A specific class for eduPersonScopedAffiliation attribute
  *
  * @author     Parviz Dousti (dousti@cmu.edu)
  * @created    June, 2002
@@ -16,7 +16,7 @@ import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.aa.ShibAttribute;
 import org.opensaml.*;
 
-public class eduPersonAffiliation implements ShibAttribute{
+public class eduPersonScopedAffiliation implements ShibAttribute{
     
 
     public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values, String recipient)
@@ -36,7 +36,7 @@ public class eduPersonAffiliation implements ShibAttribute{
 		values[i] = "member";
 	}
 
-	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation",
+	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation",
 		   Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
            defaultScope,
            null,
