@@ -47,7 +47,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.aa.arpUtil;
+package edu.internet2.middleware.shibboleth.utils;
 
 /**
  *  Attribute Authority & Release Policy
