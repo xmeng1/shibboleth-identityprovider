@@ -49,7 +49,6 @@ package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.Principal;
 
 import org.apache.log4j.Logger;
@@ -164,7 +163,6 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
 
 					if (systemId.endsWith("shibboleth-arp-1.0.xsd")) {
-						InputStream stream;
 						try {
 							return new InputSource(
 								new ShibResource("/schemas/shibboleth-arp-1.0.xsd", this.getClass()).getInputStream());

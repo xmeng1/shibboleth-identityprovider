@@ -56,8 +56,6 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-import org.apache.log4j.Logger;
-
 /**
  * This class represents an Origin site in the shibboleth parlance.
  * 
@@ -66,8 +64,7 @@ import org.apache.log4j.Logger;
 
 public class Origin implements Comparable {
 
-	private static Logger log = Logger.getLogger(Origin.class.getName());
-    private String name = "";
+	private String name = "";
     private ArrayList aliases = new ArrayList();
     private String handleService = "";
 
