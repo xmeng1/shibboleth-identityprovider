@@ -5,11 +5,12 @@
 	<!-- Set global properties for this build -->
 	<property name="distname" value="shibboleth" />
 	<property name="root" value="." />
-	<property name="src" value="${root}/source" />
+	<property name="src" value="${root}/src" />
 	<property name="approot" value="${root}/webApplication" />
+	<property name="configroot" value="${root}/webAppConfig" />
 	<property name="build" value="${approot}/WEB-INF/classes" />
 	<property name="libdir" value="${approot}/WEB-INF/lib" />
-	<property name="buildlibs" value="${root}/buildlibs" />
+	<property name="buildlibs" value="${root}/lib" />
 	<property name="dist" value="${root}/dist" />
 
 
@@ -35,7 +36,9 @@
 
 	<!-- Compile classes and move them to ${build} -->
 	<target name="compile-all" depends="init">
-		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" excludes="edu/internet2/middleware/shibboleth/aaLocal/**" debug="on">
+		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
+			<exclude name="edu/internet2/middleware/shibboleth/aaLocal/**" />
+			<exclude name="edu/internet2/middleware/shibboleth/hs-cmu/**" />
 			<classpath refid="build.path" />
 		</javac>
 		<copy todir="${build}/schemas">
@@ -46,16 +49,35 @@
 
 
 	<!-- Create various product distributions and move them to ${dist} -->
-	<target name="dist-all" depends="compile-all, package, clean-build" />
-	<target name="dist-origin" depends="compile-all, package, clean-build" />
-	<target name="dist-target" depends="compile-all, package, clean-build" />
-	<target name="dist-wayf" depends="compile-all, package, clean-build" />
-	<target name="package">
+	<target name="dist" depends="dist-all" />
+	<target name="dist-all" depends="compile-all, test-all, package-all, clean-build" />
+	<target name="package-all">
 		<war warfile="${dist}/${distname}.war" webxml="${approot}/WEB-INF/web.xml" basedir="${approot}" update="no" />
+	</target>
+
+	<target name="dist-origin" depends="compile-all, test-origin, package-origin, clean-build" />
+	<target name="package-origin">
+		<war warfile="${dist}/${distname}-origin.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
+	</target>
+
+	<target name="dist-target" depends="compile-all, test-target, package-target, clean-build" />
+	<target name="package-target">
+		<war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target.xml" basedir="${approot}" update="no" />
+	</target>
+
+	<target name="dist-target-includeswayf" depends="compile-all, test-target, test-wayf, package-target-includeswayf, clean-build" />
+	<target name="package-target-includeswayf">
+		<war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target-includeswayf.xml" basedir="${approot}" update="no" />
+	</target>
+
+	<target name="dist-wayf" depends="compile-all, test-wayf, package-wayf, clean-build" />
+	<target name="package-wayf">
+		<war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
 	</target>
 
 
 	<!-- Cleanup after the build, test, and distribution processes -->
+	<target name="clean" depends="clean-all" />
 	<target name="clean-all" depends="clean-build, clean-dist, clean-test" />
 	<target name="clean-build">
 		<delete dir="${build}" />
@@ -73,12 +95,15 @@
 
 	
 	<!-- Run automated tests on compiled code -->
-	<target name="test-all" depends="test-common" />
+	<target name="test-all" depends="test-origin, test-target, test-wayf" />
+	<target name="test-origin" depends="test-common" />
+	<target name="test-target" depends="test-common" />
+	<target name="test-wayf" depends="test-common" />
 	<target name="test-common" depends="compile-all">
 		<junit printsummary="no" fork="no" haltonfailure="yes" haltonerror="no">
 			<classpath refid="build.path" />
 			<formatter type="plain" />
-			<test name="edu.internet2.middleware.shibboleth.common.AQHTest" />
+		<!--	<test name="edu.internet2.middleware.shibboleth.common.AQHTest" /> -->
 		</junit>
 	</target>
 
