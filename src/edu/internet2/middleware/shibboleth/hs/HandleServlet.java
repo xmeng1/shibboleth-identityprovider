@@ -83,6 +83,7 @@ import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 
 import sun.misc.BASE64Decoder;
+import edu.internet2.middleware.shibboleth.common.AuditLevel;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
@@ -300,17 +301,29 @@ public class HandleServlet extends HttpServlet {
 			String header = configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
 			String username = header.equalsIgnoreCase("REMOTE_USER") ? req.getRemoteUser() : req.getHeader(header);
 
-            StringBuffer format = new StringBuffer();
+			StringBuffer format = new StringBuffer();
 			String handle = handleRepository.getHandle(new AuthNPrincipal(username), format);
 			log.info("Issued Handle (" + handle + ") to (" + username + ")");
 
 			byte[] buf =
 				generateAssertion(
 					handle,
-                    format.toString(),
+					format.toString(),
 					req.getParameter("shire"),
 					req.getRemoteAddr(),
 					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod"));
+
+			log.log(
+				AuditLevel.AUDIT,
+				"Authentication assertion issued to SHIRE ("
+					+ req.getParameter("shire")
+					+ ") on behalf of principal ("
+					+ username
+					+ ") for resource ("
+					+ req.getParameter("target")
+					+ "). Attribue Query Handle: ("
+					+ handle
+					+ ").");
 
 			createForm(req, res, buf);
 

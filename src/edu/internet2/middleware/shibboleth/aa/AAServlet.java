@@ -81,6 +81,7 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
+import edu.internet2.middleware.shibboleth.common.AuditLevel;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
@@ -219,8 +220,7 @@ public class AAServlet extends HttpServlet {
 		return properties;
 	}
 
-	public void doPost(HttpServletRequest req, HttpServletResponse resp)
-		throws ServletException, IOException {
+	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		MDC.put("serviceId", "[AA] " + new SAMLIdentifier().toString());
 		MDC.put("remoteAddr", req.getRemoteAddr());
@@ -231,8 +231,7 @@ public class AAServlet extends HttpServlet {
 		try {
 			saml =
 				new AASaml(
-					configuration.getProperty(
-						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"),
+					configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"),
 					configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll(
 						"\\s",
 						"").split(
@@ -245,7 +244,7 @@ public class AAServlet extends HttpServlet {
 				// for testing
 				principal = new AuthNPrincipal("test-handle");
 			} else {
-				principal = handleRepository.getPrincipal(saml.getHandle(),saml.getFormat());
+				principal = handleRepository.getPrincipal(saml.getHandle(), saml.getFormat());
 			}
 
 			URL resource = null;
@@ -296,6 +295,31 @@ public class AAServlet extends HttpServlet {
 			saml.respond(resp, attrs, null);
 			log.info("Successfully responded about " + principal.getName());
 
+			if (attrs.size() == 0) {
+				log.log(
+					AuditLevel.AUDIT,
+					"Attribute assertion issued to SHAR ("
+						+ saml.getShar()
+						+ ") on behalf of principal ("
+						+ principal.getName()
+						+ "). No attributes released.");
+			} else {
+				Iterator iterator = attrs.iterator();
+				StringBuffer attributeList = new StringBuffer();
+				while (iterator.hasNext()) {
+					attributeList.append(((SAMLAttribute) iterator.next()).getName());
+				}
+				log.log(
+					AuditLevel.AUDIT,
+					"Attribute assertion issued to SHAR ("
+						+ saml.getShar()
+						+ ") on behalf of principal ("
+						+ principal.getName()
+						+ "). Attributes released: ("
+						+ attributeList
+						+ ").");
+			}
+
 		} catch (InvalidHandleException e) {
 			log.info("Could not associate the Attribute Query Handle with a principal: " + e);
 			try {
@@ -332,13 +356,9 @@ public class AAServlet extends HttpServlet {
 				if (configuration
 					.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false")
 					.equals("true")) {
-					saml.fail(
-						resp,
-						new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
+					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
 				} else {
-					saml.fail(
-						resp,
-						new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
 				}
 				return;
 			} catch (Exception ee) {
