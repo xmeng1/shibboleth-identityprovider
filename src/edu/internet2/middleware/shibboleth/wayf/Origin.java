@@ -66,9 +66,9 @@ import org.apache.log4j.Logger;
 public class Origin {
 
 	private static Logger log = Logger.getLogger(Origin.class.getName());
-    private String name;
+    private String name = "";
     private ArrayList aliases = new ArrayList();
-    private String handleService;
+    private String handleService = "";
 
     /**
      * Gets the handleService for this origin.
@@ -92,6 +92,14 @@ public class Origin {
      */
     public String getName() {
         return name;
+    }
+    
+    public String getDisplayName() {
+    	if (aliases.get(0) != null) {
+    		return (String) aliases.get(0);
+    	} else {
+    		return getName();
+    	}
     }
 
     public String getUrlEncodedName() {

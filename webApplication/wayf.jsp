@@ -42,7 +42,7 @@
 		<ul>
 		<logic:iterate id="currResult" name="searchresults">
 			<li>
-			<a href="<bean:write name="requestURL" />?action=selection&amp;origin=<jsp:getProperty name="currResult" property="urlEncodedName" />&amp;shire=<bean:write name="encodedShire" />&amp;target=<bean:write name="encodedTarget" />"><jsp:getProperty name="currResult" property="name" /></a>
+			<a href="<bean:write name="requestURL" />?action=selection&amp;origin=<jsp:getProperty name="currResult" property="urlEncodedName" />&amp;shire=<bean:write name="encodedShire" />&amp;target=<bean:write name="encodedTarget" />"><jsp:getProperty name="currResult" property="displayName" /></a>
 			</li>
 		</logic:iterate>
 		</ul>		
@@ -70,8 +70,8 @@
 <input type="hidden" name="action" value="selection" />
 <select name="origin">
 	<logic:iterate id="origin" name="originset" property="origins">
-		<option value="<jsp:getProperty name="origin" property="name" />">
-		<jsp:getProperty name="origin" property="name" />
+		<option value="<jsp:getProperty name="origin" property="displayName" />">
+		<jsp:getProperty name="origin" property="displayName" />
 		</option>
 	</logic:iterate>
 </select>
