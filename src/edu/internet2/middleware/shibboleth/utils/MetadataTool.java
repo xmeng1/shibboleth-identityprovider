@@ -55,6 +55,10 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.*;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.xml.security.c14n.*;
 import org.apache.xml.security.signature.*;
 import org.apache.xml.security.transforms.*;
@@ -110,6 +114,9 @@ public class MetadataTool
             printUsage(System.out);
             System.exit(0);
         }
+
+
+		configureLogging(false);
         
         Boolean sign = (Boolean)parser.getOptionValue(signOption);
         Boolean noverify = (Boolean)parser.getOptionValue(noverifyOption);
@@ -260,5 +267,22 @@ public class MetadataTool
         out.println();
         System.exit(1);
     }
+	
+	private static void configureLogging(boolean debugEnabled) {
+		ConsoleAppender rootAppender = new ConsoleAppender();
+		rootAppender.setWriter(new PrintWriter(System.out));
+		rootAppender.setName("stdout");
+		Logger.getRootLogger().addAppender(rootAppender);
+
+		if (debugEnabled) {
+			Logger.getRootLogger().setLevel(Level.DEBUG);
+			rootAppender.setLayout(new PatternLayout("%-5p %-41X{serviceId} %d{ISO8601} (%c:%L) - %m%n")); 
+		} else {
+			Logger.getRootLogger().setLevel(Level.INFO);
+			Logger.getLogger("edu.internet2.middleware.shibboleth.aa.attrresolv").setLevel(Level.WARN);
+			rootAppender.setLayout(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)); 
+		}
+		Logger.getLogger("org.apache.xml.security").setLevel(Level.OFF);
+	}
 }
 
