@@ -163,6 +163,9 @@ public class AAServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"java.naming.factory.initial",
 			"edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory");
+		defaultProps.setProperty(
+			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
+			getServletContext().getRealPath("/WEB-INF/conf/handle.jks"));
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);

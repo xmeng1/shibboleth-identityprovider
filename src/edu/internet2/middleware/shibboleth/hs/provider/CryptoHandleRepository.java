@@ -51,17 +51,24 @@ package edu.internet2.middleware.shibboleth.hs.provider;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+
+import org.apache.log4j.Logger;
 
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
@@ -78,22 +85,53 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
  */
 public class CryptoHandleRepository extends BaseHandleRepository implements HandleRepository {
 
-	static SecretKey secret;
+	private static Logger log = Logger.getLogger(CryptoHandleRepository.class.getName());
+	protected SecretKey secret;
 
 	public CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
-		KeyGenerator keyGen;
 		try {
-			if (secret == null) {
-				keyGen = KeyGenerator.getInstance("DESede");
+			KeyStore keyStore = KeyStore.getInstance("JCEKS");
 
-				secret = keyGen.generateKey();
-			} else {
-			System.err.println("Already have a key");	
-			}
+			keyStore.load(
+				new FileInputStream(
+					properties
+						.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath")),
+				properties
+					.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePassword")
+					.toCharArray());
+			secret =
+				(SecretKey) keyStore.getKey(
+					properties.getProperty(
+						"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStoreKeyAlias"),
+					properties
+						.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStoreKeyPassword")
+						.toCharArray());
+
+		} catch (KeyStoreException e) {
+			log.error(
+				"An error occurred while loading the java keystore.  Unable to initialize Crypto Handle Repository: "
+					+ e);
+			throw new HandleRepositoryException("An error occurred while loading the java keystore.  Unable to initialize Crypto Handle Repository.");
+		} catch (CertificateException e) {
+			log.error(
+				"The java keystore contained corrupted data.  Unable to initialize Crypto Handle Repository: " + e);
+			throw new HandleRepositoryException("The java keystore contained corrupted data.  Unable to initialize Crypto Handle Repository.");
 		} catch (NoSuchAlgorithmException e) {
-			System.err.println(e);
-			return;
+			log.error(
+				"Appropriate JCE provider not found in the java environment. Unable to initialize Crypto Handle Repository: "
+					+ e);
+			throw new HandleRepositoryException("Appropriate JCE provider not found in the java environment. Unable to initialize Crypto Handle Repository.");
+		} catch (IOException e) {
+			log.error(
+				"An error accessing while loading the java keystore.  Unable to initialize Crypto Handle Repository: "
+					+ e);
+			throw new HandleRepositoryException("An error occurred while accessing the java keystore.  Unable to initialize Crypto Handle Repository.");
+		} catch (UnrecoverableKeyException e) {
+			log.error(
+				"Secret could not be loaded from the java keystore.  Verify that the alias and password are correct: "
+					+ e);
+			throw new HandleRepositoryException("Secret could not be loaded from the java keystore.  Verify that the alias and password are correct. ");
 		}
 	}
 
