@@ -47,19 +47,19 @@
 	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
 		<FileResolver Id="foo">
 			<Key format="PEM">
-				<Path>/conf/shib2.key</Path>
+				<Path>/conf/localhost.key</Path>
 			</Key>
 			<Certificate format="PEM">
-				<Path>/conf/shib2.crt</Path>
+				<Path>/conf/localhost.crt</Path>
 			</Certificate>
 		</FileResolver>
 	</Credentials>
 	
 	<FederationProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
-                uri="/conf/sites.xml"/>
+                uri="/conf/localhost-sites.xml"/>
     <!--
 	<FederationProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
-                uri="/conf/inqueue_sites.xml"/>
+                uri="/conf/IQ-sites.xml"/>
 	-->
 </ShibbolethOriginConfig>
 
