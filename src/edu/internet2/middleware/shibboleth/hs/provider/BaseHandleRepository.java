@@ -83,7 +83,7 @@ public abstract class BaseHandleRepository implements HandleRepository {
 				}
 			}
 			log.debug("Attribute Query Handle TTL set to (" + handleTTL + ") milliseconds.");
-			
+
 		} catch (NumberFormatException nfe) {
 			log.error(
 				"Value for (edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL) must be a long integer.");
@@ -91,18 +91,25 @@ public abstract class BaseHandleRepository implements HandleRepository {
 		}
 
 	}
-
-	protected class HandleEntry {
-		protected Principal principal;
-		protected long creationTime;
+	
+	protected HandleEntry createHandleEntry(Principal principal) {
+		return new HandleEntry(principal, handleTTL);
+	}
 		
-		protected HandleEntry(Principal principal) {
-			this.principal = principal;
-			creationTime = System.currentTimeMillis();	
-		}
+		
+		
+}
 
-		protected boolean isExpired() {
-			return ((System.currentTimeMillis() - creationTime) > handleTTL);
-		}
+class HandleEntry {
+	protected Principal principal;
+	protected long expirationTime;
+
+	protected HandleEntry(Principal principal, long TTL) {
+		this.principal = principal;
+		expirationTime = System.currentTimeMillis() + TTL;
+	}
+
+	protected boolean isExpired() {
+		return (System.currentTimeMillis() > expirationTime);
 	}
 }

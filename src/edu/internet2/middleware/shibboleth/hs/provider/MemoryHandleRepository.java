@@ -63,7 +63,6 @@ import org.doomdark.uuid.UUIDGenerator;
 
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
-import edu.internet2.middleware.shibboleth.hs.provider.BaseHandleRepository.HandleEntry;
 
 /**
  * <code>HandleRepository</code> implementation that uses a static cache.  This requires
@@ -87,7 +86,7 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 		String handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
 		log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
 		synchronized (cache.handleEntries) {
-			cache.handleEntries.put(handle, new HandleEntry(principal));
+			cache.handleEntries.put(handle, createHandleEntry(principal));
 		}
 		return handle;
 	}
@@ -118,82 +117,81 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 		}
 	}
 }
-	class HandleCache {
+class HandleCache {
 
-		protected Map handleEntries = new HashMap();
-		private static HandleCache instance;
-		protected MemoryRepositoryCleaner cleaner = new MemoryRepositoryCleaner();
-		private static Logger log = Logger.getLogger(HandleCache.class.getName());
+	protected Map handleEntries = new HashMap();
+	private static HandleCache instance;
+	protected MemoryRepositoryCleaner cleaner = new MemoryRepositoryCleaner();
+	private static Logger log = Logger.getLogger(HandleCache.class.getName());
 
-		protected HandleCache() {
-		}
-		
-		public static synchronized HandleCache instance() {
-			if (instance == null) {
-				instance = new HandleCache();
-				return instance;
-			}
+	protected HandleCache() {
+	}
+
+	public static synchronized HandleCache instance() {
+		if (instance == null) {
+			instance = new HandleCache();
 			return instance;
 		}
-		/**
-		* @see java.lang.Object#finalize()
-		*/
-		protected void finalize() throws Throwable {
-			super.finalize();
-			synchronized (cleaner) {
-				cleaner.shutdown = true;
-				cleaner.interrupt();
-			}
+		return instance;
+	}
+	/**
+	* @see java.lang.Object#finalize()
+	*/
+	protected void finalize() throws Throwable {
+		super.finalize();
+		synchronized (cleaner) {
+			cleaner.shutdown = true;
+			cleaner.interrupt();
+		}
+	}
+
+	private class MemoryRepositoryCleaner extends Thread {
+
+		private boolean shutdown = false;
+
+		public MemoryRepositoryCleaner() {
+			super();
+			log.debug("Starting Memory Repository Cleanup Thread.");
+			start();
 		}
 
-		private class MemoryRepositoryCleaner extends Thread {
-
-			private boolean shutdown = false;
-
-			public MemoryRepositoryCleaner() {
-				super();
-				log.debug("Starting Memory Repository Cleanup Thread.");
-				start();
+		public void run() {
+			try {
+				sleep(1 * 60 * 1000);
+			} catch (InterruptedException e) {
+				log.debug("Memory Repository Cleanup interrupted.");
 			}
-
-			public void run() {
+			while (true) {
 				try {
+					if (shutdown) {
+						log.debug("Stopping Memory Repository Cleanup Thread.");
+						return;
+					}
+					Set needsDeleting = new HashSet();
+					synchronized (handleEntries) {
+						Iterator iterator = handleEntries.entrySet().iterator();
+						while (iterator.hasNext()) {
+							Entry entry = (Entry) iterator.next();
+							HandleEntry handleEntry = (HandleEntry) entry.getValue();
+							if (handleEntry.isExpired()) {
+								needsDeleting.add(entry.getKey());
+							}
+						}
+						//release the lock to be friendly
+						Iterator deleteIterator = needsDeleting.iterator();
+						while (deleteIterator.hasNext()) {
+							synchronized (handleEntries) {
+								log.debug("Expiring an Attribute Query Handle from the Memory Repository.");
+								handleEntries.remove(deleteIterator.next());
+							}
+						}
+					}
 					sleep(1 * 60 * 1000);
 				} catch (InterruptedException e) {
 					log.debug("Memory Repository Cleanup interrupted.");
 				}
-				while (true) {
-					try {
-						if (shutdown) {
-							log.debug("Stopping Memory Repository Cleanup Thread.");
-							return;
-						}
-						Set needsDeleting = new HashSet();
-						synchronized (handleEntries) {
-							Iterator iterator = handleEntries.entrySet().iterator();
-							while (iterator.hasNext()) {
-								Entry entry = (Entry) iterator.next();
-								HandleEntry handleEntry = (HandleEntry) entry.getValue();
-								if (handleEntry.isExpired()) {
-									needsDeleting.add(entry.getKey());
-								}
-							}
-							//release the lock to be friendly
-							Iterator deleteIterator = needsDeleting.iterator();
-							while (deleteIterator.hasNext()) {
-								synchronized (handleEntries) {
-									log.debug(
-										"Expiring an Attribute Query Handle from the Memory Repository.");
-									handleEntries.remove(deleteIterator.next());
-								}
-							}
-						}
-						sleep(1 * 60 * 1000);
-					} catch (InterruptedException e) {
-						log.debug("Memory Repository Cleanup interrupted.");
-					}
-				}
 			}
 		}
-
 	}
+
+}
