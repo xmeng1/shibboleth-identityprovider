@@ -5,7 +5,7 @@
 	Name="urn-x:testFed1" validUntil="3010-01-01T00:00:00Z">
 	<EntityDescriptor entityID="urn-x:testSP1">
 		 <Extensions>
-			<KeyAuthority xmlns="urn:mace:shibboleth:metadata:1.0" VerifyDepth="0">
+			<KeyAuthority xmlns="urn:mace:shibboleth:metadata:1.0">
 				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
 					<ds:X509Data>
 						<ds:X509Certificate>MIIC9zCCArQCBEJMcbswCwYHKoZIzjgEAwUAMGExCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJUTjEQ

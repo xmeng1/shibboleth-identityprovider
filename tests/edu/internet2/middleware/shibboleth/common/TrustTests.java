@@ -55,7 +55,7 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
  */
 public class TrustTests extends TestCase {
 
-	private Parser.DOMParser	parser	= new Parser.DOMParser(true);
+	private Parser.DOMParser parser = new Parser.DOMParser(true);
 
 	public TrustTests(String name) {
 
@@ -224,9 +224,9 @@ public class TrustTests extends TestCase {
 			fail("Error in test specification: " + e);
 		}
 	}
-	
-	public void testPkixX509CertValidateWithCAs() {
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+
+	public void testPkixX509CertValidateWithCAPath() {
+
 		try {
 			// Pull the role descriptor from example metadata
 			Metadata metadata = new XMLMetadata(new File("data/metadata4.xml").toURL().toString());
@@ -260,6 +260,83 @@ public class TrustTests extends TestCase {
 		} catch (KeyStoreException e) {
 			fail("Error in test specification: " + e);
 		}
-		Logger.getRootLogger().setLevel(Level.OFF);
+	}
+	
+	public void testPkixX509CertFailValidateWithPathTooLong() {
+
+		try {
+			// Pull the role descriptor from example metadata
+			Metadata metadata = new XMLMetadata(new File("data/metadata6.xml").toURL().toString());
+			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
+					"urn:oasis:names:tc:SAML:1.1:protocol");
+
+			// Use a pre-defined cert
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new ShibResource(new File("data/trusttest.jks").toURL().toString()).getInputStream(),
+					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
+			X509Certificate endEntity = (X509Certificate) keyStore.getCertificate("inline3");
+			X509Certificate intermediate = (X509Certificate) keyStore.getCertificate("im");
+
+			// Try to validate against the metadata
+			Trust validator = new ShibbolethTrust();
+			boolean successful = validator.validate(role, new X509Certificate[]{endEntity, intermediate},
+					KeyDescriptor.ENCRYPTION);
+			if (successful) {
+				fail("Validation should not have succeeded.");
+			}
+
+		} catch (MetadataException e) {
+			fail("Error in test specification: " + e);
+		} catch (ResourceNotAvailableException e) {
+			fail("Error in test specification: " + e);
+		} catch (IOException e) {
+			fail("Error in test specification: " + e);
+		} catch (NoSuchAlgorithmException e) {
+			fail("Error in test specification: " + e);
+		} catch (CertificateException e) {
+			fail("Error in test specification: " + e);
+		} catch (KeyStoreException e) {
+			fail("Error in test specification: " + e);
+		}
+	}
+
+	public void testPkixX509CertValidateWithClientSuppliedIntermediate() {
+
+		try {
+			// Pull the role descriptor from example metadata
+			Metadata metadata = new XMLMetadata(new File("data/metadata5.xml").toURL().toString());
+			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
+					"urn:oasis:names:tc:SAML:1.1:protocol");
+
+			// Use a pre-defined cert
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new ShibResource(new File("data/trusttest.jks").toURL().toString()).getInputStream(),
+					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
+			X509Certificate endEntity = (X509Certificate) keyStore.getCertificate("inline3");
+			X509Certificate intermediate = (X509Certificate) keyStore.getCertificate("im");
+
+			// Try to validate against the metadata
+			Trust validator = new ShibbolethTrust();
+			boolean successful = validator.validate(role, new X509Certificate[]{endEntity, intermediate},
+					KeyDescriptor.ENCRYPTION);
+			if (!successful) {
+				fail("Validation should have succeeded.");
+			}
+
+		} catch (MetadataException e) {
+			fail("Error in test specification: " + e);
+		} catch (ResourceNotAvailableException e) {
+			fail("Error in test specification: " + e);
+		} catch (IOException e) {
+			fail("Error in test specification: " + e);
+		} catch (NoSuchAlgorithmException e) {
+			fail("Error in test specification: " + e);
+		} catch (CertificateException e) {
+			fail("Error in test specification: " + e);
+		} catch (KeyStoreException e) {
+			fail("Error in test specification: " + e);
+		}
 	}
 }

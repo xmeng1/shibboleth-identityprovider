@@ -31,8 +31,8 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
+import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXCertPathValidatorResult;
-import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -50,7 +50,8 @@ import org.apache.log4j.Logger;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.content.KeyName;
-import org.apache.xml.security.keys.keyresolver.KeyResolverException;
+import org.apache.xml.security.keys.content.X509Data;
+import org.apache.xml.security.keys.content.x509.XMLX509Certificate;
 
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
@@ -163,8 +164,16 @@ public class ShibbolethTrust extends Trust {
 			KeyInfo keyInfo = (KeyInfo) keyInfos.next();
 			if (keyInfo.containsX509Data()) {
 				try {
-					anchors.add(new TrustAnchor(keyInfo.getX509Certificate(), null));
-				} catch (KeyResolverException e) {
+					for (int i = 0; i < keyInfo.lengthX509Data(); i++) {
+						X509Data data = keyInfo.itemX509Data(i);
+						if (data.containsCertificate()) {
+							for (int j = 0; j < data.lengthCertificate(); j++) {
+								XMLX509Certificate xmlCert = data.itemCertificate(j);
+								anchors.add(new TrustAnchor(xmlCert.getX509Certificate(), null));
+							}
+						}
+					}
+				} catch (XMLSecurityException e) {
 					log.error("Encountered an error constructing trust list from shibboleth metadata: " + e);
 				}
 			}
@@ -176,14 +185,14 @@ public class ShibbolethTrust extends Trust {
 			try {
 				CertPath path = CertificateFactory.getInstance("X.509").generateCertPath(Arrays.asList(certChain));
 				CertPathValidator validator = CertPathValidator.getInstance("PKIX");
-				PKIXParameters params = new PKIXParameters(anchors);
-				//TODO hmm... what about this
-				params.setRevocationEnabled(false);
-				//TODO todo do we care about usage bits at all?
-				PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(path, params);
 
-				System.err.println(result.getPolicyTree());
-				// TODO honor verify depth
+				PKIXBuilderParameters params = new PKIXBuilderParameters(anchors, null);
+				params.setMaxPathLength(authority.getVerifyDepth());
+				//System.err.println(params.toString());
+				//TODO hmm... what about revocation
+				params.setRevocationEnabled(false);
+
+				PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(path, params);
 				log.debug("Path successfully validated.");
 				return true;
 
