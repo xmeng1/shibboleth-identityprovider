@@ -1,5 +1,3 @@
-<?xml version="1.0"?>
-<?xml-stylesheet type="text/xsl" href="sites.xsl"?>
 <Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <OriginSite Name="example.edu">
         <Alias>Example State University</Alias>
@@ -53,5 +51,10 @@
         <Alias>uninett</Alias>
         <HandleService Location="https://shib1.uninett.no/shibboleth/HS" Name="shib1.uninett.no"/>
         <Domain>uninett.no</Domain>
+    </OriginSite>
+    <OriginSite Name="georgetown.edu">
+        <Alias>Georgetown University</Alias>
+        <HandleService Location="https://shibtest.georgetown.edu/shibboleth/HS" Name="shibtest.georgetown.edu"/>
+        <Domain>georgetown.edu</Domain>
     </OriginSite>
 </Sites>
