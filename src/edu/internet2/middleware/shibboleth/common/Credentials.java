@@ -50,7 +50,9 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Security;
 import java.security.Signature;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
@@ -58,6 +60,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.DSAPrivateKeySpec;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.ArrayList;
@@ -65,18 +68,15 @@ import java.util.Arrays;
 import java.util.Hashtable;
 
 import javax.crypto.Cipher;
+import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
-import javax.crypto.interfaces.PBEKey;
 import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import edu.internet2.middleware.shibboleth.common.EncryptedPrivateKeyInfo;
 
 import sun.misc.BASE64Decoder;
 import sun.security.util.DerValue;
@@ -201,6 +201,7 @@ class FileCredentialResolver implements CredentialResolver {
 		//Load the key
 		String keyFormat = getKeyFormat(e);
 		String keyPath = getKeyPath(e);
+		String password = getKeyPassword(e);
 		log.debug("Key Format: (" + keyFormat + ").");
 		log.debug("Key Path: (" + keyPath + ").");
 
@@ -211,14 +212,14 @@ class FileCredentialResolver implements CredentialResolver {
 
 		if (keyFormat.equals("DER")) {
 			try {
-				key = getDERKey(new ShibResource(keyPath, this.getClass()).getInputStream());
+				key = getDERKey(new ShibResource(keyPath, this.getClass()).getInputStream(), password);
 			} catch (IOException ioe) {
 				log.error("Could not load resource from specified location (" + keyPath + "): " + e);
 				throw new CredentialFactoryException("Unable to load private key.");
 			}
 		} else if (keyFormat.equals("PEM")) {
 			try {
-				key = getPEMKey(new ShibResource(keyPath, this.getClass()).getInputStream());
+				key = getPEMKey(new ShibResource(keyPath, this.getClass()).getInputStream(), password);
 			} catch (IOException ioe) {
 				log.error("Could not load resource from specified location (" + keyPath + "): " + e);
 				throw new CredentialFactoryException("Unable to load private key.");
@@ -334,7 +335,8 @@ class FileCredentialResolver implements CredentialResolver {
 		return new Credential(((X509Certificate[]) certChain.toArray(new X509Certificate[0])), key);
 	}
 
-	private PrivateKey getDERKey(InputStream inStream) throws CredentialFactoryException, IOException {
+	private PrivateKey getDERKey(InputStream inStream, String password)
+		throws CredentialFactoryException, IOException {
 
 		byte[] inputBuffer = new byte[8];
 		int i;
@@ -387,11 +389,8 @@ class FileCredentialResolver implements CredentialResolver {
 					throw new CredentialFactoryException("Unable to load private key.");
 				}
 
-				System.err.println("OID: " + grandChild.getOID().toString());
 				log.debug("Key appears to be formatted as encrypted PKCS8. Loading...");
-				return getEncryptedPkcs8Key(inputBytes.toByteArray());
-				//log.error("Credential loader cannot yet read encrypted private keys.");
-				//throw new CredentialFactoryException("Unable to load private key.");
+				return getEncryptedPkcs8Key(inputBytes.toByteArray(), password.toCharArray());
 
 			} else if (childValues[0].tag == DerValue.tag_Integer) {
 
@@ -475,7 +474,8 @@ class FileCredentialResolver implements CredentialResolver {
 
 	}
 
-	private PrivateKey getPEMKey(InputStream inStream) throws CredentialFactoryException, IOException {
+	private PrivateKey getPEMKey(InputStream inStream, String password)
+		throws CredentialFactoryException, IOException {
 
 		byte[] inputBuffer = new byte[8];
 		int i;
@@ -712,41 +712,56 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Unable to load private key.");
 		}
 	}
-	
-	private PrivateKey getEncryptedPkcs8Key(byte[] bytes) throws CredentialFactoryException {
+
+	private PrivateKey getEncryptedPkcs8Key(byte[] bytes, char[] password) throws CredentialFactoryException {
 
 		try {
-			String password = "test123";
+
+			//Convince the JCE provider that it does know how to do pbeWithMD5AndDES-CBC
+			Provider provider = Security.getProvider("SunJCE");
+			if (provider != null) {
+				provider.setProperty("Alg.Alias.AlgorithmParameters.1.2.840.113549.1.5.3", "PBE");
+				provider.setProperty("Alg.Alias.SecretKeyFactory.1.2.840.113549.1.5.3", "PBEWithMD5AndDES");
+				provider.setProperty("Alg.Alias.Cipher.1.2.840.113549.1.5.3", "PBEWithMD5AndDES");
+			}
+
 			EncryptedPrivateKeyInfo encryptedKeyInfo = new EncryptedPrivateKeyInfo(bytes);
 			AlgorithmParameters params = encryptedKeyInfo.getAlgParameters();
-			System.err.println(params);
-			System.err.println(encryptedKeyInfo.getAlgName());
-			//PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count); 
-			SecretKeyFactory keyFactory =
-						SecretKeyFactory.getInstance("pbeWithMD5AndDES");
-			PBEKeySpec passwordSpec = new PBEKeySpec("test123".toCharArray());
-			//PBEParameterSpec paramSpec = new PBEParameterSpec();
+
+			if (params == null) {
+				log.error(
+					"Unable to decrypt private key.  Installed JCE implementations don't support the ("
+						+ encryptedKeyInfo.getAlgName()
+						+ ") algorithm.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(encryptedKeyInfo.getAlgName());
+			PBEKeySpec passwordSpec = new PBEKeySpec(password);
 			SecretKey key = keyFactory.generateSecret(passwordSpec);
-			System.err.println(key.getClass().getName());
-			Cipher cipher = Cipher.getInstance("pbeWithMD5AndDES");
-			cipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(new byte[0], 0));
-			
-			return null;
-			
-			/*
-			
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(bytes);
-			return keyFactory.generatePrivate(keySpec);
-*/
-		} catch (Exception e) {
+
+			Cipher cipher = Cipher.getInstance(encryptedKeyInfo.getAlgName());
+			cipher.init(Cipher.DECRYPT_MODE, key, params);
+			PKCS8EncodedKeySpec decrypted = encryptedKeyInfo.getKeySpec(cipher);
+
+			return getPkcs8Key(decrypted.getEncoded());
+
+		} catch (IOException e) {
 			e.printStackTrace();
-			log.error("Unable to load private key: " + e);
+			log.error("Invalid DER encoding for PKCS8 formatted encrypted key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		} catch (InvalidKeySpecException e) {
+			log.debug(e.getMessage());
+			log.error("Incorrect password to unlock private key.");
+			throw new CredentialFactoryException("Unable to load private key.");
+		} catch (Exception e) {
+			log.error(
+				"Unable to decrypt private key.  Installed JCE implementations don't support the necessary algorithm: "
+					+ e);
 			throw new CredentialFactoryException("Unable to load private key.");
 		}
+
 	}
-	
-	
 
 	private byte[] singleDerFromPEM(byte[] bytes, String beginToken, String endToken) throws IOException {
 
@@ -824,7 +839,7 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("File Credential Resolver requires a <Key> specification.");
 		}
 		if (keyElements.getLength() > 1) {
-			log.error("Multiple Keyf path specifications, using first.");
+			log.error("Multiple Key path specifications, using first.");
 		}
 
 		String format = ((Element) keyElements.item(0)).getAttribute("format");
@@ -838,6 +853,25 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 		return format;
+	}
+
+	private String getKeyPassword(Element e) throws CredentialFactoryException {
+
+		NodeList keyElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Key");
+		if (keyElements.getLength() < 1) {
+			log.error("Key not specified.");
+			throw new CredentialFactoryException("File Credential Resolver requires a <Key> specification.");
+		}
+		
+		if (keyElements.getLength() > 1) {
+			log.error("Multiple Key path specifications, using first.");
+		}
+
+		String password = ((Element) keyElements.item(0)).getAttribute("password");
+		if (password == null) {
+			password = "";
+		}
+		return password;
 	}
 
 	private String getCertPath(Element e) throws CredentialFactoryException {
