@@ -125,6 +125,11 @@ public class Rule {
 				ruleNode.appendChild(descriptionNode);
 			}
 			ruleNode.appendChild(placeHolder.importNode(target.unmarshall(), true));
+			Iterator attrIterator = attributes.iterator();
+			while (attrIterator.hasNext()) {
+				ruleNode.appendChild(
+					placeHolder.importNode(((Attribute) attrIterator.next()).unmarshall(), true));
+			}
 			return ruleNode;
 		} catch (ParserConfigurationException e) {
 			log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
@@ -557,6 +562,41 @@ public class Rule {
 			values.add(value);
 		}
 
+		/**
+		 * Unmarshalls an <code>Attribute</code> into an xml <code>Element</code>.
+		 * @return the xml <code>Element</code>
+		 */
+
+		Element unmarshall() throws ArpMarshallingException {
+
+			try {
+				Document placeHolder =
+					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				Element attributeNode = placeHolder.createElement("Attribute");
+
+				attributeNode.setAttribute("name", name.toString());
+				if (anyValue) {
+					Element anyValueNode = placeHolder.createElement("AnyValue");
+					anyValueNode.setAttribute("release", anyValueRelease);
+					attributeNode.appendChild(anyValueNode);
+				}
+				Iterator valueIterator = values.iterator();
+				while (valueIterator.hasNext()) {
+					AttributeValue value = (AttributeValue) valueIterator.next();
+					Element valueNode = placeHolder.createElement("Value");
+					valueNode.setAttribute("release", value.getRelease());
+					Text valueTextNode = placeHolder.createTextNode(value.getValue());
+					valueNode.appendChild(valueTextNode);
+					attributeNode.appendChild(valueNode);
+				}
+				return attributeNode;
+
+			} catch (ParserConfigurationException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule.");
+			}
+		}
+		
 		/**
 		 * Creates an ARP Rule Attribute from an xml representation.
 		 * @param element the xml <code>Element</code> containing the ARP Rule.
