@@ -280,11 +280,11 @@ public class ServiceProviderMapper {
 			attribute = ((Element) partyConfig).getAttribute("defaultToPOSTProfile");
 			if (attribute != null && !attribute.equals("")) {
 				defaultToPOST = Boolean.valueOf(attribute).booleanValue();
-				if (defaultToPOST) {
-					log.debug("Relying party defaults to POST profile.");
-				} else {
-					log.debug("Relying party defaults to Artifact profile.");
-				}
+			}
+			if (defaultToPOST) {
+				log.debug("Relying party defaults to POST profile.");
+			} else {
+				log.debug("Relying party defaults to Artifact profile.");
 			}
 
 			// Determine whether or not we are forcing attribute push on or off
