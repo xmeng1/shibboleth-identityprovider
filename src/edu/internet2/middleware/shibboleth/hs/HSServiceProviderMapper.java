@@ -106,14 +106,25 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	 */
 	public HSRelyingParty getRelyingParty(String providerIdFromTarget) {
 
-		//If the target did not send a Provider Id, then assume it is a Shib
-		// 1.1 or older target
 		if (providerIdFromTarget == null || providerIdFromTarget.equals("")) {
-			log.info("Request is from legacy shib target.  Selecting default Relying Party.");
-			return new LegacyWrapper((HSRelyingParty) getDefaultRelyingPatry());
+			RelyingParty relyingParty = getDefaultRelyingParty();
+			log.info("Selecting default Relying Party: (" + relyingParty.getName() + ").");
+			return new NoMetadataWrapper((HSRelyingParty) relyingParty);
 		}
 
 		return (HSRelyingParty) getRelyingPartyImpl(providerIdFromTarget);
+	}
+
+	/**
+	 * Returns the relying party for a legacy provider(the default)
+	 */
+	public HSRelyingParty getLegacyRelyingParty() {
+
+		RelyingParty relyingParty = getDefaultRelyingParty();
+		log.info("Request is from legacy shib target.  Selecting default Relying Party: (" + relyingParty.getName()
+				+ ").");
+		return new LegacyWrapper((HSRelyingParty) relyingParty);
+
 	}
 
 	protected ShibbolethOriginConfig getOriginConfig() {
@@ -259,6 +270,30 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 
 		public boolean isLegacyProvider() {
 			return true;
+		}
+
+		public String getHSNameFormatId() {
+			return ((HSRelyingParty) wrapped).getHSNameFormatId();
+		}
+
+		public URL getAAUrl() {
+			return ((HSRelyingParty) wrapped).getAAUrl();
+		}
+
+		public URI getDefaultAuthMethod() {
+			return ((HSRelyingParty) wrapped).getDefaultAuthMethod();
+		}
+	}
+
+	/**
+	 * Relying party wrapper for providers for which we have no metadata
+	 * 
+	 * @author Walter Hoehn
+	 */
+	class NoMetadataWrapper extends UnknownProviderWrapper implements HSRelyingParty {
+
+		NoMetadataWrapper(HSRelyingParty wrapped) {
+			super(wrapped, null);
 		}
 
 		public String getHSNameFormatId() {

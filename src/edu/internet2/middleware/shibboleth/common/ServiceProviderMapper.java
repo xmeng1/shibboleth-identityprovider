@@ -82,6 +82,13 @@ public abstract class ServiceProviderMapper {
 
 	protected RelyingParty getRelyingPartyImpl(String providerIdFromTarget) {
 
+		//Null request, send the default
+		if (providerIdFromTarget == null) {
+			RelyingParty relyingParty = getDefaultRelyingParty();
+			log.info("Using default Relying Party: (" + relyingParty.getName() + ").");
+			return new UnknownProviderWrapper(relyingParty, providerIdFromTarget);
+		}
+
 		//Look for a configuration for the specific relying party
 		if (relyingParties.containsKey(providerIdFromTarget)) {
 			log.info("Found Relying Party for (" + providerIdFromTarget + ").");
@@ -95,10 +102,11 @@ public abstract class ServiceProviderMapper {
 			return new RelyingPartyGroupWrapper(groupParty, providerIdFromTarget);
 		}
 
-		//OK, just send the default
+		//OK, we can't find it... just send the default
+		RelyingParty relyingParty = getDefaultRelyingParty();
 		log.info("Could not locate Relying Party configuration for (" + providerIdFromTarget
-				+ ").  Using default Relying Party.");
-		return new UnknownProviderWrapper(getDefaultRelyingPatry(), providerIdFromTarget);
+				+ ").  Using default Relying Party: (" + relyingParty.getName() + ").");
+		return new UnknownProviderWrapper(relyingParty, providerIdFromTarget);
 	}
 
 	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
@@ -122,7 +130,7 @@ public abstract class ServiceProviderMapper {
 		return null;
 	}
 
-	protected RelyingParty getDefaultRelyingPatry() {
+	public RelyingParty getDefaultRelyingParty() {
 
 		//If there is no explicit default, pick the single configured Relying
 		// Party

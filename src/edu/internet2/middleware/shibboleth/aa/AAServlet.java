@@ -239,11 +239,29 @@ public class AAServlet extends TargetFederationComponent {
 			}
 			SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
-			//Identify a Relying Party
-			relyingParty = targetMapper.getRelyingParty(attributeQuery.getResource());
+			if (!fromLegacyProvider(req)) {
+				log.info("Remote provider has identified itself as: (" + attributeQuery.getResource() + ").");
+			}
 
 			//This is the requester name that will be passed to subsystems
-			String effectiveName = getEffectiveName(req, relyingParty);
+			String effectiveName = null;
+
+			String credentialName = getCredentialName(req);
+			if (credentialName == null || credentialName.toString().equals("")) {
+				log.info("Request is from an unauthenticated service provider.");
+			} else {
+
+				//Identify a Relying Party
+				relyingParty = targetMapper.getRelyingParty(attributeQuery.getResource());
+
+				try {
+					effectiveName = getEffectiveName(req, relyingParty);
+				} catch (InvalidProviderCredentialException ipc) {
+					sendFailure(resp, samlRequest, new SAMLException(SAMLException.RESPONDER,
+					"Invalid credentials for request."));
+					return;
+				}
+			}
 
 			if (effectiveName == null) {
 				log.debug("Using default Relying Party for unauthenticated provider.");
@@ -343,9 +361,11 @@ public class AAServlet extends TargetFederationComponent {
 				}
 			} else {
 				if (fromLegacyProvider(req)) {
-					transactionLog.info("Attribute assertion issued to legacy provider (" + effectiveName + ") on behalf of principal (" + principal.getName() + ").");
+					transactionLog.info("Attribute assertion issued to legacy provider (" + effectiveName
+							+ ") on behalf of principal (" + principal.getName() + ").");
 				} else {
-					transactionLog.info("Attribute assertion issued to provider (" + effectiveName + ") on behalf of principal (" + principal.getName() + ").");
+					transactionLog.info("Attribute assertion issued to provider (" + effectiveName
+							+ ") on behalf of principal (" + principal.getName() + ").");
 				}
 			}
 
@@ -371,7 +391,8 @@ public class AAServlet extends TargetFederationComponent {
 		}
 	}
 
-	protected String getEffectiveName(HttpServletRequest req, AARelyingParty relyingParty) throws AAException {
+	protected String getEffectiveName(HttpServletRequest req, AARelyingParty relyingParty)
+			throws InvalidProviderCredentialException {
 
 		String credentialName = getCredentialName(req);
 		if (credentialName == null || credentialName.toString().equals("")) {
@@ -387,15 +408,24 @@ public class AAServlet extends TargetFederationComponent {
 				return legacyName;
 
 			} else {
+
+				//See if we have metadata for this provider
+				Provider provider = lookup(relyingParty.getProviderId());
+				if (provider == null) {
+					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+					log.info("Treating remote provider as unauthenticated.");
+					return null;
+				}
+
 				//Make sure that the suppplied credential is valid for the selected relying party
-				if (isValidCredential(relyingParty, credentialName.toString())) {
+				if (isValidCredential(provider, credentialName.toString())) {
 					log.info("Supplied credential validated for this provider.");
 					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
 					return relyingParty.getProviderId();
 				} else {
 					log.error("Supplied credential (" + credentialName.toString() + ") is NOT valid for provider ("
 							+ relyingParty.getProviderId() + ").");
-					throw new AAException("Invalid credential.");
+					throw new InvalidProviderCredentialException("Invalid credential.");
 				}
 			}
 		}
@@ -556,13 +586,7 @@ public class AAServlet extends TargetFederationComponent {
 		}
 	}
 
-	protected boolean isValidCredential(RelyingParty relyingParty, String credentialName) throws AAException {
-
-		Provider provider = lookup(relyingParty.getProviderId());
-		if (provider == null) {
-			log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-			throw new AAException("Request is from an unkown Service Provider.");
-		}
+	protected boolean isValidCredential(Provider provider, String credentialName) {
 
 		ProviderRole[] roles = provider.getRoles();
 		if (roles.length == 0) {
@@ -609,6 +633,13 @@ public class AAServlet extends TargetFederationComponent {
 			return certArray[0].getSubjectDN().getName();
 		}
 		return null;
+	}
+
+	class InvalidProviderCredentialException extends Exception {
+
+		public InvalidProviderCredentialException(String message) {
+			super(message);
+		}
 	}
 
 }

@@ -45,19 +45,16 @@ import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
-import org.opensaml.SAMLResponse;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import sun.misc.BASE64Decoder;
-
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
-import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -113,7 +110,7 @@ public class HandleServlet extends TargetFederationComponent {
 				log.error("Name Identifier mapping could not be loaded: " + e);
 			}
 		}
-		
+
 		//Load metadata
 		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
 				ShibbolethOriginConfig.originConfigNamespace, "FederationProvider");
@@ -133,7 +130,6 @@ public class HandleServlet extends TargetFederationComponent {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
 		}
-
 
 	}
 
@@ -170,22 +166,40 @@ public class HandleServlet extends TargetFederationComponent {
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
 
-			HSRelyingParty relyingParty = targetMapper.getRelyingParty(req.getParameter("providerId"));
-
 			//Get the authN info
 			String username = configuration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER")
 					? req.getRemoteUser()
 					: req.getHeader(configuration.getAuthHeaderName());
 
+			//If the target did not send a Provider Id, then assume it is a Shib
+			// 1.1 or older target
+			HSRelyingParty relyingParty = null;
+			String remoteProviderId = req.getParameter("providerId");
+			if (remoteProviderId == null) {
+				relyingParty = targetMapper.getLegacyRelyingParty();
+			} else {
+				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
+				relyingParty = targetMapper.getRelyingParty(req.getParameter("providerId"));
+			}
+
 			//Make sure that the selected relying party configuration is appropriate for this
 			//acceptance URL
 			if (!relyingParty.isLegacyProvider()) {
-				if (isValidAssertionConsumerURL(relyingParty, req.getParameter("shire"))) {
-					log.info("Supplied consumer URL validated for this provider.");
+
+				Provider provider = lookup(relyingParty.getProviderId());
+				if (provider == null) {
+					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+					relyingParty = targetMapper.getRelyingParty(null);
+
 				} else {
-					log.error("Supplied assertion consumer service URL (" + req.getParameter("shire")
-							+ ") is NOT valid for provider (" + relyingParty.getProviderId() + ").");
-					throw new InvalidClientDataException("Invalid assertion consumer service URL.");
+
+					if (isValidAssertionConsumerURL(provider, req.getParameter("shire"))) {
+						log.info("Supplied consumer URL validated for this provider.");
+					} else {
+						log.error("Supplied assertion consumer service URL (" + req.getParameter("shire")
+								+ ") is NOT valid for provider (" + relyingParty.getProviderId() + ").");
+						throw new InvalidClientDataException("Invalid assertion consumer service URL.");
+					}
 				}
 			}
 
@@ -248,14 +262,14 @@ public class HandleServlet extends TargetFederationComponent {
 
 		if (relyingParty.isLegacyProvider()) {
 			//For compatibility with pre-1.2 shibboleth targets, include a pointer to the AA
-			SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, relyingParty.getAAUrl()
-					.toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
-			return postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType, new Date(System
-					.currentTimeMillis()), Collections.singleton(binding)).toBase64();
-		
+			SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, relyingParty
+					.getAAUrl().toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
+			return postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType,
+					new Date(System.currentTimeMillis()), Collections.singleton(binding)).toBase64();
+
 		} else {
-			return postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType, new Date(System
-					.currentTimeMillis()), null).toBase64();
+			return postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType,
+					new Date(System.currentTimeMillis()), null).toBase64();
 		}
 	}
 
@@ -304,14 +318,7 @@ public class HandleServlet extends TargetFederationComponent {
 		}
 	}
 
-	protected boolean isValidAssertionConsumerURL(RelyingParty relyingParty, String shireURL)
-			throws InvalidClientDataException {
-
-		Provider provider = lookup(relyingParty.getProviderId());
-		if (provider == null) {
-			log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-			throw new InvalidClientDataException("Request is from an unkown Service Provider.");
-		}
+	protected boolean isValidAssertionConsumerURL(Provider provider, String shireURL) throws InvalidClientDataException {
 
 		ProviderRole[] roles = provider.getRoles();
 		if (roles.length == 0) {
