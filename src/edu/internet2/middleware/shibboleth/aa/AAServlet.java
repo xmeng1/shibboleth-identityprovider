@@ -74,20 +74,19 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.opensaml.QName;
 import org.opensaml.SAMLAttribute;
+import org.opensaml.SAMLAttributeQuery;
+import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLIdentifier;
+import org.opensaml.SAMLRequest;
 
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
-import edu.internet2.middleware.shibboleth.common.AuditLevel;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
-import edu.internet2.middleware.shibboleth.hs.HandleRepository;
-import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
-import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
-import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 
 /**
  *  Attribute Authority & Release Policy
@@ -100,7 +99,8 @@ import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 public class AAServlet extends HttpServlet {
 
     protected AAResponder responder;
-    protected HandleRepository handleRepository;
+	private SAMLBinding binding;
+
     protected Properties configuration;
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
@@ -120,6 +120,8 @@ public class AAServlet extends HttpServlet {
 			handleRepository = HandleRepositoryFactory.getInstance(configuration);
 
 			responder = new AAResponder(arpEngine, resolver);
+			
+			binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
 
 			log.info("Attribute Authority initialization complete.");
 
@@ -227,22 +229,30 @@ public class AAServlet extends HttpServlet {
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
 
-		AASaml saml = null;
+		StringBuffer credentialName = new StringBuffer();
+		SAMLRequest samlRequest = binding.receive(req, credentialName);
+		if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+			//TODO better exception
+			throw new SAMLException(
+				SAMLException.REQUESTER,
+				"AASaml.receive() can only respond to a SAML Attribute Query");
+		}
+		SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
 		try {
-			saml =
-				new AASaml(
-					configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"),
-					configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll(
-						"\\s",
-						"").split(
-						","));
-			saml.receive(req);
 
-            if (!configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName").equals(saml.getNameQualifier())) {
-                log.error("The name qualifier on this handle (" + saml.getNameQualifier() + ") does not match this site name.");
-                throw new InvalidHandleException("The name qualifier on this handle (" + saml.getNameQualifier() + ") does not match this site name.");
-            }
+			if (!configuration
+				.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName")
+				.equals(saml.getNameQualifier())) {
+				log.error(
+					"The name qualifier on this handle ("
+						+ saml.getNameQualifier()
+						+ ") does not match this site name.");
+				throw new InvalidHandleException(
+					"The name qualifier on this handle ("
+						+ saml.getNameQualifier()
+						+ ") does not match this site name.");
+			}
 
 			log.info("Attribute Query Handle for this request: (" + saml.getHandle() + ").");
 			Principal principal = null;
@@ -255,22 +265,23 @@ public class AAServlet extends HttpServlet {
 
 			URL resource = null;
 			try {
-				if (saml.getResource() != null)
-					resource = new URL(saml.getResource());
+				if (attributeQuery.getResource() != null)
+					resource = new URL(attributeQuery.getResource());
 			} catch (MalformedURLException mue) {
 				log.error(
 					"Request contained an improperly formatted resource identifier.  Attempting to "
 						+ "handle request without one.");
 			}
 
-			if (saml.getShar() == null || saml.getShar().equals("")) {
+			if (credentialName == null || credentialName.toString().equals("")) {
+				//TODO update messages
 				log.info("Request is from an unauthenticated SHAR.");
 			} else {
-				log.info("Request is from SHAR: (" + saml.getShar() + ").");
+				log.info("Request is from SHAR: (" + credentialName + ").");
 			}
 
 			List attrs;
-			Iterator requestedAttrsIterator = saml.getDesignators();
+			Iterator requestedAttrsIterator = attributeQuery.getDesignators();
 			if (requestedAttrsIterator.hasNext()) {
 				log.info("Request designates specific attributes, resolving this set.");
 				ArrayList requestedAttrs = new ArrayList();
@@ -290,7 +301,7 @@ public class AAServlet extends HttpServlet {
 					Arrays.asList(
 						responder.getReleaseAttributes(
 							principal,
-							saml.getShar(),
+							credentialName.toString(),
 							resource,
 							(URI[]) requestedAttrs.toArray(new URI[0])));
 			} else {
@@ -302,30 +313,7 @@ public class AAServlet extends HttpServlet {
 			saml.respond(resp, attrs, null);
 			log.info("Successfully responded about " + principal.getName());
 
-			if (attrs.size() == 0) {
-				log.log(
-					AuditLevel.AUDIT,
-					"Attribute assertion issued to SHAR ("
-						+ saml.getShar()
-						+ ") on behalf of principal ("
-						+ principal.getName()
-						+ "). No attributes released.");
-			} else {
-				Iterator iterator = attrs.iterator();
-				StringBuffer attributeList = new StringBuffer();
-				while (iterator.hasNext()) {
-					attributeList.append(((SAMLAttribute) iterator.next()).getName());
-				}
-				log.log(
-					AuditLevel.AUDIT,
-					"Attribute assertion issued to SHAR ("
-						+ saml.getShar()
-						+ ") on behalf of principal ("
-						+ principal.getName()
-						+ "). Attributes released: ("
-						+ attributeList
-						+ ").");
-			}
+			//TODO place transaction log statement here
 
 		} catch (InvalidHandleException e) {
 			log.info("Could not associate the Attribute Query Handle with a principal: " + e);
