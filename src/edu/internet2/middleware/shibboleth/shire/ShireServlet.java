@@ -75,6 +75,7 @@ import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
+import sun.misc.BASE64Decoder;
 
 import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.OriginSiteMapperException;
@@ -173,7 +174,8 @@ public class ShireServlet extends HttpServlet {
 
 		} catch (OriginSiteMapperException e) {
 			log.fatal("Configuration problem: Unable load shibboleth site information." + e);
-			throw new UnavailableException("Configuration problem: Unable load shibboleth site information." + e);
+			throw new UnavailableException(
+				"Configuration problem: Unable load shibboleth site information." + e);
 		} catch (KeyStoreException e) {
 			log.fatal("Configuration problem: Unable to load supplied keystore." + e);
 			throw new UnavailableException("Configuration problem: Unable load supplied keystore." + e);
@@ -308,6 +310,19 @@ public class ShireServlet extends HttpServlet {
 					(shireLocation != null) ? shireLocation : HttpUtils.getRequestURL(request).toString(),
 					300);
 
+			if (log.isDebugEnabled()) {
+				try {
+					log.debug(
+						"Dumping unparsed SAML Response:"
+							+ System.getProperty("line.separator")
+							+ new String(
+								new BASE64Decoder().decodeBuffer(request.getParameter("SAMLResponse")),
+								"UTF8"));
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLReponse for loggin purposes.");
+				}
+			}
+
 			// Try and accept the response...
 			SAMLResponse r = profile.accept(request.getParameter("SAMLResponse").getBytes());
 
@@ -321,7 +336,8 @@ public class ShireServlet extends HttpServlet {
 					"Very Strange... problem converting SAMLResponse to a Stream for logging purposes.");
 			}
 
-			log.debug("Parsed SAML Response: " + bytestr.toString());
+			log.debug(
+				"Dumping parsed SAML Response:" + System.getProperty("line.separator") + bytestr.toString());
 
 			// Get the statement we need.
 			SAMLAuthenticationStatement s = profile.getSSOStatement(r);
@@ -336,6 +352,8 @@ public class ShireServlet extends HttpServlet {
 				if (s.getSubjectIP() == null || !s.getSubjectIP().equals(request.getRemoteAddr())) {
 					throw new ShireException("The IP address provided by your origin site was either missing or did not match your current address.  To correct this problem, you may need to bypass a local proxy server.");
 				}
+			} else {
+				log.debug("Running with client address checking disabled.");
 			}
 
 			// All we really need is here...
@@ -403,8 +421,7 @@ public class ShireServlet extends HttpServlet {
 			response.addCookie(cookie);
 
 		} catch (IOException e) {
-			throw new ShireException(
-				"Unable to write session to file (" + filename + ") : " + e);
+			throw new ShireException("Unable to write session to file (" + filename + ") : " + e);
 		}
 	}
 
