@@ -1,6 +1,7 @@
 package edu.internet2.middleware.shibboleth.wayf;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 
@@ -14,9 +15,9 @@ import org.apache.log4j.Logger;
 
 public class OriginSet {
 
-	private ArrayList origins = new ArrayList();
+	private HashSet origins = new HashSet();
 	private static Logger log = Logger.getLogger(OriginSet.class.getName());
-	private String name;
+	private String name = "";
 
 
 	public String getName() {
@@ -33,7 +34,7 @@ public class OriginSet {
 
 	public void addOrigin(Origin origin) {
 		origins.add(origin);
-		log.debug("Adding an origin site to configuration.");
+		log.debug("Adding origin site :"+ origin.getName() + ":  to set.");
 	}
 
 }

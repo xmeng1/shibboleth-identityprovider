@@ -18,8 +18,7 @@ import edu.internet2.middleware.shibboleth.common.ServletDigester;
 
 public class WayfConfigDigester extends ServletDigester {
 
-	protected String wayfConfigClass =
-		"edu.internet2.middleware.shibboleth.wayf.WayfConfig";
+	protected String wayfConfigClass = "edu.internet2.middleware.shibboleth.wayf.WayfConfig";
 	private boolean configured = false;
 
 	public WayfConfigDigester() {
@@ -35,7 +34,6 @@ public class WayfConfigDigester extends ServletDigester {
 	public WayfConfigDigester(ServletContext context) {
 		super(context);
 	}
-
 
 	public WayfConfigDigester(XMLReader reader) {
 		super(reader);
@@ -53,14 +51,8 @@ public class WayfConfigDigester extends ServletDigester {
 		addObjectCreate("WayfConfig", wayfConfigClass);
 		addSetProperties("WayfConfig");
 		addCallMethod("WayfConfig/HelpText", "setHelpText", 0);
-		addCallMethod(
-			"WayfConfig/SearchResultEmptyText",
-			"setSearchResultEmptyText",
-			0);
-		addCallMethod(
-			"WayfConfig/SearchIgnore/IgnoreText",
-			"addIgnoredForMatch",
-			0);
+		addCallMethod("WayfConfig/SearchResultEmptyText", "setSearchResultEmptyText", 0);
+		addCallMethod("WayfConfig/SearchIgnore/IgnoreText", "addIgnoredForMatch", 0);
 
 		configured = true;
 

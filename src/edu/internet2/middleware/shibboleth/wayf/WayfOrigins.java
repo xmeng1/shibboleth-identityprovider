@@ -1,6 +1,6 @@
 package edu.internet2.middleware.shibboleth.wayf;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
@@ -14,21 +14,29 @@ import org.apache.log4j.Logger;
 
 public class WayfOrigins {
 
-	private ArrayList originSets = new ArrayList();
+	private HashMap origins = new HashMap();
 	private static Logger log = Logger.getLogger(WayfOrigins.class.getName());
 
 	public OriginSet[] getOriginSets() {
-		return (OriginSet[]) originSets.toArray(new OriginSet[0]);
+		return (OriginSet[]) origins.values().toArray(new OriginSet[0]);
 	}
 
 	public void addOriginSet(OriginSet originSet) {
-		originSets.add(originSet);
-		log.debug("Adding an origin set to configuration");
+		if (origins.containsKey(originSet.getName())) {
+			OriginSet previousOrigins = (OriginSet) origins.get(originSet.getName());
+			Origin[] newOrigins = originSet.getOrigins();
+			for (int i = 0;(i < newOrigins.length); i++) {
+				previousOrigins.addOrigin(newOrigins[i]);
+			}
+		} else {
+			origins.put(originSet.getName(), originSet);
+		}
+		log.debug("Adding origin set :" + originSet.getName() + ": to configuration");
 	}
 
 	public String lookupHSbyName(String originName) {
 		if (originName != null) {
-			Iterator originSetIt = originSets.iterator();
+			Iterator originSetIt = origins.values().iterator();
 			while (originSetIt.hasNext()) {
 
 				OriginSet originSet = (OriginSet) originSetIt.next();
@@ -47,7 +55,7 @@ public class WayfOrigins {
 
 	public Origin[] seachForMatchingOrigins(String searchString, WayfConfig config) {
 
-		Iterator originSetIt = originSets.iterator();
+		Iterator originSetIt = origins.values().iterator();
 		HashSet searchResults = new HashSet();
 		while (originSetIt.hasNext()) {
 

@@ -6,6 +6,8 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
+import org.apache.log4j.Logger;
+
 /**
  * This class represents an Origin site in the shibboleth parlance.
  * 
@@ -14,6 +16,7 @@ import java.util.StringTokenizer;
 
 public class Origin {
 
+	private static Logger log = Logger.getLogger(Origin.class.getName());
     private String name;
     private ArrayList aliases = new ArrayList();
     private String handleService;

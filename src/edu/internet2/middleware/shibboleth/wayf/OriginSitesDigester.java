@@ -16,13 +16,10 @@ import edu.internet2.middleware.shibboleth.common.ServletDigester;
  * Window>Preferences>Java>Code Generation.
  */
 public class OriginSitesDigester extends ServletDigester {
-	
-	    protected String originClass =
-                "edu.internet2.middleware.shibboleth.wayf.Origin";
-        protected String wayfDataClass =
-                "edu.internet2.middleware.shibboleth.wayf.WayfOrigins";
-        protected String originSetClass =
-                "edu.internet2.middleware.shibboleth.wayf.OriginSet";
+
+	protected String originClass = "edu.internet2.middleware.shibboleth.wayf.Origin";
+	protected String wayfDataClass = "edu.internet2.middleware.shibboleth.wayf.WayfOrigins";
+	protected String originSetClass = "edu.internet2.middleware.shibboleth.wayf.OriginSet";
 
 	private boolean configured = false;
 
@@ -56,20 +53,24 @@ public class OriginSitesDigester extends ServletDigester {
 	public OriginSitesDigester(XMLReader reader) {
 		super(reader);
 	}
-	
-		/**
-	 * @see Digester#configure()
-	 */
+
+	/**
+	* @see Digester#configure()
+	*/
 	protected void configure() {
 
 		if (configured == true) {
 			return;
 		}
+		//Create data container
 		addObjectCreate("Sites", wayfDataClass);
+
+		//Digest sites that are nested in a group
 		addObjectCreate("Sites/SiteGroup", originSetClass);
 		addSetNext("Sites/SiteGroup", "addOriginSet", originSetClass);
 		addCallMethod("Sites/SiteGroup", "setName", 1);
 		addCallParam("Sites/SiteGroup", 0, "Name");
+
 		addObjectCreate("Sites/SiteGroup/OriginSite", originClass);
 		addSetNext("Sites/SiteGroup/OriginSite", "addOrigin", originClass);
 		addCallMethod("Sites/SiteGroup/OriginSite", "setName", 1);
@@ -79,9 +80,20 @@ public class OriginSitesDigester extends ServletDigester {
 		addCallMethod("Sites/SiteGroup/OriginSite", "setHandleService", 1);
 		addCallParam("Sites/SiteGroup/OriginSite/HandleService", 0, "Location");
 
+		//Digest sites without nesting and add them to the default group
+		addObjectCreate("Sites/OriginSite", originSetClass);
+		addSetNext("Sites/OriginSite", "addOriginSet", originSetClass);
+		addObjectCreate("Sites/OriginSite", originClass);
+		addSetNext("Sites/OriginSite", "addOrigin", originClass);
+		addCallMethod("Sites/OriginSite", "setName", 1);
+		addCallParam("Sites/OriginSite", 0, "Name");
+		addSetProperties("Sites/OriginSite");
+		addCallMethod("Sites/OriginSite/Alias", "addAlias", 0);
+		addCallMethod("Sites/OriginSite", "setHandleService", 1);
+		addCallParam("Sites/OriginSite/HandleService", 0, "Location");
+
 		configured = true;
 
 	}
 
 }
-
