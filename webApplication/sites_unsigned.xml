@@ -67,7 +67,7 @@
         <Alias>University of Michigan</Alias>
         <Alias>U of M</Alias>
         <Alias>UMich</Alias>
-        <HandleService Location="http://python.ifs.umich.edu/shibboleth/HS" Name="python.ifs.umich.edu"/>
+        <HandleService Location="https://python.ifs.umich.edu/shibboleth/HS" Name="python.ifs.umich.edu"/>
         <Domain>umich.edu</Domain>
     </OriginSite>
 </Sites>

@@ -67,7 +67,7 @@
         <Alias>University of Michigan</Alias>
         <Alias>U of M</Alias>
         <Alias>UMich</Alias>
-        <HandleService Location="http://python.ifs.umich.edu/shibboleth/HS" Name="python.ifs.umich.edu"></HandleService>
+        <HandleService Location="https://python.ifs.umich.edu/shibboleth/HS" Name="python.ifs.umich.edu"></HandleService>
         <Domain>umich.edu</Domain>
     </OriginSite>
 <ds:Signature>
@@ -79,15 +79,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>3u3WWGAFcFdWAdjkYxMG31lQEGM=</ds:DigestValue>
+<ds:DigestValue>qDwNTdGldsYXZ/LkJtjBji68i6A=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-cddbcPxn/ImLdvUQ1FyRcccmD5SWI0hxRHwPvicLBGiQ4aN2nLaC4mnrTOIQStGJXqvVxZ8C8mWM
-bH1NRRjnKtuc6wNk6o5C1m1NfEtF9KDYB+gNnCzU9FNUovU4jy1e/02czuwdcXZrbg3Wrk31Iyu2
-Ap8tnLS5f7PFjPCCSJWKoZeF2GYzDZnU3GtiIfUfgmVAykyQnUByZVkV4WHu3YPLOs9s8NDpcjHr
-SNGSbdGDl3Ki9YNaTY4NIn/iFZ7RGgDVWi0G+mQvgXiMPxwiOG8smCpZFLcxajmc3T+97sfhzuPc
-NfNnboLLR6w0nHCtCV5E8ofR5Onz9xXzFE1e1A==
+AQBpQ1G12IUMRXVi9wVkGfePvacbX3E25TmYQEoJNtUxP2T47SO437tIzNxQTvjDfVzxjLrpq0CE
+gadDgVRZX7vn7ye6JsxKL3oneYc1x/RrmUbsonmhzyzrHMHuHEYpT9VmdTg/cS19eevJOeccbMhb
+743PlaWAOopNQmhmc0hL3hS1EFaCRJr2h4YW4g++YCGpN+8Azh1hG3n4ohMkhrdGUqiFTAYiAx4B
+PYEL5yyW1uYSBTpoumsJKNtHtWaEZ4V98JI4qScwGtxhhuYe1p8PH1F1e3wL/xBFMsexlnoTl6sc
+NN1He6+v83Tz+tJ+Gz+6JzbKGQVtJ3jho58WqA==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
