@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+    <display-name>Shibboleth</display-name>
+	<context-param>
+		<param-name>OriginConfigFile</param-name>
+		<param-value>/conf/origin.xml</param-value>
+	</context-param>
+	
+	<context-param>
+		<param-name>TargetConfigFile</param-name>
+		<param-value>/conf/shibboleth.xml</param-value>
+	</context-param>
+	
+	<filter>
+		<filter-name>RequestLogFilter</filter-name>
+		<filter-class>edu.internet2.middleware.commons.log4j.RequestLoggingFilter</filter-class>
+	</filter>
+
+	<filter>
+		<filter-name>ShibFilter</filter-name>
+		<filter-class>edu.internet2.middleware.shibboleth.resource.AuthenticationFilter</filter-class>
+		<init-param>
+			<param-name>shireURL</param-name>
+			<param-value>http://shibdev.yale.edu:8080/shibboleth/Shibboleth.shire</param-value>
+		</init-param>
+		<init-param>
+			<param-name>wayfURL</param-name>
+			<param-value>/shibboleth/HS</param-value>
+		</init-param>
+		<init-param>
+			<param-name>providerId</param-name>
+			<param-value>http://shibdev.yale.edu/shibboleth</param-value>
+		</init-param>
+		<init-param>
+			<param-name>requireId</param-name>
+			<param-value>*/text.txt</param-value>
+		</init-param>
+	</filter>
+
+ <filter>
+    <filter-name>CAS Filter</filter-name>
+    <filter-class>edu.yale.its.tp.cas.client.filter.CASFilter</filter-class>
+   <init-param>
+     <param-name>edu.yale.its.tp.cas.client.filter.loginUrl</param-name>
+     <param-value>https://secure.its.yale.edu/cas/login</param-value>
+   </init-param>
+   <init-param>
+     <param-name>edu.yale.its.tp.cas.client.filter.validateUrl</param-name>
+      <param-value>https://secure.its.yale.edu/cas/serviceValidate</param-value>
+   </init-param>
+    <init-param>
+     <param-name>edu.yale.its.tp.cas.client.filter.serverName</param-name>
+     <param-value>shibdev.yale.edu:8080</param-value>
+    </init-param>
+    <init-param>
+     <param-name>edu.yale.its.tp.cas.client.filter.wrapRequest</param-name>
+     <param-value>true</param-value>
+    </init-param>
+  </filter>
+	
+	<filter-mapping>
+		<filter-name>ShibFilter</filter-name>
+		<url-pattern>*.txt</url-pattern>
+	</filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>CAS Filter</filter-name>
+		<servlet-name>HS</servlet-name>
+	</filter-mapping>
+
+	<filter-mapping>
+		<filter-name>RequestLogFilter</filter-name>
+		<servlet-name>SHIRE</servlet-name>
+	</filter-mapping>
+
+	
+	<listener> 
+		<listener-class>edu.internet2.middleware.shibboleth.log.LoggingContextListener</listener-class> 
+	</listener>
+
+	<servlet>
+		<servlet-name>HS</servlet-name>
+		<display-name>Shibboleth Handle Service</display-name>
+		<servlet-class>edu.internet2.middleware.shibboleth.hs.HandleServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>AA</servlet-name>
+		<display-name>Shibboleth Attribute Authority</display-name>
+		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>SHIRE</servlet-name>
+		<display-name>Authentication Assertion Consumer</display-name>
+		<servlet-class>edu.internet2.middleware.shibboleth.target.AuthenticationAssertionConsumerServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>ShowLog</servlet-name>
+		<display-name>Return log data</display-name>
+		<servlet-class>edu.internet2.middleware.commons.log4j.ShowLog</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>HS</servlet-name>
+		<url-pattern>/HS</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>AA</servlet-name>
+		<url-pattern>/AA</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>SHIRE</servlet-name>
+		<url-pattern>*.shire</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>ShowLog</servlet-name>
+		<url-pattern>/showlog</url-pattern>
+	</servlet-mapping>
+
+	<mime-mapping>
+		<extension>css</extension>
+		<mime-type>text/css</mime-type>
+	</mime-mapping>
+</web-app>
