@@ -29,7 +29,7 @@ package edu.internet2.middleware.shibboleth.hs.provider;
 import java.io.Serializable;
 
 import org.apache.log4j.Logger;
-import org.opensaml.QName;
+import javax.xml.namespace.QName;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
 
