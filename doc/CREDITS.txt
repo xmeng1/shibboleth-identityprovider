@@ -49,7 +49,7 @@ Thanks to:
 
     Brian Pittman (WebAssign), Mark Earnest (PSU), James Shvarts (Columbia), 
       Ryan Muldoon (Wisconsin), John Hopkins (PSU), Noah Levitt (Columbia), 
-	  and David Walker (UCOP); for much help with testing
+      and David Walker (UCOP); for much help with testing
       
     Dave Dearman (NRCC), for contributing a SQL Data Connector for the AA 
       resolver
