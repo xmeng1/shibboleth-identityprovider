@@ -49,17 +49,37 @@
 
 package edu.internet2.middleware.shibboleth.shire;
 
-import edu.internet2.middleware.shibboleth.common.*;
-
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
-import java.text.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import org.doomdark.uuid.*;
-import org.opensaml.*;
+import java.security.cert.CertificateException;
+
+import javax.servlet.ServletException;
+import javax.servlet.UnavailableException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpUtils;
+
+import org.apache.log4j.Logger;
+import org.doomdark.uuid.UUIDGenerator;
+import org.opensaml.SAMLAuthenticationStatement;
+import org.opensaml.SAMLAuthorityBinding;
+import org.opensaml.SAMLException;
+import org.opensaml.SAMLResponse;
+
+import edu.internet2.middleware.shibboleth.common.Constants;
+import edu.internet2.middleware.shibboleth.common.OriginSiteMapperException;
+import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
+import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
 
 /**
  *  Implements a SAML POST profile consumer
@@ -69,14 +89,23 @@ import org.opensaml.*;
  */
 public class ShireServlet extends HttpServlet
 {
-    private String shireLocation = null;
-    private String cookieName = null;
-    private String cookieDomain = null;
-    private String sessionDir = null;
+	
+    private String shireLocation;
+    private String cookieName;
+    private String cookieDomain;
+    private String sessionDir;
+    private String keyStorePath;
+    private String keyStorePasswd;
+    private String keyStoreAlias;
+    private String registryURI;
     private boolean sslOnly = true;
     private boolean checkAddress = true;
     private boolean verbose = false;
+
+    
     private XMLOriginSiteMapper mapper = null;
+	private static Logger log = Logger.getLogger(ShireServlet.class.getName());
+	
 
     private static void HTMLFormat(PrintWriter pw, String buf)
     {
@@ -124,78 +153,116 @@ public class ShireServlet extends HttpServlet
      *    <DD> Verbosity of redirection response</DD>
      *  </DL>
      *
-     *
-     * @exception  ServletException  Raised if the servlet cannot be initialized
      */
     public void init()
         throws ServletException
     {
+    	super.init();
+    	log.info("Initializing SHIRE.");
+    			
         edu.internet2.middleware.shibboleth.common.Init.init();
 
-        ServletConfig conf = getServletConfig();
+		loadInitParams();
+		verifyConfig();
 
-        shireLocation = conf.getInitParameter("shire-location");
-        cookieDomain = conf.getInitParameter("cookie-domain");
-
-        cookieName = conf.getInitParameter("cookie-name");
-        if (cookieName == null)
-            throw new ServletException("ShireServlet.init() missing init parameter: cookie-name");
-
-        sessionDir = conf.getInitParameter("session-dir");
-        if (sessionDir == null)
-            sessionDir = "/tmp";
-
-        String temp = conf.getInitParameter("ssl-only");
-        if (temp != null && (temp.equalsIgnoreCase("false") || temp.equals("0")))
-            sslOnly = false;
-
-        temp = conf.getInitParameter("check-address");
-        if (temp != null && (temp.equalsIgnoreCase("false") || temp.equals("0")))
-            checkAddress = false;
-
-        temp = conf.getInitParameter("verbose");
-        if (temp != null && (temp.equalsIgnoreCase("true") || temp.equals("1")))
-            verbose = true;
-
-        try
-        {
+		log.info("Loading keystore.");
+		try {       
             Key k = null;
             KeyStore ks = KeyStore.getInstance("JKS");
-            ks.load(conf.getServletContext().getResourceAsStream(conf.getInitParameter("keystore-path")),
-                    conf.getInitParameter("keystore-password").toCharArray());
-            if (conf.getInitParameter("keystore-alias") != null)
+				ks.load(getServletContext().getResourceAsStream(keyStorePath), keyStorePasswd.toCharArray());
+
+            if (keyStoreAlias != null)
             {
-                Certificate cert = ks.getCertificate(conf.getInitParameter("keystore-alias"));
-                if (cert == null || (k = cert.getPublicKey()) == null)
-                    throw new ServletException("ShireServlet.init() unable to find registry verification certificate/key");
+                Certificate cert;
+				cert = ks.getCertificate(keyStoreAlias);
+							
+                if (cert == null || (k = cert.getPublicKey()) == null) {
+                	log.fatal("Unable to load registry verification certificate (" +keyStoreAlias +") from keystore");
+                    throw new UnavailableException("Unable to load registry verification certificate (" +keyStoreAlias +") from keystore");
+                }
             }
-            mapper = new XMLOriginSiteMapper(conf.getInitParameter("registry-uri"), k, ks);
-        }
-        catch (java.security.KeyStoreException e)
-        {
-            throw new ServletException("ShireServlet.init() unable to load Java keystore");
-        }
-        catch (java.security.NoSuchAlgorithmException e)
-        {
-            throw new ServletException("ShireServlet.init() unable to load Java keystore");
-        }
-        catch (java.security.cert.CertificateException e)
-        {
-            throw new ServletException("ShireServlet.init() unable to load Java keystore");
-        }
-        catch (FileNotFoundException e)
-        {
-            throw new ServletException("ShireServlet.init() unable to locate Java keystore");
-        }
-        catch (IOException e)
-        {
-            throw new ServletException("ShireServlet.init() unable to load Java keystore");
-        }
-        catch (Exception e)
-        {
-            throw new ServletException("ShireServlet.init() unable to load origin site registry: " + e.getMessage());
-        }
+            
+		log.info("Loading shibboleth site information.");
+		mapper = new XMLOriginSiteMapper(registryURI, k, ks);
+			
+		} catch (OriginSiteMapperException e) {
+			log.fatal("Unable load shibboleth site information." + e.getMessage());
+			throw new UnavailableException("Unable load shibboleth site information." + e.getMessage());
+		} catch (KeyStoreException e) {
+			log.fatal("Unable supplied keystore." + e.getMessage());
+			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+		} catch (NoSuchAlgorithmException e) {
+			log.fatal("Unable supplied keystore." + e.getMessage());
+			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+		} catch (CertificateException e) {
+			log.fatal("Unable supplied keystore." + e.getMessage());
+			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+		} catch (IOException e) {
+			log.fatal("Unable supplied keystore." + e.getMessage());
+			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
+		}
+   
     }
+
+	/**
+	 * Method verifyConfig.
+	 */
+	private void verifyConfig() throws UnavailableException {
+		
+		if (cookieName == null) {
+			log.fatal("Init parameter (cookie-name) is required in deployment descriptor.");
+            throw new UnavailableException("Init parameter (cookie-name) is required in deployment descriptor.");
+		}
+		
+		if (registryURI == null) {
+			log.fatal("Init parameter (registry-uri) is required in deployment descriptor.");
+            throw new UnavailableException("Init parameter (registry-uri) is required in deployment descriptor.");
+		}
+		
+		if (keyStorePath == null) {
+			log.fatal("Init parameter (keystore-path) is required in deployment descriptor.");
+            throw new UnavailableException("Init parameter (keystore-path) is required in deployment descriptor.");
+		}
+		
+		if (keyStorePasswd == null) {
+			log.fatal("Init parameter (keystore-password) is required in deployment descriptor.");
+            throw new UnavailableException("Init parameter (keystore-password) is required in deployment descriptor.");
+		}
+
+	}
+
+
+	private void loadInitParams() {
+		
+		log.info("Loading configuration from deployment descriptor (web.xml).");
+		
+		shireLocation = getServletConfig().getInitParameter("shire-location");
+		cookieDomain = getServletConfig().getInitParameter("cookie-domain");
+		cookieName = getServletConfig().getInitParameter("cookie-name");	
+		keyStorePath = getServletConfig().getInitParameter("keystore-path");
+		keyStorePasswd = getServletConfig().getInitParameter("keystore-password");
+		keyStoreAlias = getServletConfig().getInitParameter("keystore-alias");
+		registryURI = getServletConfig().getInitParameter("registry-uri");
+		
+		sessionDir = getServletConfig().getInitParameter("session-dir");
+		if (sessionDir == null) {	
+		    sessionDir = "/tmp";
+		    log.warn("No session-dir parameter found... using default location: (" + sessionDir +").");
+		}      
+		
+		String temp = getServletConfig().getInitParameter("ssl-only");
+		if (temp != null && (temp.equalsIgnoreCase("false") || temp.equals("0")))
+		    sslOnly = false;
+		
+		temp = getServletConfig().getInitParameter("check-address");
+		if (temp != null && (temp.equalsIgnoreCase("false") || temp.equals("0")))
+		    checkAddress = false;
+		
+		temp = getServletConfig().getInitParameter("verbose");
+		if (temp != null && (temp.equalsIgnoreCase("true") || temp.equals("1")))
+		    verbose = true;
+		    
+	}
 
     /**
      *  Processes a sign-on submission<P>
