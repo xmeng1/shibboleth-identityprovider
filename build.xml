@@ -125,7 +125,7 @@
     <!-- Run automated tests on compiled code -->
     <target name="test-all" depends="test-origin, test-wayf" />
     <target name="test-origin" depends="test-common">
-        <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes">
+        <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
             <classpath refid="build.path" />
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
