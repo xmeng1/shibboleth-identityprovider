@@ -481,11 +481,44 @@ public class ArpTests extends TestCase {
 			repository);
 
 		try {
-			repository.getSitePolicy();
-			repository.getUserPolicy(new AAPrincipal("test"));
-			repository.getAllPolicies(new AAPrincipal("test"));
-		} catch (ArpRepositoryException e) {
-			fail("Error retrieving ARP from Repository.");
+			Arp siteArp = repository.getSitePolicy();
+
+			InputStream inStream = new FileInputStream("data/arp.site.xml");
+			parser.parse(new InputSource(inStream));
+			ByteArrayOutputStream directXML = new ByteArrayOutputStream();
+			new XMLSerializer(directXML, new OutputFormat()).serialize(
+				parser.getDocument().getDocumentElement());
+
+			ByteArrayOutputStream processedXML = new ByteArrayOutputStream();
+			new XMLSerializer(processedXML, new OutputFormat()).serialize(siteArp.unmarshall());
+
+			assertTrue(
+				"File-based ARP Repository did not return the correct site ARP.",
+				directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
+					processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
+
+			Arp userArp = repository.getUserPolicy(new AAPrincipal("test"));
+
+			inStream = new FileInputStream("data/arp.user.test.xml");
+			parser.parse(new InputSource(inStream));
+			directXML = new ByteArrayOutputStream();
+			new XMLSerializer(directXML, new OutputFormat()).serialize(
+				parser.getDocument().getDocumentElement());
+
+			processedXML = new ByteArrayOutputStream();
+			new XMLSerializer(processedXML, new OutputFormat()).serialize(userArp.unmarshall());
+
+			assertTrue(
+				"File-based ARP Repository did not return the correct user ARP.",
+				directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
+					processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
+
+			Arp[] allArps = repository.getAllPolicies(new AAPrincipal("test"));
+
+			assertTrue("File-based ARP Repository did not return the correct number of ARPs.", (allArps.length == 2));
+		
+		} catch (Exception e) {
+			fail("Error retrieving ARP from Repository: " + e);
 		}
 
 	}
