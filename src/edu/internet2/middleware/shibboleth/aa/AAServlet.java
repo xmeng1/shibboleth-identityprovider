@@ -245,6 +245,11 @@ public class AAServlet extends TargetFederationComponent {
 			//This is the requester name that will be passed to subsystems
 			String effectiveName = getEffectiveName(req, relyingParty);
 
+			if (effectiveName == null) {
+				log.debug("Using default Relying Party for unauthenticated provider.");
+				relyingParty = targetMapper.getRelyingParty(null);
+			}
+
 			//Map Subject to local principal
 			if (relyingParty.getIdentityProvider().getProviderId() != null
 					&& !relyingParty.getIdentityProvider().getProviderId().equals(
@@ -304,11 +309,11 @@ public class AAServlet extends TargetFederationComponent {
 					}
 				}
 
-				attrs = responder.getReleaseAttributes(principal, effectiveName.toString(), null,
-						(URI[]) requestedAttrs.toArray(new URI[0]));
+				attrs = responder.getReleaseAttributes(principal, effectiveName, null, (URI[]) requestedAttrs
+						.toArray(new URI[0]));
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
-				attrs = responder.getReleaseAttributes(principal, effectiveName.toString(), null);
+				attrs = responder.getReleaseAttributes(principal, effectiveName, null);
 			}
 
 			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
