@@ -209,8 +209,6 @@ public class PersistentIDAttributeDefinition extends BaseAttributeDefinition imp
 			return;
 		}
 		
-		System.out.println(principal.getName() + requester);
-		
 		String localId = null;
 
 		//Resolve the correct local persistent identifier.
