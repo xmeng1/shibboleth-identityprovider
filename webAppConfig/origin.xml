@@ -5,22 +5,27 @@
     "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
 
 <web-app>
-	<init-param>
+	<context-param>
 		<param-name>DBdriver</param-name>
 		<param-value>org.gjt.mm.mysql.Driver</param-value>
-	</init-param>
-	<init-param>
+	</context-param>
+	<context-param>
 		<param-name>DBuser</param-name>
 		<param-value>shib</param-value>
-	</init-param>
-	<init-param>
+	</context-param>
+	<context-param>
 		<param-name>DBpass</param-name>
 		<param-value>shib</param-value>
-	</init-param>
-	<init-param>
+	</context-param>
+	<context-param>
 		<param-name>DBdomain</param-name>
 		<param-value>shib2.internet2.edu</param-value>
-	</init-param>
+	</context-param>
+	<context-param>
+	        <param-name>repository</param-name>
+		<param-value>MEMORY</param-value>
+	</context-param>
+
 	<servlet>
 		<servlet-name>Logging Service</servlet-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
@@ -45,10 +50,6 @@
 		<init-param>
 		        <param-name>ticket</param-name>
 			<param-value>1400000</param-value>
-		</init-param>
-		<init-param>
-		        <param-name>repository</param-name>
-			<param-value>MEMORY</param-value>
 		</init-param>
 		<init-param>
 		          <param-name>AAurl</param-name>
