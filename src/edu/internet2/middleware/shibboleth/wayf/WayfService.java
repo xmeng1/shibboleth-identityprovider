@@ -56,7 +56,6 @@ public class WayfService extends HttpServlet {
 
 		try {
 			digester.setValidating(true);
-			digester.setErrorHandler(new PassThruErrorHandler());
 			config = (WayfConfig) digester.parse(is);
 
 		} catch (SAXException se) {
@@ -69,7 +68,6 @@ public class WayfService extends HttpServlet {
 
 		try {
 			siteDigester.setValidating(true);
-			siteDigester.setErrorHandler(new PassThruErrorHandler());
 			originConfig = (WayfOrigins) siteDigester.parse(siteIs);
 
 		} catch (SAXException se) {
