@@ -97,13 +97,18 @@ public class Rule {
 	}
 
 	/**
+	 * Returns all of the attribute specifications associated with this Rule.
+	 * @return the attributes
+	 */
+
+	public Attribute[] getAttributes() {
+		return (Attribute[]) attributes.toArray(new Attribute[0]);
+	}
+
+	/**
 	 * Unmarshalls the <code>Rule</code> into an xml <code>Element</code>.
 	 * @return the xml <code>Element</code>
 	 */
-	
-	public Attribute[] getAttributes() {
-		return (Attribute[]) attributes.toArray(new Attribute[0]);	
-	}
 
 	public Element unmarshall() {
 
@@ -122,7 +127,7 @@ public class Rule {
 
 	/**
 	 * Creates an ARP Rule from an xml representation.
-	 * @param the xml <code>Element</code> containing the ARP Rule.
+	 * @param element the xml <code>Element</code> containing the ARP Rule.
 	 */
 
 	public void marshall(Element element) throws ArpMarshallingException {
@@ -166,11 +171,11 @@ public class Rule {
 	}
 
 	/**
-	 * Method matchesRequest.
-	 * @param requester
-	 * @param resource
-	 * @return boolean
+	 * Returns a boolean indication of whether this rule is applicable to a given attribute request.
+	 * @param requester the SHAR making the request
+	 * @param resource the resource on behalf of which the request is being made
 	 */
+	
 	public boolean matchesRequest(String requester, URL resource) {
 		if (target.matchesAny()) {
 			return true;
@@ -201,48 +206,52 @@ public class Rule {
 		private Resource resource = null;
 		private boolean matchesAny = false;
 
-		void marshall(Element element) throws ArpMarshallingException {
+	/**
+	 * Creates an ARP Rule Target from an xml representation.
+	 * @param element the xml <code>Element</code> containing the ARP Rule.
+	 */
+	void marshall(Element element) throws ArpMarshallingException {
 
-			//Make sure we are dealing with a Target
-			if (!element.getTagName().equals("Target")) {
-				log.error("Element data does not represent an ARP Rule Target.");
-				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
-			}
-
-			//Handle <AnyTarget/> definitions
-			NodeList anyTargetNodeList = element.getElementsByTagName("AnyTarget");
-			if (anyTargetNodeList.getLength() == 1) {
-				matchesAny = true;
-				return;
-			}
-
-			//Create Requester
-			NodeList requesterNodeList = element.getElementsByTagName("Requester");
-			if (requesterNodeList.getLength() == 1) {
-				requester = new Requester();
-				requester.marshall((Element) requesterNodeList.item(0));
-			} else {
-				log.error("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
-				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
-			}
-
-			//Handle <AnyResource/>
-			NodeList anyResourceNodeList = element.getElementsByTagName("AnyResource");
-			if (anyResourceNodeList.getLength() == 1) {
-				resource = new Resource();
-				return;
-			}
-
-			//Create Resource
-			NodeList resourceNodeList = element.getElementsByTagName("Resource");
-			if (resourceNodeList.getLength() == 1) {
-				resource = new Resource();
-				resource.marshall((Element) resourceNodeList.item(0));
-			} else {
-				log.error("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
-				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
-			}
+		//Make sure we are dealing with a Target
+		if (!element.getTagName().equals("Target")) {
+			log.error("Element data does not represent an ARP Rule Target.");
+			throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 		}
+
+		//Handle <AnyTarget/> definitions
+		NodeList anyTargetNodeList = element.getElementsByTagName("AnyTarget");
+		if (anyTargetNodeList.getLength() == 1) {
+			matchesAny = true;
+			return;
+		}
+
+		//Create Requester
+		NodeList requesterNodeList = element.getElementsByTagName("Requester");
+		if (requesterNodeList.getLength() == 1) {
+			requester = new Requester();
+			requester.marshall((Element) requesterNodeList.item(0));
+		} else {
+			log.error("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
+			throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
+		}
+
+		//Handle <AnyResource/>
+		NodeList anyResourceNodeList = element.getElementsByTagName("AnyResource");
+		if (anyResourceNodeList.getLength() == 1) {
+			resource = new Resource();
+			return;
+		}
+
+		//Create Resource
+		NodeList resourceNodeList = element.getElementsByTagName("Resource");
+		if (resourceNodeList.getLength() == 1) {
+			resource = new Resource();
+			resource.marshall((Element) resourceNodeList.item(0));
+		} else {
+			log.error("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+			throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+		}
+	}
 
 		boolean matchesAny() {
 			return matchesAny;
@@ -271,7 +280,11 @@ public class Rule {
 		String getValue() {
 			return value;
 		}
-		void marshall(Element element) throws ArpMarshallingException {
+			/**
+			 * Creates an ARP Rule Target Resource from an xml representation.
+			 * @param element the xml <code>Element</code> containing the ARP Rule.
+			 */
+			void marshall(Element element) throws ArpMarshallingException {
 			//Make sure we are deling with a Resource
 			if (!element.getTagName().equals("Resource")) {
 				log.error("Element data does not represent an ARP Rule Target.");
@@ -309,6 +322,11 @@ public class Rule {
 		String getValue() {
 			return value;
 		}
+
+		/**
+		 * Creates an ARP Rule Target Requester from an xml representation.
+		 * @param element the xml <code>Element</code> containing the ARP Rule.
+		 */
 		void marshall(Element element) throws ArpMarshallingException {
 			//Make sure we are deling with a Requester
 			if (!element.getTagName().equals("Requester")) {
@@ -350,26 +368,26 @@ public class Rule {
 			}
 			return false;
 		}
-		
+
 		boolean denyAnyValue() {
 			if (anyValueRelease.equals("deny")) {
 				return anyValue;
 			}
 			return false;
 		}
-		
+
 		void setAnyValueDeny(boolean b) {
 			if (b) {
-			anyValue = true;
-			anyValueRelease = "deny";
-			values.clear();
+				anyValue = true;
+				anyValueRelease = "deny";
+				values.clear();
 			} else {
 				if (anyValueRelease.equals("deny") && anyValue) {
-					anyValue = false;	
+					anyValue = false;
 				}
 			}
 		}
-		
+
 		boolean isValuePermitted(Object value) {
 			//Handle Deny All
 			if (denyAnyValue()) {
@@ -405,7 +423,7 @@ public class Rule {
 
 			return false;
 		}
-		
+
 		void setAnyValuePermit(boolean b) {
 			if (b) {
 				anyValue = true;
@@ -423,14 +441,14 @@ public class Rule {
 				}
 			}
 		}
-		
+
 		URI getName() {
-			return name;	
+			return name;
 		}
 		AttributeValue[] getValues() {
-			return (AttributeValue[]) values.toArray(new AttributeValue[0]);	
+			return (AttributeValue[]) values.toArray(new AttributeValue[0]);
 		}
-		
+
 		void addValue(AttributeValue value) {
 			if (denyAnyValue()) {
 				return;
@@ -438,9 +456,13 @@ public class Rule {
 			if (releaseAnyValue() && value.getRelease().equals("permit")) {
 				return;
 			}
-			values.add(value);	
+			values.add(value);
 		}
 
+		/**
+		 * Creates an ARP Rule Attribute from an xml representation.
+		 * @param element the xml <code>Element</code> containing the ARP Rule.
+		 */
 		void marshall(Element element) throws ArpMarshallingException {
 			//Make sure we are dealing with an Attribute
 			if (!element.getTagName().equals("Attribute")) {
@@ -461,17 +483,17 @@ public class Rule {
 				throw new ArpMarshallingException("Attribute name not identified by a proper URI.");
 			}
 
-				//Handle <AnyValue/> definitions
-				NodeList anyValueNodeList = element.getElementsByTagName("AnyValue");
-				if (anyValueNodeList.getLength() == 1) {
-					anyValue = true;
-					if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
-						anyValueRelease = ((Element) anyValueNodeList.item(0)).getAttribute("release");
-					}
+			//Handle <AnyValue/> definitions
+			NodeList anyValueNodeList = element.getElementsByTagName("AnyValue");
+			if (anyValueNodeList.getLength() == 1) {
+				anyValue = true;
+				if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
+					anyValueRelease = ((Element) anyValueNodeList.item(0)).getAttribute("release");
 				}
+			}
 
-				//Handle Value definitions
-				if (!denyAnyValue()) {
+			//Handle Value definitions
+			if (!denyAnyValue()) {
 				NodeList valueNodeList = element.getElementsByTagName("Value");
 				for (int i = 0; valueNodeList.getLength() > i; i++) {
 					String release = null;
@@ -489,9 +511,9 @@ public class Rule {
 					AttributeValue aValue = new AttributeValue(release, value);
 					values.add(aValue);
 				}
-				}
-
 			}
+
+		}
 	}
 	class AttributeValue {
 		private String release = "permit";
