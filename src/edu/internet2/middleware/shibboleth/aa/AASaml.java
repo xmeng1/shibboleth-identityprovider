@@ -132,7 +132,7 @@ public class AASaml {
         
         try {
             if(attrs == null || attrs.size() == 0) {
-        		sResp = new SAMLResponse(sreq.getRequestId(),
+        		sResp = new SAMLResponse(sreq.getId(),
         					 /* recipient URL*/ null,
         					 /* no attrs -> no assersion*/ null,
         					 exception);
@@ -178,7 +178,7 @@ public class AASaml {
         					     Collections.singleton(statement)
                                  );
         
-        		sResp = new SAMLResponse(sreq.getRequestId(),
+        		sResp = new SAMLResponse(sreq.getId(),
         					 /* recipient URL*/ null,
         					 Collections.singleton(sAssertion),
         					 exception);
@@ -208,7 +208,7 @@ public class AASaml {
     public void fail(HttpServletResponse resp, SAMLException exception)
 	throws IOException{
 	try{
-	    SAMLResponse sResp = new SAMLResponse((sreq!=null) ? sreq.getRequestId() : null,
+	    SAMLResponse sResp = new SAMLResponse((sreq!=null) ? sreq.getId() : null,
 						  /* recipient URL*/ null,
 						  /* an assersion*/ null,
 						  exception);
