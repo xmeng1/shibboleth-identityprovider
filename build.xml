@@ -3,15 +3,13 @@
 <project name="Shibboleth" default="dist-all" basedir=".">
 
 	<!-- Set global properties for this build -->
-    <property name="opensaml" value="${root}/../../../opensaml/java/lib" />
 	<property name="distname" value="shibboleth" />
 	<property name="root" value="." />
-	<property name="src" value="${root}/src" />
-    <property name="bld" value="${root}/build" />
+	<property name="src" value="${root}/source" />
 	<property name="approot" value="${root}/webApplication" />
 	<property name="build" value="${approot}/WEB-INF/classes" />
 	<property name="libdir" value="${approot}/WEB-INF/lib" />
-	<property name="lib" value="${root}/lib" />
+	<property name="buildlibs" value="${root}/buildlibs" />
 	<property name="dist" value="${root}/dist" />
 
 
@@ -19,47 +17,32 @@
 	<path id="build.path">
 		<pathelement path="${classpath}" />
 		<pathelement location="${build}" />
-        <pathelement location="${bld}" />
 		<fileset dir="${libdir}">
 			<include name="**/*.jar" />
 		</fileset>
-		<fileset dir="${lib}">
+		<fileset dir="${buildlibs}">
 			<include name="**/*.jar" />
-		</fileset>
-		<fileset dir="${opensaml}">
-			<include name="opensaml.jar" />
 		</fileset>
 	</path>
 
 
 	<!-- Prepare directory structure for project build-->
 	<target name="init">
-		<mkdir dir="${bld}" />
-		<mkdir dir="${build}" />
-		<mkdir dir="${dist}" />
+	<mkdir dir="${build}" />
+	<mkdir dir="${dist}" />
 	</target>
 
 
 	<!-- Compile classes and move them to ${build} -->
-	<target name="compile-all" depends="package-common">
-		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
-			<exclude name="edu/internet2/middleware/shibboleth/aaLocal/**" />
-			<exclude name="edu/internet2/middleware/shibboleth/common/**" />
-			<exclude name="edu/internet2/middleware/eduPerson/**" />
+	<target name="compile-all" depends="init">
+		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" excludes="edu/internet2/middleware/shibboleth/aaLocal/**" debug="on">
 			<classpath refid="build.path" />
 		</javac>
+		<copy todir="${build}/schemas">
+                        <fileset dir="${src}/schemas"/>
+                </copy>
 	</target>
 
-	<target name="compile-common" depends="init">
-		<javac srcdir="${src}" destdir="${bld}" debug="on">
-			<include name="edu/internet2/middleware/eduPerson/*.java" />
-			<include name="edu/internet2/middleware/shibboleth/common/*.java" />
-			<classpath refid="build.path" />
-		</javac>
-		<copy todir="${bld}/schemas">
-            <fileset dir="${src}/schemas"/>
-        </copy>
-	</target>
 
 
 	<!-- Create various product distributions and move them to ${dist} -->
@@ -67,19 +50,8 @@
 	<target name="dist-origin" depends="compile-all, package, clean-build" />
 	<target name="dist-target" depends="compile-all, package, clean-build" />
 	<target name="dist-wayf" depends="compile-all, package, clean-build" />
-
-	<target name="dist-common" depends="clean-common, compile-common, package-common" />
-
 	<target name="package">
 		<war warfile="${dist}/${distname}.war" webxml="${approot}/WEB-INF/web.xml" basedir="${approot}" update="no" />
-	</target>
-
-	<target name="package-common" depends="compile-common">
-		<jar jarfile="${dist}/${distname}.jar" basedir="${bld}">
-			<include name="schemas/**" />
-			<include name="edu/internet2/middleware/shibboleth/common/**" />
-			<include name="edu/internet2/middleware/eduPerson/**" />
-		</jar>
 	</target>
 
 
@@ -87,7 +59,6 @@
 	<target name="clean-all" depends="clean-build, clean-dist, clean-test" />
 	<target name="clean-build">
 		<delete dir="${build}" />
-        <delete dir="${bld}" />
 	</target>
 	<target name="clean-test">
 		<delete>
@@ -100,11 +71,6 @@
 		<delete dir="${dist}" />
 	</target>
 
-	<target name="clean-common">
-		<delete dir="${bld}/schemas" />
-		<delete dir="${bld}/edu/internet2/middleware/shibboleth/common" />
-		<delete dir="${bld}/edu/internet2/middleware/eduPerson" />
-	</target>
 	
 	<!-- Run automated tests on compiled code -->
 	<target name="test-all" depends="test-common" />
