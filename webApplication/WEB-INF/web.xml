@@ -75,6 +75,10 @@
 			<param-name>certalias</param-name>
 			<param-value>shibhs</param-value>
 		</init-param>
+                <init-param>
+                        <param-name>username</param-name>
+                        <param-value>REMOTE_USER</param-value>
+                </init-param>
 	</servlet>
 	<servlet>
 		<servlet-name>AA</servlet-name>
@@ -100,7 +104,6 @@
 		    <param-name>ctxFactoryClass</param-name>
 		    <param-value>edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory</param-value>
 		</init-param>
-
 		<init-param>
 		    <param-name>arpFactoryMethod</param-name>
 		    <param-value>file</param-value>
