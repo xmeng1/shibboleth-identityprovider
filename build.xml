@@ -16,7 +16,7 @@
     <property name="endorsed" value="${root}/endorsed/" />
     <property name="distlibs" value="${root}/lib/" />
     <property name="dist" value="${root}/dist/" />
-    <property name="docs" value="${root}/docs/" />
+    <property name="docs" value="${root}/doc/" />
     <property name="javadocs" value="${docs}/api/" />
 
     <property name="year" value="2002"/>
