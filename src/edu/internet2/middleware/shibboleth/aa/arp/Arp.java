@@ -75,6 +75,7 @@ import org.w3c.dom.NodeList;
 
 public class Arp {
 
+	public static final String arpNamespace = "urn:mace:shibboleth:arp:1.0";
 	private Principal principal;
 	private Set rules = new HashSet();
 	private String description;
@@ -137,7 +138,7 @@ public class Arp {
 		}
 
 		//Grab the description
-		NodeList descriptionNodes = xmlElement.getElementsByTagName("Description");
+		NodeList descriptionNodes = xmlElement.getElementsByTagNameNS(arpNamespace, "Description");
 		if (descriptionNodes.getLength() > 0) {
 			Element descriptionNode = (Element) descriptionNodes.item(0);
 			if (descriptionNode.hasChildNodes()
@@ -147,7 +148,7 @@ public class Arp {
 		}
 
 		//Grab all of the Rule Elements and marshall them
-		NodeList ruleNodes = xmlElement.getElementsByTagName("Rule");
+		NodeList ruleNodes = xmlElement.getElementsByTagNameNS(arpNamespace, "Rule");
 		if (ruleNodes.getLength() > 0) {
 			for (int i = 0; i < ruleNodes.getLength(); i++) {
 				Rule rule = new Rule();
@@ -169,10 +170,16 @@ public class Arp {
 	Element unmarshall() throws ArpMarshallingException {
 
 		try {
-			Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-			Element policyNode = placeHolder.createElement("AttributeReleasePolicy");
+			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+			docFactory.setNamespaceAware(true);
+			Document placeHolder = docFactory.newDocumentBuilder().newDocument();
+			
+			Element policyNode = placeHolder.createElementNS(arpNamespace, "AttributeReleasePolicy");
+			policyNode.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", arpNamespace);
+			policyNode.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+			policyNode.setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "xsi:schemaLocation", "urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd");
 			if (description != null) {
-				Element descriptionNode = placeHolder.createElement("Description");
+				Element descriptionNode = placeHolder.createElementNS(arpNamespace, "Description");
 				descriptionNode.appendChild(placeHolder.createTextNode(description));
 				policyNode.appendChild(descriptionNode);
 			}

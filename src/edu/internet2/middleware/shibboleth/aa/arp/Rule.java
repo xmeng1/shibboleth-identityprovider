@@ -117,10 +117,10 @@ public class Rule {
 
 		try {
 			Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-			Element ruleNode = placeHolder.createElement("Rule");
+			Element ruleNode = placeHolder.createElementNS(Arp.arpNamespace, "Rule");
 
 			if (description != null) {
-				Element descriptionNode = placeHolder.createElement("Description");
+				Element descriptionNode = placeHolder.createElementNS(Arp.arpNamespace, "Description");
 				descriptionNode.appendChild(placeHolder.createTextNode(description));
 				ruleNode.appendChild(descriptionNode);
 			}
@@ -228,16 +228,16 @@ public class Rule {
 			try {
 				Document placeHolder =
 					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-				Element targetNode = placeHolder.createElement("Target");
+				Element targetNode = placeHolder.createElementNS(Arp.arpNamespace, "Target");
 
 				if (matchesAny) {
-					Element anyTargetNode = placeHolder.createElement("AnyTarget");
+					Element anyTargetNode = placeHolder.createElementNS(Arp.arpNamespace, "AnyTarget");
 					targetNode.appendChild(anyTargetNode);
 					return targetNode;
 				}
 				targetNode.appendChild(placeHolder.importNode(requester.unmarshall(), true));
 				if (target.resource.matchesAny()) {
-					Element anyResourceNode = placeHolder.createElement("AnyResource");
+					Element anyResourceNode = placeHolder.createElementNS(Arp.arpNamespace, "AnyResource");
 					targetNode.appendChild(anyResourceNode);
 					return targetNode;
 				}
@@ -334,10 +334,10 @@ public class Rule {
 			try {
 				Document placeHolder =
 					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-				Element resourceNode = placeHolder.createElement("Resource");
+				Element resourceNode = placeHolder.createElementNS(Arp.arpNamespace, "Resource");
 				if (!matchFunctionIdentifier
 					.equals(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"))) {
-					resourceNode.setAttribute("matchFunction", matchFunctionIdentifier.toString());
+					resourceNode.setAttributeNS(Arp.arpNamespace, "matchFunction", matchFunctionIdentifier.toString());
 				}
 				Text valueNode = placeHolder.createTextNode(value);
 				resourceNode.appendChild(valueNode);
@@ -408,10 +408,10 @@ public class Rule {
 			try {
 				Document placeHolder =
 					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-				Element requesterNode = placeHolder.createElement("Requester");
+				Element requesterNode = placeHolder.createElementNS(Arp.arpNamespace, "Requester");
 				if (!matchFunctionIdentifier
 					.equals(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"))) {
-					requesterNode.setAttribute("matchFunction", matchFunctionIdentifier.toString());
+					requesterNode.setAttributeNS(Arp.arpNamespace, "matchFunction", matchFunctionIdentifier.toString());
 				}
 				Text valueNode = placeHolder.createTextNode(value);
 				requesterNode.appendChild(valueNode);
@@ -574,19 +574,19 @@ public class Rule {
 			try {
 				Document placeHolder =
 					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-				Element attributeNode = placeHolder.createElement("Attribute");
+				Element attributeNode = placeHolder.createElementNS(Arp.arpNamespace, "Attribute");
 
-				attributeNode.setAttribute("name", name.toString());
+				attributeNode.setAttributeNS(Arp.arpNamespace, "name", name.toString());
 				if (anyValue) {
-					Element anyValueNode = placeHolder.createElement("AnyValue");
-					anyValueNode.setAttribute("release", anyValueRelease);
+					Element anyValueNode = placeHolder.createElementNS(Arp.arpNamespace, "AnyValue");
+					anyValueNode.setAttributeNS(Arp.arpNamespace, "release", anyValueRelease);
 					attributeNode.appendChild(anyValueNode);
 				}
 				Iterator valueIterator = values.iterator();
 				while (valueIterator.hasNext()) {
 					AttributeValue value = (AttributeValue) valueIterator.next();
-					Element valueNode = placeHolder.createElement("Value");
-					valueNode.setAttribute("release", value.getRelease());
+					Element valueNode = placeHolder.createElementNS(Arp.arpNamespace, "Value");
+					valueNode.setAttributeNS(Arp.arpNamespace, "release", value.getRelease());
 					Text valueTextNode = placeHolder.createTextNode(value.getValue());
 					valueNode.appendChild(valueTextNode);
 					attributeNode.appendChild(valueNode);
