@@ -38,16 +38,22 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
+import java.util.Collection;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -155,13 +161,190 @@ class KeyInfoCredentialResolver implements CredentialResolver {
 
 class FileCredentialResolver implements CredentialResolver {
 	private static Logger log = Logger.getLogger(FileCredentialResolver.class.getName());
-	FileCredentialResolver() throws CredentialFactoryException {
-		log.error("Credential Resolver (FileCredentialResolver) not implemented");
-		throw new CredentialFactoryException("Failed to load credential.");
+
+	public Credential loadCredential(Element e) throws CredentialFactoryException {
+
+		if (!e.getTagName().equals("FileCredResolver")) {
+			log.error("Invalid Credential Resolver configuration: expected <FileCredResolver> .");
+			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+		}
+
+		String id = e.getAttribute("id");
+		if (id == null || id.equals("")) {
+			log.error("Credential Resolvers require specification of the attribute \"id\".");
+			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+		}
+
+		String certFormat = getCertFormat(e);
+		String certPath = getCertPath(e);
+		String keyFormat = "DER";
+		String keyPath = "/conf/test.pemkey";
+		log.debug("Certificate Format: (" + certFormat + ").");
+		log.debug("Certificate Path: (" + certPath + ").");
+		
+		//TODO provider optional
+		//TODO other kinds of certs?
+		try {
+		CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+		Collection chain = certFactory.generateCertificates(new ShibResource(certPath, this.getClass()).getInputStream());
+		if (chain.isEmpty()) {
+			log.error("File did not contain any valid certificates.");
+			throw new CredentialFactoryException("File did not contain any valid certificates.");
+		}
+		Iterator iterator = chain.iterator();
+		while (iterator.hasNext()) {
+			System.err.println(((X509Certificate)iterator.next()).getSubjectDN());
+		}
+		//TODO remove this
+		}catch (Exception p) {
+			System.err.println(p);
+			p.printStackTrace();
+		}
+		
+		try {
+			
+			//TODO provider??
+			//TODO other algorithms
+					KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+					InputStream keyStream = new ShibResource(certPath, this.getClass()).getInputStream();
+					byte[] inputBuffer = new byte[8];
+					int i;
+					ByteContainer inputBytes = new ByteContainer(400);
+					do {
+						i = keyStream.read(inputBuffer);
+						for (int j = 0; j < i; j++) {
+							inputBytes.append(inputBuffer[j]);
+						}
+					} while (i > -1);
+
+//TODO other encodings?
+					PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(inputBytes.toByteArray());
+					PrivateKey key = keyFactory.generatePrivate(keySpec);
+
+				} catch (Exception p) {
+					log.error("Problem reading private key: " + p.getMessage());
+					//throw new ExtKeyToolException("Problem reading private key.  Keys should be DER encoded pkcs8 or DER encoded native format.");
+				}
+		
+
+		return new Credential(null, null);
 	}
-	public Credential loadCredential(Element e) {
-		return null;
+	
+	private String getCertFormat(Element e) throws CredentialFactoryException {
+
+		NodeList certificateElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Certificate");
+		if (certificateElements.getLength() < 1) {
+			log.error("Certificate not specified.");
+			throw new CredentialFactoryException("File Credential Resolver requires a <Certificate> specification.");
+		}
+		if (certificateElements.getLength() > 1) {
+			log.error("Multiple Certificate path specifications, using first.");
+		}
+		
+		String format = ((Element)certificateElements.item(0)).getAttribute("id");
+		if (format == null || format.equals("")) {
+			log.debug("No format specified for certificate, using default (PEM) format.");
+			format = "PEM";
+		}
+		
+		if ((!format.equals("PEM")) && (!format.equals("DER"))) {
+			log.error("File credential resolver only supports the (DER) and (PEM) formats.");
+			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+		}
+		
+		return format;
 	}
+
+	private String getCertPath(Element e) throws CredentialFactoryException {
+
+		NodeList certificateElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Certificate");
+		if (certificateElements.getLength() < 1) {
+			log.error("Certificate not specified.");
+			throw new CredentialFactoryException("File Credential Resolver requires a <Certificate> specification.");
+		}
+		if (certificateElements.getLength() > 1) {
+			log.error("Multiple Certificate path specifications, using first.");
+		}
+		
+		NodeList pathElements = ((Element) certificateElements.item(0)).getElementsByTagNameNS(Credentials.credentialsNamespace, "Path");
+		if (pathElements.getLength() < 1) {
+			log.error("Certificate path not specified.");
+			throw new CredentialFactoryException("File Credential Resolver requires a <Certificate><Path/></Certificate> specification.");
+		}
+		if (pathElements.getLength() > 1) {
+			log.error("Multiple Certificate path specifications, using first.");
+		}
+		Node tnode = pathElements.item(0).getFirstChild();
+		String path = null;
+		if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+			path = tnode.getNodeValue();
+		}
+		if (path == null || path.equals("")) {
+			log.error("Certificate path not specified.");
+			throw new CredentialFactoryException("File Credential Resolver requires a <Certificate><Path/></Certificate> specification.");
+		}
+		return path;
+	}
+	
+	
+	
+	/**
+	 * Auto-enlarging container for bytes.
+	 */
+
+	// Sure makes you wish bytes were first class objects.
+
+	private class ByteContainer {
+
+		private byte[] buffer;
+		private int cushion;
+		private int currentSize = 0;
+
+		private ByteContainer(int cushion) {
+			buffer = new byte[cushion];
+			this.cushion = cushion;
+		}
+
+		private void grow() {
+			log.debug("Growing ByteContainer.");
+			int newSize = currentSize + cushion;
+			byte[] b = new byte[newSize];
+			int toCopy = Math.min(currentSize, newSize);
+			int i;
+			for (i = 0; i < toCopy; i++) {
+				b[i] = buffer[i];
+			}
+			buffer = b;
+		}
+
+		/** 
+		 * Returns an array of the bytes in the container. <p>
+		 */
+
+		private byte[] toByteArray() {
+			byte[] b = new byte[currentSize];
+			for (int i = 0; i < currentSize; i++) {
+				b[i] = buffer[i];
+			}
+			return b;
+		}
+
+		/** 
+		 * Add one byte to the end of the container.
+		 */
+
+		private void append(byte b) {
+			if (currentSize == buffer.length) {
+				grow();
+			}
+			buffer[currentSize] = b;
+			currentSize++;
+		}
+
+	}
+	
+	
+	
 }
 
 class KeystoreCredentialResolver implements CredentialResolver {
