@@ -226,12 +226,26 @@ public class HandleServlet extends HttpServlet {
 				certificates =
 					keyStore.getCertificateChain(
 						configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias"));
+				if (certificates == null) {
+					throw new HSConfigurationException(
+						"An error occurred while reading the java keystore: No certificate found with the specified alias ("
+							+ configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias")
+							+ ").");
+				}
 			} else {
 				certificates =
 					keyStore.getCertificateChain(
 						configuration.getProperty(
 							"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias"));
+				if (certificates == null) {
+					throw new HSConfigurationException(
+						"An error occurred while reading the java keystore: No certificate found with the specified alias ("
+							+ configuration.getProperty(
+								"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias")
+							+ ").");
+				}
 			}
+
 		} catch (KeyStoreException e) {
 			throw new HSConfigurationException("An error occurred while accessing the java keystore: " + e);
 		} catch (NoSuchAlgorithmException e) {
