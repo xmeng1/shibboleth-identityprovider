@@ -66,6 +66,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 /**
  *  An Attribute Release Policy Rule.
@@ -123,7 +124,7 @@ public class Rule {
 				descriptionNode.appendChild(placeHolder.createTextNode(description));
 				ruleNode.appendChild(descriptionNode);
 			}
-
+			ruleNode.appendChild(placeHolder.importNode(target.unmarshall(), true));
 			return ruleNode;
 		} catch (ParserConfigurationException e) {
 			log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
@@ -181,7 +182,7 @@ public class Rule {
 	 * @param requester the SHAR making the request
 	 * @param resource the resource on behalf of which the request is being made
 	 */
-	
+
 	public boolean matchesRequest(String requester, URL resource) {
 		if (target.matchesAny()) {
 			return true;
@@ -212,52 +213,83 @@ public class Rule {
 		private Resource resource = null;
 		private boolean matchesAny = false;
 
-	/**
-	 * Creates an ARP Rule Target from an xml representation.
-	 * @param element the xml <code>Element</code> containing the ARP Rule.
-	 */
-	void marshall(Element element) throws ArpMarshallingException {
+		/**
+		 * Unmarshalls the <code>Rule.Target</code> into an xml <code>Element</code>.
+		 * @return the xml <code>Element</code>
+		 */
 
-		//Make sure we are dealing with a Target
-		if (!element.getTagName().equals("Target")) {
-			log.error("Element data does not represent an ARP Rule Target.");
-			throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+		Element unmarshall() throws ArpMarshallingException {
+
+			try {
+				Document placeHolder =
+					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				Element targetNode = placeHolder.createElement("Target");
+
+				if (matchesAny) {
+					Element anyTargetNode = placeHolder.createElement("AnyTarget");
+					targetNode.appendChild(anyTargetNode);
+					return targetNode;
+				}
+				targetNode.appendChild(placeHolder.importNode(requester.unmarshall(), true));
+				if (target.resource.matchesAny()) {
+					Element anyResourceNode = placeHolder.createElement("AnyResource");
+					targetNode.appendChild(anyResourceNode);
+					return targetNode;
+				}
+				targetNode.appendChild(placeHolder.importNode(resource.unmarshall(), true));
+				return targetNode;
+			} catch (ParserConfigurationException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule.");
+			}
 		}
 
-		//Handle <AnyTarget/> definitions
-		NodeList anyTargetNodeList = element.getElementsByTagName("AnyTarget");
-		if (anyTargetNodeList.getLength() == 1) {
-			matchesAny = true;
-			return;
-		}
+		/**
+		 * Creates an ARP Rule Target from an xml representation.
+		 * @param element the xml <code>Element</code> containing the ARP Rule.
+		 */
+		void marshall(Element element) throws ArpMarshallingException {
 
-		//Create Requester
-		NodeList requesterNodeList = element.getElementsByTagName("Requester");
-		if (requesterNodeList.getLength() == 1) {
-			requester = new Requester();
-			requester.marshall((Element) requesterNodeList.item(0));
-		} else {
-			log.error("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
-			throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
-		}
+			//Make sure we are dealing with a Target
+			if (!element.getTagName().equals("Target")) {
+				log.error("Element data does not represent an ARP Rule Target.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+			}
 
-		//Handle <AnyResource/>
-		NodeList anyResourceNodeList = element.getElementsByTagName("AnyResource");
-		if (anyResourceNodeList.getLength() == 1) {
-			resource = new Resource();
-			return;
-		}
+			//Handle <AnyTarget/> definitions
+			NodeList anyTargetNodeList = element.getElementsByTagName("AnyTarget");
+			if (anyTargetNodeList.getLength() == 1) {
+				matchesAny = true;
+				return;
+			}
 
-		//Create Resource
-		NodeList resourceNodeList = element.getElementsByTagName("Resource");
-		if (resourceNodeList.getLength() == 1) {
-			resource = new Resource();
-			resource.marshall((Element) resourceNodeList.item(0));
-		} else {
-			log.error("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
-			throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+			//Create Requester
+			NodeList requesterNodeList = element.getElementsByTagName("Requester");
+			if (requesterNodeList.getLength() == 1) {
+				requester = new Requester();
+				requester.marshall((Element) requesterNodeList.item(0));
+			} else {
+				log.error("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
+			}
+
+			//Handle <AnyResource/>
+			NodeList anyResourceNodeList = element.getElementsByTagName("AnyResource");
+			if (anyResourceNodeList.getLength() == 1) {
+				resource = new Resource();
+				return;
+			}
+
+			//Create Resource
+			NodeList resourceNodeList = element.getElementsByTagName("Resource");
+			if (resourceNodeList.getLength() == 1) {
+				resource = new Resource();
+				resource.marshall((Element) resourceNodeList.item(0));
+			} else {
+				log.error("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+			}
 		}
-	}
 
 		boolean matchesAny() {
 			return matchesAny;
@@ -286,11 +318,43 @@ public class Rule {
 		String getValue() {
 			return value;
 		}
-			/**
-			 * Creates an ARP Rule Target Resource from an xml representation.
-			 * @param element the xml <code>Element</code> containing the ARP Rule.
-			 */
-			void marshall(Element element) throws ArpMarshallingException {
+
+		/**
+		 * Unmarshalls the <code>Rule.Resource</code> into an xml <code>Element</code>.
+		 * @return the xml <code>Element</code>
+		 */
+
+		Element unmarshall() throws ArpMarshallingException {
+
+			try {
+				Document placeHolder =
+					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				Element resourceNode = placeHolder.createElement("Resource");
+				if (!matchFunctionIdentifier
+					.equals(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"))) {
+					resourceNode.setAttribute("matchFunction", matchFunctionIdentifier.toString());
+				}
+				Text valueNode = placeHolder.createTextNode(value);
+				resourceNode.appendChild(valueNode);
+				return resourceNode;
+
+			} catch (URISyntaxException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule Resource: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Resource.");
+			} catch (ParserConfigurationException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule Resource: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Resource.");
+			}
+		}
+
+		/**
+		 * Creates an ARP Rule Target Resource from an xml representation.
+		 * @param element the xml <code>Element</code> containing the ARP Rule.
+		 */
+		void marshall(Element element) throws ArpMarshallingException {
+
+			matchesAny = false;
+
 			//Make sure we are deling with a Resource
 			if (!element.getTagName().equals("Resource")) {
 				log.error("Element data does not represent an ARP Rule Target.");
@@ -327,6 +391,34 @@ public class Rule {
 		}
 		String getValue() {
 			return value;
+		}
+
+		/**
+		 * Unmarshalls the <code>Rule.Requester</code> into an xml <code>Element</code>.
+		 * @return the xml <code>Element</code>
+		 */
+
+		Element unmarshall() throws ArpMarshallingException {
+
+			try {
+				Document placeHolder =
+					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				Element requesterNode = placeHolder.createElement("Requester");
+				if (!matchFunctionIdentifier
+					.equals(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"))) {
+					requesterNode.setAttribute("matchFunction", matchFunctionIdentifier.toString());
+				}
+				Text valueNode = placeHolder.createTextNode(value);
+				requesterNode.appendChild(valueNode);
+				return requesterNode;
+
+			} catch (URISyntaxException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule Requester: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Requester.");
+			} catch (ParserConfigurationException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule Requester: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Requester.");
+			}
 		}
 
 		/**

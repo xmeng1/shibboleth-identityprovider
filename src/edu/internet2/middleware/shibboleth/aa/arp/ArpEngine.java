@@ -49,7 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
-import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -113,7 +112,7 @@ public class ArpEngine {
 	 * @param functionIdentifier the identifier for the function
 	 * @return the <code>Matchfunction</code> or null if not registered
 	 */
-	
+
 	public static MatchFunction lookupMatchFunction(URI functionIdentifier) throws ArpException {
 		String className = null;
 
@@ -158,11 +157,11 @@ public class ArpEngine {
 						format.setIndent(4);
 						XMLSerializer serializer = new XMLSerializer(writer, format);
 						serializer.serialize(userPolicies[i].unmarshall());
-						log.debug(
-							"Dumping ARP from:" + System.getProperty("line.separator") + writer.toString());
+						log.debug("Dumping ARP:" + System.getProperty("line.separator") + writer.toString());
 					}
-				} catch (ArpMarshallingException ame) {
-				} catch (IOException ioe) {
+				} catch (Exception e) {
+					log.error(
+						"Encountered a strange error while writing ARP debug messages.  This should never happen.");
 				}
 			}
 
@@ -234,12 +233,12 @@ public class ArpEngine {
 		throws ArpProcessingException {
 
 		Set releaseSet = new HashSet();
-		
+
 		log.info("Applying Attribute Release Policies.");
 		if (log.isDebugEnabled()) {
 			log.debug("Processing the following attributes:");
-			for (int i = 0;attributes.length > i; i++) {
-				log.debug("Attribute: (" + attributes[i].getName() + ")");	
+			for (int i = 0; attributes.length > i; i++) {
+				log.debug("Attribute: (" + attributes[i].getName() + ")");
 			}
 		}
 
@@ -305,19 +304,25 @@ public class ArpEngine {
 			if (!canonicalSpec.containsKey(attributes[i].getName().toString())) {
 				canonicalSpec.put(attributes[i].getName().toString(), attributes[i]);
 			} else {
-				if (((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).denyAnyValue()) {
+				if (((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString()))
+					.denyAnyValue()) {
 					continue;
 				}
 				if (attributes[i].denyAnyValue()) {
-					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValueDeny(true);
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValueDeny(
+						true);
 					continue;
 				}
 				if (attributes[i].releaseAnyValue()) {
-					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValuePermit(true);
+					(
+						(Rule.Attribute) canonicalSpec.get(
+							attributes[i].getName().toString())).setAnyValuePermit(
+						true);
 				}
 				Rule.AttributeValue[] values = attributes[i].getValues();
 				for (int j = 0; values.length > j; j++) {
-					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).addValue(values[j]);
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).addValue(
+						values[j]);
 				}
 			}
 		}
