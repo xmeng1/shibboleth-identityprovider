@@ -88,7 +88,7 @@ public class AQHTest extends TestCase {
 		}
 	}
 	/**
-	 * Ensue that all of our UUIDs are not identical
+	 * Ensure that all of our UUIDs are not identical
 	 */
 	public void testDups() {
 		try {
