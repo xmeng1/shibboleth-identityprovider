@@ -55,3 +55,6 @@ Thanks to:
       resolver
 
     Noah Levitt (Columbia), for simplifying the logging configuration.
+
+    Joel Murphy (Buffalo), for much help with load testing and generally
+      pushing the software to its limits.
