@@ -14,9 +14,9 @@ import org.apache.xml.security.Init;
  * @author Walter Hoehn
  *
  */
-public class LoggerInit extends HttpServlet {
+public class LogServ extends HttpServlet {
 
-	private static Logger log = Logger.getLogger(LoggerInit.class.getName());
+	private static Logger log = Logger.getLogger(LogServ.class.getName());
 
 	/**
 	 * @see javax.servlet.GenericServlet#init()
