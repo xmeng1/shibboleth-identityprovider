@@ -180,4 +180,94 @@ public class ArpEngine {
 		return (URI[]) possibleReleaseSet.toArray(new URI[0]);
 	}
 
+	public ArpAttribute[] filterAttributes(
+		ArpAttribute[] attributes,
+		Principal principal,
+		String requester,
+		URL resource)
+		throws ArpProcessingException {
+
+		Set releaseSet = new HashSet();
+
+		//Gather all applicable ARP attribute specifiers
+		Set attributeNames = new HashSet();
+		for (int i = 0; attributes.length > i; i++) {
+			attributeNames.add(attributes[i].getName());
+		}
+		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
+		Set applicableRuleAttributes = new HashSet();
+		for (int i = 0; rules.length > i; i++) {
+			Rule.Attribute[] ruleAttributes = rules[i].getAttributes();
+			for (int j = 0; ruleAttributes.length > j; j++) {
+				if (attributeNames.contains(ruleAttributes[j].getName().toString())) {
+					applicableRuleAttributes.add(ruleAttributes[j]);
+				}
+			}
+		}
+
+		//Canonicalize specifiers
+		Map arpAttributeSpecs =
+			createCanonicalAttributeSpec(
+				(Rule.Attribute[]) applicableRuleAttributes.toArray(new Rule.Attribute[0]));
+
+		//Filter
+		for (int i = 0; attributes.length > i; i++) {
+			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(attributes[i].getName());
+			
+			//Handle no specifier
+			if (attribute == null) {
+				continue;
+			}
+			
+			//Handle Deny All
+			if (attribute.denyAnyValue()) {
+				continue;
+			}
+
+			//Handle Permit All
+			if (attribute.releaseAnyValue() && attribute.getValues().length == 0) {
+				releaseSet.add(attributes[i]);
+				continue;
+			}
+
+			//Handle Permit All-Except and Permit Specific
+			Object[] resolvedValues = attributes[i].getValues();
+			Set releaseValues = new HashSet();
+			for (int j = 0; resolvedValues.length > j; j++) {
+				System.err.println(attribute.isValuePermitted(resolvedValues[j]));
+				if (attribute.isValuePermitted(resolvedValues[j])) {
+					releaseValues.add(resolvedValues[j]);
+				}
+			}
+			attributes[i].setValues((ArpAttribute[]) releaseValues.toArray(new ArpAttribute[0]));
+			releaseSet.add(attributes[i]);
+		}
+		return (ArpAttribute[]) releaseSet.toArray(new ArpAttribute[0]);
+	}
+
+	private Map createCanonicalAttributeSpec(Rule.Attribute[] attributes) {
+		Map canonicalSpec = new HashMap();
+		for (int i = 0; attributes.length > i; i++) {
+			if (!canonicalSpec.containsKey(attributes[i].getName().toString())) {
+				canonicalSpec.put(attributes[i].getName().toString(), attributes[i]);
+			} else {
+				if (((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).denyAnyValue()) {
+					continue;
+				}
+				if (attributes[i].denyAnyValue()) {
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName())).setAnyValueDeny(true);
+					continue;
+				}
+				if (attributes[i].releaseAnyValue()) {
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValuePermit(true);
+				}
+				Rule.AttributeValue[] values = attributes[i].getValues();
+				for (int j = 0; values.length > j; j++) {
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).addValue(values[j]);
+				}
+			}
+		}
+		return canonicalSpec;
+	}
+
 }

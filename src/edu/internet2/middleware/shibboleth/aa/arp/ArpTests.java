@@ -438,5 +438,148 @@ public class ArpTests extends TestCase {
 		}
 
 	}
+	
+	public void testArpApplication() {
+		Properties props = new Properties();
+		props.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
+		ArpRepository repository = null;
+		try {
+			repository = ArpRepositoryFactory.getInstance(props);
+		} catch (ArpRepositoryException e) {
+			fail("Failed to create memory-based Arp Repository" + e);
+		}
+		try {
+			Principal principal1 = new AAPrincipal("TestPrincipal");
+			URL url1 = new URL("http://www.example.edu/");
+
+			//Test with just a site ARP
+			InputStream inStream = new FileInputStream("test/arp1.xml");
+			DOMParser parser = new DOMParser();
+			parser.parse(new InputSource(inStream));
+			Arp arp1 = new Arp();
+			arp1.marshall(parser.getDocument().getDocumentElement());
+			repository.update(arp1);
+			ArpEngine engine = new ArpEngine(repository, props);
+
+			TestAttribute testAttribute1 =
+				new TestAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" });
+			TestAttribute testAttribute2 =
+				new TestAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+					new Object[] { "mehoehn@example.edu" });
+			ArpAttribute[] releaseAttributes =
+				engine.filterAttributes(
+					new ArpAttribute[] { testAttribute1, testAttribute2 },
+					principal1,
+					"shar.example.edu",
+					url1);
+			for (int i = 0; releaseAttributes.length > i; i++) {
+				Object[] values = releaseAttributes[i].getValues();
+				for (int j = 0; values.length > j; j++) {
+					System.err.println(values[j]);
+				}
+			}
+			System.err.println("---");
+			//Test with site and user ARPs
+			inStream = new FileInputStream("test/arp7.xml");
+			parser.parse(new InputSource(inStream));
+			Arp arp7 = new Arp();
+			arp7.setPrincipal(principal1);
+			arp7.marshall(parser.getDocument().getDocumentElement());
+			repository.update(arp7);
+			releaseAttributes =
+				engine.filterAttributes(
+					new ArpAttribute[] { testAttribute1, testAttribute2 },
+					principal1,
+					"shar.example.edu",
+					url1);
+			for (int i = 0; releaseAttributes.length > i; i++) {
+				Object[] values = releaseAttributes[i].getValues();
+				for (int j = 0; values.length > j; j++) {
+					System.err.println(values[j]);
+				}
+			}
+			System.err.println("---");
+			releaseAttributes =
+				engine.filterAttributes(
+					new ArpAttribute[] { testAttribute1, testAttribute2 },
+					principal1,
+					"shar1.example.edu",
+					url1);
+			for (int i = 0; releaseAttributes.length > i; i++) {
+				Object[] values = releaseAttributes[i].getValues();
+				for (int j = 0; values.length > j; j++) {
+					System.err.println(values[j]);
+				}
+			}
+			System.err.println("---");
+			inStream = new FileInputStream("test/arp6.xml");
+			parser.parse(new InputSource(inStream));
+			Arp arp6 = new Arp();
+			arp6.setPrincipal(principal1);
+			arp6.marshall(parser.getDocument().getDocumentElement());
+			repository.update(arp6);
+			releaseAttributes =
+				engine.filterAttributes(
+					new ArpAttribute[] { testAttribute1, testAttribute2 },
+					principal1,
+					"shar.example.edu",
+					url1);
+			for (int i = 0; releaseAttributes.length > i; i++) {
+				Object[] values = releaseAttributes[i].getValues();
+				for (int j = 0; values.length > j; j++) {
+					System.err.println(values[j]);
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Failed to apply ARPs: " + e);
+		}
+	}
+	
+	public class TestAttribute implements ArpAttribute {
+		private String name;
+		private Object[] values;
+
+		public TestAttribute(String name, Object[] values) {
+			this.name = name;
+			this.values = values;
+		}
+
+		/**
+		 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute#getName()
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute#getValues()
+		 */
+		public Object[] getValues() {
+			return values;
+		}
+
+		/**
+		 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute#setValues(Object[])
+		 */
+		public void setValues(Object[] values) {
+			this.values = values;
+		}
+		
+		public boolean equals(Object object) {
+			if (!(object instanceof TestAttribute)) {
+				return false;
+			}
+			//finish this
+			return super.equals(object);
+		}
+
+	}
 
 }

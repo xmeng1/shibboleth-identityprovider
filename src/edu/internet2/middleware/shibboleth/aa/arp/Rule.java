@@ -54,6 +54,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -357,11 +358,87 @@ public class Rule {
 			return false;
 		}
 		
+		void setAnyValueDeny(boolean b) {
+			if (b) {
+			anyValue = true;
+			anyValueRelease = "deny";
+			values.clear();
+			} else {
+				if (anyValueRelease.equals("deny") && anyValue) {
+					anyValue = false;	
+				}
+			}
+		}
+		
+		boolean isValuePermitted(Object value) {
+			//Handle Deny All
+			if (denyAnyValue()) {
+				return false;
+			}
+
+			//Handle Permit All with no specific values
+			if (releaseAnyValue() && getValues().length == 0) {
+				return true;
+			}
+
+			//Handle Deny Specific
+			Iterator iterator = values.iterator();
+			while (iterator.hasNext()) {
+				AttributeValue valueSpec = (AttributeValue) iterator.next();
+				if (valueSpec.getValue().equals(value) && valueSpec.getRelease().equals("deny")) {
+					return false;
+				}
+			}
+			//Handle Permit All with no relevant specific denies
+			if (releaseAnyValue()) {
+				return true;
+			}
+
+			//Handle Permit Specific
+			iterator = values.iterator();
+			while (iterator.hasNext()) {
+				AttributeValue valueSpec = (AttributeValue) iterator.next();
+				if (valueSpec.getValue().equals(value) && valueSpec.getRelease().equals("permit")) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+		
+		void setAnyValuePermit(boolean b) {
+			if (b) {
+				anyValue = true;
+				anyValueRelease = "permit";
+				Iterator iterator = values.iterator();
+				while (iterator.hasNext()) {
+					AttributeValue value = (AttributeValue) iterator.next();
+					if (value.getRelease().equals("permit")) {
+						values.remove(value);
+					}
+				}
+			} else {
+				if (anyValueRelease.equals("permit") && anyValue) {
+					anyValue = false;
+				}
+			}
+		}
+		
 		URI getName() {
 			return name;	
 		}
 		AttributeValue[] getValues() {
 			return (AttributeValue[]) values.toArray(new AttributeValue[0]);	
+		}
+		
+		void addValue(AttributeValue value) {
+			if (denyAnyValue()) {
+				return;
+			}
+			if (releaseAnyValue() && value.getRelease().equals("permit")) {
+				return;
+			}
+			values.add(value);	
 		}
 
 		void marshall(Element element) throws ArpMarshallingException {
@@ -394,6 +471,7 @@ public class Rule {
 				}
 
 				//Handle Value definitions
+				if (!denyAnyValue()) {
 				NodeList valueNodeList = element.getElementsByTagName("Value");
 				for (int i = 0; valueNodeList.getLength() > i; i++) {
 					String release = null;
@@ -405,8 +483,12 @@ public class Rule {
 						&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType() == Node.TEXT_NODE) {
 						value = ((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild()).getData();
 					}
+					if (releaseAnyValue() && release.equals("permit")) {
+						continue;
+					}
 					AttributeValue aValue = new AttributeValue(release, value);
 					values.add(aValue);
+				}
 				}
 
 			}
