@@ -67,7 +67,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import org.opensaml.Init;
 import org.opensaml.QName;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLIdentifier;
@@ -113,7 +112,6 @@ public class AAServlet extends HttpServlet {
 
 			handleRepository = HandleRepositoryFactory.getInstance(configuration);
 
-			Init.init();
 			responder = new AAResponder(arpEngine, resolver);
 
 			log.info("Attribute Authority initialization complete.");

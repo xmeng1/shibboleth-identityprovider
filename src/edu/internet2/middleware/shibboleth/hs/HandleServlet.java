@@ -74,7 +74,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.doomdark.uuid.UUIDGenerator;
-import org.opensaml.Init;
 import org.opensaml.QName;
 import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
@@ -173,8 +172,6 @@ public class HandleServlet extends HttpServlet {
 		try {
 			log.info("Initializing Handle Service.");
 			configuration = loadConfiguration();
-
-			Init.init();
 
 			initPKI();
 
