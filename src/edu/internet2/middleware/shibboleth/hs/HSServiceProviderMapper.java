@@ -153,8 +153,8 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 					throw new ServiceProviderMapperException("Required configuration not specified.");
 				} else {
 					log
-							.error("Relying Party credential not set.  Add a (signingCredential) attribute to <RelyingParty>.");
-					throw new ServiceProviderMapperException("Required configuration not specified.");
+							.error("Relying Party credential invalid.  Fix the (signingCredential) attribute on <RelyingParty>.");
+					throw new ServiceProviderMapperException("Required configuration is invalid.");
 				}
 			}
 
