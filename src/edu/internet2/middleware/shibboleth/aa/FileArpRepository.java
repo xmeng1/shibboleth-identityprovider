@@ -102,6 +102,7 @@ public class FileArpRepository implements ArpRepository {
 			
 			File arpFile = new File(fileName);
 			if (!arpFile.exists()) {
+				log.info("No ARP matching (" + arpName + ") exists in the ARP Repository.");
 				return null;	
 			}
 
@@ -113,7 +114,7 @@ public class FileArpRepository implements ArpRepository {
 			}
 			arp.setNew(false);
 			arp.setLastRead(new Date());
-			log.info("AA: Found and using ARP " + arpName);
+			log.info("Found ARP (" + arpName + ").");
 			return arp;
 		} catch (FileNotFoundException fnfe) {
 			log.error("Unable to read ARP storage: " + fnfe.getMessage());

@@ -58,6 +58,7 @@ package edu.internet2.middleware.shibboleth.aa.arpUtil;
  */
 
 import java.security.Principal;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Properties;
@@ -248,11 +249,13 @@ class ArpUtil{
 	    isAdmin = true;
 	    i++;
 	}
+	
 	sharName = args[i++];
 	if(args[i].equalsIgnoreCase("-default")){
 	    isDefault = true;
 	    i++;
 	}
+	
 	if(i < args.length)
 	    resourceName = args[i++];
 
@@ -290,10 +293,25 @@ class ArpUtil{
 	    System.out.println("-admin must be specified for -default or -exclude");
 	    return;
 	}
-	   
+	  
+	log.debug("Admin arp?: " + isAdmin);
+	log.debug("Default arp?: " + isDefault);
+	log.debug("Resource name: " + resourceName);
+	log.debug("SHAR name: " + sharName);
+	log.debug("Attribute name: " + attrName);
+	
 
 	try{
 	    Arp arp = arpFactory.lookupArp(arpName, isAdmin);
+	    if (arp == null) {
+	    	arp = new Arp(arpName, isAdmin);
+			arp.setNew(true);
+			arp.setLastRead(new Date());
+			log.info("Creating new ARP.");
+	    } else {
+	    	log.info("Editing existing ARP.");
+	    }
+	    
 	    ArpShar s = arp.getShar(sharName);
 
 	    if(s == null)
