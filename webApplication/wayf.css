@@ -97,8 +97,8 @@ span.option {
 span.warning {
 	font-size: 80%;
 }
-span.incommon {
-	font-size: larger;
-	font-weight: bolder;
-	color: #FFFFFF;
+
+.logo {
+	text-align: center;
+	margin-top: 1.5em;
 }
