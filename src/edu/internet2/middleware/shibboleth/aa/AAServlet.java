@@ -258,7 +258,7 @@ public class AAServlet extends TargetFederationComponent {
 					effectiveName = getEffectiveName(req, relyingParty);
 				} catch (InvalidProviderCredentialException ipc) {
 					sendFailure(resp, samlRequest, new SAMLException(SAMLException.RESPONDER,
-					"Invalid credentials for request."));
+							"Invalid credentials for request."));
 					return;
 				}
 			}
@@ -285,12 +285,11 @@ public class AAServlet extends TargetFederationComponent {
 			if (relyingParty.getIdentityProvider().getProviderId() != null
 					&& !relyingParty.getIdentityProvider().getProviderId().equals(
 							attributeQuery.getSubject().getName().getNameQualifier())) {
-				log.error("The name qualifier for the referenced subject ("
+				log.error("The name qualifier (" + attributeQuery.getSubject().getName().getNameQualifier()
+						+ ") for the referenced subject is not valid for this identiy provider.");
+				throw new NameIdentifierMappingException("The name qualifier ("
 						+ attributeQuery.getSubject().getName().getNameQualifier()
-						+ ") is not valid for this identiy provider.");
-				throw new NameIdentifierMappingException("The name qualifier for the referenced subject ("
-						+ attributeQuery.getSubject().getName().getNameQualifier()
-						+ ") is not valid for this identiy provider.");
+						+ ") for the referenced subject is not valid for this identiy provider.");
 			}
 
 			Principal principal = null;
