@@ -337,8 +337,7 @@ public class Rule {
 				resource = new Resource();
 				resource.marshall((Element) resourceNodeList.item(0));
 			} else {
-				log.error("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
-				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+				resource = new Resource();
 			}
 		}
 
