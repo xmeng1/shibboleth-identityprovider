@@ -82,6 +82,8 @@ import org.xml.sax.SAXParseException;
 
 public class ArpTests extends TestCase {
 
+	DOMParser parser = new DOMParser();
+
 	public ArpTests(String name) {
 		super(name);
 		BasicConfigurator.resetConfiguration();
@@ -93,12 +95,52 @@ public class ArpTests extends TestCase {
 		BasicConfigurator.configure();
 	}
 
+	/**
+	 * @see junit.framework.TestCase#setUp()
+	 */
+	protected void setUp() throws Exception {
+		super.setUp();
+		try {
+			parser.setFeature("http://xml.org/sax/features/validation", true);
+			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
+			parser.setEntityResolver(new EntityResolver() {
+				public InputSource resolveEntity(String publicId, String systemId)
+					throws SAXException {
+					InputStream stream;
+					try {
+						stream = new FileInputStream("src/schemas/ARP.xsd");
+						if (stream != null) {
+							return new InputSource(stream);
+						}
+						throw new SAXException("Could not load entity: Null input stream");
+					} catch (FileNotFoundException e) {
+						throw new SAXException("Could not load entity: " + e);
+					}
+				}
+			});
+
+			parser.setErrorHandler(new ErrorHandler() {
+				public void error(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void fatalError(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void warning(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+			});
+		} catch (Exception e) {
+			fail("Failed to setup xml parser: " + e);
+		}
+
+	}
+
 	public void testArpMarshalling() {
 
 		//Test ARP description
 		try {
 			InputStream inStream = new FileInputStream("test/arp1.xml");
-			DOMParser parser = new DOMParser();
 			parser.parse(new InputSource(inStream));
 			Arp arp1 = new Arp();
 			arp1.marshall(parser.getDocument().getDocumentElement());
@@ -119,7 +161,6 @@ public class ArpTests extends TestCase {
 		//Test case where ARP description does not exist
 		try {
 			InputStream inStream = new FileInputStream("test/arp2.xml");
-			DOMParser parser = new DOMParser();
 			parser.parse(new InputSource(inStream));
 			Arp arp2 = new Arp();
 			arp2.marshall(parser.getDocument().getDocumentElement());
@@ -145,20 +186,26 @@ public class ArpTests extends TestCase {
 
 			//Lookup a function that doesn't exist
 			MatchFunction noFunction =
-				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:dummy"));
+				ArpEngine.lookupMatchFunction(
+					new URI("urn:mace:shibboleth:arp:matchFunction:dummy"));
 			assertNull("ArpEngine did not return null on dummy function.", noFunction);
 
 			//Lookup some real functions
 			MatchFunction exactSharFunction =
-				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"));
-			assertNotNull("ArpEngine did not properly load the Exact SHAR function.", exactSharFunction);
+				ArpEngine.lookupMatchFunction(
+					new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"));
+			assertNotNull(
+				"ArpEngine did not properly load the Exact SHAR function.",
+				exactSharFunction);
 			MatchFunction resourceTreeFunction =
-				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"));
+				ArpEngine.lookupMatchFunction(
+					new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"));
 			assertNotNull(
 				"ArpEngine did not properly load the Resource Tree SHAR function.",
 				resourceTreeFunction);
 			MatchFunction regexFunction =
-				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"));
+				ArpEngine.lookupMatchFunction(
+					new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"));
 			assertNotNull("ArpEngine did not properly load the Regex function.", regexFunction);
 
 			/* 
@@ -261,7 +308,9 @@ public class ArpTests extends TestCase {
 			assertTrue(
 				"Regex function: false negative",
 				regexFunction.match("^shar[1-9]?\\.example\\.edu$", "shar1.example.edu"));
-			assertTrue("Regex function: false negative", regexFunction.match(".*\\.edu", "shar.example.edu"));
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match(".*\\.edu", "shar.example.edu"));
 			assertTrue(
 				"Regex function: false positive",
 				!regexFunction.match("^shar[1-9]\\.example\\.edu$", "shar.example.edu"));
@@ -335,7 +384,9 @@ public class ArpTests extends TestCase {
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create memory-based Arp Repository" + e);
 		}
-		assertNotNull("Failed to create memory-based Arp Repository: Factory returned null.", repository);
+		assertNotNull(
+			"Failed to create memory-based Arp Repository: Factory returned null.",
+			repository);
 
 		/*
 		 * Exercise the Memory Arp Repository
@@ -351,7 +402,9 @@ public class ArpTests extends TestCase {
 				siteArp1,
 				repository.getSitePolicy());
 			repository.remove(repository.getSitePolicy());
-			assertNull("Memorty Repository does not properly delete Site ARPs.", repository.getSitePolicy());
+			assertNull(
+				"Memorty Repository does not properly delete Site ARPs.",
+				repository.getSitePolicy());
 		} catch (ArpRepositoryException e) {
 			fail("Error adding Site ARP to Memory Repository.");
 		}
@@ -401,8 +454,7 @@ public class ArpTests extends TestCase {
 		try {
 			Principal principal1 = new AAPrincipal("TestPrincipal");
 			URL url1 = new URL("http://www.example.edu/");
-			URI[] list1 =
-				{ new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation")};
+			URI[] list1 = { new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation")};
 			URI[] list2 =
 				{
 					new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
@@ -411,17 +463,13 @@ public class ArpTests extends TestCase {
 
 			//Test with just a site ARP
 			InputStream inStream = new FileInputStream("test/arp1.xml");
-			DOMParser parser = new DOMParser();
 			parser.parse(new InputSource(inStream));
 			Arp arp1 = new Arp();
 			arp1.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp1);
 			ArpEngine engine = new ArpEngine(repository, props);
 			URI[] possibleAttributes =
-				engine.listPossibleReleaseAttributes(
-					principal1,
-					"shar.example.edu",
-					url1);
+				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertEquals(
 				"Incorrectly computed possible release set (1).",
 				new HashSet(Arrays.asList(possibleAttributes)),
@@ -435,10 +483,7 @@ public class ArpTests extends TestCase {
 			arp7.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp7);
 			possibleAttributes =
-				engine.listPossibleReleaseAttributes(
-					principal1,
-					"shar.example.edu",
-					url1);
+				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertEquals(
 				"Incorrectly computed possible release set (2).",
 				new HashSet(Arrays.asList(possibleAttributes)),
@@ -452,10 +497,7 @@ public class ArpTests extends TestCase {
 			arp6.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp6);
 			possibleAttributes =
-				engine.listPossibleReleaseAttributes(
-					principal1,
-					"shar.example.edu",
-					url1);
+				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertEquals(
 				"Incorrectly computed possible release set (3).",
 				new HashSet(Arrays.asList(possibleAttributes)),
@@ -482,39 +524,6 @@ public class ArpTests extends TestCase {
 			fail("Failed to create memory-based Arp Repository" + e);
 		}
 
-		DOMParser parser = new DOMParser();
-		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-					InputStream stream;
-					try {
-						stream = new FileInputStream("src/schemas/ARP.xsd");
-						if (stream != null) {
-							return new InputSource(stream);
-						}
-						throw new SAXException("Could not load entity: Null input stream");
-					} catch (FileNotFoundException e) {
-						throw new SAXException("Could not load entity: " + e);
-					}
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-		} catch (Exception e) {
-			fail("Failed to setup xml parser: " + e);
-		}
 		try {
 
 			arpApplicationTest1(repository, props, parser);
@@ -549,7 +558,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest1(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest1(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -598,7 +608,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release, implicit deny
 	 */
-	void arpApplicationTest2(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest2(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -651,7 +662,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: One value release
 	 */
-	void arpApplicationTest3(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest3(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -704,7 +716,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, canonical representation
 	 */
-	void arpApplicationTest4(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest4(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -726,7 +739,10 @@ public class ArpTests extends TestCase {
 		TestAttribute testAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+				new Object[] {
+					"member@example.edu",
+					"faculty@example.edu",
+					"employee@example.edu" });
 		TestAttribute filteredAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
@@ -758,7 +774,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, expanded representation
 	 */
-	void arpApplicationTest5(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest5(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -782,7 +799,10 @@ public class ArpTests extends TestCase {
 		TestAttribute testAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+				new Object[] {
+					"member@example.edu",
+					"faculty@example.edu",
+					"employee@example.edu" });
 		TestAttribute filteredAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
@@ -814,7 +834,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except two release, expanded representation
 	 */
-	void arpApplicationTest6(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest6(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -841,7 +862,10 @@ public class ArpTests extends TestCase {
 		TestAttribute testAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+				new Object[] {
+					"member@example.edu",
+					"faculty@example.edu",
+					"employee@example.edu" });
 		TestAttribute filteredAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
@@ -873,7 +897,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, canonical representation
 	 */
-	void arpApplicationTest7(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest7(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -895,7 +920,10 @@ public class ArpTests extends TestCase {
 		TestAttribute testAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+				new Object[] {
+					"member@example.edu",
+					"faculty@example.edu",
+					"employee@example.edu" });
 		TestAttribute filteredAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
@@ -927,7 +955,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, expanded representation
 	 */
-	void arpApplicationTest8(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest8(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -951,7 +980,10 @@ public class ArpTests extends TestCase {
 		TestAttribute testAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+				new Object[] {
+					"member@example.edu",
+					"faculty@example.edu",
+					"employee@example.edu" });
 		TestAttribute filteredAttribute =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
@@ -983,7 +1015,8 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny
 	 */
-	void arpApplicationTest9(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest9(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1518,13 +1551,14 @@ public class ArpTests extends TestCase {
 			new HashSet(Arrays.asList(releaseAttributes)),
 			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1, testAttribute2 })));
 	}
-	
+
 	/**
 	 * ARPs: A user ARP only
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest19(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest19(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1568,7 +1602,7 @@ public class ArpTests extends TestCase {
 			new HashSet(Arrays.asList(releaseAttributes)),
 			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute })));
 	}
-	
+
 	/**
 	 * ARPs: A site ARP and user ARP
 	 * Target: various
@@ -1676,20 +1710,16 @@ public class ArpTests extends TestCase {
 
 		TestAttribute preferredLanguageInput =
 			new TestAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" });
-			
-				TestAttribute entitlementOutput =
+
+		TestAttribute entitlementOutput =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonEntitlement",
-				new Object[] {
-					"urn:example:lovesIceCream",
-					"urn:example:contract:4657483" });
-					
+				new Object[] { "urn:example:lovesIceCream", "urn:example:contract:4657483" });
+
 		TestAttribute affiliationOutput =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"employee@example.edu" });
+				new Object[] { "member@example.edu", "employee@example.edu" });
 
 		//Add the site ARP
 		parser.parse(new InputSource(new StringReader(rawSiteArp)));
@@ -1721,9 +1751,15 @@ public class ArpTests extends TestCase {
 		assertEquals(
 			"ARP application test 20: ARP not applied as expected.",
 			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { entitlementOutput, affiliationOutput, principalNameInput, preferredLanguageInput })));
+			new HashSet(
+				Arrays.asList(
+					new ArpAttribute[] {
+						entitlementOutput,
+						affiliationOutput,
+						principalNameInput,
+						preferredLanguageInput })));
 	}
-	
+
 	/**
 	 * ARPs: A site ARP and user ARP
 	 * Target: various
@@ -1831,12 +1867,12 @@ public class ArpTests extends TestCase {
 
 		TestAttribute preferredLanguageInput =
 			new TestAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" });
-			
-				TestAttribute entitlementOutput =
+
+		TestAttribute entitlementOutput =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonEntitlement",
 				new Object[] { "urn:example:contract:113455" });
-					
+
 		TestAttribute affiliationOutput =
 			new TestAttribute(
 				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
@@ -1872,7 +1908,12 @@ public class ArpTests extends TestCase {
 		assertEquals(
 			"ARP application test 21: ARP not applied as expected.",
 			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { entitlementOutput, affiliationOutput, preferredLanguageInput })));
+			new HashSet(
+				Arrays.asList(
+					new ArpAttribute[] {
+						entitlementOutput,
+						affiliationOutput,
+						preferredLanguageInput })));
 	}
 
 	public class TestAttribute implements ArpAttribute {
