@@ -106,7 +106,7 @@
 		</init-param>
 		<init-param>
 		    <param-name>arpFactoryMethod</param-name>
-		    <param-value>file</param-value>
+		    <param-value>edu.internet2.middleware.shibboleth.aa.ArpFileFactory</param-value>
 		</init-param>
 	</servlet>
 	<servlet>

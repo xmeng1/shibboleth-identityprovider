@@ -79,7 +79,6 @@ public class AAServlet extends HttpServlet {
     String dirUrl;
     String uidSyntax;
     String arpFactoryMethod;
-    String arpFactoryData;
     String ctxFactory;
     AAResponder responder;
     HandleRepositoryFactory hrf;
@@ -100,19 +99,22 @@ public class AAServlet extends HttpServlet {
 	    ctxFactory = getInitParameter("ctxFactoryClass");
 	    if(ctxFactory == null)
 		ctxFactory = "com.sun.jndi.ldap.LdapCtxFactory";
-	    arpFactoryMethod = getInitParameter("arpFactoryMethod");
-	    arpFactoryData = getInitParameter("arpFactoryData");
-	    if(arpFactoryMethod.equalsIgnoreCase("file") &&
-	       arpFactoryData == null){
-		String realPath = getServletContext().getRealPath("/");
-		realPath += "arps";
-		log.debug("shib dir = "+ realPath);
-		arpFactoryData = realPath;
-	    }
+            // build a properties object to be handed to ArpFactories
+            // include all parameters :-(
+            Enumeration en = getInitParameterNames();
+            Properties props = new Properties();
+            while(en.hasMoreElements()){
+                String key = (String)en.nextElement();
+                String val = getInitParameter(key);
+                props.setProperty(key, val);
+            }
+            props.setProperty("arpFactoryRealPath",
+                              getServletContext().getRealPath("/"));
 
+            arpFactoryMethod = getInitParameter("arpFactoryMethod");
 
-      
-	    arpFactory = ArpRepository.getInstance(arpFactoryMethod, arpFactoryData);
+   
+            arpFactory = ArpRepository.getInstance(arpFactoryMethod, props);
 
 	    log.info("Using "+ctxFactory+" as directory for attributes.");
 

@@ -56,26 +56,43 @@ package edu.internet2.middleware.shibboleth.aa;
  * @author     Parviz Dousti (dousti@cmu.edu)
  * @created    June, 2002
  */
+import java.util.*;
+import java.lang.reflect.*;
+
 
 public class ArpRepository{
 
-
     /**
-     * This is a method to allow implementation of different 
+     * This is a class to allow implementation of different 
      * repositories for ARPs. e.g. File system, SQL database, or LDAP
-     * It returns an implementation based on the given method.  
-     * It passes the given data string to the implementation.  Data string is 
-     * opeque and only meaningful to the specific implementation.
-     * e.g. it might be a directory path to file system implementation.
+     * It returns an implementation based on the given class name.  
+     * It passes a Properties object with all configured key-value pairs 
+     * Each implementation can extract their own configuration values
+     * from Properties.
      */
 
-    public static ArpFactory getInstance(String method, String pathData)
-	throws AAException{
-	if(method.equalsIgnoreCase("file"))
-	    return new ArpFileFactory(pathData);
-	else
-	    throw new AAException("Unknown repository or not implemented yet:" +method);
+    public static ArpFactory getInstance(String implementor, Properties props)
+        throws AAException{
 
+        try{
+            Class implementorClass = Class.forName(implementor);
+            Class[] params = new Class[1];
+            params[0] = Class.forName("java.util.Properties");
+            Constructor implementorConstructor = implementorClass.getConstructor(params);
+            Object[] args = new Object[1];
+            args[0] = props;
+            return (ArpFactory) implementorConstructor.newInstance(args);
+
+        }catch(ClassNotFoundException cnfe){
+            throw new AAException("Failed to instantiate an ArpFactory: "+cnfe);
+        }catch(InstantiationException ie){
+            throw new AAException("Failed to instantiate an ArpFactory: "+ie);
+        }catch(IllegalAccessException iae){
+            throw new AAException("Failed to instantiate an ArpFactory: "+iae);
+        }catch(NoSuchMethodException nsme){
+            throw new AAException("Failed to instantiate an ArpFactory: "+nsme);
+        }catch(InvocationTargetException ite){
+            throw new AAException("Failed to instantiate an ArpFactory: "+ite);
+        }
     }
 }
-
