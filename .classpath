@@ -2,7 +2,6 @@
 <classpath>
     <classpathentry kind="var" path="JRE_LIB" rootpath="JRE_SRCROOT" sourcepath="JRE_SRC"/>
     <classpathentry kind="src" path="src"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/log4j-1.2.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
@@ -17,6 +16,7 @@
     <classpathentry kind="lib" path="lib/xercesImpl.jar"/>
     <classpathentry kind="lib" path="lib/xml-apis.jar"/>
     <classpathentry kind="lib" path="lib/xmlParserAPIs.jar"/>
-    <classpathentry kind="lib" path="lib/servlet-2.2.jar" rootpath="" sourcepath="/Shibboleth/lib/servlet-src.jar"/>
+    <classpathentry kind="lib" path="lib/servlet-2.2.jar" sourcepath="/Shibboleth/lib/servlet-src.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/log4j-1.2.3.jar"/>
     <classpathentry kind="output" path="webApplication\WEB-INF\classes"/>
 </classpath>
