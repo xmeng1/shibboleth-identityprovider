@@ -49,7 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.wayf;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
