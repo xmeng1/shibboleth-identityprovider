@@ -27,6 +27,8 @@ public class AASaml {
     public AASaml(String myName){
 	
 	Init.init();
+	edu.internet2.middleware.eduPerson.Init.init();
+
 	binding = SAMLBindingFactory.getInstance(protocol, policies);
 	this.myName = myName;
     }
