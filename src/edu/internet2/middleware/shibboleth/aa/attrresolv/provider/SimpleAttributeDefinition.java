@@ -93,7 +93,14 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 
 		String sourceName = e.getAttribute("sourceName");
 		if (sourceName == null || sourceName.equals("")) {
-			connectorMapping = getId().substring(getId().lastIndexOf(":") + 1);
+			int index = getId().lastIndexOf("#");
+			if (index < 0) {
+				index = getId().lastIndexOf(":");
+			}
+			if (index < 0) {
+				index = getId().lastIndexOf("/");
+			}
+			connectorMapping = getId().substring(index + 1);
 		} else {
 			connectorMapping = sourceName;
 		}
