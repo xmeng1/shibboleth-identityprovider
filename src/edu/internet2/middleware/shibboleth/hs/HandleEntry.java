@@ -83,7 +83,7 @@ public class HandleEntry {
 	if (username == null || username.length() == 0) 
 	    throw new HandleException(HandleException.ERR, "HandleEntry() requires username");
 	if (authType == null || authType.length() == 0)
-	    throw new HandleException(HandleException.ERR, "HandleEntry() requires authType");
+            authType = "unknown";
 
 	handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
 	this.username = username;
@@ -105,7 +105,7 @@ public class HandleEntry {
 	if (username == null || username.length() == 0) 
 	    throw new HandleException(HandleException.ERR, "HandleEntry() requires username");
 	if (authType == null || authType.length() == 0)
-	    throw new HandleException(HandleException.ERR, "HandleEntry() requires authType");
+            authType = "unknown";
 	
 	this.handle = handle;
 	this.username = username;
