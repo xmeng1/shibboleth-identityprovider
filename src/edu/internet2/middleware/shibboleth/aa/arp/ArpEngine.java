@@ -156,12 +156,15 @@ public class ArpEngine {
 	URI[] listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
 		throws ArpProcessingException {
 		Set possibleReleaseSet = new HashSet();
+		Set anyValueDenies = new HashSet();
 		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
 		for (int i = 0; rules.length > i; i++) {
 			Rule.Attribute[] attributes = rules[i].getAttributes();
 			for (int j = 0; attributes.length > j; j++) {
 				if (attributes[j].releaseAnyValue()) {
 					possibleReleaseSet.add(attributes[j].getName());
+				} else if (attributes[j].denyAnyValue()) {
+					anyValueDenies.add(attributes[j].getName());
 				} else {
 					Rule.AttributeValue[] values = attributes[j].getValues();
 					for (int k = 0; values.length > k; k++) {
@@ -173,6 +176,7 @@ public class ArpEngine {
 				}
 			}
 		}
+		possibleReleaseSet.removeAll(anyValueDenies);
 		return (URI[]) possibleReleaseSet.toArray(new URI[0]);
 	}
 

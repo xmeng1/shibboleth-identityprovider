@@ -350,6 +350,13 @@ public class Rule {
 			return false;
 		}
 		
+		boolean denyAnyValue() {
+			if (anyValueRelease.equals("deny")) {
+				return anyValue;
+			}
+			return false;
+		}
+		
 		URI getName() {
 			return name;	
 		}

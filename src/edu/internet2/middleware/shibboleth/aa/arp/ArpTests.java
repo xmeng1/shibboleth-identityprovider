@@ -398,6 +398,7 @@ public class ArpTests extends TestCase {
 				{
 					new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
 					new URI("urn:mace:eduPerson:1.0:eduPersonPrincipalName")};
+			URI[] list3 = new URI[0];
 					
 			//Test with just a site ARP
 			InputStream inStream = new FileInputStream("test/arp1.xml");
@@ -420,6 +421,17 @@ public class ArpTests extends TestCase {
 			repository.update(arp7);
 			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertTrue("Incorrectly computed possible release set.", Arrays.equals(possibleAttributes, list2));
+			
+			//Ensure that explicit denies on any value are not in the release set
+			inStream = new FileInputStream("test/arp6.xml");
+			parser.parse(new InputSource(inStream));
+			Arp arp6 = new Arp();
+			arp6.setPrincipal(principal1);
+			arp6.marshall(parser.getDocument().getDocumentElement());
+			repository.update(arp6);
+			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
+			assertTrue("Incorrectly computed possible release set.", Arrays.equals(possibleAttributes, list3));
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Failed to marshall ARP: " + e);

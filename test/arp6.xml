@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AttributeReleasePolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ARP.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<Description>Any Target.  One attribute with no values.</Description>
+	<Rule>
+		<Target>
+			<AnyTarget/>
+		</Target>
+		<Attribute name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+			<AnyValue release="deny"/>
+		</Attribute>
+	</Rule>
+</AttributeReleasePolicy>
