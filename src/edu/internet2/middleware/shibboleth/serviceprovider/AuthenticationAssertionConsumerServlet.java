@@ -164,96 +164,115 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             String applicationId = config.mapRequest(target);
             ApplicationInfo appinfo = config.getApplication(applicationId);
             Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
-            
-            // Sanity check:
-            // I am the SHIRE. So the SHIRE URL should be the one in the 
-            // HttpRequest. However, it might have been stepped on by a filter
-            // or frontend. This is the configured cannonical URL that was 
-            // passed to the filter, sent to the HS, and used by the browser
-            // in the redirect. If I need (for whatever reason) to pass a 
-            // Shire URL to the POST processing, lets use the configured one
             String shireURL = appSessionValues.getShireURL();
-            
-            // Provider ID of me, the Service Provider, for this application
             String providerId = appinfo.getApplicationConfig().getProviderId();
-            String[] audiences = new String[1];
-            audiences[0]=providerId;
             
+           
             if (appSessionValues.getShireSSL()&& // Requires SSL
             		!request.isSecure()) {       // isn't SSL
             	log.error("Authentication Assersion not posted over SSL.");
-            	response.sendRedirect("/shibboleth/shireError.html");
+            	try {
+                    response.sendRedirect("/shibboleth/shireError.html");
+                } catch (IOException e1) {
+                }
+            	return;
             }
             
             log.debug("Authentication received from "+ipaddr+" for "+target+
                         "(application:"+applicationId+") (Provider:"+providerId+")");
-            
-            // Unfortunately, the previous mix of Java and C had about 100 things
-            // called "providers". In this particular case, we are passing to 
-            // the POST processing layer an empty StringBuffer into which will be
-            // placed a second return value (tricky!). This will be the ID of the
-            // Origin. 
-            StringBuffer pproviderId = new StringBuffer();
-            
-            SAMLResponse samldata = null;	
-            SAMLAssertion assertion = null;
-            SAMLAuthenticationStatement authstmt = null;
-            try { 
-            	ShibPOSTProfile profile = new ShibPOSTProfile(applicationId);
-            	samldata = profile.accept(
-            	        bin64Assertion, // Assertion from POST of Form field
-            	        shireURL,   // My URL (Why??)
-            	        60, 
-            	        audiences,  // My "Provider" (Entity) ID
-            	        pproviderId // HS "Provider" (Entity) ID returned
-            	        );
-            	
-                assertion = SAMLPOSTProfile.getSSOAssertion(samldata,
-                        Collections.singleton(providerId));
-                authstmt = SAMLPOSTProfile.getSSOStatement(assertion);
-            	
-            } catch (SAMLException e) {
-            	log.error("Authentication Assertion had invalid format.");
-            	response.sendRedirect("/shibboleth/shireError.html");
-            	return;
-            }
-            catch (MetadataException e) {
-            	log.error("Authentication Assertion source not found in Metadata.");
-            	response.sendRedirect("/shibboleth/shireError.html");
-            	return;
-            }
 
+            String sessionId = createSessionFromPost(ipaddr, bin64Assertion, applicationId, shireURL, providerId);
             
-            // The Authentication Assertion gets placed in a newly created
-            // Session object. Later, someone will get an Attribute Assertion
-            // and add it to the Session. The SessionID key is returned to
-            // the Browser as a Cookie.
-            SessionManager sessionManager = context.getSessionManager();
-            String sessionid = sessionManager.newSession(
-                    applicationId, ipaddr, pproviderId.toString(), assertion, authstmt);
-            Cookie cookie = new Cookie("ShibbolethSPSession",sessionid);
+            Cookie cookie = new Cookie("ShibbolethSPSession",sessionId);
             response.addCookie(cookie);
             
-            // Very agressive attribute fetch rule 
-            // Get the Attributes immediately! [good for debugging]
-            Session session = sessionManager.findSession(sessionid, applicationId);
-            boolean gotattributes = AttributeRequestor.fetchAttributes(session);
-            if (!gotattributes)
-            	response.sendRedirect("/shibboleth/shireError.html");
-            
-            log.debug(SessionManager.dumpAttributes(session));
-            
-            response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionid);
-        } catch (IOException e) {
-            // A sendRedirect() failed. 
-            // This can only happen if the user closed the Browser.
-            // Nothing to do
+            try {
+                response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+            } catch (IOException e) {}
+        } catch (SAMLException e) {
+        	log.error("Authentication Assertion had invalid format.");
+        	try {
+                response.sendRedirect("/shibboleth/shireError.html");
+            } catch (IOException e1) {}
+        }
+        catch (MetadataException e) {
+        	log.error("Authentication Assertion source not found in Metadata.");
+        	try {
+                response.sendRedirect("/shibboleth/shireError.html");
+            } catch (IOException e1) {}
         } finally {
             ServletContextInitializer.finishService(request,response);
         }
 
 	}
 	
+    /**
+     * Create a Session object from SHIRE POST data
+     * 
+     * @param ipaddr IP Address of Browser
+     * @param bin64Assertion Authentication assertion from POST
+     * @param applicationId from RequestMap
+     * @param shireURL 
+     * @param providerId Our Entity name
+     * @return UUID key of Session
+     * @throws SAMLException
+     * @throws MetadataException
+     */
+    public static 
+    String createSessionFromPost(
+            String ipaddr, 
+            byte[] bin64Assertion, 
+            String applicationId, 
+            String shireURL, 
+            String providerId 
+            ) 
+    throws SAMLException, MetadataException {
+        String sessionid=null;
+        StringBuffer pproviderId = // Get back Origin Entity name from SAML
+            new StringBuffer();
+        String[] audiences = new String[1];
+        audiences[0]=providerId;
+        
+        SAMLResponse samldata = null;	
+        SAMLAssertion assertion = null;
+        SAMLAuthenticationStatement authstmt = null;
+        ShibPOSTProfile profile = new ShibPOSTProfile(applicationId);
+        samldata = profile.accept(
+                bin64Assertion, // Assertion from POST of Form field
+                shireURL,   // My URL (Why??)
+                60, 
+                audiences,  // My "Provider" (Entity) ID
+                pproviderId // HS "Provider" (Entity) ID returned
+        );
+        
+        assertion = SAMLPOSTProfile.getSSOAssertion(samldata,
+                Collections.singleton(providerId));
+        authstmt = SAMLPOSTProfile.getSSOStatement(assertion);
+        
+
+        
+        // The Authentication Assertion gets placed in a newly created
+        // Session object. Later, someone will get an Attribute Assertion
+        // and add it to the Session. The SessionID key is returned to
+        // the Browser as a Cookie.
+        SessionManager sessionManager = context.getSessionManager();
+        sessionid = sessionManager.newSession(
+                applicationId, 
+                ipaddr, 
+                pproviderId.toString(), 
+                assertion, 
+                authstmt);
+        
+        // Very agressive attribute fetch rule 
+        // Get the Attributes immediately! [good for debugging]
+        Session session = sessionManager.findSession(sessionid, applicationId);
+        AttributeRequestor.fetchAttributes(session);
+
+        return sessionid;
+    }
+
+
+
     protected void doGet(HttpServletRequest arg0, HttpServletResponse arg1)
     	throws ServletException, IOException {
         // TODO Auto-generated method stub

@@ -17,8 +17,13 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.util.Map;
 
+import org.opensaml.SAMLException;
+
+import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
+
 import edu.internet2.middleware.shibboleth.common.AAP;
 import edu.internet2.middleware.shibboleth.common.AttributeRule;
+import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.resource.FilterSupport;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
@@ -133,5 +138,37 @@ public class FilterSupportImpl implements FilterSupport {
         return null;
     }
 
+    /**
+     * @param ipaddr
+     * @param bin64Assertion
+     * @param applicationId
+     * @param shireURL
+     * @param providerId
+     * @return
+     */
+    public String createSessionFromPost(
+            String ipaddr, 
+            byte[] bin64Assertion, 
+            String applicationId, 
+            String shireURL, 
+            String providerId) {
+        String sessionid;
+        try {
+            sessionid = AuthenticationAssertionConsumerServlet.createSessionFromPost(
+                    ipaddr, bin64Assertion, applicationId, shireURL, providerId);
+        } catch (SAMLException e) {
+            return null;
+        } catch (MetadataException e) {
+            return null;
+        }
+        return sessionid;
+    }
 
+
+    public boolean getShireSSL(String applicationId) {
+        ServiceProviderConfig config = context.getServiceProviderConfig();
+        ApplicationInfo appinfo = config.getApplication(applicationId);
+        Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
+        return appSessionValues.getShireSSL();
+    }
 }
