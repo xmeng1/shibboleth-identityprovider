@@ -23,7 +23,7 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.hs.provider;
+package edu.internet2.middleware.shibboleth.common.provider;
 
 import java.io.File;
 import java.io.StringReader;
@@ -45,6 +45,7 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
+import edu.internet2.middleware.shibboleth.common.provider.CryptoShibHandle;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**

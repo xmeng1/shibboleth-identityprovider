@@ -24,7 +24,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.hs.provider;
+package edu.internet2.middleware.shibboleth.common.provider;
 
 import java.io.Serializable;
 
@@ -34,7 +34,6 @@ import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
-import edu.internet2.middleware.shibboleth.common.BaseNameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 
 /**

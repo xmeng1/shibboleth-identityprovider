@@ -23,73 +23,55 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.common;
-
-import java.net.URI;
-import java.net.URISyntaxException;
+package edu.internet2.middleware.shibboleth.common.provider;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.IdentityProvider;
+import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
+import edu.internet2.middleware.shibboleth.common.ServiceProvider;
+
 /**
- * Base class for processing name identifier mapping configuration.
+ * {@link NameIdentifierMapping}implementation to use when the SAML name identifier format matches the Shibboleth
+ * internal representation of the principal.
  * 
  * @author Walter Hoehn
  */
-public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping {
+public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {
 
-	private static Logger log = Logger.getLogger(BaseNameIdentifierMapping.class.getName());
-	private URI format;
-	private String id;
+	private static Logger log = Logger.getLogger(PrincipalNameIdentifier.class.getName());
 
-	public BaseNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
+	public PrincipalNameIdentifier(Element config) throws NameIdentifierMappingException {
 
-		if (!config.getLocalName().equals("NameMapping")) { throw new IllegalArgumentException(); }
+		super(config);
+	}
 
-		String rawFormat = ((Element) config).getAttribute("format");
-		if (rawFormat == null || rawFormat.equals("")) {
-			log.error("Name Mapping requires a \"format\" attribute.");
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
+	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+			throws NameIdentifierMappingException, InvalidNameIdentifierException {
+
+		verifyQualifier(nameId, idProv);
+		return new AuthNPrincipal(nameId.getName());
+	}
+
+	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+			IdentityProvider idProv) throws NameIdentifierMappingException {
+
+		if (principal == null) {
+			log.error("A principal must be supplied for Name Identifier creation.");
+			throw new IllegalArgumentException("A principal must be supplied for Name Identifier creation.");
 		}
 
 		try {
-			format = new URI(rawFormat);
-		} catch (URISyntaxException e) {
-			log.error("Name Mapping attribute \"format\" is not a valid URI: " + e);
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
-		}
-
-		String id = ((Element) config).getAttribute("id");
-		if (id != null || !id.equals("")) {
-			this.id = id;
-		}
-
-	}
-
-	public URI getNameIdentifierFormat() {
-
-		return format;
-	}
-
-	public String getId() {
-
-		return id;
-	}
-
-	public void destroy() {
-
-	//nothing to do
-	}
-
-	protected void verifyQualifier(SAMLNameIdentifier nameId, IdentityProvider idProv)
-			throws NameIdentifierMappingException {
-
-		if (idProv.getProviderId() == null || !idProv.getProviderId().equals(nameId.getNameQualifier())) {
-			log.error("The name qualifier (" + nameId.getNameQualifier()
-					+ ") for the referenced subject is not valid for this identity provider.");
-			throw new NameIdentifierMappingException("The name qualifier (" + nameId.getNameQualifier()
-					+ ") for the referenced subject is not valid for this identity provider.");
+			return new SAMLNameIdentifier(principal.getName(), idProv.getProviderId(), getNameIdentifierFormat()
+					.toString());
+		} catch (SAMLException e) {
+			throw new NameIdentifierMappingException("Unable to generate Name Identifier: " + e);
 		}
 	}
 }

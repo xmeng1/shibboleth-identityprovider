@@ -40,7 +40,7 @@ import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
-import edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle;
+import edu.internet2.middleware.shibboleth.common.provider.SharedMemoryShibHandle;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**

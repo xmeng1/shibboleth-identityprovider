@@ -1,5 +1,4 @@
-
-package edu.internet2.middleware.shibboleth.hs.provider;
+package edu.internet2.middleware.shibboleth.common.provider;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,7 +11,6 @@ import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
-import edu.internet2.middleware.shibboleth.common.BaseNameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;

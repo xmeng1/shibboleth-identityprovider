@@ -23,7 +23,7 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.hs.provider;
+package edu.internet2.middleware.shibboleth.common.provider;
 
 import java.util.HashMap;
 import java.util.HashSet;
