@@ -9,8 +9,8 @@
 	<jsp:useBean id="supportContact" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="shire" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="target" scope="request" class="java.lang.String"/>
-	<jsp:useBean id="encodedShire" scope="request" class="java.lang.String"/>
-	<jsp:useBean id="encodedTarget" scope="request" class="java.lang.String"/>
+	<jsp:useBean id="providerId" scope="request" class="java.lang.String"/>
+	<jsp:useBean id="time" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="searchResultEmptyText" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="logoLocation" scope="application" class="java.lang.String"/>
 	<logic:present name="searchresults" scope="request">
@@ -35,6 +35,12 @@
 					<p>
 					<input type="hidden" name="shire" value="<bean:write name="shire" />" />
 					<input type="hidden" name="target" value="<bean:write name="target" />" />
+					<logic:present name="providerId" scope="request">
+						<input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
+					</logic:present>
+					<logic:present name="time" scope="request">
+						<input type="hidden" name="time" value="<bean:write name="time" />" />
+					</logic:present>
 					<input type="hidden" name="action" value="selection" />
 					<select name="origin">	
 						<logic:iterate id="origin" name="originset" property="origins">
@@ -58,6 +64,12 @@
 						<p>
 							<input type="hidden" name="shire" value="<bean:write name="shire" />" />
 							<input type="hidden" name="target" value="<bean:write name="target" />" />
+							<logic:present name="providerId" scope="request">
+								<input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
+							</logic:present>
+							<logic:present name="time" scope="request">
+								<input type="hidden" name="time" value="<bean:write name="time" />" />
+							</logic:present>
 							<input type="hidden" name="action" value="search" />
 							<input type="text" name="string" />
 							<input type="submit" value="Search" />
@@ -79,6 +91,12 @@
 							<p>
 								<input type="hidden" name="shire" value="<bean:write name="shire" />" />
 								<input type="hidden" name="target" value="<bean:write name="target" />" />
+								<logic:present name="providerId" scope="request">
+									<input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
+								</logic:present>
+								<logic:present name="time" scope="request">
+									<input type="hidden" name="time" value="<bean:write name="time" />" />
+								</logic:present>
 								<input type="hidden" name="action" value="selection" />
 								<input type="submit" value="Select" />
 								<input type="checkbox" checked="checked" name="cache" value="TRUE" /><span class="warning">Remember my selection on this computer.</span>

@@ -52,6 +52,7 @@ package edu.internet2.middleware.shibboleth.wayf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.util.Date;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -231,8 +232,11 @@ public class WayfService extends HttpServlet {
 			}
 			req.setAttribute("shire", getSHIRE(req));
 			req.setAttribute("target", getTarget(req));
-			req.setAttribute("encodedShire", URLEncoder.encode(getSHIRE(req), "UTF-8"));
-			req.setAttribute("encodedTarget", URLEncoder.encode(getTarget(req), "UTF-8"));
+			String providerId = getProviderId(req);
+			if (providerId != null) {
+				req.setAttribute("providerId", providerId);
+				req.setAttribute("time", new Long(new Date().getTime() / 1000).toString()); // Unix Time
+			}
 			req.setAttribute("requestURL", req.getRequestURI().toString());
 
 			log.debug("Displaying WAYF selection page.");
@@ -287,16 +291,17 @@ public class WayfService extends HttpServlet {
 	private void forwardToHS(HttpServletRequest req, HttpServletResponse res, String handleService)
 		throws WayfException {
 
-		String shire = getSHIRE(req);
-		String target = getTarget(req);
 		log.info("Redirecting to selected Handle Service");
 		try {
-			res.sendRedirect(
-				handleService
-					+ "?target="
-					+ URLEncoder.encode(target, "UTF-8")
-					+ "&shire="
-					+ URLEncoder.encode(shire, "UTF-8"));
+			StringBuffer buffer = new StringBuffer(handleService + "?target="
+					+ URLEncoder.encode(getTarget(req), "UTF-8") + "&shire="
+					+ URLEncoder.encode(getSHIRE(req), "UTF-8"));
+			String providerId = getProviderId(req);
+			if (providerId != null) {
+				buffer.append("&providerId=" + URLEncoder.encode(getProviderId(req), "UTF-8"));
+				buffer.append("&time=" + new Long(new Date().getTime() / 1000).toString()); // Unix Time
+			}
+			res.sendRedirect(buffer.toString());
 		} catch (IOException ioe) {
 			throw new WayfException("Error forwarding to HS: " + ioe.toString());
 		}
@@ -353,6 +358,14 @@ public class WayfService extends HttpServlet {
 			throw new WayfException("Invalid data from SHIRE: No target URL received.");
 		}
 		return target;
+	}
+	
+	private String getProviderId(HttpServletRequest req) {
+		if (req.getParameter("providerId") != null) {
+			return req.getParameter("providerId");
+		} else {
+			return (String) req.getAttribute("providerId");
+		}
 	}
 
 	private WayfOrigins getOrigins() {
