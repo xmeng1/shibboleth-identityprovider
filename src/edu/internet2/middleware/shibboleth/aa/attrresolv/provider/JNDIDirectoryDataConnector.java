@@ -50,7 +50,7 @@
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
 import java.security.Principal;
-import java.util.Hashtable;
+import java.util.Properties;
 
 import javax.naming.CommunicationException;
 import javax.naming.NamingEnumeration;
@@ -79,13 +79,12 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 
 	private static Logger log = Logger.getLogger(JNDIDirectoryDataConnector.class.getName());
 	protected String searchFilter;
-	protected InitialDirContext context;
+	protected Properties properties;
 	protected SearchControls controls;
 
 	public JNDIDirectoryDataConnector(Element e) throws ResolutionPlugInException {
 
 		super(e);
-
 		NodeList searchNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
 		if (searchNodes.getLength() != 1) {
 			log.error("JNDI Directory Data Connector requires a \"Search\" specification.");
@@ -104,13 +103,14 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 		defineSearchControls(((Element) searchNodes.item(0)));
 
 		NodeList propertyNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
-		Hashtable env = new Hashtable();
+		properties = System.getProperties();
 		for (int i = 0; propertyNodes.getLength() > i; i++) {
 			Element property = (Element) propertyNodes.item(i);
 			String propName = property.getAttribute("name");
 			String propValue = property.getAttribute("value");
+
 			if (propName != null && !propName.equals("") && propValue != null && !propValue.equals("")) {
-				env.put(propName, propValue);
+				properties.setProperty(propName, propValue);
 				log.debug("Property: (" + propName + ").");
 				log.debug("   Value: (" + propValue + ").");
 			} else {
@@ -119,7 +119,8 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 			}
 		}
 		try {
-			context = new InitialDirContext(env);
+			InitialDirContext context = new InitialDirContext(properties);
+			context.close();
 			log.debug("JNDI Directory context activated.");
 		} catch (NamingException e1) {
 			log.error("Failed to startup directory context: " + e1);
@@ -202,8 +203,11 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(java.security.Principal)
 	 */
 	public Attributes resolve(Principal principal) throws ResolutionPlugInException {
+
 		try {
+			InitialDirContext context = new InitialDirContext(properties);
 			NamingEnumeration enum = null;
+
 			try {
 				enum = context.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
 			} catch (CommunicationException e) {
@@ -226,6 +230,8 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 				log.error("Unable to disambiguate date for principal (" + principal.getName() + ") in search.");
 				throw new ResolutionPlugInException("Cannot disambiguate data for this principal.");
 			}
+
+			context.close();
 			return attributes;
 
 		} catch (NamingException e) {
