@@ -57,6 +57,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
+import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
 import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 
 /**
@@ -68,17 +69,22 @@ public class IdentityHandleRepository extends BaseHandleRepository implements Ha
 
 	private static Logger log = Logger.getLogger(IdentityHandleRepository.class.getName());
     
-    private String format;
+    private String format = null;
+    private HandleRepository generator = null;
 
 	public IdentityHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
-        if (properties.getProperty("edu.internet2.middleware.shibboleth.hs.IdentityHandleRepository.formatURI")
-            != null) {
-            format = properties.getProperty(
-                        "edu.internet2.middleware.shibboleth.hs.IdentityHandleRepository.formatURI",
-                        null);
-            if (format == null)
-                format = Constants.SHIB_NAMEID_FORMAT_URI;
+        format = properties.getProperty(
+            "edu.internet2.middleware.shibboleth.hs.IdentityHandleRepository.formatURI",
+            Constants.SHIB_NAMEID_FORMAT_URI
+            );
+        String className = properties.getProperty(
+            "edu.internet2.middleware.shibboleth.hs.IdentityHandleRepository.handleGenerator",
+            null
+            );
+        if (className != null) {
+            generator = HandleRepositoryFactory.getInstance(className, properties);
+            log.debug("Handle generation will be implemented by (" + className +  ")");
         }
         log.debug("Attribute Query Handle TTL set to (" + handleTTL + ") milliseconds.");
 	}
@@ -87,6 +93,11 @@ public class IdentityHandleRepository extends BaseHandleRepository implements Ha
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
 	public String getHandle(AuthNPrincipal principal, StringBuffer format) throws HandleRepositoryException {
+        //Delegate handle creation?
+        if (generator != null) {
+            return generator.getHandle(principal, format);
+        }
+        
 		if (principal == null || format == null) {
 			log.error("A principal and format buffer must be supplied for Attribute Query Handle creation.");
 			throw new IllegalArgumentException("A principal and format buffer must be supplied for Attribute Query Handle creation.");
@@ -102,9 +113,8 @@ public class IdentityHandleRepository extends BaseHandleRepository implements Ha
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
 	public AuthNPrincipal getPrincipal(String handle, String format) throws HandleRepositoryException, InvalidHandleException {
-        if (!this.format.equals(format)) {
-            log.debug("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
-            throw new InvalidHandleException("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
+        if (this.format.equals(Constants.SHIB_NAMEID_FORMAT_URI)) {
+            return generator.getPrincipal(handle, format);
         }
         
         return new AuthNPrincipal(handle);

@@ -66,32 +66,40 @@ public class HandleRepositoryFactory {
 
 	private static Logger log = Logger.getLogger(HandleRepositoryFactory.class.getName());
 
+    public static HandleRepository getInstance(String className, Properties props) throws HandleRepositoryException {
+        if (className == null) {
+            throw new HandleRepositoryException("No Handle Repository implementation specified.");
+        }
+        try {
+            Class implementorClass = Class.forName(className);
+            Class[] params = new Class[] { Properties.class };
+            Constructor implementorConstructor = implementorClass.getConstructor(params);
+            Object[] args = new Object[] { props };
+            log.debug("Initializing Handle Repository of type (" + implementorClass.getName() + ").");
+            return (HandleRepository) implementorConstructor.newInstance(args);
+
+        } catch (NoSuchMethodException nsme) {
+            log.error(
+                "Failed to instantiate an Handle Repository: HandleRepository "
+                    + "implementation must contain a constructor that accepts a Properties bundle for "
+                    + "configuration data.");
+            throw new HandleRepositoryException("Failed to instantiate a Handle Repository.");
+        } catch (Exception e) {
+
+            log.error("Failed to instantiate a Handle Repository: " + e + ":" + e.getCause());
+            throw new HandleRepositoryException("Failed to instantiate a Handle Repository: " + e);
+
+        }
+    }
+
 	public static HandleRepository getInstance(Properties props) throws HandleRepositoryException {
 
 		if (props.getProperty("edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation") == null) {
-			throw new HandleRepositoryException("No Handle Repository implementaiton specified.");
+			throw new HandleRepositoryException("No Handle Repository implementation specified.");
 		}
-		try {
-			Class implementorClass =
-				Class.forName(
-					props.getProperty("edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation"));
-			Class[] params = new Class[] { Properties.class };
-			Constructor implementorConstructor = implementorClass.getConstructor(params);
-			Object[] args = new Object[] { props };
-			log.debug("Initializing Handle Repository of type (" + implementorClass.getName() + ").");
-			return (HandleRepository) implementorConstructor.newInstance(args);
-
-		} catch (NoSuchMethodException nsme) {
-			log.error(
-				"Failed to instantiate an Handle Repository: HandleRepository "
-					+ "implementation must contain a constructor that accepts a Properties bundle for "
-					+ "configuration data.");
-			throw new HandleRepositoryException("Failed to instantiate a Handle Repository.");
-		} catch (Exception e) {
-
-			log.error("Failed to instantiate a Handle Repository: " + e + ":" + e.getCause());
-			throw new HandleRepositoryException("Failed to instantiate a Handle Repository: " + e);
-
-		}
+		return getInstance(
+            props.getProperty("edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation"),
+            props
+            );
 	}
 }
