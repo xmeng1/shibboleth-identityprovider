@@ -189,7 +189,7 @@ public class XMLAAPProvider implements AAP {
         }
         
         private int toValueType(Element e) throws MalformedException {
-            if (XML.safeCompare("literal",e.getAttributeNS(null,"Type")))
+            if (!e.hasAttributeNS(null,"Type") || XML.safeCompare("literal",e.getAttributeNS(null,"Type")))
                 return Rule.LITERAL;
             else if (XML.safeCompare("regexp",e.getAttributeNS(null,"Type")))
                 return Rule.REGEXP;
