@@ -148,7 +148,7 @@ public class AASaml {
         		SAMLStatement statement = new SAMLAttributeStatement(rSubject, attrs);
         	    
         		if(min > 0)
-        		    then = new Date(now.getTime() + min);
+        		    then = new Date(now.getTime() + (min*1000));
         
         		SAMLAssertion sAssertion = new SAMLAssertion(
                                 myName,
