@@ -1,0 +1,28 @@
+<project name="AA" default="dist" basedir=".">
+
+  <!-- set global properties for this build -->
+  <property name="src" value="."/>
+  <property name="build" value="build"/>
+  <property name="dist"  value="/var/tomcat3/webapps/"/>
+ 
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}" />
+  </target>
+
+  <target name="compile" depends="init">
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" destdir="${build}" classpath=".:/usr/java/jdk1.3.1_02/lib/jre:/usr/local/shib/lib/shibboleth.jar:/usr/local/shib/lib/xmlParserAPIs.jar:/usr/local/shib/lib/xercesImpl.jar:/var/tomcat3/lib/common/servlet.jar:/var/tomcat3/lib/common/mm.mysql-2.0.8-bin.jar"/>
+  </target>
+  <target name="dist" depends="compile">
+    <war warfile="shibb.war" webxml="web.xml">
+      <classes dir="build"/>
+    </war>
+    <copy file="shibb.war" tofile="${dist}/shibb.war">
+    </copy>
+  </target>
+
+</project>
+
