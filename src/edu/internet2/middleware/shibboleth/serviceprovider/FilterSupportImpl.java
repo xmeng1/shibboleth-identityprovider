@@ -151,11 +151,12 @@ public class FilterSupportImpl implements FilterSupport {
             byte[] bin64Assertion, 
             String applicationId, 
             String shireURL, 
-            String providerId) {
+            String providerId,
+            String emptySessionId) {
         String sessionid;
         try {
             sessionid = AuthenticationAssertionConsumerServlet.createSessionFromPost(
-                    ipaddr, bin64Assertion, applicationId, shireURL, providerId);
+                    ipaddr, bin64Assertion, applicationId, shireURL, providerId,emptySessionId);
         } catch (SAMLException e) {
             return null;
         } catch (MetadataException e) {
@@ -170,5 +171,17 @@ public class FilterSupportImpl implements FilterSupport {
         ApplicationInfo appinfo = config.getApplication(applicationId);
         Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
         return appSessionValues.getShireSSL();
+    }
+
+    /**
+     * Create empty Session so SessionID can be written as a Cookie
+     * before redirecting the Browser to the IDP.
+     * 
+     * @param applicationId
+     * @return SessionId of empty session
+     */
+    public String createSession(String applicationId) {
+        return context.getSessionManager().newSession(
+                applicationId, null, null, null, null, null);
     }
 }

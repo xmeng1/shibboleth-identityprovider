@@ -181,7 +181,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             log.debug("Authentication received from "+ipaddr+" for "+target+
                         "(application:"+applicationId+") (Provider:"+providerId+")");
 
-            String sessionId = createSessionFromPost(ipaddr, bin64Assertion, applicationId, shireURL, providerId);
+            String sessionId = createSessionFromPost(ipaddr, bin64Assertion, applicationId, shireURL, providerId, null);
             
             Cookie cookie = new Cookie("ShibbolethSPSession",sessionId);
             response.addCookie(cookie);
@@ -214,7 +214,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
      * @param applicationId from RequestMap
      * @param shireURL 
      * @param providerId Our Entity name
-     * @return UUID key of Session
+     * @return random key of Session
      * @throws SAMLException
      * @throws MetadataException
      */
@@ -224,7 +224,8 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             byte[] bin64Assertion, 
             String applicationId, 
             String shireURL, 
-            String providerId 
+            String providerId,
+            String emptySessionId
             ) 
     throws SAMLException, MetadataException {
         String sessionid=null;
@@ -261,7 +262,8 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
                 ipaddr, 
                 pproviderId.toString(), 
                 assertion, 
-                authstmt);
+                authstmt,
+                emptySessionId);
         
         // Very agressive attribute fetch rule 
         // Get the Attributes immediately! [good for debugging]

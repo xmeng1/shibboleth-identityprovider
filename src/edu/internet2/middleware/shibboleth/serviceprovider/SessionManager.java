@@ -21,6 +21,7 @@
  */
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,6 +63,23 @@ public class SessionManager {
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
 
+	private static SecureRandom rand = new SecureRandom();
+	private static final String table = "0123456789" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
+		"abcdefgjikjlmnopqrstuvwxyz"+
+		"$@";
+	public String generateKey() {
+	    byte[] trash = new byte[16];
+	    char[] ctrash = new char[16];
+	    do {
+	        rand.nextBytes(trash);
+	        for (int i=0;i<16;i++) {
+	            trash[i]|=0x3f;
+	            ctrash[i]=(char)table.charAt(trash[i]);
+	        }
+	    } while (null!=sessions.get(ctrash));
+	    return new String(ctrash);
+	}
 	
 	
 	
@@ -69,10 +87,22 @@ public class SessionManager {
 		Session s = (Session) sessions.get(sessionId);
 		if (s==null)
 			return null;
+		if (null==s.getAuthenticationAssertion())
+		    return null;
 		if (!applicationId.equals(s.getApplicationId()))
 			return null;
 		return s;
 	}
+
+	private synchronized Session findEmptySession(String sessionId) {
+		Session s = (Session) sessions.get(sessionId);
+		if (s==null)
+			return null;
+		if (null!=s.getAuthenticationAssertion())
+		    return null;
+		return s;
+	}
+	
 	
 	protected synchronized void add(Session s) {
 		sessions.put(s.getKey(), s);
@@ -127,9 +157,10 @@ public class SessionManager {
 	 * Called from Authentication Assertion Consumer [SHIRE]
 	 * 
 	 * @param applicationId The application for this session
-	 * @param shireUrl The managing SHIRE
 	 * @param ipaddr The client's remote IP address from HTTP
-	 * @param authentication SAMLAssertion from the Post data
+	 * @param entityId The Entity of the AA issuing the authentication
+	 * @param assertion Assertion in case one needs more data
+	 * @param authentication subset of assertion with handle
 	 * @return String (UUID) to go in the browser cookie
 	 */
 	public 
@@ -139,7 +170,9 @@ public class SessionManager {
 			String ipaddr,
 			String entityId,
 			SAMLAssertion assertion,
-			SAMLAuthenticationStatement authenticationStatement){
+			SAMLAuthenticationStatement authenticationStatement,
+			String emptySessionId // may be null
+			){
 		
 		ServiceProviderConfig config = context.getServiceProviderConfig();
 		ApplicationInfo appinfo = config.getApplication(applicationId);
@@ -147,12 +180,22 @@ public class SessionManager {
 		
 		String sessionId = null;
 		
-		Session session = new Session();
+		Session session;
+		if (emptySessionId==null) {
+		    session = new Session(generateKey());
+		} else {
+		    session = findEmptySession(emptySessionId);
+		    if (session==null) {
+			    session = new Session(generateKey());
+		    }
+		}
 		session.setApplicationId(applicationId);
 		session.setIpaddr(ipaddr);
 		session.setEntityId(entityId);
+		
 		session.setAuthenticationAssertion(assertion);
 		session.setAuthenticationStatement(authenticationStatement);
+		
 		session.setLifetime(appSessionValues.getLifetime());
 		session.setTimeout(appSessionValues.getTimeout());
 		
