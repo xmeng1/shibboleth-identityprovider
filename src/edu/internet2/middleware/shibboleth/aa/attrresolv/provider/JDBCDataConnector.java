@@ -144,6 +144,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 		//Initialize a pooling Data Source
 		int maxActive = 0;
 		int maxIdle = 0;
+        int maxWait = 30;
 		try {
 			if (e.getAttributeNode("maxActive") != null) {
 				maxActive = Integer.parseInt(e.getAttribute("maxActive"));
@@ -151,6 +152,9 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			if (e.getAttributeNode("maxIdle") != null) {
 				maxIdle = Integer.parseInt(e.getAttribute("maxIdle"));
 			}
+            if (e.getAttributeNode("maxWait") != null) {
+                maxWait = Integer.parseInt(e.getAttribute("maxWait"));
+            }
 		} catch (NumberFormatException ex) {
 			log.error("Malformed pooling limits: using defaults.");
 		}
@@ -158,13 +162,13 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			log.error("JDBC connection requires a dbURL property");
 			throw new ResolutionPlugInException("JDBCDataConnection requires a \"dbURL\" property");
 		}
-		setupDataSource(e.getAttribute("dbURL"), props, maxActive, maxIdle);
+		setupDataSource(e.getAttribute("dbURL"), props, maxActive, maxIdle, maxWait);
 	}
 
 	/**
 	 * Initialize a Pooling Data Source
 	 */
-	private void setupDataSource(String dbURL, Properties props, int maxActive, int maxIdle) throws ResolutionPlugInException {
+	private void setupDataSource(String dbURL, Properties props, int maxActive, int maxIdle, int maxWait) throws ResolutionPlugInException {
 
 		GenericObjectPool objectPool = new GenericObjectPool(null);
 
@@ -174,6 +178,9 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 		if (maxIdle > 0) {
 			objectPool.setMaxIdle(maxIdle);
 		}
+        if (maxWait > 0) {
+            objectPool.setMaxWait(1000*maxWait);
+        }
 
 		objectPool.setWhenExhaustedAction(GenericObjectPool.WHEN_EXHAUSTED_BLOCK);
 
@@ -304,7 +311,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 
 		//Setup and execute a (pooled) prepared statement
 		ResultSet rs = null;
-		PreparedStatement preparedStatement;
+		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = conn.prepareStatement(searchVal);
 			statementCreator.create(preparedStatement, principal, requester, depends);
@@ -312,45 +319,44 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			if (!rs.next()) {
 				return new BasicAttributes();
 			}
+            return extractor.extractAttributes(rs);
 		} catch (JDBCStatementCreatorException e) {
 			log.error("An ERROR occured while constructing the query");
 			throw new ResolutionPlugInException("An ERROR occured while constructing the query: " + e.getMessage());
+        } catch (JDBCAttributeExtractorException e) {
+            log.error("An ERROR occured while extracting attributes from result set");
+            throw new ResolutionPlugInException("An ERROR occured while extracting attributes from result set: " + e.getMessage());
 		} catch (SQLException e) {
 			log.error("An ERROR occured while executing the query");
 			throw new ResolutionPlugInException("An ERROR occured while executing the query: " + e.getMessage());
-		}
-
-		//Extract attributes from the ResultSet
-		try {
-			return extractor.extractAttributes(rs);
-
-		} catch (JDBCAttributeExtractorException e) {
-			log.error("An ERROR occured while extracting attributes from result set");
-			throw new ResolutionPlugInException(
-				"An ERROR occured while extracting attributes from result set: " + e.getMessage());
-		} finally {
-			try {
-				if (preparedStatement != null) {
-					preparedStatement.close();
-				}
-			} catch (SQLException e) {
-				log.error("An error occured while closing the prepared statement: " + e);
-				throw new ResolutionPlugInException("An error occured while closing the prepared statement: " + e);
-			}
-			try {
-				rs.close();
-			} catch (SQLException e) {
-				log.error("An error occured while closing the result set: " + e);
-				throw new ResolutionPlugInException("An error occured while closing the result set: " + e);
-			}
-
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				log.error("An error occured while closing the database connection: " + e);
-				throw new ResolutionPlugInException("An error occured while closing the database connection: " + e);
-			}
-		}
+        } finally {
+            Exception e_save = null;
+            try {
+                if (preparedStatement != null) {
+                    preparedStatement.close();
+                }
+            } catch (SQLException e) {
+                log.error("An error occured while closing the prepared statement: " + e.getMessage());
+                e_save = e;
+            }
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+                log.error("An error occured while closing the result set: " + e.getMessage());
+                e_save = e;
+            }
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                log.error("An error occured while closing the database connection: " + e.getMessage());
+                e_save = e;
+            }
+            if (e_save != null) {
+                throw new ResolutionPlugInException("An error occured while closing database objects:" + e_save.getMessage());
+            }
+        }
 	}
 
 	/** 
