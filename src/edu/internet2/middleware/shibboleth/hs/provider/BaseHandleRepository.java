@@ -64,8 +64,9 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 public abstract class BaseHandleRepository implements HandleRepository {
-
-	protected long handleTTL = 1800000;
+	
+	/** Time in seconds for which handles are valid */
+	protected long handleTTL = 1800;
 	private static Logger log = Logger.getLogger(BaseHandleRepository.class.getName());
 
 	protected BaseHandleRepository(Properties properties) throws HandleRepositoryException {
@@ -77,7 +78,7 @@ public abstract class BaseHandleRepository implements HandleRepository {
 						properties.getProperty(
 							"edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL",
 							null));
-				if (handleTTL < 30000) {
+				if (handleTTL < 30) {
 					log.warn(
 						"You have set the Attribute Query Handle \"Time To Live\' to a very low "
 							+ "value.  It is recommended that you increase it.");
@@ -107,9 +108,14 @@ class HandleEntry implements Serializable {
 	protected AuthNPrincipal principal;
 	protected long expirationTime;
 
+	/**
+	 * Creates a HandleEntry
+	 * @param principal the principal represented by this entry.
+	 * @param TTL the time, in seconds, for which the handle should be valid.
+	 */
 	protected HandleEntry(AuthNPrincipal principal, long TTL) {
 		this.principal = principal;
-		expirationTime = System.currentTimeMillis() + TTL;
+		expirationTime = System.currentTimeMillis() + (TTL * 1000);
 	}
 
 	protected boolean isExpired() {
