@@ -1032,12 +1032,12 @@ configuration</h4>
 <h4><a name="4.e."></a>4.e. <span class="fixed">metadatatool</span></h4>
 <blockquote>
     <p>The Shibboleth origin leverages metadata distributed by relying parties and federations to validate the identity of requesters and the resource providers on whose behalf the request is being made.  This metadata is cached locally in the form of <span class="fixed">sites.xml</span> files.  Shibboleth includes a simple utility called <span class="fixed">metadatatool</span> which can be used to refresh a <span class="fixed">sites.xml</span> file.  These files are then pointed to by <a href="#confFederationProvider"><span class="fixed">FederationProvider</span></a> elements in <a href="#5.a."><span class="fixed">shibboleth.xml</span></a>.</p>
-<p>The following command is appropriate for most deployments and is run from the $SHIB_HOME directory.  This should be frequently run by adding it to a <span class="fixed">crontab/span> to ensure that the data is fresh.</p>
+<p>The following command is appropriate for most deployments and is run from the $SHIB_HOME directory.  This should be frequently run by adding it to a <span class="fixed">crontab</span> to ensure that the data is fresh.</p>
 <blockquote><span class="fixed">bin/metadatatool -i https://wayf.internet2.edu/InQueue/sites.xml -k conf/internet2.jks -p shib123 -a sitesigner  -o /your_path_here/sites.xml</span></blockquote>
 <p>This is a list of all the command-line parameters that may be specified:</p>
-<blockquote><span class="fixed">when signing:   -i <uri> -s -k <keystore> -a <alias> -p <pass> [-o
-<outfile>]<br>
-when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
+<blockquote><span class="fixed">when signing:   -i &lt;uri&gt; -s -k &lt;keystore&gt; -a &lt;alias&gt; -p &lt;pass&gt; [-o
+&lt;outfile&gt;]<br>
+when updating:  -i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; OR -N ] [-o &lt;outfile&gt;]<br>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td width="150">-i,--in</td><td>input file or url</td></tr>
 <tr><td width="150">-k,--keystore</td><td>pathname of Java keystore file</td></tr>
@@ -1171,7 +1171,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
     class="mandatory">mandatory</span> by a purple background.</p>
 
     <dl>
-        <dd class="attribute"><a name="confArpRepository"><span class="fixed">&lt;ArpRepository implementation =&quot;edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confArpRepository"><span class="fixed">&lt;ArpRepository implementation =&quot;edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository&quot;&gt;</span></a></dd>
         <dd class="value"><p>This element specifies an individual implementation
         of a release policy engine, with the given value specifying Shibboleth's
         file-based ARP repository implementation, which is currently the only
@@ -1192,7 +1192,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         group entries would have ARP attributes, and all those ARP&#39;s would
         be applicable.</p></dd>
 
-        <dd class="attribute"><a name="confCAPath"><span class="fixed">&lt;CAPath&gt;<i>pathname</i>&lt;/CAPath&gt;</span></dd>
+        <dd class="attribute"><a name="confCAPath"><span class="fixed">&lt;CAPath&gt;<i>pathname</i>&lt;/CAPath&gt;</span></a></dd>
         <dd class="value">Paired with a <a href="#confPath"><span
         class="fixed">Path</span></a> element and contained by a <a
         href="#confFileResolver"><span class="fixed">FileResolver</span></a>
@@ -1202,14 +1202,14 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         may be specified.  The expectations of the target and the federation may
         determine the necessity for the use of this field.</dd>
 
-        <dd class="attribute"><a name="confCertAlias"><span class="fixed">&lt;CertAlias&gt;<i>string</i>&lt;/CertAlias&gt;</span></dd>
+        <dd class="attribute"><a name="confCertAlias"><span class="fixed">&lt;CertAlias&gt;<i>string</i>&lt;/CertAlias&gt;</span></a></dd>
         <dd class="value">Specifies the alias for the certificate corresponding
         to the private key used by the HS.  If no alias is specified, defaults
         to the private key's alias.  Contained by the <a
         href="#confKeyStoreResolver"><span
         class="fixed">KeyStoreResolver</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confCertificate"><span class="fixed">&lt;Certificate format=&quot;<i>type</i>&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confCertificate"><span class="fixed">&lt;Certificate format=&quot;<i>type</i>&quot;&gt;</span></a></dd>
         <dd class="value">This specifies the certificate corresponding to this
         set of credentials.  The certificate itself must be referred to using a
         <a href="#confPath"><span class="fixed">Path</span></a> element
@@ -1223,7 +1223,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         and must be paired with the corresponding private key using the <a
         href="#confKey"><span class="fixed">Key</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confCredentials"><span class="fixed">&lt;Credentials xmlns=&quot;urn:mace:shibboleth:credentials:1.0&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confCredentials"><span class="fixed">&lt;Credentials xmlns=&quot;urn:mace:shibboleth:credentials:1.0&quot;&gt;</span></a></dd>
         <dd class="value">This element is the container for credentials used by
         the credential mechanism specified by the <a
         href="#confShibbolethOriginConfig"><span
@@ -1235,7 +1235,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         class="fixed">KeyStoreResolver</span></a> element for compound
         keystores.</dd>
 
-        <dd class="attribute"><a name="confErrorLog"><span class="fixed">&lt;ErrorLog level=&quot;<i>level</i>&quot; location=&quot;<i>URL</i>&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confErrorLog"><span class="fixed">&lt;ErrorLog level=&quot;<i>level</i>&quot; location=&quot;<i>URL</i>&quot;&gt;</span></a></dd>
         <dd class="value">Paired with a <a href="#confTransactionLog"><span
         class="fixed">TransactionLog</span></a> element, this will log any
         errors encountered by the origin above a certain logging threshold to a
@@ -1248,7 +1248,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         Must be contained by a <a href="#confLogging"><span
         class="fixed">Logging</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;FederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;/&gt;</span></dd>
+        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;FederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;/&gt;</span></a></dd>
         <dd class="value">Individual sets of targets in the form of a <span
         class="fixed">sites.xml</span> file that this origin will trust to make
         requests may be specified by adding <span
@@ -1260,7 +1260,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         federations.  This file should be regularly refreshed using
         <a href="#4.e."><span class="fixedwidth">metadatatool</span></a>.</dd>
 
-        <dd class="attribute"><a name="confFileResolver"><span class="fixed">&lt;FileResolver Id=&quot;<i>string</i>&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confFileResolver"><span class="fixed">&lt;FileResolver Id=&quot;<i>string</i>&quot;&gt;</span></a></dd>
         <dd class="value">This element defines a pair of files used to store a
         private key and certificate associated with a given identifier and is
         contained by the <a href="#confCredentials"><span
@@ -1273,7 +1273,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         contain one <a href="#confCertificate"><span
         class="fixed">Certificate</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confHSNameFormat"><span class="fixed">&lt;HSNameFormat <span class="mandatory">nameMapping=&quot;<i>id</i>&quot;</span>/&gt;</span></dd>
+        <dd class="attribute"><a name="confHSNameFormat"><span class="fixed">&lt;HSNameFormat <span class="mandatory">nameMapping=&quot;<i>id</i>&quot;</span>/&gt;</span></a></dd>
         <dd class="value">Individual <a href="#confRelyingParty"><span
         class="fixed">RelyingParty</span></a> elements may contain this element
         to specify the <a href="#confNameMapping"><span
@@ -1282,7 +1282,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         relying party.  If this element is not present, default Shibboleth
         handles will be used.</dd>
 
-        <dd class="attribute"><a name="confKey"><span class="fixed">&lt;Key format=&quot;<i>type</i>&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confKey"><span class="fixed">&lt;Key format=&quot;<i>type</i>&quot;&gt;</span></a></dd>
         <dd class="value">This specifies the file containing a private key to be
         used by a set of credentials.  Valid encodings are <span
         class="fixed">PEM</span> and <span class="fixed">DER</span>.  Keys are
@@ -1293,43 +1293,43 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         class="fixed">Certificate</span></a> element, and contain a <a
         href="#confPath"><span class="fixed">Path</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confKeyAlias"><span class="fixed">&lt;KeyAlias&gt;<i>string</i>&lt;/KeyAlias&gt;</span></dd>
+        <dd class="attribute"><a name="confKeyAlias"><span class="fixed">&lt;KeyAlias&gt;<i>string</i>&lt;/KeyAlias&gt;</span></a></dd>
         <dd class="value">Specifies the alias used for accessing the private
         key.  Contained by the <a href="#confKeyStoreResolver"><span
         class="fixed">KeyStoreResolver</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confKeyPassword"><span class="fixed">&lt;KeyPassword&gt;<i>string</i>&lt;/KeyPassword&gt;</span></dd>
+        <dd class="attribute"><a name="confKeyPassword"><span class="fixed">&lt;KeyPassword&gt;<i>string</i>&lt;/KeyPassword&gt;</span></a></dd>
         <dd class="value">Specifies the password used to retrieve the private
         key.  Contained by the <a href="#confKeyStoreResolver"><span
         class="fixed">KeyStoreResolver</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confKeyStoreKeyAlias"><span class="fixed">&lt;KeyStoreKeyAlias&gt;<i>string</i>&lt;/KeyStoreKeyAlias&gt;</span></dd>
+        <dd class="attribute"><a name="confKeyStoreKeyAlias"><span class="fixed">&lt;KeyStoreKeyAlias&gt;<i>string</i>&lt;/KeyStoreKeyAlias&gt;</span></a></dd>
         <dd class="value">Specifies the alias used for accessing the private
         key.  Contained by the <a href="#confNameMapping"><span
         class="fixed">NameMapping</span></a> element when a <span
         class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
-        <dd class="attribute"><a name="confKeyStoreKeyPassword"><span class="fixed">&lt;KeyStoreKeyPassword&gt;<i>string</i>&lt;/KeyStoreKeyPassword&gt;</span></dd>
+        <dd class="attribute"><a name="confKeyStoreKeyPassword"><span class="fixed">&lt;KeyStoreKeyPassword&gt;<i>string</i>&lt;/KeyStoreKeyPassword&gt;</span></a></dd>
         <dd class="value">Specifies the password used to retrieve the private
         key.  Contained by the <a href="#confNameMapping"><span
         class="fixed">NameMapping</span></a> element when a <span
         class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
-        <dd class="attribute"><a name="confKeyStorePassword"><span class="fixed">&lt;KeyStorePassword&gt;<i>string</i>&lt;/KeyStorePassword&gt;</span></dd>
+        <dd class="attribute"><a name="confKeyStorePassword"><span class="fixed">&lt;KeyStorePassword&gt;<i>string</i>&lt;/KeyStorePassword&gt;</span></a></dd>
         <dd class="value">Specifies the password to access the keystore
         containing the private key to be used for symmetric encryption. 
         Contained by the <a href="#confNameMapping"><span
         class="fixed">NameMapping</span></a> element when a <span
         class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
-        <dd class="attribute"><a name="confKeyStorePath"><span class="fixed">&lt;KeyStorePath&gt;<i>string</i>&lt;/KeyStorePath&gt;</span></dd>
+        <dd class="attribute"><a name="confKeyStorePath"><span class="fixed">&lt;KeyStorePath&gt;<i>string</i>&lt;/KeyStorePath&gt;</span></a></dd>
         <dd class="value">Specifies the location of the keystore containing the
         private key to be used for symmetric encryption to pass handles between
         the HS and AA.  Contained by the <a href="#confNameMapping"><span
         class="fixed">NameMapping</span></a> element when a <span
         class="fixed">CryptoHandleGenerator</span> type is specified.</dd>
 
-        <dd class="attribute"><a name="confKeyStoreResolver"><span class="fixed">&lt;KeyStoreResolver Id=&quot;<i>string</i>&quot; storeType=&quot;<i>type</i>&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confKeyStoreResolver"><span class="fixed">&lt;KeyStoreResolver Id=&quot;<i>string</i>&quot; storeType=&quot;<i>type</i>&quot;&gt;</span></a></dd>
         <dd class="value">This element is contained by the <a
         href="#confCredentials"><span class="fixed">Credentials</span></a>
         element and to specify a keystore that contains both the certificate and
@@ -1348,7 +1348,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         href="#confCertAlias"><span class="fixed">CertAlias</span></a>
         element.</dd>
 
-        <dd class="attribute"><a name="confLog4JConfig"><span class="fixed">&lt;Log4JConfig location=&quot;<i>pathname</i>&quot;/&gt;</span></dd>
+        <dd class="attribute"><a name="confLog4JConfig"><span class="fixed">&lt;Log4JConfig location=&quot;<i>pathname</i>&quot;/&gt;</span></a></dd>
         <dd class="value">This element informs Shibboleth to utilize Log4J as a
         logging system and points to the relevant configuration file using the
         <span class="fixed">location</span> attribute.  A basic configuration is
@@ -1362,7 +1362,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
         class="fixed">TransactionLog</span></a> or <a href="#confErrorLog"><span
         class="fixed">ErrorLog</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confLogging"><span class="fixed">&lt;Logging&gt;</span></dd>
+        <dd class="attribute"><a name="confLogging"><span class="fixed">&lt;Logging&gt;</span></a></dd>
         <dd class="value">This container element identifies a logging method for
         both the HS and AA to use and may not occur more than once.  Three
         different logging methods may be specified depending on what is placed
@@ -1379,7 +1379,7 @@ when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
 format=&quot;<i>URN</i>&quot;<br>
 handleTTL=&quot;<i>seconds</i>&quot;<br>
 id=&quot;<i>string</i>&quot;<br>
-type=&quot;<i>type</i>&quot;/&gt;</span></dd>
+type=&quot;<i>type</i>&quot;/&gt;</span></a></dd>
         <dd class="value">This element defines a name mapping system to create
         SAML assertion subject names for users; in standard Shibboleth, this
         will be the creation of a handle to be given to the SHAR and shared with
@@ -1415,19 +1415,19 @@ shared in-memory repository.</li>
 </ul></li>
 </ul></dd>
 
-        <dd class="attribute"><a name="confPath"><span class="fixed">&lt;Path&gt;<i>pathname</i>&lt;/Path&gt;</span></dd>
+        <dd class="attribute"><a name="confPath"></a><span class="fixed">&lt;Path&gt;<i>pathname</i>&lt;/Path&gt;</span></a></dd>
         <dd class="value">This mandatory element specifies the path to a file or
         directory utilized by other elements of the configuration.  It may be
         contained by various elements to point to different types of files
         required by the origin.</dd>
 
-        <dd class="attribute"><a name="confReleasePolicyEngine"><span class="fixed">&lt;ReleasePolicyEngine&gt;</span></dd>
+        <dd class="attribute"><a name="confReleasePolicyEngine"></a><span class="fixed">&lt;ReleasePolicyEngine&gt;</span></a></dd>
         <dd class="value">The <span class="fixed">ReleasePolicyEngine</span>
         element is used to specify a class of release policy processing.  This
         should contain one <a href="#confArpRepository"><span
         class="fixed">ArpRepository</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confRelyingParty"><span class="fixed">&lt;RelyingParty <span class="mandatory">name=&quot;<i>URN</i>&quot;</span><br>
+        <dd class="attribute"><a name="confRelyingParty"><span class="fixed">&lt;RelyingParty <span class="mandatory">name=&quot;<i>URN</i>&quot;</span></a><br>
 AAsigningCredential=&quot;<i>string</i>&quot;<br>
 AAUrl=&quot;<i>URL</i>&quot;<br>
 defaultAuthMethod=&quot;<i>URN</i>&quot;<br>
@@ -1437,7 +1437,7 @@ signAttrAssertions=&quot;<i>true/false</i>&quot;<br>
 signAttrResponses=&quot;<i>true/false</i>&quot;<br>
 signAuthAssertions=&quot;<i>true/false</i>&quot;<br>
 signAuthResponses=&quot;<i>true/false</i>&quot;<br>
-signingCredential=&quot;<i>string</i>&quot;&gt;</span></dd>
+signingCredential=&quot;<i>string</i>&quot;&gt;</span></a></dd>
         <dd class="value"><p>The <span class="fixed">RelyingParty</span> element
         is used to specify one or more relying parties that this origin must
         recognize.  This includes any federations the origin is a member of, any
@@ -1483,7 +1483,7 @@ signingCredential=&quot;<i>string</i>&quot;&gt;</span></dd>
           provider is a member of.</li>
           <li><span class="fixed">AAsigningCredential</span>: This attribute
           must equal the identifier of one of the <a
-          href="#confFileResolver><span class="fixed">FileResolver</span></a>
+          href="#confFileResolver"><span class="fixed">FileResolver</span></a>
           Id's.  A separate set of credentials may be specified for the AA's
           signing of assertions/SSL session identification using this attribute,
           as opposed to the HS' signing of assertions.  If this is not specified
@@ -1539,7 +1539,7 @@ signingCredential=&quot;<i>string</i>&quot;&gt;</span></dd>
           one or more assertions.  Defaults to <span
           class="fixed">true</span>.</li>
           <li><span class="fixed">signingCredential</span>: This attribute must
-          equal the identifier of one of the <a href="#confFileResolver><span
+          equal the identifier of one of the <a href="#confFileResolver"><span
           class="fixed">FileResolver</span></a> Id's.  This allows the origin to
           use different signing keys and certificates for exchanges with
           different federations or targets.  Ensure that the appropriate signing
@@ -1561,7 +1561,7 @@ authHeaderName=&quot;<i>string</i>&quot;<br>
 defaultAuthMethod=&quot;<i>URN</i>&quot;<br>
 maxHSThreads=&quot;<i>integer</i>&quot;<br>
 passThruErrors=&quot;<i>true/false</i>&quot;<br>
-resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></dd>
+resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></a></dd>
         <dd class="value"><p>This is the primary element that defines an <span class="fixed">origin.xml</span> file and is the container for every other element and must appear once and only once.  For most deployments, all the <span class="fixed">xmlns</span> attributes, which specify the handlers for different aspects of origin operation, should remain unchanged.  The mandatory attributes must be changed before operating the origin.</p>
 <ul>
 <li class="mandatory"><span class="fixed">defaultRelyingParty</span>: This specifies the relying party to use for a request when no <a href="#confRelyingParty"><span class="fixed">RelyingParty</span></a> element's <span class="fixed">name</span> attribute matches the policy URN of an incoming request.  Typically, this will be populated with the URN of a federation.</li>
@@ -1597,10 +1597,10 @@ resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></dd>
 </ul>
 </dd>
 
-        <dd class="attribute"><a name="confStorePassword"><span class="fixed">&lt;StorePassword&gt;<i>string</i>&lt;/StorePassword&gt;</span></dd>
+        <dd class="attribute"><a name="confStorePassword"><span class="fixed">&lt;StorePassword&gt;<i>string</i>&lt;/StorePassword&gt;</span></a></dd>
         <dd class="value">Specifies the password for the keystore.  Contained by the <a href="#confKeyStoreResolver"><span class="fixed">KeyStoreResolver</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confTransactionLog"><span class="fixed">&lt;TransactionLog location=&quot;<i>URL</i>&quot;&gt;</span></dd>
+        <dd class="attribute"><a name="confTransactionLog"><span class="fixed">&lt;TransactionLog location=&quot;<i>URL</i>&quot;&gt;</span></a></dd>
         <dd class="value">Paired with an <a href="#confErrorLog"><span class="fixed">ErrorLog</span></a> element, this will log all transactions that the origin is involved in.  The information in this file is sensitive and may be useful for auditing and security purposes.  Must be contained by a <a href="#confLogging"><span class="fixed">Logging</span></a> element.</dd>
 
     </dl>
