@@ -71,6 +71,7 @@ public class ShireServlet extends HttpServlet
 {
     private String shireLocation = null;
     private String cookieName = null;
+    private String cookieDomain = null;
     private String sessionDir = null;
     private boolean sslOnly = true;
     private boolean checkAddress = true;
@@ -110,6 +111,8 @@ public class ShireServlet extends HttpServlet
      *    <DD> The origin site registry URI to install</DD>
      *    <DT> cookie-name <I>(required)</I> </DT>
      *    <DD> Name of session cookie to set in browser</DD>
+     *    <DT> cookie-domain <I>(optional)</I> </DT>
+     *    <DD> Domain of session cookie to set in browser</DD>
      *    <DT> ssl-only <I>(defaults to true)</I> </DT>
      *    <DD> If true, allow only SSL-protected POSTs and issue a secure cookie
      *    </DD>
@@ -132,6 +135,7 @@ public class ShireServlet extends HttpServlet
         ServletConfig conf = getServletConfig();
 
         shireLocation = conf.getInitParameter("shire-location");
+        cookieDomain = conf.getInitParameter("cookie-domain");
 
         cookieName = conf.getInitParameter("cookie-name");
         if (cookieName == null)
@@ -333,6 +337,8 @@ public class ShireServlet extends HttpServlet
             // Set the session cookie.
             Cookie cookie = new Cookie(cookieName, filename);
             cookie.setPath("/");
+            if (cookieDomain != null)
+                cookie.setDomain(cookieDomain);
             response.addCookie(cookie);
 
             // Redirect back to the requested resource.
