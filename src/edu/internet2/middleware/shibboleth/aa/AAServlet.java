@@ -141,6 +141,8 @@ public class AAServlet extends HttpServlet {
 
     public void doPost(HttpServletRequest req, HttpServletResponse resp)
         throws ServletException, IOException {
+        	
+	log.info("Recieved a request.");
 
 	SAMLAttribute[] attrs = null;
 	SAMLException ourSE = null;
@@ -150,7 +152,6 @@ public class AAServlet extends HttpServlet {
 	try{
 	    saml = new AASaml(myName);
 	    saml.receive(req);
-	    log.info("AA received a query");
 	    String resource = saml.getResource();
 	    String handle = saml.getHandle();
 	    String shar = saml.getShar();

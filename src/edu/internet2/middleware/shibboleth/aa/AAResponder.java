@@ -208,14 +208,14 @@ public class AAResponder{
 	if(shar == null)
 	    throw new AAException("No default SHAR.");
 
-	log.info("\t using shar: "+shar+(usingDefault?"(default)":""));
-	log.info("\t using url: "+url);
+	log.debug("\t using shar: "+shar+(usingDefault?"(default)":""));
+	log.debug("\t using url: "+url);
 
 	if(url == null || url.length() == 0)
 	    throw new AAException("Given url to AA is null or blank");
 
 	ArpResource resource = shar.bestFit(url);
-	log.info("\t\t best fit is: "+resource);
+	log.debug("\t\t best fit is: "+resource);
 	if(resource == null){
 	    if(usingDefault)
 		return new HashSet(); // empty set
@@ -275,27 +275,30 @@ public class AAResponder{
 	return null;
     }
     
-    private SAMLAttribute jndi2saml(Attribute jAttr)
-	throws NamingException, AAException{
+	private SAMLAttribute jndi2saml(Attribute jAttr) throws NamingException, AAException {
 
-	if(jAttr == null)
-	    return null;
-	    
-	String id = jAttr.getID();
-	Vector vals = new Vector();
+		if (jAttr == null) {
+			return null;
+		}
 
-	NamingEnumeration ne = jAttr.getAll();
-	while(ne.hasMore())
-	    vals.add(ne.next());
+		log.debug("Converting Attribute (" + jAttr.getID() + ") to SAML.");
+		Vector vals = new Vector();
 
-	try{
-	    Class attrClass = Class.forName(id);
-	    log.info("Got the class for "+attrClass);
-	    ShibAttribute sa = (ShibAttribute)attrClass.newInstance();
-	    return sa.toSamlAttribute(this.domain, vals.toArray());
-	}catch(Exception e){
-	    throw new AAException("Failed to read the class for attribute "+id+" :"+e);
+		NamingEnumeration ne = jAttr.getAll();
+
+		while (ne.hasMore()) {
+			vals.add(ne.next());
+		}
+
+		try {
+			Class attrClass = Class.forName("edu.internet2.middleware.shibboleth.aaLocal.attributes." + jAttr.getID());
+			log.debug("Loaded the class for " + attrClass);
+			ShibAttribute sa = (ShibAttribute) attrClass.newInstance();
+			return sa.toSamlAttribute(this.domain, vals.toArray());
+		} catch (Exception e) {
+			log.error("Failed to load the class for attribute (" + jAttr.getID() + ") :" + e);
+			throw new AAException("Failed to load the class for attribute (" + jAttr.getID() + ") :" + e);
+		}
+
 	}
-
-    }
 }
