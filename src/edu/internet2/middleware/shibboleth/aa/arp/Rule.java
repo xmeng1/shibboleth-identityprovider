@@ -227,15 +227,26 @@ public class Rule {
 		if (target.matchesAny()) {
 			return true;
 		}
+		
+		if (requester == null) {
+			return false;
+		}
+		
 		try {
 			MatchFunction requesterFunction =
 				ArpEngine.lookupMatchFunction(target.getRequester().getMatchFunctionIdentifier());
 			if (!requesterFunction.match(target.getRequester().getValue(), requester)) {
 				return false;
 			}
+			
 			if (target.getResource().matchesAny()) {
 				return true;
 			}
+			
+			if (resource == null) {
+				return false;
+			}
+			
 			MatchFunction resourceFunction =
 				ArpEngine.lookupMatchFunction(target.getResource().getMatchFunctionIdentifier());
 			if (resourceFunction.match(target.getResource().getValue(), resource)) {
