@@ -440,6 +440,12 @@ public class ServiceProviderMapper {
 			return wantsAssertionsSigned;
 		}
 
+		public int getPreferredArtifactType() {
+
+			// TODO make configurable
+			return 1;
+		}
+
 		/**
 		 * Default identity provider implementation.
 		 * 
@@ -550,6 +556,11 @@ public class ServiceProviderMapper {
 
 			return wrapped.wantsAssertionsSigned();
 		}
+
+		public int getPreferredArtifactType() {
+
+			return wrapped.getPreferredArtifactType();
+		}
 	}
 
 	/**
@@ -626,6 +637,11 @@ public class ServiceProviderMapper {
 		public boolean wantsAssertionsSigned() {
 
 			return wrapped.wantsAssertionsSigned();
+		}
+
+		public int getPreferredArtifactType() {
+
+			return wrapped.getPreferredArtifactType();
 		}
 	}
 

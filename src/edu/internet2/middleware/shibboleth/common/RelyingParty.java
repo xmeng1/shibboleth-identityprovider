@@ -109,4 +109,9 @@ public interface RelyingParty extends ServiceProvider {
 	 * addition to profile-specific signing).
 	 */
 	public boolean wantsAssertionsSigned();
+
+	/**
+	 * Returns the type of SAML Artifact that this appropriate for use with this Relying Party.
+	 */
+	public int getPreferredArtifactType();
 }

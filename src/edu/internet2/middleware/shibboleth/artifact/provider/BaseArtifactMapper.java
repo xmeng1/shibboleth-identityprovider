@@ -25,6 +25,7 @@
 
 package edu.internet2.middleware.shibboleth.artifact.provider;
 
+import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -32,6 +33,7 @@ import org.apache.log4j.Logger;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.artifact.Artifact;
 import org.opensaml.artifact.SAMLArtifactType0001;
+import org.opensaml.artifact.SAMLArtifactType0002;
 import org.opensaml.artifact.Util;
 
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
@@ -48,6 +50,8 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 public abstract class BaseArtifactMapper implements ArtifactMapper {
 
 	private static Logger log = Logger.getLogger(BaseArtifactMapper.class.getName());
+	// TODO init from config
+	private URI type2SourceLocation;
 
 	private MessageDigest md;
 
@@ -65,13 +69,29 @@ public abstract class BaseArtifactMapper implements ArtifactMapper {
 
 	public Artifact generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty) {
 
-		// TODO should the artifact type be configurable?
-
 		// Generate the artifact
 		Artifact artifact;
-		synchronized (md) {
-			artifact = new SAMLArtifactType0001(Util.generateSourceId(md, relyingParty.getIdentityProvider()
-					.getProviderId()));
+
+		// If the relying party prefers type 2 and we have the proper data, use it
+		if (relyingParty.getPreferredArtifactType() == 2 && type2SourceLocation != null) {
+			synchronized (md) {
+				artifact = new SAMLArtifactType0002(Util.generateSourceId(md, relyingParty.getIdentityProvider()
+						.getProviderId()), type2SourceLocation);
+			}
+			// Else, use type 1
+		} else {
+			if (relyingParty.getPreferredArtifactType() == 2) {
+				log.warn("The relying party prefers Type 2 artifacts, but the mapper does not "
+						+ "have a sourceLocation configured.  Using Type 1.");
+			} else if (relyingParty.getPreferredArtifactType() != 1) {
+				log.warn("The relying party prefers Type " + relyingParty.getPreferredArtifactType()
+						+ " artifacts, but the mapper does not " + "support this type.  Using Type 1.");
+			}
+
+			synchronized (md) {
+				artifact = new SAMLArtifactType0001(Util.generateSourceId(md, relyingParty.getIdentityProvider()
+						.getProviderId()));
+			}
 		}
 
 		// Delegate adding to extenders
