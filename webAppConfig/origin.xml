@@ -5,6 +5,22 @@
     "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
 
 <web-app>
+	<init-param>
+		<param-name>DBdriver</param-name>
+		<param-value>org.gjt.mm.mysql.Driver</param-value>
+	</init-param>
+	<init-param>
+		<param-name>DBuser</param-name>
+		<param-value>shib</param-value>
+	</init-param>
+	<init-param>
+		<param-name>DBpass</param-name>
+		<param-value>shib</param-value>
+	</init-param>
+	<init-param>
+		<param-name>DBdomain</param-name>
+		<param-value>shib2.internet2.edu</param-value>
+	</init-param>
 	<servlet>
 		<servlet-name>Logging Service</servlet-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
@@ -37,22 +53,6 @@
 		<init-param>
 		          <param-name>AAurl</param-name>
 		          <param-value>https://shib2.internet2.edu/shibboleth-origin/servlet/AA</param-value>
-		</init-param>
-		<init-param>
-			<param-name>DBdriver</param-name>
-			<param-value>org.gjt.mm.mysql.Driver</param-value>
-		</init-param>
-		<init-param>
-			<param-name>DBuser</param-name>
-			<param-value>shib</param-value>
-		</init-param>
-		<init-param>
-			<param-name>DBpass</param-name>
-			<param-value>shib</param-value>
-		</init-param>
-		<init-param>
-			<param-name>DBdomain</param-name>
-			<param-value>shib2.internet2.edu</param-value>
 		</init-param>
 		<init-param>
 			<param-name>KSpath</param-name>
