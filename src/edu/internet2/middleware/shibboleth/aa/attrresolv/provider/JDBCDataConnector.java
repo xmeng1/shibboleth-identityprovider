@@ -62,7 +62,6 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
  * Data Connector that uses JDBC to access user attributes stored in databases.
  *
  * @author David Dearman (dearman@cs.dal.ca)
- * @version 0.1 July 23, 2003
  */
 
 public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
@@ -139,8 +138,8 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 
 		//Replaces %PRINCIPAL% in the query string with its value
 		log.debug("The query string before coverting %PRINCIPAL%: " + searchVal);
-		searchVal = searchVal.replaceAll("%PRINCIPAL%", principal.getName());
-		log.debug("The query string after converting %PRINCIPAL%: " + searchVal);
+		String convertedSearchVal = searchVal.replaceAll("%PRINCIPAL%", principal.getName());
+		log.debug("The query string after converting %PRINCIPAL%: " + convertedSearchVal);
 
 		try {
 			//Loads the database driver
@@ -175,7 +174,7 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 
 		try {
 			//Gets the results set for the query
-			rs = executeQuery(conn, searchVal);
+			rs = executeQuery(conn, convertedSearchVal);
 		} catch (SQLException e) {
 			log.error("An ERROR occured while executing the query");
 			throw new ResolutionPlugInException("An ERROR occured while executing the query: " + e.getMessage());
