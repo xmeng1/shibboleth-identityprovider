@@ -35,7 +35,7 @@
 
 	<!-- Compile classes and move them to ${build} -->
 	<target name="compile-all" depends="init">
-		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
+		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" excludes="edu/internet2/middleware/shibboleth/aaLocal/**" debug="on">
 			<classpath refid="build.path" />
 		</javac>
 		<copy todir="${build}/schemas">
