@@ -52,12 +52,41 @@ import java.net.URL;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 
 /**
+ * Defines a method for obtaining data that is bound to a <code>RelyingParty</code>
+ * and is needed by the Shibboloeth Handle Service.
+ * 
  * @author Walter Hoehn
  */
 public interface HSRelyingParty extends RelyingParty {
 
+	/**
+	 * Returns the id of the name format that should be used in authentication
+	 * assertions issued to this <code>RelyingParty</code>.
+	 * 
+	 * @return the id for the format
+	 */
 	public String getHSNameFormatId();
+
+	/**
+	 * A boolean indication of whether this <code>RelyingParty</code> is
+	 * running <= Shibboleth v1.1 .  Used to ensure backward compatibility.
+	 */
 	public boolean isLegacyProvider();
+
+	/**
+	 * Returns the location of the Shibboleth Attribute Authority that should
+	 * answer requests for this <code>RelyingParty</code>.
+	 * 
+	 * @return the URL
+	 */
 	public URL getAAUrl();
+
+	/**
+	 * The authentication method that should be included in assertions to the
+	 * <code>RelyingParty</code>, if one is not found in HTTP request
+	 * headers.
+	 * 
+	 * @return the identifier for the method
+	 */
 	public URI getDefaultAuthMethod();
 }

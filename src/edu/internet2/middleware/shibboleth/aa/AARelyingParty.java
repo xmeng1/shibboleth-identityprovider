@@ -49,10 +49,17 @@ package edu.internet2.middleware.shibboleth.aa;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 
 /**
+ * Defines a method for obtaining data that is bound to a <code>RelyingParty</code>
+ * and is needed by the Shibboloeth Attribute Authority.
+ * 
  * @author Walter Hoehn
  */
 public interface AARelyingParty extends RelyingParty {
-	
+
+	/**
+	 * A boolean indication of whether internal errors should be transmitted to
+	 * this <code>RelyingParty</code>
+	 */
 	public boolean passThruErrors();
-	
+
 }
