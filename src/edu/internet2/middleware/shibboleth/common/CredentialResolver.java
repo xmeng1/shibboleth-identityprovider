@@ -40,9 +40,20 @@ package edu.internet2.middleware.shibboleth.common;
 import org.w3c.dom.Element;
 
 /**
+ * Defines a method for loading a credential from a particular storage mechanism.
  * @author Walter Hoehn
- *  
  */
 public interface CredentialResolver {
+
+        /**
+         * Loads a credential as specified by the XML configuration.
+         *
+         * @param e DOM representation of credential resolver configuration
+         *
+         * @return the credential
+         *
+         * @throws CredentialFactoryException
+         * 	        if the credential could not be loaded
+         */
 	Credential loadCredential(Element e) throws CredentialFactoryException;
 }

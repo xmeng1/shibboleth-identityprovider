@@ -63,6 +63,9 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
+ * Class for determining the effective relying party for the Shibboleth handle service from the unique id of the service
+ * provider.
+ *
  * @author Walter Hoehn
  */
 public class HSServiceProviderMapper extends ServiceProviderMapper {
@@ -72,6 +75,17 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	private Credentials credentials;
 	private HSNameMapper nameMapper;
 
+	/**
+         * Constructs a new service provider mapper for the handle service.
+	 * 
+	 * @param rawConfig DOM representation of the handle service configuration
+	 * @param configuration global handle service configuration
+	 * @param credentials credentials for the handle service using this provider mapper
+	 * @param nameMapper name mapper for the handle service using this provider mapper
+         *
+	 * @throws ServiceProviderMapperException
+	 *             if the configuration is invalid
+	 */
 	public HSServiceProviderMapper(
 		Element rawConfig,
 		HSConfig configuration,
@@ -107,6 +121,9 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		}
 	}
 
+        /**
+         * Returns the appropriate relying party for the supplied service provider id.
+         */
 	public HSRelyingParty getRelyingParty(String providerIdFromTarget) {
 
 		//If the target did not send a Provider Id, then assume it is a Shib
@@ -118,6 +135,15 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 
 		return (HSRelyingParty) getRelyingPartyImpl(providerIdFromTarget);
 	}
+
+	protected ShibbolethOriginConfig getOriginConfig() {
+		return configuration;
+	}
+
+        /**
+         * HS-specific relying party implementation.
+         * @author Walter Hoehn
+         */
 	class HSRelyingPartyImpl extends BaseRelyingPartyImpl implements HSRelyingParty {
 
 		private URL overridenAAUrl;
@@ -242,6 +268,10 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		}
 	}
 
+        /**
+         * Relying party wrapper for Shibboleth &lt;=1.1 service providers.
+         * @author Walter Hoehn
+         */
 	class LegacyWrapper extends UnknownProviderWrapper implements HSRelyingParty {
 
 		LegacyWrapper(HSRelyingParty wrapped) {
@@ -262,10 +292,6 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		public URI getDefaultAuthMethod() {
 			return ((HSRelyingParty) wrapped).getDefaultAuthMethod();
 		}
-	}
-
-	protected ShibbolethOriginConfig getOriginConfig() {
-		return configuration;
 	}
 
 }

@@ -56,25 +56,24 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
- * Defines a mechanism for generating SAML Name Identifiers from <code>AuthNPrincipal</code>
- * objects.
+ * Adds a mechanism to the {@link NameIdentifierMapping} interface for generating SAML Name Identifiers from 
+ * {@link AuthNPrincipal} objects.
  * 
  * @author Walter Hoehn
  */
 public interface HSNameIdentifierMapping extends NameIdentifierMapping {
 
 	/**
-	 * @return the id of this mapping or <tt>null</tt> is it is not
+	 * @return the id of this mapping or <code>null</code> is it is not
 	 *         configured with one
 	 */
 	public String getId();
 
 	/**
-	 * 
 	 * Maps a local principal to a SAML Name Identifier.
 	 * 
 	 * @param id
-	 *            the id under which the effective <code>HSNameIdentifierMapping</code>
+	 *            the id under which the effective {@link HSNameIdentifierMapping}
 	 *            is registered
 	 * @param principal
 	 *            the principal to map
@@ -82,8 +81,9 @@ public interface HSNameIdentifierMapping extends NameIdentifierMapping {
 	 *            the provider initiating the request
 	 * @param idProv
 	 *            the provider handling the request
-	 * @return @throws
-	 *         NameIdentifierMappingException If the <code>NameMapper</code>
+	 * @return the SAML name identifier
+
+         * @throws NameIdentifierMappingException If the {@link NameMapper}
 	 *         encounters an internal error
 	 */
 	public SAMLNameIdentifier getNameIdentifierName(

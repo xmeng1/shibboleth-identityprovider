@@ -85,8 +85,9 @@ import sun.misc.BASE64Decoder;
 import sun.security.util.DerValue;
 
 /**
+ * Uses {@link CredentialResolver} implementations to create {@link Credential}s.
+ *
  * @author Walter Hoehn
- *  
  */
 public class Credentials {
 
@@ -95,6 +96,10 @@ public class Credentials {
 	private static Logger log = Logger.getLogger(Credentials.class.getName());
 	private Hashtable data = new Hashtable();
 
+        /**
+         * Creates credentials based on XML configuration.
+         * @param e DOM representation of credentials configuration
+         */
 	public Credentials(Element e) {
 
 		if (!e.getLocalName().equals("Credentials")) {
@@ -187,6 +192,10 @@ class KeyInfoCredentialResolver implements CredentialResolver {
 	}
 }
 
+/**
+ * Loads a credential from a file. Supports DER, PEM, encrypted PEM, PKCS8, and encrypted PKCS8 for RSA and DSA.
+ * @author Walter Hoehn
+ */
 class FileCredentialResolver implements CredentialResolver {
 
 	private static Logger log = Logger.getLogger(FileCredentialResolver.class.getName());
@@ -1140,9 +1149,8 @@ class FileCredentialResolver implements CredentialResolver {
 	}
 
 	/**
-	 * 
-	 * Loads a specified bundle of certs individually and returns an array of <code>Certificate</code> objects. This
-	 * is needed because the standard <code>CertificateFactory.getCertificates(InputStream)</code> method bails out
+	 * Loads a specified bundle of certs individually and returns an array of {@link Certificate} objects. This
+	 * is needed because the standard {@link CertificateFactory#getCertificates(InputStream)} method bails out
 	 * when it has trouble loading any cert and cannot handle "comments".
 	 */
 	private Certificate[] loadCertificates(InputStream inStream, String certType) throws CredentialFactoryException {
@@ -1209,7 +1217,6 @@ class FileCredentialResolver implements CredentialResolver {
 	 * @throws InvalidCertificateChainException
 	 *             thrown if a chain cannot be constructed from the specified elements
 	 */
-
 	protected void walkChain(X509Certificate[] chainSource, ArrayList chainDest) throws CredentialFactoryException {
 
 		X509Certificate currentCert = (X509Certificate) chainDest.get(chainDest.size() - 1);
@@ -1236,7 +1243,6 @@ class FileCredentialResolver implements CredentialResolver {
 	 * @param privKey
 	 *            the private key
 	 */
-
 	protected boolean isMatchingKey(PublicKey pubKey, PrivateKey privKey) {
 
 		try {
@@ -1327,6 +1333,10 @@ class FileCredentialResolver implements CredentialResolver {
 
 }
 
+/**
+ * Loads a credential from a Java keystore. 
+ * @author Walter Hoehn
+ */
 class KeystoreCredentialResolver implements CredentialResolver {
 
 	private static Logger log = Logger.getLogger(KeystoreCredentialResolver.class.getName());
@@ -1518,6 +1528,11 @@ class KeystoreCredentialResolver implements CredentialResolver {
 	}
 }
 
+/**
+ * Uses implementation specified in the configuration to load a credential.
+ *
+ * @author Walter Hoehn
+ */
 class CustomCredentialResolver implements CredentialResolver {
 
 	private static Logger log = Logger.getLogger(CustomCredentialResolver.class.getName());

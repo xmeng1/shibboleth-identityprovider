@@ -58,8 +58,11 @@ import edu.internet2.middleware.shibboleth.aa.AARelyingParty;
 import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
 
 /**
+ * Base class for determining the effective relying party from the unique id of the service provider. Checks first for
+ * an exact match on the service provider, then for membership in a federation. Uses the default relying party if
+ * neither is found.
+ * 
  * @author Walter Hoehn
- *  
  */
 public abstract class ServiceProviderMapper {
 
@@ -135,15 +138,17 @@ public abstract class ServiceProviderMapper {
 		return (RelyingParty) relyingParties.get(defaultParty);
 	}
 
+        /**
+         * Base relying party implementation.
+         *
+         * @author Walter Hoehn
+         */
 	protected abstract class BaseRelyingPartyImpl implements RelyingParty {
 
 		protected RelyingPartyIdentityProvider identityProvider;
 		protected String name;
 		protected String overridenOriginProviderId;
 
-		/**
-		 * Shared construction
-		 */
 		public BaseRelyingPartyImpl(Element partyConfig) throws ServiceProviderMapperException {
 
 			//Get party name
@@ -175,6 +180,10 @@ public abstract class ServiceProviderMapper {
 			return identityProvider;
 		}
 
+                /**
+                 * Default identity provider implementation.
+                 * @author Walter Hoehn
+                 */
 		protected class RelyingPartyIdentityProvider implements IdentityProvider {
 
 			private String providerId;
@@ -200,6 +209,11 @@ public abstract class ServiceProviderMapper {
 		}
 	}
 
+        /**
+         * Relying party implementation wrapper for relying parties that are federations.
+         * 
+         * @author Walter Hoehn
+         */
 	class RelyingPartyGroupWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
 
 		private RelyingParty wrapped;
@@ -254,6 +268,11 @@ public abstract class ServiceProviderMapper {
 		}
 	}
 
+        /**
+         * Relying party implementation wrapper for anonymous service providers.
+         *
+         * @author Walter Hoehn
+         */
 	protected class UnknownProviderWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
 		protected RelyingParty wrapped;
 

@@ -51,8 +51,8 @@ import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
 /**
- * <code>NameMapping</code> implementation that creates a principal from a
- * shared principal name.
+ * {@link NameIdentifierMapping} implementation to use when the SAML name identifier format matches the Shibboleth
+ * internal representation of the principal.
  * 
  * @author Walter Hoehn
  */

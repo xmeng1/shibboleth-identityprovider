@@ -65,7 +65,7 @@ public class NameMapper {
 	private static Logger log = Logger.getLogger(NameMapper.class.getName());
 	protected Map byFormat = new HashMap();
 	private static Map registeredMappingTypes = Collections.synchronizedMap(new HashMap());
-	/** Indicated of whether mappings have been added */
+	/** true if mappings have been added */
 	protected boolean initialized = false;
 	/** Mapping to use if no other mappings have been added */
 	protected SharedMemoryShibHandle defaultMapping;
@@ -91,7 +91,7 @@ public class NameMapper {
 	}
 
 	/**
-	 * Constructs name mapper and loads a default name mapping.
+	 * Constructs the name mapper and loads a default name mapping.
 	 */
 	public NameMapper() {
 		try {
@@ -174,8 +174,7 @@ public class NameMapper {
 	}
 
 	/**
-	 * Adds a <code>NameIdentifierMapping</code> to this <code>NameMapper</code>, registering it according to its
-	 * format.
+         * Adds a {@link NameIdentifierMapping} to this name mapper, registering it according to its format.
 	 * 
 	 * @param mapping
 	 *            the mapping to add
@@ -193,11 +192,11 @@ public class NameMapper {
 	}
 
 	/**
-	 * Returns the <code>NameIdentifierMapping</code> registered for a given format
+	 * Returns the {@link NameIdentifierMapping} registered for a given format.
 	 * 
 	 * @param format
 	 *            the registered format
-	 * @return the mapping or <tt>null</tt> if no mapping is registered for the given format
+	 * @return the mapping or <code>null</code> if no mapping is registered for the given format
 	 */
 	public NameIdentifierMapping getNameIdentifierMapping(URI format) {
 		if (!initialized) {
@@ -242,9 +241,9 @@ public class NameMapper {
 	 *            the provider handling the request
 	 * @return the local principal
 	 * @throws NameIdentifierMappingException
-	 *             If the <code>NameMapper</code> encounters an internal error
+	 *             If the {@link NameMapper} encounters an internal error
 	 * @throws InvalidNameIdentifierException
-	 *             If the <code>SAMLNameIdentifier</code> contains invalid data
+	 *             If the {@link SAMLNameIdentifier} contains invalid data
 	 */
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 		throws NameIdentifierMappingException, InvalidNameIdentifierException {

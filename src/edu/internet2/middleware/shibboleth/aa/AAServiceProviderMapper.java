@@ -56,6 +56,9 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
+ * Class for determining the effective relying party for the Shibboleth attribute authority from the unique id of the
+ * service provider.
+ * 
  * @author Walter Hoehn
  */
 public class AAServiceProviderMapper extends ServiceProviderMapper {
@@ -63,6 +66,15 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 	private static Logger log = Logger.getLogger(AAServiceProviderMapper.class.getName());
 	private AAConfig configuration;
 
+	/**
+         * Constructs a new service provider mapper for the attribute authority.
+	 * 
+	 * @param rawConfig DOM representation of the attribute authority configuration
+	 * @param configuration global attribute authority configuration
+         *
+	 * @throws ServiceProviderMapperException
+	 *             if the configuration is invalid
+	 */
 	public AAServiceProviderMapper(Element rawConfig, AAConfig configuration) throws ServiceProviderMapperException {
 
 		this.configuration = configuration;
@@ -91,10 +103,21 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 		}
 	}
 
+        /**
+         * Returns the appropriate relying party for the supplied service provider id.
+         */
 	public AARelyingParty getRelyingParty(String providerIdFromTarget) {
 		return (AARelyingParty) getRelyingPartyImpl(providerIdFromTarget);
 	}
 
+	protected ShibbolethOriginConfig getOriginConfig() {
+		return configuration;
+	}
+
+        /**
+         * AA-specific relying party implementation.
+         * @author Walter Hoehn
+         */
 	class AARelyingPartyImpl extends BaseRelyingPartyImpl {
 
 		private AAConfig aaConfig;
@@ -127,9 +150,5 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 			}
 		}
 
-	}
-
-	protected ShibbolethOriginConfig getOriginConfig() {
-		return configuration;
 	}
 }

@@ -93,9 +93,8 @@ import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 
 /**
- * <code>HSNameIdentifierMapping</code> implementation that uses symmetric
- * encryption to securely transport principal data inside Shibboleth Attribute
- * Query Handles.
+ * {@link HSNameIdentifierMapping} implementation that uses symmetric encryption to store principal data inside
+ * Shibboleth Attribute Query Handles.
  * 
  * @author Walter Hoehn
  */

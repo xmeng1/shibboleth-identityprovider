@@ -56,6 +56,8 @@ import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 
 /**
+ * Base class for processing name identifier mapping configuration.
+ *
  * @author Walter Hoehn
  */
 public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping {

@@ -67,8 +67,8 @@ import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 
 /**
- * <code>HSNameIdentifierMapping</code> implementation that uses an in-memory
- * cache to store mappings between principal names and Shibboleth Attribute Query Handles.
+ * {@link HSNameIdentifierMapping} implementation that uses an in-memory cache to store mappings between principal names
+ * and Shibboleth Attribute Query Handles.
  * 
  * @author Walter Hoehn
  */

@@ -54,8 +54,9 @@ import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 
 /**
+ * Used to prove identity or integrity of transmitted messages.
+ *
  * @author Walter Hoehn
- *  
  */
 public class Credential {
 
@@ -63,10 +64,16 @@ public class Credential {
 	public static int RSA = 1;
 	public static int DSA = 2;
 
-	private int type = 0;
+	private int type = UNKNOWN;
 	private Key key;
 	private X509Certificate[] certs;
 
+        /**
+         * Creates a X509 credential.
+         *
+         * @param certChain certificate chain corresponding to the private key
+         * @param key the RSA or DSA private key
+         */
 	public Credential(X509Certificate[] certChain, PrivateKey key) {
 		if (key instanceof RSAPrivateKey) {
 			type = RSA;
