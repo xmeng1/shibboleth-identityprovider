@@ -38,7 +38,7 @@ public class eduPersonPrincipalName implements ShibAttribute{
 	    scopes[0] = defaultScope;
 	}
 
-	System.out.println("AA debug: sending value="+vals[0]+"  scope="+scopes[0]);
+	log.debug("Sending value="+vals[0]+"  scope="+scopes[0]);
 		
 	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName",
 				 Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
