@@ -74,9 +74,12 @@ public class AASaml {
 					       sub.getConfirmationMethods(),
 					       sub.getConfirmationData());
             
-	    SAMLStatement sStatement = new SAMLAttributeStatement(rSubject, attrs);
-	    SAMLStatement[] statements = new SAMLStatement[1];
-	    statements[0] = sStatement;
+	    SAMLStatement[] statements = null;
+	    if(attrs != null && attrs.length > 0){
+		statements = new SAMLStatement[1];
+		statements[0] = new SAMLAttributeStatement(rSubject, attrs);
+	    }
+
 	    Date now = new Date();
 	    Date  then = null;
 	    if(attrs != null && attrs.length > 0){
