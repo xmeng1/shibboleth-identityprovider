@@ -1,67 +1,84 @@
-<project default="dist" basedir=".">
+<!-- Main build configutaion for Shibboleth java components - Walter Hoehn 06/04/2002 -->
 
-	<property name="distname" value="shibboleth"/>
+<project default="dist-all" basedir=".">
 
-	<!-- set global properties for this build -->
-	<property name="root" value="."/>
-	<property name="src" value="${root}/source"/>
-	<property name="approot" value="${root}/webApplication"/>
-	<property name="build" value="${approot}/WEB-INF/classes"/>
-	<property name="libdir" value="${approot}/WEB-INF/lib"/>
-	<property name="buildlibs" value="${root}/buildlibs"/>
-	<property name="dist" value="${root}/dist"/>
 
+	<!-- Set global properties for this build -->
+	<property name="distname" value="shibboleth" />
+	<property name="root" value="." />
+	<property name="src" value="${root}/source" />
+	<property name="approot" value="${root}/webApplication" />
+	<property name="build" value="${approot}/WEB-INF/classes" />
+	<property name="libdir" value="${approot}/WEB-INF/lib" />
+	<property name="buildlibs" value="${root}/buildlibs" />
+	<property name="dist" value="${root}/dist" />
+
+
+	<!-- Construct the CLASSPATH -->
 	<path id="build.path">
-		<pathelement path="${classpath}"/>
-		<pathelement location="${build}"/>
+		<pathelement path="${classpath}" />
+		<pathelement location="${build}" />
 		<fileset dir="${libdir}">
-			<include name="**/*.jar"/>
+			<include name="**/*.jar" />
 		</fileset>
 		<fileset dir="${buildlibs}">
-			<include name="**/*.jar"/>
+			<include name="**/*.jar" />
 		</fileset>
-
 	</path>
+
 
 	<!-- Prepare directory structure for project build-->
 	<target name="init">
-		<mkdir dir="${build}"/>
-		<mkdir dir="${dist}"/>
+	<mkdir dir="${build}" />
+	<mkdir dir="${dist}" />
 	</target>
 
+
 	<!-- Compile classes and move them to ${build} -->
-	<target name="compile" depends="init">
+	<target name="compile-all" depends="init">
 		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
-			<classpath refid="build.path"/>
+			<classpath refid="build.path" />
 		</javac>
 	</target>
 
+
+	<!-- Create various product distributions and move them to ${dist} -->
+	<target name="dist-all" depends="compile-all, package, clean-build" />
+	<target name="dist-origin" depends="compile-all, package, clean-build" />
+	<target name="dist-target" depends="compile-all, package, clean-build" />
+	<target name="dist-wayf" depends="compile-all, package, clean-build" />
 	<target name="package">
-		<war warfile="${dist}/${distname}.war" webxml="${approot}/WEB-INF/web.xml" basedir="${approot}" update="no"/>
+		<war warfile="${dist}/${distname}.war" webxml="${approot}/WEB-INF/web.xml" basedir="${approot}" update="no" />
 	</target>
 
-	<target name="dist" depends="compile, package, clean-build"/>
 
-	<!-- Delete the ${build} and ${dist} directory trees -->
-	<target name="clean" depends="clean-build, clean-dist"/>
-
+	<!-- Cleanup after the build, test, and distribution processes -->
+	<target name="clean-all" depends="clean-build, clean-dist, clean-test" />
 	<target name="clean-build">
-		<delete dir="${build}"/>
+		<delete dir="${build}" />
+	</target>
+	<target name="clean-test">
+		<delete>
+			<fileset dir="${root}">
+				<include name="**/TEST*.txt" />
+			</fileset>
+		</delete>
+	</target>
+	<target name="clean-dist">
+		<delete dir="${dist}" />
 	</target>
 
-	<target name="clean-dist">
-		<delete dir="${dist}"/>
-	</target>
 	
-	<target name="test" depends="test-common" />
-	<target name="test-common" depends="compile">
-		<junit printsummary="yes" fork="no" haltonfailure="yes" haltonerror="no">
-			<classpath refid="build.path"/>
+	<!-- Run automated tests on compiled code -->
+	<target name="test-all" depends="test-common" />
+	<target name="test-common" depends="compile-all">
+		<junit printsummary="no" fork="no" haltonfailure="yes" haltonerror="no">
+			<classpath refid="build.path" />
 			<formatter type="plain" />
 			<test name="edu.internet2.middleware.shibboleth.common.AQHTest" />
 		</junit>
 	</target>
-	
 
+	
 </project>
 
