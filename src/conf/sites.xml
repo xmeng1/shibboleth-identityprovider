@@ -14,30 +14,12 @@
 		<AttributeAuthority Location="https://shib2.internet2.edu/shibboleth/AA" Name="shib2.internet2.edu"/>
 		<Domain>shibdev.edu</Domain>
 	</OriginSite>
-
-	<SiteGroup Name="foofed">
-		<DestinationSite Name="bar">
-		<Alias>barman</Alias>
-			<Contact Type="technical" Name="Walter Hoehn" Email="wassa@memphis.edu"/>
-			<AssertionConsumerServiceURL Location="http://foo.com/SHIRE"/>
-			<AttributeRequester Name="C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test.memphis.edu"/>
-		</DestinationSite>
-			<SiteGroup Name="bahfed">
-				<DestinationSite Name="bahsite">
-				<Alias>bahman</Alias>
-					<Contact Type="technical" Name="Walter Hoehn" Email="wassa@memphis.edu"/>
-					<AssertionConsumerServiceURL Location="http://foo.com/SHIRE"/>
-					<AttributeRequester Name="C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test.memphis.edu"/>
-				</DestinationSite>
-			</SiteGroup>
-	</SiteGroup>
 	
-	<DestinationSite Name="rootsite">
-		<Alias>rootman</Alias>
+	<DestinationSite Name="urn:mace:inqueue:example.edu">
+		<Alias>Example State University</Alias>
 			<Contact Type="technical" Name="Walter Hoehn" Email="wassa@memphis.edu"/>
 			<AssertionConsumerServiceURL Location="http://foo.com/SHIRE"/>
-			<AttributeRequester Name="C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test1.memphis.edu"/>
-			<AttributeRequester Name="C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test2.memphis.edu"/>
+			<AttributeRequester Name="CN=shibboleth.example.edu, O=UCAID, C=US"/>
 	</DestinationSite>
 
 </SiteGroup>
