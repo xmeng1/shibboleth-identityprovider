@@ -42,7 +42,7 @@ public class IdPConfig {
 
 	private String defaultRelyingPartyName;
 	private String providerId;
-	public static final String originConfigNamespace = "urn:mace:shibboleth:origin:1.0";
+	public static final String originConfigNamespace = "urn:mace:shibboleth:idp:config:1.0";
 	private String resolverConfig = "/conf/resolver.xml";
 	private boolean passThruErrors = false;
 	private int maxThreads = 5;
@@ -55,21 +55,21 @@ public class IdPConfig {
 	public IdPConfig(Element config) throws ShibbolethConfigurationException {
 
 		if (!config.getTagName().equals("IdPConfig")) { throw new ShibbolethConfigurationException(
-				"Unexpected configuration data.  <IdPConfig> is needed."); }
+				"Unexpected configuration data.  <IdPConfig/> is needed."); }
 
 		log.debug("Loading global configuration properties.");
 
 		// Global providerId
 		providerId = ((Element) config).getAttribute("providerId");
 		if (providerId == null || providerId.equals("")) {
-			log.error("Global providerId not set.  Add a (providerId) attribute to <IdPConfig>.");
+			log.error("Global providerId not set.  Add a (providerId) attribute to <IdPConfig/>.");
 			throw new ShibbolethConfigurationException("Required configuration not specified.");
 		}
 
 		// Default Relying Party
 		defaultRelyingPartyName = ((Element) config).getAttribute("defaultRelyingParty");
 		if (defaultRelyingPartyName == null || defaultRelyingPartyName.equals("")) {
-			log.error("Default Relying Party not set.  Add a (defaultRelyingParty) attribute to <IdPConfig>.");
+			log.error("Default Relying Party not set.  Add a (defaultRelyingParty) attribute to <IdPConfig/>.");
 			throw new ShibbolethConfigurationException("Required configuration not specified.");
 		}
 
@@ -87,7 +87,7 @@ public class IdPConfig {
 
 		attribute = ((Element) config).getAttribute("AAUrl");
 		if (attribute == null || attribute.equals("")) {
-			log.error("Global Attribute Authority URL not set.  Add an (AAUrl) attribute to <IdPConfig>.");
+			log.error("Global Attribute Authority URL not set.  Add an (AAUrl) attribute to <IdPConfig/>.");
 			throw new ShibbolethConfigurationException("Required configuration not specified.");
 		}
 		try {

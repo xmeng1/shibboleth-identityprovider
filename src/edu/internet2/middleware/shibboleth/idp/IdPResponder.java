@@ -115,6 +115,8 @@ public class IdPResponder extends TargetFederationComponent {
 
 	// TODO Maybe should rethink the inheritance here, since there is only one
 	// servlet
+	
+	//TODO idp config should accept new or old element <ShibbolethOriginConfiguration/> or <IdPConfig/>
 
 	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
 	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
@@ -143,6 +145,12 @@ public class IdPResponder extends TargetFederationComponent {
 			// TODO this needs to be pluggable
 			artifactMapper = new MemoryArtifactMapper();
 			loadConfiguration();
+			
+			//TODO what should we do with the throttle now!!!  default???
+			
+			//Load a semaphore that throttles how many requests the IdP will handle at once
+			throttle = new Semaphore(configuration.getMaxThreads());
+			
 			log.info("Identity Provider initialization complete.");
 
 		} catch (ShibbolethConfigurationException ae) {
@@ -245,6 +253,174 @@ public class IdPResponder extends TargetFederationComponent {
 
 	}
 
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
+		MDC.put("remoteAddr", request.getRemoteAddr());
+		log.debug("Recieved a request via GET.");
+		log.info("Handling authN request.");
+
+		try {
+			throttle.enter();
+
+			// Ensure that we have the required data from the servlet container
+			validateEngineData(request);
+
+			// Determine which profile of SAML we are responding to (at this point, Shib vs. EAuth)
+			SSOProfileHandler activeHandler = null;
+			for (int i = 0; i < profileHandlers.length; i++) {
+				if (profileHandlers[i].validForRequest(request)) {
+					activeHandler = profileHandlers[i];
+					break;
+				}
+			}
+			if (activeHandler == null) { throw new InvalidClientDataException(
+					"The request did not contain sufficient parameter data to determine the protocol."); }
+
+			// Run profile specific preprocessing
+			if (activeHandler.preProcessHook(request, response)) { return; }
+
+			// Get the authN info
+			String username = configuration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
+					.getRemoteUser() : request.getHeader(configuration.getAuthHeaderName());
+
+			// Select the appropriate Relying Party configuration for the request
+			RelyingParty relyingParty = null;
+			String remoteProviderId = activeHandler.getRemoteProviderId(request);
+			// If the target did not send a Provider Id, then assume it is a Shib
+			// 1.1 or older target
+			if (remoteProviderId == null) {
+				relyingParty = spMapper.getLegacyRelyingParty();
+			} else if (remoteProviderId.equals("")) {
+				throw new InvalidClientDataException("Invalid service provider id.");
+			} else {
+				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
+				relyingParty = spMapper.getRelyingParty(remoteProviderId);
+			}
+
+			// Grab the metadata for the provider
+			Provider provider = lookup(relyingParty.getProviderId());
+
+			// Use profile-specific method for determining the acceptance URL
+			String acceptanceURL = activeHandler.getAcceptanceURL(request, relyingParty, provider);
+
+			// Make sure that the selected relying party configuration is appropriate for this
+			// acceptance URL
+			if (!relyingParty.isLegacyProvider()) {
+
+				if (provider == null) {
+					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+					relyingParty = spMapper.getRelyingParty(null);
+
+				} else {
+
+					if (isValidAssertionConsumerURL(provider, acceptanceURL)) {
+						log.info("Supplied consumer URL validated for this provider.");
+					} else {
+						log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
+								+ relyingParty.getProviderId() + ").");
+						throw new InvalidClientDataException("Invalid assertion consumer service URL.");
+					}
+				}
+			}
+
+			// Create SAML Name Identifier
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(relyingParty.getHSNameFormatId(),
+					new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
+
+			String authenticationMethod = request.getHeader("SAMLAuthenticationMethod");
+			if (authenticationMethod == null || authenticationMethod.equals("")) {
+				authenticationMethod = relyingParty.getDefaultAuthMethod().toString();
+				log.debug("User was authenticated via the default method for this relying party ("
+						+ authenticationMethod + ").");
+			} else {
+				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
+			}
+
+			// We might someday want to provide a mechanism for the authenticator to specify the auth time
+			SAMLAssertion[] assertions = activeHandler.processHook(request, relyingParty, provider, nameId,
+					authenticationMethod, new Date(System.currentTimeMillis()));
+
+			// TODO do assertion signing here
+
+			// SAML Artifact profile
+			if (useArtifactProfile(provider, acceptanceURL)) {
+				log.debug("Responding with Artifact profile.");
+
+				// Create artifacts for each assertion
+				ArrayList artifacts = new ArrayList();
+				for (int i = 0; i < assertions.length; i++) {
+					artifacts.add(artifactMapper.generateArtifact(assertions[i], relyingParty));
+				}
+
+				// Assemble the query string
+				StringBuffer destination = new StringBuffer(acceptanceURL);
+				destination.append("?TARGET=");
+				destination.append(URLEncoder.encode(activeHandler.getSAMLTargetParameter(request, relyingParty,
+						provider), "UTF-8"));
+				Iterator iterator = artifacts.iterator();
+				StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
+				while (iterator.hasNext()) {
+					destination.append("&SAMLart=");
+					String artifact = (String) iterator.next();
+					destination.append(URLEncoder.encode(artifact, "UTF-8"));
+					artifactBuffer.append("(" + artifact + ")");
+				}
+				log.debug("Redirecting to (" + destination.toString() + ").");
+				response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
+
+				transactionLog.info("Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
+						+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal (" + username
+						+ "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
+						+ nameId.getFormat() + ").");
+
+				// SAML POST profile
+			} else {
+				log.debug("Responding with POST profile.");
+				request.setAttribute("acceptanceURL", acceptanceURL);
+				request.setAttribute("target", activeHandler.getSAMLTargetParameter(request, relyingParty, provider));
+
+				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, Arrays.asList(assertions), null);
+				addSignatures(samlResponse, relyingParty, provider, true);
+				createPOSTForm(request, response, samlResponse.toBase64());
+
+				// Make transaction log entry
+				if (relyingParty.isLegacyProvider()) {
+					transactionLog.info("Authentication assertion issued to legacy provider (SHIRE: "
+							+ request.getParameter("shire") + ") on behalf of principal (" + username
+							+ ") for resource (" + request.getParameter("target") + "). Name Identifier: ("
+							+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
+				} else {
+					transactionLog.info("Authentication assertion issued to provider ("
+							+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+							+ username + "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
+							+ nameId.getFormat() + ").");
+				}
+			}
+
+			// TODO profile specific error handling
+		} catch (NameIdentifierMappingException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} catch (InvalidClientDataException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} catch (SAMLException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} catch (InterruptedException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} finally {
+			throttle.exit();
+		}
+
+	}
+
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
@@ -332,6 +508,85 @@ public class IdPResponder extends TargetFederationComponent {
 			} catch (Exception ee) {
 				log.fatal("Could not construct a SAML error response: " + ee);
 				throw new ServletException("Identity Provider response failure.");
+			}
+		}
+	}
+
+	// TODO this should be renamed, since it is now only one type of response
+	// that we can send
+	public void sendSAMLResponse(HttpServletResponse resp, SAMLAttribute[] attrs, SAMLRequest samlRequest,
+			RelyingParty relyingParty, SAMLException exception) throws IOException {
+
+		SAMLException ourSE = null;
+		SAMLResponse samlResponse = null;
+
+		try {
+			if (attrs == null || attrs.length == 0) {
+				// No attribute found
+				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, exception);
+			} else {
+
+				SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
+
+				// Reference requested subject
+				SAMLSubject rSubject = (SAMLSubject) attributeQuery.getSubject().clone();
+
+				// Set appropriate audience
+				ArrayList audiences = new ArrayList();
+				if (relyingParty.getProviderId() != null) {
+					audiences.add(relyingParty.getProviderId());
+				}
+				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
+					audiences.add(relyingParty.getName());
+				}
+				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
+
+				// Put all attributes into an assertion
+				SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
+
+				// Set assertion expiration to longest attribute expiration
+				long max = 0;
+				for (int i = 0; i < attrs.length; i++) {
+					if (max < attrs[i].getLifetime()) {
+						max = attrs[i].getLifetime();
+					}
+				}
+				Date now = new Date();
+				Date then = new Date(now.getTime() + (max * 1000)); // max is in
+				// seconds
+
+				SAMLAssertion sAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(), now,
+						then, Collections.singleton(condition), null, Collections.singleton(statement));
+
+				samlResponse = new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), exception);
+				addSignatures(samlResponse, relyingParty, lookup(relyingParty.getProviderId()), false);
+			}
+		} catch (SAMLException se) {
+			ourSE = se;
+		} catch (CloneNotSupportedException ex) {
+			ourSE = new SAMLException(SAMLException.RESPONDER, ex);
+
+		} finally {
+
+			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
+				try {
+					log.debug("Dumping generated SAML Response:"
+							+ System.getProperty("line.separator")
+							+ new String(
+									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
+									"UTF8"));
+				} catch (SAMLException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+				}
+			}
+
+			try {
+				binding.respond(resp, samlResponse, ourSE);
+			} catch (SAMLException e) {
+				log.error("Caught exception while responding to requester: " + e.getMessage());
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
 			}
 		}
 	}
@@ -525,172 +780,196 @@ public class IdPResponder extends TargetFederationComponent {
 		transactionLog.info("Succesfully dereferenced the following artifacts: " + dereferencedArtifacts.toString());
 	}
 
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
-		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via GET.");
-		log.info("Handling authN request.");
+	private void sendSAMLFailureResponse(HttpServletResponse httpResponse, SAMLRequest samlRequest,
+			SAMLException exception) throws IOException {
 
 		try {
-			throttle.enter();
-
-			// Ensure that we have the required data from the servlet container
-			validateEngineData(request);
-
-			// Determine which profile of SAML we are responding to (at this point, Shib vs. EAuth)
-			SSOProfileHandler activeHandler = null;
-			for (int i = 0; i < profileHandlers.length; i++) {
-				if (profileHandlers[i].validForRequest(request)) {
-					activeHandler = profileHandlers[i];
-					break;
+			SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
+					null, exception);
+			if (log.isDebugEnabled()) {
+				try {
+					log.debug("Dumping generated SAML Error Response:"
+							+ System.getProperty("line.separator")
+							+ new String(
+									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
+									"UTF8"));
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
 				}
 			}
-			if (activeHandler == null) { throw new InvalidClientDataException(
-					"The request did not contain sufficient parameter data to determine the protocol."); }
-
-			// Run profile specific preprocessing
-			if (activeHandler.preProcessHook(request, response)) { return; }
-
-			// Get the authN info
-			String username = configuration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
-					.getRemoteUser() : request.getHeader(configuration.getAuthHeaderName());
-
-			// Select the appropriate Relying Party configuration for the request
-			RelyingParty relyingParty = null;
-			String remoteProviderId = activeHandler.getRemoteProviderId(request);
-			// If the target did not send a Provider Id, then assume it is a Shib
-			// 1.1 or older target
-			if (remoteProviderId == null) {
-				relyingParty = spMapper.getLegacyRelyingParty();
-			} else if (remoteProviderId.equals("")) {
-				throw new InvalidClientDataException("Invalid service provider id.");
-			} else {
-				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
-				relyingParty = spMapper.getRelyingParty(remoteProviderId);
+			binding.respond(httpResponse, samlResponse, null);
+			log.debug("Returning SAML Error Response.");
+		} catch (SAMLException se) {
+			try {
+				binding.respond(httpResponse, null, exception);
+			} catch (SAMLException e) {
+				log.error("Caught exception while responding to requester: " + e.getMessage());
+				httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
 			}
+			log.error("Identity Provider failed to make an error message: " + se);
+		}
+	}
 
-			// Grab the metadata for the provider
-			Provider provider = lookup(relyingParty.getProviderId());
+	private String getEffectiveName(HttpServletRequest req, RelyingParty relyingParty)
+			throws InvalidProviderCredentialException {
 
-			// Use profile-specific method for determining the acceptance URL
-			String acceptanceURL = activeHandler.getAcceptanceURL(request, relyingParty, provider);
+		// X500Principal credentialName = getCredentialName(req);
+		X509Certificate credential = getCredentialFromProvider(req);
 
-			// Make sure that the selected relying party configuration is appropriate for this
-			// acceptance URL
-			if (!relyingParty.isLegacyProvider()) {
+		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+			log.info("Request is from an unauthenticated service provider.");
+			return null;
 
+		} else {
+			log.info("Request contains credential: ("
+					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
+			// Mockup old requester name for requests from < 1.2 targets
+			if (fromLegacyProvider(req)) {
+				String legacyName = ShibBrowserProfile.getHostNameFromDN(credential.getSubjectX500Principal());
+				if (legacyName == null) {
+					log.error("Unable to extract legacy requester name from certificate subject.");
+				}
+
+				log.info("Request from legacy service provider: (" + legacyName + ").");
+				return legacyName;
+
+			} else {
+
+				// See if we have metadata for this provider
+				Provider provider = lookup(relyingParty.getProviderId());
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-					relyingParty = spMapper.getRelyingParty(null);
+					log.info("Treating remote provider as unauthenticated.");
+					return null;
+				}
 
+				// Make sure that the suppplied credential is valid for the
+				// selected relying party
+				if (isValidCredential(provider, credential)) {
+					log.info("Supplied credential validated for this provider.");
+					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
+					return relyingParty.getProviderId();
 				} else {
+					log.error("Supplied credential ("
+							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
+							+ ") is NOT valid for provider (" + relyingParty.getProviderId() + ").");
+					throw new InvalidProviderCredentialException("Invalid credential.");
+				}
+			}
+		}
+	}
 
-					if (isValidAssertionConsumerURL(provider, acceptanceURL)) {
-						log.info("Supplied consumer URL validated for this provider.");
-					} else {
-						log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
-								+ relyingParty.getProviderId() + ").");
-						throw new InvalidClientDataException("Invalid assertion consumer service URL.");
+	private static void addSignatures(SAMLResponse response, RelyingParty relyingParty, Provider provider,
+			boolean signResponse) throws SAMLException {
+
+		if (provider != null) {
+			boolean signAssertions = false;
+
+			ProviderRole[] roles = provider.getRoles();
+			if (roles.length == 0) {
+				log.info("Inappropriate metadata for provider: " + provider.getId() + ".  Expected SPSSODescriptor.");
+			}
+			for (int i = 0; roles.length > i; i++) {
+				if (roles[i] instanceof SPProviderRole) {
+					if (((SPProviderRole) roles[i]).wantAssertionsSigned()) {
+						signAssertions = true;
 					}
 				}
 			}
 
-			// Create SAML Name Identifier
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(relyingParty.getHSNameFormatId(),
-					new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
+			if (signAssertions && relyingParty.getIdentityProvider().getSigningCredential() != null
+					&& relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() != null) {
 
-			String authenticationMethod = request.getHeader("SAMLAuthenticationMethod");
-			if (authenticationMethod == null || authenticationMethod.equals("")) {
-				authenticationMethod = relyingParty.getDefaultAuthMethod().toString();
-				log.debug("User was authenticated via the default method for this relying party ("
-						+ authenticationMethod + ").");
-			} else {
-				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
-			}
+				Iterator assertions = response.getAssertions();
 
-			// We might someday want to provide a mechanism for the authenticator to specify the auth time
-			SAMLAssertion[] assertions = activeHandler.processHook(request, relyingParty, provider, nameId,
-					authenticationMethod, new Date(System.currentTimeMillis()));
+				while (assertions.hasNext()) {
+					SAMLAssertion assertion = (SAMLAssertion) assertions.next();
+					String assertionAlgorithm;
+					if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.RSA) {
+						assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
+					} else if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.DSA) {
+						assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
+					} else {
+						throw new InvalidCryptoException(SAMLException.RESPONDER,
+								"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
+					}
 
-			//TODO do assertion signing here
-
-			// SAML Artifact profile
-			if (useArtifactProfile(provider, acceptanceURL)) {
-				log.debug("Responding with Artifact profile.");
-
-				// Create artifacts for each assertion
-				ArrayList artifacts = new ArrayList();
-				for (int i = 0; i < assertions.length; i++) {
-					artifacts.add(artifactMapper.generateArtifact(assertions[i], relyingParty));
-				}
-
-				// Assemble the query string
-				StringBuffer destination = new StringBuffer(acceptanceURL);
-				destination.append("?TARGET=");
-				destination.append(URLEncoder.encode(activeHandler.getSAMLTargetParameter(request, relyingParty,
-						provider), "UTF-8"));
-				Iterator iterator = artifacts.iterator();
-				StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
-				while (iterator.hasNext()) {
-					destination.append("&SAMLart=");
-					String artifact = (String) iterator.next();
-					destination.append(URLEncoder.encode(artifact, "UTF-8"));
-					artifactBuffer.append("(" + artifact + ")");
-				}
-				log.debug("Redirecting to (" + destination.toString() + ").");
-				response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
-
-				transactionLog.info("Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
-						+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal (" + username
-						+ "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
-						+ nameId.getFormat() + ").");
-
-				// SAML POST profile
-			} else {
-				log.debug("Responding with POST profile.");
-				request.setAttribute("acceptanceURL", acceptanceURL);
-				request.setAttribute("target", activeHandler.getSAMLTargetParameter(request, relyingParty, provider));
-
-				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, Arrays.asList(assertions), null);
-				addSignatures(samlResponse, relyingParty, provider, true);
-				createPOSTForm(request, response, samlResponse.toBase64());
-
-				// Make transaction log entry
-				if (relyingParty.isLegacyProvider()) {
-					transactionLog.info("Authentication assertion issued to legacy provider (SHIRE: "
-							+ request.getParameter("shire") + ") on behalf of principal (" + username
-							+ ") for resource (" + request.getParameter("target") + "). Name Identifier: ("
-							+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
-				} else {
-					transactionLog.info("Authentication assertion issued to provider ("
-							+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
-							+ username + "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
-							+ nameId.getFormat() + ").");
+					assertion.sign(assertionAlgorithm, relyingParty.getIdentityProvider().getSigningCredential()
+							.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential()
+							.getX509CertificateChain()));
 				}
 			}
-
-			// TODO profile specific error handling
-		} catch (NameIdentifierMappingException ex) {
-			log.error(ex);
-			handleSSOError(request, response, ex);
-			return;
-		} catch (InvalidClientDataException ex) {
-			log.error(ex);
-			handleSSOError(request, response, ex);
-			return;
-		} catch (SAMLException ex) {
-			log.error(ex);
-			handleSSOError(request, response, ex);
-			return;
-		} catch (InterruptedException ex) {
-			log.error(ex);
-			handleSSOError(request, response, ex);
-			return;
-		} finally {
-			throttle.exit();
 		}
 
+		// Sign the response, if appropriate
+		if (signResponse && relyingParty.getIdentityProvider().getSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() != null) {
+
+			String responseAlgorithm;
+			if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.RSA) {
+				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
+			} else if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.DSA) {
+				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
+			} else {
+				throw new InvalidCryptoException(SAMLException.RESPONDER,
+						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
+			}
+
+			response.sign(responseAlgorithm, relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey(),
+					Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential().getX509CertificateChain()));
+		}
+	}
+
+	private static boolean useArtifactProfile(Provider provider, String acceptanceURL) {
+
+		// Default to POST if we have no metadata
+		if (provider == null) { return false; }
+
+		// Default to POST if we have incomplete metadata
+		ProviderRole[] roles = provider.getRoles();
+		if (roles.length == 0) { return false; }
+
+		for (int i = 0; roles.length > i; i++) {
+			if (roles[i] instanceof SPProviderRole) {
+				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
+
+				for (int j = 0; endpoints.length > j; j++) {
+					if (acceptanceURL.equals(endpoints[j].getLocation())
+							&& "urn:oasis:names:tc:SAML:1.0:profiles:artifact-01".equals(endpoints[j].getBinding())) { return true; }
+				}
+			}
+		}
+		// Default to POST if we have incomplete metadata
+		return false;
+	}
+
+	private static void validateEngineData(HttpServletRequest req) throws InvalidClientDataException {
+
+		if ((req.getRemoteUser() == null) || (req.getRemoteUser().equals(""))) { throw new InvalidClientDataException(
+				"Unable to authenticate remote user"); }
+		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) { throw new InvalidClientDataException(
+				"Unable to obtain client address."); }
+	}
+
+	private static boolean isValidAssertionConsumerURL(Provider provider, String shireURL)
+			throws InvalidClientDataException {
+
+		ProviderRole[] roles = provider.getRoles();
+		if (roles.length == 0) {
+			log.info("Inappropriate metadata for provider.");
+			return false;
+		}
+
+		for (int i = 0; roles.length > i; i++) {
+			if (roles[i] instanceof SPProviderRole) {
+				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
+				for (int j = 0; endpoints.length > j; j++) {
+					if (shireURL.equals(endpoints[j].getLocation())) { return true; }
+				}
+			}
+		}
+		log.info("Supplied consumer URL not found in metadata.");
+		return false;
 	}
 
 	private static X509Certificate getCredentialFromProvider(HttpServletRequest req) {
@@ -775,36 +1054,6 @@ public class IdPResponder extends TargetFederationComponent {
 		return false;
 	}
 
-	private void sendSAMLFailureResponse(HttpServletResponse httpResponse, SAMLRequest samlRequest,
-			SAMLException exception) throws IOException {
-
-		try {
-			SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
-					null, exception);
-			if (log.isDebugEnabled()) {
-				try {
-					log.debug("Dumping generated SAML Error Response:"
-							+ System.getProperty("line.separator")
-							+ new String(
-									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
-									"UTF8"));
-				} catch (IOException e) {
-					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-				}
-			}
-			binding.respond(httpResponse, samlResponse, null);
-			log.debug("Returning SAML Error Response.");
-		} catch (SAMLException se) {
-			try {
-				binding.respond(httpResponse, null, exception);
-			} catch (SAMLException e) {
-				log.error("Caught exception while responding to requester: " + e.getMessage());
-				httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
-			}
-			log.error("Identity Provider failed to make an error message: " + se);
-		}
-	}
-
 	private static boolean fromLegacyProvider(HttpServletRequest request) {
 
 		String version = request.getHeader("Shibboleth");
@@ -816,248 +1065,7 @@ public class IdPResponder extends TargetFederationComponent {
 		return true;
 	}
 
-	private String getEffectiveName(HttpServletRequest req, RelyingParty relyingParty)
-			throws InvalidProviderCredentialException {
-
-		// X500Principal credentialName = getCredentialName(req);
-		X509Certificate credential = getCredentialFromProvider(req);
-
-		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
-			log.info("Request is from an unauthenticated service provider.");
-			return null;
-
-		} else {
-			log.info("Request contains credential: ("
-					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
-			// Mockup old requester name for requests from < 1.2 targets
-			if (fromLegacyProvider(req)) {
-				String legacyName = ShibBrowserProfile.getHostNameFromDN(credential.getSubjectX500Principal());
-				if (legacyName == null) {
-					log.error("Unable to extract legacy requester name from certificate subject.");
-				}
-
-				log.info("Request from legacy service provider: (" + legacyName + ").");
-				return legacyName;
-
-			} else {
-
-				// See if we have metadata for this provider
-				Provider provider = lookup(relyingParty.getProviderId());
-				if (provider == null) {
-					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-					log.info("Treating remote provider as unauthenticated.");
-					return null;
-				}
-
-				// Make sure that the suppplied credential is valid for the
-				// selected relying party
-				if (isValidCredential(provider, credential)) {
-					log.info("Supplied credential validated for this provider.");
-					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
-					return relyingParty.getProviderId();
-				} else {
-					log.error("Supplied credential ("
-							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
-							+ ") is NOT valid for provider (" + relyingParty.getProviderId() + ").");
-					throw new InvalidProviderCredentialException("Invalid credential.");
-				}
-			}
-		}
-	}
-
-	// TODO this should be renamed, since it is now only one type of response
-	// that we can send
-	public void sendSAMLResponse(HttpServletResponse resp, SAMLAttribute[] attrs, SAMLRequest samlRequest,
-			RelyingParty relyingParty, SAMLException exception) throws IOException {
-
-		SAMLException ourSE = null;
-		SAMLResponse samlResponse = null;
-
-		try {
-			if (attrs == null || attrs.length == 0) {
-				// No attribute found
-				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, exception);
-			} else {
-
-				SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
-
-				// Reference requested subject
-				SAMLSubject rSubject = (SAMLSubject) attributeQuery.getSubject().clone();
-
-				// Set appropriate audience
-				ArrayList audiences = new ArrayList();
-				if (relyingParty.getProviderId() != null) {
-					audiences.add(relyingParty.getProviderId());
-				}
-				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
-					audiences.add(relyingParty.getName());
-				}
-				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
-
-				// Put all attributes into an assertion
-				SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
-
-				// Set assertion expiration to longest attribute expiration
-				long max = 0;
-				for (int i = 0; i < attrs.length; i++) {
-					if (max < attrs[i].getLifetime()) {
-						max = attrs[i].getLifetime();
-					}
-				}
-				Date now = new Date();
-				Date then = new Date(now.getTime() + (max * 1000)); // max is in
-				// seconds
-
-				SAMLAssertion sAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(), now,
-						then, Collections.singleton(condition), null, Collections.singleton(statement));
-
-				samlResponse = new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), exception);
-				addSignatures(samlResponse, relyingParty, lookup(relyingParty.getProviderId()), false);
-			}
-		} catch (SAMLException se) {
-			ourSE = se;
-		} catch (CloneNotSupportedException ex) {
-			ourSE = new SAMLException(SAMLException.RESPONDER, ex);
-
-		} finally {
-
-			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
-				try {
-					log.debug("Dumping generated SAML Response:"
-							+ System.getProperty("line.separator")
-							+ new String(
-									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
-									"UTF8"));
-				} catch (SAMLException e) {
-					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-				} catch (IOException e) {
-					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-				}
-			}
-
-			try {
-				binding.respond(resp, samlResponse, ourSE);
-			} catch (SAMLException e) {
-				log.error("Caught exception while responding to requester: " + e.getMessage());
-				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
-			}
-		}
-	}
-
-	private static void addSignatures(SAMLResponse response, RelyingParty relyingParty, Provider provider,
-			boolean signResponse) throws SAMLException {
-
-		if (provider != null) {
-			boolean signAssertions = false;
-
-			ProviderRole[] roles = provider.getRoles();
-			if (roles.length == 0) {
-				log.info("Inappropriate metadata for provider: " + provider.getId() + ".  Expected SPSSODescriptor.");
-			}
-			for (int i = 0; roles.length > i; i++) {
-				if (roles[i] instanceof SPProviderRole) {
-					if (((SPProviderRole) roles[i]).wantAssertionsSigned()) {
-						signAssertions = true;
-					}
-				}
-			}
-
-			if (signAssertions && relyingParty.getIdentityProvider().getSigningCredential() != null
-					&& relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() != null) {
-
-				Iterator assertions = response.getAssertions();
-
-				while (assertions.hasNext()) {
-					SAMLAssertion assertion = (SAMLAssertion) assertions.next();
-					String assertionAlgorithm;
-					if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.RSA) {
-						assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-					} else if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.DSA) {
-						assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
-					} else {
-						throw new InvalidCryptoException(SAMLException.RESPONDER,
-								"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
-					}
-
-					assertion.sign(assertionAlgorithm, relyingParty.getIdentityProvider().getSigningCredential()
-							.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential()
-							.getX509CertificateChain()));
-				}
-			}
-		}
-
-		// Sign the response, if appropriate
-		if (signResponse && relyingParty.getIdentityProvider().getSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() != null) {
-
-			String responseAlgorithm;
-			if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.RSA) {
-				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.DSA) {
-				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
-			} else {
-				throw new InvalidCryptoException(SAMLException.RESPONDER,
-						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
-			}
-
-			response.sign(responseAlgorithm, relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey(),
-					Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential().getX509CertificateChain()));
-		}
-	}
-
-	private boolean useArtifactProfile(Provider provider, String acceptanceURL) {
-
-		// Default to POST if we have no metadata
-		if (provider == null) { return false; }
-
-		// Default to POST if we have incomplete metadata
-		ProviderRole[] roles = provider.getRoles();
-		if (roles.length == 0) { return false; }
-
-		for (int i = 0; roles.length > i; i++) {
-			if (roles[i] instanceof SPProviderRole) {
-				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
-
-				for (int j = 0; endpoints.length > j; j++) {
-					if (acceptanceURL.equals(endpoints[j].getLocation())
-							&& "urn:oasis:names:tc:SAML:1.0:profiles:artifact-01".equals(endpoints[j].getBinding())) { return true; }
-				}
-			}
-		}
-		// Default to POST if we have incomplete metadata
-		return false;
-	}
-
-	protected static void validateEngineData(HttpServletRequest req) throws InvalidClientDataException {
-
-		if ((req.getRemoteUser() == null) || (req.getRemoteUser().equals(""))) { throw new InvalidClientDataException(
-				"Unable to authenticate remote user"); }
-		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) { throw new InvalidClientDataException(
-				"Unable to obtain client address."); }
-	}
-
-	protected static boolean isValidAssertionConsumerURL(Provider provider, String shireURL)
-			throws InvalidClientDataException {
-
-		ProviderRole[] roles = provider.getRoles();
-		if (roles.length == 0) {
-			log.info("Inappropriate metadata for provider.");
-			return false;
-		}
-
-		for (int i = 0; roles.length > i; i++) {
-			if (roles[i] instanceof SPProviderRole) {
-				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
-				for (int j = 0; endpoints.length > j; j++) {
-					if (shireURL.equals(endpoints[j].getLocation())) { return true; }
-				}
-			}
-		}
-		log.info("Supplied consumer URL not found in metadata.");
-		return false;
-	}
-
-	protected void createPOSTForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,
+	private static void createPOSTForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,
 			ServletException {
 
 		// Hardcoded to ASCII to ensure Base64 encoding compatibility
@@ -1077,7 +1085,7 @@ public class IdPResponder extends TargetFederationComponent {
 		rd.forward(req, res);
 	}
 
-	protected void handleSSOError(HttpServletRequest req, HttpServletResponse res, Exception e)
+	private static void handleSSOError(HttpServletRequest req, HttpServletResponse res, Exception e)
 			throws ServletException, IOException {
 
 		req.setAttribute("errorText", e.toString());
