@@ -190,9 +190,12 @@ public class AASaml {
 						+ System.getProperty("line.separator")
 						+ new String(new BASE64Decoder().decodeBuffer(new String(sResp.toBase64(), "ASCII")), "UTF8"));
 				}
+               /*
+                //TODO This will be required when we upgrade to the latest opensaml 
                 catch (SAMLException e) {
-                    log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+                   log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
                 }
+                */
                 catch (IOException e) {
 					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
 				}
