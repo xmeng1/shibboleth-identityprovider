@@ -9,6 +9,62 @@
 		<servlet-name>HS</servlet-name>
 		<display-name>Shibboleth Handle Service</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.hs.HandleServlet</servlet-class>
+		<init-param>
+			<param-name>domain</param-name>
+			<param-value>internet2.edu</param-value>
+		</init-param>
+		<init-param>
+		        <param-name>HSname</param-name>
+			<param-value>shib2.internet2.edu</param-value>
+		</init-param>
+		<init-param>
+		        <param-name>ticket</param-name>
+			<param-value>1400000</param-value>
+		</init-param>
+		<init-param>
+		          <param-name>AAurl</param-name>
+		          <param-value>https://shib2.internet2.edu/shibb/servlet/AAServlet</param-value>
+		</init-param>
+		<init-param>
+			<param-name>DBdriver</param-name>
+			<param-value>org.gjt.mm.mysql.Driver</param-value>
+		</init-param>
+		<init-param>
+			<param-name>DBdriver</param-name>
+			<param-value>org.gjt.mm.mysql.Driver</param-value>
+		</init-param>
+		<init-param>
+			<param-name>DBuser</param-name>
+			<param-value>shib</param-value>
+		</init-param>
+		<init-param>
+			<param-name>DBpass</param-name>
+			<param-value>shib</param-value>
+		</init-param>
+		<init-param>
+			<param-name>DBdomain</param-name>
+			<param-value>shib2.internet2.edu</param-value>
+		</init-param>
+		<init-param>
+			<param-name>KSpath</param-name>
+			<param-value>/home/blk/.keystore</param-value>
+		</init-param>
+		<init-param>
+			<param-name>KSpass</param-name>
+			<param-value>shibhs</param-value>
+		</init-param>
+		<init-param>
+			<param-name>KSkeyalias</param-name>
+			<param-value>shibhs</param-value>
+		</init-param>
+		<init-param>
+			<param-name>KSkeypass</param-name>
+			<param-value>shibhs</param-value>
+		</init-param>
+		<init-param>
+			<param-name>certalias</param-name>
+			<param-value>shibhs</param-value>
+		</init-param>
 	</servlet>
 	<servlet>
 		<servlet-name>AA</servlet-name>
