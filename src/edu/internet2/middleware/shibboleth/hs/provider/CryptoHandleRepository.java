@@ -56,6 +56,8 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -76,18 +78,23 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
  */
 public class CryptoHandleRepository extends BaseHandleRepository implements HandleRepository {
 
-	SecretKey secret;
+	static SecretKey secret;
 
 	public CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
 		KeyGenerator keyGen;
 		try {
-			keyGen = KeyGenerator.getInstance("DESede");
+			if (secret == null) {
+				keyGen = KeyGenerator.getInstance("DESede");
+
+				secret = keyGen.generateKey();
+			} else {
+			System.err.println("Already have a key");	
+			}
 		} catch (NoSuchAlgorithmException e) {
 			System.err.println(e);
 			return;
 		}
-        secret = keyGen.generateKey();
 	}
 
 	/**
@@ -95,10 +102,10 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	 */
 	public String getHandle(AuthNPrincipal principal) {
 		try {
-
 			HandleEntry handleEntry = createHandleEntry(principal);
 			ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-			ObjectOutput objectStream = new ObjectOutputStream(outStream);
+			GZIPOutputStream zipStream = new GZIPOutputStream(outStream);
+			ObjectOutput objectStream = new ObjectOutputStream(zipStream);
 			objectStream.writeObject(handleEntry);
 			objectStream.flush();
 			objectStream.close();
@@ -120,17 +127,17 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
 	public AuthNPrincipal getPrincipal(String handle) {
-		
+
 		try {
 			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
 			cipher.init(Cipher.DECRYPT_MODE, secret);
 			byte[] objectArray = cipher.doFinal(new BASE64Decoder().decodeBuffer(handle));
 
-			ObjectInputStream objectStream = new ObjectInputStream(new ByteArrayInputStream(objectArray));
+			ObjectInputStream objectStream =
+				new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(objectArray)));
 			HandleEntry handleEntry = (HandleEntry) objectStream.readObject();
-			System.err.println(handleEntry.principal.getName());
 			return handleEntry.principal;
-			
+
 		} catch (Exception e) {
 			System.err.println(e);
 			return null;

@@ -102,6 +102,8 @@ public abstract class BaseHandleRepository implements HandleRepository {
 }
 
 class HandleEntry implements Serializable {
+
+	static final long serialVersionUID = 1L;
 	protected AuthNPrincipal principal;
 	protected long expirationTime;
 

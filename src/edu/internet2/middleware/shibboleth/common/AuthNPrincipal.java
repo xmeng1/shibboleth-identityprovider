@@ -60,6 +60,7 @@ import java.security.Principal;
 
 public class AuthNPrincipal implements Principal, Serializable {
 
+	static final long serialVersionUID = 1L;
 	private String principalName;
 
 	/**
