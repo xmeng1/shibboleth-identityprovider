@@ -2,9 +2,9 @@
 <classpath>
     <classpathentry kind="src" path="src"/>
     <classpathentry kind="src" path="tests"/>
+    <classpathentry kind="lib" path="endorsed/dom3-xercesImpl-2.4.0.jar"/>
+    <classpathentry kind="lib" path="endorsed/dom3-xml-apis-2.4.0.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
-    <classpathentry kind="lib" path="lib/dom3-xercesImpl-2.4.0.jar"/>
-    <classpathentry kind="lib" path="lib/dom3-xml-apis-2.4.0.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
     <classpathentry kind="lib"
