@@ -54,6 +54,7 @@ import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.InvalidCryptoException;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
+import org.opensaml.SAMLAttributeDesignator;
 import org.opensaml.SAMLAttributeQuery;
 import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
@@ -314,7 +315,7 @@ public class AAServlet extends TargetFederationComponent {
 				log.info("Request designates specific attributes, resolving this set.");
 				ArrayList requestedAttrs = new ArrayList();
 				while (requestedAttrsIterator.hasNext()) {
-					SAMLAttribute attribute = (SAMLAttribute) requestedAttrsIterator.next();
+					SAMLAttributeDesignator attribute = (SAMLAttributeDesignator) requestedAttrsIterator.next();
 					try {
 						log.debug("Designated attribute: (" + attribute.getName() + ")");
 						requestedAttrs.add(new URI(attribute.getName()));
