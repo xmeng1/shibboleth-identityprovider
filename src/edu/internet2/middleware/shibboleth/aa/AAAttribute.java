@@ -83,7 +83,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	public final static String SHIB_ATTRIBUTE_NAMESPACE_URI = "urn:mace:shibboleth:1.0:attributeNamespace:uri";
 	
 	/** Default lifetime, in seconds **/
-	private static long defaultLifetime = 300;
+	private static long defaultLifetime = 1800; // 30 minutes
 	private ValueHandler valueHandler = new StringValueHandler();
 
 	public AAAttribute(String name) throws SAMLException {

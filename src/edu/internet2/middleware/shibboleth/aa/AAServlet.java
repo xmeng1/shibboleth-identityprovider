@@ -445,7 +445,7 @@ public class AAServlet extends TargetFederationComponent {
 					}
 				}
 				Date now = new Date();
-				Date then = new Date(now.getTime() + max);
+				Date then = new Date(now.getTime() + (max * 1000)); //max is in seconds
 
 				SAMLAssertion sAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(), now,
 						then, Collections.singleton(condition), null, Collections.singleton(statement));
