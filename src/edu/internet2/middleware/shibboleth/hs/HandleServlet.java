@@ -127,7 +127,7 @@ public class HandleServlet extends HttpServlet {
 			String[] requiredProperties =
 				{
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.authenticationDomain",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName",
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl",
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath",
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword",
@@ -318,7 +318,7 @@ public class HandleServlet extends HttpServlet {
 			postProfile.prepare(
 				shireURL,
 				handle,
-				configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authenticationDomain"),
+				configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName"),
 				clientAddress,
 				authType,
 				new Date(System.currentTimeMillis()),
