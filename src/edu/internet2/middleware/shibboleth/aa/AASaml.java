@@ -84,7 +84,6 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import sun.misc.BASE64Decoder;
 
-import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 
 

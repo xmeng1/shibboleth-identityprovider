@@ -49,8 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import java.util.Collection;
-
 import org.opensaml.*;
 
 

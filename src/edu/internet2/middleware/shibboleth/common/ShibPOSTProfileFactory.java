@@ -52,8 +52,6 @@ package edu.internet2.middleware.shibboleth.common;
 import java.util.Collection;
 
 import org.opensaml.SAMLException;
-import org.opensaml.SAMLPOSTProfile;
-
 
 /**
  *  Used by Shibboleth HS/SHIRE to locate a Shibboleth POST profile

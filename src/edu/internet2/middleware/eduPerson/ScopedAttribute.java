@@ -52,7 +52,6 @@ package edu.internet2.middleware.eduPerson;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Vector;
 
 import org.opensaml.*;
 import org.w3c.dom.*;

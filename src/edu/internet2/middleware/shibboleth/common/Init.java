@@ -49,7 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import edu.internet2.middleware.shibboleth.common.XML.SchemaResolver;
 
 /**
  *  Handles one-time library initialization

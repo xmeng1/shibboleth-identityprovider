@@ -82,7 +82,6 @@ import org.opensaml.SAMLResponse;
 import sun.misc.BASE64Decoder;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
-import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
 import edu.internet2.middleware.shibboleth.common.ShibResource;

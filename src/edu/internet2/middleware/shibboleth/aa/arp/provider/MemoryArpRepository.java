@@ -50,7 +50,6 @@
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
 import java.security.Principal;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
