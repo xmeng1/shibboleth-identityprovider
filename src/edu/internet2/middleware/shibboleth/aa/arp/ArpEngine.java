@@ -270,7 +270,7 @@ public class ArpEngine {
 
 		//Filter
 		for (ArpAttributeIterator returnIterator = attributes.arpAttributeIterator(); returnIterator.hasNext();) {
-			
+
 			ArpAttribute arpAttribute = returnIterator.nextArpAttribute();
 			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(arpAttribute.getName());
 
@@ -293,13 +293,19 @@ public class ArpEngine {
 
 			//Handle "Permit All-Except" and "Permit Specific"
 			ArrayList releaseValues = new ArrayList();
-			for (Iterator valueIterator = arpAttribute.getValues();valueIterator.hasNext();) {
+			for (Iterator valueIterator = arpAttribute.getValues(); valueIterator.hasNext();) {
 				Object value = valueIterator.next();
 				if (attribute.isValuePermitted(value)) {
 					releaseValues.add(value);
 				}
 			}
-			arpAttribute.setValues((Object[]) releaseValues.toArray(new Object[0]));
+
+			if (!releaseValues.isEmpty()) {
+				arpAttribute.setValues((Object[]) releaseValues.toArray(new Object[0]));
+			} else {
+				returnIterator.remove();
+			}
+
 		}
 	}
 
