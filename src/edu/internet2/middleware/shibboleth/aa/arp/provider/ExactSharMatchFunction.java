@@ -68,8 +68,11 @@ public class ExactSharMatchFunction implements MatchFunction {
 	public boolean match(Object arpComponent, Object requestComponent)
 		throws MatchingException
 	{
-		if (!(arpComponent instanceof String) || !(requestComponent instanceof String)) {
-			log.error("Invalid use of ARP matching function (ExacthSharMatchFunction).");
+		if (arpComponent == null || requestComponent == null) {
+			return false;
+		}
+		else if (!(arpComponent instanceof String) || !(requestComponent instanceof String)) {
+			log.error("Invalid use of ARP matching function (ExacthSharMatchFunction). arpComponent: (" + arpComponent + "). requestComponent: (" + requestComponent + ").");
 			throw new MatchingException("Invalid use of ARP matching function (ExacthSharMatchFunction).");
 		}
 		return arpComponent.equals(requestComponent);
