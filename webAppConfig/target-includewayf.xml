@@ -10,13 +10,31 @@
 		<display-name>Shibboleth SHIRE Component</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.shire.ShireServlet</servlet-class>
 	</servlet>
-     <servlet-mapping>
+        <servlet>
+                <servlet-name>WAYF</servlet-name>
+                <display-name>Shibboleth WAYF Service</display-name>
+                <servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfService</servlet-class>
+        </servlet>
+        <servlet>
+                <servlet-name>WAYFTester</servlet-name>
+                <display-name>Simple servlet for testing WAYF functionality</display-name>
+                <servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfTester</servlet-class>
+        </servlet>
+	<servlet-mapping>
 		<servlet-name>SHIRE</servlet-name>
 		<url-pattern>/SHIRE</url-pattern>
 	</servlet-mapping>
-	
-	<mime-mapping>
-		<extension>css</extension>
-		<mime-type>text/css</mime-type>
-	</mime-mapping>
+	<servlet-mapping>
+                <servlet-name>WAYF</servlet-name>
+                <url-pattern>/WAYF</url-pattern>
+        </servlet-mapping>
+        <servlet-mapping>
+                <servlet-name>WAYFTester</servlet-name>
+                <url-pattern>/WAYFTester</url-pattern>
+        </servlet-mapping>
+
+        <mime-mapping>
+                <extension>css</extension>
+                <mime-type>text/css</mime-type>
+        </mime-mapping>
 </web-app>
