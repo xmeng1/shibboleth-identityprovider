@@ -94,7 +94,9 @@ public class ArpTests extends TestCase {
 			"data/example6.xml",
 			"data/example7.xml",
 			"data/example8.xml",
-			"data/example9.xml" };
+			"data/example9.xml",
+			"data/example10.xml",
+			"data/example11.xml" };
 
 	public ArpTests(String name) {
 		super(name);

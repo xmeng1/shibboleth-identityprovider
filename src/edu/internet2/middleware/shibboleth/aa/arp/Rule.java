@@ -82,6 +82,8 @@ public class Rule {
 	private ArrayList attributes = new ArrayList();
 	private NodeList attributeReferences;
 
+	private URI identifier;
+
 	/**
 	 * Returns the description for this <code>Rule</code>.
 	 * @return String
@@ -119,6 +121,10 @@ public class Rule {
 		try {
 			Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 			Element ruleNode = placeHolder.createElementNS(Arp.arpNamespace, "Rule");
+			
+			if (identifier != null) {
+				ruleNode.setAttributeNS(Arp.arpNamespace, "identifier", identifier.toString());
+			}
 
 			if (description != null) {
 				Element descriptionNode = placeHolder.createElementNS(Arp.arpNamespace, "Description");
@@ -156,6 +162,16 @@ public class Rule {
 		if (!element.getTagName().equals("Rule")) {
 			log.error("Element data does not represent an ARP Rule.");
 			throw new ArpMarshallingException("Element data does not represent an ARP Rule.");
+		}
+
+		//Get the rule identifier
+		try {
+			if (element.hasAttribute("identifier")) {
+				identifier = new URI(element.getAttribute("identifier"));
+			}
+		} catch (URISyntaxException e) {
+			log.error("Rule not identified by a proper URI: " + e);
+			throw new ArpMarshallingException("Rule not identified by a proper URI.");
 		}
 
 		//Grab the description
@@ -483,6 +499,7 @@ public class Rule {
 		private boolean anyValue = false;
 		private String anyValueRelease = "permit";
 		private Set values = new HashSet();
+		private URI identifier;
 
 		boolean releaseAnyValue() {
 			if (anyValueRelease.equals("permit")) {
@@ -596,8 +613,17 @@ public class Rule {
 				Element attributeNode = placeHolder.createElementNS(Arp.arpNamespace, "Attribute");
 
 				attributeNode.setAttributeNS(Arp.arpNamespace, "name", name.toString());
+
+				if (identifier != null) {
+					attributeNode.setAttributeNS(
+						Arp.arpNamespace,
+						"identifier",
+						identifier.toString());
+				}
+
 				if (anyValue) {
-					Element anyValueNode = placeHolder.createElementNS(Arp.arpNamespace, "AnyValue");
+					Element anyValueNode =
+						placeHolder.createElementNS(Arp.arpNamespace, "AnyValue");
 					anyValueNode.setAttributeNS(Arp.arpNamespace, "release", anyValueRelease);
 					attributeNode.appendChild(anyValueNode);
 				}
@@ -629,6 +655,16 @@ public class Rule {
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
 
+			//Get the attribute identifier
+			try {
+				if (element.hasAttribute("identifier")) {
+					identifier = new URI(element.getAttribute("identifier"));
+				}
+			} catch (URISyntaxException e) {
+				log.error("Attribute not identified by a proper URI: " + e);
+				throw new ArpMarshallingException("Attribute not identified by a proper URI.");
+			}
+
 			//Get the attribute name
 			try {
 				if (element.hasAttribute("name")) {
@@ -643,7 +679,8 @@ public class Rule {
 			}
 
 			//Handle <AnyValue/> definitions
-			NodeList anyValueNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "AnyValue");
+			NodeList anyValueNodeList =
+				element.getElementsByTagNameNS(Arp.arpNamespace, "AnyValue");
 			if (anyValueNodeList.getLength() == 1) {
 				anyValue = true;
 				if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
@@ -661,8 +698,11 @@ public class Rule {
 						release = ((Element) valueNodeList.item(i)).getAttribute("release");
 					}
 					if (((Element) valueNodeList.item(i)).hasChildNodes()
-						&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType() == Node.TEXT_NODE) {
-						value = ((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild()).getData();
+						&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType()
+							== Node.TEXT_NODE) {
+						value =
+							((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild())
+								.getData();
 					}
 					if (releaseAnyValue() && release.equals("permit")) {
 						continue;

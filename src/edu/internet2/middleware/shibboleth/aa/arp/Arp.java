@@ -83,6 +83,8 @@ public class Arp {
 	private static Logger log = Logger.getLogger(Arp.class.getName());
 	private Set attributes = new HashSet();
 
+	private NodeList ruleReferences;
+
 	/**
 	 * Creates an Arp for the specified <code>Principal</code>.
 	 */
@@ -162,18 +164,29 @@ public class Arp {
 				rules.add(rule);
 			}
 
-			//Retain attributes declared outside the scop of a rule
-			//Not enforced!
-			NodeList attributeNodes =
-				xmlElement.getElementsByTagNameNS(Arp.arpNamespace, "Attribute");
-			if (attributeNodes.getLength() > 0) {
-				for (int i = 0; i < attributeNodes.getLength(); i++) {
-					if (attributeNodes.item(i).getParentNode() == xmlElement) {
-						log.warn(
-							"Encountered an Attribute definition outside the scope of a Rule definition while marshalling an ARP.  "
-								+ "References are currently unsupported by the ARP Engine.  Ignoring...");
-						attributes.add(attributeNodes.item(i));
-					}
+		}
+		
+		//Retain Rule references
+		//Not enforced!
+		NodeList ruleReferenceNodes =
+			xmlElement.getElementsByTagNameNS(arpNamespace, "RuleReference");
+		if (ruleReferenceNodes.getLength() > 0) {
+			log.warn(
+				"Encountered a Rule Reference while marshalling an ARP.  "
+					+ "References are currently unsupported by the ARP Engine.  Ignoring...");
+			ruleReferences = ruleReferenceNodes;
+		}
+
+		//Retain attributes declared outside the scop of a rule
+		//Not enforced!
+		NodeList attributeNodes = xmlElement.getElementsByTagNameNS(Arp.arpNamespace, "Attribute");
+		if (attributeNodes.getLength() > 0) {
+			for (int i = 0; i < attributeNodes.getLength(); i++) {
+				if (attributeNodes.item(i).getParentNode() == xmlElement) {
+					log.warn(
+						"Encountered an Attribute definition outside the scope of a Rule definition while marshalling an ARP.  "
+							+ "References are currently unsupported by the ARP Engine.  Ignoring...");
+					attributes.add(attributeNodes.item(i));
 				}
 			}
 		}
@@ -211,6 +224,12 @@ public class Arp {
 			Rule[] rules = getAllRules();
 			for (int i = 0; rules.length > i; i++) {
 				policyNode.appendChild(placeHolder.importNode(rules[i].unmarshall(), true));
+			}
+
+			if (ruleReferences != null) {
+				for (int i = 0; i < ruleReferences.getLength(); i++) {
+					policyNode.appendChild(placeHolder.importNode(ruleReferences.item(i), true));
+				}
 			}
 
 			Iterator attrIterator = attributes.iterator();

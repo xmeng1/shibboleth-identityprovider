@@ -1,39 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AttributeReleasePolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:arp:1.0" xsi:schemaLocation="urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd" >
-	<Description>Combining a few Rules that might apply to the same target.</Description>
-	<Rule>
+	<Description>Adding an identifier to an attribute and a rule.</Description>
+	<Rule identifier="http://example.edu/rules/rule10">
 		<Target>
 			<AnyTarget/>
 		</Target>
-		<Attribute name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+		<Attribute identifier="http://example.edu/attributes/attribute10" name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
 			<Value release="permit">member@example.edu</Value>
-		</Attribute>
-	</Rule>
-	<Rule>
-		<Target>
-			<Requester matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">shar[1-9]\.example\.edu</Requester>
-			<Resource matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^https?://.+\.example\.edu/.*$</Resource>
-		</Target>
-		<Attribute name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
-			<Value release="permit">faculty@example.edu</Value>
-		</Attribute>
-	</Rule>
-	<Rule>
-		<Target>
-			<Requester>shar.example.edu</Requester>
-			<Resource>http://www.example.edu/example1/</Resource>
-		</Target>
-		<Attribute name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
-			<Value release="deny">faculty@example.edu</Value>
-		</Attribute>
-	</Rule>
-	<Rule>
-		<Target>
-			<Requester>shar.example.edu</Requester>
-			<Resource>http://www.example.edu/example2/</Resource>
-		</Target>
-		<Attribute name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
-			<AnyValue release="permit"/>
 		</Attribute>
 	</Rule>
 </AttributeReleasePolicy>
