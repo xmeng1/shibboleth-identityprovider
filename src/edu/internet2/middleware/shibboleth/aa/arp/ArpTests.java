@@ -50,6 +50,7 @@
 package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -468,7 +469,7 @@ public class ArpTests extends TestCase {
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
 		props.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
-			"data");
+			new File("data/").toURI().toString());
 		props.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
 			"65535");
@@ -476,7 +477,7 @@ public class ArpTests extends TestCase {
 		try {
 			repository = ArpRepositoryFactory.getInstance(props);
 		} catch (ArpRepositoryException e) {
-			fail("Failed to create file-based Arp Repository" + e);
+			fail("Failed to create file-based Arp Repository" + e.getMessage());
 		}
 		assertNotNull(
 			"Failed to create file-based Arp Repository: Factory returned null.",

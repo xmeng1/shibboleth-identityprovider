@@ -98,6 +98,8 @@ public class ShibResource {
 			return file;
 		} catch (URISyntaxException e) {
 			throw new ResourceNotAvailableException("File could not be loaded from specified resource: " + e);
+		} catch (IllegalArgumentException e) {
+			throw new ResourceNotAvailableException("File could not be loaded from specified resource: " + e);
 		}
 	}
 

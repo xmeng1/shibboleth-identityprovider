@@ -50,7 +50,6 @@
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,7 +82,10 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 
 	public FileSystemArpRepository(Properties props) throws ArpRepositoryException {
 		super(props);
-		if (props.getProperty("edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path", null)
+		if (props
+			.getProperty(
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
+				null)
 			== null) {
 			log.error(
 				"Cannot initialize FileSystemArpRepository: attribute (edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path) not specified");
@@ -107,21 +109,22 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 			}
 
 			dataStorePath =
-				props.getProperty("edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path");
+				props.getProperty(
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path");
 			if (!dataStorePath.endsWith("/")) {
 				dataStorePath += "/";
 			}
 			log.info("Initializing File System Arp Repository with a root of (" + dataStorePath + ").");
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.error(
 				"Cannot initialize FileSystemArpRepository: error accessing path: ("
 					+ props.getProperty(
 						"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path")
-					+ ").");
+					+ "): "
+					+ e);
 			throw new ArpRepositoryException("Cannot initialize FileSystemArpRepository");
 		}
 	}
-
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#remove(Arp)
 	 */
@@ -155,7 +158,7 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 			return null;
 		}
 
-		InputStream inStream = new FileInputStream(fileName);
+		InputStream inStream = new ShibResource(fileName).getInputStream();
 		DOMParser parser = new DOMParser();
 		parser.parse(new InputSource(inStream));
 		return parser.getDocument().getDocumentElement();
