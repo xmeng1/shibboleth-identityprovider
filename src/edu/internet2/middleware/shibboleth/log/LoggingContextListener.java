@@ -95,6 +95,9 @@ public class LoggingContextListener implements ServletContextListener {
 	// tomcat calls this before the servlet init()s, but is that guaranteed?
 	public void contextInitialized(ServletContextEvent sce)
 	{
+		//Silliness to get around xmlsec doing its own configuration, ie: we might need to override it
+		Init.init();
+
 		ConsoleAppender rootAppender = new ConsoleAppender();
 		rootAppender.setWriter(new PrintWriter(System.out));
 		rootAppender.setName("stdout");
@@ -104,12 +107,6 @@ public class LoggingContextListener implements ServletContextListener {
 		// Logger.getRootLogger().setLevel((Level) Level.DEBUG);
 		Logger.getRootLogger().setLevel((Level) Level.INFO);
 		rootAppender.setLayout(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"));
-
-		Logger.getLogger("org.apache.xml.security").setLevel((Level) Level.OFF);
-		Logger.getLogger("org.opensaml").setLevel((Level) Level.OFF);
-
-		//Silliness to get around xmlsec doing its own configuration, ie: we might need to override it
-		Init.init();
 
 		try {
 			Document originConfig = OriginConfig.getOriginConfig(sce.getServletContext());
@@ -133,6 +130,7 @@ public class LoggingContextListener implements ServletContextListener {
 	protected void loadConfiguration(Document originConfig) throws ShibbolethConfigurationException
 	{
 		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "Logging");
+
 		if (itemElements.getLength() > 1) 
 		{
 			log.warn("Encountered multiple <Logging> configuration elements. Using first one.");
@@ -142,6 +140,7 @@ public class LoggingContextListener implements ServletContextListener {
 		{
 			Node loggingNode = itemElements.item(0);
 			Node errorLogNode = null;
+                        boolean encounteredLog4JConfig = false;
 
 			for (int i = 0; i < loggingNode.getChildNodes().getLength(); i++)
 			{
@@ -150,6 +149,7 @@ public class LoggingContextListener implements ServletContextListener {
 				if ("Log4JConfig".equals(node.getNodeName()))
 				{
 					doLog4JConfig(node);
+                                        encounteredLog4JConfig = true;
 				}
 				else if ("TransactionLog".equals(node.getNodeName()))
 				{
@@ -166,6 +166,18 @@ public class LoggingContextListener implements ServletContextListener {
 			if (errorLogNode != null)
 			{
 				configureErrorLog(errorLogNode);
+			}
+			else
+			{
+				// started out at INFO for logging config messages
+				Logger.getRootLogger().setLevel((Level) Level.WARN);
+			}
+
+			// turn these off by default
+			if (!encounteredLog4JConfig)
+			{
+				Logger.getLogger("org.apache.xml.security").setLevel((Level) Level.OFF);
+				Logger.getLogger("org.opensaml").setLevel((Level) Level.OFF);
 			}
 		}
 	}
