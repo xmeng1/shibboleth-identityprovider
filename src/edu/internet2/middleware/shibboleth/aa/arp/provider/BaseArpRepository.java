@@ -79,18 +79,31 @@ public abstract class BaseArpRepository implements ArpRepository {
 	private static Logger log = Logger.getLogger(BaseArpRepository.class.getName());
 	private ArpCache arpCache;
 
-	BaseArpRepository(Properties properties) {
-		if (properties
-			.getProperty(
-				"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
-				null)
-			!= null) {
-			arpCache = ArpCache.instance();
-			arpCache.setCacheLength(
-				Long.parseLong(
-					properties.getProperty(
-						"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
-						null)));
+	BaseArpRepository(Properties properties) throws ArpRepositoryException {
+		try {
+			if (properties
+				.getProperty(
+					"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
+					null)
+				!= null) {
+				if (Long
+					.parseLong(
+						properties.getProperty(
+							"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
+							null))
+					!= 0) {
+					arpCache = ArpCache.instance();
+					arpCache.setCacheLength(
+						Long.parseLong(
+							properties.getProperty(
+								"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
+								null)));
+				}
+			}
+		} catch (NumberFormatException nfe) {
+			log.error(
+				"Value for (edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL) must be a long integer.");
+			throw new ArpRepositoryException("Value for (edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL) must be a long integer.");
 		}
 	}
 
