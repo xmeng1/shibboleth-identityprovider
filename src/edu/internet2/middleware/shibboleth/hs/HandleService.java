@@ -34,6 +34,7 @@ import edu.internet2.middleware.shibboleth.common.HandleException;
  * embedded in an HTML that auto-POSTs to the referring SHIRE.
  * 
  * @author Walter Hoehn wassa&#064;columbia.edu
+ * @author Barbara Jenson blk&#064;cmu.edu
  *
  */
 
