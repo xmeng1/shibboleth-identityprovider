@@ -113,6 +113,8 @@ public class AAServlet extends HttpServlet {
       
 	    arpFactory = ArpRepository.getInstance(arpFactoryMethod, arpFactoryData);
 
+	    log.info("Using "+ctxFactory+" as directory for attributes.");
+
 	    Hashtable env = new Hashtable(11);
 	    env.put(Context.INITIAL_CONTEXT_FACTORY, ctxFactory);
 
@@ -168,7 +170,7 @@ public class AAServlet extends HttpServlet {
 
 	    if(handle.equalsIgnoreCase("foo")){
 		// for testing only
-		userName = "dousti"; 
+		userName = "dummy"; 
 	    }else{
 		if(hrf == null){
 		    throw new HandleException("No HandleRepository found! Has HS initialized?");
