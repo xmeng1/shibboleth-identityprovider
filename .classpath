@@ -2,14 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry kind="lib" path="endorsed/dom3-xercesImpl-2.5.0.jar"/>
-	<classpathentry kind="lib" path="endorsed/dom3-xml-apis-2.5.0.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
 	<classpathentry sourcepath="lib/junit-3.8.1-src.jar" kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry sourcepath="lib/log4j-1.2.5-src.jar" kind="lib" path="lib/log4j-1.2.5.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug-1.0.1.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xalan-2.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/ant-1.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/ant-optional-1.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
@@ -29,5 +26,9 @@
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean_xpath.jar"/>
 	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
+	<classpathentry kind="lib" path="endorsed/xalan.jar"/>
+	<classpathentry kind="lib" path="endorsed/sax.jar"/>
+	<classpathentry kind="lib" path="endorsed/jaxp-api.jar"/>
+	<classpathentry kind="lib" path="endorsed/dom.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
