@@ -78,6 +78,7 @@ public class IdPProtocolSupport implements Metadata {
 	private ArpEngine arpEngine;
 	private AttributeResolver resolver;
 	private ArtifactMapper artifactMapper;
+	private Semaphore throttle;
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
 			ArpEngine arpEngine, AttributeResolver resolver) throws ShibbolethConfigurationException {
@@ -91,6 +92,9 @@ public class IdPProtocolSupport implements Metadata {
 		this.resolver = resolver;
 		// TODO make this pluggable... and clean up memory impl
 		artifactMapper = new MemoryArtifactMapper();
+
+		// Load a semaphore that throttles how many requests the IdP will handle at once
+		throttle = new Semaphore(config.getMaxThreads());
 	}
 
 	public static void validateEngineData(HttpServletRequest req) throws InvalidClientDataException {
@@ -121,8 +125,8 @@ public class IdPProtocolSupport implements Metadata {
 		return spMapper;
 	}
 
-	public static void signAssertions(SAMLAssertion[] assertions, RelyingParty relyingParty)
-			throws InvalidCryptoException, SAMLException {
+	public void signAssertions(SAMLAssertion[] assertions, RelyingParty relyingParty) throws InvalidCryptoException,
+			SAMLException {
 
 		if (relyingParty.getIdentityProvider().getSigningCredential() == null
 				|| relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() == null) {
@@ -140,13 +144,18 @@ public class IdPProtocolSupport implements Metadata {
 						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
 			}
 
-			assertions[i].sign(assertionAlgorithm, relyingParty.getIdentityProvider().getSigningCredential()
-					.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential()
-					.getX509CertificateChain()));
+			try {
+				throttle.enter();
+				assertions[i].sign(assertionAlgorithm, relyingParty.getIdentityProvider().getSigningCredential()
+						.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential()
+						.getX509CertificateChain()));
+			} finally {
+				throttle.exit();
+			}
 		}
 	}
 
-	public static void signResponse(SAMLResponse response, RelyingParty relyingParty) throws SAMLException {
+	public void signResponse(SAMLResponse response, RelyingParty relyingParty) throws SAMLException {
 
 		// Make sure we have an appropriate credential
 		if (relyingParty.getIdentityProvider().getSigningCredential() == null
@@ -165,9 +174,13 @@ public class IdPProtocolSupport implements Metadata {
 			throw new InvalidCryptoException(SAMLException.RESPONDER,
 					"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
 		}
-
-		response.sign(responseAlgorithm, relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey(),
-				Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential().getX509CertificateChain()));
+		try {
+			throttle.enter();
+			response.sign(responseAlgorithm, relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey(),
+					Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential().getX509CertificateChain()));
+		} finally {
+			throttle.exit();
+		}
 	}
 
 	protected void addFederationProvider(Element element) {
@@ -267,5 +280,33 @@ public class IdPProtocolSupport implements Metadata {
 	public ArtifactMapper getArtifactMapper() {
 
 		return artifactMapper;
+	}
+
+	private class Semaphore {
+
+		private int value;
+
+		public Semaphore(int value) {
+
+			this.value = value;
+		}
+
+		public synchronized void enter() {
+
+			--value;
+			if (value < 0) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					// squelch and continue
+				}
+			}
+		}
+
+		public synchronized void exit() {
+
+			++value;
+			notify();
+		}
 	}
 }

@@ -237,7 +237,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			}
 		}
 		if (relyingParty.wantsAssertionsSigned() || metaDataIndicatesSignAssertions) {
-			IdPProtocolSupport.signAssertions((SAMLAssertion[]) assertions.toArray(new SAMLAssertion[0]), relyingParty);
+			support.signAssertions((SAMLAssertion[]) assertions.toArray(new SAMLAssertion[0]), relyingParty);
 		}
 
 		// Create artifacts for each assertion
@@ -293,7 +293,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			}
 		}
 		if (relyingParty.wantsAssertionsSigned() || metaDataIndicatesSignAssertions) {
-			IdPProtocolSupport.signAssertions((SAMLAssertion[]) assertions.toArray(new SAMLAssertion[0]), relyingParty);
+			support.signAssertions((SAMLAssertion[]) assertions.toArray(new SAMLAssertion[0]), relyingParty);
 		}
 
 		// Set attributes needed by form
@@ -302,7 +302,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 		SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, assertions, null);
 
-		IdPProtocolSupport.signResponse(samlResponse, relyingParty);
+		support.signResponse(samlResponse, relyingParty);
 
 		createPOSTForm(request, response, samlResponse.toBase64());
 

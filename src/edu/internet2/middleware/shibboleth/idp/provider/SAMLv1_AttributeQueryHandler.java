@@ -275,7 +275,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					}
 				}
 				if (relyingParty.wantsAssertionsSigned() || metaDataIndicatesSignAssertions) {
-					IdPProtocolSupport.signAssertions(new SAMLAssertion[]{sAssertion}, relyingParty);
+					support.signAssertions(new SAMLAssertion[]{sAssertion}, relyingParty);
 				}
 
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), null);

@@ -77,7 +77,7 @@ public class IdPResponder extends HttpServlet {
 	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
 	private static Random idgen = new Random();
 	private SAMLBinding binding;
-	private Semaphore throttle;
+
 	private IdPConfig configuration;
 	private HashMap protocolHandlers = new HashMap();
 	private IdPProtocolSupport protocolSupport;
@@ -98,9 +98,6 @@ public class IdPResponder extends HttpServlet {
 
 			// Load global configuration properties
 			configuration = new IdPConfig(originConfig.getDocumentElement());
-
-			// Load a semaphore that throttles how many requests the IdP will handle at once
-			throttle = new Semaphore(configuration.getMaxThreads());
 
 			// Load name mappings
 			NameMapper nameMapper = new NameMapper();
@@ -228,9 +225,6 @@ public class IdPResponder extends HttpServlet {
 		log.debug("Recieved a request via GET for location (" + request.getRequestURL() + ").");
 
 		try {
-			// TODO this throttle should probably just wrap signing operations...
-			throttle.enter();
-
 			// Determine which protocol we are responding to (at this point normally Shibv1 vs. EAuth)
 			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURL()
 					.toString());
@@ -251,8 +245,6 @@ public class IdPResponder extends HttpServlet {
 			log.error(ex);
 			displayBrowserError(request, response, ex);
 			return;
-		} finally {
-			throttle.exit();
 		}
 	}
 
@@ -353,34 +345,6 @@ public class IdPResponder extends HttpServlet {
 		req.setAttribute("requestURL", req.getRequestURI().toString());
 		RequestDispatcher rd = req.getRequestDispatcher("/IdPError.jsp");
 		rd.forward(req, res);
-	}
-
-	private class Semaphore {
-
-		private int value;
-
-		public Semaphore(int value) {
-
-			this.value = value;
-		}
-
-		public synchronized void enter() {
-
-			--value;
-			if (value < 0) {
-				try {
-					wait();
-				} catch (InterruptedException e) {
-					// squelch and continue
-				}
-			}
-		}
-
-		public synchronized void exit() {
-
-			++value;
-			notify();
-		}
 	}
 
 }
