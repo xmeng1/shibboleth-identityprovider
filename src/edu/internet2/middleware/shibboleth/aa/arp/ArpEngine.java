@@ -56,6 +56,7 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -103,6 +104,12 @@ public class ArpEngine {
 		this.repository = repository;
 	}
 
+	/**
+	 * Lookup by identifier a function for matching ARP Target Components .
+	 * @param functionIdentifier the identifier for the function
+	 * @return the <code>Matchfunction</code> or null if not registered
+	 */
+	
 	public static MatchFunction lookupMatchFunction(URI functionIdentifier) throws ArpException {
 		String className = null;
 
@@ -137,7 +144,7 @@ public class ArpEngine {
 			effectiveArp.setDescription("Effective ARP.");
 
 			Arp[] userPolicies = repository.getAllPolicies(principal);
-
+			log.debug("Creating effective ARP from (" + userPolicies.length + ") polic(y|ies).");
 			for (int i = 0; userPolicies.length > i; i++) {
 				Rule[] rules = userPolicies[i].getMatchingRules(requester, resource);
 
@@ -145,15 +152,22 @@ public class ArpEngine {
 					effectiveArp.addRule(rules[j]);
 				}
 			}
-
 			return effectiveArp;
+
 		} catch (ArpRepositoryException e) {
 			log.error("Error creating effective policy: " + e);
 			throw new ArpProcessingException("Error creating effective policy.");
 		}
 	}
 
-	URI[] listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
+	/**
+	 * Determines which attributes MIGHT be releasable for a given request.  This function 
+	 * may be used to determine which attributes to resolve when a request for all
+	 * attributes is made.  This is done for performance reasons only. ie: The resulting 
+	 * attributes must still be filtered before release.
+	 * @return an array of <code>URI</code> objects that name the possible attributes
+	 */
+	public URI[] listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
 		throws ArpProcessingException {
 		Set possibleReleaseSet = new HashSet();
 		Set anyValueDenies = new HashSet();
@@ -177,9 +191,20 @@ public class ArpEngine {
 			}
 		}
 		possibleReleaseSet.removeAll(anyValueDenies);
+		if (log.isDebugEnabled()) {
+			log.debug("Computed possible attribute release set.");
+			Iterator iterator = possibleReleaseSet.iterator();
+			while (iterator.hasNext()) {
+				log.debug("Possible attribute: " + iterator.next().toString());
+			}
+		}
 		return (URI[]) possibleReleaseSet.toArray(new URI[0]);
 	}
 
+	/**
+	 * Applies all applicable ARPs to a set of attributes.
+	 * @return the attributes to be released
+	 */
 	public ArpAttribute[] filterAttributes(
 		ArpAttribute[] attributes,
 		Principal principal,
@@ -213,12 +238,12 @@ public class ArpEngine {
 		//Filter
 		for (int i = 0; attributes.length > i; i++) {
 			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(attributes[i].getName());
-			
+
 			//Handle no specifier
 			if (attribute == null) {
 				continue;
 			}
-			
+
 			//Handle Deny All
 			if (attribute.denyAnyValue()) {
 				continue;
