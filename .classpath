@@ -1,20 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
     <classpathentry kind="src" path="src"/>
-    <classpathentry kind="lib"
-        path="webApplication/WEB-INF/lib/xml-apis.jar" sourcepath="/Shibboleth/lib/xerces-src.jar"/>
-    <classpathentry kind="lib"
-        path="webApplication/WEB-INF/lib/xercesImpl.jar" sourcepath="/Shibboleth/lib/xerces-src.jar"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xalan.jar"/>
     <classpathentry kind="var" path="JRE_LIB" rootpath="JRE_SRCROOT" sourcepath="JRE_SRC"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
     <classpathentry kind="lib"
         path="webApplication/WEB-INF/lib/commons-digester.jar" sourcepath="/Shibboleth/lib/commons-digester-src.jar"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug.jar" sourcepath="/shib-java/webApplication/WEB-INF/lib/jug-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
-    <classpathentry kind="lib"
-        path="webApplication/WEB-INF/lib/xmlsec.jar" sourcepath="/Shibboleth/lib/xml-sec-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
     <classpathentry kind="lib" path="lib/servlet-2.2.jar" sourcepath="/Shibboleth/lib/servlet-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/ldap.jar"/>
@@ -22,6 +14,12 @@
     <classpathentry kind="lib" path="lib/bcprov-jdk14-117.jar" sourcepath="/Shibboleth/lib/bcprov-jdk14-117-src.jar"/>
     <classpathentry kind="var" path="JAVA_HOME/jre/lib/jce.jar"/>
     <classpathentry kind="var" path="JAVA_HOME/jre/lib/jsse.jar"/>
-    <classpathentry kind="lib" path="lib/log4j-1.2.5.jar" rootpath="" sourcepath="/Shibboleth/lib/log4j-1.2.5-src.jar"/>
+    <classpathentry kind="lib" path="lib/log4j-1.2.5.jar" sourcepath="/Shibboleth/lib/log4j-1.2.5-src.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug-1.0.1.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xalan-2.4.1.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xercesImpl-2.2.1.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xml-apis-2.4.1.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlParserAPIs-2.2.1.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlsec-1.0.5.jar"/>
     <classpathentry kind="output" path="webApplication\WEB-INF\classes"/>
 </classpath>
