@@ -54,7 +54,6 @@ import java.text.*;
 import java.util.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
-import edu.internet2.middleware.shibboleth.*;
 import edu.internet2.middleware.shibboleth.common.*;
 import org.opensaml.*;
 import org.apache.log4j.Logger;
@@ -185,10 +184,8 @@ public class HandleServlet extends HttpServlet {
 	    req.setAttribute("shire", req.getParameter("shire"));
 	    req.setAttribute("target", req.getParameter("target"));
 
-	    he = new HandleEntry( req.getRemoteUser(), req.getAuthType(), 
-				  ticketExp );
-	    log.info("HS: Got Handle: "+ he.getHandle());
-	    System.err.println("HS: Got Handle: "+ he.getHandle());
+	    he = new HandleEntry(req.getRemoteUser(), req.getAuthType(), ticketExp);
+	    log.info("Issued Handle (" + he.getHandle() + ") to (" + he.getUsername() + ")");
 	    hrf.insertHandleEntry( he );
 	    
 	    byte[] buf = hsSAML.prepare
@@ -199,7 +196,7 @@ public class HandleServlet extends HttpServlet {
 	    createForm( req, res, buf );
 	}
 	catch (HandleException ex) {
-	    System.out.println(ex);
+	    log.error(ex);
 	    handleError( req, res, ex );
 	}
 
@@ -208,9 +205,9 @@ public class HandleServlet extends HttpServlet {
     private void createForm( HttpServletRequest req, 
 			     HttpServletResponse res,
 			     byte[] buf )  
-	throws HandleException {
+	throws HandleException
+    {
 	try {
-
 	    /**
 	     * forwarding to hs.jsp for submission
              */
@@ -282,16 +279,14 @@ public class HandleServlet extends HttpServlet {
 	if(hrf == null){
 	    // make one
 	    String repositoryType = this.getServletContext().getInitParameter("repository");
-	    hrf = HandleRepositoryFactory.getInstance(						      Constants.POLICY_CLUBSHIB, 
-												      repositoryType,
-												      this );
+	    hrf = HandleRepositoryFactory.getInstance(Constants.POLICY_CLUBSHIB,
+						      repositoryType,
+						      this );
 	    sctx.setAttribute("HandleRepository", hrf);
 	    log.info("A new HandleRepository created by HS: "+hrf);
 	}
 	return hrf;
     }
-
-
 }
 
     
