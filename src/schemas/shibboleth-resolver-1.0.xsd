@@ -11,6 +11,7 @@
 								<xs:attribute name="smartScope" type="xs:string" use="optional"/>
 								<xs:attribute name="valueHandler" type="xs:string" use="optional"/>
 								<xs:attribute name="allowEmpty" type="xs:boolean" use="optional"/>
+								<xs:attribute name="downCase" type="xs:boolean" use="optional"/>
 							</xs:extension>
 						</xs:complexContent>
 					</xs:complexType>
