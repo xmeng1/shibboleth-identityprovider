@@ -82,13 +82,17 @@ public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, ServletException, IOException {
 
-		//TODO attribute push?
+		// TODO attribute push?
 
-		if (request != null) {
+		if (request == null) {
 			log.error("Protocol Handler received a SAML Request, but is unable to handle it.");
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
 		}
-		
+
+		// Set attributes that are needed by the jsp
+		request.setAttribute("shire", request.getParameter("shire"));
+		request.setAttribute("target", request.getParameter("target"));
+
 		try {
 			// Ensure that we have the required data from the servlet container
 			IdPProtocolSupport.validateEngineData(request);
