@@ -8,20 +8,25 @@ import javax.servlet.http.*;
 import edu.internet2.middleware.shibboleth.*;
 import edu.internet2.middleware.shibboleth.common.*;
 import org.opensaml.*;
+import org.apache.log4j.*;
 
 public class HandleServlet extends HttpServlet {
 
     private HandleRepositoryFactory hrf;
     private long ticketExp; 
     private HandleServiceSAML hsSAML;
+    private static Logger log; 
+    private String log4jConfigFileLocation;
 
     public void init(ServletConfig conf)
 	throws ServletException
     {
 	super.init(conf);
-	getInitParams();
 	ServletConfig sc = getServletConfig();
 	ServletContext sctx = sc.getServletContext();
+
+	getInitParams();
+	initLogger();
 
 	try {
 	    edu.internet2.middleware.eduPerson.Init.init();
@@ -42,6 +47,7 @@ public class HandleServlet extends HttpServlet {
 		  this );
 	}
 	catch (SAMLException ex) {
+	    log.fatal("Error initializing SAML libraries.", ex);
 	    throw new ServletException( "Error initializing SAML libraries: " + ex );
 	}
 	catch (java.security.KeyStoreException ex) {
@@ -63,7 +69,15 @@ public class HandleServlet extends HttpServlet {
 	    throw new ServletException( "Error initializing SAML libraries: No Profile created." );
 	}  
     }
-    
+    private void initLogger() {
+	log = Logger.getLogger(HandleServlet.class.getName());
+	PropertyConfigurator.configure
+	    ( getServletContext().getRealPath("/") + log4jConfigFileLocation);
+	log.info("Logger initialized.");
+        }
+
+
+
     private void getInitParams() throws ServletException {
 
 	String ticket = getInitParameter("ticket");
@@ -72,6 +86,11 @@ public class HandleServlet extends HttpServlet {
 	}
 	ticketExp = Long.parseLong(ticket);
 
+	log4jConfigFileLocation = getInitParameter("logConfig");
+	if ( log4jConfigFileLocation == null || 
+	     log4jConfigFileLocation.equals("")) {
+	    log4jConfigFileLocation = "/WEB-INF/conf/log4j.properties";
+	}
 	if ( getInitParameter("domain") == null || 
 	     getInitParameter("domain").equals("")) {
 	    throw new ServletException("Cannot find host domain in init parameters");
@@ -128,6 +147,8 @@ public class HandleServlet extends HttpServlet {
 
 	    he = new HandleEntry( req.getRemoteUser(), req.getAuthType(), 
 				  ticketExp );
+	    log.info("Got Handle: "+ he.getHandle());
+	    System.out.println("Got Handle: "+ he.getHandle());
 	    hrf.insertHandleEntry( he );
 	    
 	    byte[] buf = hsSAML.prepare
