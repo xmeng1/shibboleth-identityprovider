@@ -45,7 +45,7 @@ the information Shibboleth gives me:<p>
     <li>Your eduPersonPrincipalName is: <b><%= request.getRemoteUser() %></b></li>
 <% } %>
 <% if (request.getHeader("Shib-EP-Affiliation")!=null) { %>
-    <li>Your eduPersonAffiliation value(s):
+    <li>Your eduPersonScopedAffiliation value(s):
     <b><%= request.getHeader("Shib-EP-Affiliation") %></b></li>
 <% } %>
 <% if (request.getHeader("Shib-EP-Entitlement")!=null) { %>
