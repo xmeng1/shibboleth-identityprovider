@@ -730,7 +730,16 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 		private void setSpecificParameter(PreparedStatement preparedStatement, int valueIndex, Object object)
 			throws JDBCStatementCreatorException {
 
-			if (type.equalsIgnoreCase("String")) {
+			if (object == null) {
+				try {
+					preparedStatement.setNull(valueIndex, Types.NULL);
+					return;
+				} catch (SQLException e) {
+					log.error(
+						"Encountered a problem while attempting to convert missing attribute value to null parameter.");
+					throw new JDBCStatementCreatorException("Encountered a problem while attempting to convert missing attribute value to null parameter.");
+				}
+			} else if (type.equalsIgnoreCase("String")) {
 				setString(preparedStatement, valueIndex, object);
 			} else if (type.equalsIgnoreCase("Integer")) {
 				setInteger(preparedStatement, valueIndex, object);
