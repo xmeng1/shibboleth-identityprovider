@@ -370,15 +370,20 @@ class ArpCache {
 							}
 						}
 					}
-						//release the lock to be friendly
-						Iterator deleteIterator = needsDeleting.iterator();
-						while (deleteIterator.hasNext()) {
-							synchronized (cache) {
+					//release the lock to be friendly
+					Iterator deleteIterator = needsDeleting.iterator();
+					while (deleteIterator.hasNext()) {
+						synchronized (cache) {
+							CachedArp cachedArp = (CachedArp) deleteIterator.next();
+							if (cachedArp.arp.isSitePolicy()) {
+								log.debug("Expiring site ARP from the Cache.");
+								cache.remove(new SiteCachePrincipal());
+							} else {
 								log.debug("Expiring an ARP from the Cache.");
-								cache.remove(
-									((CachedArp) deleteIterator.next()).arp.getPrincipal());
+								cache.remove(cachedArp.arp.getPrincipal());
 							}
 						}
+					}
 
 					sleep(5 * 60 * 1000);
 				} catch (InterruptedException e) {
