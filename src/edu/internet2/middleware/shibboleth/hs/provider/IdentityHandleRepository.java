@@ -113,7 +113,7 @@ public class IdentityHandleRepository extends BaseHandleRepository implements Ha
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
 	public AuthNPrincipal getPrincipal(String handle, String format) throws HandleRepositoryException, InvalidHandleException {
-        if (this.format.equals(Constants.SHIB_NAMEID_FORMAT_URI)) {
+        if (format != null && format.equals(Constants.SHIB_NAMEID_FORMAT_URI)) {
             return generator.getPrincipal(handle, format);
         }
         
