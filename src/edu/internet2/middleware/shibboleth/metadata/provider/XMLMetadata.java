@@ -71,7 +71,7 @@ public class XMLMetadata extends ResourceWatchdog implements Metadata {
 		}
         catch (SAXException e) {
             log.error("Encountered a problem parsing metadata source: " + e);
-            throw new MetadataException("Unable to read metadata: + e");
+            throw new MetadataException("Unable to read metadata: " + e);
         }
         catch (SAMLException e) {
             log.error("Encountered a problem processing metadata source: " + e);

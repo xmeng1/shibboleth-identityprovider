@@ -35,7 +35,6 @@ import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.keyresolver.KeyResolverException;
 
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
@@ -44,9 +43,13 @@ import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 public class Trust {
 
 	private static Logger log = Logger.getLogger(Trust.class.getName());
-	private Metadata metadata;
 
 	public boolean validate(RoleDescriptor descriptor, X509Certificate[] certificateChain, int keyUse) {
+
+		if (descriptor == null || certificateChain == null || certificateChain.length < 1) {
+			log.error("Appropriate data was not supplied for trust evaluation.");
+			return false;
+		}
 
 		// Iterator through all the keys in the metadata
 		Iterator keyDescriptors = descriptor.getKeyDescriptors();
