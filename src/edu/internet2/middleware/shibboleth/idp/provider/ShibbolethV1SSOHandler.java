@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
@@ -41,11 +42,14 @@ import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLAssertion;
+import org.opensaml.SAMLAttribute;
+import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBrowserProfile;
+import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLRequest;
@@ -58,6 +62,7 @@ import org.w3c.dom.Element;
 
 import sun.misc.BASE64Decoder;
 
+import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
@@ -176,7 +181,68 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 			// TODO Provide a mechanism for the authenticator to specify the auth time
 
+			SAMLSubject authNSubject = new SAMLSubject(nameId, null, null, null);
+
 			ArrayList assertions = new ArrayList();
+
+			// TODO push support cleanup???
+
+			if (true) {
+				// TODO error out if legacy and push
+				SAMLAttribute[] attrs;
+				try {
+					attrs = support.getReleaseAttributes(new AuthNPrincipal(username), relyingParty.getProviderId(),
+							null);
+				
+				if (attrs != null && attrs.length > 0) {
+					// Reference requested subject
+					SAMLSubject attrSubject;
+				
+						attrSubject = (SAMLSubject) authNSubject.clone();
+					
+
+					ArrayList audiences = new ArrayList();
+					if (relyingParty.getProviderId() != null) {
+						audiences.add(relyingParty.getProviderId());
+					}
+					if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
+						audiences.add(relyingParty.getName());
+					}
+					SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
+
+					// Put all attributes into an assertion
+					SAMLStatement statement = new SAMLAttributeStatement(attrSubject, Arrays.asList(attrs));
+
+					// Set assertion expiration to longest attribute expiration
+					long max = 0;
+					for (int i = 0; i < attrs.length; i++) {
+						if (max < attrs[i].getLifetime()) {
+							max = attrs[i].getLifetime();
+						}
+					}
+					Date now = new Date();
+					Date then = new Date(now.getTime() + (max * 1000)); // max is in seconds
+
+					SAMLAssertion attrAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(),
+							now, then, Collections.singleton(condition), null, Collections.singleton(statement));
+					if (log.isDebugEnabled()) {
+						log.debug("Dumping generated Attribute Assertion:" + System.getProperty("line.separator")
+								+ new String(new BASE64Decoder().decodeBuffer(new String(attrAssertion.toBase64(), "ASCII")), "UTF8"));
+					}
+					assertions.add(attrAssertion);
+					// TODO make sure signature adds covers this stuff
+				} else {
+					//TODO remove this message
+					log.debug("No Attrs!");
+				}
+				} catch (AAException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				} catch (CloneNotSupportedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
 
 			// TODO do assertion signing for artifact stuff
 
@@ -184,8 +250,12 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			if (useArtifactProfile(provider, acceptanceURL)) {
 				log.debug("Responding with Artifact profile.");
 
+				// TODO woa! error if legacy
+
+				authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
+
 				assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod,
-						new Date(System.currentTimeMillis()), false));
+						new Date(System.currentTimeMillis()), authNSubject));
 
 				// Create artifacts for each assertion
 				ArrayList artifacts = new ArrayList();
@@ -224,8 +294,10 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			} else {
 				log.debug("Responding with POST profile.");
 
+				authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
+
 				assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod,
-						new Date(System.currentTimeMillis()), true));
+						new Date(System.currentTimeMillis()), authNSubject));
 
 				request.setAttribute("acceptanceURL", acceptanceURL);
 				request.setAttribute("target", request.getParameter("target"));
@@ -257,7 +329,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 	private SAMLAssertion generateAuthNAssertion(HttpServletRequest request, RelyingParty relyingParty,
 			EntityDescriptor provider, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime,
-			boolean bearerConfirmation) throws SAMLException, IOException {
+			SAMLSubject subject) throws SAMLException, IOException {
 
 		Document doc = org.opensaml.XML.parserPool.newDocument();
 
@@ -296,18 +368,9 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			bindings.add(binding);
 		}
 
-		// Create the authN assertion
+		// Create the assertion
 		Vector conditions = new Vector(1);
 		if (audiences != null && audiences.size() > 0) conditions.add(new SAMLAudienceRestrictionCondition(audiences));
-
-		String[] confirmationMethods = new String[0];
-		if (bearerConfirmation) {
-			confirmationMethods = new String[]{SAMLSubject.CONF_BEARER};
-		} else {
-			confirmationMethods = new String[]{SAMLSubject.CONF_ARTIFACT};
-		}
-
-		SAMLSubject subject = new SAMLSubject(nameId, Arrays.asList(confirmationMethods), null, null);
 
 		SAMLStatement[] statements = {new SAMLAuthenticationStatement(subject, authenticationMethod, authTime, request
 				.getRemoteAddr(), null, bindings)};
@@ -316,7 +379,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 				.currentTimeMillis() + 300000), conditions, null, Arrays.asList(statements));
 
 		if (log.isDebugEnabled()) {
-			log.debug("Dumping generated SAML Assertions:" + System.getProperty("line.separator")
+			log.debug("Dumping generated AuthN Assertion:" + System.getProperty("line.separator")
 					+ new String(new BASE64Decoder().decodeBuffer(new String(assertion.toBase64(), "ASCII")), "UTF8"));
 		}
 
