@@ -55,6 +55,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.ArrayList;
@@ -331,12 +332,19 @@ class FileCredentialResolver implements CredentialResolver {
 			}
 		} while (i > -1);
 
+		//TODO switch to examining the DER, so we don't get failure messages
 		try {
 			return getRSAPkcs8DerKey(inputBytes.toByteArray());
 
 		} catch (CredentialFactoryException e) {
-			log.debug("Unable to load private key as PKCS8, attempting raw RSA.");
-			return getRSARawDERKey(inputBytes.toByteArray());
+			try {
+				log.debug("Unable to load private key as PKCS8, attempting raw RSA.");
+				return getRSARawDERKey(inputBytes.toByteArray());
+
+			} catch (CredentialFactoryException e2) {
+				log.debug("Unable to load private key as raw RSA, attempting raw DSA.");
+				return getDSARawDERKey(inputBytes.toByteArray());
+			}
 		}
 
 	}
@@ -375,8 +383,11 @@ class FileCredentialResolver implements CredentialResolver {
 						"-----END RSA PRIVATE KEY-----"));
 			} else if (str.matches("^.*-----BEGIN DSA PRIVATE KEY-----.*$")) {
 				in.close();
-				log.error("No Support for DSA PEM keys.");
-				throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+				return getDSARawDERKey(
+					singleDerFromPEM(
+						inputBytes.toByteArray(),
+						"-----BEGIN DSA PRIVATE KEY-----",
+						"-----END DSA PRIVATE KEY-----"));
 			}
 		}
 		in.close();
@@ -457,7 +468,60 @@ class FileCredentialResolver implements CredentialResolver {
 			return keyFactory.generatePrivate(keySpec);
 
 		} catch (IOException e) {
-			log.error("Invalid DER encoding: " + e);
+			log.error("Invalid DER encoding for RSA key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		} catch (GeneralSecurityException e) {
+			log.error("Unable to marshall private key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		}
+
+	}
+
+	private PrivateKey getDSARawDERKey(byte[] bytes) throws CredentialFactoryException {
+
+		try {
+			DerValue root = new DerValue(bytes);
+			if (root.tag != DerValue.tag_Sequence) {
+				log.error("Unexpected data type.  Unable to load data as an DSA key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			DerValue[] childValues = new DerValue[6];
+			childValues[0] = root.data.getDerValue();
+			childValues[1] = root.data.getDerValue();
+			childValues[2] = root.data.getDerValue();
+			childValues[3] = root.data.getDerValue();
+			childValues[4] = root.data.getDerValue();
+			childValues[5] = root.data.getDerValue();
+
+			if (root.data.available() != 0) {
+				log.error("Data overflow.  Unable to load data as an DSA key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			if (childValues[0].tag != DerValue.tag_Integer
+				|| childValues[1].tag != DerValue.tag_Integer
+				|| childValues[2].tag != DerValue.tag_Integer
+				|| childValues[3].tag != DerValue.tag_Integer
+				|| childValues[4].tag != DerValue.tag_Integer
+				|| childValues[5].tag != DerValue.tag_Integer) {
+				log.error("Unexpected data type.  Unable to load data as an DSA key.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			DSAPrivateKeySpec keySpec =
+				new DSAPrivateKeySpec(
+					childValues[5].getBigInteger(),
+					childValues[1].getBigInteger(),
+					childValues[2].getBigInteger(),
+					childValues[3].getBigInteger());
+
+			KeyFactory keyFactory = KeyFactory.getInstance("DSA");
+
+			return keyFactory.generatePrivate(keySpec);
+
+		} catch (IOException e) {
+			log.error("Invalid DER encoding for DSA key: " + e);
 			throw new CredentialFactoryException("Unable to load private key.");
 		} catch (GeneralSecurityException e) {
 			log.error("Unable to marshall private key: " + e);
@@ -468,7 +532,7 @@ class FileCredentialResolver implements CredentialResolver {
 
 	private PrivateKey getPkcs8PemKey(byte[] bytes) throws CredentialFactoryException {
 
-		//Needs to work for DSA as well
+		//TODO Needs to work for DSA as well
 		return getRSAPkcs8DerKey(bytes);
 	}
 

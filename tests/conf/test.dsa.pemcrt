@@ -1,0 +1,119 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 0 (0x0)
+        Signature Algorithm: dsaWithSHA1
+        Issuer: C=US, ST=NY, L=New York, O=Columbia University, OU=ACIS, CN=test.columbia.edu
+        Validity
+            Not Before: Dec  4 21:17:48 2003 GMT
+            Not After : Apr 21 21:17:48 2031 GMT
+        Subject: C=US, ST=NY, L=New York, O=Columbia University, OU=ACIS, CN=test.columbia.edu
+        Subject Public Key Info:
+            Public Key Algorithm: dsaEncryption
+            DSA Public Key:
+                pub: 
+                    28:90:8d:3e:b8:8d:87:74:1b:f7:b0:b2:66:7b:d4:
+                    55:d1:b4:4d:30:53:85:3b:05:93:ef:a9:9d:68:26:
+                    fe:60:d0:44:cf:d2:cf:39:58:d5:cb:3b:28:b3:15:
+                    cb:c2:fd:28:c4:8d:d2:19:ab:36:8a:73:5d:32:10:
+                    96:fd:5a:9c:4b:17:23:55:56:c5:70:32:d2:44:f9:
+                    63:e0:10:19:f7:02:da:40:e8:05:b0:fc:ed:ba:f2:
+                    fc:37:4d:72:2c:af:fc:12:ce:4e:e1:6c:25:68:7f:
+                    5b:47:13:5d:da:75:4f:22:74:cf:c3:27:0a:0b:ba:
+                    2d:d4:1f:24:3f:10:db:0a:a5:c6:c8:34:93:fa:b0:
+                    ed:3a:8d:ce:39:3e:8e:c2:ae:9d:76:2c:9a:d4:49:
+                    53:a9:e6:a8:ea:c3:91:ba:ab:7d:2d:ea:7c:59:9a:
+                    ad:5d:9b:c2:44:2e:95:05:89:52:cb:ba:4e:9e:60:
+                    ba:a9:0b:ec:f0:bd:ac:c5:f5:b8:08:e0:68:b3:35:
+                    c3:62:e3:8f:3e:88:ed:dd:2e:2d:53:d0:52:57:38:
+                    2d:5c:ff:d9:a2:5c:8f:dc:52:98:95:c2:09:0f:61:
+                    5b:95:79:0f:c9:c1:c2:b3:e1:fc:b1:7d:a3:95:10:
+                    e0:61:a6:55:9f:79:e1:ca:8f:48:85:42:6f:9b:18:
+                    d8
+                P:   
+                    00:de:f6:ce:e5:2b:8f:09:02:ef:37:5f:56:7d:a5:
+                    7b:66:b3:fb:8d:92:1d:5c:83:73:da:72:82:30:46:
+                    17:05:3f:a9:79:65:63:de:bd:ef:6f:88:35:59:3f:
+                    11:ee:19:93:af:f6:5b:0e:e4:e9:bf:c2:23:a6:55:
+                    c6:f0:9a:df:c1:81:57:db:ae:df:89:a6:4d:a6:f3:
+                    14:16:a6:07:0e:30:83:3f:53:a3:89:6c:bf:55:50:
+                    5d:db:0c:50:72:10:47:82:8e:91:9a:5c:66:03:a9:
+                    2a:3c:68:24:08:50:f5:cb:bc:3a:78:b1:e1:a0:04:
+                    a5:dd:88:9e:f1:0e:4f:f4:98:76:9b:55:de:78:50:
+                    50:7f:2a:e8:aa:4d:b0:82:24:a5:38:a0:7e:e6:95:
+                    9e:4d:b5:54:c4:46:d7:75:a9:1f:63:7d:e0:8b:99:
+                    a3:b6:fa:80:da:73:7b:73:ab:d5:6a:ce:2b:a2:18:
+                    04:d0:ec:01:3b:cf:be:50:98:62:b0:ca:6d:25:a6:
+                    3f:89:89:59:2d:e2:81:60:34:4f:57:a1:7f:ab:7b:
+                    6b:70:26:86:c6:a2:e4:78:3d:9e:4a:95:a8:98:d4:
+                    13:85:e2:b2:19:17:bd:69:bb:b8:14:a5:54:11:3c:
+                    89:33:84:d3:4b:bb:93:29:76:e4:f7:93:1a:42:ce:
+                    54:ef
+                Q:   
+                    00:ac:b7:12:00:0b:8f:20:0c:2a:e8:45:f1:ae:a4:
+                    7b:61:56:14:1e:31
+                G:   
+                    00:89:c2:61:a1:fd:fe:59:43:44:05:9e:1f:71:d4:
+                    59:e2:5c:84:27:01:9e:99:99:cd:32:b3:92:f4:e8:
+                    b4:13:01:9a:a3:7b:26:2b:4e:31:4c:ec:19:cd:c8:
+                    04:60:2c:45:f7:b1:86:d5:e8:d6:d4:84:f6:4e:2f:
+                    8a:83:a7:aa:14:fb:91:5a:64:28:40:6b:20:1e:75:
+                    34:68:95:ff:2d:1f:78:99:ba:d6:0c:3d:6b:de:7c:
+                    33:b0:43:08:b2:38:9f:58:03:a7:6f:cc:6a:10:50:
+                    01:b5:a8:44:ce:b8:53:cc:fa:3e:be:79:ac:b4:6f:
+                    11:6f:55:50:36:5f:48:5e:ad:90:76:99:4c:08:13:
+                    d7:db:6a:ea:df:37:e0:ab:6f:4b:e1:15:0a:ba:a1:
+                    7d:6e:08:ee:df:5d:b0:10:1b:87:1d:ba:db:af:ce:
+                    b7:65:05:f0:65:39:5b:17:b3:8e:b9:8b:41:c5:76:
+                    e5:8a:de:ef:fb:8e:a7:44:93:11:b5:6a:7f:0c:e2:
+                    7b:34:e5:f1:5a:cf:4b:e3:5f:27:7d:f2:d0:66:3e:
+                    92:a4:a2:59:c1:07:e7:08:44:0f:79:b6:51:b9:1b:
+                    13:ca:50:d2:b5:73:35:15:a2:53:3d:88:a6:a4:3c:
+                    13:a8:b1:a4:f2:36:03:2b:78:e9:e7:fe:30:fe:ba:
+                    fc:71
+        X509v3 extensions:
+            X509v3 Subject Key Identifier: 
+                A2:47:7E:C0:91:D9:4B:92:04:50:E1:93:70:D3:89:67:DE:CA:5F:42
+            X509v3 Authority Key Identifier: 
+                keyid:A2:47:7E:C0:91:D9:4B:92:04:50:E1:93:70:D3:89:67:DE:CA:5F:42
+                DirName:/C=US/ST=NY/L=New York/O=Columbia University/OU=ACIS/CN=test.columbia.edu
+                serial:00
+
+            X509v3 Basic Constraints: 
+                CA:TRUE
+    Signature Algorithm: dsaWithSHA1
+        30:2d:02:14:4c:6e:fa:2b:f4:47:84:d9:61:ba:51:a0:4c:87:
+        e6:02:6c:62:b1:7a:02:15:00:a8:2b:40:fd:5a:a1:9c:8a:36:
+        99:2f:4d:76:9d:6f:84:c1:83:51:9f
+-----BEGIN CERTIFICATE-----
+MIIFeTCCBTigAwIBAgIBADAJBgcqhkjOOAQDMHYxCzAJBgNVBAYTAlVTMQswCQYD
+VQQIEwJOWTERMA8GA1UEBxMITmV3IFlvcmsxHDAaBgNVBAoTE0NvbHVtYmlhIFVu
+aXZlcnNpdHkxDTALBgNVBAsTBEFDSVMxGjAYBgNVBAMTEXRlc3QuY29sdW1iaWEu
+ZWR1MB4XDTAzMTIwNDIxMTc0OFoXDTMxMDQyMTIxMTc0OFowdjELMAkGA1UEBhMC
+VVMxCzAJBgNVBAgTAk5ZMREwDwYDVQQHEwhOZXcgWW9yazEcMBoGA1UEChMTQ29s
+dW1iaWEgVW5pdmVyc2l0eTENMAsGA1UECxMEQUNJUzEaMBgGA1UEAxMRdGVzdC5j
+b2x1bWJpYS5lZHUwggM7MIICLgYHKoZIzjgEATCCAiECggEBAN72zuUrjwkC7zdf
+Vn2le2az+42SHVyDc9pygjBGFwU/qXllY96972+INVk/Ee4Zk6/2Ww7k6b/CI6ZV
+xvCa38GBV9uu34mmTabzFBamBw4wgz9To4lsv1VQXdsMUHIQR4KOkZpcZgOpKjxo
+JAhQ9cu8Onix4aAEpd2InvEOT/SYdptV3nhQUH8q6KpNsIIkpTigfuaVnk21VMRG
+13WpH2N94IuZo7b6gNpze3Or1WrOK6IYBNDsATvPvlCYYrDKbSWmP4mJWS3igWA0
+T1ehf6t7a3Amhsai5Hg9nkqVqJjUE4XishkXvWm7uBSlVBE8iTOE00u7kyl25PeT
+GkLOVO8CFQCstxIAC48gDCroRfGupHthVhQeMQKCAQEAicJhof3+WUNEBZ4fcdRZ
+4lyEJwGemZnNMrOS9Oi0EwGao3smK04xTOwZzcgEYCxF97GG1ejW1IT2Ti+Kg6eq
+FPuRWmQoQGsgHnU0aJX/LR94mbrWDD1r3nwzsEMIsjifWAOnb8xqEFABtahEzrhT
+zPo+vnmstG8Rb1VQNl9IXq2QdplMCBPX22rq3zfgq29L4RUKuqF9bgju312wEBuH
+Hbrbr863ZQXwZTlbF7OOuYtBxXblit7v+46nRJMRtWp/DOJ7NOXxWs9L418nffLQ
+Zj6SpKJZwQfnCEQPebZRuRsTylDStXM1FaJTPYimpDwTqLGk8jYDK3jp5/4w/rr8
+cQOCAQUAAoIBACiQjT64jYd0G/ewsmZ71FXRtE0wU4U7BZPvqZ1oJv5g0ETP0s85
+WNXLOyizFcvC/SjEjdIZqzaKc10yEJb9WpxLFyNVVsVwMtJE+WPgEBn3AtpA6AWw
+/O268vw3TXIsr/wSzk7hbCVof1tHE13adU8idM/DJwoLui3UHyQ/ENsKpcbINJP6
+sO06jc45Po7Crp12LJrUSVOp5qjqw5G6q30t6nxZmq1dm8JELpUFiVLLuk6eYLqp
+C+zwvazF9bgI4GizNcNi448+iO3dLi1T0FJXOC1c/9miXI/cUpiVwgkPYVuVeQ/J
+wcKz4fyxfaOVEOBhplWfeeHKj0iFQm+bGNijgdMwgdAwHQYDVR0OBBYEFKJHfsCR
+2UuSBFDhk3DTiWfeyl9CMIGgBgNVHSMEgZgwgZWAFKJHfsCR2UuSBFDhk3DTiWfe
+yl9CoXqkeDB2MQswCQYDVQQGEwJVUzELMAkGA1UECBMCTlkxETAPBgNVBAcTCE5l
+dyBZb3JrMRwwGgYDVQQKExNDb2x1bWJpYSBVbml2ZXJzaXR5MQ0wCwYDVQQLEwRB
+Q0lTMRowGAYDVQQDExF0ZXN0LmNvbHVtYmlhLmVkdYIBADAMBgNVHRMEBTADAQH/
+MAkGByqGSM44BAMDMAAwLQIUTG76K/RHhNlhulGgTIfmAmxisXoCFQCoK0D9WqGc
+ijaZL012nW+EwYNRnw==
+-----END CERTIFICATE-----

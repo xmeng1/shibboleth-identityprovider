@@ -352,4 +352,58 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
+	public void testKeyStoreX509_DER_DSA_Key() {
+
+		try {
+			InputStream inStream = new FileInputStream("data/credentials8.xml");
+			parser.parse(new InputSource(inStream));
+			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+
+			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
+			Credential credential = credentials.getCredential("test");
+
+			assertTrue(
+				"Credential was loaded with an incorrect type.",
+				credential.getCredentialType() == Credential.X509);
+			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals(
+				"Unexpected X509 certificate found.",
+				credential.getX509Certificate().getSubjectDN().getName(),
+				"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
+			assertEquals(
+				"Unexpected certificate chain length.",
+				new Integer(credential.getX509CertificateChain().length),
+				new Integer(1));
+		} catch (Exception e) {
+			fail("Failed to load credentials: " + e);
+		}
+	}
+	
+	public void testKeyStoreX509_PEM_DSA_Key() {
+
+		try {
+			InputStream inStream = new FileInputStream("data/credentials9.xml");
+			parser.parse(new InputSource(inStream));
+			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+
+			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
+			Credential credential = credentials.getCredential("test");
+
+			assertTrue(
+				"Credential was loaded with an incorrect type.",
+				credential.getCredentialType() == Credential.X509);
+			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals(
+				"Unexpected X509 certificate found.",
+				credential.getX509Certificate().getSubjectDN().getName(),
+				"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
+			assertEquals(
+				"Unexpected certificate chain length.",
+				new Integer(credential.getX509CertificateChain().length),
+				new Integer(1));
+		} catch (Exception e) {
+			fail("Failed to load credentials: " + e);
+		}
+	}
+
 }
