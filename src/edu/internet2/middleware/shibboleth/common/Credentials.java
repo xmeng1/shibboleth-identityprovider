@@ -37,11 +37,13 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyStore;
@@ -62,10 +64,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.interfaces.PBEKey;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import edu.internet2.middleware.shibboleth.common.EncryptedPrivateKeyInfo;
 
 import sun.misc.BASE64Decoder;
 import sun.security.util.DerValue;
@@ -194,6 +205,7 @@ class FileCredentialResolver implements CredentialResolver {
 		log.debug("Key Path: (" + keyPath + ").");
 
 		//TODO encrypted keys
+		//TODO maybe more info statements
 
 		PrivateKey key = null;
 
@@ -376,8 +388,10 @@ class FileCredentialResolver implements CredentialResolver {
 				}
 
 				System.err.println("OID: " + grandChild.getOID().toString());
-				log.error("Credential load cannot yet read encrypted keys.");
-				throw new CredentialFactoryException("Unable to load private key.");
+				log.debug("Key appears to be formatted as encrypted PKCS8. Loading...");
+				return getEncryptedPkcs8Key(inputBytes.toByteArray());
+				//log.error("Credential loader cannot yet read encrypted private keys.");
+				//throw new CredentialFactoryException("Unable to load private key.");
 
 			} else if (childValues[0].tag == DerValue.tag_Integer) {
 
@@ -409,7 +423,7 @@ class FileCredentialResolver implements CredentialResolver {
 						throw new CredentialFactoryException("Unable to load private key.");
 					}
 
-					log.debug("Key appears to be PKCS8. Loading...");
+					log.debug("Key appears to be formatted as PKCS8. Loading...");
 					return getRSAPkcs8DerKey(inputBytes.toByteArray());
 
 				} else if (childValues[1].tag == DerValue.tag_Integer) {
@@ -698,6 +712,41 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Unable to load private key.");
 		}
 	}
+	
+	private PrivateKey getEncryptedPkcs8Key(byte[] bytes) throws CredentialFactoryException {
+
+		try {
+			String password = "test123";
+			EncryptedPrivateKeyInfo encryptedKeyInfo = new EncryptedPrivateKeyInfo(bytes);
+			AlgorithmParameters params = encryptedKeyInfo.getAlgParameters();
+			System.err.println(params);
+			System.err.println(encryptedKeyInfo.getAlgName());
+			//PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count); 
+			SecretKeyFactory keyFactory =
+						SecretKeyFactory.getInstance("pbeWithMD5AndDES");
+			PBEKeySpec passwordSpec = new PBEKeySpec("test123".toCharArray());
+			//PBEParameterSpec paramSpec = new PBEParameterSpec();
+			SecretKey key = keyFactory.generateSecret(passwordSpec);
+			System.err.println(key.getClass().getName());
+			Cipher cipher = Cipher.getInstance("pbeWithMD5AndDES");
+			cipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(new byte[0], 0));
+			
+			return null;
+			
+			/*
+			
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+			PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(bytes);
+			return keyFactory.generatePrivate(keySpec);
+*/
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error("Unable to load private key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
+		}
+	}
+	
+	
 
 	private byte[] singleDerFromPEM(byte[] bytes, String beginToken, String endToken) throws IOException {
 
