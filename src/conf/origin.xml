@@ -6,14 +6,21 @@
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="urn:mace:shibboleth:origin:1.0 origin.xsd" 
-	AAUrl="http://therock.cc.columbia.edu:6666/shibboleth/AA" 
-	defaultRelyingParty="urn:mace:inqueue" 
-	providerId="urn:mace:inqueue:shibdev.edu">
+	AAUrl="https://localhost/shibboleth/AA" 
+	defaultRelyingParty="https://localhost/shibboleth/target" 
+	providerId="https://localhost/shibboleth/origin">
 
-	<RelyingParty name="urn:mace:inqueue" signingCredential="foo">
+	<RelyingParty name="https://localhost/shibboleth/target" signingCredential="foo">
 		<HSNameFormat nameMapping="crypto"/>
 	</RelyingParty>
 
+	<!-- You'll need to get a test credential from an InQueue CA -->
+	<!--
+	<RelyingParty name="urn:mace:inqueue" signingCredential="inqueue_cred">
+		<HSNameFormat nameMapping="crypto"/>
+	</RelyingParty>
+	-->
+	
 	<ReleasePolicyEngine>
 		<ArpRepository implementation="edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository">
 			<Path>/conf/arps/</Path>
@@ -50,6 +57,9 @@
 	
 	<FederationProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
                 uri="/conf/sites.xml"/>
-
+    <!--
+	<FederationProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
+                uri="/conf/inqueue_sites.xml"/>
+	-->
 </ShibbolethOriginConfig>
 
