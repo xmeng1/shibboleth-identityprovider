@@ -304,7 +304,7 @@ public class HandleService extends HttpServlet {
 
 			return assertionFactory
 				.getAssertion(
-					aqh.serialize(),
+					new String(aqh.serialize(), "ASCII"),
 					shireURL,
 					clientAddress,
 					authType,

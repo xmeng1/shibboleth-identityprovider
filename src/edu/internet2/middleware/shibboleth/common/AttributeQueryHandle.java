@@ -29,7 +29,7 @@ public class AttributeQueryHandle {
 	 * 
 	 */
 
-	public AttributeQueryHandle(String handle, SecretKey key)
+	public AttributeQueryHandle(byte[] handle, SecretKey key)
 		throws HandleException {
 
 		try {
@@ -111,12 +111,12 @@ public class AttributeQueryHandle {
 	}
 
 	/**
-	 * Returns a <code>String</code> of ciphertext representing the <code>AttributeQueryHandle</code> instance.
+	 * Returns bytes of ciphertext representing the <code>AttributeQueryHandle</code> instance.
 	 */
 
-	public String serialize() {
+	public byte[] serialize() {
 
-		return new String(Base64.encode(cipherTextHandle));
+		return Base64.encode(cipherTextHandle);
 	}
 
 	/**
