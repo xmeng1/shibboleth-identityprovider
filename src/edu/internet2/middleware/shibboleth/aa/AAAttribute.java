@@ -80,8 +80,6 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 
 	private static Logger log = Logger.getLogger(AAAttribute.class.getName());
 	private boolean resolved = false;
-	/** A hedge in case we are wrong about no longer needing xsi:type.  Remove this, if possible, in 1.3. **/
-	static boolean typeHack = false;
 	
 	public final static String SHIB_ATTRIBUTE_NAMESPACE_URI = "urn:mace:shibboleth:1.0:attributeNamespace:uri";
 	
@@ -93,7 +91,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 		super(
 			name,
 			SHIB_ATTRIBUTE_NAMESPACE_URI,
-			!typeHack? null: new QName("urn:mace:shibboleth:1.0", "AttributeValueType"),
+			new QName("urn:mace:shibboleth:1.0", "AttributeValueType"),
 			defaultLifetime,
 			null);
 	}
