@@ -70,7 +70,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 
 /**
- * <code>DataConnectorPlugIn</code> implementation that utilizes a user specified JNDI 
+ * <code>DataConnectorPlugIn</code> implementation that utilizes a user-specified JNDI 
  * <code>DirContext</code> to retrieve attribute data.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
@@ -83,6 +83,14 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 	protected Properties properties;
 	protected SearchControls controls;
 
+	/**
+	 * Constructs a DataConnector based on DOM configuration.
+	 * 
+	 * @param e a &lt;JNDIDirectoryDataConnector /&gt; DOM Element as specified by 
+	 * urn:mace:shibboleth:resolver:1.0
+	 * 
+	 * @throws ResolutionPlugInException if the PlugIn cannot be initialized
+	 */
 	public JNDIDirectoryDataConnector(Element e) throws ResolutionPlugInException {
 
 		super(e);
@@ -119,11 +127,13 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 				throw new ResolutionPlugInException("Property is malformed.");
 			}
 		}
+		
+		//Fail-fast connection test
 		InitialDirContext context = null;
 		try {
 			context = new InitialDirContext(properties);
 			log.debug("JNDI Directory context activated.");
-			
+
 		} catch (NamingException e1) {
 			log.error("Failed to startup directory context: " + e1);
 			throw new ResolutionPlugInException("Failed to startup directory context.");
@@ -139,6 +149,11 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 		}
 	}
 
+	/**
+	 * Create JNDI search controls based on DOM configuration
+	 * @param searchNode a &lt;Controls /&gt; DOM Element as specified by 
+	 * urn:mace:shibboleth:resolver:1.0
+	 */
 	protected void defineSearchControls(Element searchNode) {
 
 		controls = new SearchControls();
@@ -171,7 +186,6 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 			String timeLimitSpec = ((Element) controlNodes.item(0)).getAttribute("timeLimit");
 			if (timeLimitSpec != null && !timeLimitSpec.equals("")) {
 				try {
-					System.err.println("hey");
 					controls.setTimeLimit(Integer.parseInt(timeLimitSpec));
 				} catch (NumberFormatException nfe) {
 					log.error("Control spec included an invalid (timeLimit) attribute value.");
@@ -219,7 +233,6 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 		try {
 			context = new InitialDirContext(properties);
 			NamingEnumeration enum = null;
-
 			try {
 				enum = context.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
 			} catch (CommunicationException e) {
