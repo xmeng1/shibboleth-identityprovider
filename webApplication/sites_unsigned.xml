@@ -1,6 +1,6 @@
 <Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-    <OriginSite Name="demo.edu">
-        <Alias>Demo State University</Alias>
+    <OriginSite Name="example.edu">
+        <Alias>Example State University</Alias>
         <HandleService Location="https://shib2.internet2.edu/shibboleth-origin/servlet/HS" Name="shib2.internet2.edu"/>
     </OriginSite>
     <OriginSite Name="brown.edu">
