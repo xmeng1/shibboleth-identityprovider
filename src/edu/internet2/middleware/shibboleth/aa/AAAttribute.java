@@ -91,7 +91,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 		super(
 			name,
 			SHIB_ATTRIBUTE_NAMESPACE_URI,
-			new QName("urn:mace:shibboleth:1.0", "AttributeValueType"),
+			null,
 			defaultLifetime,
 			null);
 	}
