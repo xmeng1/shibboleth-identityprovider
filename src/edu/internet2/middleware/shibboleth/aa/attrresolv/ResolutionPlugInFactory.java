@@ -55,6 +55,7 @@ import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.CustomAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.CustomDataConnector;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.JNDIDirectoryDataConnector;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.PersistentIDAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SimpleAttributeDefinition;
 
 /**
@@ -80,6 +81,10 @@ public class ResolutionPlugInFactory {
 
 		if (e.getTagName().equals("SimpleAttributeDefinition")) {
 			return new SimpleAttributeDefinition(e);
+		}
+
+		if (e.getTagName().equals("PersistentIDAttributeDefinition")) {
+			return new PersistentIDAttributeDefinition(e);
 		}
 
 		if (e.getTagName().equals("JNDIDirectoryDataConnector")) {
