@@ -96,9 +96,10 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 			int index = getId().lastIndexOf("#");
 			if (index < 0) {
 				index = getId().lastIndexOf(":");
-			}
-			if (index < 0) {
-				index = getId().lastIndexOf("/");
+				int slashIndex = getId().lastIndexOf("/");
+				if (slashIndex > index) {
+					index = slashIndex;
+				}
 			}
 			connectorMapping = getId().substring(index + 1);
 		} else {
