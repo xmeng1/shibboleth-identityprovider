@@ -175,6 +175,7 @@ public class AASaml {
         					     now,
         					     then,
         					     Collections.singleton(condition),
+        					     null,
         					     Collections.singleton(statement)
                                  );
         
