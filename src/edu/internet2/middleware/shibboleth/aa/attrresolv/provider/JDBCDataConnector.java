@@ -688,6 +688,34 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 			this.connectorId = connectorId;
 
 		}
+        
+        protected int getSQLType() {
+            if (type.equalsIgnoreCase("String")) {
+                return Types.VARCHAR;
+            } else if (type.equalsIgnoreCase("Integer")) {
+                return Types.INTEGER;
+            } else if (type.equalsIgnoreCase("Byte")) {
+                return Types.TINYINT;
+            } else if (type.equalsIgnoreCase("Double")) {
+                return Types.DOUBLE;
+            } else if (type.equalsIgnoreCase("Float")) {
+                return Types.FLOAT;
+            } else if (type.equalsIgnoreCase("Long")) {
+                return Types.INTEGER;
+            } else if (type.equalsIgnoreCase("Short")) {
+                return Types.SMALLINT;
+            } else if (type.equalsIgnoreCase("Boolean")) {
+                return Types.BOOLEAN;
+            } else if (type.equalsIgnoreCase("Date")) {
+                return Types.DATE;
+            } else if (type.equalsIgnoreCase("Blob")) {
+                return Types.BLOB;
+            } else if (type.equalsIgnoreCase("Clob")) {
+                return Types.CLOB;
+            } else {
+                return Types.VARCHAR;
+            }
+        }
 
 		protected void setParameterValue(PreparedStatement preparedStatement, int valueIndex, Dependencies depends)
 			throws JDBCStatementCreatorException {
@@ -710,7 +738,7 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 				if (attribute == null || attribute.size() < 1) {
 					if (nullMissing) {
 						try {
-							preparedStatement.setNull(valueIndex, Types.NULL);
+							preparedStatement.setNull(valueIndex, getSQLType());
 							return;
 						} catch (SQLException e) {
 							log.error(
@@ -754,7 +782,7 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 			}
 			if (nullMissing) {
 				try {
-					preparedStatement.setNull(valueIndex, Types.NULL);
+					preparedStatement.setNull(valueIndex, getSQLType());
 					return;
 				} catch (SQLException e) {
 					log.error(
@@ -774,7 +802,7 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 
 			if (object == null) {
 				try {
-					preparedStatement.setNull(valueIndex, Types.NULL);
+					preparedStatement.setNull(valueIndex, getSQLType());
 					return;
 				} catch (SQLException e) {
 					log.error(
