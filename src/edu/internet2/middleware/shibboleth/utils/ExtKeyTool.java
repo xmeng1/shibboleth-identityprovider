@@ -611,9 +611,16 @@ public class ExtKeyTool {
 	public static void main(String[] args) {
 
 		try {
-			Properties arguments = parseArguments(args);
-
 			ExtKeyTool tool = new ExtKeyTool();
+			Properties arguments = null;
+			try {
+				arguments = parseArguments(args);
+			} catch (IllegalArgumentException iae) {
+				System.err.println(
+					"Illegal argument specified: " + iae.getMessage() + System.getProperty("line.separator"));
+				printUsage(System.err);
+				System.exit(1);
+			}
 			tool.startLogger(arguments);
 			String providerName = tool.initProvider(arguments);
 			if (providerName != null) {
@@ -621,11 +628,6 @@ public class ExtKeyTool {
 			}
 			tool.run(arguments);
 
-		} catch (IllegalArgumentException iae) {
-			log.fatal(
-				"Illegal argument specified: " + iae.getMessage() + System.getProperty("line.separator"));
-			LogManager.shutdown();
-			printUsage(System.err);
 		} catch (ExtKeyToolException ske) {
 			log.fatal("Cannot Perform Operation: " + ske.getMessage() + System.getProperty("line.separator"));
 			LogManager.shutdown();
@@ -808,7 +810,8 @@ public class ExtKeyTool {
 		out.print("\t     [-keypass <keypass>] ");
 		out.println("[-provider <provider_class_name>] ");
 		out.print("\t     [-file <output_file>] ");
-		out.println();out.println();
+		out.println();
+		out.println();
 
 		out.print("-importkey      [-v] [-alias <alias>] ");
 		out.println("[-keyfile <key_file>]");
