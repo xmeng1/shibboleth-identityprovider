@@ -193,7 +193,7 @@ class FileCredentialResolver implements CredentialResolver {
 		log.debug("Key Format: (" + keyFormat + ").");
 		log.debug("Key Path: (" + keyPath + ").");
 
-		//TODO support DER, PEM, DER-PKCS8, and PEM-PKCS8?
+		//TODO encrypted keys
 
 		PrivateKey key = null;
 
@@ -334,20 +334,129 @@ class FileCredentialResolver implements CredentialResolver {
 			}
 		} while (i > -1);
 
-		//TODO switch to examining the DER, so we don't get failure messages
-		//TODO support DSA when switching
+		//Examine the ASN.1 Structure to auto-detect the format
+		//This gets a tad nasty
 		try {
-			return getRSAPkcs8DerKey(inputBytes.toByteArray());
+			DerValue root = new DerValue(inputBytes.toByteArray());
+			if (root.tag != DerValue.tag_Sequence) {
+				log.error("Unexpected data type.  Unable to determine key type from data.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			DerValue[] childValues = new DerValue[3];
+
+			if (root.data.available() == 0) {
+				log.error("Unexpected data type.  Unable to determine key type from data.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
+
+			childValues[0] = root.data.getDerValue();
+
+			if (childValues[0].tag == DerValue.tag_Sequence) {
+
+				//May be encrypted pkcs8... dig further
+				if (root.data.available() == 0) {
+					log.error("Unexpected data type.  Unable to determine key type from data.");
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+				childValues[1] = root.data.getDerValue();
+				if (childValues[1].tag != DerValue.tag_OctetString) {
+					log.error("Unexpected data type.  Unable to determine key type from data.");
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+
+				if (childValues[0].data.available() == 0) {
+					log.error("Unexpected data type.  Unable to determine key type from data.");
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+				DerValue grandChild = childValues[0].data.getDerValue();
+				if (grandChild.tag != DerValue.tag_ObjectId) {
+					log.error("Unexpected data type.  Unable to determine key type from data.");
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+
+				System.err.println("OID: " + grandChild.getOID().toString());
+				log.error("Credential load cannot yet read encrypted keys.");
+				throw new CredentialFactoryException("Unable to load private key.");
+
+			} else if (childValues[0].tag == DerValue.tag_Integer) {
+
+				//May be pkcs8, rsa, or dsa... dig further
+				if (root.data.available() == 0) {
+					log.error("Unexpected data type.  Unable to determine key type from data.");
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+				childValues[1] = root.data.getDerValue();
+				if (childValues[1].tag == DerValue.tag_Sequence) {
+					//May be pkcs8... dig further
+					if (root.data.available() == 0) {
+						log.error("Unexpected data type.  Unable to determine key type from data.");
+						throw new CredentialFactoryException("Unable to load private key.");
+					}
+					childValues[2] = root.data.getDerValue();
+					if (childValues[2].tag != DerValue.tag_OctetString) {
+						log.error("Unexpected data type.  Unable to determine key type from data.");
+						throw new CredentialFactoryException("Unable to load private key.");
+					}
+
+					if (childValues[1].data.available() == 0) {
+						log.error("Unexpected data type.  Unable to determine key type from data.");
+						throw new CredentialFactoryException("Unable to load private key.");
+					}
+					DerValue grandChild = childValues[1].data.getDerValue();
+					if (grandChild.tag != DerValue.tag_ObjectId) {
+						log.error("Unexpected data type.  Unable to determine key type from data.");
+						throw new CredentialFactoryException("Unable to load private key.");
+					}
+
+					log.debug("Key appears to be PKCS8. Loading...");
+					return getRSAPkcs8DerKey(inputBytes.toByteArray());
+
+				} else if (childValues[1].tag == DerValue.tag_Integer) {
+
+					//May be rsa or dsa... dig further
+					if (root.data.available() == 0
+						|| root.data.getDerValue().tag != DerValue.tag_Integer
+						|| root.data.available() == 0
+						|| root.data.getDerValue().tag != DerValue.tag_Integer
+						|| root.data.available() == 0
+						|| root.data.getDerValue().tag != DerValue.tag_Integer
+						|| root.data.available() == 0
+						|| root.data.getDerValue().tag != DerValue.tag_Integer) {
+						log.error("Unexpected data type.  Unable to determine key type from data.");
+						throw new CredentialFactoryException("Unable to load private key.");
+					}
+
+					if (root.data.available() == 0) {
+
+						log.debug("Key appears to be DSA. Loading...");
+						return getDSARawDerKey(inputBytes.toByteArray());
+
+					} else {
+
+						DerValue dsaOverrun = root.data.getDerValue();
+						if (dsaOverrun.tag != DerValue.tag_Integer) {
+							log.error("Unexpected data type.  Unable to determine key type from data.");
+							throw new CredentialFactoryException("Unable to load private key.");
+						}
+
+						log.debug("Key appears to be RSA. Loading...");
+						return getRSARawDerKey(inputBytes.toByteArray());
+					}
+
+				} else {
+					log.error("Unexpected data type.  Unable to determine key type from data.");
+					throw new CredentialFactoryException("Unable to load private key.");
+				}
+
+			} else {
+				log.error("Unexpected data type.  Unable to determine key type from data.");
+				throw new CredentialFactoryException("Unable to load private key.");
+			}
 
 		} catch (CredentialFactoryException e) {
-			try {
-				log.debug("Unable to load private key as PKCS8, attempting raw RSA.");
-				return getRSARawDERKey(inputBytes.toByteArray());
-
-			} catch (CredentialFactoryException e2) {
-				log.debug("Unable to load private key as raw RSA, attempting raw DSA.");
-				return getDSARawDERKey(inputBytes.toByteArray());
-			}
+			log.error("Invalid DER encoding for key: " + e);
+			throw new CredentialFactoryException("Unable to load private key.");
 		}
 
 	}
@@ -381,7 +490,7 @@ class FileCredentialResolver implements CredentialResolver {
 			} else if (str.matches("^.*-----BEGIN RSA PRIVATE KEY-----.*$")) {
 				in.close();
 				log.debug("Key appears to be RSA in raw format.");
-				return getRSARawDERKey(
+				return getRSARawDerKey(
 					singleDerFromPEM(
 						inputBytes.toByteArray(),
 						"-----BEGIN RSA PRIVATE KEY-----",
@@ -389,7 +498,7 @@ class FileCredentialResolver implements CredentialResolver {
 			} else if (str.matches("^.*-----BEGIN DSA PRIVATE KEY-----.*$")) {
 				in.close();
 				log.debug("Key appears to be DSA in raw format.");
-				return getDSARawDERKey(
+				return getDSARawDerKey(
 					singleDerFromPEM(
 						inputBytes.toByteArray(),
 						"-----BEGIN DSA PRIVATE KEY-----",
@@ -428,7 +537,7 @@ class FileCredentialResolver implements CredentialResolver {
 		}
 	}
 
-	private PrivateKey getRSARawDERKey(byte[] bytes) throws CredentialFactoryException {
+	private PrivateKey getRSARawDerKey(byte[] bytes) throws CredentialFactoryException {
 
 		try {
 			DerValue root = new DerValue(bytes);
@@ -495,7 +604,7 @@ class FileCredentialResolver implements CredentialResolver {
 
 	}
 
-	private PrivateKey getDSARawDERKey(byte[] bytes) throws CredentialFactoryException {
+	private PrivateKey getDSARawDerKey(byte[] bytes) throws CredentialFactoryException {
 
 		try {
 			DerValue root = new DerValue(bytes);
