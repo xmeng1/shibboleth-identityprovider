@@ -177,15 +177,18 @@ public class ShibbolethTrust extends Trust {
 				CertPath path = CertificateFactory.getInstance("X.509").generateCertPath(Arrays.asList(certChain));
 				CertPathValidator validator = CertPathValidator.getInstance("PKIX");
 				PKIXParameters params = new PKIXParameters(anchors);
+				//TODO hmm... what about this
+				params.setRevocationEnabled(false);
+				
 				PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(path, params);
 
-				System.err.println(result.getPolicyTree().getDepth());
+				//System.err.println(result.getPolicyTree().getDepth());
 				// TODO honor verify depth
 				log.debug("Path successfully validated.");
 				return true;
 
 			} catch (CertPathValidatorException e) {
-				log.debug("Path failed to validate.");
+				log.debug("Path failed to validate: " + e);
 			} catch (GeneralSecurityException e) {
 				log.error("Encountered an error during validation: " + e);
 			}
