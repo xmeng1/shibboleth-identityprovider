@@ -29,5 +29,19 @@
 		<Property name="java.naming.security.principal" value="cn=admin,dc=example,dc=edu" />
 		<Property name="java.naming.security.credentials" value="examplepw" />
 	</JNDIDirectoryDataConnector>
+	
+	<!-- An example of how to do a simple ldap bind over SSL -->
+	<!-- 
+	<JNDIDirectoryDataConnector id="directorySecure">
+		<Search filter="cn=%PRINCIPAL%">
+			<Controls searchScope="SUBTREE_SCOPE" returningObjects="false" />
+		</Search>
+		<Property name="java.naming.factory.initial" value="com.sun.jndi.ldap.LdapCtxFactory" />
+		<Property name="java.naming.provider.url" value="ldap://ldap.example.edu:636/dc=example,dc=edu" />
+		<Property name="java.naming.security.protocol" value="ssl" />
+		<Property name="java.naming.security.principal" value="cn=admin,dc=example,dc=edu" />
+		<Property name="java.naming.security.credentials" value="examplepw" />
+	</JNDIDirectoryDataConnector>
+	-->
 
 </AttributeResolver>
