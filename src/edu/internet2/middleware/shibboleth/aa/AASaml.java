@@ -1,10 +1,13 @@
-package aa;
+package edu.internet2.middleware.shibboleth.aa;
 
 import java.util.*;
 import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import edu.internet2.middleware.shibboleth.*;
+import edu.internet2.middleware.shibboleth.common.Constants;
+import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
+
 import org.w3c.dom.*;
 import org.opensaml.*;
 

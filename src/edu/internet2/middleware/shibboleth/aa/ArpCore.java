@@ -1,4 +1,4 @@
-package aa;
+package edu.internet2.middleware.shibboleth.aa;
 
 import java.util.Enumeration;
 import java.security.Principal;
