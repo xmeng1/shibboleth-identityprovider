@@ -1,3 +1,5 @@
+package edu.internet2.middleware.shibboleth.aa.arpUtil;
+
 import edu.internet2.middleware.shibboleth.aa.*;
 import java.io.*;
 import java.util.*;

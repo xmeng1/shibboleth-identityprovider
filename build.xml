@@ -90,6 +90,11 @@
         <war warfile="${dist}/${distname}-target.war" webxml="${configroot}/target-includewayf.xml" basedir="${approot}" update="no" />
     </target>
 
+    <!-- Build utilities -->
+    <target name="build-util" depends="compile-all">
+        <jar jarfile="${dist}/shib-util.jar" basedir="${build}" />
+    </target>
+
     <target name="dist-wayf" depends="compile-all, test-wayf, package-wayf, clean-build" />
     <target name="package-wayf">
         <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
@@ -131,5 +136,3 @@
     </target>
 
 </project>
-
-

@@ -1,5 +1,0 @@
-#!/bin/sh
-#CP=runtime class path
-
-/usr/java/jdk1.3.1_02/bin/java -cp ${CP} ArpUtil $*
-
