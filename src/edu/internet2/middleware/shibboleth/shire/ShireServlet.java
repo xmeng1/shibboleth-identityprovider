@@ -168,6 +168,7 @@ public class ShireServlet extends HttpServlet {
 
 			log.info("Loading shibboleth site information.");
 			mapper = new XMLOriginSiteMapper(registryURI, k, ks);
+			log.info("Completed SHIRE initialization");
 
 		} catch (OriginSiteMapperException e) {
 			log.fatal("Unable load shibboleth site information." + e.getMessage());
