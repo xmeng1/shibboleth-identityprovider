@@ -6,6 +6,15 @@
 
 <web-app>
 	<servlet>
+		<servlet-name>Logging Service</servlet-name>
+		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
+		<init-param>
+			<param-name>log4jConfigFileLocation</param-name>
+			<param-value>/WEB-INF/conf/log4j.properties</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
 		<servlet-name>WAYF</servlet-name>
 		<display-name>Shibboleth WAYF Service</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfService</servlet-class>
