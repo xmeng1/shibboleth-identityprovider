@@ -1,0 +1,12 @@
+<AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
+	
+	<SimpleAttributeDefinition id="foo">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<JNDIDirectoryDataConnector id="directory">
+		<Search filter="cn=%PRINCIPAL%" />
+		<Property name="java.naming.factory.initial" value="com.sun.jndi.ldap.LdapCtxFactory" />
+		<Property name="java.naming.provider.url" value="ldap://nonexistent/dc=test,dc=com" />
+	</JNDIDirectoryDataConnector>
+</AttributeResolver>

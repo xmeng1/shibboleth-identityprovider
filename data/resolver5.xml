@@ -1,0 +1,11 @@
+<AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
+	
+	<SimpleAttributeDefinition id="foo">
+		<AttributeDependency requires="bar"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="bar">
+		<AttributeDependency requires="foo"/>
+	</SimpleAttributeDefinition>
+	
+</AttributeResolver>

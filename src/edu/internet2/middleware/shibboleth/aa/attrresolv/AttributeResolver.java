@@ -119,8 +119,7 @@ public class AttributeResolver {
 						InputStream stream;
 						try {
 							return new InputSource(
-								new ShibResource("/schemas/shibboleth-resolver-1.0.xsd",
-									this.getClass())
+								new ShibResource("/schemas/shibboleth-resolver-1.0.xsd", this.getClass())
 									.getInputStream());
 						} catch (IOException e) {
 							throw new SAXException("Could not load entity: " + e);
@@ -191,41 +190,110 @@ public class AttributeResolver {
 		log.info("Configuration complete.");
 	}
 
-	private void verifyPlugIns() {
-		//TODO Maybe this should detect loops in the directed graph
-		//TODO this has to do better verification, if plugins are unloaded after dependants have been checked, we get null pointers
-
+	private void verifyPlugIns() throws AttributeResolverException {
+		
 		log.info("Verifying PlugIn graph consitency.");
 		Set inconsistent = new HashSet();
 		Iterator registered = plugIns.keySet().iterator();
 
 		while (registered.hasNext()) {
 			ResolutionPlugIn plugIn = lookupPlugIn((String) registered.next());
+			log.debug("Checking PlugIn (" + plugIn.getId() + ") for consistency.");
 			if (plugIn instanceof AttributeDefinitionPlugIn) {
-				log.debug("Checking PlugIn (" + plugIn.getId() + ") for consistency.");
-				List depends = new ArrayList();
-				depends.addAll(
-					Arrays.asList(((AttributeDefinitionPlugIn) plugIn).getAttributeDefinitionDependencyIds()));
-				depends.addAll(Arrays.asList(((AttributeDefinitionPlugIn) plugIn).getDataConnectorDependencyIds()));
-				Iterator dependsIt = depends.iterator();
-				while (dependsIt.hasNext()) {
-					String key = (String) dependsIt.next();
-					if (!plugIns.containsKey(key)) {
-						log.error(
-							"The PlugIn ("
-								+ plugIn.getId()
-								+ ") is inconsistent.  It depends on a PlugIn (" + key + ") that is not registered.");
-						inconsistent.add(plugIn.getId());
-					}
-				}
+				verifyPlugIn((AttributeDefinitionPlugIn) plugIn, new HashSet(), inconsistent);
 			}
 		}
-
+		
 		if (!inconsistent.isEmpty()) {
 			log.info("Unloading inconsistent PlugIns.");
 			Iterator inconsistentIt = inconsistent.iterator();
 			while (inconsistentIt.hasNext()) {
 				plugIns.remove(inconsistentIt.next());
+			}
+		}
+		
+		if (plugIns.size() < 1) {
+			log.error("Failed to load any PlugIn definitions.");
+			throw new AttributeResolverException("Cannot load Attribute Resolver.");
+		}
+
+	}
+
+	private void verifyPlugIn(AttributeDefinitionPlugIn plugIn, Set verifyChain, Set inconsistent) {
+
+		//Short-circuit if we have already found this PlugIn to be inconsistent
+		if (inconsistent.contains(plugIn.getId())) {
+			return;
+		}
+
+		//Make sure that we don't have a circular dependency
+		if (verifyChain.contains(plugIn.getId())) {
+			log.error(
+				"The PlugIn (" + plugIn.getId() + ") is inconsistent.  It is involved in a circular dependency chain.");
+			inconsistent.add(plugIn.getId());
+			return;
+		}
+
+		//Make sure all dependent Data Connectors are registered
+		List depends = new ArrayList();
+		depends.addAll(Arrays.asList(plugIn.getDataConnectorDependencyIds()));
+		Iterator dependsIt = depends.iterator();
+		while (dependsIt.hasNext()) {
+			String key = (String) dependsIt.next();
+			if (!plugIns.containsKey(key)) {
+				log.error(
+					"The PlugIn ("
+						+ plugIn.getId()
+						+ ") is inconsistent.  It depends on a PlugIn ("
+						+ key
+						+ ") that is not registered.");
+				inconsistent.add(plugIn.getId());
+				return;
+			}
+		}
+
+		//Recursively go through all AttributeDefinition dependencies and make sure all are registered and consistent.
+		depends.clear();
+		depends.addAll(Arrays.asList(plugIn.getAttributeDefinitionDependencyIds()));
+		dependsIt = depends.iterator();
+		while (dependsIt.hasNext()) {
+			String key = (String) dependsIt.next();
+
+			if (!plugIns.containsKey(key)) {
+				log.error(
+					"The PlugIn ("
+						+ plugIn.getId()
+						+ ") is inconsistent.  It depends on a PlugIn ("
+						+ key
+						+ ") that is not registered.");
+				inconsistent.add(plugIn.getId());
+				return;
+			}
+
+			ResolutionPlugIn dependent = lookupPlugIn(key);
+			if (!(dependent instanceof AttributeDefinitionPlugIn)) {
+				log.error(
+					"The PlugIn ("
+						+ plugIn.getId()
+						+ ") is inconsistent.  It depends on a PlugIn ("
+						+ key
+						+ ") that is mislabeled as an AttributeDefinitionPlugIn.");
+				inconsistent.add(plugIn.getId());
+				return;
+			}
+			
+			verifyChain.add(plugIn.getId());
+			verifyPlugIn((AttributeDefinitionPlugIn) dependent, verifyChain, inconsistent);
+
+			if (inconsistent.contains(key)) {
+				log.error(
+					"The PlugIn ("
+						+ plugIn.getId()
+						+ ") is inconsistent.  It depends on a PlugIn ("
+						+ key
+						+ ") that is not inconsistent.");
+				inconsistent.add(plugIn.getId());
+				return;
 			}
 		}
 	}
@@ -405,7 +473,7 @@ public class AttributeResolver {
 			super(message);
 		}
 	}
-	
+
 	class DependentOnlyResolutionAttribute implements ResolverAttribute {
 		String name;
 		ArrayList values = new ArrayList();

@@ -152,9 +152,13 @@ public class ResolverTests extends TestCase {
 				//Attribute should have scope appended to connector output
 				new AAAttribute(
 					"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
-					new Object[] { "mytestuser@example.edu" }, new ScopedStringValueHandler("example.edu")),
+					new Object[] { "mytestuser@example.edu" },
+					new ScopedStringValueHandler("example.edu")),
 				//Attribute should retain scope from connector output
-				new AAAttribute("foo", new Object[] { "bar@example.com" }, new ScopedStringValueHandler("example.edu"))
+				new AAAttribute(
+					"foo",
+					new Object[] { "bar@example.com" },
+					new ScopedStringValueHandler("example.edu"))
 				});
 
 			ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", inputAttributes);
@@ -168,5 +172,77 @@ public class ResolverTests extends TestCase {
 			fail("Error creating SAML Attribute: " + e.getMessage());
 		}
 	}
+	
+	public void testExceptionForNoPlugIns() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver3.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+			fail("Attribute Resolver loaded even when no PlugIns were configured.");
+		} catch (AttributeResolverException e) {
+			//This exception should be thrown, ignoring
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		}
+	}
+		
+	public void testExceptionForNoValidPlugIns() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver4.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+			fail("Attribute Resolver loaded even when no PlugIns were successfully registered.");
+		} catch (AttributeResolverException e) {
+			//This exception should be thrown, ignoring
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		}
+	}
+		
+	public void testFailToLoadCircularDependencies() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver5.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+			fail("Attribute Resolver loaded even when no only PlugIns with circular dependencies were configured.");
+		} catch (AttributeResolverException e) {
+			//This exception should be thrown, ignoring
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		}
+	}
+	
+	public void testFailToLoadCircularDependenciesDeeper() {
+
+			try {
+				Properties props = new Properties();
+				File file = new File("data/resolver6.xml");
+				props.setProperty(
+					"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+					file.toURL().toString());
+
+				AttributeResolver ar = new AttributeResolver(props);
+				fail("Attribute Resolver loaded even when no only PlugIns with circular dependencies were configured.");
+			} catch (AttributeResolverException e) {
+				//This exception should be thrown, ignoring
+			} catch (MalformedURLException e) {
+				fail("Error in test specification: " + e.getMessage());
+			}
+		}
 
 }
