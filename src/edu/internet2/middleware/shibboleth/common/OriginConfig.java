@@ -111,8 +111,6 @@ public class OriginConfig {
 			originConfigFile = getOriginConfigFile(context);
 		}
 
-		originConfigFile = context.getInitParameter("OriginConfigFile");
-
 		DOMParser parser = new DOMParser();
 
 		try {
