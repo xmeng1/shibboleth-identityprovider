@@ -57,8 +57,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -110,19 +112,23 @@ public class Rule {
 	 * @return the xml <code>Element</code>
 	 */
 
-	public Element unmarshall() {
+	public Element unmarshall() throws ArpMarshallingException {
 
-		DOMParser parser = new DOMParser();
-		Document placeHolder = parser.getDocument();
-		Element ruleNode = placeHolder.createElement("Rule");
+		try {
+			Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+			Element ruleNode = placeHolder.createElement("Rule");
 
-		if (description != null) {
-			Element descriptionNode = placeHolder.createElement("Description");
-			descriptionNode.appendChild(placeHolder.createTextNode(description));
-			ruleNode.appendChild(descriptionNode);
+			if (description != null) {
+				Element descriptionNode = placeHolder.createElement("Description");
+				descriptionNode.appendChild(placeHolder.createTextNode(description));
+				ruleNode.appendChild(descriptionNode);
+			}
+
+			return ruleNode;
+		} catch (ParserConfigurationException e) {
+			log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
+			throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule.");
 		}
-
-		return ruleNode;
 	}
 
 	/**

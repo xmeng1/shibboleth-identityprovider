@@ -49,6 +49,8 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -62,6 +64,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.apache.xml.serialize.OutputFormat;
+import org.apache.xml.serialize.XMLSerializer;
 
 /**
  *  Defines a processing engine for Attribute Release Policies.
@@ -144,7 +148,24 @@ public class ArpEngine {
 			effectiveArp.setDescription("Effective ARP.");
 
 			Arp[] userPolicies = repository.getAllPolicies(principal);
-			log.debug("Creating effective ARP from (" + userPolicies.length + ") polic(y|ies).");
+
+			if (log.isDebugEnabled()) {
+				log.debug("Creating effective ARP from (" + userPolicies.length + ") polic(y|ies).");
+				try {
+					for (int i = 0; userPolicies.length > i; i++) {
+						StringWriter writer = new StringWriter();
+						OutputFormat format = new OutputFormat();
+						format.setIndent(4);
+						XMLSerializer serializer = new XMLSerializer(writer, format);
+						serializer.serialize(userPolicies[i].unmarshall());
+						log.debug(
+							"Dumping ARP from:" + System.getProperty("line.separator") + writer.toString());
+					}
+				} catch (ArpMarshallingException ame) {
+				} catch (IOException ioe) {
+				}
+			}
+
 			for (int i = 0; userPolicies.length > i; i++) {
 				Rule[] rules = userPolicies[i].getMatchingRules(requester, resource);
 
@@ -213,6 +234,14 @@ public class ArpEngine {
 		throws ArpProcessingException {
 
 		Set releaseSet = new HashSet();
+		
+		log.info("Applying Attribute Release Policies.");
+		if (log.isDebugEnabled()) {
+			log.debug("Processing the following attributes:");
+			for (int i = 0;attributes.length > i; i++) {
+				log.debug("Attribute: (" + attributes[i].getName() + ")");	
+			}
+		}
 
 		//Gather all applicable ARP attribute specifiers
 		Set attributeNames = new HashSet();

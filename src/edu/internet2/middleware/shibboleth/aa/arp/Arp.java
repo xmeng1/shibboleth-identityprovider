@@ -55,6 +55,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -74,6 +79,7 @@ public class Arp {
 	private Set rules = new HashSet();
 	private String description;
 	private boolean sitePolicy = false;
+	private static Logger log = Logger.getLogger(Arp.class.getName());
 
 	/**
 	 * Creates an Arp for the specified <code>Principal</code>.
@@ -160,24 +166,29 @@ public class Arp {
 	 * @return the xml <code>Element</code>
 	 */
 
-	Element unmarshall() {
+	Element unmarshall() throws ArpMarshallingException {
 
-		DOMParser parser = new DOMParser();
-		Document placeHolder = parser.getDocument();
-		Element policyNode = placeHolder.createElement("AttributeReleasePolicy");
+		try {
+			Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+			Element policyNode = placeHolder.createElement("AttributeReleasePolicy");
+			if (description != null) {
+				Element descriptionNode = placeHolder.createElement("Description");
+				descriptionNode.appendChild(placeHolder.createTextNode(description));
+				policyNode.appendChild(descriptionNode);
+			}
 
-		if (description != null) {
-			Element descriptionNode = placeHolder.createElement("Description");
-			descriptionNode.appendChild(placeHolder.createTextNode(description));
-			policyNode.appendChild(descriptionNode);
+			Rule[] rules = getAllRules();
+			for (int i = 0; rules.length > i; i++) {
+				policyNode.appendChild(placeHolder.importNode(rules[i].unmarshall(), true));
+			}
+
+			return policyNode;
+
+		} catch (ParserConfigurationException e) {
+			log.error("Encountered a problem unmarshalling an ARP: " + e);
+			throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP.");
 		}
 
-		Rule[] rules = getAllRules();
-		for (int i = 0; rules.length > i; i++) {
-			policyNode.appendChild(rules[i].unmarshall());
-		}
-
-		return policyNode;
 	}
 
 	/**
