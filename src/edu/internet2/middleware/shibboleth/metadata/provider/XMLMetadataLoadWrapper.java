@@ -28,11 +28,9 @@ package edu.internet2.middleware.shibboleth.metadata.provider;
 
 import java.io.IOException;
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
@@ -50,7 +48,6 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 
 	private static Logger	log	= Logger.getLogger(XMLMetadataLoadWrapper.class.getName());
 	private Metadata		currentMeta;
-	private DOMParser		parser;
 
 	public XMLMetadataLoadWrapper(Element configuration) throws MetadataException, ResourceNotAvailableException {
 		this(configuration.getAttribute("uri"));
@@ -85,6 +82,7 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 	}
 
 	protected void doOnChange() throws ResourceWatchdogExecutionException {
+        Document newDoc = null;
 		//Log
 		try {
 			log.info("Detected a change in the federation metadata.  Reloading from (" + resource.getURL().toString()
@@ -96,7 +94,10 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 
 		//Load new, but keep the old in place
 		try {
-			parser.parse(new InputSource(resource.getInputStream()));
+            newDoc = org.opensaml.XML.parserPool.parse(resource.getInputStream());
+        } catch (SAMLException e) {
+            log.error("Encountered an error parsing updated federation metadata, continuing to use stale copy.");
+            return;
 		} catch (SAXException e) {
 			log.error("Encountered an error parsing updated federation metadata, continuing to use stale copy.");
 			return;
@@ -108,7 +109,7 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 		//If things went well, replace the live copy
 		Metadata newMeta = null;
 		try {
-			newMeta = new XMLMetadata(parser.getDocument().getDocumentElement());
+			newMeta = new XMLMetadata(newDoc.getDocumentElement());
 		} catch (MetadataException e1) {
 			log.error("Encountered an error loading updated federation metadata, continuing to use stale copy.");
 			return;
