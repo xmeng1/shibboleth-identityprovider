@@ -28,11 +28,16 @@ package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.security.Principal;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
@@ -55,6 +60,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 
 /*
  * Built at the Canada Institute for Scientific and Technical Information (CISTI 
@@ -240,7 +246,6 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 					"Implementation constructor does have a parameterized constructor, attempting to load default.");
 				statementCreator = (JDBCStatementCreator) scClass.newInstance();
 			}
-
 			log.debug("Statement Creator implementation loaded.");
 
 		} catch (ClassNotFoundException e) {
@@ -275,12 +280,11 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 
 		//Setup and execute a (pooled) prepared statement
 		ResultSet rs = null;
+		PreparedStatement preparedStatement;
 		try {
-			PreparedStatement preparedStatement = conn.prepareStatement(searchVal);
+			preparedStatement = conn.prepareStatement(searchVal);
 			statementCreator.create(preparedStatement, principal, requester, depends);
 			rs = preparedStatement.executeQuery();
-			preparedStatement.close();
-
 			if (!rs.next()) {
 				return new BasicAttributes();
 			}
@@ -302,6 +306,14 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 			throw new ResolutionPlugInException(
 				"An ERROR occured while extracting attributes from result set: " + e.getMessage());
 		} finally {
+			try {
+				if (preparedStatement != null) {
+					preparedStatement.close();
+				}
+			} catch (SQLException e) {
+				log.error("An error occured while closing the prepared statement: " + e);
+				throw new ResolutionPlugInException("An error occured while closing the prepared statemen: " + e);
+			}
 			try {
 				rs.close();
 			} catch (SQLException e) {
@@ -456,10 +468,10 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		}
 	}
 }
+
 /**
  * The default attribute extractor. 
  */
-
 class DefaultAE implements JDBCAttributeExtractor {
 
 	private static Logger log = Logger.getLogger(DefaultAE.class.getName());
@@ -530,6 +542,290 @@ class DefaultStatementCreator implements JDBCStatementCreator {
 			log.error("Encountered an error while creating prepared statement: " + e);
 			throw new JDBCStatementCreatorException(
 				"Encountered an error while creating prepared statement: " + e.getMessage());
+		}
+	}
+}
+
+class DependencyStatementCreator implements JDBCStatementCreator {
+
+	private static Logger log = Logger.getLogger(DependencyStatementCreator.class.getName());
+	private ArrayList parameters = new ArrayList();
+
+	public DependencyStatementCreator(Element conf) throws JDBCStatementCreatorException {
+
+		NodeList nodes = conf.getElementsByTagName("Parameter");
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Element parameter = (Element) nodes.item(i);
+			String type = "String";
+			if (parameter.getAttribute("type") != null && (!parameter.getAttribute("type").equals(""))) {
+				type = parameter.getAttribute("type");
+			}
+
+			if (parameter.getAttribute("attributeName") == null
+				|| parameter.getAttribute("attributeName").equals("")) {
+				log.error("Statement Creator Parameter must reference an attribute by name.");
+				throw new JDBCStatementCreatorException("Statement Creator Parameter must reference an attribute by name.");
+			}
+
+			if (parameter.getAttribute("connectorId") != null && (!parameter.getAttribute("connectorId").equals(""))) {
+				parameters.add(
+					new Parameter(
+						type,
+						parameter.getAttribute("attributeName"),
+						parameter.getAttribute("connectorId")));
+			} else {
+				parameters.add(new Parameter(type, parameter.getAttribute("attributeName")));
+
+			}
+		}
+		log.debug("Parameters configured: " + parameters.size());
+	}
+
+	public void create(
+		PreparedStatement preparedStatement,
+		Principal principal,
+		String requester,
+		Dependencies depends)
+		throws JDBCStatementCreatorException {
+
+		try {
+			log.debug("Creating prepared statement.  Substituting values from dependencies.");
+			for (int i = 0; i < parameters.size(); i++) {
+				((Parameter) parameters.get(i)).setParameterValue(preparedStatement, i + 1, depends);
+			}
+
+		} catch (Exception e) {
+			log.error("Encountered an error while creating prepared statement: " + e);
+			throw new JDBCStatementCreatorException(
+				"Encountered an error while creating prepared statement: " + e.getMessage());
+		}
+	}
+
+	private class Parameter {
+		private String type;
+		private String attributeName;
+		private boolean referencesConnector = false;
+		private String connectorId;
+
+		private Parameter(String type, String attributeName) throws JDBCStatementCreatorException {
+			if ((!type.equalsIgnoreCase("String"))
+				&& (!type.equalsIgnoreCase("Integer"))
+				&& (!type.equalsIgnoreCase("Byte"))
+				&& (!type.equalsIgnoreCase("Double"))
+				&& (!type.equalsIgnoreCase("Float"))
+				&& (!type.equalsIgnoreCase("Long"))
+				&& (!type.equalsIgnoreCase("Short"))
+				&& (!type.equalsIgnoreCase("Boolean"))
+				&& (!type.equalsIgnoreCase("Date"))
+				&& (!type.equalsIgnoreCase("Blob"))
+				&& (!type.equalsIgnoreCase("Clob"))) {
+				log.error("Unsupported type configured for Statement Creator Parameter.");
+				throw new JDBCStatementCreatorException("Unsupported type on Statement Creator Parameter.");
+			}
+			this.type = type;
+			this.attributeName = attributeName;
+		}
+
+		private Parameter(String type, String attributeName, String connectorId) throws JDBCStatementCreatorException {
+			this(type, attributeName);
+			referencesConnector = true;
+			this.connectorId = connectorId;
+
+		}
+
+		private Object setParameterValue(PreparedStatement preparedStatement, int valueIndex, Dependencies depends)
+			throws JDBCStatementCreatorException {
+
+			//TODO handle connector attributes
+			ResolverAttribute attribute = depends.getAttributeResolution(attributeName);
+			if (attribute != null) {
+				Object object = null;
+				Iterator iterator = attribute.getValues();
+				if (iterator.hasNext()) {
+					setSpecificParameter(preparedStatement, valueIndex, iterator.next());
+				} else {
+					//TODO make configurable (same as below)
+				}
+				if (iterator.hasNext()) {
+					log.error("Statement Creator encountered a multivalued dependent attribute.");
+					throw new JDBCStatementCreatorException("Statement Creator encountered a multivalued dependent attribute.");
+				}
+				return object;
+			} else {
+				//TODO make configurable
+				throw new JDBCStatementCreatorException("foo");
+			}
+		}
+
+		private void setSpecificParameter(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+
+			if (type.equalsIgnoreCase("String")) {
+				setString(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Integer")) {
+				setInteger(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Byte")) {
+				setByte(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Double")) {
+				setDouble(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Float")) {
+				setFloat(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Long")) {
+				setLong(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Short")) {
+				setShort(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Boolean")) {
+				setBoolean(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Date")) {
+				setDate(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Blob")) {
+				setBlob(preparedStatement, valueIndex, object);
+			} else if (type.equalsIgnoreCase("Clob")) {
+				setClob(preparedStatement, valueIndex, object);
+			} else {
+				setString(preparedStatement, valueIndex, object);
+			}
+		}
+
+		private void setClob(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			if (object instanceof Clob) {
+				try {
+					preparedStatement.setClob(valueIndex, (Clob) object);
+					return;
+				} catch (SQLException e) {
+					log.error("Encountered an error while adding parameter to prepared statement: " + e);
+					throw new JDBCStatementCreatorException(
+						"Encountered an error while adding parameter to prepared statement: " + e.getMessage());
+				}
+			}
+			log.error("Encountered a dependency with an invalid java type.");
+			throw new JDBCStatementCreatorException("Encountered a dependency with an invalid java type.");
+
+		}
+
+		private void setBlob(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			if (object instanceof Blob) {
+				try {
+					preparedStatement.setBlob(valueIndex, (Blob) object);
+					return;
+				} catch (SQLException e) {
+					log.error("Encountered an error while adding parameter to prepared statement: " + e);
+					throw new JDBCStatementCreatorException(
+						"Encountered an error while adding parameter to prepared statement: " + e.getMessage());
+				}
+			}
+			log.error("Encountered a dependency with an invalid java type.");
+			throw new JDBCStatementCreatorException("Encountered a dependency with an invalid java type.");
+
+		}
+
+		private void setDate(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+
+			if (object instanceof java.sql.Date) {
+				try {
+					preparedStatement.setDate(valueIndex, (java.sql.Date) object);
+					return;
+				} catch (SQLException e) {
+					log.error("Encountered an error while adding parameter to prepared statement: " + e);
+					throw new JDBCStatementCreatorException(
+						"Encountered an error while adding parameter to prepared statement: " + e.getMessage());
+				}
+			} else if (object instanceof java.util.Date) {
+				try {
+					//If you want to be frustrated by the java class library, look no further...
+					preparedStatement.setDate(valueIndex, new java.sql.Date(((java.util.Date) object).getTime()));
+					return;
+				} catch (SQLException e) {
+					log.error("Encountered an error while adding parameter to prepared statement: " + e);
+					throw new JDBCStatementCreatorException(
+						"Encountered an error while adding parameter to prepared statement: " + e.getMessage());
+				}
+			} else if (object instanceof Long) {
+				try {
+					preparedStatement.setDate(valueIndex, new java.sql.Date(((Long) object).longValue()));
+					return;
+				} catch (SQLException e) {
+					log.error("Encountered an error while adding parameter to prepared statement: " + e);
+					throw new JDBCStatementCreatorException(
+						"Encountered an error while adding parameter to prepared statement: " + e.getMessage());
+				}
+			} else if (object instanceof String) {
+				try {
+					preparedStatement.setDate(
+						valueIndex,
+						new java.sql.Date(new SimpleDateFormat().parse((String) object).getTime()));
+					return;
+				} catch (Exception e) {
+					log.error("Encountered an error while adding parameter to prepared statement: " + e);
+					throw new JDBCStatementCreatorException(
+						"Encountered an error while adding parameter to prepared statement: " + e.getMessage());
+				}
+			}
+			log.error("Encountered a dependency with an invalid java type.");
+			throw new JDBCStatementCreatorException("Encountered a dependency with an invalid java type.");
+
+		}
+
+		private void setBoolean(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			// TODO Auto-generated method stub
+
+		}
+
+		private void setShort(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			// TODO Auto-generated method stub
+
+		}
+
+		private void setLong(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			// TODO Auto-generated method stub
+
+		}
+
+		private void setFloat(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			// TODO Auto-generated method stub
+
+		}
+
+		private void setDouble(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			// TODO Auto-generated method stub
+
+		}
+
+		private void setByte(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			// TODO Auto-generated method stub
+
+		}
+
+		private void setInteger(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			// TODO Auto-generated method stub
+
+		}
+
+		private void setString(PreparedStatement preparedStatement, int valueIndex, Object object)
+			throws JDBCStatementCreatorException {
+			if (object instanceof String) {
+				try {
+					preparedStatement.setString(valueIndex, (String) object);
+					return;
+				} catch (SQLException e) {
+					log.error("Encountered an error while adding parameter to prepared statement: " + e);
+					throw new JDBCStatementCreatorException(
+						"Encountered an error while adding parameter to prepared statement: " + e.getMessage());
+				}
+			}
+			log.error("Encountered a dependency with an invalid java type.");
+			throw new JDBCStatementCreatorException("Encountered a dependency with an invalid java type.");
+
 		}
 	}
 }
