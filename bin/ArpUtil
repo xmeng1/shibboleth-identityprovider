@@ -1,14 +1,20 @@
 #!/bin/sh
 
+#The Shibboleth webapp root
+if [ -z SHIB_ROOT ]
+	then
+		SHIB_ROOT=/usr/local/tomcat/webapps/shibboleth
+fi
+
 #Where log4j config file is
-LOG_CONFIG=../webApplication/WEB-INF/conf/log4j.properties
+LOG_CONFIG=$SHIB_ROOT/WEB-INF/conf/log4j.properties
 
 #Where ARPs directory is
-ARP_DIR=../webApplication/arps
+ARP_DIR=$SHIB_ROOT/arps
 
 if [ -n JAVA_HOME ]
 	then
-		$JAVA_HOME/bin/java -Dlog.config=$LOG_CONFIG -Darp.dir=$ARP_DIR -cp ../dist/shib-util.jar:../lib/log4j-1.2.5.jar edu.internet2.middleware.shibboleth.aa.arpUtil.ArpUtil $@
+		$JAVA_HOME/bin/java -Dlog.config=$LOG_CONFIG -Darp.dir=$ARP_DIR -cp $SHIB_ROOT/WEB-INF/classes:$SHIB_ROOT/WEB-INF/lib/log4j-1.2.5.jar edu.internet2.middleware.shibboleth.aa.arpUtil.ArpUtil $@
 	else
 		echo "JAVA_HOME not set."
 fi
