@@ -54,6 +54,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.io.StreamCorruptedException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyException;
@@ -109,7 +110,6 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSName
 			String keyStoreKeyPassword = getElementConfigData(config, "KeyStoreKeyPassword");
 
 			KeyStore keyStore = KeyStore.getInstance("JCEKS");
-
 			keyStore.load(
 				new ShibResource(keyStorePath, this.getClass()).getInputStream(),
 				keyStorePassword.toCharArray());
@@ -124,7 +124,15 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSName
 					"You are running Crypto AQH Name Mapping with the default secret key.  This is UNSAFE!  Please change "
 						+ "this configuration and restart the origin.");
 			}
-
+		} catch (StreamCorruptedException e) {
+			if (System.getProperty("java.version").startsWith("1.4.2")) {
+				log.error(
+					"There is a bug in Java 1.4.2 that prevents JCEKS keystores from being loaded properly.  "
+						+ "You probably need to upgrade or downgrade your JVM in order to make this work.");
+			}
+			log.error(
+				"An error occurred while loading the java keystore.  Unable to initialize Crypto Name Mapping: " + e);
+			throw new NameIdentifierMappingException("An error occurred while loading the java keystore.  Unable to initialize Crypto Name Mapping.");
 		} catch (KeyStoreException e) {
 			log.error(
 				"An error occurred while loading the java keystore.  Unable to initialize Crypto Name Mapping: " + e);
