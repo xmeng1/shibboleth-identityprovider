@@ -610,6 +610,7 @@ public class ArpTests extends TestCase {
 			arpApplicationTest21(repository, props, parser);
 			arpApplicationTest22(repository, props, parser);
 			arpApplicationTest23(repository, props, parser);
+			arpApplicationTest24(repository, props, parser);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1950,6 +1951,62 @@ public class ArpTests extends TestCase {
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
 		assertEquals("ARP application test 23: ARP not applied as expected.", inputSet, releaseSet);
+	}
+	
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Specific shar, Specific resource
+	 * Attribute: No matches on specific values should yield no attribute
+	 */
+	void arpApplicationTest24(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<Requester>shar.example.edu</Requester>"
+				+ "					<Resource>http://www.example.edu/</Resource>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:dir:attribute-def:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"permit\" />"
+				+ "				</Attribute>"
+				+ "				<Attribute name=\"urn:mace:dir:attribute-def:eduPersonEntitlement\">"
+				+ "					<Value release=\"permit\">urn:x:foo</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AuthNPrincipal("Test2Principal");
+		URL url1 = new URL("http://www.example.edu/index.html");
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:dir:attribute-def:eduPersonEntitlement",
+						new Object[] { "urn:x:bar", "urn:x:adagio"}),
+					new AAAttribute(
+						"urn:mace:dir:attribute-def:eduPersonAffiliation",
+						new Object[] { "member" })
+		});
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:dir:attribute-def:eduPersonAffiliation",
+					new Object[] { "member" }));
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
+
+		assertEquals("ARP application test 24: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 }
