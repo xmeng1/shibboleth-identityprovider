@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- edited with XML Spy v4.2 U (http://www.xmlspy.com) by Test (Test) -->
 <xs:schema targetNamespace="urn:mace:shibboleth:arp:1.0" xmlns:arp="urn:mace:shibboleth:arp:1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:simpleType name="RequireType">
 		<xs:restriction base="xs:string">
