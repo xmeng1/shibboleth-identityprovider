@@ -157,7 +157,7 @@ public class HandleServlet extends HttpServlet {
 		//Load relying party config
 		try {
 			targetMapper =
-				new ServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration, credentials);
+				new ServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration, credentials, nameMapper);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new HSConfigurationException("Could not load origin configuration.");

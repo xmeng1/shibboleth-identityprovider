@@ -54,6 +54,8 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import edu.internet2.middleware.shibboleth.hs.HSNameMapper;
+
 /**
  * @author Walter Hoehn
  *  
@@ -63,13 +65,19 @@ public class ServiceProviderMapper {
 	private static Logger log = Logger.getLogger(ShibbolethOriginConfig.class.getName());
 	private ShibbolethOriginConfig configuration;
 	private Credentials credentials;
+	private HSNameMapper nameMapper;
 	private Map relyingParties = new HashMap();
 
-	public ServiceProviderMapper(Element rawConfig, ShibbolethOriginConfig configuration, Credentials credentials)
+	public ServiceProviderMapper(
+		Element rawConfig,
+		ShibbolethOriginConfig configuration,
+		Credentials credentials,
+		HSNameMapper nameMapper)
 		throws ServiceProviderMapperException {
 
 		this.configuration = configuration;
 		this.credentials = credentials;
+		this.nameMapper = nameMapper;
 
 		NodeList itemElements =
 			rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "RelyingParty");
@@ -101,11 +109,14 @@ public class ServiceProviderMapper {
 	private void addRelyingParty(Element e) throws ServiceProviderMapperException {
 
 		log.debug("Found a Relying Party.");
-		//TODO catch these individually and don't totally fail for one bad
-		if (e.getLocalName().equals("RelyingParty")) {
-			RelyingParty party = new RelyingPartyImpl(e, configuration, credentials);
-			log.debug("Relying Party (" + party.getName() + ") loaded.");
-			relyingParties.put(party.getName(), party);
+		try {
+			if (e.getLocalName().equals("RelyingParty")) {
+				RelyingParty party = new RelyingPartyImpl(e, configuration, credentials, nameMapper);
+				log.debug("Relying Party (" + party.getName() + ") loaded.");
+				relyingParties.put(party.getName(), party);
+			}
+		} catch (ServiceProviderMapperException exc) {
+			log.error("Encountered an error while attempting to load Relying Party configuration.  Skipping...");
 		}
 	}
 	public RelyingParty getRelyingParty(String providerIdFromTarget) {
@@ -140,7 +151,8 @@ public class ServiceProviderMapper {
 
 	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
 
-		// TODO This is totally a stub and needs to be based on target metadata lookup
+		// TODO This is totally a stub and needs to be based on target metadata
+		// lookup
 		if (providerIdFromTarget.startsWith("urn:mace:inqueue:")) {
 			if (relyingParties.containsKey("urn:mace:inqueue")) {
 				return (RelyingParty) relyingParties.get("urn:mace:inqueue");
@@ -151,7 +163,8 @@ public class ServiceProviderMapper {
 
 	private RelyingParty getDefaultRelyingPatry() {
 
-		//If there is no explicit default, pick the single configured Relying Party
+		//If there is no explicit default, pick the single configured Relying
+		// Party
 		String defaultParty =
 			configuration.getConfigProperty(
 				"edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty");
@@ -169,8 +182,13 @@ public class ServiceProviderMapper {
 		protected Properties partyOverrides = new Properties();
 		protected RelyingPartyIdentityProvider identityProvider;
 		protected String name;
+		protected String hsNameFormatId;
 
-		public RelyingPartyImpl(Element partyConfig, ShibbolethOriginConfig globalConfig, Credentials credentials)
+		public RelyingPartyImpl(
+			Element partyConfig,
+			ShibbolethOriginConfig globalConfig,
+			Credentials credentials,
+			HSNameMapper nameMapper)
 			throws ServiceProviderMapperException {
 
 			//Use global config for defaults
@@ -184,7 +202,7 @@ public class ServiceProviderMapper {
 			}
 			log.debug("Loading Relying Party: (" + name + ").");
 
-			//Load an credential for signing
+			//Load a credential for signing
 			String credentialName = ((Element) partyConfig).getAttribute("signingCredential");
 			Credential credential = credentials.getCredential(credentialName);
 
@@ -200,8 +218,42 @@ public class ServiceProviderMapper {
 				}
 			}
 
-			//TODO HSNameFormat
+			//Load and verify the name format that the HS should use in
+			//assertions for this RelyingParty
+			NodeList hsNameFormats =
+				((Element) partyConfig).getElementsByTagNameNS(
+					ShibbolethOriginConfig.originConfigNamespace,
+					"HSNameFormat");
+			//If no specification. Make sure we have a default mapping
+			if (hsNameFormats.getLength() < 1) {
+				if (nameMapper.getNameIdentifierMappingById(null) == null) {
+					log.error("Relying Party HS Name Format not set.  Add a <HSNameFormat> element to <RelyingParty>.");
+					throw new ServiceProviderMapperException("Required configuration not specified.");
+				}
 
+			} else {
+				//We do have a specification, so make sure it points to a
+				// valid Name Mapping
+				if (hsNameFormats.getLength() > 1) {
+					log.warn(
+						"Found multiple HSNameFormat specifications for Relying Party ("
+							+ name
+							+ ").  Ignoring all but the first.");
+				}
+
+				String hsNameFormatId = ((Element) hsNameFormats.item(0)).getAttribute("nameMapping");
+				if (hsNameFormatId == null || hsNameFormatId.equals("")) {
+					log.error("HS Name Format mapping not set.  Add a (nameMapping) attribute to <HSNameFormat>.");
+					throw new ServiceProviderMapperException("Required configuration not specified.");
+				}
+
+				if (nameMapper.getNameIdentifierMappingById(hsNameFormatId) == null) {
+					log.error("Relying Party HS Name Format refers to a name mapping that is not loaded.");
+					throw new ServiceProviderMapperException("Required configuration not specified.");
+				}
+			}
+
+			//Process overrides for global data
 			String attribute = ((Element) partyConfig).getAttribute("providerId");
 			if (attribute != null && !attribute.equals("")) {
 				log.debug("Overriding providerId for Relying Pary (" + name + ") with (" + attribute + ").");
@@ -351,4 +403,3 @@ public class ServiceProviderMapper {
 		}
 	}
 }
-
