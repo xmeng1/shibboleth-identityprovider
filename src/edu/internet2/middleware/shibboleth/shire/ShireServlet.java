@@ -61,6 +61,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.Cookie;
@@ -72,7 +73,6 @@ import javax.servlet.http.HttpUtils;
 import org.apache.log4j.Logger;
 import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.SAMLAuthenticationStatement;
-import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 
@@ -87,104 +87,88 @@ import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
  * @author     Scott Cantor
  * @created    June 10, 2002
  */
-public class ShireServlet extends HttpServlet
-{
-	
-    private String shireLocation;
-    private String cookieName;
-    private String cookieDomain;
-    private String sessionDir;
-    private String keyStorePath;
-    private String keyStorePasswd;
-    private String keyStoreAlias;
-    private String registryURI;
-    private boolean sslOnly = true;
-    private boolean checkAddress = true;
-    private boolean verbose = false;
 
-    
-    private XMLOriginSiteMapper mapper = null;
+public class ShireServlet extends HttpServlet {
+
+	private String shireLocation;
+	private String cookieName;
+	private String cookieDomain;
+	private String sessionDir;
+	private String keyStorePath;
+	private String keyStorePasswd;
+	private String keyStoreAlias;
+	private String registryURI;
+	private boolean sslOnly = true;
+	private boolean checkAddress = true;
+	private boolean verbose = false;
+
+	private XMLOriginSiteMapper mapper = null;
 	private static Logger log = Logger.getLogger(ShireServlet.class.getName());
-	
 
-    private static void HTMLFormat(PrintWriter pw, String buf)
-    {
-        for (int i = 0; i < buf.length(); i++)
-        {
-            if (buf.charAt(i) == '<')
-                pw.write("&lt;");
-            else if (buf.charAt(i) == '>')
-                pw.write("&gt;");
-            else if (buf.charAt(i) == '&')
-                pw.write("&amp;");
-            else
-                pw.write(buf.charAt(i));
-        }
-    }
+	/**
+	 *  Use the following servlet init parameters:<P>
+	 *
+	 *
+	 *  <DL>
+	 *    <DT> shire-location <I>(optional)</I> </DT>
+	 *    <DD> The URL of the SHIRE if not derivable from requests</DD>
+	 *    <DT> keystore-path <I>(required)</I> </DT>
+	 *    <DD> A pathname to the trusted CA roots to accept</DD>
+	 *    <DT> keystore-password <I>(required)</I> </DT>
+	 *    <DD> The root keystore password</DD>
+	 *    <DT> registry-alias <I>(optional)</I> </DT>
+	 *    <DD> An alias in the provided keystore for the cert that can verify
+	 *    the origin site registry signature</DD>
+	 *    <DT> registry-uri <I>(required)</I> </DT>
+	 *    <DD> The origin site registry URI to install</DD>
+	 *    <DT> cookie-name <I>(required)</I> </DT>
+	 *    <DD> Name of session cookie to set in browser</DD>
+	 *    <DT> cookie-domain <I>(optional)</I> </DT>
+	 *    <DD> Domain of session cookie to set in browser</DD>
+	 *    <DT> ssl-only <I>(defaults to true)</I> </DT>
+	 *    <DD> If true, allow only SSL-protected POSTs and issue a secure cookie
+	 *    </DD>
+	 *    <DT> check-address <I>(defaults to true)</I> </DT>
+	 *    <DD> If true, check client's IP address against assertion</DD>
+	 *    <DT> session-dir <I>(defaults to /tmp)</I> </DT>
+	 *    <DD> Directory in which to place session files</DD>
+	 *  </DL>
+	 *
+	 */
+	public void init() throws ServletException {
+		super.init();
+		log.info("Initializing SHIRE.");
 
-    /**
-     *  Use the following servlet init parameters:<P>
-     *
-     *
-     *  <DL>
-     *    <DT> shire-location <I>(optional)</I> </DT>
-     *    <DD> The URL of the SHIRE if not derivable from requests</DD>
-     *    <DT> keystore-path <I>(required)</I> </DT>
-     *    <DD> A pathname to the trusted CA roots to accept</DD>
-     *    <DT> keystore-password <I>(required)</I> </DT>
-     *    <DD> The root keystore password</DD>
-     *    <DT> registry-alias <I>(optional)</I> </DT>
-     *    <DD> An alias in the provided keystore for the cert that can verify
-     *    the origin site registry signature</DD>
-     *    <DT> registry-uri <I>(required)</I> </DT>
-     *    <DD> The origin site registry URI to install</DD>
-     *    <DT> cookie-name <I>(required)</I> </DT>
-     *    <DD> Name of session cookie to set in browser</DD>
-     *    <DT> cookie-domain <I>(optional)</I> </DT>
-     *    <DD> Domain of session cookie to set in browser</DD>
-     *    <DT> ssl-only <I>(defaults to true)</I> </DT>
-     *    <DD> If true, allow only SSL-protected POSTs and issue a secure cookie
-     *    </DD>
-     *    <DT> check-address <I>(defaults to true)</I> </DT>
-     *    <DD> If true, check client's IP address against assertion</DD>
-     *    <DT> session-dir <I>(defaults to /tmp)</I> </DT>
-     *    <DD> Directory in which to place session files</DD>
-     *    <DT> verbose <I>(defaults to false)</I> </DT>
-     *    <DD> Verbosity of redirection response</DD>
-     *  </DL>
-     *
-     */
-    public void init()
-        throws ServletException
-    {
-    	super.init();
-    	log.info("Initializing SHIRE.");
-    			
-        edu.internet2.middleware.shibboleth.common.Init.init();
+		edu.internet2.middleware.shibboleth.common.Init.init();
 
 		loadInitParams();
 		verifyConfig();
 
 		log.info("Loading keystore.");
-		try {       
-            Key k = null;
-            KeyStore ks = KeyStore.getInstance("JKS");
-				ks.load(getServletContext().getResourceAsStream(keyStorePath), keyStorePasswd.toCharArray());
+		try {
+			Key k = null;
+			KeyStore ks = KeyStore.getInstance("JKS");
+			ks.load(getServletContext().getResourceAsStream(keyStorePath), keyStorePasswd.toCharArray());
 
-            if (keyStoreAlias != null)
-            {
-                Certificate cert;
+			if (keyStoreAlias != null) {
+				Certificate cert;
 				cert = ks.getCertificate(keyStoreAlias);
-							
-                if (cert == null || (k = cert.getPublicKey()) == null) {
-                	log.fatal("Unable to load registry verification certificate (" +keyStoreAlias +") from keystore");
-                    throw new UnavailableException("Unable to load registry verification certificate (" +keyStoreAlias +") from keystore");
-                }
-            }
-            
-		log.info("Loading shibboleth site information.");
-		mapper = new XMLOriginSiteMapper(registryURI, k, ks);
-			
+
+				if (cert == null || (k = cert.getPublicKey()) == null) {
+					log.fatal(
+						"Unable to load registry verification certificate ("
+							+ keyStoreAlias
+							+ ") from keystore");
+					throw new UnavailableException(
+						"Unable to load registry verification certificate ("
+							+ keyStoreAlias
+							+ ") from keystore");
+				}
+			}
+
+			log.info("Loading shibboleth site information.");
+			mapper = new XMLOriginSiteMapper(registryURI, k, ks);
+
 		} catch (OriginSiteMapperException e) {
 			log.fatal("Unable load shibboleth site information." + e.getMessage());
 			throw new UnavailableException("Unable load shibboleth site information." + e.getMessage());
@@ -201,224 +185,270 @@ public class ShireServlet extends HttpServlet
 			log.fatal("Unable supplied keystore." + e.getMessage());
 			throw new UnavailableException("Unable load supplied keystore." + e.getMessage());
 		}
-   
-    }
+
+	}
 
 	/**
-	 * Method verifyConfig.
+	 * Ensures that all required initialization attributes have been set.
 	 */
 	private void verifyConfig() throws UnavailableException {
-		
+
 		if (cookieName == null) {
 			log.fatal("Init parameter (cookie-name) is required in deployment descriptor.");
-            throw new UnavailableException("Init parameter (cookie-name) is required in deployment descriptor.");
+			throw new UnavailableException("Init parameter (cookie-name) is required in deployment descriptor.");
 		}
-		
+
 		if (registryURI == null) {
 			log.fatal("Init parameter (registry-uri) is required in deployment descriptor.");
-            throw new UnavailableException("Init parameter (registry-uri) is required in deployment descriptor.");
+			throw new UnavailableException("Init parameter (registry-uri) is required in deployment descriptor.");
 		}
-		
+
 		if (keyStorePath == null) {
 			log.fatal("Init parameter (keystore-path) is required in deployment descriptor.");
-            throw new UnavailableException("Init parameter (keystore-path) is required in deployment descriptor.");
+			throw new UnavailableException("Init parameter (keystore-path) is required in deployment descriptor.");
 		}
-		
+
 		if (keyStorePasswd == null) {
 			log.fatal("Init parameter (keystore-password) is required in deployment descriptor.");
-            throw new UnavailableException("Init parameter (keystore-password) is required in deployment descriptor.");
+			throw new UnavailableException("Init parameter (keystore-password) is required in deployment descriptor.");
 		}
 
 	}
 
-
+	/**
+	 * Loads SHIRE configuration parameters.  Sets default values as appropriate.
+	 */
 	private void loadInitParams() {
-		
+
 		log.info("Loading configuration from deployment descriptor (web.xml).");
-		
+
 		shireLocation = getServletConfig().getInitParameter("shire-location");
 		cookieDomain = getServletConfig().getInitParameter("cookie-domain");
-		cookieName = getServletConfig().getInitParameter("cookie-name");	
+		cookieName = getServletConfig().getInitParameter("cookie-name");
 		keyStorePath = getServletConfig().getInitParameter("keystore-path");
 		keyStorePasswd = getServletConfig().getInitParameter("keystore-password");
 		keyStoreAlias = getServletConfig().getInitParameter("keystore-alias");
 		registryURI = getServletConfig().getInitParameter("registry-uri");
-		
+
 		sessionDir = getServletConfig().getInitParameter("session-dir");
-		if (sessionDir == null) {	
-		    sessionDir = "/tmp";
-		    log.warn("No session-dir parameter found... using default location: (" + sessionDir +").");
-		}      
-		
+		if (sessionDir == null) {
+			sessionDir = "/tmp";
+			log.warn("No session-dir parameter found... using default location: (" + sessionDir + ").");
+		}
+
 		String temp = getServletConfig().getInitParameter("ssl-only");
 		if (temp != null && (temp.equalsIgnoreCase("false") || temp.equals("0")))
-		    sslOnly = false;
-		
+			sslOnly = false;
+
 		temp = getServletConfig().getInitParameter("check-address");
 		if (temp != null && (temp.equalsIgnoreCase("false") || temp.equals("0")))
-		    checkAddress = false;
-		
-		temp = getServletConfig().getInitParameter("verbose");
-		if (temp != null && (temp.equalsIgnoreCase("true") || temp.equals("1")))
-		    verbose = true;
-		    
+			checkAddress = false;
+
 	}
 
-    /**
-     *  Processes a sign-on submission<P>
-     *
-     *
-     *
-     * @param  request               HTTP request context
-     * @param  response              HTTP response context
-     * @exception  IOException       Thrown if an I/O error occurs
-     * @exception  ServletException  Thrown if a servlet engine error occurs
-     */
-    public void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws IOException, ServletException
-    {
-        // Output page opener.
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
-        out.println("<HTML>");
-        out.println("<HEAD>");
-        out.println("<TITLE>Shibboleth Session Establisher</TITLE>");
-        out.println("</HEAD>");
-        out.println("<BODY>");
-        out.println("<H3>Shibboleth Session Establisher</H3>");
+	/**
+	 *  Processes a sign-on submission<P>
+	 *
+	 *
+	 *
+	 * @param  request               HTTP request context
+	 * @param  response              HTTP response context
+	 * @exception  IOException       Thrown if an I/O error occurs
+	 * @exception  ServletException  Thrown if a servlet engine error occurs
+	 */
+	public void doPost(HttpServletRequest request, HttpServletResponse response)
+		throws IOException, ServletException {
 
-        if (sslOnly && !request.isSecure())
-        {
-            out.println("<H4>There was a problem with this submission.</H4>");
-            out.println("<P>Access to this site requires the use of SSL. To correct the problem, please re-enter the desired target URL into your browser and make sure it begins with 'https'.</P>");
-            out.println("</BODY></HTML>");
-            return;
-        }
+		try {
 
-        String target = request.getParameter("TARGET");
-        if (target == null || target.length() == 0)
-        {
-            out.println("<H4>There was a problem with this submission.</H4>");
-            out.println("<P>The target location was unspecified. To correct the problem, please re-enter the desired target URL into your browser.</P>");
-            out.println("</BODY></HTML>");
-            return;
-        }
-        else if (verbose)
-            out.println("<P><B>Target URL:</B>" + target + "</P>");
+			log.info("Received a handle package.");
+			log.debug("Target URL from client: " + request.getParameter("TARGET"));
+			validateRequest(request);
 
-        String responseData = request.getParameter("SAMLResponse");
-        if (responseData == null || responseData.length() == 0)
-        {
-            out.println("<H4>There was a problem with this submission.</H4>");
-            out.println("<P>The assertion of your Shibboleth identity was missing. To correct the problem, please re-enter the desired target URL into your browser.</P>");
-            out.println("</BODY></HTML>");
-            return;
-        }
+			SAMLAuthenticationStatement s = processAssertion(request);
+			shareSession(
+				response,
+				s.getSubject().getName(),
+				s.getSubject().getNameQualifier(),
+				System.currentTimeMillis(),
+				request.getRemoteAddr(),
+				s.getBindings()[0].getBinding(),
+				s.getBindings()[0].getLocation());
 
-        // Process the SAML response inside an exception handler.
-        try
-        {
-            // Get a profile object using our specifics.
-            String[] policies = {Constants.POLICY_CLUBSHIB};
-            ShibPOSTProfile profile =
-                ShibPOSTProfileFactory.getInstance(policies, mapper,
-                    (shireLocation!=null) ? shireLocation : HttpUtils.getRequestURL(request).toString(),
-                    300);
+			log.info("Redirecting to the requested resource.");
+			response.sendRedirect(request.getParameter("TARGET"));
 
-            // Try and accept the response...
-            SAMLResponse r = profile.accept(responseData.getBytes());
+		} catch (ShireException se) {
+			handleError(se, request, response);
+		}
 
-            // We've got a valid signed response we can trust (or the whole response was empty...)
-            if (verbose)
-            {
-                ByteArrayOutputStream bytestr = new ByteArrayOutputStream();
-                r.toStream(bytestr);
-                out.println("<P><B>Parsed SAML Response:</B></P>");
-                out.println("<P>");
-                HTMLFormat(out, bytestr.toString(response.getCharacterEncoding()));
-                out.println("</P>");
-            }
+	}
 
-            // Get the statement we need.
-            SAMLAuthenticationStatement s = profile.getSSOStatement(r);
-            if (s == null)
-            {
-                out.println("<H4>There was a problem with this submission.</H4>");
-                out.println("<P>The assertion of your Shibboleth identity was missing or incompatible with the policies of this site. To correct the problem, please re-enter the desired target URL into your browser. If the problem persists, please contact the technical staff at your site.</P>");
-                out.println("</BODY></HTML>");
-                return;
-            }
+	/**
+	 * Extracts a SAML Authentication Assertion from a POST request object and performs appropriate validity 
+	 * checks on the same. 
+	 *
+	 * @param  request The <code>HttpServletRequest</code> object for the current request
+	 * @exception  ShireException  Thrown if any error is encountered parsing or validating the assertion 
+	 * that is retreived from the request object.
+	 */
 
-            if (checkAddress)
-            {
-                if (verbose)
-                    out.println("<P><B>Client Address:</B>" + request.getRemoteAddr() + "</P>");
-                if (s.getSubjectIP() == null || !s.getSubjectIP().equals(request.getRemoteAddr()))
-                {
-                    if (verbose && s.getSubjectIP() != null)
-                        out.println("<P><B>Supplied Client Address:</B>" + s.getSubjectIP() + "</P>");
-                    out.println("<H4>There was a problem with this submission.</H4>");
-                    out.println("<P>The IP address provided by your origin site was either missing or did not match your current address. To correct this problem, you may need to bypass a local proxy server and/or contact your origin site technical staff.</P>");
-                    out.println("</BODY></HTML>");
-                }
-            }
+	private SAMLAuthenticationStatement processAssertion(HttpServletRequest request) throws ShireException {
 
-            // All we really need is here...
-            String handle = s.getSubject().getName();
-            String domain = s.getSubject().getNameQualifier();
-            SAMLAuthorityBinding[] bindings = s.getBindings();
+		log.info("Processing SAML Assertion.");
+		try {
+			// Get a profile object using our specifics.
+			String[] policies = { Constants.POLICY_CLUBSHIB };
+			ShibPOSTProfile profile =
+				ShibPOSTProfileFactory.getInstance(
+					policies,
+					mapper,
+					(shireLocation != null) ? shireLocation : HttpUtils.getRequestURL(request).toString(),
+					300);
 
-            if (verbose)
-            {
-                out.println("<P><B>Shibboleth Origin Site:</B>" + domain + "</P>");
-                out.println("<P><B>Shibboleth Handle:</B>" + handle + "</P>");
-                if (bindings != null)
-                    out.println("<P><B>Shibboleth AA URL:</B>" + bindings[0].getLocation() + "</P>");
-            }
+			// Try and accept the response...
+			SAMLResponse r = profile.accept(request.getParameter("SAMLResponse").getBytes());
 
-            // Generate a random session file.
-            String filename = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
-            String pathname = null;
-            if (sessionDir.endsWith(File.separator))
-                pathname = sessionDir + filename;
-            else
-                pathname = sessionDir + File.separatorChar + filename;
-            PrintWriter fout = new PrintWriter(new FileWriter(pathname));
+			// We've got a valid signed response we can trust (or the whole response was empty...)
 
-            if (verbose)
-                out.println("<P><B>Session Pathname:</B>" + pathname + "</P>");
+			ByteArrayOutputStream bytestr = new ByteArrayOutputStream();
+			try {
+				r.toStream(bytestr);
+			} catch (IOException e) {
+				log.error(
+					"Very Strange... problem converting SAMLResponse to a Stream for logging purposes.");
+			}
 
-            fout.println("Handle=" + handle);
-            fout.println("Domain=" + domain);
-            fout.println("PBinding0=" + bindings[0].getBinding());
-            fout.println("LBinding0=" + bindings[0].getLocation());
-            fout.println("Time=" + System.currentTimeMillis()/1000);
-            fout.println("ClientAddress=" + request.getRemoteAddr());
-            fout.println("EOF");
-            fout.close();
+			log.debug("Parsed SAML Response: " + bytestr.toString());
 
-            out.println("<P>Redirecting you to your target...</P>");
-            out.println("<P>Allow 10-15 seconds, then click <A HREF='" + target + "'>here</A> if you do not get redirected.</P>");
-            out.println("</BODY></HTML>");
+			// Get the statement we need.
+			SAMLAuthenticationStatement s = profile.getSSOStatement(r);
+			if (s == null) {
+				throw new ShireException("The assertion of your Shibboleth identity was missing or incompatible with the policies of this site.");
+			}
 
-            // Set the session cookie.
-            Cookie cookie = new Cookie(cookieName, filename);
-            cookie.setPath("/");
-            if (cookieDomain != null)
-                cookie.setDomain(cookieDomain);
-            response.addCookie(cookie);
+			if (checkAddress) {
+				log.debug("Running with client address checking enabled.");
+				log.debug("Client Address from request: " + request.getRemoteAddr());
+				log.debug("Client Address from assertion: " + s.getSubjectIP());
+				if (s.getSubjectIP() == null || !s.getSubjectIP().equals(request.getRemoteAddr())) {
+					throw new ShireException("The IP address provided by your origin site was either missing or did not match your current address.  To correct this problem, you may need to bypass a local proxy server.");
+				}
+			}
 
-            // Redirect back to the requested resource.
-            response.sendRedirect(target);
-        }
-        catch (SAMLException e)
-        {
-            out.println("<H4>There was a problem with this submission.</H4>");
-            out.println("<P>The system detected the following error while processing your submission:</P>");
-            out.println("<BLOCKQUOTE>" + e.getMessage() + "</BLOCKQUOTE>");
-            out.println("<P>Please contact this site's administrator to resolve the problem.</P>");
-            out.println("</BODY></HTML>");
-        }
-    }
+			// All we really need is here...
+			log.debug("Shibboleth Origin Site: " + s.getSubject().getNameQualifier());
+			log.debug("Shibboleth Handle: " + s.getSubject().getName());
+			log.debug("Shibboleth AA URL:</B>" + s.getBindings()[0].getLocation());
+			return s;
+
+		} catch (SAMLException e) {
+			throw new ShireException("Error processing SAML assertion: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Makes user information available to SHAR.
+	 * 
+	 */
+
+	private void shareSession(
+		HttpServletResponse response,
+		String handle,
+		String domain,
+		long currentTime,
+		String clientAddress,
+		String protocolBinding,
+		String locationBinding)
+		throws ShireException {
+
+		log.info("Generating SHIR/SHAR shared data.");
+		String filename = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
+		log.debug("Created unique session identifier: " + filename);
+
+		// Write session identifier to a file		
+		String pathname = null;
+		if (sessionDir.endsWith(File.separator))
+			pathname = sessionDir + filename;
+		else
+			pathname = sessionDir + File.separatorChar + filename;
+		PrintWriter fout;
+		try {
+			log.debug("Writing session data to file: (" + pathname + ")");
+			fout = new PrintWriter(new FileWriter(pathname));
+
+			log.debug("Session Pathname: " + pathname);
+
+			fout.println("Handle=" + handle);
+			fout.println("Domain=" + domain);
+			fout.println("PBinding0=" + protocolBinding);
+			fout.println("LBinding0=" + locationBinding);
+			fout.println("Time=" + currentTime / 1000);
+			fout.println("ClientAddress=" + clientAddress);
+			fout.println("EOF");
+			fout.close();
+
+			Cookie cookie = new Cookie(cookieName, filename);
+			cookie.setPath("/");
+			if (cookieDomain != null)
+				cookie.setDomain(cookieDomain);
+			log.debug(
+				"Adding session identifier to browser cookie: ("
+					+ cookie.getDomain()
+					+ ":"
+					+ cookie.getName()
+					+ ")");
+			response.addCookie(cookie);
+
+		} catch (IOException e) {
+			throw new ShireException(
+				"Unable to write session to file (" + filename + ") : " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Ensures that the POST request contains the necessary data elements
+	 * 
+	 * @param request <code>The HttpServletRequest</code> object for the current request
+	 * @exception ShireException thrown if required POST data is missing
+	 */
+
+	private void validateRequest(HttpServletRequest request) throws ShireException {
+
+		log.info("Validating POST request properties.");
+
+		if (sslOnly && !request.isSecure()) {
+			throw new ShireException("Access to this site requires the use of SSL.");
+		}
+
+		if (request.getParameter("TARGET") == null || request.getParameter("TARGET").length() == 0) {
+			throw new ShireException("Invalid data from HS: No target URL received.");
+		}
+
+		if (request.getParameter("SAMLResponse") == null
+			|| request.getParameter("SAMLResponse").length() == 0) {
+			throw new ShireException("Invalid data from HS: No SAML Assertion included received.");
+		}
+
+	}
+
+	/**
+	 * Appropriately routes all recoverable errors encountered by the SHIRE
+	 */
+
+	private void handleError(ShireException se, HttpServletRequest req, HttpServletResponse res) {
+		log.error(se.getMessage());
+		log.debug("Displaying error page.");
+		req.setAttribute("errorText", se.getMessage());
+		req.setAttribute("requestURL", req.getRequestURI().toString());
+		RequestDispatcher rd = req.getRequestDispatcher("/wayferror.jsp");
+
+		try {
+			rd.forward(req, res);
+		} catch (IOException ioe) {
+			log.error("Problem trying to display SHIRE error page: " + ioe.toString());
+		} catch (ServletException servletE) {
+			log.error("Problem trying to display SHIRE error page: " + servletE.toString());
+		}
+	}
 }
-
