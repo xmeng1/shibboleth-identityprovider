@@ -57,14 +57,32 @@ package edu.internet2.middleware.shibboleth.aa.arpUtil;
  * @created    June, 2002
  */
 
-import edu.internet2.middleware.shibboleth.aa.*;
-import java.io.*;
-import java.util.*;
-import java.security.*;
-import javax.naming.*;
-import javax.naming.directory.*;
+import java.security.Principal;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+
+import edu.internet2.middleware.shibboleth.aa.AAAttributes;
+import edu.internet2.middleware.shibboleth.aa.AAException;
+import edu.internet2.middleware.shibboleth.aa.AAPermissionException;
+import edu.internet2.middleware.shibboleth.aa.AA_Identity;
+import edu.internet2.middleware.shibboleth.aa.Arp;
+import edu.internet2.middleware.shibboleth.aa.ArpAttribute;
+import edu.internet2.middleware.shibboleth.aa.ArpFilter;
+import edu.internet2.middleware.shibboleth.aa.ArpFilterValue;
+import edu.internet2.middleware.shibboleth.aa.ArpRepository;
+import edu.internet2.middleware.shibboleth.aa.ArpRepositoryFactory;
+import edu.internet2.middleware.shibboleth.aa.ArpResource;
+import edu.internet2.middleware.shibboleth.aa.ArpShar;
 
 class ArpUtil{
 
@@ -77,39 +95,62 @@ class ArpUtil{
     static String setAclUsage = "\tArpUtil setAcl <user> <acl> <arp name> [<shar name> [<url>]]";
     static String attrUsage = "\tArpUtil listAttributes <jar file name>";
 
-    public static void main(String [] args)throws AAException{
+	public static void main(String[] args) throws AAException {
 
-	Properties props = new Properties();
-	props.setProperty("arpFactoryRealpath", System.getProperty("arp.dir"));
-	arpFactory = ArpRepositoryFactory.getInstance("edu.internet2.middleware.shibboleth.aa.FileArpRepository", props);
+		if (System.getProperty("log.config") != null) {
+			PropertyConfigurator.configure(System.getProperty("log.config"));
+		} else {
+			BasicConfigurator.configure();
+		}
 
-	PropertyConfigurator.configure(System.getProperty("log.config"));
-	
-	//user = new KerberosPrincipal(System.getProperty("user.name"));
-	user = new AA_Identity(System.getProperty("user.name"));
+		Properties props = new Properties();
+		if (System.getProperty("arp.dir") != null) {
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path",
+				System.getProperty("arp.dir"));
+		} else {
+			props.setProperty("edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path", ".");
+		}
+		arpFactory =
+			ArpRepositoryFactory.getInstance(
+				"edu.internet2.middleware.shibboleth.aa.FileArpRepository",
+				props);
 
-	System.out.println("Running as: "+user+" ... \n");
+		//user = new KerberosPrincipal(System.getProperty("user.name"));
+		user = new AA_Identity(System.getProperty("user.name"));
 
-	String usage = "Usage:\n"+listUsage+"\nor\n"+addUsage+"\nor\n"+removeUsage+"\nor\n"+setAclUsage+"\nor\n"+attrUsage;
+		log.info("Running as: (" + user + ").");
 
-        if(args.length < 2){
-	    System.out.println(usage);
-	    return;
+		String usage =
+			"Usage:\n"
+				+ listUsage
+				+ "\nor\n"
+				+ addUsage
+				+ "\nor\n"
+				+ removeUsage
+				+ "\nor\n"
+				+ setAclUsage
+				+ "\nor\n"
+				+ attrUsage;
+
+		if (args.length < 2) {
+			System.out.println(usage);
+			return;
+		}
+		if (args[0].equalsIgnoreCase("list")) {
+			doList(args);
+		} else if (args[0].equalsIgnoreCase("add")) {
+			doAdd(args);
+		} else if (args[0].equalsIgnoreCase("remove")) {
+			doRemove(args);
+		} else if (args[0].equalsIgnoreCase("setAcl")) {
+			doSetAcl(args);
+		} else if (args[0].equalsIgnoreCase("listAttributes")) {
+			doListAttributes(args);
+		} else {
+			System.out.println(usage);
+		}
 	}
-	if(args[0].equalsIgnoreCase("list")){
-	    doList(args);
-	}else if(args[0].equalsIgnoreCase("add")){
-	    doAdd(args);
-	}else if(args[0].equalsIgnoreCase("remove")){
-	    doRemove(args);
-	}else if(args[0].equalsIgnoreCase("setAcl")){
-	    doSetAcl(args);
-	}else if(args[0].equalsIgnoreCase("listAttributes")){
-	    doListAttributes(args);
-	}else{
-	    System.out.println(usage);
-	}
-    }
 
     static void doList(String[] args){
 	try{
