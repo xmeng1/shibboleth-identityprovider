@@ -63,7 +63,11 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
 public abstract class BaseResolutionPlugIn {
 
 	private static Logger log = Logger.getLogger(BaseResolutionPlugIn.class.getName());
+	
+	/** The identifier for this PlugIn. */
 	protected String id;
+
+	/** Time, in seconds, for which the Attribute Resolver should cache resolutions of this PlugIn. */
 	protected long ttl = 0;
 
 	protected BaseResolutionPlugIn(Element e) throws ResolutionPlugInException {
@@ -84,11 +88,13 @@ public abstract class BaseResolutionPlugIn {
 			}
 		}
 	}
-
+	
+	/** Returns the identifier for this PlugIn. */
 	public String getId() {
 		return id;
 	}
 
+	/** Returns the time, in seconds, for which the Attribute Resolver should cache resolutions of this PlugIn. */
 	public long getTTL() {
 		return ttl;
 	}

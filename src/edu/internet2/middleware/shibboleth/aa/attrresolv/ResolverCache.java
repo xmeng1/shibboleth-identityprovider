@@ -84,7 +84,7 @@ public class ResolverCache {
 			log.debug("Adding resolved Connector data to Attribute Resolver cache.");
 			connectorDataCache.put(
 				new CacheKey(principal, plugInId),
-				new CacheObject(toCache, System.currentTimeMillis() + cacheLength));
+				new CacheObject(toCache, System.currentTimeMillis() + (cacheLength * 1000)));
 
 		} else {
 			log.error("Attempted to add bad data to Attribute Resolver cache.");
@@ -97,7 +97,7 @@ public class ResolverCache {
 			log.debug("Adding resolved Attribute data to Attribute Resolver cache.");
 			attributeDataCache.put(
 				new CacheKey(principal, plugInId),
-				new CacheObject(toCache, System.currentTimeMillis() + cacheLength));
+				new CacheObject(toCache, System.currentTimeMillis() + (cacheLength * 1000)));
 
 		} else {
 			log.error("Attempted to add bad data to Attribute Resolver cache.");

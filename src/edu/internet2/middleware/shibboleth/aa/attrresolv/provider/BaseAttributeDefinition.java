@@ -69,7 +69,9 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
 
 public abstract class BaseAttributeDefinition extends BaseResolutionPlugIn implements AttributeDefinitionPlugIn {
 	
+	/** The time, in seconds, for which attribute created from this definition should be valid. */
 	protected long lifeTime = -1;
+	
 	private static Logger log = Logger.getLogger(BaseAttributeDefinition.class.getName());
 	protected Set connectorDependencyIds = new HashSet();
 	protected Set attributeDependencyIds = new HashSet();

@@ -80,7 +80,9 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 
 	private static Logger log = Logger.getLogger(AAAttribute.class.getName());
 	private boolean resolved = false;
-	private static long defaultLifetime = 1800000;
+	
+	/** Default lifetime, in seconds **/
+	private static long defaultLifetime = 300;
 	private ValueHandler valueHandler = new StringValueHandler();
 
 	public AAAttribute(String name) throws SAMLException {

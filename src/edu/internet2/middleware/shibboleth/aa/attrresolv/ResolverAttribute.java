@@ -61,12 +61,28 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 
 public interface ResolverAttribute {
 
+	/** Returns the Name of the attribute. */
 	public String getName();
+
+	/** Boolean indicator of whether the attribute has been resolved by the Attribute Resolver. */
 	public boolean resolved();
+
+	/** This method signals that the attribute has been resolved by the Attribute Resolver. */
 	public void setResolved();
+
+	/** 
+	 * Resolves the attribute based on a previous resolution.
+	 * 
+	 * @param attribute the previously resolved attribute
+	 */
 	public void resolveFromCached(ResolverAttribute attribute);
+
+	/** Sets the time, in seconds, for which this attribute is valid. */
 	public void setLifetime(long lifetime);
-	public long getLifetime();	
+
+	/** Returns the time, in seconds, for which this attribute is valid. */
+	public long getLifetime();
+
 	public void addValue(Object value);
 	public Iterator getValues();
 	public boolean hasValues();
