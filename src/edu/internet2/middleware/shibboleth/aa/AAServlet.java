@@ -336,16 +336,16 @@ public class AAServlet extends TargetFederationComponent {
 			if (effectiveName == null) {
 				if (fromLegacyProvider(req)) {
 					transactionLog.info("Attribute assertion issued to anonymous legacy provider at ("
-							+ req.getRemoteAddr() + ").");
+							+ req.getRemoteAddr() + ") on behalf of principal (" + principal.getName() + ").");
 				} else {
 					transactionLog.info("Attribute assertion issued to anonymous provider at (" + req.getRemoteAddr()
-							+ ").");
+							+ ") on behalf of principal (" + principal.getName() + ").");
 				}
 			} else {
 				if (fromLegacyProvider(req)) {
-					transactionLog.info("Attribute assertion issued to legacy provider: (" + effectiveName + ").");
+					transactionLog.info("Attribute assertion issued to legacy provider (" + effectiveName + ") on behalf of principal (" + principal.getName() + ").");
 				} else {
-					transactionLog.info("Attribute assertion issued to provider: (" + effectiveName + ").");
+					transactionLog.info("Attribute assertion issued to provider (" + effectiveName + ") on behalf of principal (" + principal.getName() + ").");
 				}
 			}
 
