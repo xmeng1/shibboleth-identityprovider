@@ -11,20 +11,20 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 	<link rel="stylesheet" type="text/css" href="main.css" />
-	<title>Shibboleth Handle Service Failure</title>
+	<title>Shibboleth Identity Provider Failure</title>
 </head>
 
 <body>
 <div class="head">
 <img src="images/logo.jpg" alt="Logo" />
-<h1>Shibboleth Handle Service Failure</h1>
+<h1>Shibboleth Identity Provider Failure</h1>
 </div>
 
 <p>The inter-institutional access system experienced a technical failure.</p>
 
 <p>Please email <a href="mailto:root@localhost">root@localhost</a> and include the following error message:</p>
 
-<p class="error">Handle Service failure at (<bean:write name="requestURL" />)</p>
+<p class="error">Identity Provider failure at (<bean:write name="requestURL" />)</p>
 
 <p><bean:write name="errorText" /></p>
 

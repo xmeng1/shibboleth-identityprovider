@@ -1,0 +1,352 @@
+/*
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution, if any, must include the following acknowledgment: "This product includes software
+ * developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2 Project.
+ * Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor
+ * the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please contact
+ * shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the
+ * University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name, without prior
+ * written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS PROVIDED BY THE
+ * COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE
+ * DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO
+ * EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC.
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+package edu.internet2.middleware.shibboleth.idp.provider;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.Principal;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+
+import javax.security.auth.x500.X500Principal;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.opensaml.SAMLAssertion;
+import org.opensaml.SAMLAttribute;
+import org.opensaml.SAMLAttributeDesignator;
+import org.opensaml.SAMLAttributeQuery;
+import org.opensaml.SAMLAttributeStatement;
+import org.opensaml.SAMLAudienceRestrictionCondition;
+import org.opensaml.SAMLCondition;
+import org.opensaml.SAMLException;
+import org.opensaml.SAMLRequest;
+import org.opensaml.SAMLResponse;
+import org.opensaml.SAMLStatement;
+import org.opensaml.SAMLSubject;
+
+import sun.misc.BASE64Decoder;
+import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
+import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
+import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
+import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
+import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
+
+/**
+ * @author Walter Hoehn
+ */
+public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
+
+	private static Logger log = Logger.getLogger(SAMLv1_AttributeQueryHandler.class.getName());
+
+	/*
+	 * @see edu.internet2.middleware.shibboleth.idp.ProtocolHandler#getHandlerName()
+	 */
+	public String getHandlerName() {
+
+		return "SAML v1.1 Attribute Query";
+	}
+
+	private String getEffectiveName(HttpServletRequest req, RelyingParty relyingParty)
+			throws InvalidProviderCredentialException {
+
+		// X500Principal credentialName = getCredentialName(req);
+		X509Certificate credential = getCredentialFromProvider(req);
+
+		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+			log.info("Request is from an unauthenticated service provider.");
+			return null;
+
+		} else {
+			log.info("Request contains credential: ("
+					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
+			// Mockup old requester name for requests from < 1.2 targets
+			if (fromLegacyProvider(req)) {
+				String legacyName = ShibBrowserProfile.getHostNameFromDN(credential.getSubjectX500Principal());
+				if (legacyName == null) {
+					log.error("Unable to extract legacy requester name from certificate subject.");
+				}
+
+				log.info("Request from legacy service provider: (" + legacyName + ").");
+				return legacyName;
+
+			} else {
+
+				// See if we have metadata for this provider
+				EntityDescriptor provider = protocolSupport.lookup(relyingParty.getProviderId());
+				if (provider == null) {
+					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+					log.info("Treating remote provider as unauthenticated.");
+					return null;
+				}
+
+				// Make sure that the suppplied credential is valid for the
+				// selected relying party
+				if (isValidCredential(provider, credential)) {
+					log.info("Supplied credential validated for this provider.");
+					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
+					return relyingParty.getProviderId();
+				} else {
+					log.error("Supplied credential ("
+							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
+							+ ") is NOT valid for provider (" + relyingParty.getProviderId() + ").");
+					throw new InvalidProviderCredentialException("Invalid credential.");
+				}
+			}
+		}
+	}
+
+	/*
+	 * @see edu.internet2.middleware.shibboleth.idp.ProtocolHandler#processRequest(javax.servlet.http.HttpServletRequest,
+	 *      javax.servlet.http.HttpServletResponse, org.opensaml.SAMLRequest,
+	 *      edu.internet2.middleware.shibboleth.idp.ProtocolSupport)
+	 */
+	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
+			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, InvalidClientDataException,
+			IOException, ServletException {
+
+		// TODO negate this and throw an error if it isn't
+		if (samlRequest.getQuery() != null && (samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+			log.info("Recieved an attribute query.");
+			// processAttributeQuery(samlRequest, request, response);
+
+		}
+
+		RelyingParty relyingParty = null;
+
+		SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
+
+		if (!fromLegacyProvider(request)) {
+			log.info("Remote provider has identified itself as: (" + attributeQuery.getResource() + ").");
+		}
+
+		// This is the requester name that will be passed to subsystems
+		String effectiveName = null;
+
+		X509Certificate credential = getCredentialFromProvider(request);
+		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+			log.info("Request is from an unauthenticated service provider.");
+		} else {
+
+			// Identify a Relying Party
+			relyingParty = support.getServiceProviderMapper().getRelyingParty(attributeQuery.getResource());
+
+			try {
+				effectiveName = getEffectiveName(request, relyingParty);
+			} catch (InvalidProviderCredentialException ipc) {
+				sendSAMLFailureResponse(response, samlRequest, new SAMLException(SAMLException.RESPONDER,
+						"Invalid credentials for request."));
+				return null;
+			}
+		}
+
+		if (effectiveName == null) {
+			log.debug("Using default Relying Party for unauthenticated provider.");
+			relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
+		}
+
+		// Fail if we can't honor SAML Subject Confirmation
+		if (!fromLegacyProvider(request)) {
+			Iterator iterator = attributeQuery.getSubject().getConfirmationMethods();
+			boolean hasConfirmationMethod = false;
+			while (iterator.hasNext()) {
+				log.info("Request contains SAML Subject Confirmation method: (" + (String) iterator.next() + ").");
+			}
+			if (hasConfirmationMethod) { throw new SAMLException(SAMLException.REQUESTER,
+					"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method."); }
+		}
+
+		// Map Subject to local principal
+		Principal principal = support.getNameMapper().getPrincipal(attributeQuery.getSubject().getName(), relyingParty,
+				relyingParty.getIdentityProvider());
+		log.info("Request is for principal (" + principal.getName() + ").");
+
+		SAMLAttribute[] attrs;
+		Iterator requestedAttrsIterator = attributeQuery.getDesignators();
+		if (requestedAttrsIterator.hasNext()) {
+			log.info("Request designates specific attributes, resolving this set.");
+			ArrayList requestedAttrs = new ArrayList();
+			while (requestedAttrsIterator.hasNext()) {
+				SAMLAttributeDesignator attribute = (SAMLAttributeDesignator) requestedAttrsIterator.next();
+				try {
+					log.debug("Designated attribute: (" + attribute.getName() + ")");
+					requestedAttrs.add(new URI(attribute.getName()));
+				} catch (URISyntaxException use) {
+					log.error("Request designated an attribute name that does not conform to the required URI syntax ("
+							+ attribute.getName() + ").  Ignoring this attribute");
+				}
+			}
+
+			attrs = support.getReleaseAttributes(principal, effectiveName, null, (URI[]) requestedAttrs
+					.toArray(new URI[0]));
+		} else {
+			log.info("Request does not designate specific attributes, resolving all available.");
+			attrs = support.getReleaseAttributes(principal, effectiveName, null);
+		}
+
+		log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
+		sendSAMLResponse(response, attrs, samlRequest, relyingParty, null);
+		log.info("Successfully responded about " + principal.getName());
+
+		if (effectiveName == null) {
+			if (fromLegacyProvider(request)) {
+				support.getTransactionLog().info(
+						"Attribute assertion issued to anonymous legacy provider at (" + request.getRemoteAddr()
+								+ ") on behalf of principal (" + principal.getName() + ").");
+			} else {
+				support.getTransactionLog().info(
+						"Attribute assertion issued to anonymous provider at (" + request.getRemoteAddr()
+								+ ") on behalf of principal (" + principal.getName() + ").");
+			}
+		} else {
+			if (fromLegacyProvider(request)) {
+				support.getTransactionLog().info(
+						"Attribute assertion issued to legacy provider (" + effectiveName
+								+ ") on behalf of principal (" + principal.getName() + ").");
+			} else {
+				support.getTransactionLog().info(
+						"Attribute assertion issued to provider (" + effectiveName + ") on behalf of principal ("
+								+ principal.getName() + ").");
+			}
+		}
+
+		// TODO not NULL!!!
+		return null;
+
+		/*
+		 * throw new SAMLException(SAMLException.REQUESTER, "Identity Provider unable to respond to this SAML Request
+		 * type."); } catch (InvalidNameIdentifierException invalidNameE) { log.info("Could not associate the request
+		 * subject with a principal: " + invalidNameE); try { // TODO once again, ifgure out passThruErrors if (false) { //
+		 * if (relyingParty.passThruErrors()) { sendSAMLFailureResponse(response, samlRequest, new
+		 * SAMLException(Arrays.asList(invalidNameE .getSAMLErrorCodes()), "The supplied Subject was unrecognized.",
+		 * invalidNameE)); } else { sendSAMLFailureResponse(response, samlRequest, new
+		 * SAMLException(Arrays.asList(invalidNameE .getSAMLErrorCodes()), "The supplied Subject was unrecognized.")); }
+		 * return; } catch (Exception ee) { log.fatal("Could not construct a SAML error response: " + ee); throw new
+		 * ServletException("Identity Provider response failure."); }
+		 */
+
+	}
+
+	// TODO this should be renamed, since it is now only one type of response
+	// that we can send
+	public void sendSAMLResponse(HttpServletResponse resp, SAMLAttribute[] attrs, SAMLRequest samlRequest,
+			RelyingParty relyingParty, SAMLException exception) throws IOException {
+
+		SAMLException ourSE = null;
+		SAMLResponse samlResponse = null;
+
+		try {
+			if (attrs == null || attrs.length == 0) {
+				// No attribute found
+				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, exception);
+			} else {
+
+				SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
+
+				// Reference requested subject
+				SAMLSubject rSubject = (SAMLSubject) attributeQuery.getSubject().clone();
+
+				// Set appropriate audience
+				ArrayList audiences = new ArrayList();
+				if (relyingParty.getProviderId() != null) {
+					audiences.add(relyingParty.getProviderId());
+				}
+				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
+					audiences.add(relyingParty.getName());
+				}
+				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
+
+				// Put all attributes into an assertion
+				SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
+
+				// Set assertion expiration to longest attribute expiration
+				long max = 0;
+				for (int i = 0; i < attrs.length; i++) {
+					if (max < attrs[i].getLifetime()) {
+						max = attrs[i].getLifetime();
+					}
+				}
+				Date now = new Date();
+				Date then = new Date(now.getTime() + (max * 1000)); // max is in
+				// seconds
+
+				SAMLAssertion sAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(), now,
+						then, Collections.singleton(condition), null, Collections.singleton(statement));
+
+				samlResponse = new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), exception);
+				ProtocolSupport.addSignatures(samlResponse, relyingParty, protocolSupport.lookup(relyingParty
+						.getProviderId()), false);
+			}
+		} catch (SAMLException se) {
+			ourSE = se;
+		} catch (CloneNotSupportedException ex) {
+			ourSE = new SAMLException(SAMLException.RESPONDER, ex);
+
+		} finally {
+
+			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
+				try {
+					log.debug("Dumping generated SAML Response:"
+							+ System.getProperty("line.separator")
+							+ new String(
+									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
+									"UTF8"));
+				} catch (SAMLException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+				}
+			}
+
+			try {
+				binding.respond(resp, samlResponse, ourSE);
+			} catch (SAMLException e) {
+				log.error("Caught exception while responding to requester: " + e.getMessage());
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+			}
+		}
+	}
+
+	private static boolean fromLegacyProvider(HttpServletRequest request) {
+
+		String version = request.getHeader("Shibboleth");
+		if (version != null) {
+			log.debug("Request from Shibboleth version: " + version);
+			return false;
+		}
+		log.debug("No version header found.");
+		return true;
+	}
+
+}

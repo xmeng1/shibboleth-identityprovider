@@ -33,7 +33,7 @@
 	{
 		request.setAttribute("requestURL", request.getRequestURI()); 
 		request.setAttribute("errorText", "This page cannot be accessed directly"); 
-        request.getRequestDispatcher("/hserror.jsp").forward(request, response);
+        request.getRequestDispatcher("/IdPError.jsp").forward(request, response);
 	}
 %>
 
