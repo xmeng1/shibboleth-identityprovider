@@ -15,7 +15,7 @@
         <Domain>brown.edu</Domain>
     </OriginSite>
     <OriginSite Name="washington.edu">
-        <Alias>UDub</Alias>
+        <Alias>University of Washington</Alias>
         <HandleService Location="https://abajo.cac.washington.edu/shibboleth/HS" Name="abajo.cac.washington.edu"/>
         <Domain>washington.edu</Domain>
     </OriginSite>
