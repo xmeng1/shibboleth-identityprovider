@@ -37,8 +37,8 @@ import java.net.URL;
 public interface RelyingParty extends ServiceProvider {
 
 	/**
-	 * Returns the name of the relying party. If the relying party is a Shibboleth SP (not a group), this
-	 * function returns the same thing as {@link #getProviderId}.
+	 * Returns the name of the relying party. If the relying party is a Shibboleth SP (not a group), this function
+	 * returns the same thing as {@link #getProviderId}.
 	 * 
 	 * @return name of the relying party
 	 */
@@ -85,4 +85,16 @@ public interface RelyingParty extends ServiceProvider {
 	 * A boolean indication of whether internal errors should be transmitted to this {@link RelyingParty}
 	 */
 	public boolean passThruErrors();
+
+	/**
+	 * A boolean indication of whether attributes should be pushed without regard for the profile (POST vs. Artifact).
+	 * This should be be mutually exclusive with forceAttributeNoPush().
+	 */
+	public boolean forceAttributePush();
+
+	/**
+	 * A boolean indication of whether attributes should be NOT pushed without regard for the profile (POST vs.
+	 * Artifact).
+	 */
+	public boolean forceAttributeNoPush();
 }

@@ -73,8 +73,9 @@ public class ServiceProviderMapper {
 		verifyDefaultParty(configuration);
 
 	}
-	
+
 	public void setMetadata(Metadata metadata) {
+
 		this.metaData = metadata;
 	}
 
@@ -135,7 +136,7 @@ public class ServiceProviderMapper {
 	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
 
 		if (metaData == null) { return null; }
-		
+
 		EntityDescriptor provider = metaData.lookup(providerIdFromTarget);
 		if (provider != null) {
 			EntitiesDescriptor parent = provider.getEntitiesDescriptor();
@@ -222,6 +223,8 @@ public class ServiceProviderMapper {
 		private IdPConfig configuration;
 		private boolean overridenPassThruErrors = false;
 		private boolean passThruIsOverriden = false;
+		private boolean forceAttributePush = false;
+		private boolean forceAttributeNoPush = false;
 
 		public RelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials,
 				NameMapper nameMapper) throws ServiceProviderMapperException {
@@ -270,6 +273,21 @@ public class ServiceProviderMapper {
 				log.debug("Overriding passThruErrors for Relying Pary (" + name + ") with (" + attribute + ").");
 				overridenPassThruErrors = Boolean.valueOf(attribute).booleanValue();
 				passThruIsOverriden = true;
+			}
+
+			// Determine whether or not we are forcing attribute push on or off
+			String forcePush = ((Element) partyConfig).getAttribute("forceAttributePush");
+			String forceNoPush = ((Element) partyConfig).getAttribute("forceAttributeNoPush");
+
+			if (forcePush != null && Boolean.valueOf(forcePush).booleanValue() && forceNoPush != null
+					&& Boolean.valueOf(forceNoPush).booleanValue()) {
+				log.error("Invalid configuration:  Attribute push is forced to ON and OFF for this relying "
+						+ "party.  Turning off forcing in favor of profile defaults.");
+			} else {
+				forceAttributePush = Boolean.valueOf(forcePush).booleanValue();
+				forceAttributeNoPush = Boolean.valueOf(forceNoPush).booleanValue();
+				log.debug("Attribute push forcing is set to (" + forceAttributePush + ").");
+				log.debug("No attribute push forcing is set to (" + forceAttributeNoPush + ").");
 			}
 
 			// Load and verify the name format that the HS should use in
@@ -378,6 +396,16 @@ public class ServiceProviderMapper {
 			}
 		}
 
+		public boolean forceAttributePush() {
+
+			return forceAttributePush;
+		}
+
+		public boolean forceAttributeNoPush() {
+
+			return forceAttributeNoPush;
+		}
+
 		/**
 		 * Default identity provider implementation.
 		 * 
@@ -467,6 +495,16 @@ public class ServiceProviderMapper {
 
 			return wrapped.passThruErrors();
 		}
+
+		public boolean forceAttributePush() {
+
+			return wrapped.forceAttributePush();
+		}
+
+		public boolean forceAttributeNoPush() {
+
+			return wrapped.forceAttributeNoPush();
+		}
 	}
 
 	/**
@@ -523,6 +561,16 @@ public class ServiceProviderMapper {
 		public boolean passThruErrors() {
 
 			return wrapped.passThruErrors();
+		}
+
+		public boolean forceAttributePush() {
+
+			return false;
+		}
+
+		public boolean forceAttributeNoPush() {
+
+			return false;
 		}
 	}
 

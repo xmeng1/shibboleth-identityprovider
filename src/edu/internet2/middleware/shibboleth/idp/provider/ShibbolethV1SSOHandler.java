@@ -76,6 +76,9 @@ import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
+ * <code>ProtocolHandler</code> implementation that responds to SSO flows as specified in "Shibboleth Architecture:
+ * Protocols and Profiles". Includes a compatibility mode for dealing with Shibboleth v1.1 SPs.
+ * 
  * @author Walter Hoehn
  */
 public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHandler {
@@ -187,7 +190,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 			// Package attributes for push, if necessary - don't attempt this for legacy providers (they don't support
 			// it)
-			if (!relyingParty.isLegacyProvider() && pushAttributes(artifactProfile)) {
+			if (!relyingParty.isLegacyProvider() && pushAttributes(artifactProfile, relyingParty)) {
 				log.info("Resolving attributes for push.");
 				SAMLAssertion attrAssertion = generateAttributeAssertion(support, principal, relyingParty, authNSubject);
 				if (attrAssertion != null) {
@@ -451,6 +454,9 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 		rd.forward(req, res);
 	}
 
+	/**
+	 * Boolean indication of which browser profile is in effect. "true" indicates Artifact and "false" indicates POST.
+	 */
 	private static boolean useArtifactProfile(EntityDescriptor provider, String acceptanceURL) {
 
 		// TODO this logic needs to be updated
@@ -475,13 +481,28 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 		return false;
 	}
 
-	private static boolean pushAttributes(boolean artifactProfile) {
+	/**
+	 * Boolean indication of whether an assertion containing an attribute statement should be bundled in the response
+	 * with the assertion containing the AuthN statement.
+	 */
+	private static boolean pushAttributes(boolean artifactProfile, RelyingParty relyingParty) {
 
-		if (artifactProfile) { return true; }
-		// TODO implement overrides
-		return false;
+		// By default push for Artifact and don't push for POST
+		// This can be overriden at the level of the relying party
+		if (relyingParty.forceAttributePush()) {
+			return true;
+		} else if (relyingParty.forceAttributeNoPush()) {
+			return false;
+		} else if (artifactProfile) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
+	/**
+	 * Boolean indication of whethere or not a given assertion consumer URL is valid for a given SP.
+	 */
 	private static boolean isValidAssertionConsumerURL(EntityDescriptor provider, String shireURL)
 			throws InvalidClientDataException {
 
