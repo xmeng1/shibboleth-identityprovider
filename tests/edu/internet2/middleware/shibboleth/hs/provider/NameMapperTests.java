@@ -289,7 +289,10 @@ public class NameMapperTests extends TestCase {
 
 			String rawConfig2 =
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping format=\"urn-x:testNameIdentifier\""
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""
+					+ "		xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+					+ "		xsi:schemaLocation=\"urn:mace:shibboleth:namemapper:1.0 namemapper.xsd\" "
+					+ "			format=\"urn-x:testNameIdentifier\""
 					+ "		type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
 					+ "		<KeyStorePath>"
 					+ file.toURL().toString()
