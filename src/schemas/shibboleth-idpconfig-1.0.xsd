@@ -10,9 +10,12 @@
 
 	<xs:import namespace="urn:mace:shibboleth:credentials:1.0" schemaLocation="credentials.xsd"/>
 	<xs:import namespace="urn:mace:shibboleth:namemapper:1.0" schemaLocation="namemapper.xsd"/>
-
-	<xs:element name="IdPConfig" type="idp:ShibbolethOriginConfig"/>
-
+	
+	<xs:choice>
+		<xs:element name="IdPConfig" type="idp:IdPConfigType"/>
+		<xs:element name="ShibbolethOriginConfig" type="idp:IdPConfigType"/>
+	</xs:choice>
+	
 	<xs:simpleType name="LevelType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="OFF"/>
@@ -40,7 +43,7 @@
 		</xs:restriction>
 	</xs:simpleType>
 
-		<xs:complexType name="ShibbolethOriginConfig">
+		<xs:complexType name="IdPConfigType">
 			<xs:sequence>
 				<xs:sequence>
 					<xs:element name="RelyingParty" maxOccurs="unbounded">
