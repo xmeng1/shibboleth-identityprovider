@@ -103,7 +103,6 @@ public class HandleServlet extends HttpServlet {
 			"edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation",
 			"edu.internet2.middleware.shibboleth.hs.provider.MemoryHandleRepository");
 		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL", "1800000");
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer", "shib2.internet2.edu");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
@@ -117,6 +116,33 @@ public class HandleServlet extends HttpServlet {
 		try {
 			log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
 			properties.load(new ShibResource(propertiesFileLocation, this.getClass()).getInputStream());
+
+			//Make sure we have all required parameters
+			StringBuffer missingProperties = new StringBuffer();
+			String[] requiredProperties =
+				{
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.authenticationDomain",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias",
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword" };
+
+			for (int i = 0; i < requiredProperties.length; i++) {
+				if (properties.getProperty(requiredProperties[i]) == null) {
+					missingProperties.append("\"");
+					missingProperties.append(requiredProperties[i]);
+					missingProperties.append("\" ");
+				}
+			}
+			if (missingProperties.length() > 0) {
+				log.error(
+					"Missing configuration data.  The following configuration properites have not been set: "
+						+ missingProperties.toString());
+				throw new HSConfigurationException("Missing configuration data.");
+			}
+
 		} catch (IOException e) {
 			log.error("Could not load HS servlet configuration: " + e);
 			throw new HSConfigurationException("Could not load HS servlet configuration.");
