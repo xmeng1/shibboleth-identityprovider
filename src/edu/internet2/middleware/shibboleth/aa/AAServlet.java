@@ -157,9 +157,6 @@ public class AAServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
-			"shib2.internet2.edu");
 		defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase", "uid=");
 		defaultProps.setProperty(
 			"java.naming.factory.initial",
@@ -167,7 +164,9 @@ public class AAServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:InCommon:pilot:2003");
+		defaultProps.setProperty(
+			"edu.internet2.middleware.shibboleth.audiences",
+			"urn:mace:InCommon:pilot:2003");
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);
@@ -178,6 +177,30 @@ public class AAServlet extends HttpServlet {
 		try {
 			log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
 			properties.load(new ShibResource(propertiesFileLocation, this.getClass()).getInputStream());
+
+			//Make sure we have all required parameters
+			StringBuffer missingProperties = new StringBuffer();
+			String[] requiredProperties =
+				{
+					"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
+					"java.naming.factory.initial",
+					"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
+					"edu.internet2.middleware.shibboleth.audiences" };
+
+			for (int i = 0; i < requiredProperties.length; i++) {
+				if (properties.getProperty(requiredProperties[i]) == null) {
+					missingProperties.append("\"");
+					missingProperties.append(requiredProperties[i]);
+					missingProperties.append("\" ");
+				}
+			}
+			if (missingProperties.length() > 0) {
+				log.error(
+					"Missing configuration data.  The following configuration properites have not been set: "
+						+ missingProperties.toString());
+				throw new AAException("Missing configuration data.");
+			}
+
 		} catch (IOException e) {
 			log.error("Could not load AA servlet configuration: " + e);
 			throw new AAException("Could not load AA servlet configuration.");
@@ -188,7 +211,9 @@ public class AAServlet extends HttpServlet {
 			PrintStream debugPrinter = new PrintStream(debugStream);
 			properties.list(debugPrinter);
 			log.debug(
-				"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
+				"Runtime configuration parameters: "
+					+ System.getProperty("line.separator")
+					+ debugStream.toString());
 			try {
 				debugStream.close();
 			} catch (IOException e) {
