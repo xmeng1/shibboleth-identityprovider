@@ -87,13 +87,13 @@ public class NameMapper {
 		try {
 			//Load the default mapping
 			String rawConfig = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\"" + "		handleTTL=\"1800\"/>";
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\"" + "		handleTTL=\"1800\"/>";
 			Parser.DOMParser parser = new Parser.DOMParser(false);
 			parser.parse(new InputSource(new StringReader(rawConfig)));			
 			defaultMapping = new SharedMemoryShibHandle(parser.getDocument().getDocumentElement());
 
 		} catch (Exception e) {
-			log.error("Unable to register default Name Identifier Mapping.");
+			log.error("Unable to register default Name Identifier Mapping: " + e);
 			initialize();
 		}
 	}
