@@ -25,61 +25,69 @@
 			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="name" type="xs:anyURI" use="required"/>
-		<xs:attribute name="identifier" type="xs:anyURI"/>
+		<xs:attribute name="identifier" type="xs:anyURI" use="optional"/>
 	</xs:complexType>
 	<xs:element name="AttributeReleasePolicy">
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="Description" type="xs:string" minOccurs="0"/>
-				<xs:element name="Rule" maxOccurs="unbounded">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="Description" type="xs:string" minOccurs="0"/>
-							<xs:element name="Target">
-								<xs:complexType>
-									<xs:choice>
-										<xs:element name="AnyTarget">
-											<xs:complexType/>
-										</xs:element>
-										<xs:sequence>
-											<xs:element name="Requester">
-												<xs:complexType>
-													<xs:simpleContent>
-														<xs:extension base="xs:string">
-															<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:exactShar"/>
-														</xs:extension>
-													</xs:simpleContent>
-												</xs:complexType>
+				<xs:sequence>
+					<xs:element name="Rule" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="Description" type="xs:string" minOccurs="0"/>
+								<xs:element name="Target">
+									<xs:complexType>
+										<xs:choice>
+											<xs:element name="AnyTarget">
+												<xs:complexType/>
 											</xs:element>
-											<xs:choice>
-												<xs:element name="Resource">
+											<xs:sequence>
+												<xs:element name="Requester">
 													<xs:complexType>
 														<xs:simpleContent>
 															<xs:extension base="xs:string">
-																<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:resourceTree"/>
+																<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:exactShar"/>
 															</xs:extension>
 														</xs:simpleContent>
 													</xs:complexType>
 												</xs:element>
-												<xs:element name="AnyResource">
-													<xs:complexType/>
-												</xs:element>
-											</xs:choice>
-										</xs:sequence>
-									</xs:choice>
-								</xs:complexType>
-							</xs:element>
-							<xs:sequence>
-								<xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
-								<xs:element name="AttributeReference" minOccurs="0" maxOccurs="unbounded">
-									<xs:complexType>
-										<xs:attribute name="identifier" type="xs:anyURI" use="required"/>
+												<xs:choice>
+													<xs:element name="Resource">
+														<xs:complexType>
+															<xs:simpleContent>
+																<xs:extension base="xs:string">
+																	<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:resourceTree"/>
+																</xs:extension>
+															</xs:simpleContent>
+														</xs:complexType>
+													</xs:element>
+													<xs:element name="AnyResource">
+														<xs:complexType/>
+													</xs:element>
+												</xs:choice>
+											</xs:sequence>
+										</xs:choice>
 									</xs:complexType>
 								</xs:element>
+								<xs:sequence>
+									<xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+									<xs:element name="AttributeReference" minOccurs="0" maxOccurs="unbounded">
+										<xs:complexType>
+											<xs:attribute name="identifier" type="xs:anyURI" use="required"/>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
 							</xs:sequence>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
+							<xs:attribute name="identifier" type="xs:anyURI" use="optional"/>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="RuleReference" minOccurs="0" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:attribute name="identifier" type="xs:anyURI" use="required"/>
+						</xs:complexType>
+					</xs:element>
+				</xs:sequence>
 				<xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
