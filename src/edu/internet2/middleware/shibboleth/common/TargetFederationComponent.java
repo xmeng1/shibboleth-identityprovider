@@ -26,7 +26,6 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -95,9 +94,11 @@ class FederationProviderFactory {
 				return (Metadata) Class.forName(className).getConstructor(params).newInstance(new Object[]{e});
 			} catch (Exception loaderException) {
 				log.error("Failed to load Federation Provider implementation class: " + loaderException);
-				if (loaderException instanceof InvocationTargetException) {
-					log.error("Root cause: " + ((InvocationTargetException)loaderException).getTargetException());
-				}
+                Throwable cause = loaderException.getCause();
+                while (cause != null) {
+					log.error("caused by: " + cause);
+                    cause = cause.getCause();
+                }
 				throw new MetadataException("Failed to initialize Federation Provider.");
 			}
 		}
