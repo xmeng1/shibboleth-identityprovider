@@ -64,6 +64,12 @@ public class XML
     /**  Shibboleth XML schema identifier */
     public final static String SHIB_SCHEMA_ID = "shibboleth.xsd";
     
+    /**  Shibboleth Metadata XML namespace */
+    public final static String SHIBMETA_NS = "urn:mace:shibboleth:1.0:metadata";
+    
+    /**  Shibboleth XML schema identifier */
+    public final static String SHIBMETA_SCHEMA_ID = "shibboleth-metadata-1.0.xsd";
+
     /**  Shibboleth trust metadata XML namespace */
     public final static String TRUST_NS = "urn:mace:shibboleth:trust:1.0";
     
