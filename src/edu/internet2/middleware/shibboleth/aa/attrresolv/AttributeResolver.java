@@ -501,6 +501,7 @@ public class AttributeResolver {
 		AttributeDefinitionPlugIn currentDefinition = (AttributeDefinitionPlugIn) lookupPlugIn(attribute.getName());
 
 		//Check to see if we have already resolved the attribute during this request
+		// (this checks dependency-only attributes and attributes resolved with no values
 		if (requestCache.containsKey(currentDefinition.getId())) {
 			log.debug(
 				"Attribute ("
@@ -508,6 +509,15 @@ public class AttributeResolver {
 					+ ") already resolved for this request, using cached version");
 			attribute.resolveFromCached((ResolverAttribute) requestCache.get(currentDefinition.getId()));
 			return;
+		}
+
+		//Check to see if we have already resolved the attribute during this request
+		// (this checks attributes that were submitted to the AR for resolution)
+		ResolverAttribute requestedAttribute = requestedAttributes.getByName(currentDefinition.getId());
+		if (requestedAttribute != null) {
+			if (requestedAttribute.resolved()) {
+				attribute.resolveFromCached(requestedAttribute);
+			}
 		}
 
 		//Check to see if we have a cached resolution for this attribute
@@ -526,7 +536,7 @@ public class AttributeResolver {
 
 		//Resolve all attribute dependencies
 		Dependencies depends = new Dependencies();
-        String[] attributeDependencies = currentDefinition.getAttributeDefinitionDependencyIds();
+		String[] attributeDependencies = currentDefinition.getAttributeDefinitionDependencyIds();
 
 		boolean dependancyOnly = false;
 		for (int i = 0; attributeDependencies.length > i; i++) {
@@ -547,9 +557,9 @@ public class AttributeResolver {
 		for (int i = 0; connectorDependencies.length > i; i++) {
 			log.debug(
 				"Attribute (" + attribute.getName() + ") depends on connector (" + connectorDependencies[i] + ").");
-            depends.addConnectorResolution(
-                connectorDependencies[i],
-                resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
+			depends.addConnectorResolution(
+				connectorDependencies[i],
+				resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
 		}
 
 		//Resolve the attribute
