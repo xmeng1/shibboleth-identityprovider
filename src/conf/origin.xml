@@ -7,6 +7,7 @@
 	<RelyingPartyGroup name="urn:x-fed1" signingCredentials="bar" passThruErrors="true">
 		<HSNameFormat nameMapping="crypto"/>
 	</RelyingPartyGroup>
+<!-- might want to change attribute to explicitly say "response" credentials -->
 	<RelyingParty name="urn:x-columbia-intranet" signingCredentials="foo" providerId="urn:x-columbia-intranet.columbia">
 		<HSNameFormat nameMapping="uni"/>
 	</RelyingParty>
