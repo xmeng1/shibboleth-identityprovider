@@ -77,4 +77,21 @@ public class AAPrincipal implements Principal {
 		return principalName;
 	}
 
+	/**
+	 * @see java.lang.Object#equals(Object)
+	 */
+	public boolean equals(Object obj) {
+		if (!(obj instanceof AAPrincipal)) {
+			return false;
+		}
+		return ((AAPrincipal) obj).getName().equals(getName());
+	}
+
+	/**
+	 * @see java.lang.Object#hashCode()
+	 */
+	public int hashCode() {
+		return "AAPrincipal".hashCode() + principalName.hashCode();
+	}
+
 }

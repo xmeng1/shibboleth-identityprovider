@@ -103,12 +103,15 @@ public abstract class BaseArpRepository implements ArpRepository {
 				+ principal.getName()
 				+ ").");
 		Set allPolicies = new HashSet();
-		if (getSitePolicy() != null) {
+		Arp sitePolicy = getSitePolicy();
+		if (sitePolicy != null) {
 			log.debug("Returning site policy.");
-			allPolicies.add(getSitePolicy());
+			allPolicies.add(sitePolicy);
 		}
-		if (getUserPolicy(principal) != null) {
-			allPolicies.add(getUserPolicy(principal));
+		
+		Arp userPolicy = getUserPolicy(principal);
+		if (userPolicy != null) {
+			allPolicies.add(userPolicy);
 			log.debug("Returning user policy.");
 		}
 		if (allPolicies.isEmpty()) {
@@ -273,6 +276,9 @@ class ArpCache {
 			return "ARP admin";
 		}
 
+		/**
+		 * @see java.lang.Object#equals(Object)
+		 */
 		public boolean equals(Object object) {
 			if (object instanceof SiteCachePrincipal) {
 				return true;
@@ -280,7 +286,10 @@ class ArpCache {
 			return false;
 		}
 
-		public long hashcode() {
+		/**
+		 * @see java.lang.Object#hashCode()
+		 */
+		public int hashCode() {
 			return "edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository.SiteCachePrincipal"
 				.hashCode();
 		}

@@ -162,7 +162,7 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 				+ principal.getName()
 				+ ".xml";
 		log.debug(
-			"Attempting to load user (" + principal.getName() + ")ARP from: (" + fileName + ").");
+			"Attempting to load user (" + principal.getName() + ") ARP from: (" + fileName + ").");
 		return retrieveArpXml(fileName);
 	}
 
