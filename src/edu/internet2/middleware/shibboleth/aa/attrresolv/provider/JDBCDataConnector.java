@@ -577,6 +577,15 @@ class DefaultStatementCreator implements JDBCStatementCreator {
 		try {
 			log.debug("Creating prepared statement.  Substituting principal: (" + principal.getName() + ")");
 			preparedStatement.setString(1, principal.getName());
+            //Tried using ParameterMetaData to determine param count, but it fails, so...
+            try {
+                int i=2;
+                while (true) {
+                    preparedStatement.setString(i++, principal.getName());
+                }
+            } catch (SQLException e) {
+                //Ignore any additional exceptions, assume parameters simply don't exist.
+            }
 		} catch (SQLException e) {
 			log.error("Encountered an error while creating prepared statement: " + e);
 			throw new JDBCStatementCreatorException(
