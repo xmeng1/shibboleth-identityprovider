@@ -182,4 +182,8 @@
 	<login-config>
 		<auth-method>BASIC</auth-method>
 	</login-config>
+	<security-role>
+		<description>group of users</description>
+		<role-name>user</role-name>
+	</security-role>
 </web-app>
