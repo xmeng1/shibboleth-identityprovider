@@ -55,7 +55,7 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 
 	protected HandleCache cache = HandleCache.instance();
 	private static Logger log = Logger.getLogger(SharedMemoryShibHandle.class.getName());
-    private static SAMLConfig config = SAMLConfig.instance();
+	private static SAMLConfig config = SAMLConfig.instance();
 
 	public SharedMemoryShibHandle(Element config) throws NameIdentifierMappingException {
 
@@ -69,14 +69,13 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 			log.error("A principal must be supplied for Attribute Query Handle creation.");
 			throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
 		}
-
-		String handle = new String(config.getDefaultIDProvider().generateRandomBytes(16));
-		log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
-		synchronized (cache.handleEntries) {
-			cache.handleEntries.put(handle, createHandleEntry(principal));
-		}
-
 		try {
+			String handle = new String(config.getDefaultIDProvider().getIdentifier());
+			log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
+			synchronized (cache.handleEntries) {
+				cache.handleEntries.put(handle, createHandleEntry(principal));
+			}
+
 			return new SAMLNameIdentifier(handle, idProv.getProviderId(), getNameIdentifierFormat().toString());
 		} catch (SAMLException e) {
 			throw new NameIdentifierMappingException("Unable to generate Attribute Query Handle: " + e);
@@ -178,7 +177,7 @@ class HandleCache {
 		public void run() {
 
 			try {
-				sleep(60 * 1000); //one minute
+				sleep(60 * 1000); // one minute
 			} catch (InterruptedException e) {
 				log.debug("Memory-based shib handle cache cleanup interrupted.");
 			}
@@ -203,7 +202,7 @@ class HandleCache {
 								needsDeleting.add(entry.getKey());
 							}
 						}
-						//release the lock to be friendly
+						// release the lock to be friendly
 						Iterator deleteIterator = needsDeleting.iterator();
 						while (deleteIterator.hasNext()) {
 							synchronized (handleEntries) {
@@ -212,7 +211,7 @@ class HandleCache {
 							}
 						}
 					}
-					sleep(60 * 1000); //one minute
+					sleep(60 * 1000); // one minute
 				} catch (InterruptedException e) {
 					log.debug("Memory-based shib handle cache cleanup interrupted.");
 				}
