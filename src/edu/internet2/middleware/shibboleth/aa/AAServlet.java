@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -61,8 +62,6 @@ import java.util.Properties;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
@@ -79,9 +78,9 @@ import edu.internet2.middleware.eduPerson.Init;
 import edu.internet2.middleware.shibboleth.aa.arp.AAPrincipal;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
-import edu.internet2.middleware.shibboleth.common.Constants;
-import edu.internet2.middleware.shibboleth.hs.HandleEntry;
 import edu.internet2.middleware.shibboleth.hs.HandleException;
+import edu.internet2.middleware.shibboleth.hs.HandleRepository;
+import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
 
 /**
@@ -95,7 +94,7 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
 public class AAServlet extends HttpServlet {
 
     protected AAResponder responder;
-    protected HandleRepositoryFactory hrf;
+    protected HandleRepository handleRepository;
     protected Properties configuration;
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
@@ -111,7 +110,7 @@ public class AAServlet extends HttpServlet {
 
 			ArpEngine arpEngine = new ArpEngine(configuration);
 			
-			hrf = getHandleRepository();
+			handleRepository = HandleRepositoryFactory.getInstance(configuration);
 
 			log.info(
 				"Using JNDI context ("
@@ -141,7 +140,7 @@ public class AAServlet extends HttpServlet {
 		} catch (AAException ae) {
 			log.fatal("The AA could not be initialized: " + ae);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
-		} catch (HandleException he) {
+		} catch (HandleRepositoryException he) {
 			log.fatal(
 				"The AA could not be initialized due to a problem with the Handle Repository configuration: "
 					+ he);
@@ -204,7 +203,7 @@ public class AAServlet extends HttpServlet {
 		List attrs = null;
 		SAMLException ourSE = null;
 		AASaml saml = null;
-		String userName = null;
+		Principal principal = null;
 
 		try {
 			saml =
@@ -228,32 +227,28 @@ public class AAServlet extends HttpServlet {
 			log.info("AA: handle:" + handle);
 			if (handle.equalsIgnoreCase("foo")) {
 				// for testing only
-				userName = "dummy";
+				new AAPrincipal("dummy");
 			} else {
-				if (hrf == null) {
-					throw new HandleException("No HandleRepository found! Has HS initialized?");
-				} else {
-					HandleEntry he = hrf.getHandleEntry(handle);
-					userName = he.getUsername();
-					if (userName == null)
-						throw new HandleException("HandleServer returns null for user name!");
+				principal = handleRepository.getPrincipal(handle);
+				if (principal == null) {
+					throw new HandleException("Received a request for an invalid/unknown handle.");
 				}
 			}
 
 			attrs =
 				Arrays.asList(
 					responder.getReleaseAttributes(
-						new AAPrincipal(userName),
+						principal,
 						configuration.getProperty(
 							"edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
 						shar,
 						resource));
-			log.info("Got " + attrs.size() + " attributes for " + userName);
+			log.info("Got " + attrs.size() + " attributes for " + principal.getName());
 			saml.respond(resp, attrs, null);
-			log.info("Successfully responded about " + userName);
+			log.info("Successfully responded about " + principal.getName());
 
 		} catch (org.opensaml.SAMLException se) {
-			log.error("AA failed for " + userName + " because of: " + se);
+			log.error("AA failed for " + principal.getName() + " because of: " + se);
 			try {
 				saml.fail(resp, se);
 			} catch (Exception ee) {
@@ -264,12 +259,17 @@ public class AAServlet extends HttpServlet {
 						+ se);
 			}
 		} catch (HandleException he) {
-			log.error("AA failed for " + userName + " because of: " + he);
+			log.error("AA failed for " + principal.getName() + " because of: " + he);
 			try {
 				QName[] codes = new QName[2];
 				codes[0] = SAMLException.REQUESTER;
-				codes[1] = new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle");
-				saml.fail(resp, new SAMLException(Arrays.asList(codes), "AA got a HandleException: " + he));
+				codes[1] =
+					new QName(
+						edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,
+						"InvalidHandle");
+				saml.fail(
+					resp,
+					new SAMLException(Arrays.asList(codes), "AA got a HandleException: " + he));
 			} catch (Exception ee) {
 				throw new ServletException(
 					"AA failed to even make a SAML Failure message because "
@@ -281,7 +281,7 @@ public class AAServlet extends HttpServlet {
 			e.printStackTrace();
 			log.error(
 				"Attribute Authority Error for principal ("
-					+ userName
+					+ principal.getName()
 					+ ") : "
 					+ e.getClass().getName()
 					+ " : "
@@ -302,32 +302,6 @@ public class AAServlet extends HttpServlet {
 
 		}
 	}
-
-
-    private synchronized HandleRepositoryFactory getHandleRepository()
-	throws HandleException, AAException{
-
-	ServletConfig sc = getServletConfig();
-	ServletContext sctx = sc.getServletContext(); 
-	HandleRepositoryFactory hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
-
-	log.debug("Context attribute for HandleRepository: "+hrf);
-	    
-	    
-	if(hrf == null){
-	    // make one
-	    String repositoryType = this.getServletContext().getInitParameter("repository");
-	    if(repositoryType == null)
-		throw new AAException("repository parameter not set. Unknown Handle repository type");
-	    hrf = HandleRepositoryFactory.getInstance(						      Constants.POLICY_CLUBSHIB, 
-												      repositoryType,
-												      this );
-	    sctx.setAttribute("HandleRepository", hrf);
-	    log.info("A new HandleRepository created by AA: "+hrf);
-	    
-	}
-	return hrf;
-    }
 
 
 }

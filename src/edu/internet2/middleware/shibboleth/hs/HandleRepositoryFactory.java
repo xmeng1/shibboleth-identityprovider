@@ -49,51 +49,50 @@
 
 package edu.internet2.middleware.shibboleth.hs;
 
-import javax.servlet.http.*;
-import edu.internet2.middleware.shibboleth.*;
-import edu.internet2.middleware.shibboleth.common.*;
+import java.lang.reflect.Constructor;
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
 
 /**
- *  Used by Shibboleth Handle Service and Attribute Authority to build a repository object
+ * Factory for generating instances of <code>HandleRepository</code>.  Configuration
+ * is delegated to the Handle Repository.  Runtime options are passed to concrete constructors
+ * via a <code>Properties</code> object.
+ *
+ * @author Walter Hoehn (wassa@columbia.edu)
  */
-public abstract class HandleRepositoryFactory
-{
-    /**  Array of policy URI(s) (HS and SHIRE) */
-    protected String[] policies;
-    protected String SQL = "SQL";
-    protected String MEMORY = "MEMORY";
 
-    public HandleRepositoryFactory()
-    {
-    }
+public class HandleRepositoryFactory {
 
-    public static HandleRepositoryFactory getInstance(String policy, 
-						      String repository,
-						      HttpServlet HS)
-        throws HandleException {
+	private static Logger log = Logger.getLogger(HandleRepositoryFactory.class.getName());
 
-	if (policy.equalsIgnoreCase( Constants.POLICY_CLUBSHIB )) {
-	    if (repository.equalsIgnoreCase( "SQL" )) {
-		return new ClubShibSQLHandleRepository(HS);
-	    } else if (repository.equalsIgnoreCase( "MEMORY" )) {
-		return new ClubShibInMemoryHandleRepository(HS);
-	    } else {
-		throw new HandleException("Unspecified repository type.");
-	    }
-	}else{
-	    throw new HandleException("Unsupported policy found.");
+	public static HandleRepository getInstance(Properties props) throws HandleRepositoryException {
+
+		if (props.getProperty("edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation") == null) {
+			throw new HandleRepositoryException("No Handle Repository implementaiton specified.");
+		}
+		try {
+			Class implementorClass =
+				Class.forName(
+					props.getProperty("edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation"));
+			Class[] params = new Class[1];
+			params[0] = Class.forName("java.util.Properties");
+			Constructor implementorConstructor = implementorClass.getConstructor(params);
+			Object[] args = new Object[1];
+			args[0] = props;
+			log.debug("Initializing Handle Repository of type (" + implementorClass.getName() + ").");
+			return (HandleRepository) implementorConstructor.newInstance(args);
+
+		} catch (NoSuchMethodException nsme) {
+			log.error(
+				"Failed to instantiate an Handle Repository: HandleRepository "
+					+ "implementation must contain a constructor that accepts a Properties bundle for "
+					+ "configuration data.");
+			throw new HandleRepositoryException("Failed to instantiate an Handle Repository.");
+		} catch (Exception e) {
+			log.error("Failed to instantiate an Handle Repository: " + e);
+			throw new HandleRepositoryException("Failed to instantiate an Handle Repository: " + e.getMessage());
+
+		}
 	}
-    }
-
-    public abstract HandleEntry getHandleEntry(String handle)
-	throws HandleException;
-
-    public abstract  void insertHandleEntry(HandleEntry he)
-	throws HandleException;
-    
-    /* for debugging purposes only */
-    public abstract String toHTMLString()
-        throws HandleException;
-
 }
-

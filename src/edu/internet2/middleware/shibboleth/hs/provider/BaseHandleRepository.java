@@ -52,33 +52,56 @@ package edu.internet2.middleware.shibboleth.hs.provider;
 import java.security.Principal;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
+
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 
 /**
- * <code>HandleRepository</code> implementation that employs the use of a shard secret
- * in order to transmit identity information.
+ * <code>HandleRepository</code> shared implementation code.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class CryptoHandleRepository extends BaseHandleRepository implements HandleRepository {
+public abstract class BaseHandleRepository implements HandleRepository {
 
-	protected CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
-		super(properties);
+	protected long handleTTL = 1800000;
+	private static Logger log = Logger.getLogger(BaseHandleRepository.class.getName());
+
+	protected BaseHandleRepository(Properties properties) throws HandleRepositoryException {
+		try {
+			if (properties.getProperty("edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL", null)
+				!= null) {
+
+				handleTTL =
+					Long.parseLong(
+						properties.getProperty(
+							"edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL",
+							null));
+				if (handleTTL < 30000) {
+					log.warn(
+						"You have set the Attribute Query Handle \"Time To Live\' to a very low "
+							+ "value.  It is recommended that you increase it.");
+				}
+			}
+		} catch (NumberFormatException nfe) {
+			log.error(
+				"Value for (edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL) must be a long integer.");
+			throw new HandleRepositoryException("Value for (edu.internet2.middleware.shibboleth.hs.HandleRepository.handleTTL) must be a long integer.");
+		}
+
 	}
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
-	 */
-	public String getHandle(Principal principal) {
-		return null;
-	}
+	protected class HandleEntry {
+		protected Principal principal;
+		protected long creationTime;
+		
+		protected HandleEntry(Principal principal) {
+			this.principal = principal;
+			creationTime = System.currentTimeMillis();	
+		}
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
-	 */
-	public Principal getPrincipal(String handle) {
-		return null;
+		protected boolean isExpired() {
+			return ((System.currentTimeMillis() - creationTime) > handleTTL);
+		}
 	}
-
 }

@@ -53,7 +53,7 @@ import java.security.Principal;
 
 /**
  * Defines a mechanism for communicating identities between the Shibboleth Handle
- * Service and Attribute Authority.
+ * Service and Attribute Authority.  Implementations must be thread-safe.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */

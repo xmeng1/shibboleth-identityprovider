@@ -50,20 +50,26 @@
 package edu.internet2.middleware.shibboleth.hs.provider;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+
+import org.doomdark.uuid.UUIDGenerator;
 
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 
 /**
- * <code>HandleRepository</code> implementation that employs the use of a shard secret
- * in order to transmit identity information.
+ * <code>HandleRepository</code> implementation that uses a static cache.  This requires
+ * that the HS and AA run in the same JVM.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class CryptoHandleRepository extends BaseHandleRepository implements HandleRepository {
+public class MemoryHandleRepository extends BaseHandleRepository implements HandleRepository {
 
-	protected CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
+	protected static Map handleEntries = new HashMap();
+
+	public MemoryHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
 	}
 
@@ -71,14 +77,34 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
 	public String getHandle(Principal principal) {
-		return null;
+		String handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
+		synchronized (handleEntries) {
+			handleEntries.put(handle, new HandleEntry(principal));
+		}
+		return handle;
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
 	public Principal getPrincipal(String handle) {
-		return null;
+		synchronized (handleEntries) {
+			if (!handleEntries.containsKey(handle)) {
+				return null;
+			}
+		}
+		HandleEntry handleEntry;
+		synchronized (handleEntries) {
+			handleEntry = (HandleEntry) handleEntries.get(handle);
+		}
+		if (handleEntry.isExpired()) {
+			synchronized (handleEntries) {
+				handleEntries.remove(handle);
+			}
+			return null;
+		} else {
+			return handleEntry.principal;
+		}
 	}
 
 }

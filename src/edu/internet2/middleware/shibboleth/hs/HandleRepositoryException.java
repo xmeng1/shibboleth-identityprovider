@@ -47,38 +47,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.hs.provider;
-
-import java.security.Principal;
-import java.util.Properties;
-
-import edu.internet2.middleware.shibboleth.hs.HandleRepository;
-import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
+package edu.internet2.middleware.shibboleth.hs;
 
 /**
- * <code>HandleRepository</code> implementation that employs the use of a shard secret
- * in order to transmit identity information.
+ * Indicates an error occurred while manipulating an instance of <code>HandleRepository</code>
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class CryptoHandleRepository extends BaseHandleRepository implements HandleRepository {
+public class HandleRepositoryException extends Exception {
 
-	protected CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
-		super(properties);
+	public HandleRepositoryException(String message) {
+		super(message);
 	}
-
-	/**
-	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
-	 */
-	public String getHandle(Principal principal) {
-		return null;
-	}
-
-	/**
-	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
-	 */
-	public Principal getPrincipal(String handle) {
-		return null;
-	}
-
 }

@@ -28,14 +28,6 @@
 			<param-value>shibdev.edu</param-value>
 		</init-param>
 		<init-param>
-		        <param-name>HSname</param-name>
-			<param-value>shib2.internet2.edu</param-value>
-		</init-param>
-		<init-param>
-		        <param-name>ticket</param-name>
-			<param-value>1400000</param-value>
-		</init-param>
-		<init-param>
 		          <param-name>AAurl</param-name>
 		          <param-value>https://shib2.internet2.edu/shibboleth-origin/servlet/AA</param-value>
 		</init-param>
