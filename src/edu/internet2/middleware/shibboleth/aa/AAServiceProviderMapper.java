@@ -92,7 +92,6 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 	}
 
 	public AARelyingParty getRelyingParty(String providerIdFromTarget) {
-		//TODO hmmm...
 		return (AARelyingParty) getRelyingPartyImpl(providerIdFromTarget);
 	}
 

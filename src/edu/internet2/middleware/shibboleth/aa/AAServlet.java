@@ -54,7 +54,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import org.apache.xerces.parsers.DOMParser;
 import org.opensaml.QName;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
@@ -69,11 +68,9 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
@@ -88,7 +85,6 @@ import edu.internet2.middleware.shibboleth.common.OriginComponent;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
-import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
@@ -251,7 +247,7 @@ public class AAServlet extends OriginComponent {
 							relyingParty,
 							relyingParty.getIdentityProvider());
 				}
-				log.info("Request is for principal (" + principal + ").");
+				log.info("Request is for principal (" + principal.getName() + ").");
 
 				//TODO Do something about these silly passthru errors
 

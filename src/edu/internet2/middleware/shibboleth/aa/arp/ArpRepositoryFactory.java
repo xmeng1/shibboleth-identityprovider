@@ -66,8 +66,6 @@ public class ArpRepositoryFactory {
 
 	public static ArpRepository getInstance(Element repositoryConfig) throws ArpRepositoryException {
 
-		String implementation = repositoryConfig.getAttribute("implementation");
-
 		if (repositoryConfig.getAttribute("implementation") == null) {
 			throw new ArpRepositoryException("No ARP Repository implementaiton specified.");
 		}

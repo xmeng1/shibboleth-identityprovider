@@ -50,7 +50,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import org.apache.xerces.parsers.DOMParser;
 import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.QName;
 import org.opensaml.SAMLAuthorityBinding;
@@ -58,11 +57,9 @@ import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLResponse;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
@@ -72,7 +69,6 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
 import edu.internet2.middleware.shibboleth.common.OriginComponent;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
-import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
 public class HandleServlet extends OriginComponent {
