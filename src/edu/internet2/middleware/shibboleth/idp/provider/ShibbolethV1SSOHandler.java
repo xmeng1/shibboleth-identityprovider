@@ -52,6 +52,7 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
+import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -197,14 +198,15 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 				Iterator iterator = artifacts.iterator();
 				StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
+
+				// Construct the artifact query parameter
 				while (iterator.hasNext()) {
-					destination.append("&SAMLart=");
-					String artifact = (String) iterator.next();
-
-					destination.append(URLEncoder.encode(artifact, "UTF-8"));
+					Artifact artifact = (Artifact) iterator.next();
 					artifactBuffer.append("(" + artifact + ")");
-
+					destination.append("&SAMLart=");
+					destination.append(artifact.encode());
 				}
+
 				log.debug("Redirecting to (" + destination.toString() + ").");
 				response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
 
