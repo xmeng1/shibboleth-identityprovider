@@ -15,9 +15,9 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.BaseNameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
-import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 
 /**
  * <code>HSNameIdentifierMapping</code> implementation that translates principal names to E-Auth compliant
@@ -25,23 +25,18 @@ import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
  * 
  * @author Walter Hoehn
  */
-public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapping implements HSNameIdentifierMapping {
+public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapping implements NameIdentifierMapping {
 
-	private static Logger	log				= Logger.getLogger(X509SubjectNameNameIdentifierMapping.class.getName());
-	private String			regexTemplate	= ".*uid=([^,/]+).*";
-	private Pattern			regex;
-	private String			id;
-	private String			qualifier;
-	private String			internalNameContext;
-	private QName[]			errorCodes		= new QName[0];
+	private static Logger log = Logger.getLogger(X509SubjectNameNameIdentifierMapping.class.getName());
+	private String regexTemplate = ".*uid=([^,/]+).*";
+	private Pattern regex;
+	private String qualifier;
+	private String internalNameContext;
+	private QName[] errorCodes = new QName[0];
 
 	public X509SubjectNameNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
-		super(config);
 
-		String id = ((Element) config).getAttribute("id");
-		if (id != null || !id.equals("")) {
-			this.id = id;
-		}
+		super(config);
 
 		String rawRegex = ((Element) config).getAttribute("regex");
 		if (rawRegex != null && !rawRegex.equals("")) {
@@ -94,15 +89,6 @@ public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapp
 		if (principal == null) { throw new InvalidNameIdentifierException("Unable to map X509SubjectName ("
 				+ nameId.getName() + ") to a local principal.", errorCodes); }
 		return new AuthNPrincipal(principal);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping#getId()
-	 */
-	public String getId() {
-		return id;
 	}
 
 	/*

@@ -64,7 +64,6 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
-import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.utils.Base32;
 
 /**
@@ -74,7 +73,7 @@ import edu.internet2.middleware.shibboleth.utils.Base32;
  * @author Walter Hoehn
  * @author Derek Morr
  */
-public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSNameIdentifierMapping {
+public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameIdentifierMapping {
 
 	private static Logger log = Logger.getLogger(CryptoShibHandle.class.getName());
 	protected SecretKey secret;

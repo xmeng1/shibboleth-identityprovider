@@ -2,26 +2,25 @@
  * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
  * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
  * provided that the following conditions are met: Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
- * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
- * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
- * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2
- * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
- * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
- * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
- * products derived from this software without specific prior written permission. For written permission, please
- * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
- * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
- * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
- * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
- * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
- * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
- * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution, if any, must include the following acknowledgment: "This product includes software
+ * developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2 Project.
+ * Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor
+ * the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please contact
+ * shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the
+ * University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name, without prior
+ * written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS PROVIDED BY THE
+ * COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE
+ * DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO
+ * EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC.
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.hs;
@@ -37,6 +36,7 @@ import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.Credentials;
+import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
@@ -44,17 +44,17 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 
 /**
- * Class for determining the effective relying party for the Shibboleth handle service from the unique id of the
- * service provider.
+ * Class for determining the effective relying party for the Shibboleth handle service from the unique id of the service
+ * provider.
  * 
  * @author Walter Hoehn
  */
 public class HSServiceProviderMapper extends ServiceProviderMapper {
 
-	private static Logger	log	= Logger.getLogger(HSServiceProviderMapper.class.getName());
-	private HSConfig		configuration;
-	private Credentials		credentials;
-	private HSNameMapper	nameMapper;
+	private static Logger log = Logger.getLogger(HSServiceProviderMapper.class.getName());
+	private HSConfig configuration;
+	private Credentials credentials;
+	private NameMapper nameMapper;
 
 	/**
 	 * Constructs a new service provider mapper for the handle service.
@@ -71,7 +71,8 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	 *             if the configuration is invalid
 	 */
 	public HSServiceProviderMapper(Element rawConfig, HSConfig configuration, Credentials credentials,
-			HSNameMapper nameMapper, Metadata metaData) throws ServiceProviderMapperException {
+			NameMapper nameMapper, Metadata metaData) throws ServiceProviderMapperException {
+
 		super(metaData);
 		this.configuration = configuration;
 		this.credentials = credentials;
@@ -128,6 +129,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	}
 
 	protected ShibbolethOriginConfig getOriginConfig() {
+
 		return configuration;
 	}
 
@@ -138,12 +140,12 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	 */
 	class HSRelyingPartyImpl extends BaseRelyingPartyImpl implements HSRelyingParty {
 
-		private URL			overridenAAUrl;
-		private URI			overridenDefaultAuthMethod;
-		protected String	hsNameFormatId;
-		private HSConfig	configuration;
+		private URL overridenAAUrl;
+		private URI overridenDefaultAuthMethod;
+		protected String hsNameFormatId;
+		private HSConfig configuration;
 
-		HSRelyingPartyImpl(Element partyConfig, HSConfig globalConfig, Credentials credentials, HSNameMapper nameMapper)
+		HSRelyingPartyImpl(Element partyConfig, HSConfig globalConfig, Credentials credentials, NameMapper nameMapper)
 				throws ServiceProviderMapperException {
 
 			super(partyConfig);
@@ -232,10 +234,12 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		}
 
 		public boolean isLegacyProvider() {
+
 			return false;
 		}
 
 		public String getHSNameFormatId() {
+
 			return hsNameFormatId;
 		}
 
@@ -249,6 +253,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		}
 
 		public URL getAAUrl() {
+
 			if (overridenAAUrl != null) {
 				return overridenAAUrl;
 			} else {
@@ -265,22 +270,27 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	class LegacyWrapper extends UnknownProviderWrapper implements HSRelyingParty {
 
 		LegacyWrapper(HSRelyingParty wrapped) {
+
 			super(wrapped, null);
 		}
 
 		public boolean isLegacyProvider() {
+
 			return true;
 		}
 
 		public String getHSNameFormatId() {
+
 			return ((HSRelyingParty) wrapped).getHSNameFormatId();
 		}
 
 		public URL getAAUrl() {
+
 			return ((HSRelyingParty) wrapped).getAAUrl();
 		}
 
 		public URI getDefaultAuthMethod() {
+
 			return ((HSRelyingParty) wrapped).getDefaultAuthMethod();
 		}
 	}
@@ -293,18 +303,22 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	class NoMetadataWrapper extends UnknownProviderWrapper implements HSRelyingParty {
 
 		NoMetadataWrapper(HSRelyingParty wrapped) {
+
 			super(wrapped, null);
 		}
 
 		public String getHSNameFormatId() {
+
 			return ((HSRelyingParty) wrapped).getHSNameFormatId();
 		}
 
 		public URL getAAUrl() {
+
 			return ((HSRelyingParty) wrapped).getAAUrl();
 		}
 
 		public URI getDefaultAuthMethod() {
+
 			return ((HSRelyingParty) wrapped).getDefaultAuthMethod();
 		}
 	}

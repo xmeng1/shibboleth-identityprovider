@@ -47,16 +47,11 @@ public abstract class AQHNameIdentifierMapping extends BaseNameIdentifierMapping
 	private static Logger		log			= Logger.getLogger(AQHNameIdentifierMapping.class.getName());
 	/** Time in seconds for which handles are valid */
 	protected long				handleTTL	= 1800;
-	private String				id;
 	protected static QName[]	errorCodes	= {SAMLException.REQUESTER,
 			new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
 
 	public AQHNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
 		super(config);
-		String id = ((Element) config).getAttribute("id");
-		if (id != null || !id.equals("")) {
-			this.id = id;
-		}
 
 		String rawTTL = ((Element) config).getAttribute("handleTTL");
 		try {
@@ -78,11 +73,6 @@ public abstract class AQHNameIdentifierMapping extends BaseNameIdentifierMapping
 	protected HandleEntry createHandleEntry(AuthNPrincipal principal) {
 		return new HandleEntry(principal, handleTTL);
 	}
-
-	public String getId() {
-		return id;
-	}
-
 }
 
 class HandleEntry implements Serializable {

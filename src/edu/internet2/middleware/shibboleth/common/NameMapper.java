@@ -36,6 +36,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -44,20 +45,22 @@ import edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle;
 
 /**
  * Facility for managing mappings from SAML Name Identifiers to local {@link AuthNPrincipal}objects. Mappings are
- * registered by Name Identifier format.
+ * registered by Name Identifier format and can be associated with a <code>String</code> id and recovered based on the
+ * same.
  * 
  * @author Walter Hoehn
  * @see NameIdentifierMapping
  */
 public class NameMapper {
 
-	private static Logger				log						= Logger.getLogger(NameMapper.class.getName());
-	protected Map						byFormat				= new HashMap();
-	private static Map					registeredMappingTypes	= Collections.synchronizedMap(new HashMap());
+	private static Logger log = Logger.getLogger(NameMapper.class.getName());
+	private Map byFormat = new HashMap();
+	private Map byId = new HashMap();
+	private static Map registeredMappingTypes = Collections.synchronizedMap(new HashMap());
 	/** true if mappings have been added */
-	protected boolean					initialized				= false;
+	protected boolean initialized = false;
 	/** Mapping to use if no other mappings have been added */
-	protected SharedMemoryShibHandle	defaultMapping;
+	protected SharedMemoryShibHandle defaultMapping;
 
 	//Preload aliases for bundled mappings
 	static {
@@ -69,7 +72,7 @@ public class NameMapper {
 					.forName("edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle"));
 
 			registeredMappingTypes.put("Principal", Class
-					.forName("edu.internet2.middleware.shibboleth.common.PrincipalNameIdentifier"));
+					.forName("edu.internet2.middleware.shibboleth.hs.provider.PrincipalNameIdentifier"));
 
 		} catch (ClassNotFoundException e) {
 			log.error("Unable to pre-register Name mapping implementation types.");
@@ -80,6 +83,7 @@ public class NameMapper {
 	 * Constructs the name mapper and loads a default name mapping.
 	 */
 	public NameMapper() {
+
 		try {
 			//Load the default mapping
 			String rawConfig = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -95,6 +99,7 @@ public class NameMapper {
 	}
 
 	protected void initialize() {
+
 		initialized = true;
 		defaultMapping = null;
 	}
@@ -166,6 +171,10 @@ public class NameMapper {
 		}
 		byFormat.put(mapping.getNameIdentifierFormat(), mapping);
 
+		if (mapping.getId() != null && !mapping.getId().equals("")) {
+			byId.put(mapping.getId(), mapping);
+		}
+
 	}
 
 	/**
@@ -182,6 +191,28 @@ public class NameMapper {
 		if (!initialized) { return defaultMapping; }
 
 		return (NameIdentifierMapping) byFormat.get(format);
+	}
+
+	/**
+	 * Returns the <code>NameIdentifierMapping</code> registered for a given id
+	 * 
+	 * @param id
+	 *            the registered id
+	 * @return the mapping or <tt>null</tt> if no mapping is registered for the given id
+	 */
+	public NameIdentifierMapping getNameIdentifierMappingById(String id) {
+
+		if (id == null || id.equals("")) {
+			if (!initialized) { return defaultMapping; }
+
+			if (byFormat.size() == 1) {
+				Iterator values = byFormat.values().iterator();
+				Object mapping = values.next();
+				return (NameIdentifierMapping) mapping;
+			}
+		}
+
+		return (NameIdentifierMapping) byId.get(id);
 	}
 
 	protected NameIdentifierMapping loadNameIdentifierMapping(Class implementation, Element config)
@@ -238,13 +269,27 @@ public class NameMapper {
 	}
 
 	/**
-	 * Cleanup resources that won't be released when this object is garbage-collected
+	 * Maps a local principal to a SAML Name Identifier using the mapping registered under a given id.
+	 * 
+	 * @param id
+	 *            the id under which the effective <code>NameIdentifierMapping</code> is registered
+	 * @param principal
+	 *            the principal to map
+	 * @param sProv
+	 *            the provider initiating the request
+	 * @param idProv
+	 *            the provider handling the request
+	 * @return
+	 * @throws NameIdentifierMappingException
+	 *             If the <code>NameMapper</code> encounters an internal error
 	 */
-	public void destroy() {
-		Iterator mappingIterator = byFormat.values().iterator();
-		while (mappingIterator.hasNext()) {
-			((NameIdentifierMapping) mappingIterator.next()).destroy();
-		}
+	public SAMLNameIdentifier getNameIdentifierName(String id, AuthNPrincipal principal, ServiceProvider sProv,
+			IdentityProvider idProv) throws NameIdentifierMappingException {
+
+		NameIdentifierMapping mapping = getNameIdentifierMappingById(id);
+
+		if (mapping == null) { throw new NameIdentifierMappingException("Name Identifier id not registered."); }
+		return mapping.getNameIdentifierName(principal, sProv, idProv);
 	}
 
 	/**
@@ -253,6 +298,7 @@ public class NameMapper {
 	public class TestNameIdentifierMapping implements NameIdentifierMapping {
 
 		private TestNameIdentifierMapping() {
+
 		//Constructor to prevent others from creating this class
 		}
 
@@ -262,6 +308,7 @@ public class NameMapper {
 		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifierFormat()
 		 */
 		public URI getNameIdentifierFormat() {
+
 			try {
 				return new URI("urn:mace:shibboleth:test:nameIdentifier");
 			} catch (URISyntaxException e) {
@@ -279,7 +326,7 @@ public class NameMapper {
 		 */
 		public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 				throws NameIdentifierMappingException, InvalidNameIdentifierException {
-			
+
 			log.info("Request references built-in test principal.");
 
 			if (idProv.getProviderId() == null || !idProv.getProviderId().equals(nameId.getNameQualifier())) {
@@ -298,7 +345,47 @@ public class NameMapper {
 		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#destroy()
 		 */
 		public void destroy() {
+
 		//Nothing to do
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getId()
+		 */
+		public String getId() {
+
+			return null;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifierName(edu.internet2.middleware.shibboleth.common.AuthNPrincipal,
+		 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
+		 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
+		 */
+		public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+				IdentityProvider idProv) throws NameIdentifierMappingException {
+
+			try {
+				return new SAMLNameIdentifier("test-handle", idProv.getProviderId(), getNameIdentifierFormat()
+						.toString());
+			} catch (SAMLException e) {
+				throw new NameIdentifierMappingException("Unable to generate Name Identifier: " + e);
+			}
+		}
+	}
+
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	public void destroy() {
+
+		Iterator mappingIterator = byFormat.values().iterator();
+		while (mappingIterator.hasNext()) {
+			((NameIdentifierMapping) mappingIterator.next()).destroy();
 		}
 	}
 }

@@ -101,7 +101,6 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
 import edu.internet2.middleware.shibboleth.hs.HSConfig;
-import edu.internet2.middleware.shibboleth.hs.HSNameMapper;
 import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
 import edu.internet2.middleware.shibboleth.hs.HSServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
@@ -133,10 +132,7 @@ public class IdPResponder extends TargetFederationComponent {
 	//TODO Obviously this has got to be unified
 	private AAConfig configuration;
 	private HSConfig hsConfiguration;
-
-	//TODO unify
 	private NameMapper nameMapper;
-	private HSNameMapper hsNameMapper;
 
 	//TODO unify
 	private AAServiceProviderMapper targetMapper;
@@ -598,7 +594,7 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 
 			//Create SAML Name Identifier
-			SAMLNameIdentifier nameId = hsNameMapper.getNameIdentifierName(relyingParty.getHSNameFormatId(),
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(relyingParty.getHSNameFormatId(),
 					new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
 
 			String authenticationMethod = request.getHeader("SAMLAuthenticationMethod");

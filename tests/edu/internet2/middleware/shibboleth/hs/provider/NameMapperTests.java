@@ -48,11 +48,11 @@ import org.xml.sax.SAXParseException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
-import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
-import edu.internet2.middleware.shibboleth.hs.HSNameMapper;
+
 
 /**
  * Validation suite for the <code>NameMapper</code>.
@@ -131,7 +131,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			File file = new File("data/handle.jks");
 
@@ -171,7 +171,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			File file = new File("data/handle.jks");
 
@@ -214,7 +214,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			File file = new File("data/handle.jks");
 
@@ -257,7 +257,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(null, new AuthNPrincipal("testprincipal"),
 					new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
@@ -278,7 +278,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			File file = new File("data/handle.jks");
 
@@ -305,7 +305,7 @@ public class NameMapperTests extends TestCase {
 
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
 
-			HSNameIdentifierMapping nameMapping = nameMapper.getNameIdentifierMappingById(null);
+			NameIdentifierMapping nameMapping = nameMapper.getNameIdentifierMappingById(null);
 			if (!(nameMapping instanceof CryptoShibHandle)) {
 				fail("HSNameMapper defaulted to incorrect name mapping.");
 			}
@@ -321,7 +321,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			File file = new File("data/handle.jks");
 
@@ -374,7 +374,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			String rawConfig = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""
@@ -408,7 +408,7 @@ public class NameMapperTests extends TestCase {
 
 		try {
 
-			HSNameMapper nameMapper = new HSNameMapper();
+			NameMapper nameMapper = new NameMapper();
 
 			String rawConfig = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\""

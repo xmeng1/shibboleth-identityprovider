@@ -23,74 +23,56 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.common;
+package edu.internet2.middleware.shibboleth.hs.provider;
 
-import java.net.URI;
-
+import org.apache.log4j.Logger;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
+import org.w3c.dom.Element;
+
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.BaseNameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.IdentityProvider;
+import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
+import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
- * Defines a mechanism for converting back and forth between SAML Name Identifiers and local {@link AuthNPrincipal}
- * objects.
+ * {@link NameIdentifierMapping}implementation to use when the SAML name identifier format matches the Shibboleth
+ * internal representation of the principal.
  * 
  * @author Walter Hoehn
  */
-public interface NameIdentifierMapping {
+public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {
 
-	public static final String mappingNamespace = "urn:mace:shibboleth:namemapper:1.0";
+	private static Logger log = Logger.getLogger(PrincipalNameIdentifier.class.getName());
 
-	/**
-	 * @return the id of this mapping or <code>null</code> is it is not configured with one
-	 */
-	public String getId();
+	public PrincipalNameIdentifier(Element config) throws NameIdentifierMappingException {
 
-	/**
-	 * Returns the Name Identifier format for this mapping.
-	 * 
-	 * @return the format
-	 */
-	public URI getNameIdentifierFormat();
+		super(config);
+	}
 
-	/**
-	 * Maps a SAML Name Identifier to a local principal using the appropriate registered mapping. Must ensure that the
-	 * SAML NameIdentifer is properly qualified.
-	 * 
-	 * @param nameId
-	 *            the SAML Name Identifier that should be converted
-	 * @param sProv
-	 *            the provider initiating the request
-	 * @param idProv
-	 *            the provider handling the request
-	 * @return the local principal
-	 * @throws NameIdentifierMappingException
-	 *             If the {@link NameMapper}encounters an internal error
-	 * @throws InvalidNameIdentifierException
-	 *             If the {@link SAMLNameIdentifier}contains invalid data
-	 */
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
-			throws NameIdentifierMappingException, InvalidNameIdentifierException;
+			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
-	/**
-	 * Maps a local principal to a SAML Name Identifier.
-	 * 
-	 * @param id
-	 *            the id under which the effective {@link HSNameIdentifierMapping}is registered
-	 * @param principal
-	 *            the principal to map
-	 * @param sProv
-	 *            the provider initiating the request
-	 * @param idProv
-	 *            the provider handling the request
-	 * @return the SAML name identifier
-	 * @throws NameIdentifierMappingException
-	 *             If the {@link NameMapper}encounters an internal error
-	 */
+		verifyQualifier(nameId, idProv);
+		return new AuthNPrincipal(nameId.getName());
+	}
+
 	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
-			IdentityProvider idProv) throws NameIdentifierMappingException;
+			IdentityProvider idProv) throws NameIdentifierMappingException {
 
-	/**
-	 * Cleanup resources that won't be released when this object is garbage-collected
-	 */
-	public void destroy();
+		if (principal == null) {
+			log.error("A principal must be supplied for Name Identifier creation.");
+			throw new IllegalArgumentException("A principal must be supplied for Name Identifier creation.");
+		}
 
+		try {
+			return new SAMLNameIdentifier(principal.getName(), idProv.getProviderId(), getNameIdentifierFormat()
+					.toString());
+		} catch (SAMLException e) {
+			throw new NameIdentifierMappingException("Unable to generate Name Identifier: " + e);
+		}
+	}
 }
