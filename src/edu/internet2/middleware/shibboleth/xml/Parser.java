@@ -76,8 +76,7 @@ public class Parser {
             "urn:mace:shibboleth:trust:1.0",
             "urn:mace:shibboleth:1.0",
             "http://schemas.xmlsoap.org/soap/envelope/",
-            "urn:oasis:names:tc:SAML:2.0:metadata",
-            "http://www.w3.org/2002/06/xmldsig-filter2"
+            "urn:oasis:names:tc:SAML:2.0:metadata"
       };
     
     // If there were a real Framework here (like Spring) then
