@@ -52,6 +52,10 @@ the information Shibboleth gives me:<p>
     <li>Your eduPersonEntitlement value(s):
     <b><%= request.getHeader("Shib-EP-Entitlement") %></b></li>
 <% } %>
+<% if (request.getHeader("Shib-PersistentID")!=null) { %>
+    <li>Your PersistentID value(s):
+    <b><%= request.getHeader("Shib-PersistentID") %></b></li>
+<% } %>
 </ul>
 </p>
 
