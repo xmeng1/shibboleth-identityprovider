@@ -307,7 +307,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			conn = dataSource.getConnection();
 			log.debug("Connection retrieved from pool");
 		} catch (Exception e) {
-			log.error("Unable to fetch a connection from the pool");
+			log.error("JDBC Connector (" + getId() + ") unable to fetch a connection from the pool");
 			throw new ResolutionPlugInException("Unable to fetch a connection from the pool: " + e.getMessage());
 		}
 		if (conn == null) {
