@@ -6,10 +6,10 @@
 			<Requester>shar.example.edu</Requester>
 			<Resource matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^https?://.+\.example\.edu/.*$</Resource>
 		</Target>
-		<Attribute name="urn:mace:eduPerson:1.0:eduPersonPrincipalName">
+		<Attribute name="urn:mace:dir:eduperson#eduPersonPrincipalName">
 			<AnyValue release="permit"/>
 		</Attribute>
-		<Attribute name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+		<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation">
 			<Value release="permit">member@example.edu</Value>
 		</Attribute>
 	</Rule>

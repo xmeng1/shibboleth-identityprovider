@@ -517,11 +517,11 @@ public class ArpTests extends TestCase {
 		try {
 			Principal principal1 = new AuthNPrincipal("TestPrincipal");
 			URL url1 = new URL("http://www.example.edu/");
-			URI[] list1 = { new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation")};
+			URI[] list1 = { new URI("urn:mace:dir:eduperson#eduPersonAffiliation")};
 			URI[] list2 =
 				{
-					new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
-					new URI("urn:mace:eduPerson:1.0:eduPersonPrincipalName")};
+					new URI("urn:mace:dir:eduperson#eduPersonAffiliation"),
+					new URI("urn:mace:dir:eduperson#eduPersonPrincipalName")};
 			URI[] list3 = new URI[0];
 
 			//Test with just a site ARP
@@ -656,7 +656,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -667,13 +667,13 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -704,7 +704,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -716,10 +716,10 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "faculty@example.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "mehoehn@example.edu" })
 		});
 
@@ -727,7 +727,7 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					 new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "faculty@example.edu" })
 		});
 
@@ -759,7 +759,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"permit\">member@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -770,11 +770,11 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
-				new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation", new Object[] { "member@example.edu" }));
+				new AAAttribute("urn:mace:dir:eduperson#eduPersonAffiliation", new Object[] { "member@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -804,7 +804,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "					<Value release=\"deny\">member@example.edu</Value>"
 				+ "				</Attribute>"
@@ -816,12 +816,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "faculty@example.edu", "employee@example.edu" }));
 
 		//Setup the engine
@@ -852,10 +852,10 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"deny\">member@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -866,12 +866,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "faculty@example.edu", "employee@example.edu" }));
 
 		//Setup the engine
@@ -902,13 +902,13 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"deny\">member@example.edu</Value>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"deny\">faculty@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -919,12 +919,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "employee@example.edu" }));
 
 		//Setup the engine
@@ -955,7 +955,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"permit\">member@example.edu</Value>"
 				+ "					<Value release=\"permit\">faculty@example.edu</Value>"
 				+ "				</Attribute>"
@@ -967,12 +967,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1003,10 +1003,10 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"permit\">member@example.edu</Value>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"permit\">faculty@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1017,12 +1017,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1053,7 +1053,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"deny\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1064,7 +1064,7 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1095,10 +1095,10 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"deny\"/>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"permit\">member@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1109,7 +1109,7 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1140,7 +1140,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"deny\"/>"
 				+ "					<Value release=\"permit\">member@example.edu</Value>"
 				+ "				</Attribute>"
@@ -1152,7 +1152,7 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1184,7 +1184,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>shar.example.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1195,12 +1195,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1232,7 +1232,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>shar.example.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1243,12 +1243,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1280,7 +1280,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>shar.example.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1291,7 +1291,7 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1323,7 +1323,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>shar.example.edu</Requester>"
 				+ "					<Resource>http://www.example.edu/</Resource>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1334,12 +1334,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1371,7 +1371,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>shar.example.edu</Requester>"
 				+ "					<Resource>http://www.example.edu/</Resource>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1382,7 +1382,7 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1413,7 +1413,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1422,7 +1422,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>shar1.example.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"deny\">faculty@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1431,7 +1431,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">shar[1-9]\\.example\\.edu</Requester>"
 				+ "					<Resource matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">^https?://.+\\.example\\.edu/.*$</Resource>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonPrincipalName\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonPrincipalName\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1443,10 +1443,10 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "faculty@example.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "wassa@columbia.edu" })
 		});
 
@@ -1454,10 +1454,10 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "wassa@columbia.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu" })
 		});
 
@@ -1489,10 +1489,10 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonPrincipalName\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonPrincipalName\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1504,10 +1504,10 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "faculty@example.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "mehoehn@example.edu" })
 		});
 
@@ -1515,10 +1515,10 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "faculty@example.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "mehoehn@example.edu" })
 		});
 
@@ -1550,7 +1550,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1561,12 +1561,12 @@ public class ArpTests extends TestCase {
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 		AAAttributeSet releaseSet =
 			new AAAttributeSet(
 				new AAAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					"urn:mace:dir:eduperson#eduPersonAffiliation",
 					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
@@ -1598,7 +1598,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"permit\">member@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "				<Attribute name=\"urn:mace:inetOrgPerson:preferredLanguage\">"
@@ -1610,7 +1610,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">.*\\.example\\.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonPrincipalName\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonPrincipalName\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1619,10 +1619,10 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>www.example.edu</Requester>"
 				+ "					<Resource>http://www.example.edu/</Resource>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"permit\">urn:example:contract:4657483</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1631,7 +1631,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>www.external.com</Requester>"
 				+ "					<Resource>http://www.external.com/</Resource>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"permit\">urn:example:contract:113455</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1644,7 +1644,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"deny\">urn:example:poorlyDressed</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1653,10 +1653,10 @@ public class ArpTests extends TestCase {
 				+ "					<Requester matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">.*\\.example\\.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"deny\">faculty@example.edu</Value>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"permit\">urn:example:lovesIceCream</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1669,17 +1669,17 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						"urn:mace:dir:eduperson#eduPersonEntitlement",
 						new Object[] {
 							"urn:example:lovesIceCream",
 							"urn:example:poorlyDressed",
 							"urn:example:contract:113455",
 							"urn:example:contract:4657483" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "wassa@example.edu" }),
 					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
 		});
@@ -1688,13 +1688,13 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						"urn:mace:dir:eduperson#eduPersonEntitlement",
 						new Object[] { "urn:example:lovesIceCream", "urn:example:contract:4657483" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "employee@example.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "wassa@example.edu" }),
 					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
 		});
@@ -1735,7 +1735,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"permit\">member@example.edu</Value>"
 				+ "				</Attribute>"
 				+ "				<Attribute name=\"urn:mace:inetOrgPerson:preferredLanguage\">"
@@ -1747,7 +1747,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">.*\\.example\\.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonPrincipalName\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonPrincipalName\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1756,10 +1756,10 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>www.example.edu</Requester>"
 				+ "					<Resource>http://www.example.edu/</Resource>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<AnyValue release=\"permit\"/>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"permit\">urn:example:contract:4657483</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1768,7 +1768,7 @@ public class ArpTests extends TestCase {
 				+ "					<Requester>www.external.com</Requester>"
 				+ "					<Resource>http://www.external.com/</Resource>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"permit\">urn:example:contract:113455</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1781,7 +1781,7 @@ public class ArpTests extends TestCase {
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"deny\">urn:example:poorlyDressed</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1790,10 +1790,10 @@ public class ArpTests extends TestCase {
 				+ "					<Requester matchFunction=\"urn:mace:shibboleth:arp:matchFunction:regexMatch\">.*\\.example\\.edu</Requester>"
 				+ "					<AnyResource />"
 				+ "				</Target>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonAffiliation\">"
 				+ "					<Value release=\"deny\">faculty@example.edu</Value>"
 				+ "				</Attribute>"
-				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonEntitlement\">"
+				+ "				<Attribute name=\"urn:mace:dir:eduperson#eduPersonEntitlement\">"
 				+ "					<Value release=\"permit\">urn:example:lovesIceCream</Value>"
 				+ "				</Attribute>"
 				+ "			</Rule>"
@@ -1806,17 +1806,17 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						"urn:mace:dir:eduperson#eduPersonEntitlement",
 						new Object[] {
 							"urn:example:lovesIceCream",
 							"urn:example:poorlyDressed",
 							"urn:example:contract:113455",
 							"urn:example:contract:4657483" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						"urn:mace:dir:eduperson#eduPersonPrincipalName",
 						new Object[] { "wassa@example.edu" }),
 					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
 		});
@@ -1825,10 +1825,10 @@ public class ArpTests extends TestCase {
 			new AAAttributeSet(
 				new AAAttribute[] {
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						"urn:mace:dir:eduperson#eduPersonEntitlement",
 						new Object[] { "urn:example:contract:113455" }),
 					new AAAttribute(
-						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						"urn:mace:dir:eduperson#eduPersonAffiliation",
 						new Object[] { "member@example.edu" }),
 					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
 		});

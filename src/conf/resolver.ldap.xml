@@ -1,19 +1,19 @@
 <AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
 	
-	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonPrincipalName" smartScope="shibdev.edu">
+	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonPrincipalName" smartScope="shibdev.edu">
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
 	
-	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonEntitlement">
+	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonEntitlement">
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
 	
-	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonAffiliation">
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
 	
-	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonScopedAffiliation" smartScope="shibdev.edu">
-		<AttributeDependency requires="urn:mace:eduPerson:1.0:eduPersonAffiliation"/>
+	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonScopedAffiliation" smartScope="shibdev.edu">
+		<AttributeDependency requires="urn:mace:dir:eduperson#eduPersonAffiliation"/>
 	</SimpleAttributeDefinition>
 
 	<JNDIDirectoryDataConnector id="directory">

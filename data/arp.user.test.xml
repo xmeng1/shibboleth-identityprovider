@@ -4,7 +4,7 @@
 		<Target>
 			<AnyTarget/>
 		</Target>
-		<Attribute name="urn:mace:eduPerson:1.0:eduPersonPrincipalName">
+		<Attribute name="urn:mace:dir:eduperson#eduPersonPrincipalName">
 			<AnyValue release="permit"/>
 		</Attribute>
 	</Rule>
