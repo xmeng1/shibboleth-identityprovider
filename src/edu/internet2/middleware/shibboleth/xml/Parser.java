@@ -69,7 +69,7 @@ public class Parser {
             "urn:oasis:names:tc:SAML:1.0:protocol",
             "urn:oasis:names:tc:SAML:2.0:protocol",
             "urn:mace:shibboleth:namemapper:1.0",
-            "urn:mace:shibboleth:origin:1.0",
+            "urn:mace:shibboleth:idp:config:1.0",
             "urn:mace:shibboleth:arp:1.0",
             "urn:mace:shibboleth:resolver:1.0",
             "urn:mace:shibboleth:target:config:1.0",
@@ -92,36 +92,22 @@ public class Parser {
      * @param validate If true, use Schema. Otherwise, its raw XML.
      * @return A DOM 3 tree
      */
-    public static Document loadDom(InputSource ins, boolean validate) {
-        Document doc=null;
-        log.info("Loading XML from (" + ins.getSystemId() + ")"
-                + (validate?" with Schema validation":"")
-                );
-        try {
-            if (validate)
-                doc = org.opensaml.XML.parserPool.parse(ins,schema);
-            else
-                doc = org.opensaml.XML.parserPool.parse(ins,null);
-            
-        } catch (SAXException e) {
-            log.error("Error in XML configuration file"+e);
-            return null;
-        } catch (IOException e) {
-            log.error("Error accessing XML configuration file"+e);
-            return null;
-        } catch (SAMLException e) {
-            log.error("Error with XML parser "+e);
-            return null;
-       }
-        
-        return doc;
-    }
+    public static Document loadDom(InputSource ins, boolean validate) throws SAMLException, SAXException, IOException {
+
+		Document doc = null;
+		log.debug("Loading XML from (" + ins.getSystemId() + ")" + (validate ? " with Schema validation" : ""));
+		if (validate) {
+			doc = org.opensaml.XML.parserPool.parse(ins, schema);
+		} else {
+			doc = org.opensaml.XML.parserPool.parse(ins, null);
+		}
+		return doc;
+	}
     
     
     /**
-     * A dummy class that pretends to be an old Xerces DOMParser
-     * to simplify conversion of existing code.
-     */
+	 * A dummy class that pretends to be an old Xerces DOMParser to simplify conversion of existing code.
+	 */
     public static class DOMParser {
         Document doc = null;
         boolean validate = false;
@@ -130,7 +116,7 @@ public class Parser {
             this.validate=validate;
         }
         
-        public Document parse(InputSource ins) throws SAXException, IOException {
+        public Document parse(InputSource ins) throws SAXException, IOException, SAMLException {
             doc = loadDom(ins,true);
             return doc;
         }
@@ -175,7 +161,7 @@ public class Parser {
      * @param validate if true, use Schema
      * @return DOM tree
      */
-    public static Document loadDom(String configFilePath,boolean validate) 
+    public static Document loadDom(String configFilePath,boolean validate) throws SAMLException, SAXException, IOException 
     {
         InputSource insrc;
         String schemaCannonicalFilePath;

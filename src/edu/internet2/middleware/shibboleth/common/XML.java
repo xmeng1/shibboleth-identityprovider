@@ -77,7 +77,7 @@ public class XML
     public final static String TRUST_SCHEMA_ID = "shibboleth-trust-1.0.xsd";
     
     public final static String MAIN_SHEMA_ID = "shibboleth-targetconfig-1.0.xsd";
-    public final static String ORIGIN_SHEMA_ID = "origin.xsd";
+    public final static String ORIGIN_SHEMA_ID = "shibboleth-idpconfig-1.0.xsd";
     
     public final static String XMLSIG_RETMETHOD_RAWX509    = "http://www.w3.org/2000/09/xmldsig#rawX509Certificate";
     public final static String XMLSIG_RETMETHOD_RAWX509CRL = "http://www.w3.org/2000/09/xmldsig-more#rawX509CRL";
