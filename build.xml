@@ -107,7 +107,23 @@
     <target name="package-origin">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
     </target>
-    
+
+	<!-- Ant target used to test the Java Service Provider.
+	     *** You may not agree with these decisions.
+	     Tomcat must be stopped during the build.
+	     Compile everything, deploy the WAR, and delete the old directory 
+	     so the WAR gets expanded when Tomcat restarts.
+	     Ant and Eclipse should agree on the Build directory, and the
+	     class files should remain in place after deployment. 
+	     -->
+    <target name="dist-target" depends="compile, package-target">
+    	<copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${distname}.war" />
+    	<delete dir="${tomcat.home}/webapps/${distname}" quiet="yes" />
+    </target>	
+    	
+    <target name="package-target">
+        <war warfile="${dist}/${distname}.war" webxml="${configroot}/target.xml" basedir="${approot}" update="no" />
+    </target>
     <target name="dist-wayf" depends="compile, package-wayf, clean-build" />
     <target name="package-wayf">
         <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
