@@ -27,20 +27,13 @@
 package edu.internet2.middleware.shibboleth.metadata.provider;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.StringTokenizer;
-
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
