@@ -75,7 +75,7 @@ public class LoggingContextListener implements ServletContextListener {
 
 		// rootAppender.setLayout(new PatternLayout("%-5p %-41X{serviceId} %d{ISO8601} (%c:%L) - %m%n"));
 		// Logger.getRootLogger().setLevel((Level) Level.DEBUG);
-		Logger.getRootLogger().setLevel((Level) Level.DEBUG);
+		Logger.getRootLogger().setLevel((Level) Level.INFO);
 		rootAppender.setLayout(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"));
 
 		try {
@@ -128,7 +128,7 @@ public class LoggingContextListener implements ServletContextListener {
 			configureErrorLog(errorLogNode);
 		} else {
 			// started out at INFO for logging config messages
-			Logger.getRootLogger().setLevel((Level) Level.DEBUG);
+			Logger.getRootLogger().setLevel((Level) Level.WARN);
 		}
 
 		// turn these off by default
