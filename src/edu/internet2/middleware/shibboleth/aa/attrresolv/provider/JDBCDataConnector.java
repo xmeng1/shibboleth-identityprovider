@@ -88,7 +88,8 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 
 	private static Logger log = Logger.getLogger(JDBCDataConnector.class.getName());
 	protected String searchVal;
-    protected int minResultSet=0,maxResultSet=0;
+    protected int minResultSet=0,maxResultSet=0,retryInterval=300;
+    protected long deadSince = 0;
 	protected DataSource dataSource;
 	protected JDBCAttributeExtractor extractor;
 	protected JDBCStatementCreator statementCreator;
@@ -126,8 +127,11 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
             if (e.getAttributeNode("maxResultSet") != null) {
                 maxResultSet = Integer.parseInt(e.getAttribute("maxResultSet"));
             }
+            if (e.getAttributeNode("retryInterval") != null) {
+            	retryInterval = Integer.parseInt(e.getAttribute("retryInterval"));
+            }
         } catch (NumberFormatException ex) {
-            log.error("Malformed result set limits: using defaults.");
+            log.error("Malformed result set and retry limits: using defaults.");
         }
         
 		//Load site-specific implementation classes	
@@ -310,17 +314,38 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 
 		log.debug("Resolving connector: (" + getId() + ")");
 
+        // Are we alive?
+        boolean alive = true;
+        long now = System.currentTimeMillis();
+        synchronized(this) {
+        	if (deadSince > 0 && now - deadSince < retryInterval) {
+                alive = false;
+            }
+            else {
+            	deadSince = 0;
+            }
+        }
+        
+        if (!alive) {
+        	log.info("JDBC Connector (" + getId() + ") is dead, returning immediately");
+            throw new ResolutionPlugInException("Connection is dead");
+        }
+        
 		//Retrieve a connection from the connection pool
 		Connection conn = null;
 		try {
 			conn = dataSource.getConnection();
 			log.debug("Connection retrieved from pool");
-		} catch (Exception e) {
-			log.error("JDBC Connector (" + getId() + ") unable to fetch a connection from the pool");
-			throw new ResolutionPlugInException("Unable to fetch a connection from the pool: " + e.getMessage());
+		}
+        catch (Exception e) {
+            synchronized (this) {
+            	deadSince = now;
+            }
+			log.error("JDBC Connector (" + getId() + ") unable to fetch a connection from the pool, marking it dead");
+			throw new ResolutionPlugInException("Unable to fetch a connection from the pool, marking it dead: " + e.getMessage());
 		}
 		if (conn == null) {
-			log.error("Pool didn't return a propertly initialized connection.");
+			log.error("Pool didn't return a properly initialized connection.");
 			throw new ResolutionPlugInException("Pool didn't return a properly initialized connection.");
 		}
 
@@ -348,8 +373,11 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
             log.error("An ERROR occured while extracting attributes from result set");
             throw new ResolutionPlugInException("An ERROR occured while extracting attributes from result set: " + e.getMessage());
 		} catch (SQLException e) {
-			log.error("An ERROR occured while executing the query");
-			throw new ResolutionPlugInException("An ERROR occured while executing the query: " + e.getMessage());
+            synchronized (this) {
+                deadSince = now;
+            }
+			log.error("An ERROR occured while executing the query, marking connector dead");
+			throw new ResolutionPlugInException("An ERROR occured while executing the query, marking connector dead: " + e.getMessage());
         } finally {
             Exception e_save = null;
             try {
