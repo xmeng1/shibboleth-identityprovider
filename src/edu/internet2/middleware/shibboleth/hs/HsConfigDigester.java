@@ -1,8 +1,11 @@
 package edu.internet2.middleware.shibboleth.hs;
 
+import javax.servlet.ServletContext;
 import javax.xml.parsers.SAXParser;
-import org.apache.commons.digester.Digester;
+
 import org.xml.sax.XMLReader;
+
+import edu.internet2.middleware.shibboleth.common.ServletDigester;
 
 /**
  * This class is a jakarta Digester style parser for the HS configuration file.  
@@ -13,32 +16,27 @@ import org.xml.sax.XMLReader;
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
-public class HsConfigDigester extends Digester {
+public class HsConfigDigester extends ServletDigester {
 
-	protected String hsConfigClass = "edu.internet2.middleware.shibboleth.hs.HandleServiceConfig";
+	protected String hsConfigClass =
+		"edu.internet2.middleware.shibboleth.hs.HandleServiceConfig";
 	private boolean configured = false;
 
-	/**
-	 * Constructor for ShibbolethConfigDigester.
-	 */
 	public HsConfigDigester() {
 		super();
 		configure();
 	}
 
-	/**
-	 * Constructor for ShibbolethConfigDigester.
-	 * @param parser
-	 */
 	public HsConfigDigester(SAXParser parser) {
 		super(parser);
 		configure();
 	}
 
-	/**
-	 * Constructor for ShibbolethConfigDigester.
-	 * @param reader
-	 */
+	public HsConfigDigester(ServletContext context) {
+		super(context);
+		configure();
+	}
+
 	public HsConfigDigester(XMLReader reader) {
 		super(reader);
 		configure();

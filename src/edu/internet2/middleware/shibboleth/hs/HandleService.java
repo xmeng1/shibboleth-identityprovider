@@ -13,6 +13,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -113,8 +114,11 @@ public class HandleService extends HttpServlet {
 
 		InputStream is =
 			getServletContext().getResourceAsStream(hsConfigFileLocation);
-		HsConfigDigester digester = new HsConfigDigester();
+
 		try {
+			HsConfigDigester digester =
+				new HsConfigDigester(getServletContext());
+			digester.setValidating(true);
 			digester.parse(is);
 		} catch (SAXException se) {
 			log.fatal("Error parsing HS configuration file.", se);
@@ -231,7 +235,8 @@ public class HandleService extends HttpServlet {
 	private void handleError(
 		HttpServletRequest req,
 		HttpServletResponse res,
-		Exception e) throws ServletException {
+		Exception e)
+		throws ServletException {
 
 		log.warn("Handle Service Failure: " + e);
 
@@ -248,7 +253,7 @@ public class HandleService extends HttpServlet {
 		} catch (ServletException se) {
 			log.error(
 				"Problem trying to display Handle Service error page: " + se);
-				throw se;
+			throw se;
 		}
 	}
 
