@@ -6,7 +6,8 @@
 
 <!--  A Servlet deployment descriptor (WEB-INF/web.xml) file
 	defining Servlets, Filters, and Listeners for a /shibboleth
-	context containing both an IdP and an SP  -->
+	context containing both an IdP and an SP.  
+-->
 
 <web-app>
 	<display-name>Shibboleth</display-name>
@@ -84,14 +85,6 @@
 		</init-param>
 		</filter>
 	-->
-	<!--  Frontend the IdP SSO Servlet with the institution's
-		locally selected WebISO Filter. -->
-	<!--  CAS Example		
-		<filter-mapping>
-		<filter-name>CAS Filter</filter-name>
-		<servlet-name>HS</servlet-name>
-		</filter-mapping>
-	-->
 
 
 	<!-- Frontend any protocol endpoints with the RequestLogFilter
@@ -114,19 +107,11 @@
 
 	<!-- Servlets for Shibboleth/SAML Protocol endpoints -->
 	<servlet>
-		<!-- IdP SSO  -->
-		<servlet-name>HS</servlet-name>
-		<display-name>Shibboleth Handle Service</display-name>
+		<!-- IdP SSO and AA -->
+		<servlet-name>IdP</servlet-name>
+		<display-name>Shibboleth Identity Provider</display-name>
 		<servlet-class>
-			edu.internet2.middleware.shibboleth.hs.HandleServlet
-		</servlet-class>
-	</servlet>
-	<servlet>
-		<!--  IdP AttributeAuthority -->
-		<servlet-name>AA</servlet-name>
-		<display-name>Shibboleth Attribute Authority</display-name>
-		<servlet-class>
-			edu.internet2.middleware.shibboleth.aa.AAServlet
+			edu.internet2.middleware.shibboleth.idp.IdPResponder
 		</servlet-class>
 	</servlet>
 	<servlet>
@@ -153,16 +138,20 @@
 
 	<!--  Mapping for SAML/Shibboleth protocol endpoints -->
 	<servlet-mapping>
-		<servlet-name>HS</servlet-name>
-		<url-pattern>/HS</url-pattern>
+		<servlet-name>IdP</servlet-name>
+		<url-pattern>/SSO</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
-		<servlet-name>AA</servlet-name>
+		<servlet-name>IdP</servlet-name>
 		<url-pattern>/AA</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
+		<servlet-name>IdP</servlet-name>
+		<url-pattern>/Artifact</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
 		<servlet-name>AssertionConsumer</servlet-name>
-		<url-pattern>*.SHIRE</url-pattern>
+		<url-pattern>*.shire</url-pattern>
 	</servlet-mapping>
 
 	<!-- Mapping for administrative functions -->
@@ -175,4 +164,22 @@
 		<extension>css</extension>
 		<mime-type>text/css</mime-type>
 	</mime-mapping>
+	
+	
+<!-- If you don't have a real SSO, then this code triggers
+	 Basic Authentication against the {tomcat}/conf/tomcat-users file
+-->	
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Shibboleth SSO</web-resource-name>
+			<url-pattern>/SSO</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>user</role-name>
+		</auth-constraint>
+	</security-constraint>
+	<!-- Define the Login Configuration for this Application -->
+	<login-config>
+		<auth-method>BASIC</auth-method>
+	</login-config>
 </web-app>

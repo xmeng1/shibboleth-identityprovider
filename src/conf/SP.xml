@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- Test SP configuration file for Example State University 
+<!-- Test SP configuration file for Example Entity 
 	 There is one Metadata Entity: urn:mace:inqueue:example.org
 	 It has both IdP and SP Roles.
 	 It has one server: //shibboleth.example.org:8080
@@ -26,7 +26,7 @@
     <SHIRE>
         <RequestMapProvider type="edu.internet2.middleware.shibboleth.serviceprovider.XMLRequestMap">
             <RequestMap applicationId="default">
-               <Host name="shibboleth.example.org" scheme="https">
+               <Host name="shibboleth.example.org" port="8443" scheme="https">
                     <Path name="secure" requireSession="true" exportAssertion="true" />
                 </Host>
                 <Host name="shibboleth.example.org" port="8080" scheme="http">
@@ -37,7 +37,7 @@
     </SHIRE>
 
     <Applications xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion"
-        id="default" providerId="http://shibboleth.example.org/shibboleth">
+        id="default" providerId="urn:mace:inqueue:example.org">
 
         <!--
         Controls session lifetimes, address checks, cookie handling, WAYF, and the SHIRE location.
@@ -49,7 +49,7 @@
         Change to https://localhost/shibboleth/HS for internal testing against your own origin.
         -->
         <Sessions lifetime="7200" timeout="3600" checkAddress="true"
-            wayfURL="http://shibboleth.example.org:8080/shibboleth/HS"
+            wayfURL="http://shibboleth.example.org:8080/shibboleth/SSO"
             shireURL="http://shibboleth.example.org:8080/shibboleth/Shibboleth.shire" 
 			shireSSL="false"/>
 
@@ -85,17 +85,9 @@
         <FederationProvider type="edu.internet2.middleware.shibboleth.common.provider.XMLMetadata"
             uri="/conf/ExampleMetadata.xml"/>
 
-        <!--
-        Revocation using X.509 CRLs is an optional feature in some trust metadata or you may
-        supply your own revocation information locally.
-        -->
-        <!--
-        <RevocationProvider type="edu.internet2.middleware.shibboleth.common.provider.XMLRevocation"
-            uri="/conf/IQ-trust.xml"/>
-        -->
 
         <!-- zero or more SAML Audience condition matches -->
-        <saml:Audience>urn:mace:shibdev</saml:Audience>
+        <saml:Audience>urn:mace:inqueue:example.org</saml:Audience>
 
 
     </Applications>

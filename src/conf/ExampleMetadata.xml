@@ -1,3 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- A single-entity "Federation" consisting of example.org.
+	 Defines both an IdP and an SP.
+     All Role Endpoints are hosted on shibboleth.example.org,
+     which should appear in the "hosts" file mapped to 127.0.0.1
+     You may change the protocol and port to switch to/from https.
+-->
+
 <EntitiesDescriptor
     xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -17,14 +26,14 @@
 			</KeyDescriptor>
 			<NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
 			<SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"
-			    Location="https://shibboleth.example.org:8080/shibboleth/HS"/>
+			    Location="http://shibboleth.example.org:8080/shibboleth/SSO"/>
 		</IDPSSODescriptor>
 		<AttributeAuthorityDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
 			<Extensions>
 		        <shib:Scope xmlns:shib="urn:mace:shibboleth:metadata:1.0">example.org</shib:Scope>
 			</Extensions>
 			<AttributeService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
-			    Location="https://shibboleth.example.org:8080/shibboleth/AA"/>
+			    Location="http://shibboleth.example.org:8080/shibboleth/AA"/>
 			<NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
 		</AttributeAuthorityDescriptor>
 		<SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
@@ -36,11 +45,11 @@
 			<NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
 		    <AssertionConsumerService index="0"
 		        Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post"
-		        Location="https://shibboleth.example.org:8080/shibboleth/Shibboleth.shire"/>
+		        Location="http://shibboleth.example.org:8080/shibboleth/Shibboleth.shire"/>
 		</SPSSODescriptor>
 		<Organization>
 		    <OrganizationName xml:lang="en">Example Entity</OrganizationName>
-		    <OrganizationDisplayName xml:lang="en">Example State University</OrganizationDisplayName>
+		    <OrganizationDisplayName xml:lang="en">Example Entity</OrganizationDisplayName>
 		    <OrganizationURL xml:lang="en">http://shibboleth.internet2.edu/</OrganizationURL>
 		</Organization>
 		<ContactPerson contactType="technical">

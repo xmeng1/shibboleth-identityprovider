@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- Test IdP configuration file for Example State University 
+<!-- Test IdP configuration file for Example Entity
 	 There is one Metadata Entity: urn:mace:inqueue:example.org
 	 It has both IdP and SP Roles.
 	 It has one server: //shibboleth.example.org:8080
@@ -19,7 +19,7 @@
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 shibboleth-idpconfig-1.0.xsd" 
-	AAUrl="https://shibboleth.example.org:8080/shibboleth/AA" 
+	AAUrl="http://shibboleth.example.org:8080/shibboleth/AA" 
 	resolverConfig="/conf/resolver.xml"
 	defaultRelyingParty="urn:mace:inqueue:example.org" 
 	providerId="urn:mace:inqueue:example.org">
@@ -71,6 +71,23 @@
 			</Certificate>
 		</FileResolver>
 	</Credentials>
+
+
+	<ProtocolHandler  
+		implementation="edu.internet2.middleware.shibboleth.idp.provider.ShibbolethV1SSOHandler">
+		<Location>http://shibboleth.example.org:8080/shibboleth/SSO</Location>
+	</ProtocolHandler>
+	
+	<ProtocolHandler  
+ 		implementation="edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_AttributeQueryHandler">
+		<Location>http://shibboleth.example.org:8080/shibboleth/AA</Location>
+	</ProtocolHandler>
+	
+	<ProtocolHandler  
+		implementation="edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_1ArtifactQueryHandler">
+		<Location>http://shibboleth.example.org:8080/shibboleth/Artifact</Location>
+	</ProtocolHandler>
+
 	
 	<FederationProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
                 uri="/conf/ExampleMetadata.xml"/>
