@@ -16,13 +16,13 @@
 
 <body>
 <div class="head">
-<img src="images/internet2.gif" />" alt="Logo" />
+<img src="images/internet2.gif"" alt="Logo" />
 <h1>Shibboleth SHIRE Failure</h1>
 </div>
 
 <p>The inter-institutional access system experienced a technical failure.</p>
 
-<p>Please email <a href="mailto:<bean:write name="test@test.edu" />"><bean:write name="test@test.edu" /></a> and include the following error message:</p>
+<p>Please email <a href="mailto:test@test.edu"">test@test.edu"</a> and include the following error message:</p>
 
 <p class="error">SHIRE failure at (<bean:write name="requestURL" />)</p>
 

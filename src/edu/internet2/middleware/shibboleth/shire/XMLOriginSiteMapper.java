@@ -60,6 +60,7 @@ import java.util.Vector;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.log4j.Logger;
 import org.apache.xml.security.c14n.Canonicalizer;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
@@ -89,6 +90,7 @@ public class XMLOriginSiteMapper implements OriginSiteMapper {
 	private HashMap originSites = null;
 	private HashMap hsKeys = null;
 	private KeyStore ks = null;
+	private static Logger log = Logger.getLogger(XMLOriginSiteMapper.class.getName());
 
 	/**
 	 *  Constructor for the XMLOriginSiteMapper object
@@ -113,9 +115,12 @@ public class XMLOriginSiteMapper implements OriginSiteMapper {
 			builder = org.opensaml.XML.parserPool.get();
 			Document doc;
 			doc = builder.parse(registryURI);
+			log.info("Located site file (" +registryURI +").");
 			Element e = doc.getDocumentElement();
-			if (!XML.SHIB_NS.equals(e.getNamespaceURI()) || !"Sites".equals(e.getLocalName()))
-				throw new OriginSiteMapperException("XMLOriginSiteMapper() requires shib:Sites as root element");
+			if (!XML.SHIB_NS.equals(e.getNamespaceURI()) || !"Sites".equals(e.getLocalName())) {
+				log.error("Construction requires a valid site file: (shib:Sites as root element)");
+				throw new OriginSiteMapperException("Construction requires a valid site file: (shib:Sites as root element)");
+			}
 
 			// Loop over the OriginSite elements.
 			NodeList nlist = e.getElementsByTagNameNS(XML.SHIB_NS, "OriginSite");
@@ -168,56 +173,83 @@ public class XMLOriginSiteMapper implements OriginSiteMapper {
 				}
 			}
 
-			if (verifyKey == null)
-				return;
-
-			Node n = e.getLastChild();
-			while (n != null && n.getNodeType() != Node.ELEMENT_NODE)
-				n = n.getPreviousSibling();
-
-			if (n != null
-				&& org.opensaml.XML.XMLSIG_NS.equals(n.getNamespaceURI())
-				&& "Signature".equals(n.getLocalName())) {
-				try {
-					XMLSignature sig = new XMLSignature((Element) n, null);
-					if (sig.checkSignatureValue(verifyKey)) {
-						// Now we verify that what is signed is what we expect.
-						SignedInfo sinfo = sig.getSignedInfo();
-						if (sinfo.getLength() == 1
-							&& (sinfo
-								.getCanonicalizationMethodURI()
-								.equals(Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS)
-								|| sinfo.getCanonicalizationMethodURI().equals(
-									Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS)))
-							//                      	  sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS) ||
-							//                     	   sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS))
-							{
-							Reference ref = sinfo.item(0);
-							if (ref.getURI() == null || ref.getURI().equals("")) {
-								Transforms trans = ref.getTransforms();
-								if (trans.getLength() == 1
-									&& trans.item(0).getURI().equals(Transforms.TRANSFORM_ENVELOPED_SIGNATURE))
-									return;
-							}
-						}
-					}
-				} catch (Exception sigE) {
-					throw new OriginSiteMapperException(
-						"Unable to verify signature on registry file: Site file not signed correctly with specified key:"
-							+ sigE);
-				}
+			if (verifyKey != null) {
+				log.info("Initialized with a key: attempting to verify document signature.");
+				validateSignature(verifyKey, e);
+			} else {
+				log.info("Initialized without key: skipping signature verification.");
 			}
-			throw new OriginSiteMapperException("Unable to verify signature on registry file: no signature found.");
+
 		} catch (SAXException e) {
+			log.error("Problem parsing site configuration" + e);
 			throw new OriginSiteMapperException("Problem parsing site configuration" + e);
 		} catch (IOException e) {
+			log.error("Problem accessing site configuration" + e);
 			throw new OriginSiteMapperException("Problem accessing site configuration" + e);
 		} catch (ParserConfigurationException pce) {
+			log.error("Parser configuration error" + pce);
 			throw new OriginSiteMapperException("Parser configuration error" + pce);
 		} finally {
 			if (builder != null)
 				org.opensaml.XML.parserPool.put(builder);
 		}
+	}
+
+	private void validateSignature(Key verifyKey, Element e) throws OriginSiteMapperException {
+
+		Node n = e.getLastChild();
+		while (n != null && n.getNodeType() != Node.ELEMENT_NODE)
+			n = n.getPreviousSibling();
+
+		if (n != null
+			&& org.opensaml.XML.XMLSIG_NS.equals(n.getNamespaceURI())
+			&& "Signature".equals(n.getLocalName())) {
+				log.info("Located signature in document... verifying.");
+			try {
+				XMLSignature sig = new XMLSignature((Element) n, null);
+				if (sig.checkSignatureValue(verifyKey)) {
+					// Now we verify that what is signed is what we expect.
+					SignedInfo sinfo = sig.getSignedInfo();
+					if (sinfo.getLength() == 1
+						&& (sinfo
+							.getCanonicalizationMethodURI()
+							.equals(Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS)
+							|| sinfo.getCanonicalizationMethodURI().equals(
+								Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS))) {
+						Reference ref = sinfo.item(0);
+						if (ref.getURI() == null || ref.getURI().equals("")) {
+							Transforms trans = ref.getTransforms();
+							if (trans.getLength() == 1
+								&& trans.item(0).getURI().equals(Transforms.TRANSFORM_ENVELOPED_SIGNATURE))
+								log.info("Signature verification successful.");
+								return;
+						}
+						log.error(
+							"Unable to verify signature on registry file: Unsupported dsig reference or transform data submitted with signature.");
+						throw new OriginSiteMapperException("Unable to verify signature on registry file: Unsupported dsig reference or transform data submitted with signature.");
+					} else {
+						log.error(
+							"Unable to verify signature on registry file: Unsupported canonicalization method.");
+						throw new OriginSiteMapperException("Unable to verify signature on registry file: Unsupported canonicalization method.");
+					}
+				} else {
+					log.error(
+						"Unable to verify signature on registry file: signature cannot be verified with the specified key.");
+					throw new OriginSiteMapperException("Unable to verify signature on registry file: signature cannot be verified with the specified key.");
+				}
+			} catch (Exception sigE) {
+				log.error(
+					"Unable to verify signature on registry file: An error occured while attempting to verify the signature:"
+						+ sigE);
+				throw new OriginSiteMapperException(
+					"Unable to verify signature on registry file: An error occured while attempting to verify the signature:"
+						+ sigE);
+			}
+		} else {
+			log.error("Unable to verify signature on registry file: no signature found in document.");
+			throw new OriginSiteMapperException("Unable to verify signature on registry file: no signature found in document.");
+		}
+
 	}
 
 	/**

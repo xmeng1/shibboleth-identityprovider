@@ -116,7 +116,7 @@ public class ShireServlet extends HttpServlet {
 	 *    <DD> A pathname to the trusted CA roots to accept</DD>
 	 *    <DT> keystore-password <I>(required)</I> </DT>
 	 *    <DD> The root keystore password</DD>
-	 *    <DT> registry-alias <I>(optional)</I> </DT>
+	 *    <DT> keystore-alias <I>(optional)</I> </DT>
 	 *    <DD> An alias in the provided keystore for the cert that can verify
 	 *    the origin site registry signature</DD>
 	 *    <DT> registry-uri <I>(required)</I> </DT>
@@ -150,6 +150,7 @@ public class ShireServlet extends HttpServlet {
 			KeyStore ks = KeyStore.getInstance("JKS");
 			ks.load(getServletContext().getResourceAsStream(keyStorePath), keyStorePasswd.toCharArray());
 
+			log.debug("Configured to use keystore-alias (" + keyStoreAlias + ") to verify site file.");
 			if (keyStoreAlias != null) {
 				Certificate cert;
 				cert = ks.getCertificate(keyStoreAlias);
@@ -171,20 +172,20 @@ public class ShireServlet extends HttpServlet {
 			log.info("Completed SHIRE initialization");
 
 		} catch (OriginSiteMapperException e) {
-			log.fatal("Unable load shibboleth site information." + e);
-			throw new UnavailableException("Unable load shibboleth site information." + e);
+			log.fatal("Configuration problem: Unable load shibboleth site information." + e);
+			throw new UnavailableException("Configuration problem: Unable load shibboleth site information." + e);
 		} catch (KeyStoreException e) {
-			log.fatal("Unable supplied keystore." + e);
-			throw new UnavailableException("Unable load supplied keystore." + e);
+			log.fatal("Configuration problem: Unable to load supplied keystore." + e);
+			throw new UnavailableException("Configuration problem: Unable load supplied keystore." + e);
 		} catch (NoSuchAlgorithmException e) {
-			log.fatal("Unable supplied keystore." + e);
-			throw new UnavailableException("Unable load supplied keystore." + e);
+			log.fatal("Configuration problem: Unable to load supplied keystore." + e);
+			throw new UnavailableException("Configuration problem: Unable load supplied keystore." + e);
 		} catch (CertificateException e) {
-			log.fatal("Unable supplied keystore." + e);
-			throw new UnavailableException("Unable load supplied keystore." + e);
+			log.fatal("Configuration problem: Unable to load supplied keystore." + e);
+			throw new UnavailableException("Configuration problem: Unable load supplied keystore." + e);
 		} catch (IOException e) {
-			log.fatal("Unable supplied keystore." + e);
-			throw new UnavailableException("Unable load supplied keystore." + e);
+			log.fatal("Configuration problem: Unable to loadsupplied keystore." + e);
+			throw new UnavailableException("Configuration problem: Unable load supplied keystore." + e);
 		}
 
 	}
@@ -442,7 +443,7 @@ public class ShireServlet extends HttpServlet {
 		log.debug("Displaying error page.");
 		req.setAttribute("errorText", se.toString());
 		req.setAttribute("requestURL", req.getRequestURI().toString());
-		RequestDispatcher rd = req.getRequestDispatcher("/wayferror.jsp");
+		RequestDispatcher rd = req.getRequestDispatcher("/shireerror.jsp");
 
 		try {
 			rd.forward(req, res);
