@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlException;
 import org.opensaml.SAMLException;
 import org.opensaml.artifact.Artifact;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -50,7 +51,10 @@ class XMLMetadataImpl
 	    try {
             // Assuming this just gets a DOM tree containing the metadata,
             // hopefully this will "just work".
-            realObject = new edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataProvider((Element)dom);
+            realObject =
+                new edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataProvider(
+                        (dom instanceof Element) ? (Element)dom : ((dom instanceof Document) ? ((Document)dom).getDocumentElement() : null)
+                    );
         }
         catch (SAMLException e) {
             throw new ShibbolethConfigurationException("Exception initializing metadata: " + e);
