@@ -86,7 +86,7 @@
     <OriginSite Name="muohio.edu">
         <Alias>Miami University</Alias>
         <Alias>MU</Alias>
-        <HandleService Location="https://naslnx07.mcs.muohio.edu/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"></HandleService>
+        <HandleService Location="http://naslnx07.mcs.muohio.edu:11180/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"></HandleService>
         <Domain>muohio.edu</Domain>
     </OriginSite>
 <ds:Signature>
@@ -98,15 +98,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>KGJX3bgsKmtZBTBEFELJtrJabXA=</ds:DigestValue>
+<ds:DigestValue>hKF/uvvxhPHIW2bHpSgzNF93lLA=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-XiW/h7g/iTZMB/sNed35XL2kNrFNogEPEpgVkj481x4U1jx3a3pqyUySTWu0Saju16O7LpfjF64h
-5+EqB/r5+fdFtJY/GLRjUrp8ly5QftMsp+vQDPKZ+zkjGOdKegik+2zTx5v0bsBOqUZGXkOKC4B2
-1y1xQ7PK6ZTo9go4HALtSqf4p/vFF7CXD6Yq+vm95uiq5g7fahQ9x7kz6at4M0PA4o/mSVKQSNAm
-qGwhYusGoppRNPr4DNj2bR3RjTCNxHDDOWygxM5Kj0DtB6UNYaKyBWA7UFaGR3ypItIRHozmO4ZB
-1dcI2zP3PnAbjvRBtLLB1G1QpVLgkwerJgSggw==
+FCD0kjda/AGfWOCZ97xy/4VJvPdrhbZu2lKsT6qpPeM6T6h2BNRUWMhPEgl7VxYOK8EzcpY7BNvv
+jTjGeDANdvOYpPU8T/HXM0qtPvqVcGUlSazZehTW6sYDvpTqIMJpyPwLxONn/HuyvI2xXHQIxmKp
+nds/gg/IyirWifjz5NaJo3OAjPCFRojwELLmPOiu4nvWMwdiLI2giBI9sNsBBbSWhaz0Q3LtPt3I
+7pASIn4Eo3tccWbWY66ME4XJzg2ccfiN04vERnUm3MJo1R7q5K6n0b8oQFLGa5RvbV+LE8pFTePR
+A5LptAxjviCXMadlvnFuRH3o/Rn1TKGKzKH97w==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
