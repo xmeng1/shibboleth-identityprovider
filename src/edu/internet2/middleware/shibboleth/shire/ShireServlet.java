@@ -113,10 +113,6 @@ public class ShireServlet extends HttpServlet
             }
             mapper = new XMLOriginSiteMapper(conf.getInitParameter("registry-uri"), k, ks);
         }
-        catch (org.apache.xml.security.exceptions.XMLSecurityException e)
-        {
-            throw new ServletException(e.getMessage());
-        }
         catch (java.security.KeyStoreException e)
         {
             throw new ServletException("ShireServlet.init() unable to load Java keystore");
@@ -137,7 +133,7 @@ public class ShireServlet extends HttpServlet
         {
             throw new ServletException("ShireServlet.init() unable to load Java keystore");
         }
-        catch (org.xml.sax.SAXException e)
+        catch (Exception e)
         {
             throw new ServletException("ShireServlet.init() unable to load origin site registry: " + e.getMessage());
         }
