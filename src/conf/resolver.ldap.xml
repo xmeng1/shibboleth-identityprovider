@@ -1,9 +1,5 @@
 <AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
 	
-	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="shibdev.edu">
-		<DataConnectorDependency requires="directory"/>
-	</SimpleAttributeDefinition>
-	
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonEntitlement">
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
@@ -12,10 +8,14 @@
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
 	
-	<!-- To use this attribute, you should change the smartScope value to match your site's domain name.
+	<!-- To use these attributes, you should change the smartScope value to match your site's domain name.
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" smartScope="shibdev.edu">
 		<AttributeDependency requires="urn:mace:dir:attribute-def:eduPersonAffiliation"/>
 	</SimpleAttributeDefinition>
+
+        <SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="shibdev.edu">
+                <DataConnectorDependency requires="directory"/>
+        </SimpleAttributeDefinition>
 	-->
 
 	<JNDIDirectoryDataConnector id="directory">
