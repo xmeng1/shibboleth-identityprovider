@@ -94,19 +94,15 @@ public class HandleServlet extends HttpServlet {
 	private static Logger log = Logger.getLogger(HandleServlet.class.getName());
 	private Certificate[] certificates;
 	private PrivateKey privateKey;
-	protected Properties loadConfiguration() throws HandleException {
+	protected Properties loadConfiguration() throws HSConfigurationException {
 
 		//Set defaults
 		Properties defaultProps = new Properties();
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation",
 			"edu.internet2.middleware.shibboleth.hs.provider.MemoryHandleRepository");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL",
-			"1800000");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer",
-			"shib2.internet2.edu");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL", "1800000");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer", "shib2.internet2.edu");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			getServletContext().getRealPath("/WEB-INF/conf/handle.jks"));
@@ -122,7 +118,7 @@ public class HandleServlet extends HttpServlet {
 			properties.load(getServletContext().getResourceAsStream(propertiesFileLocation));
 		} catch (IOException e) {
 			log.error("Could not load HS servlet configuration: " + e);
-			throw new HandleException("Could not load HS servlet configuration.");
+			throw new HSConfigurationException("Could not load HS servlet configuration.");
 		}
 
 		if (log.isDebugEnabled()) {
@@ -130,9 +126,7 @@ public class HandleServlet extends HttpServlet {
 			PrintStream debugPrinter = new PrintStream(debugStream);
 			properties.list(debugPrinter);
 			log.debug(
-				"Runtime configuration parameters: "
-					+ System.getProperty("line.separator")
-					+ debugStream.toString());
+				"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
 		}
 
 		return properties;
@@ -161,15 +155,11 @@ public class HandleServlet extends HttpServlet {
 			log.fatal("Error initializing SAML libraries: " + ex);
 			throw new UnavailableException("Handle Service failed to initialize.");
 		} catch (HSConfigurationException ex) {
-			log.fatal(
-				"Handle Service runtime configuration error.  Please fix and re-initialize. Cause: " + ex);
+			log.fatal("Handle Service runtime configuration error.  Please fix and re-initialize. Cause: " + ex);
 			throw new UnavailableException("Handle Service failed to initialize.");
 		} catch (HandleRepositoryException ex) {
 			log.fatal("Unable to load Handle Repository: " + ex);
 			throw new UnavailableException("Handle Service failed to initialize.");
-		} catch (Exception ex) {
-			log.fatal("Error in initialization: " + ex);
-			throw new ServletException("Handle Service could not be initialized.");
 		}
 	}
 
@@ -179,26 +169,22 @@ public class HandleServlet extends HttpServlet {
 
 			keyStore.load(
 				getServletContext().getResourceAsStream(
-					configuration.getProperty(
-						"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath")),
+					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath")),
 				configuration
 					.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword")
 					.toCharArray());
 
 			privateKey =
 				(PrivateKey) keyStore.getKey(
-					configuration.getProperty(
-						"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias"),
+					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias"),
 					configuration
 						.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword")
 						.toCharArray());
 
-			if (configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias")
-				!= null) {
+			if (configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias") != null) {
 				certificates =
 					keyStore.getCertificateChain(
-						configuration.getProperty(
-							"edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias"));
+						configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.certAlias"));
 			} else {
 				certificates =
 					keyStore.getCertificateChain(
@@ -208,8 +194,7 @@ public class HandleServlet extends HttpServlet {
 		} catch (KeyStoreException e) {
 			throw new HSConfigurationException("An error occurred while accessing the java keystore: " + e);
 		} catch (NoSuchAlgorithmException e) {
-			throw new HSConfigurationException(
-				"Appropriate JCE provider not found in the java environment: " + e);
+			throw new HSConfigurationException("Appropriate JCE provider not found in the java environment: " + e);
 		} catch (CertificateException e) {
 			throw new HSConfigurationException(
 				"The java keystore contained a certificate that could not be loaded: " + e);
@@ -244,7 +229,7 @@ public class HandleServlet extends HttpServlet {
 			log.error(ex);
 			handleError(req, res, ex);
 			return;
-		} catch (HandleException ex) {
+		} catch (InvalidClientDataException ex) {
 			log.error(ex);
 			handleError(req, res, ex);
 			return;
@@ -269,8 +254,7 @@ public class HandleServlet extends HttpServlet {
 			postProfile.prepare(
 				shireURL,
 				handle,
-				configuration.getProperty(
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.authenticationDomain"),
+				configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authenticationDomain"),
 				clientAddress,
 				authType,
 				new Date(System.currentTimeMillis()),
@@ -279,38 +263,29 @@ public class HandleServlet extends HttpServlet {
 				Arrays.asList(certificates),
 				null,
 				null);
+				
 		return r.toBase64();
 	}
 
 	protected void createForm(HttpServletRequest req, HttpServletResponse res, byte[] buf)
-		throws HandleException {
-		try {
-			/**
-			 * forwarding to hs.jsp for submission
-			     */
-			//Hardcoded to ASCII to ensure Base64 encoding compatibility
-			req.setAttribute("assertion", new String(buf, "ASCII"));
+		throws IOException, ServletException {
 
-			if (log.isDebugEnabled()) {
-				try {
-					log.debug(
-						"Dumping generated SAML Response:"
-							+ System.getProperty("line.separator")
-							+ new String(new BASE64Decoder().decodeBuffer(new String(buf, "ASCII")), "UTF8"));
-				} catch (IOException e) {
-					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-				}
+		//Hardcoded to ASCII to ensure Base64 encoding compatibility
+		req.setAttribute("assertion", new String(buf, "ASCII"));
+
+		if (log.isDebugEnabled()) {
+			try {
+				log.debug(
+					"Dumping generated SAML Response:"
+						+ System.getProperty("line.separator")
+						+ new String(new BASE64Decoder().decodeBuffer(new String(buf, "ASCII")), "UTF8"));
+			} catch (IOException e) {
+				log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
 			}
-
-			RequestDispatcher rd = req.getRequestDispatcher("/hs.jsp");
-			rd.forward(req, res);
-
-		} catch (IOException ex) {
-			throw new HandleException("IO interruption while displaying Handle Service UI." + ex);
-		} catch (ServletException ex) {
-			throw new HandleException("Problem displaying Handle Service UI." + ex);
 		}
 
+		RequestDispatcher rd = req.getRequestDispatcher("/hs.jsp");
+		rd.forward(req, res);
 	}
 
 	protected void handleError(HttpServletRequest req, HttpServletResponse res, Exception e)
@@ -324,23 +299,29 @@ public class HandleServlet extends HttpServlet {
 
 	}
 
-	protected void checkRequestParams(HttpServletRequest req) throws HandleException {
+	protected void checkRequestParams(HttpServletRequest req) throws InvalidClientDataException {
 
 		if (req.getParameter("target") == null || req.getParameter("target").equals("")) {
-			throw new HandleException("Invalid data from SHIRE: no target URL received.");
+			throw new InvalidClientDataException("Invalid data from SHIRE: no target URL received.");
 		}
 		if ((req.getParameter("shire") == null) || (req.getParameter("shire").equals(""))) {
-			throw new HandleException("Invalid data from SHIRE: No acceptance URL received.");
+			throw new InvalidClientDataException("Invalid data from SHIRE: No acceptance URL received.");
 		}
 		if ((req.getRemoteUser() == null) || (req.getRemoteUser().equals(""))) {
-			throw new HandleException("Unable to authenticate remote user");
+			throw new InvalidClientDataException("Unable to authenticate remote user");
 		}
 		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) {
-			throw new HandleException("Unable to obtain client address.");
+			throw new InvalidClientDataException("Unable to obtain client address.");
 		}
 	}
 
+	class InvalidClientDataException extends Exception {
+		public InvalidClientDataException(String message) {
+			super(message);
+		}
+	}
 }
+
 
     
 
