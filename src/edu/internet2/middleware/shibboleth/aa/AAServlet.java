@@ -180,8 +180,9 @@ public class AAServlet extends HttpServlet {
 		}
 
 		if (log.isDebugEnabled()) {
-			PrintStream debugStream = new PrintStream(new ByteArrayOutputStream());
-			properties.list(debugStream);
+			ByteArrayOutputStream debugStream = new ByteArrayOutputStream();
+			PrintStream debugPrinter = new PrintStream(debugStream);
+			properties.list(debugPrinter);
 			log.debug(
 				"Runtime configuration parameters: "
 					+ System.getProperty("line.separator")
