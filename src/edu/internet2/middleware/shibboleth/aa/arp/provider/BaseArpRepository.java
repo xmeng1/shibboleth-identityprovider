@@ -367,6 +367,7 @@ class ArpCache {
 								needsDeleting.add(cachedArp);
 							}
 						}
+					}
 						//release the lock to be friendly
 						Iterator deleteIterator = needsDeleting.iterator();
 						while (deleteIterator.hasNext()) {
@@ -376,7 +377,7 @@ class ArpCache {
 									((CachedArp) deleteIterator.next()).arp.getPrincipal());
 							}
 						}
-					}
+
 					sleep(5 * 60 * 1000);
 				} catch (InterruptedException e) {
 					log.debug("ArpCache Cleanup interrupted.");
