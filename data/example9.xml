@@ -5,7 +5,7 @@
 		<Target>
 			<AnyTarget/>
 		</Target>
-		<Attribute identifier="http://example.edu/attributes/attribute10" name="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+		<Attribute identifier="http://example.edu/attributes/attribute10" name="urn:mace:dir:eduperson#eduPersonAffiliation">
 			<Value release="permit">member@example.edu</Value>
 		</Attribute>
 	</Rule>
