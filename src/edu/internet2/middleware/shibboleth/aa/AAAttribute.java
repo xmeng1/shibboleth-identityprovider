@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.opensaml.QName;
@@ -120,7 +121,11 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 		if (!this.values.isEmpty()) {
 			this.values.clear();
 		}
-		this.values.addAll(Arrays.asList(values));
+		List newList = Arrays.asList(values);
+		if (newList.contains(null)) {
+			newList.remove(null);
+		}
+		this.values.addAll(newList);
 	}
 
 	/**
@@ -174,7 +179,9 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	}
 
 	public void addValue(Object value) {
-		values.add(value);
+		if (value != null) {
+			values.add(value);
+		}
 	}
 
 	/**
