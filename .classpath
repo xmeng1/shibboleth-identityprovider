@@ -17,10 +17,13 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-dbcp-1.1.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-logging-1.03.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-pool-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/xmlsec-1.1.jar"/>
+	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/servlet-api.jar"/>
+	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jasper-runtime.jar"/>
+	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
+	<classpathentry sourcepath="lib/commons-pool-1.2-src.jar" kind="lib" path="lib/commons-pool-1.2.jar"/>
+	<classpathentry sourcepath="lib/commons-dbcp-1.2.1-src.jar" kind="lib" path="lib/commons-dbcp-1.2.1.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
