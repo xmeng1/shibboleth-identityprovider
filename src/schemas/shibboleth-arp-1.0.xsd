@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XML Spy v4.2 U (http://www.xmlspy.com) by Test (Test) -->
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+<xs:schema targetNamespace="urn:mace:shibboleth:arp:1.0" xmlns:arp="urn:mace:shibboleth:arp:1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:simpleType name="RequireType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="deny"/>
@@ -11,7 +11,7 @@
 		<xs:sequence>
 			<xs:element name="AnyValue" minOccurs="0">
 				<xs:complexType>
-					<xs:attribute name="release" type="RequireType" use="required"/>
+					<xs:attribute name="release" type="arp:RequireType" use="required"/>
 				</xs:complexType>
 			</xs:element>
 			<xs:element name="Value" minOccurs="0" maxOccurs="unbounded">
@@ -20,7 +20,7 @@
 						<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 					</xs:sequence>
 					<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:stringValue"/>
-					<xs:attribute name="release" type="RequireType" use="required"/>
+					<xs:attribute name="release" type="arp:RequireType" use="required"/>
 				</xs:complexType>
 			</xs:element>
 		</xs:sequence>
@@ -71,7 +71,7 @@
 									</xs:complexType>
 								</xs:element>
 								<xs:sequence>
-									<xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+									<xs:element name="Attribute" type="arp:AttributeType" minOccurs="0" maxOccurs="unbounded"/>
 									<xs:element name="AttributeReference" minOccurs="0" maxOccurs="unbounded">
 										<xs:complexType>
 											<xs:attribute name="identifier" type="xs:anyURI" use="required"/>
@@ -88,7 +88,7 @@
 						</xs:complexType>
 					</xs:element>
 				</xs:sequence>
-				<xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Attribute" type="arp:AttributeType" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

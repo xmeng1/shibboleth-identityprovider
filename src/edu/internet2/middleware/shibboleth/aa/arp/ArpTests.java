@@ -106,15 +106,20 @@ public class ArpTests extends TestCase {
 			parser.setEntityResolver(new EntityResolver() {
 				public InputSource resolveEntity(String publicId, String systemId)
 					throws SAXException {
-					InputStream stream;
-					try {
-						stream = new FileInputStream("src/schemas/ARP.xsd");
-						if (stream != null) {
-							return new InputSource(stream);
+
+					if (systemId.endsWith("shibboleth-arp-1.0.xsd")) {
+						InputStream stream;
+						try {
+							stream = new FileInputStream("src/schemas/shibboleth-arp-1.0.xsd");
+							if (stream != null) {
+								return new InputSource(stream);
+							}
+							throw new SAXException("Could not load entity: Null input stream");
+						} catch (FileNotFoundException e) {
+							throw new SAXException("Could not load entity: " + e);
 						}
-						throw new SAXException("Could not load entity: Null input stream");
-					} catch (FileNotFoundException e) {
-						throw new SAXException("Could not load entity: " + e);
+					} else {
+						return null;
 					}
 				}
 			});
@@ -564,7 +569,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -614,7 +619,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -668,7 +673,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -722,7 +727,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -780,7 +785,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -840,7 +845,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -903,7 +908,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -961,7 +966,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1021,7 +1026,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1071,7 +1076,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1124,7 +1129,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1175,7 +1180,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<Requester>shar.example.edu</Requester>"
@@ -1226,7 +1231,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<Requester>shar.example.edu</Requester>"
@@ -1277,7 +1282,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<Requester>shar.example.edu</Requester>"
@@ -1328,7 +1333,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<Requester>shar.example.edu</Requester>"
@@ -1379,7 +1384,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<Requester>shar.example.edu</Requester>"
@@ -1430,7 +1435,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget />"
@@ -1506,7 +1511,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1563,7 +1568,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1614,7 +1619,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawSiteArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1660,7 +1665,7 @@ public class ArpTests extends TestCase {
 
 		String rawUserArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1771,7 +1776,7 @@ public class ArpTests extends TestCase {
 		//Gather the Input
 		String rawSiteArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"
@@ -1817,7 +1822,7 @@ public class ArpTests extends TestCase {
 
 		String rawUserArp =
 			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
 				+ "			<Rule>"
 				+ "				<Target>"
 				+ "					<AnyTarget/>"

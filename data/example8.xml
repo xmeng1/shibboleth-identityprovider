@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AttributeReleasePolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:arp:1.0" xsi:schemaLocation="urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd" >
-	<Description>A specific SHAR and a regex resource.</Description>
+	<Description>A regex SHAR and a regex resource.</Description>
 	<Rule>
 		<Target>
-			<Requester>shar.example.edu</Requester>
+			<Requester matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">shar[1-9]\.example\.edu</Requester>
 			<Resource matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^https?://.+\.example\.edu/.*$</Resource>
 		</Target>
 		<Attribute name="urn:mace:eduPerson:1.0:eduPersonPrincipalName">
