@@ -54,6 +54,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
@@ -72,16 +73,22 @@ public class MemoryArpRepository implements ArpRepository {
 
 	public MemoryArpRepository(Properties props) {
 	}
+
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getAllPolicies(Principal)
 	 */
+
 	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
-		return (Arp[]) userPolicies.entrySet().toArray(new Arp[0]);
+
+		Set allPolicies = userPolicies.entrySet();
+		allPolicies.add(sitePolicy);
+		return (Arp[]) allPolicies.toArray(new Arp[0]);
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getSitePolicy()
 	 */
+
 	public synchronized Arp getSitePolicy() throws ArpRepositoryException {
 		return sitePolicy;
 	}
@@ -89,6 +96,7 @@ public class MemoryArpRepository implements ArpRepository {
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getUserPolicy(Principal)
 	 */
+
 	public Arp getUserPolicy(Principal principal) throws ArpRepositoryException {
 		return (Arp) userPolicies.get(principal);
 	}
@@ -96,10 +104,11 @@ public class MemoryArpRepository implements ArpRepository {
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#remove(Arp)
 	 */
+
 	public void remove(Arp arp) throws ArpRepositoryException {
 
-		if (arp.getPrincipal().equals(sitePolicy.getPrincipal())) {
-			synchronized (sitePolicy) {
+		if (arp.isSitePolicy()) {
+			synchronized (this) {
 				sitePolicy = null;
 			}
 		} else if (userPolicies.containsKey(arp.getPrincipal())) {
@@ -110,7 +119,25 @@ public class MemoryArpRepository implements ArpRepository {
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#update(Arp)
 	 */
+
 	public void update(Arp arp) throws ArpRepositoryException {
+
+		if (arp == null) {
+			throw new ArpRepositoryException("Cannot add a null ARP to the repository.");
+		}
+
+		if (arp.isSitePolicy()) {
+			synchronized (this) {
+				sitePolicy = arp;
+			}
+			return;
+		}
+
+		if (arp.getPrincipal() == null) {
+			throw new ArpRepositoryException("Cannot add ARP to repository.  Must contain a Principal or be a Site ARP.");
+		}
+
+		userPolicies.put(arp.getPrincipal(), arp);
 	}
 
 }

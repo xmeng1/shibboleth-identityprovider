@@ -57,4 +57,24 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 
 public class Rule {
 
+	private String description;
+
+	/**
+	 * Returns the description for this <code>Rule</code>.
+	 * @return String
+	 */
+
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Sets the description for this <code>Rule</code>.
+	 * @param description The description to set
+	 */
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 }

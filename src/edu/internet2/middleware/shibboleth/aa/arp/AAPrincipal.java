@@ -50,90 +50,31 @@
 package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.security.Principal;
-import java.util.HashSet;
 
 /**
- *  An Attribute Release Policy.
- *
+ * <code>Principal</code> for use within the Shibboleth Attribute Authority.
+ * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public class Arp {
+public class AAPrincipal implements Principal {
 
-	private Principal principal;
-	private HashSet rules;
-	private String description;
-	private boolean sitePolicy = false;
+	private String principalName;
 
 	/**
-	 * Creates an Arp for the specified <code>Principal</code>.
+	 * Constructor for AAPrincipal.
 	 */
 
-	public Arp(Principal principal) {
-		this.principal = principal;
+	public AAPrincipal(String principalName) {
+		this.principalName = principalName;
 	}
 
 	/**
-	 * Creates a "Site" Policy.
+	 * @see java.security.Principal#getName()
 	 */
 
-	public Arp() {
-		sitePolicy = true;
-	}
-
-	/**
-	 * Boolean indication of whether or not this Policy is a "Site" policy.
-	 */
-
-	public boolean isSitePolicy() {
-		return sitePolicy;
-	}
-
-	/**
-	 * Returns the <code>Principal</code> for which this policy is applicable.
-	 * @return Principal
-	 */
-
-	public Principal getPrincipal() {
-		return principal;
-	}
-
-	/**
-	 * Specify the <code>Principal</code> for which this policy is applicable.
-	 * @param principal The principal
-	 */
-
-	public void setPrincipal(Principal principal) {
-		sitePolicy = false;
-		this.principal = principal;
-	}
-
-	/**
-	 * Returns all of the <code>Rule</code> objects that make up this policy.
-	 * @return the rules 
-	 */
-
-	public Rule[] getAllRules() {
-
-		return (Rule[]) rules.toArray(new Rule[0]);
-	}
-
-	/**
-	 * Returns the description for this <code>Arp</code>.
-	 * @return String
-	 */
-
-	public String getDescription() {
-		return description;
-	}
-
-	/**
-	 * Sets the description for this <code>Arp</code>.
-	 * @param description The description to set
-	 */
-
-	public void setDescription(String description) {
-		this.description = description;
+	public String getName() {
+		return principalName;
 	}
 
 }

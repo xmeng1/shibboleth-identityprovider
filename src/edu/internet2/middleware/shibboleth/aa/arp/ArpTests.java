@@ -75,7 +75,9 @@ public class ArpTests extends TestCase {
 
 	public void testRepositories() {
 
-		//Test the Factory
+		/*
+		 * Test the Factory
+		 */
 
 		//Make sure we fail if no Repository is specified
 		Properties props = new Properties();
@@ -85,14 +87,63 @@ public class ArpTests extends TestCase {
 			//This is supposed to fail
 		}
 
-		//Make sure we can create an Arp Repository
+		// Make sure we can create an Arp Repository
 		props.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
+		ArpRepository repository = null;
 		try {
-			ArpRepositoryFactory.getInstance(props);
+			repository = ArpRepositoryFactory.getInstance(props);
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create memory-based Arp Repository" + e);
+		}
+		assertNotNull("Failed to create memory-based Arp Repository: Factory returned null.", repository);
+
+		/*
+		 * Exercise the Memory Arp Repository
+		 */
+
+		//Set/retrieve/remove a Site ARP
+		Arp siteArp1 = new Arp();
+		siteArp1.setDescription("Test Site Arp 1.");
+		try {
+			repository.update(siteArp1);
+			assertEquals(
+				"Memory Repository does not store and retrieve Site ARPs properly.",
+				siteArp1,
+				repository.getSitePolicy());
+			repository.remove(repository.getSitePolicy());
+			assertNull("Memorty Repository does not properly delete Site ARPs.", repository.getSitePolicy());
+		} catch (ArpRepositoryException e) {
+			fail("Error adding Site ARP to Memory Repository.");
+		}
+
+		//Set/retrieve/delete some user ARPs
+		Arp userArp1 = new Arp();
+		userArp1.setDescription("Broken User Arp 1.");
+		try {
+			repository.update(userArp1);
+			assertTrue(
+				"Memory Repository does not store and retrieve User ARPs properly.",
+				(!userArp1.equals(repository.getUserPolicy(userArp1.getPrincipal()))));
+		} catch (ArpRepositoryException e) {
+			fail("Error adding User ARP to Memory Repository.");
+		}
+
+		Arp userArp2 = new Arp(new AAPrincipal("TestPrincipal"));
+		userArp2.setDescription("Test User Arp 2.");
+		try {
+			repository.update(userArp2);
+			assertEquals(
+				"Memory Repository does not store and retrieve User ARPs properly.",
+				userArp2,
+				repository.getUserPolicy(userArp2.getPrincipal()));
+			repository.remove(repository.getUserPolicy(userArp2.getPrincipal()));
+			assertNull(
+				"Memorty Repository does not properly delete User ARPs.",
+				repository.getUserPolicy(userArp2.getPrincipal()));
+		} catch (ArpRepositoryException e) {
+			fail("Error adding User ARP to Memory Repository.");
 		}
 
 	}
