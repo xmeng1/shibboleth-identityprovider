@@ -178,11 +178,12 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 		if (maxIdle > 0) {
 			objectPool.setMaxIdle(maxIdle);
 		}
-        if (maxWait > 0) {
-            objectPool.setMaxWait(1000*maxWait);
-        }
+		if (maxWait > 0) {
+			objectPool.setMaxWait(1000*maxWait);
+		}
 
 		objectPool.setWhenExhaustedAction(GenericObjectPool.WHEN_EXHAUSTED_BLOCK);
+		objectPool.setTestOnBorrow(true);
 
 		ConnectionFactory connFactory = null;
 		PoolableConnectionFactory poolConnFactory = null;
@@ -202,9 +203,9 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
     				connFactory,
     				objectPool,
     				new StackKeyedObjectPoolFactory(),
-    				null,
+    				"select 1",
     				false,
-					true);
+				true);
 		} catch (Exception ex) {
 			log.debug("Poolable connection factory error");
 		}
