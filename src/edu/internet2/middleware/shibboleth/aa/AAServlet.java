@@ -43,9 +43,7 @@ public class AAServlet extends HttpServlet {
 	    arpFactoryMethod = getInitParameter("arpFactoryMethod");
 	    arpFactoryData = getInitParameter("arpFactoryData");
 
-	    ServletConfig sc = getServletConfig();
-	    ServletContext sctx = sc.getServletContext(); 
-	    hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
+
       
 	    arpFactory = ArpRepository.getInstance(arpFactoryMethod, arpFactoryData);
 
@@ -55,7 +53,7 @@ public class AAServlet extends HttpServlet {
 	    env.put(Context.PROVIDER_URL, dirUrl);
 	    DirContext ctx = new InitialDirContext(env);
 	    
-	    responder = new AAResponder(hrf, arpFactory, ctx, myName);
+	    responder = new AAResponder(arpFactory, ctx, myName);
 
 	}catch(NamingException ne){
 	    throw new ServletException("Init failed: "+ne);
@@ -92,7 +90,28 @@ public class AAServlet extends HttpServlet {
 	    System.err.println("AA debug: issuer:"+issuedBy);
 	    System.err.println("AA debug: shar:"+shar);
 
-	    attrs = responder.getReleaseAttributes(uidSyntax, handle, shar, resource);
+	    // get HS and convert handle to userName
+	    ServletConfig sc = getServletConfig();
+	    ServletContext sctx = sc.getServletContext(); 
+	    hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
+	    System.out.println("Debug: Context aTTR: "+sctx.getAttribute("HandleRepository"));
+
+	    String userName = null;
+
+	    if(hrf == null){
+		if(handle.equalsIgnoreCase("foo"))
+		    userName = "dousti"; 
+		if(userName == null)
+		    throw new AAException("No HandleRepository found!");
+	    }else{
+		HandleEntry he = hrf.getHandleEntry(handle);
+		userName = he.getUsername();
+		if(userName == null)
+		    throw new AAException("HandleServer returns null for user name!");
+	    }
+	    
+
+	    attrs = responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource);
 	    System.err.println("AA debug: got attributes");
 	    saml.respond(resp, attrs, null);
 
@@ -102,8 +121,12 @@ public class AAServlet extends HttpServlet {
 	    }catch(Exception ee){
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+se);
 	    }
-	    //	}catch (HandleException he) {
-	    //	    ourSE = new org.opensaml.SAMLException(org.opensaml.SAMLException.RESPONDER,"Bad Handle or Handle Service Problem: "+he);
+	}catch (HandleException he) {
+	    try{
+		saml.fail(resp, new SAMLException(null, "AA got a HandleException: "+he));
+	    }catch(Exception ee){
+		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+he);
+	    }
 	}catch (Exception e) {
 	    try{
 		saml.fail(resp, new SAMLException(null, "AA got an Exception: "+e));

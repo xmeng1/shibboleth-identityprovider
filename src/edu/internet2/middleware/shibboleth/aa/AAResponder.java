@@ -15,16 +15,14 @@ import org.opensaml.*;
 
 public class AAResponder{
 
-    HandleRepositoryFactory hrf;
     ArpFactory arpFactory;
     Arp adminArp;
     DirContext ctx;
     String domain;
 
-    public AAResponder(HandleRepositoryFactory hrf, ArpFactory arpFactory, DirContext ctx, String domain)
+    public AAResponder(ArpFactory arpFactory, DirContext ctx, String domain)
 	throws AAException{
 
-	this.hrf = hrf;
 	this.arpFactory = arpFactory;
 	adminArp = arpFactory.getInstance("admin", true);
 	if(adminArp.isNew())
@@ -34,25 +32,10 @@ public class AAResponder{
     }
 
 
-    public SAMLAttribute[] getReleaseAttributes(String uidSyntax, String handle, String sharName, String url)
-	throws AAException,HandleException {
+    public SAMLAttribute[] getReleaseAttributes(String userName, String uidSyntax, String handle, String sharName, String url)
+	throws AAException{
 
 	DirContext userCtx = null;
-	String userName = null;
-
-	if(hrf == null){
-	    if(handle.equalsIgnoreCase("foo"))
-		userName = "dousti"; 
-	    if(userName == null)
-		throw new AAException("No HandleRepository found!");
-	}else{
-	    HandleEntry he = hrf.getHandleEntry(handle);
-	    userName = he.getUsername();
-	    if(userName == null)
-		throw new AAException("HandleServer returns null for user name!");
-	}
-	    
-
 
 	try{
 	    if(uidSyntax == null)
