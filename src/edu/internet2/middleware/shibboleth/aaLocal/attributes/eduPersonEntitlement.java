@@ -7,7 +7,6 @@
  * @created    June, 2002
  */
 
-import edu.internet2.middleware.eduPerson.*;
 import edu.internet2.middleware.shibboleth.common.Constants; 
 import edu.internet2.middleware.shibboleth.aa.ShibAttribute;
 import org.opensaml.*;
@@ -19,9 +18,8 @@ public class eduPersonEntitlement implements ShibAttribute{
 	throws SAMLException{
 
 	return new SAMLAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement",
-		   Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
-		   new QName("urn:mace:eduPerson:1.0",
-			     "xsd:anyURI"),
+				 Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
+				 new QName(org.opensaml.XML.XSD_NS,"anyURI"),
 				 10*60,
 				 values);
 
