@@ -62,6 +62,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.apache.log4j.Level;
 import org.apache.xerces.parsers.DOMParser;
 import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.QName;
@@ -93,6 +94,8 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 public class HandleServlet extends HttpServlet {
 
 	private static Logger log = Logger.getLogger(HandleServlet.class.getName());
+	private static Logger transactionLog = Logger.getLogger("edu.internet2.middleware.shibboleth.TRANSACTION");
+
 	private Semaphore throttle;
 	private ShibbolethOriginConfig configuration;
 	private Credentials credentials;
@@ -229,6 +232,7 @@ public class HandleServlet extends HttpServlet {
 	public void init() throws ServletException {
 		super.init();
 		MDC.put("serviceId", "[HS] Core");
+		transactionLog.setLevel((Level) Level.INFO);
 		try {
 			log.info("Initializing Handle Service.");
 
@@ -298,6 +302,20 @@ public class HandleServlet extends HttpServlet {
 					authenticationMethod);
 
 			createForm(req, res, buf);
+
+                        transactionLog.info("Authentication assertion issued to SHIRE ("
+                                        + req.getParameter("shire")
+                                        + ") providerId ("
+                                        + req.getParameter("providerId")
+                                        + ") on behalf of principal ("
+                                        + username
+                                        + ") for resource ("
+                                        + req.getParameter("target")
+                                        + "). Name Identifier: ("
+                                        + nameId.getName()
+                                        + "). Name Identifier Format: ("
+                                        + nameId.getFormat()
+                                        + ").");
 
 		} catch (NameIdentifierMappingException ex) {
 			log.error(ex);
