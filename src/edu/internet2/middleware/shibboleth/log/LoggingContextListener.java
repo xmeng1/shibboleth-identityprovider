@@ -40,7 +40,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.RollingFileAppender;
+import org.apache.log4j.DailyRollingFileAppender;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.apache.xml.security.Init;
 import org.w3c.dom.Document;
@@ -138,30 +138,21 @@ public class LoggingContextListener implements ServletContextListener {
 		}
 	}
 
-	// location should be a "file:/" uri
-	private RollingFileAppender makeRollingFileAppender(String location, String pattern)
-			throws ShibbolethConfigurationException {
-		try {
-			String logPath = new ShibResource(location, LoggingContextListener.class).getFile().getCanonicalPath();
-			RollingFileAppender appender = new RollingFileAppender(new PatternLayout(pattern), logPath);
-
-			appender.setMaximumFileSize(2 * 1024 * 1024); // 2 megs
-			appender.setMaxBackupIndex(50);
-
-			return appender;
-		} catch (IOException e) {
-			log.fatal("<TransactionLog location=\"" + location + "\">: error creating RollingFileAppender: " + e);
-			throw new ShibbolethConfigurationException("<TransactionLog location=\"" + location
-					+ "\">: error creating RollingFileAppender: " + e);
-		}
-	}
-
 	private void configureErrorLog(Node node) throws ShibbolethConfigurationException {
 		NamedNodeMap attributes = node.getAttributes();
 
-		/* schema check should catch if location is missing, NullPointerException here if not */
+		// schema check should catch if "location" is missing, NullPointerException here if not
 		String location = attributes.getNamedItem("location").getNodeValue();
-		RollingFileAppender appender = makeRollingFileAppender(location, "%d{ISO8601} %-5p %-41X{serviceId} - %m%n");
+		DailyRollingFileAppender appender = null;
+		try {
+			String logPath = new ShibResource(location, LoggingContextListener.class).getFile().getCanonicalPath();
+			log.debug("logPath = " + logPath);
+			appender = new DailyRollingFileAppender(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"), logPath, "'.'yyyy-MM-dd");
+		}
+		catch (Exception e) {  // catch any exception
+			log.fatal("<ErrorLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
+			throw new ShibbolethConfigurationException("<ErrorLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
+		}
 		appender.setName("error");
 
 		Level level = (Level) Level.WARN;
@@ -180,11 +171,21 @@ public class LoggingContextListener implements ServletContextListener {
 	}
 
 	private void configureTransactionLog(Node node) throws ShibbolethConfigurationException {
+
 		NamedNodeMap attributes = node.getAttributes();
 
-		// schema check should catch if location is missing, NullPointerException here if not
+		// schema check should catch if "location" is missing, NullPointerException here if not
 		String location = attributes.getNamedItem("location").getNodeValue();
-		RollingFileAppender appender = makeRollingFileAppender(location, "%d{ISO8601} %m%n");
+		DailyRollingFileAppender appender = null;
+		try {
+			String logPath = new ShibResource(attributes.getNamedItem("location").getNodeValue(), LoggingContextListener.class).getFile().getCanonicalPath();
+			log.debug("logPath = " + logPath);
+			appender = new DailyRollingFileAppender(new PatternLayout("%d{ISO8601} %m%n"), logPath, "'.'yyyy-MM-dd");
+		}
+		catch (Exception e) {  // catch any exception
+			log.fatal("<TransactionLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
+			throw new ShibbolethConfigurationException("<TransactionLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
+		}
 		appender.setName("transaction");
 
 		Logger log = Logger.getLogger("Shibboleth-TRANSACTION");
