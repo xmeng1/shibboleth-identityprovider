@@ -2,38 +2,46 @@
 <Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <OriginSite Name="example.edu">
         <Alias>Example State University</Alias>
-        <HandleService Location="https://shibprod0.internet2.edu/shibboleth/HS" Name="shibprod0.internet2.edu"></HandleService>
+        <HandleService Location="https://wayf.internet2.edu/shibboleth/HS" Name="wayf.internet2.edu"></HandleService>
+        <Domain>example.edu</Domain>
     </OriginSite>
     <OriginSite Name="shibdev.edu">
         <Alias>Shibboleth Development Origin</Alias>
         <HandleService Location="https://shib2.internet2.edu/shibboleth/HS" Name="shib2.internet2.edu"></HandleService>
+        <Domain>shibdev.edu</Domain>
     </OriginSite>
     <OriginSite Name="brown.edu">
         <Alias>Brown University</Alias>
         <HandleService Location="http://portsmouth.services.brown.edu:1080/shibboleth/HS" Name="dilbert2.cis.brown.edu"></HandleService>
+        <Domain>brown.edu</Domain>
     </OriginSite>
     <OriginSite Name="washington.edu">
         <Alias>UDub</Alias>
         <HandleService Location="https://abajo.cac.washington.edu/shibboleth/HS" Name="abajo.cac.washington.edu"></HandleService>
+        <Domain>washington.edu</Domain>
     </OriginSite>
     <OriginSite Name="wisc.edu">
         <Alias>UW - Madison</Alias>
         <Alias>University of Wisconsin</Alias>
         <Alias>Wisc</Alias>
         <HandleService Location="https://gari.doit.wisc.edu/shibboleth/HS" Name="gari.doit.wisc.edu"></HandleService>
+        <Domain>wisc.edu</Domain>
     </OriginSite>
     <OriginSite Name="psu.edu">
         <Alias>Penn State University</Alias>
         <HandleService Location="https://aistest02.aset.psu.edu/shibboleth/HS" Name="aistest02.aset.psu.edu"></HandleService>
+        <Domain>psu.edu</Domain>
     </OriginSite>
     <OriginSite Name="osu.edu">
         <Alias>Ohio State University</Alias>
         <Alias>Buckeyes</Alias> 
         <HandleService Location="https://trotsky.uts.ohio-state.edu:444/shibboleth/HS" Name="trotsky.uts.ohio-state.edu"></HandleService>
+        <Domain>osu.edu</Domain>
     </OriginSite>
     <OriginSite Name="virginia.edu">
         <Alias>UVa</Alias>  
         <HandleService Location="https://shib.itc.virginia.edu/shibboleth/HS" Name="shib.itc.virginia.edu"></HandleService>
+        <Domain>virginia.edu</Domain>
     </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
@@ -44,15 +52,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>pxpyoClLuyYDEhCx3IFGCAm58B4=</ds:DigestValue>
+<ds:DigestValue>6Sg7Mc938TRMlkdpWgBvNUpInrw=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-ltG54XpgvnMGIDSMMHSWbeWMbjyngYZI6GYvBvFmcx4NafulxT58uujc2/Vh9+AOUELsT4Wcu6Xq
-/5M+6neVj3JJLWuWxHnT+Aiqlwn7EhI9nrDakq6wkPfRx5YLCHW0VwflG5s5RbjBVa6JDklLk/QW
-sF+vD7jJui+zfK3GqQrsusfXuIeJgwFz4y12DKsLLmToH1QTnBOVkRviWBn4OEoAWWmcsrE8pOiZ
-0ZVSO2bUQCoflB3K4oaM0gSup+pYDMAErMZMc0MjsasuG+5ZQ/fR6jmgiKvv018Sa1yb0Inzp54i
-X7/kofMo0ib6M6PuKUqkOF/MI5/NVKkJxYDGCw==
+l78eoAnbSvz6uc8D1tf5Q4QQscekCSgS65MI9I1N0v4cec2s2262HuAY4SDrCkFrkbANgn+FEVIm
+GHL5GqiEvxAOGNAxL9YsLUT7OHmhFv4RD+g2bsAUjv/MmeCjSYMRGAhwpR0gJkshl/NqvMSNHLRE
+sWpOdGcJ2f26nti32n/wTjdB3cyCWTCdEEsTBE5ZsZGCjt9BpyurJNKyB1WENlS2xAudWgaWuNdS
+LnrYE6usNLRTlf2R1e9CWw5zUaDODpDCxXSkRqS4OullJCRo4v1ASzJrZrCPZ9QkvkgYL+3dj0oe
+DBEeN6L4G/AoKt4qpn1X/eVG6wOpkRy3n7Im0Q==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
