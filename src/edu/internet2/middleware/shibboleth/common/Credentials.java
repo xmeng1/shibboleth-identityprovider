@@ -37,20 +37,26 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 
 import org.apache.log4j.Logger;
@@ -171,34 +177,8 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
-		String certFormat = getCertFormat(e);
-		String certPath = getCertPath(e);
+		//Load the key
 
-		log.debug("Certificate Format: (" + certFormat + ").");
-		log.debug("Certificate Path: (" + certPath + ").");
-
-		//TODO provider optional
-		//TODO other kinds of certs?
-		//TODO provide a way to specify a separate CA bundle
-		Collection chain = null;
-		try {
-			CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-			chain = certFactory.generateCertificates(new ShibResource(certPath, this.getClass()).getInputStream());
-
-			//TODO probably want to walk the chain and make sure things are kosher
-			//TODO need to order the chain
-			if (chain.isEmpty()) {
-				log.error("File did not contain any valid certificates.");
-				throw new CredentialFactoryException("File did not contain any valid certificates.");
-			}
-
-		} catch (IOException p) {
-			log.error("Could not load resource from specified location (" + certPath + "): " + p);
-			throw new CredentialFactoryException("Unable to load certificates.");
-		} catch (CertificateException p) {
-			log.error("Problem parsing certificate at (" + certPath + "): " + p);
-			throw new CredentialFactoryException("Unable to load certificates.");
-		}
 		String keyFormat = getKeyFormat(e);
 		String keyPath = getKeyPath(e);
 		log.debug("Key Format: (" + keyFormat + ").");
@@ -224,7 +204,108 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
-		return new Credential(((X509Certificate[]) chain.toArray(new X509Certificate[0])), key);
+		String certFormat = getCertFormat(e);
+		String certPath = getCertPath(e);
+		//A placeholder in case we ever want to make this configurable
+		String certType = "X.509";
+
+		log.debug("Certificate Format: (" + certFormat + ").");
+		log.debug("Certificate Path: (" + certPath + ").");
+
+		//TODO provider optional
+		//TODO provide a way to specify a separate CA bundle
+
+		//The loading code should work for other types, but the chain construction code 
+		//would break
+		if (!certType.equals("X.509")) {
+			log.error("File credential resolver only supports the X.509 certificates.");
+			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
+		}
+
+		ArrayList certChain = new ArrayList();
+		ArrayList allCerts = new ArrayList();
+
+		try {
+			Certificate[] certsFromPath =
+				loadCertificates(new ShibResource(certPath, this.getClass()).getInputStream(), certType);
+
+			allCerts.addAll(Arrays.asList(certsFromPath));
+
+			//Find the end-entity cert first
+			if (certsFromPath == null || certsFromPath.length == 0) {
+				log.error("File at (" + certPath + ") did not contain any valid certificates.");
+				throw new CredentialFactoryException("File did not contain any valid certificates.");
+			}
+
+			if (certsFromPath.length == 1) {
+				log.debug("Certificate file only contains 1 certificate.");
+				log.debug("Ensure that it matches the private key.");
+				if (!isMatchingKey(certsFromPath[0].getPublicKey(), key)) {
+					log.error("Certificate does not match the private key.");
+					throw new CredentialFactoryException("File did not contain any valid certificates.");
+				}
+				certChain.add(certsFromPath[0]);
+				log.debug(
+					"Successfully identified the end entity cert: "
+						+ ((X509Certificate) certChain.get(0)).getSubjectDN());
+
+			} else {
+				log.debug("Certificate file contains multiple certificates.");
+				log.debug("Trying to determine the end-entity cert by matching against the private key.");
+				for (int i = 0; certsFromPath.length > i; i++) {
+					if (isMatchingKey(certsFromPath[i].getPublicKey(), key)) {
+						log.debug("Found matching end cert: " + ((X509Certificate) certsFromPath[i]).getSubjectDN());
+						certChain.add(certsFromPath[i]);
+					}
+				}
+				if (certChain.size() < 1) {
+					log.error("No certificate in chain that matches specified private key");
+					throw new CredentialFactoryException("No certificate in chain that matches specified private key");
+				}
+				if (certChain.size() > 1) {
+					log.error("More than one certificate in chain that matches specified private key");
+					throw new CredentialFactoryException("More than one certificate in chain that matches specified private key");
+				}
+				log.debug(
+					"Successfully identified the end entity cert: "
+						+ ((X509Certificate) certChain.get(0)).getSubjectDN());
+			}
+
+			//Now load additional certs and construct a chain
+			String[] caPaths = getCAPaths(e);
+			if (caPaths != null && caPaths.length > 0) {
+				log.debug("Attempting to load certificates from (" + caPaths.length + ") CA certificate files.");
+				for (int i = 0; i < caPaths.length; i++) {
+					allCerts.addAll(
+						Arrays.asList(
+							loadCertificates(
+								new ShibResource(caPaths[i], this.getClass()).getInputStream(),
+								certType)));
+				}
+			}
+
+			//TODO probably don't want to require a full chain
+			log.debug("Attempting to construct a certificate chain.");
+			walkChain((X509Certificate[]) allCerts.toArray(new X509Certificate[0]), certChain);
+
+			log.info("Verifying that each link in the cert chain is signed appropriately");
+			for (int i = 0; i < certChain.size() - 1; i++) {
+				PublicKey pubKey = ((X509Certificate) certChain.get(i + 1)).getPublicKey();
+				try {
+					((X509Certificate) certChain.get(i)).verify(pubKey);
+				} catch (Exception se) {
+					log.error("Certificate chain cannot be verified: " + se);
+					throw new CredentialFactoryException("Certificate chain cannot be verified: " + se);
+				}
+			}
+			log.debug("All signatures verified. Certificate chain creation successful.");
+
+		} catch (IOException p) {
+			log.error("Could not load resource from specified location (" + certPath + "): " + p);
+			throw new CredentialFactoryException("Unable to load certificates.");
+		}
+
+		return new Credential(((X509Certificate[]) certChain.toArray(new X509Certificate[0])), key);
 	}
 
 	private PrivateKey getRSADERKey(InputStream inStream) throws CredentialFactoryException {
@@ -335,6 +416,40 @@ class FileCredentialResolver implements CredentialResolver {
 		return path;
 	}
 
+	private String[] getCAPaths(Element e) throws CredentialFactoryException {
+
+		NodeList certificateElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Certificate");
+		if (certificateElements.getLength() < 1) {
+			log.error("Certificate not specified.");
+			throw new CredentialFactoryException("File Credential Resolver requires a <Certificate> specification.");
+		}
+		if (certificateElements.getLength() > 1) {
+			log.error("Multiple Certificate path specifications, using first.");
+		}
+
+		NodeList pathElements =
+			((Element) certificateElements.item(0)).getElementsByTagNameNS(Credentials.credentialsNamespace, "CAPath");
+		if (pathElements.getLength() < 1) {
+			log.debug("No CA Certificate paths specified.");
+			return null;
+		}
+		ArrayList paths = new ArrayList();
+		for (int i = 0; i < pathElements.getLength(); i++) {
+			Node tnode = pathElements.item(i).getFirstChild();
+			String path = null;
+			if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+				path = tnode.getNodeValue();
+			}
+			if (path != null && !(path.equals(""))) {
+				paths.add(path);
+			}
+			if (paths.isEmpty()) {
+				log.debug("No CA Certificate paths specified.");
+			}
+		}
+		return (String[]) paths.toArray(new String[0]);
+	}
+
 	private String getKeyPath(Element e) throws CredentialFactoryException {
 
 		NodeList keyElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Key");
@@ -365,6 +480,135 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("File Credential Resolver requires a <Key><Path/></Certificate> specification.");
 		}
 		return path;
+	}
+
+	/**
+	 * 
+	 * Loads a specified bundle of certs individually and returns an array of 
+	 * <code>Certificate</code> objects.  This is needed because the standard 
+	 * <code>CertificateFactory.getCertificates(InputStream)</code> method bails 
+	 * out when it has trouble loading any cert and cannot handle "comments".
+	 */
+	private Certificate[] loadCertificates(InputStream inStream, String certType) throws CredentialFactoryException {
+
+		ArrayList certificates = new ArrayList();
+
+		try {
+			CertificateFactory certFactory = CertificateFactory.getInstance(certType);
+
+			BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
+			String str;
+			boolean insideCert = false;
+			StringBuffer rawCert = null;
+			while ((str = in.readLine()) != null) {
+
+				if (insideCert) {
+					rawCert.append(str);
+					rawCert.append(System.getProperty("line.separator"));
+					if (str.matches("^.*-----END CERTIFICATE-----.*$")) {
+						insideCert = false;
+						try {
+							Certificate cert =
+								certFactory.generateCertificate(
+									new ByteArrayInputStream(rawCert.toString().getBytes()));
+							certificates.add(cert);
+						} catch (CertificateException ce) {
+							log.warn("Failed to load a certificate from the certificate bundle: " + ce);
+							if (log.isDebugEnabled()) {
+								log.debug(
+									"Dump of bad certificate: "
+										+ System.getProperty("line.separator")
+										+ rawCert.toString());
+							}
+						}
+						continue;
+					}
+				} else if (str.matches("^.*-----BEGIN CERTIFICATE-----.*$")) {
+					insideCert = true;
+					rawCert = new StringBuffer();
+					rawCert.append(str);
+					rawCert.append(System.getProperty("line.separator"));
+				}
+			}
+			in.close();
+		} catch (IOException p) {
+			log.error("Could not load resource from specified location: " + p);
+			throw new CredentialFactoryException("Unable to load certificates.");
+		} catch (CertificateException p) {
+			log.error("Problem loading certificate factory: " + p);
+			throw new CredentialFactoryException("Unable to load certificates.");
+		}
+
+		return (Certificate[]) certificates.toArray(new Certificate[0]);
+	}
+
+	/**
+	 * Given an ArrayList containing a base certificate and an array of unordered certificates, 
+	 * populates the ArrayList with an ordered certificate chain, based on subject and issuer.
+	 * 
+	 * @param	chainSource array of certificates to pull from
+	 * @param	chainDest ArrayList containing base certificate
+	 * @throws InvalidCertificateChainException thrown if a chain cannot be constructed from 
+	 * 			the specified elements
+	 */
+
+	protected void walkChain(X509Certificate[] chainSource, ArrayList chainDest) throws CredentialFactoryException {
+
+		X509Certificate currentCert = (X509Certificate) chainDest.get(chainDest.size() - 1);
+		if (currentCert.getSubjectDN().equals(currentCert.getIssuerDN())) {
+			log.debug("Found self-signed root cert: " + currentCert.getSubjectDN());
+			return;
+		} else {
+			//TODO maybe this should check more than the DN...
+			for (int i = 0; chainSource.length > i; i++) {
+				if (currentCert.getIssuerDN().equals(chainSource[i].getSubjectDN())) {
+					chainDest.add(chainSource[i]);
+					walkChain(chainSource, chainDest);
+					return;
+				}
+			}
+			log.error("Incomplete certificate chain.");
+			throw new CredentialFactoryException("Incomplete cerficate chain.");
+		}
+	}
+
+	/**
+	 * Boolean indication of whether a given private key and public key form a valid keypair.
+	 * 
+	 * @param pubKey the public key
+	 * @param privKey the private key
+	 */
+
+	protected boolean isMatchingKey(PublicKey pubKey, PrivateKey privKey) {
+
+		try {
+			String controlString = "asdf";
+			log.debug("Checking for matching private key/public key pair");
+			Signature signature = null;
+			try {
+				signature = Signature.getInstance(privKey.getAlgorithm());
+			} catch (NoSuchAlgorithmException nsae) {
+				log.debug("No provider for (RSA) signature, attempting (MD5withRSA).");
+				if (privKey.getAlgorithm().equals("RSA")) {
+					signature = Signature.getInstance("MD5withRSA");
+				} else {
+					throw nsae;
+				}
+			}
+			signature.initSign(privKey);
+			signature.update(controlString.getBytes());
+			byte[] sigBytes = signature.sign();
+			signature.initVerify(pubKey);
+			signature.update(controlString.getBytes());
+			if (signature.verify(sigBytes)) {
+				log.debug("Found match.");
+				return true;
+			}
+		} catch (Exception e) {
+			log.warn(e);
+		}
+		log.debug("This pair does not match.");
+		return false;
 	}
 
 	/**
