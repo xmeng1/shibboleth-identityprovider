@@ -83,7 +83,7 @@ public class ArpFilterValue implements Serializable{
 	return value;
     }
     
-    public boolean equlas(Object afv){
+    public boolean equals(Object afv){
 	return value.equals(((ArpFilterValue)afv).getValue());
     }
 
