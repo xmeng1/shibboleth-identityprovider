@@ -62,6 +62,7 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Properties;
 
 import javax.servlet.RequestDispatcher;
@@ -165,6 +166,19 @@ public class HandleServlet extends HttpServlet {
 				debugStream.close();
 			} catch (IOException e) {
 				log.error("Encountered a problem cleaning up resources: could not close debug stream.");
+			}
+		}
+		
+		//Be nice and trim "extra" whitespace from config properties
+		Enumeration propNames = properties.propertyNames();
+		while (propNames.hasMoreElements()) {
+			String propName = (String) propNames.nextElement();
+			if (properties.getProperty(propName, "").matches(".+\\s$")) {
+				log.debug(
+					"The configuration property ("
+						+ propName
+						+ ") contains trailing whitespace.  Trimming... ");
+				properties.setProperty(propName, properties.getProperty(propName).trim());
 			}
 		}
 
