@@ -7,7 +7,7 @@ LOG_CONFIG=$TOMCAT_HOME/webapps/shibboleth/WEB-INF/conf/log4j.properties
 
 #Where to find jar files...
 LIB=$TOMCAT_HOME/webapps/shibboleth/WEB-INF/lib
-CP=$LIB/../classes:$LIB/bcprov-jdk14-117.jar:$LIB/log4j-1.2.5.jar:$LIB/opensaml.jar:$LIB/xalan-2.4.1.jar:$LIB/xercesImpl-2.2.1.jar:$LIB/xml-apis-2.4.1.jar:$LIB/xmlsec-1.0.5.jar
+CP=$LIB/../classes:$LIB/log4j-1.2.5.jar:$LIB/opensaml.jar:$LIB/xalan-2.4.1.jar:$LIB/dom3-xercesImpl-2.4.0.jar:$LIB/dom3-xml-apis-2.4.0.jar:$LIB/xmlsec-1.0.5.jar
 
 #Where Registry directory is
 REG_DIR=$TOMCAT_HOME/webapps/shibboleth
@@ -15,6 +15,7 @@ REG_DIR=$TOMCAT_HOME/webapps/shibboleth
 if [ -n JAVA_HOME ]
 	then
 		$JAVA_HOME/bin/java -Dlog.config=$LOG_CONFIG -cp $CP edu.internet2.middleware.shibboleth.common.SiteSigner -o $REG_DIR/sites.xml $@ $REG_DIR/sites_unsigned.xml
+		$JAVA_HOME/bin/java -Dlog.config=$LOG_CONFIG -cp $CP edu.internet2.middleware.shibboleth.common.SiteSigner -o $REG_DIR/trust.xml $@ $REG_DIR/trust_unsigned.xml
 	else
 		echo "JAVA_HOME not set."
 fi

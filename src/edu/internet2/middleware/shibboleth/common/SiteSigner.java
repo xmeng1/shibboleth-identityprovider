@@ -166,9 +166,10 @@ public class SiteSigner
 
         Document doc = org.opensaml.XML.parserPool.parse(arg);
         Element e = doc.getDocumentElement();
-        if (!XML.SHIB_NS.equals(e.getNamespaceURI()) || !"Sites".equals(e.getLocalName()))
+        if (!XML.SHIB_NS.equals(e.getNamespaceURI()) ||
+            (!"SiteGroup".equals(e.getLocalName()) && !"Trust".equals(e.getLocalName())))
         {
-            System.err.println("error: root element must be shib:Sites");
+            System.err.println("error: root element must be shib:SiteGroup or shib:Trust");
             System.exit(1);
         }
 
