@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.opensaml.artifact.Artifact;
 
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
@@ -43,35 +44,25 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 public class MemoryArtifactMapper extends BaseArtifactMapper implements ArtifactMapper {
 
 	public MemoryArtifactMapper() throws ShibbolethConfigurationException {
+
 		super();
 	}
 
-	//TODO need to cleanup stale artifacts
-	private static Logger	log			= Logger.getLogger(MemoryArtifactMapper.class.getName());
-	private static Map		mappings	= Collections.synchronizedMap(new HashMap());
+	// TODO need to cleanup stale artifacts
+	private static Logger log = Logger.getLogger(MemoryArtifactMapper.class.getName());
+	private static Map mappings = Collections.synchronizedMap(new HashMap());
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.internet2.middleware.shibboleth.artifact.provider.BaseArtifactMapper#recoverAssertionImpl(java.lang.String)
-	 */
-	protected ArtifactMapping recoverAssertionImpl(String stringHandle) {
+	public ArtifactMapping recoverAssertion(Artifact artifact) {
 
-		//Load the assertion from memory
-		ArtifactMapping mapping = (ArtifactMapping) mappings.get(stringHandle);
-		mappings.remove(stringHandle);
+		ArtifactMapping mapping = (ArtifactMapping) mappings.get(artifact);
+		mappings.remove(artifact);
 		if (mapping == null || mapping.isExpired()) { return null; }
 		return mapping;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.internet2.middleware.shibboleth.artifact.provider.BaseArtifactMapper#addAssertionImpl(java.lang.String,
-	 *      edu.internet2.middleware.shibboleth.artifact.ArtifactMapping)
-	 */
-	protected void addAssertionImpl(String assertionHandle, ArtifactMapping mapping) {
-		mappings.put(assertionHandle, mapping);
+	public void addAssertionImpl(Artifact artifact, ArtifactMapping mapping) {
+
+		mappings.put(artifact, mapping);
 	}
 
 }

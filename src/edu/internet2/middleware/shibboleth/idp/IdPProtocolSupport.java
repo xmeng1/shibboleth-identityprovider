@@ -50,10 +50,13 @@ import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
+import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
+import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -75,9 +78,10 @@ public class IdPProtocolSupport implements Metadata {
 	private ServiceProviderMapper spMapper;
 	private ArpEngine arpEngine;
 	private AttributeResolver resolver;
+	private ArtifactMapper artifactMapper;
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
-			ArpEngine arpEngine, AttributeResolver resolver) {
+			ArpEngine arpEngine, AttributeResolver resolver) throws ShibbolethConfigurationException {
 
 		this.transactionLog = transactionLog;
 		this.config = config;
@@ -86,11 +90,13 @@ public class IdPProtocolSupport implements Metadata {
 		spMapper.setMetadata(this);
 		this.arpEngine = arpEngine;
 		this.resolver = resolver;
+		// TODO make this pluggable... and clean up memory impl
+		artifactMapper = new MemoryArtifactMapper();
 	}
 
 	public static void validateEngineData(HttpServletRequest req) throws InvalidClientDataException {
 
-		//TODO this should be pulled out into handlers
+		// TODO this should be pulled out into handlers
 
 		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) { throw new InvalidClientDataException(
 				"Unable to obtain client address."); }
@@ -265,5 +271,10 @@ public class IdPProtocolSupport implements Metadata {
 
 		resolver.destroy();
 		arpEngine.destroy();
+	}
+
+	public ArtifactMapper getArtifactMapper() {
+
+		return artifactMapper;
 	}
 }

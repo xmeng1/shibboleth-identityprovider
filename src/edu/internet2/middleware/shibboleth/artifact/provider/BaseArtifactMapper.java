@@ -25,16 +25,15 @@
 
 package edu.internet2.middleware.shibboleth.artifact.provider;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLAssertion;
+import org.opensaml.artifact.Artifact;
+import org.opensaml.artifact.SAMLArtifactType0001;
+import org.opensaml.artifact.Util;
 
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
@@ -48,13 +47,12 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
  */
 public abstract class BaseArtifactMapper implements ArtifactMapper {
 
-	private static Logger	log			= Logger.getLogger(BaseArtifactMapper.class.getName());
-	private static byte[]	typeCode	= {0, 1};
+	private static Logger log = Logger.getLogger(BaseArtifactMapper.class.getName());
 
-	private SecureRandom	random		= new SecureRandom();
-	private MessageDigest	md;
+	private MessageDigest md;
 
 	public BaseArtifactMapper() throws ShibbolethConfigurationException {
+
 		try {
 			md = MessageDigest.getInstance("SHA-1");
 		} catch (NoSuchAlgorithmException e) {
@@ -65,83 +63,27 @@ public abstract class BaseArtifactMapper implements ArtifactMapper {
 
 	}
 
-	public ArtifactMapping recoverAssertion(String artifact) {
+	public Artifact generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty) {
 
-		try {
-			//Decode the artifact
-			byte[] decoded = new BASE64Decoder().decodeBuffer(artifact);
-			if (decoded.length != 42) {
-				log.error("Invalid artifact length.");
-				return null;
-			}
+		// TODO should the artifact type be configurable?
 
-			//Check the type
-			if (decoded[0] != typeCode[0] || decoded[1] != typeCode[1]) {
-				log.error("Incorrect artifact type code.");
-				return null;
-			}
-
-			//Grab the assertion handle
-			byte[] assertionHandle = new byte[20];
-			for (int assertionHandleCount = 0, decodedCount = 22; assertionHandleCount < assertionHandle.length; assertionHandleCount++, decodedCount++) {
-				assertionHandle[assertionHandleCount] = decoded[decodedCount];
-			}
-			String stringHandle = new String(assertionHandle);
-
-			//delegate recovery to extenders
-			return recoverAssertionImpl(stringHandle);
-
-		} catch (IOException e) {
-			log.error("Artifact not properly Base64 encoded.");
-			return null;
-		}
-	}
-
-	public String generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty) {
-
-		byte[] allArtifactComponents = new byte[42];
-
-		// Add typecode
-		allArtifactComponents[0] = typeCode[0];
-		allArtifactComponents[1] = typeCode[1];
-
-		// Add SourceID
-		byte[] sourceID = new byte[20];
+		// Generate the artifact
+		Artifact artifact;
 		synchronized (md) {
-			sourceID = md.digest(relyingParty.getIdentityProvider().getProviderId().getBytes());
+			artifact = new SAMLArtifactType0001(Util.generateSourceId(md, relyingParty.getIdentityProvider()
+					.getProviderId()));
 		}
-		for (int sourceIdCount = 0, allComponentCount = 2; sourceIdCount < sourceID.length; sourceIdCount++, allComponentCount++) {
-			allArtifactComponents[allComponentCount] = sourceID[sourceIdCount];
-		}
-
-		// Add Asserton Handle
-		byte[] buffer = new byte[20];
-		random.nextBytes(buffer);
-		for (int assertionHandleCount = 0, allComponentCount = 22; assertionHandleCount < buffer.length; assertionHandleCount++, allComponentCount++) {
-			allArtifactComponents[allComponentCount] = buffer[assertionHandleCount];
-		}
-
-		// Cache the assertion handle
-		String assertionHandle = new String(buffer);
 
 		// Delegate adding to extenders
-		addAssertionImpl(assertionHandle, new ArtifactMapping(assertionHandle, assertion, relyingParty));
+		addAssertionImpl(artifact, new ArtifactMapping(artifact, assertion, relyingParty));
 
 		// Return the encoded artifact
-		return new BASE64Encoder().encode(allArtifactComponents);
+		return artifact;
 	}
 
 	/**
 	 * Subclasses should implement artifact storage with this method.
 	 */
-	protected abstract void addAssertionImpl(String assertionHandle, ArtifactMapping mapping);
-
-	/**
-	 * Subclasses should implement artifact lookup with this method.
-	 * 
-	 * @param stringHandle
-	 *            the artifact string
-	 */
-	protected abstract ArtifactMapping recoverAssertionImpl(String artifact);
+	protected abstract void addAssertionImpl(Artifact artifact, ArtifactMapping mapping);
 
 }

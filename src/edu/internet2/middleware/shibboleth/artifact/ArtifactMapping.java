@@ -26,6 +26,7 @@
 package edu.internet2.middleware.shibboleth.artifact;
 
 import org.opensaml.SAMLAssertion;
+import org.opensaml.artifact.Artifact;
 
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
@@ -36,15 +37,16 @@ import edu.internet2.middleware.shibboleth.common.ServiceProvider;
  */
 public class ArtifactMapping {
 
-	private String			assertionHandle;
-	private long			expirationTime;
-	private SAMLAssertion	assertion;
-	private String			serviceProviderId;
+	private Artifact artifact;
+	private long expirationTime;
+	private SAMLAssertion assertion;
+	private String serviceProviderId;
 
-	public ArtifactMapping(String assertionHandle, SAMLAssertion assertion, ServiceProvider sp) {
-		this.assertionHandle = assertionHandle;
+	public ArtifactMapping(Artifact artifact, SAMLAssertion assertion, ServiceProvider sp) {
+
+		this.artifact = artifact;
 		this.assertion = assertion;
-		expirationTime = System.currentTimeMillis() + (1000 * 60 * 5); //in 5 minutes
+		expirationTime = System.currentTimeMillis() + (1000 * 60 * 5); // in 5 minutes
 		serviceProviderId = sp.getProviderId();
 	}
 
@@ -52,6 +54,7 @@ public class ArtifactMapping {
 	 * Boolean indication of whether the artifact is expired.
 	 */
 	public boolean isExpired() {
+
 		if (System.currentTimeMillis() > expirationTime) { return true; }
 		return false;
 	}
@@ -60,6 +63,7 @@ public class ArtifactMapping {
 	 * Boolean indication of whether the artifact was created on behalf of a specified SP.
 	 */
 	public boolean isCorrectProvider(ServiceProvider sp) {
+
 		if (sp.getProviderId().equals(serviceProviderId)) { return true; }
 		return false;
 	}
@@ -68,6 +72,7 @@ public class ArtifactMapping {
 	 * Retrieves the SAML assertion associated with the artifact.
 	 */
 	public SAMLAssertion getAssertion() {
+
 		return assertion;
 	}
 
@@ -75,6 +80,7 @@ public class ArtifactMapping {
 	 * Retrieves the SP on behalf of which the artifact was originally created.
 	 */
 	public String getServiceProviderId() {
+
 		return serviceProviderId;
 	}
 

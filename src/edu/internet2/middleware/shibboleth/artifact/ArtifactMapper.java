@@ -26,6 +26,7 @@
 package edu.internet2.middleware.shibboleth.artifact;
 
 import org.opensaml.SAMLAssertion;
+import org.opensaml.artifact.Artifact;
 
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 
@@ -46,12 +47,15 @@ public interface ArtifactMapper {
 	 *            the relying party on behalf of which the artifact is being created
 	 * @return the artifact
 	 */
-	public String generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty);
+	public Artifact generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty);
 
 	/**
+	 * Recover an assertion that was previosly generated for a given artifact.
+	 * 
 	 * @param artifact
-	 * @return
+	 *            the artifact in question
+	 * @return a mapping to the assertion
 	 */
 
-	public ArtifactMapping recoverAssertion(String artifact);
+	public ArtifactMapping recoverAssertion(Artifact artifact);
 }

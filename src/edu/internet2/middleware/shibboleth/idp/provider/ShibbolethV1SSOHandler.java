@@ -186,8 +186,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 				// Create artifacts for each assertion
 				ArrayList artifacts = new ArrayList();
 				for (int i = 0; i < assertions.length; i++) {
-					// TODO replace the artifact stuff here!!!
-					// artifacts.add(artifactMapper.generateArtifact(assertions[i], relyingParty));
+					artifacts.add(support.getArtifactMapper().generateArtifact(assertions[i], relyingParty));
 				}
 
 				// Assemble the query string

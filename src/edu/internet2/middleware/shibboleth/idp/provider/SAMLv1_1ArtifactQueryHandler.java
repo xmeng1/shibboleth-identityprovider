@@ -40,12 +40,11 @@ import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
+import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Element;
 
 import sun.misc.BASE64Decoder;
-import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
-import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
@@ -56,21 +55,14 @@ import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
  */
 public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
 
-	// TODO figure out how to refactor this
-	private ArtifactMapper artifactMapper;
-
 	private static Logger log = Logger.getLogger(SAMLv1_1ArtifactQueryHandler.class.getName());
 
 	public SAMLv1_1ArtifactQueryHandler(Element config) throws ShibbolethConfigurationException {
 
 		super(config);
-		// TODO move the mapper out into protocol support
-		artifactMapper = new MemoryArtifactMapper();
 	}
 
 	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see edu.internet2.middleware.shibboleth.idp.ProtocolHandler#getHandlerName()
 	 */
 	public String getHandlerName() {
@@ -85,9 +77,8 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
-		log.info("Recieved a request to dereference an assertion artifact.");
+		log.info("Recieved a request to dereference assertion artifacts.");
 
-		// TODO how about signatures on artifact dereferencing
 		// Pull credential from request
 		X509Certificate credential = getCredentialFromProvider(request);
 		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
@@ -102,24 +93,31 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 		ArrayList assertions = new ArrayList();
 		Iterator artifacts = samlRequest.getArtifacts();
 
-		// TODO error if not artifacts
+		if (!artifacts.hasNext()) {
+			log.error("Protocol Handler received a SAML Request, but is unable to handle it.  No "
+					+ "artifacts were included in the request.");
+			throw new SAMLException(SAMLException.REQUESTER, "General error processing request.");
+		}
 
 		int queriedArtifacts = 0;
+		// for transaction log
 		StringBuffer dereferencedArtifacts = new StringBuffer();
-		// for // transaction // log
+
 		while (artifacts.hasNext()) {
 			queriedArtifacts++;
-			String artifact = (String) artifacts.next();
-			log.debug("Attempting to dereference artifact: (" + artifact + ").");
-			ArtifactMapping mapping = artifactMapper.recoverAssertion(artifact);
+			Artifact artifact = (Artifact) artifacts.next();
+			log.debug("Attempting to dereference artifact: (" + artifact.toString() + ").");
+			ArtifactMapping mapping = support.getArtifactMapper().recoverAssertion(artifact);
 			if (mapping != null) {
-				SAMLAssertion assertion = mapping.getAssertion(); // See if we have metadata for this provider
+				SAMLAssertion assertion = mapping.getAssertion();
+				// See if we have metadata for this provider
 				EntityDescriptor provider = support.lookup(mapping.getServiceProviderId());
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + mapping.getServiceProviderId() + ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider.");
 				}
-				// Make sure that the suppplied credential is valid for the // provider to which theartifact was issued
+
+				// Make sure that the suppplied credential is valid for the provider to which the artifact was issued
 				if (!isValidCredential(provider, credential)) {
 					log.error("Supplied credential ("
 							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
@@ -131,12 +129,15 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 				assertions.add(assertion);
 				dereferencedArtifacts.append("(" + artifact + ")");
 			}
-		} // The spec requires that if any artifacts are dereferenced, they must
+		}
+
+		// The spec requires that if any artifacts are dereferenced, they must
 		// all be dereferenced
 		if (assertions.size() > 0 && assertions.size() != queriedArtifacts) { throw new SAMLException(
 				SAMLException.REQUESTER, "Unable to successfully dereference all artifacts."); }
+
 		// Create and send response
-		// The spec says that we should send "success" in the case where no // artifacts match
+		// The spec says that we should send "success" in the case where no artifacts match
 		SAMLResponse samlResponse = new SAMLResponse(samlRequest.getId(), null, assertions, null);
 		if (log.isDebugEnabled()) {
 			try {
