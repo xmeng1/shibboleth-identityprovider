@@ -49,15 +49,10 @@
  
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn;
-import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 
 /**
@@ -73,8 +68,6 @@ public abstract class BaseAttributeDefinition extends BaseResolutionPlugIn imple
 	protected long lifeTime = -1;
 	
 	private static Logger log = Logger.getLogger(BaseAttributeDefinition.class.getName());
-	protected Set connectorDependencyIds = new HashSet();
-	protected Set attributeDependencyIds = new HashSet();
 
 	protected BaseAttributeDefinition(Element e) throws ResolutionPlugInException {
 
@@ -89,58 +82,5 @@ public abstract class BaseAttributeDefinition extends BaseResolutionPlugIn imple
 				log.error("Bad value for attribute (lifeTime) for Attribute Definition (" + getId() + ").");
 			}
 		}
-
-		NodeList connectorNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "DataConnectorDependency");
-
-		for (int i = 0; connectorNodes.getLength() > i; i++) {
-			Element connector = (Element) connectorNodes.item(i);
-			String connectorName = connector.getAttribute("requires");
-			if (connectorName != null && !connectorName.equals("")) {
-				addDataConnectorDependencyId(connectorName);
-			} else {
-				log.error("Data Connector dependency must be accomanied by a \"requires\" attribute.");
-				throw new ResolutionPlugInException("Failed to initialize Attribute PlugIn.");
-			}
-		}
-
-		NodeList attributeNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "AttributeDependency");
-		for (int i = 0; attributeNodes.getLength() > i; i++) {
-			Element attribute = (Element) attributeNodes.item(i);
-			String attributeName = attribute.getAttribute("requires");
-			if (attributeName != null && !attributeName.equals("")) {
-				addAttributeDefinitionDependencyId(attributeName);
-			} else {
-				log.error("Attribute Definition dependency must be accomanied by a \"requires\" attribute.");
-				throw new ResolutionPlugInException("Failed to initialize Attribute PlugIn.");
-			}
-		}
-
-		if (connectorNodes.getLength() == 0 && attributeNodes.getLength() == 0) {
-			log.debug("Attribute " + getId() + " has no registered dependencies.");
-		}
-
 	}
-
-	protected void addDataConnectorDependencyId(String id) {
-		connectorDependencyIds.add(id);
-	}
-
-	protected void addAttributeDefinitionDependencyId(String id) {
-		attributeDependencyIds.add(id);
-	}
-
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#getAttributeDependencyIds()
-	 */
-	public String[] getAttributeDefinitionDependencyIds() {
-		return (String[]) attributeDependencyIds.toArray(new String[0]);
-	}
-
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#getConnectorDependencyIds()
-	 */
-	public String[] getDataConnectorDependencyIds() {
-		return (String[]) connectorDependencyIds.toArray(new String[0]);
-	}
-
 }

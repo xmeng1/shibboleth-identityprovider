@@ -79,8 +79,6 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 	private static Logger log = Logger.getLogger(SimpleAttributeDefinition.class.getName());
 	private String connectorMapping;
 	private String smartScope;
-	private String schemaType;
-	private String schemaNamespace;
 	private ValueHandler valueHandler;
 
 	/**

@@ -59,6 +59,7 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 
 /**
@@ -79,7 +80,7 @@ public class SampleConnector extends BaseResolutionPlugIn implements DataConnect
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(Principal)
 	 */
-	public Attributes resolve(Principal principal) {
+	public Attributes resolve(Principal principal, String requester, Dependencies depends) {
 
 		log.debug("Resolving connector: (" + getId() + ")");
 		log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");

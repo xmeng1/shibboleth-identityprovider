@@ -133,5 +133,4 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 	public String[] getDataConnectorDependencyIds() {
 		return custom.getDataConnectorDependencyIds();
 	}
-
 }

@@ -61,5 +61,20 @@ public interface ResolutionPlugIn {
 	public String getId();
 	public long getTTL();
 
+    /**
+     * Returns an array containing the names of the attribute
+     * definitions that this definition depends upon for resolution. 
+     * 
+     * @return String[] an array of Ids
+     */
+    public String[] getAttributeDefinitionDependencyIds();
+    
+    /**
+     * Returns an array containining the names of the connectors
+     * that this definition depends upon for resolution. 
+     * 
+     * @return String[] an array of Ids
+     */
+    public String[] getDataConnectorDependencyIds();
 }
 

@@ -77,7 +77,7 @@ public class ScopeTestConnector extends BaseResolutionPlugIn implements DataConn
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(Principal)
 	 */
-	public Attributes resolve(Principal principal) {
+	public Attributes resolve(Principal principal, String requester, Dependencies depends) {
 
 		log.debug("Resolving connector: (" + getId() + ")");
 		log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");

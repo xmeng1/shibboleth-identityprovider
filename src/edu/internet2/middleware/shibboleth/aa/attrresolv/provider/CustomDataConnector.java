@@ -57,6 +57,7 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 
 /**
@@ -97,8 +98,8 @@ public class CustomDataConnector implements DataConnectorPlugIn {
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(Principal)
 	 */
-	public Attributes resolve(Principal principal) throws ResolutionPlugInException {
-		return custom.resolve(principal);
+	public Attributes resolve(Principal principal, String requester, Dependencies depends) throws ResolutionPlugInException {
+		return custom.resolve(principal, requester, depends);
 	}
 
 	/**
@@ -115,4 +116,17 @@ public class CustomDataConnector implements DataConnectorPlugIn {
 		return custom.getTTL();
 	}
 
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugIn#getAttributeDefinitionDependencyIds()
+     */
+    public String[] getAttributeDefinitionDependencyIds() {
+        return custom.getAttributeDefinitionDependencyIds();
+    }
+
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugIn#getDataConnectorDependencyIds()
+     */
+    public String[] getDataConnectorDependencyIds() {
+        return custom.getDataConnectorDependencyIds();
+    }
 }

@@ -62,7 +62,15 @@ import javax.naming.directory.Attributes;
 
 public interface DataConnectorPlugIn extends ResolutionPlugIn {
 	
-	public Attributes resolve(Principal principal) throws ResolutionPlugInException;
+    /**
+     * Resolves the values of a data connector.
+     * 
+     * @param principal The principal for which the connector should be resolved
+     * @param requester The name of the entity making the resolution request
+     * @param depends Resolution dependencies
+     * @throws ResolutionPlugInException
+     */
+    public Attributes resolve(Principal principal, String requester, Dependencies depends) throws ResolutionPlugInException;
 
 }
 

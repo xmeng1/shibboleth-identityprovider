@@ -50,7 +50,6 @@
 package edu.internet2.middleware.shibboleth.aa.attrresolv;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,7 +115,6 @@ public class AttributeResolver {
 			parser.setEntityResolver(new EntityResolver() {
 				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
 					if (systemId.endsWith("shibboleth-resolver-1.0.xsd")) {
-						InputStream stream;
 						try {
 							return new InputSource(
 								new ShibResource("/schemas/shibboleth-resolver-1.0.xsd", this.getClass())
@@ -199,9 +197,7 @@ public class AttributeResolver {
 		while (registered.hasNext()) {
 			ResolutionPlugIn plugIn = lookupPlugIn((String) registered.next());
 			log.debug("Checking PlugIn (" + plugIn.getId() + ") for consistency.");
-			if (plugIn instanceof AttributeDefinitionPlugIn) {
-				verifyPlugIn((AttributeDefinitionPlugIn) plugIn, new HashSet(), inconsistent);
-			}
+			verifyPlugIn(plugIn, new HashSet(), inconsistent);
 		}
 		
 		if (!inconsistent.isEmpty()) {
@@ -219,7 +215,7 @@ public class AttributeResolver {
 
 	}
 
-	private void verifyPlugIn(AttributeDefinitionPlugIn plugIn, Set verifyChain, Set inconsistent) {
+	private void verifyPlugIn(ResolutionPlugIn plugIn, Set verifyChain, Set inconsistent) {
 
 		//Short-circuit if we have already found this PlugIn to be inconsistent
 		if (inconsistent.contains(plugIn.getId())) {
@@ -234,7 +230,7 @@ public class AttributeResolver {
 			return;
 		}
 
-		//Make sure all dependent Data Connectors are registered
+        //Recursively go through all DataConnector dependencies and make sure all are registered and consistent.
 		List depends = new ArrayList();
 		depends.addAll(Arrays.asList(plugIn.getDataConnectorDependencyIds()));
 		Iterator dependsIt = depends.iterator();
@@ -262,6 +258,20 @@ public class AttributeResolver {
 				inconsistent.add(plugIn.getId());
 				return;
 			}
+            
+            verifyChain.add(plugIn.getId());
+            verifyPlugIn(dependent, verifyChain, inconsistent);
+
+            if (inconsistent.contains(key)) {
+                log.error(
+                    "The PlugIn ("
+                        + plugIn.getId()
+                        + ") is inconsistent.  It depends on a PlugIn ("
+                        + key
+                        + ") that is not inconsistent.");
+                inconsistent.add(plugIn.getId());
+                return;
+            }
 		}
 
 		//Recursively go through all AttributeDefinition dependencies and make sure all are registered and consistent.
@@ -295,7 +305,7 @@ public class AttributeResolver {
 			}
 			
 			verifyChain.add(plugIn.getId());
-			verifyPlugIn((AttributeDefinitionPlugIn) dependent, verifyChain, inconsistent);
+			verifyPlugIn(dependent, verifyChain, inconsistent);
 
 			if (inconsistent.contains(key)) {
 				log.error(
@@ -403,6 +413,82 @@ public class AttributeResolver {
 		}
 		return (String[]) found.toArray(new String[0]);
 	}
+    
+    private Attributes resolveConnector(
+        String connector,
+        Principal principal,
+        String requester,
+        Map requestCache,
+        ResolverAttributeSet requestedAttributes)
+        throws ResolutionPlugInException {
+        
+        DataConnectorPlugIn currentDefinition = (DataConnectorPlugIn)lookupPlugIn(connector);
+
+        //Check to see if we have already resolved the connector during this request
+        if (requestCache.containsKey(currentDefinition.getId())) {
+            log.debug(
+                "Connector ("
+                    + currentDefinition.getId()
+                    + ") already resolved for this request, using cached version");
+            return (Attributes)requestCache.get(currentDefinition.getId());
+        }
+
+        //Check to see if we have a cached resolution for this connector
+        if (currentDefinition.getTTL() > 0) {
+            Attributes cachedAttributes =
+                resolverCache.getResolvedConnector(principal, currentDefinition.getId());
+            if (cachedAttributes != null) {
+                log.debug(
+                    "Connector ("
+                        + currentDefinition.getId()
+                        + ") resolution cached from a previous request, using cached version");
+                return cachedAttributes;
+            }
+        }
+
+        //Resolve all attribute dependencies
+        String[] attributeDependencies = currentDefinition.getAttributeDefinitionDependencyIds();
+        Dependencies depends = new Dependencies();
+
+        for (int i = 0; attributeDependencies.length > i; i++) {
+            log.debug(
+                "Connector (" + currentDefinition.getId() + ") depends on attribute (" + attributeDependencies[i] + ").");
+            ResolverAttribute dependant = requestedAttributes.getByName(attributeDependencies[i]);
+            if (dependant == null) {
+                dependant = new DependentOnlyResolutionAttribute(attributeDependencies[i]);
+            }
+            resolveAttribute(dependant, principal, requester, requestCache, requestedAttributes);
+            depends.addAttributeResolution(attributeDependencies[i], dependant);
+
+        }
+
+        //Resolve all connector dependencies
+        String[] connectorDependencies = currentDefinition.getDataConnectorDependencyIds();
+        for (int i = 0; connectorDependencies.length > i; i++) {
+            log.debug(
+                "Connector (" + currentDefinition.getId() + ") depends on connector (" + connectorDependencies[i] + ").");
+            depends.addConnectorResolution(
+                connectorDependencies[i],
+                resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
+        }
+
+        //Resolve the connector
+        Attributes resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
+
+        //If necessary, cache for this request
+        requestCache.put(currentDefinition.getId(), resolvedAttributes);
+
+        //Add attribute resolution to cache
+        if (currentDefinition.getTTL() > 0) {
+            resolverCache.cacheConnectorResolution(
+                principal,
+                currentDefinition.getId(),
+                currentDefinition.getTTL(),
+                resolvedAttributes);
+        }
+        
+        return resolvedAttributes;
+    }
 
 	private void resolveAttribute(
 		ResolverAttribute attribute,
@@ -439,8 +525,8 @@ public class AttributeResolver {
 		}
 
 		//Resolve all attribute dependencies
-		String[] attributeDependencies = currentDefinition.getAttributeDefinitionDependencyIds();
 		Dependencies depends = new Dependencies();
+        String[] attributeDependencies = currentDefinition.getAttributeDefinitionDependencyIds();
 
 		boolean dependancyOnly = false;
 		for (int i = 0; attributeDependencies.length > i; i++) {
@@ -461,43 +547,9 @@ public class AttributeResolver {
 		for (int i = 0; connectorDependencies.length > i; i++) {
 			log.debug(
 				"Attribute (" + attribute.getName() + ") depends on connector (" + connectorDependencies[i] + ").");
-			//Check to see if we have already resolved the connector during this request
-			if (requestCache.containsKey(connectorDependencies[i])) {
-				log.debug(
-					"Connector ("
-						+ connectorDependencies[i]
-						+ ") already resolved for this request, using cached version");
-				depends.addConnectorResolution(
-					connectorDependencies[i],
-					(Attributes) requestCache.get(connectorDependencies[i]));
-			} else {
-				//Check to see if we have a cached resolution for this attribute
-				if (((DataConnectorPlugIn) lookupPlugIn(connectorDependencies[i])).getTTL() > 0) {
-					Attributes cachedAttributes =
-						resolverCache.getResolvedConnector(principal, connectorDependencies[i]);
-					if (cachedAttributes != null) {
-						log.debug(
-							"Connector ("
-								+ connectorDependencies[i]
-								+ ") resolution cached from a previous request, using cached version");
-						depends.addConnectorResolution(connectorDependencies[i], cachedAttributes);
-					}
-				}
-
-				Attributes resolvedConnector =
-					((DataConnectorPlugIn) lookupPlugIn(connectorDependencies[i])).resolve(principal);
-				requestCache.put(connectorDependencies[i], resolvedConnector);
-				depends.addConnectorResolution(connectorDependencies[i], resolvedConnector);
-
-				//Add attribute resolution to cache
-				if (((DataConnectorPlugIn) lookupPlugIn(connectorDependencies[i])).getTTL() > 0) {
-					resolverCache.cacheConnectorResolution(
-						principal,
-						connectorDependencies[i],
-						((DataConnectorPlugIn) lookupPlugIn(connectorDependencies[i])).getTTL(),
-						resolvedConnector);
-				}
-			}
+            depends.addConnectorResolution(
+                connectorDependencies[i],
+                resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
 		}
 
 		//Resolve the attribute

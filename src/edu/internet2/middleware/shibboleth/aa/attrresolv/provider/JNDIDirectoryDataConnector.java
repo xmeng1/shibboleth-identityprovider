@@ -66,6 +66,7 @@ import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 
 /**
@@ -202,7 +203,7 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(java.security.Principal)
 	 */
-	public Attributes resolve(Principal principal) throws ResolutionPlugInException {
+	public Attributes resolve(Principal principal, String requester, Dependencies depends) throws ResolutionPlugInException {
 
 		try {
 			InitialDirContext context = new InitialDirContext(properties);
