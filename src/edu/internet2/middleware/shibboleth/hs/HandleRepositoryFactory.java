@@ -1,4 +1,4 @@
-package edu.internet2.middleware.shibboleth.hs
+package edu.internet2.middleware.shibboleth.hs;
 
 import javax.servlet.http.*;
 import edu.internet2.middleware.shibboleth.*;

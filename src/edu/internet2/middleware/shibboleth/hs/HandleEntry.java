@@ -1,10 +1,9 @@
-package edu.internet2.middleware.shibboleth.hs
+package edu.internet2.middleware.shibboleth.hs;
 
 import edu.internet2.middleware.shibboleth.*;
 import edu.internet2.middleware.shibboleth.common.*;
 import org.opensaml.*;
 import java.util.*;
-import HandleException;
 import org.doomdark.uuid.*;
 
 /**

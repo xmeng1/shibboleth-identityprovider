@@ -1,4 +1,4 @@
-package edu.internet2.middleware.shibboleth.hs
+package edu.internet2.middleware.shibboleth.hs;
 
 import java.util.*;
 import java.sql.*;
@@ -54,7 +54,7 @@ public class ClubShibSQLHandleRepository extends HandleRepositoryFactory{
             ResultSet rs = st.executeQuery(query);
 
 	    if(rs == null)
-		throw new HandleException(HandleException.ERR, "null result set for handle: "+handle);
+		throw new HandleException("null result set for handle: "+handle);
 	    
 	    while (rs.next()) {
 		he = new HandleEntry( rs.getString("handle"), 
@@ -65,11 +65,11 @@ public class ClubShibSQLHandleRepository extends HandleRepositoryFactory{
 	    }
 	    st.close();
 	}
-	catch (SQLException e) {
-	    throw new HandleException(HandleException.SQL, e.getMessage());
+	catch (SQLException ex) {
+	    throw new HandleException(ex.getMessage());
         }
 	if ( he == null ) 
-	    throw new HandleException(HandleException.ERR, "getHandleEntry() cannot find matching record for handle: "+handle);
+	    throw new HandleException("getHandleEntry() cannot find matching record for handle: "+handle);
 	else
 	    return he;
     }
