@@ -1,6 +1,6 @@
 <!-- Main build configutaion for Shibboleth java components - Walter Hoehn 06/04/2002 -->
 
-<project name="Shibboleth" default="dist-origin" basedir=".">
+<project name="Shibboleth" default="dist-IdP" basedir=".">
 
     <!-- Set global properties for this build -->
     <property name="distname" value="shibboleth" />
@@ -99,31 +99,21 @@
     <!-- Create various product distributions and move them to ${dist} -->
 
     <target name="dist-all" depends="compile, test-all, package-all, clean-build" />
+	
     <target name="package-all">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/all.xml" basedir="${approot}" update="no" />
     </target>
 
-    <target name="dist-origin" depends="compile, test-origin, package-origin, clean-build" />
-    <target name="package-origin">
+    <target name="dist-IdP" depends="compile, test-IdP, package-IdP, clean-build" />
+    <target name="package-IdP">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
     </target>
-
-	<!-- Ant target used to test the Java Service Provider.
-	     *** You may not agree with these decisions.
-	     Tomcat must be stopped during the build.
-	     Compile everything, deploy the WAR, and delete the old directory 
-	     so the WAR gets expanded when Tomcat restarts.
-	     Ant and Eclipse should agree on the Build directory, and the
-	     class files should remain in place after deployment. 
-	     -->
-    <target name="dist-target" depends="compile, package-target">
-    	<copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${distname}.war" />
-    	<delete dir="${tomcat.home}/webapps/${distname}" quiet="yes" />
-    </target>	
-    	
-    <target name="package-target">
-        <war warfile="${dist}/${distname}.war" webxml="${configroot}/target.xml" basedir="${approot}" update="no" />
+	
+    <target name="dist-IdP-SP" depends="compile, test-IdP, package-IdP-SP, clean-build" />
+    <target name="package-IdP-SP">
+        <war warfile="${dist}/${distname}.war" webxml="${configroot}/IdP-SP.xml" basedir="${approot}" update="no" />
     </target>
+
     <target name="dist-wayf" depends="compile, package-wayf, clean-build" />
     <target name="package-wayf">
         <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
@@ -163,8 +153,8 @@
     </target>
 
     <!-- Run automated tests on compiled code -->
-    <target name="test-all" depends="test-origin" />
-    <target name="test-origin" depends="compile-tests">
+    <target name="test-all" depends="test-IdP" />
+    <target name="test-IdP" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
             <classpath refid="build.path" />
