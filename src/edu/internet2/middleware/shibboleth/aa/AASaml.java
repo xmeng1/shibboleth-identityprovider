@@ -111,4 +111,10 @@ public class AASaml {
 	    binding.respond(resp,sResp,ourSE);	    
 	}
     }
+
+    public void fail(HttpServletResponse resp, SAMLException exception)
+	throws IOException{
+
+	binding.respond(resp, null, exception);
+    }
 }

@@ -91,16 +91,23 @@ public class AAServlet extends HttpServlet {
 
 	    attrs = responder.getReleaseAttributes(uidSyntax, handle, shar, resource);
 	    System.err.println("AA debug: got attributes");
+	    saml.respond(resp, attrs, null);
 
  	}catch (org.opensaml.SAMLException se) {
-	    ourSE = se;
-	    
+	    try{
+		saml.fail(resp, new SAMLException(null, "AA got a SAML Exception: "+se));
+	    }catch(Exception ee){
+		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+se);
+	    }
 	    //	}catch (HandleException he) {
 	    //	    ourSE = new org.opensaml.SAMLException(org.opensaml.SAMLException.RESPONDER,"Bad Handle or Handle Service Problem: "+he);
 	}catch (Exception e) {
-	    ourSE = new org.opensaml.SAMLException(org.opensaml.SAMLException.RESPONDER,"AA Failed with: "+e);
-	}finally{
-	    saml.respond(resp, attrs, ourSE);
+	    try{
+		saml.fail(resp, new SAMLException(null, "AA got an Exception: "+e));
+	    }catch(Exception ee){
+		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+e);
+	    }
+
 	}
     }
 
