@@ -49,6 +49,8 @@
 
 package edu.internet2.middleware.shibboleth.utils;
 
+import jargs.gnu.CmdLineParser;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -69,8 +71,6 @@ import edu.internet2.middleware.shibboleth.aa.AAAttributeSet.ShibAttributeIterat
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
 
 /**
  * Utility for testing an Attribute Resolver configuration.
@@ -88,50 +88,40 @@ public class ResolverTest {
 
 	public static void main(String[] args) {
 
-		LongOpt[] longopts =
-			{
-				new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
-				new LongOpt("file", LongOpt.REQUIRED_ARGUMENT, null, 'f'),
-				new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
-				new LongOpt("requester", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
-				new LongOpt("debug", LongOpt.NO_ARGUMENT, null, 'd')};
+		CmdLineParser parser = new CmdLineParser();
+		CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
+		CmdLineParser.Option debugOption = parser.addBooleanOption('d', "debug");
+		CmdLineParser.Option fileOption = parser.addStringOption('f', "file");
+		CmdLineParser.Option userOption = parser.addStringOption('u', "user");
+		CmdLineParser.Option requesterOption = parser.addStringOption('r', "requester");
 
-		Getopt getOpt = new Getopt("ResolverTest", args, ":hdf:u:r:", longopts);
-		getOpt.setOpterr(false);
-
-		for (int c;((c = getOpt.getopt()) != -1);) {
-			switch (c) {
-
-				case 'h' :
-					printUsage(System.out);
-					System.exit(0);
-					break;
-
-				case 'd' :
-					debug = true;
-					break;
-
-				case 'f' :
-					file = getOpt.getOptarg();
-					break;
-
-				case 'u' :
-					user = getOpt.getOptarg();
-					break;
-
-				case 'r' :
-					requester = getOpt.getOptarg();
-					break;
-
-				case ':' :
-					System.out.println("You need an argument for option " + (char) getOpt.getOptopt());
-					System.exit(1);
-
-				case '?' :
-					System.out.println("The option '" + (char) getOpt.getOptopt() + "' is not valid");
-					System.exit(1);
+		try {
+			parser.parse(args);
+		} catch (CmdLineParser.OptionException e) {
+			System.err.println(e.getMessage());
+			try {
+				Thread.sleep(100); //silliness to get error to print first
+			} catch (InterruptedException ie) {
+				//doesn't matter
 			}
+			printUsage(System.out);
+			System.exit(1);
 		}
+
+		Boolean helpEnabled = (Boolean) parser.getOptionValue(helpOption);
+		if (helpEnabled != null && helpEnabled.booleanValue()) {
+			printUsage(System.out);
+			System.exit(0);
+		}
+
+		Boolean debugEnabled = ((Boolean) parser.getOptionValue(debugOption));
+		if (debugEnabled != null) {
+			debug = debugEnabled.booleanValue();
+		}
+
+		file = (String) parser.getOptionValue(fileOption);
+		user = (String) parser.getOptionValue(userOption);
+		requester = (String) parser.getOptionValue(requesterOption);
 
 		configureLogging(debug);
 		checkRequired();
@@ -140,7 +130,7 @@ public class ResolverTest {
 		configuration.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
 			file);
-			
+
 		try {
 			AttributeResolver resolver = new AttributeResolver(configuration);
 			String[] attributes = resolver.listRegisteredAttributeDefinitionPlugIns();
@@ -154,7 +144,7 @@ public class ResolverTest {
 
 			System.out.println(
 				"Received the following back from the Attribute Resolver:" + System.getProperty("line.separator"));
-			
+
 			for (ShibAttributeIterator iterator = attributeSet.shibAttributeIterator(); iterator.hasNext();) {
 				AAAttribute attribute = iterator.nextShibAttribute();
 				Node node = attribute.toDOM();
@@ -168,6 +158,7 @@ public class ResolverTest {
 				new XMLSerializer(xml, format).serialize((Element) node);
 				System.out.println(xml.toString() + System.getProperty("line.separator"));
 			}
+		
 		} catch (AttributeResolverException e) {
 			System.err.println("Error initializing the Attribute Resolver: " + e.getMessage());
 		} catch (SAMLException e) {

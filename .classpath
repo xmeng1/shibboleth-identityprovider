@@ -22,6 +22,6 @@
     <classpathentry kind="var" path="JAVA_HOME/jre/lib/jce.jar"/>
     <classpathentry kind="var" path="JAVA_HOME/jre/lib/jsse.jar"/>
     <classpathentry kind="var" path="JRE_LIB" sourcepath="JRE_SRC"/>
-    <classpathentry kind="lib" path="lib/getopt-1.0.9.jar"/>
+    <classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
     <classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
