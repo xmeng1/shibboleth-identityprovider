@@ -41,7 +41,6 @@
 	<!-- Compile classes and move them to ${build} -->
 	<target name="compile-all" depends="init">
 		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
-			<exclude name="edu/internet2/middleware/shibboleth/aaLocal/**" />
 			<exclude name="edu/internet2/middleware/shibboleth/hs-cmu/**" />
 			<classpath refid="build.path" />
 		</javac>
