@@ -130,7 +130,7 @@ public class AAServlet extends HttpServlet {
 		codes[0]=SAMLException.REQUESTER[0];
 		codes[1]=new QName(
 				   edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,
-				   he.toString());//"InvalidHandle");
+				   "InvalidHandle");
 		saml.fail(resp, new SAMLException(codes, "AA got a HandleException: "+he));
 	    }catch(Exception ee){
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+he);
