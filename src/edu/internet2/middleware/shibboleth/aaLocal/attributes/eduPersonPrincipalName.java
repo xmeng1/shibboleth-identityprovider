@@ -12,9 +12,13 @@ package edu.internet2.middleware.shibboleth.aaLocal.attributes;
 import edu.internet2.middleware.eduPerson.*;
 import edu.internet2.middleware.shibboleth.common.Constants; 
 import edu.internet2.middleware.shibboleth.aa.ShibAttribute;
+
+import org.apache.log4j.Logger;
 import org.opensaml.*;
 
 public class eduPersonPrincipalName implements ShibAttribute{
+	
+	private static Logger log = Logger.getLogger(SAMLResponse.class.getName());
     
 
     public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values)
@@ -25,7 +29,7 @@ public class eduPersonPrincipalName implements ShibAttribute{
 	String eppn = (String)values[0];
 
 	int x = eppn.indexOf("@") ;
-	System.out.println("EPPN: "+eppn+"    @ at "+x);
+	log.debug("EPPN: "+eppn+"    @ at "+x);
 	if(x > 0){
 	    vals[0] = eppn.substring(0,x);
 	    scopes[0] = eppn.substring(x+1);
