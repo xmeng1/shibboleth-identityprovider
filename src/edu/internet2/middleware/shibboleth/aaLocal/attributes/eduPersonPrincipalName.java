@@ -10,19 +10,24 @@ public class eduPersonPrincipalName implements ShibAttribute{
 	throws SAMLException{
 
 	String scopes[] = new String[1];
+	String vals[] = new String[1];
+	String eppn = (String)values[0];
 
-	int x = ((String)values[0]).indexOf("@") ;
-	int len = ((String)values[0]).length();
+	int x = eppn.indexOf("@") ;
+	System.out.println("EPPN: "+eppn+"    @ at "+x);
 	if(x > 0){
-	    values[0] = ((String)values[0]).substring(0,x-1);
-	    scopes[0] = ((String)values[0]).substring(x+1);
-	}	
+	    vals[0] = eppn.substring(0,x);
+	    scopes[0] = eppn.substring(x+1);
+	}else{
+	    vals[0] = eppn;
+	    scopes[0] = defaultScope;
+	}
 	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName",
 				 Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
 				 new QName("urn:mace:eduPerson:1.0",
 					   "eduPersonPrincipalNameType"),
 				 10*60,
-				 values,
+				 vals,
 				 defaultScope,
 				 scopes);
 
