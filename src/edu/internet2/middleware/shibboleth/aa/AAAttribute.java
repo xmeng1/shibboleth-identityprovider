@@ -91,6 +91,11 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 			null);
 	}
 
+	public AAAttribute(String name, Object[] values) throws SAMLException {
+		this(name);
+		setValues(values);
+	}
+
 	public boolean hasValues() {
 		if (values.isEmpty()) {
 			return false;
@@ -204,13 +209,24 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 		return valueHandler;
 	}
 
-	/* (non-Javadoc)
+	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
-	public boolean equals(Object obj) {
-		// TODO Figure out what to do here
-		System.err.println("Hit AAAttribute equals().");
-		return super.equals(obj);
+	public boolean equals(Object object) {
+
+		if (!(object instanceof AAAttribute)) {
+			return false;
+		}
+		if (lifetime != ((AAAttribute) object).lifetime) {
+			return false;
+		}
+		if (name != ((AAAttribute) object).name) {
+			return false;
+		}
+		if (!valueHandler.getClass().getName().equals(((AAAttribute) object).valueHandler.getClass().getName())) {
+			return false;
+		}
+		return values.equals(((AAAttribute) object).values);
 	}
 
 }

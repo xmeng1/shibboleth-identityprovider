@@ -69,6 +69,19 @@ public class AAAttributeSet implements ResolverAttributeSet, ArpAttributeSet {
 
 	private HashMap attributes = new HashMap();
 
+	public AAAttributeSet() {
+	}
+
+	public AAAttributeSet(AAAttribute attribute) {
+		attributes.put(attribute.getName(), attribute);
+	}
+
+	public AAAttributeSet(AAAttribute[] attributes) {
+		for (int i = 0; i < attributes.length; i++) {
+			this.attributes.put(attributes[i].getName(), attributes[i]);
+		}
+	}
+
 	public void add(AAAttribute attribute) {
 		attributes.put(attribute.getName(), attribute);
 	}
@@ -126,4 +139,14 @@ public class AAAttributeSet implements ResolverAttributeSet, ArpAttributeSet {
 		}
 
 	}
+	/**
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	public boolean equals(Object object) {
+		if (!(object instanceof AAAttributeSet)) {
+			return false;
+		}
+		return attributes.equals(((AAAttributeSet) object).attributes);
+	}
+
 }
