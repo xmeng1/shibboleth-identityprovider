@@ -78,7 +78,7 @@ public class ShibbolethTrust extends Trust {
 			log.error("Appropriate data was not supplied for trust evaluation.");
 			return false;
 		}
-
+		log.debug("Inline validation was unsuccessful.  Attmping PKIX...");
 		// If not, try PKIX validation against the shib-custom metadata extensions
 
 		// First, we want to see if we can match a keyName from the metadata against the cert
