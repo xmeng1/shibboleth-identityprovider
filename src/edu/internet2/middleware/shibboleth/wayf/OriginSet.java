@@ -50,7 +50,8 @@
 package edu.internet2.middleware.shibboleth.wayf;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
@@ -64,7 +65,7 @@ import org.apache.log4j.Logger;
 
 public class OriginSet {
 
-	private HashSet origins = new HashSet();
+	private SortedSet origins = new TreeSet();
 	private static Logger log = Logger.getLogger(OriginSet.class.getName());
 	private String name = "";
 

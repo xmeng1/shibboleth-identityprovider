@@ -165,7 +165,11 @@ public class Origin implements Comparable {
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	public int compareTo(Object o) {
-			return name.compareTo(((Origin)o).getDisplayName().toLowerCase());
+		int result = getDisplayName().toLowerCase().compareTo(((Origin) o).getDisplayName().toLowerCase());
+		if (result == 0) {
+			result = getDisplayName().compareTo(((Origin) o).getDisplayName());
+		}
+		return result;
 	}
 
 }
