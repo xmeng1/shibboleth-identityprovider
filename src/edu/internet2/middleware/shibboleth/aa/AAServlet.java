@@ -11,7 +11,7 @@ import org.w3c.dom.*;
 import edu.internet2.middleware.shibboleth.*;
 import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
-
+import org.apache.log4j.Logger;
 
 
 
@@ -26,7 +26,7 @@ public class AAServlet extends HttpServlet {
     AAResponder responder;
     HandleRepositoryFactory hrf;
     ArpFactory arpFactory;
-    
+    private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
     public void init(ServletConfig conf)
 	throws ServletException{
@@ -54,7 +54,7 @@ public class AAServlet extends HttpServlet {
 	    DirContext ctx = new InitialDirContext(env);
 	    
 	    responder = new AAResponder(arpFactory, ctx, myName);
-	    System.out.println("AA all initialized at "+new Date());
+	    log.info("AA all initialized at "+new Date());
 
 	}catch(NamingException ne){
 	    throw new ServletException("Init failed: "+ne);
@@ -77,53 +77,54 @@ public class AAServlet extends HttpServlet {
 	SAMLAttribute[] attrs = null;
 	SAMLException ourSE = null;
 	AASaml saml = null;
-
+	String userName = null;
+	    
 	try{
-	    System.out.println("AA about to make a saml obj");
 	    saml = new AASaml(myName);
 	    saml.receive(req);
-	    System.out.println("AA received a query");
+	    log.info("AA received a query");
 	    String resource = saml.getResource();
 	    String handle = saml.getHandle();
 	    String shar = saml.getShar();
 	    String issuedBy = saml.getIssuer();
-	    System.err.println("AA debug: handle:"+handle);
-	    System.err.println("AA debug: issuer:"+issuedBy);
-	    System.err.println("AA debug: shar:"+shar);
+	    log.info("AA: handle:"+handle);
+	    log.info("AA: issuer:"+issuedBy);
+	    log.info("AA: shar:"+shar);
 
 	    // get HS and convert handle to userName
 	    ServletConfig sc = getServletConfig();
 	    ServletContext sctx = sc.getServletContext(); 
 	    hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
-	    System.out.println("Debug: Context aTTR: "+sctx.getAttribute("HandleRepository"));
+	    log.debug("Context aTTR: "+sctx.getAttribute("HandleRepository"));
 
-	    String userName = null;
 	    if(handle.equalsIgnoreCase("foo")){
 		// for testing only
 		userName = "dousti"; 
 	    }else{
 		if(hrf == null){
-		    if(userName == null)
-			throw new AAException("No HandleRepository found!");
+		    throw new HandleException("No HandleRepository found! Has HS initialized?");
 		}else{
 		    HandleEntry he = hrf.getHandleEntry(handle);
 		    userName = he.getUsername();
 		    if(userName == null)
-			throw new AAException("HandleServer returns null for user name!");
+			throw new HandleException("HandleServer returns null for user name!");
 		}
 	    }
 
 	    attrs = responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource);
-	    System.err.println("AA debug: got attributes");
+	    log.info("Got "+attrs.length+" attributes for "+userName);
 	    saml.respond(resp, attrs, null);
+	    log.info("Successfully responded about "+userName);
 
  	}catch (org.opensaml.SAMLException se) {
+	    log.error("AA failed for "+userName+" because of: "+se);
 	    try{
 		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "AA got a SAML Exception: "+se));
 	    }catch(Exception ee){
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+se);
 	    }
 	}catch (HandleException he) {
+	    log.error("AA failed for "+userName+" because of: "+he);
 	    try{
 		QName[] codes=new QName[2];
 		codes[0]=SAMLException.REQUESTER[0];
@@ -135,6 +136,7 @@ public class AAServlet extends HttpServlet {
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+he);
 	    }
 	}catch (Exception e) {
+	    log.error("AA failed for "+userName+" because of: "+e);
 	    try{
 		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "AA got an Exception: "+e));
 	    }catch(Exception ee){
