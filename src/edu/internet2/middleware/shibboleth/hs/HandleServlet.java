@@ -58,6 +58,8 @@ import edu.internet2.middleware.shibboleth.common.*;
 import org.opensaml.*;
 import sun.misc.BASE64Decoder;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+import org.doomdark.uuid.UUIDGenerator;
 
 public class HandleServlet extends HttpServlet {
 
@@ -68,10 +70,12 @@ public class HandleServlet extends HttpServlet {
     private String rep;
     private static Logger log = Logger.getLogger(HandleServlet.class.getName());; 
 
-    public void init(ServletConfig conf)
+    public void init()
 	throws ServletException
     {
-	super.init(conf);
+    
+    MDC.put("serviceId", "[HS Core]");
+    	
 	ServletConfig sc = getServletConfig();
 	ServletContext sctx = sc.getServletContext();
 
@@ -176,7 +180,10 @@ public class HandleServlet extends HttpServlet {
 	throws ServletException, IOException
     {
 
-
+	log.debug("Recieved a request.");
+	MDC.put("serviceId", UUIDGenerator.getInstance().generateRandomBasedUUID());
+	MDC.put("remoteAddr", req.getRemoteAddr());
+	log.info("Handling request.");
 
 	HandleEntry he = null;
 

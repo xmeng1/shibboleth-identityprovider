@@ -147,7 +147,7 @@ public class AAServlet extends HttpServlet {
     public void doPost(HttpServletRequest req, HttpServletResponse resp)
         throws ServletException, IOException {
         	
-	log.info("Recieved a request.");
+	log.debug("Recieved a request.");
 	MDC.put("serviceId", UUIDGenerator.getInstance().generateRandomBasedUUID());
 	MDC.put("remoteAddr", req.getRemoteAddr());
 	log.info("Handling request.");
