@@ -1,49 +1,37 @@
-/* 
- * The Shibboleth License, Version 1. 
- * Copyright (c) 2002 
- * University Corporation for Advanced Internet Development, Inc. 
+/*
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
  * All rights reserved
  * 
  * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+ * following conditions are met:
  * 
- * Redistributions of source code must retain the above copyright notice, this 
- * list of conditions and the following disclaimer.
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+ * disclaimer.
  * 
- * Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation 
- * and/or other materials provided with the distribution, if any, must include 
- * the following acknowledgment: "This product includes software developed by 
- * the University Corporation for Advanced Internet Development 
- * <http://www.ucaid.edu>Internet2 Project. Alternately, this acknowledegement 
- * may appear in the software itself, if and wherever such third-party 
- * acknowledgments normally appear.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
+ * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
+ * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
+ * software itself, if and wherever such third-party acknowledgments normally appear.
  * 
- * Neither the name of Shibboleth nor the names of its contributors, nor 
- * Internet2, nor the University Corporation for Advanced Internet Development, 
- * Inc., nor UCAID may be used to endorse or promote products derived from this 
- * software without specific prior written permission. For written permission, 
- * please contact shibboleth@shibboleth.org
+ * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
+ * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
+ * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
  * 
- * Products derived from this software may not be called Shibboleth, Internet2, 
- * UCAID, or the University Corporation for Advanced Internet Development, nor 
- * may Shibboleth appear in their name, without prior written permission of the 
+ * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
+ * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
  * University Corporation for Advanced Internet Development.
  * 
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK 
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY 
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
+ * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
+ * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -58,7 +46,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.naming.directory.Attributes;
@@ -83,11 +70,11 @@ import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 
 /**
- * An engine for obtaining attribute values for specified principals.  Attributes values are
- * resolved using a directed graph of pluggable attribute definitions and data connectors.
- *   
+ * An engine for obtaining attribute values for specified principals. Attributes values are resolved using a directed
+ * graph of pluggable attribute definitions and data connectors.
+ * 
  * @author Walter Hoehn (wassa@columbia.edu)
- *
+ *  
  */
 
 public class AttributeResolver {
@@ -98,31 +85,13 @@ public class AttributeResolver {
 	public static final String resolverNamespace = "urn:mace:shibboleth:resolver:1.0";
 
 	public AttributeResolver(AAConfig configuration) throws AttributeResolverException {
-		if (configuration == null
-			|| configuration.getConfigProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig")
-				== null) {
+		
+		if (configuration == null || configuration.getResolverConfigLocation() == null) {
 			log.error("No Attribute Resolver configuration file specified.");
 			throw new AttributeResolverException("No Attribute Resolver configuration file specified.");
 		}
-
-		loadConfig(
-			configuration.getConfigProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig"));
-	}
-	
-	public AttributeResolver(Properties properties) throws AttributeResolverException {
-		if (properties == null
-			|| properties.getProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig")
-				== null) {
-			log.error("No Attribute Resolver configuration file specified.");
-			throw new AttributeResolverException("No Attribute Resolver configuration file specified.");
-		}
-
-		loadConfig(
-			properties.getProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig"));
+		
+		loadConfig(configuration.getResolverConfigLocation());
 	}
 
 	private void loadConfig(String configFile) throws AttributeResolverException {
@@ -208,7 +177,7 @@ public class AttributeResolver {
 	}
 
 	private void verifyPlugIns() throws AttributeResolverException {
-		
+
 		log.info("Verifying PlugIn graph consitency.");
 		Set inconsistent = new HashSet();
 		Iterator registered = plugIns.keySet().iterator();
@@ -218,7 +187,7 @@ public class AttributeResolver {
 			log.debug("Checking PlugIn (" + plugIn.getId() + ") for consistency.");
 			verifyPlugIn(plugIn, new HashSet(), inconsistent);
 		}
-		
+
 		if (!inconsistent.isEmpty()) {
 			log.info("Unloading inconsistent PlugIns.");
 			Iterator inconsistentIt = inconsistent.iterator();
@@ -226,7 +195,7 @@ public class AttributeResolver {
 				plugIns.remove(inconsistentIt.next());
 			}
 		}
-		
+
 		if (plugIns.size() < 1) {
 			log.error("Failed to load any PlugIn definitions.");
 			throw new AttributeResolverException("Cannot load Attribute Resolver.");
@@ -249,7 +218,7 @@ public class AttributeResolver {
 			return;
 		}
 
-        //Recursively go through all DataConnector dependencies and make sure all are registered and consistent.
+		//Recursively go through all DataConnector dependencies and make sure all are registered and consistent.
 		List depends = new ArrayList();
 		depends.addAll(Arrays.asList(plugIn.getDataConnectorDependencyIds()));
 		Iterator dependsIt = depends.iterator();
@@ -265,7 +234,7 @@ public class AttributeResolver {
 				inconsistent.add(plugIn.getId());
 				return;
 			}
-			
+
 			ResolutionPlugIn dependent = lookupPlugIn(key);
 			if (!(dependent instanceof DataConnectorPlugIn)) {
 				log.error(
@@ -277,22 +246,22 @@ public class AttributeResolver {
 				inconsistent.add(plugIn.getId());
 				return;
 			}
-            
-            verifyChain.add(plugIn.getId());
-            verifyPlugIn(dependent, verifyChain, inconsistent);
 
-            if (inconsistent.contains(key)) {
-                log.error(
-                    "The PlugIn ("
-                        + plugIn.getId()
-                        + ") is inconsistent.  It depends on a PlugIn ("
-                        + key
-                        + ") that is inconsistent.");
-                inconsistent.add(plugIn.getId());
-                return;
-            }
+			verifyChain.add(plugIn.getId());
+			verifyPlugIn(dependent, verifyChain, inconsistent);
+
+			if (inconsistent.contains(key)) {
+				log.error(
+					"The PlugIn ("
+						+ plugIn.getId()
+						+ ") is inconsistent.  It depends on a PlugIn ("
+						+ key
+						+ ") that is inconsistent.");
+				inconsistent.add(plugIn.getId());
+				return;
+			}
 		}
-        verifyChain.remove(plugIn.getId());
+		verifyChain.remove(plugIn.getId());
 
 		//Recursively go through all AttributeDefinition dependencies and make sure all are registered and consistent.
 		depends.clear();
@@ -323,7 +292,7 @@ public class AttributeResolver {
 				inconsistent.add(plugIn.getId());
 				return;
 			}
-			
+
 			verifyChain.add(plugIn.getId());
 			verifyPlugIn(dependent, verifyChain, inconsistent);
 
@@ -338,51 +307,51 @@ public class AttributeResolver {
 				return;
 			}
 		}
-        verifyChain.remove(plugIn.getId());
-        
-        //Check the failover dependency, if there is one.
-        if (plugIn instanceof DataConnectorPlugIn) {
-            String key = ((DataConnectorPlugIn)plugIn).getFailoverDependencyId();
-            if (key != null) {
-                if (!plugIns.containsKey(key)) {
-                    log.error(
-                        "The PlugIn ("
-                            + plugIn.getId()
-                            + ") is inconsistent.  It depends on a PlugIn ("
-                            + key
-                            + ") that is not registered.");
-                    inconsistent.add(plugIn.getId());
-                    return;
-                }
+		verifyChain.remove(plugIn.getId());
 
-                ResolutionPlugIn dependent = lookupPlugIn(key);
-                if (!(dependent instanceof DataConnectorPlugIn)) {
-                    log.error(
-                        "The PlugIn ("
-                            + plugIn.getId()
-                            + ") is inconsistent.  It depends on a fail-over PlugIn ("
-                            + key
-                            + ") that is not a DataConnectorPlugIn.");
-                    inconsistent.add(plugIn.getId());
-                    return;
-                }
-            
-                verifyChain.add(plugIn.getId());
-                verifyPlugIn(dependent, verifyChain, inconsistent);
+		//Check the failover dependency, if there is one.
+		if (plugIn instanceof DataConnectorPlugIn) {
+			String key = ((DataConnectorPlugIn) plugIn).getFailoverDependencyId();
+			if (key != null) {
+				if (!plugIns.containsKey(key)) {
+					log.error(
+						"The PlugIn ("
+							+ plugIn.getId()
+							+ ") is inconsistent.  It depends on a PlugIn ("
+							+ key
+							+ ") that is not registered.");
+					inconsistent.add(plugIn.getId());
+					return;
+				}
 
-                if (inconsistent.contains(key)) {
-                    log.error(
-                        "The PlugIn ("
-                            + plugIn.getId()
-                            + ") is inconsistent.  It depends on a PlugIn ("
-                            + key
-                            + ") that is inconsistent.");
-                    inconsistent.add(plugIn.getId());
-                    return;
-                }
-            }
-        }
-        verifyChain.remove(plugIn.getId());
+				ResolutionPlugIn dependent = lookupPlugIn(key);
+				if (!(dependent instanceof DataConnectorPlugIn)) {
+					log.error(
+						"The PlugIn ("
+							+ plugIn.getId()
+							+ ") is inconsistent.  It depends on a fail-over PlugIn ("
+							+ key
+							+ ") that is not a DataConnectorPlugIn.");
+					inconsistent.add(plugIn.getId());
+					return;
+				}
+
+				verifyChain.add(plugIn.getId());
+				verifyPlugIn(dependent, verifyChain, inconsistent);
+
+				if (inconsistent.contains(key)) {
+					log.error(
+						"The PlugIn ("
+							+ plugIn.getId()
+							+ ") is inconsistent.  It depends on a PlugIn ("
+							+ key
+							+ ") that is inconsistent.");
+					inconsistent.add(plugIn.getId());
+					return;
+				}
+			}
+		}
+		verifyChain.remove(plugIn.getId());
 	}
 
 	private void registerPlugIn(ResolutionPlugIn connector, String id) throws DuplicatePlugInException {
@@ -403,31 +372,26 @@ public class AttributeResolver {
 	/**
 	 * Resolve a set of attributes for a particular principal and requester.
 	 * 
-	 * @param principal the <code>Principal</code> for which the attributes should be resolved
-	 * @param requester the name of the requesting entity
-	 * @param attributes the set of attributes to be resolved
+	 * @param principal
+	 *            the <code>Principal</code> for which the attributes should be resolved
+	 * @param requester
+	 *            the name of the requesting entity
+	 * @param attributes
+	 *            the set of attributes to be resolved
 	 */
-	public void resolveAttributes(
-		Principal principal,
-		String requester,
-		ResolverAttributeSet attributes) {
+	public void resolveAttributes(Principal principal, String requester, ResolverAttributeSet attributes) {
 
 		HashMap requestCache = new HashMap();
-		ResolverAttributeIterator iterator =
-			attributes.resolverAttributeIterator();
+		ResolverAttributeIterator iterator = attributes.resolverAttributeIterator();
 
 		while (iterator.hasNext()) {
 			ResolverAttribute attribute = iterator.nextResolverAttribute();
 			try {
 				if (lookupPlugIn(attribute.getName()) == null) {
-					log.warn(
-						"No PlugIn registered for attribute: ("
-							+ attribute.getName()
-							+ ")");
+					log.warn("No PlugIn registered for attribute: (" + attribute.getName() + ")");
 					iterator.remove();
 				} else {
-					log.info(
-						"Resolving attribute: (" + attribute.getName() + ")");
+					log.info("Resolving attribute: (" + attribute.getName() + ")");
 					if (attribute.resolved()) {
 						log.debug(
 							"Attribute ("
@@ -435,12 +399,7 @@ public class AttributeResolver {
 								+ ") already resolved for this request.  No need for further resolution.");
 
 					} else {
-						resolveAttribute(
-							attribute,
-							principal,
-							requester,
-							requestCache,
-							attributes);
+						resolveAttribute(attribute, principal, requester, requestCache, attributes);
 					}
 
 					if (!attribute.hasValues()) {
@@ -448,11 +407,7 @@ public class AttributeResolver {
 					}
 				}
 			} catch (ResolutionPlugInException rpe) {
-				log.error(
-					"Problem encountered while resolving attribute: ("
-						+ attribute.getName()
-						+ "): "
-						+ rpe);
+				log.error("Problem encountered while resolving attribute: (" + attribute.getName() + "): " + rpe);
 				iterator.remove();
 			}
 		}
@@ -478,69 +433,76 @@ public class AttributeResolver {
 		}
 		return (String[]) found.toArray(new String[0]);
 	}
-    
-    private Attributes resolveConnector(
-        String connector,
-        Principal principal,
-        String requester,
-        Map requestCache,
-        ResolverAttributeSet requestedAttributes)
-        throws ResolutionPlugInException {
-        
-        DataConnectorPlugIn currentDefinition = (DataConnectorPlugIn)lookupPlugIn(connector);
 
-        //Check to see if we have already resolved the connector during this request
-        if (requestCache.containsKey(currentDefinition.getId())) {
-            log.debug(
-                "Connector ("
-                    + currentDefinition.getId()
-                    + ") already resolved for this request, using cached version");
-            return (Attributes)requestCache.get(currentDefinition.getId());
-        }
+	private Attributes resolveConnector(
+		String connector,
+		Principal principal,
+		String requester,
+		Map requestCache,
+		ResolverAttributeSet requestedAttributes)
+		throws ResolutionPlugInException {
 
-        //Check to see if we have a cached resolution for this connector
-        if (currentDefinition.getTTL() > 0) {
-            Attributes cachedAttributes =
-                resolverCache.getResolvedConnector(principal, currentDefinition.getId());
-            if (cachedAttributes != null) {
-                log.debug(
-                    "Connector ("
-                        + currentDefinition.getId()
-                        + ") resolution cached from a previous request, using cached version");
-                return cachedAttributes;
-            }
-        }
+		DataConnectorPlugIn currentDefinition = (DataConnectorPlugIn) lookupPlugIn(connector);
 
-        //Resolve all attribute dependencies
-        String[] attributeDependencies = currentDefinition.getAttributeDefinitionDependencyIds();
-        Dependencies depends = new Dependencies();
+		//Check to see if we have already resolved the connector during this request
+		if (requestCache.containsKey(currentDefinition.getId())) {
+			log.debug(
+				"Connector ("
+					+ currentDefinition.getId()
+					+ ") already resolved for this request, using cached version");
+			return (Attributes) requestCache.get(currentDefinition.getId());
+		}
 
-        for (int i = 0; attributeDependencies.length > i; i++) {
-            log.debug(
-                "Connector (" + currentDefinition.getId() + ") depends on attribute (" + attributeDependencies[i] + ").");
-            ResolverAttribute dependant = requestedAttributes.getByName(attributeDependencies[i]);
-            if (dependant == null) {
-                dependant = new DependentOnlyResolutionAttribute(attributeDependencies[i]);
-            }
-            resolveAttribute(dependant, principal, requester, requestCache, requestedAttributes);
-            depends.addAttributeResolution(attributeDependencies[i], dependant);
+		//Check to see if we have a cached resolution for this connector
+		if (currentDefinition.getTTL() > 0) {
+			Attributes cachedAttributes = resolverCache.getResolvedConnector(principal, currentDefinition.getId());
+			if (cachedAttributes != null) {
+				log.debug(
+					"Connector ("
+						+ currentDefinition.getId()
+						+ ") resolution cached from a previous request, using cached version");
+				return cachedAttributes;
+			}
+		}
 
-        }
+		//Resolve all attribute dependencies
+		String[] attributeDependencies = currentDefinition.getAttributeDefinitionDependencyIds();
+		Dependencies depends = new Dependencies();
 
-        //Resolve all connector dependencies
-        String[] connectorDependencies = currentDefinition.getDataConnectorDependencyIds();
-        for (int i = 0; connectorDependencies.length > i; i++) {
-            log.debug(
-                "Connector (" + currentDefinition.getId() + ") depends on connector (" + connectorDependencies[i] + ").");
-            depends.addConnectorResolution(
-                connectorDependencies[i],
-                resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
-        }
+		for (int i = 0; attributeDependencies.length > i; i++) {
+			log.debug(
+				"Connector ("
+					+ currentDefinition.getId()
+					+ ") depends on attribute ("
+					+ attributeDependencies[i]
+					+ ").");
+			ResolverAttribute dependant = requestedAttributes.getByName(attributeDependencies[i]);
+			if (dependant == null) {
+				dependant = new DependentOnlyResolutionAttribute(attributeDependencies[i]);
+			}
+			resolveAttribute(dependant, principal, requester, requestCache, requestedAttributes);
+			depends.addAttributeResolution(attributeDependencies[i], dependant);
 
-        //Resolve the connector
-        Attributes resolvedAttributes = null;
-        try {
-            resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
+		}
+
+		//Resolve all connector dependencies
+		String[] connectorDependencies = currentDefinition.getDataConnectorDependencyIds();
+		for (int i = 0; connectorDependencies.length > i; i++) {
+			log.debug(
+				"Connector ("
+					+ currentDefinition.getId()
+					+ ") depends on connector ("
+					+ connectorDependencies[i]
+					+ ").");
+			depends.addConnectorResolution(
+				connectorDependencies[i],
+				resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
+		}
+
+		//Resolve the connector
+		Attributes resolvedAttributes = null;
+		try {
+			resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
 
 			//Add attribute resolution to cache
 			if (currentDefinition.getTTL() > 0) {
@@ -550,29 +512,33 @@ public class AttributeResolver {
 					currentDefinition.getTTL(),
 					resolvedAttributes);
 			}
-        }
-        catch (ResolutionPlugInException e) {
-            // Something went wrong, so check for a fail-over...
-            if (currentDefinition.getFailoverDependencyId() != null) {
-            	log.info("Connector (" + currentDefinition.getId() + ") failed, invoking failover dependency");
-                resolvedAttributes = resolveConnector(
-                    currentDefinition.getFailoverDependencyId(), principal, requester, requestCache, requestedAttributes
-                    );
-            }
-            else if (currentDefinition.getPropagateErrors()) {
-                throw e;
-            }
-            else {
-                log.warn(
-                    "Connector (" + currentDefinition.getId() + ") returning empty attribute set instead of propagating error: " + e);
-                resolvedAttributes = new BasicAttributes();
-            }
-        }
+		} catch (ResolutionPlugInException e) {
+			// Something went wrong, so check for a fail-over...
+			if (currentDefinition.getFailoverDependencyId() != null) {
+				log.info("Connector (" + currentDefinition.getId() + ") failed, invoking failover dependency");
+				resolvedAttributes =
+					resolveConnector(
+						currentDefinition.getFailoverDependencyId(),
+						principal,
+						requester,
+						requestCache,
+						requestedAttributes);
+			} else if (currentDefinition.getPropagateErrors()) {
+				throw e;
+			} else {
+				log.warn(
+					"Connector ("
+						+ currentDefinition.getId()
+						+ ") returning empty attribute set instead of propagating error: "
+						+ e);
+				resolvedAttributes = new BasicAttributes();
+			}
+		}
 
-        //Cache for this request
-        requestCache.put(currentDefinition.getId(), resolvedAttributes);
-        return resolvedAttributes;
-    }
+		//Cache for this request
+		requestCache.put(currentDefinition.getId(), resolvedAttributes);
+		return resolvedAttributes;
+	}
 
 	private void resolveAttribute(
 		ResolverAttribute attribute,
@@ -646,27 +612,29 @@ public class AttributeResolver {
 				resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
 		}
 
-        //Resolve the attribute
-        try {
-            currentDefinition.resolve(attribute, principal, requester, depends);
+		//Resolve the attribute
+		try {
+			currentDefinition.resolve(attribute, principal, requester, depends);
 
-            //Add attribute resolution to cache
-            if (currentDefinition.getTTL() > 0) {
-                resolverCache.cacheAttributeResolution(
-                    principal,
-                    attribute.getName(),
-                    currentDefinition.getTTL(),
-                    attribute);
-            }
-        }
-        catch (ResolutionPlugInException e) {
-            if (currentDefinition.getPropagateErrors()) {
-                throw e;
-            } else {
-                log.warn(
-                    "Attribute (" + currentDefinition.getId() + ") returning no values instead of propagating error: " + e);
-            }
-        }
+			//Add attribute resolution to cache
+			if (currentDefinition.getTTL() > 0) {
+				resolverCache.cacheAttributeResolution(
+					principal,
+					attribute.getName(),
+					currentDefinition.getTTL(),
+					attribute);
+			}
+		} catch (ResolutionPlugInException e) {
+			if (currentDefinition.getPropagateErrors()) {
+				throw e;
+			} else {
+				log.warn(
+					"Attribute ("
+						+ currentDefinition.getId()
+						+ ") returning no values instead of propagating error: "
+						+ e);
+			}
+		}
 
 		//If necessary, cache for this request
 		if (dependancyOnly || !attribute.hasValues()) {

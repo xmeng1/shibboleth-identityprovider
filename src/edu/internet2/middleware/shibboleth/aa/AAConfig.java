@@ -50,21 +50,21 @@ public class AAConfig extends ShibbolethOriginConfig {
 
 	private static Logger log = Logger.getLogger(AAConfig.class.getName());
 
+	private String resolverConfig = "/conf/resolver.xml";
+
 	public AAConfig(Element config) throws ShibbolethConfigurationException {
 
 		super(config);
 
-		String attribute = ((Element) config).getAttribute("resolverConfig");
-		if (attribute == null || attribute.equals("")) {
-			log.error(
-				"Attribute Resolver config file not specified.  Add a (resolverConfig) attribute to <ShibbolethOriginConfig>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
+		//Attribute resolver config file location
+		String rawResolverConfig = ((Element) config).getAttribute("resolverConfig");
+		if (rawResolverConfig != null && !rawResolverConfig.equals("")) {
+			resolverConfig = rawResolverConfig;
 		}
-		properties.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-			attribute);
+		log.debug("Resolver config file location set to: (" + resolverConfig + ").");
 
-		attribute = ((Element) config).getAttribute("passThruErros");
+		//Global Pass thru error setting
+		String attribute = ((Element) config).getAttribute("passThruErros");
 		if (attribute == null || attribute.equals("")) {
 			properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
 		} else {
@@ -75,9 +75,10 @@ public class AAConfig extends ShibbolethOriginConfig {
 				properties.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", attribute);
 			}
 		}
+	}
 
-		dumpPropertiesToLog();
-
+	public String getResolverConfigLocation() {
+		return resolverConfig;
 	}
 
 }
