@@ -5,9 +5,6 @@
 	<classpathentry kind="lib" path="endorsed/dom3-xercesImpl-2.5.0.jar"/>
 	<classpathentry kind="lib" path="endorsed/dom3-xml-apis-2.5.0.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
-	<classpathentry sourcepath="lib/commons-digester-src.jar" kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
 	<classpathentry sourcepath="lib/junit-3.8.1-src.jar" kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry sourcepath="lib/log4j-1.2.5-src.jar" kind="lib" path="lib/log4j-1.2.5.jar"/>
@@ -17,10 +14,13 @@
 	<classpathentry kind="lib" path="lib/ant-optional-1.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-dbcp-1.0.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-pool-1.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/commons-logging-1.03.jar"/>
 	<classpathentry kind="lib" path="lib/xmlsec-2.0.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-dbcp-1.1.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-logging-1.03.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-pool-1.1.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
