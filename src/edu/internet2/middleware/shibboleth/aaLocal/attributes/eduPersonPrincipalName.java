@@ -15,7 +15,7 @@ public class eduPersonPrincipalName implements ShibAttribute{
 	int len = ((String)values[0]).length();
 	if(x > 0){
 	    values[0] = ((String)values[0]).substring(0,x-1);
-	    scopes[0] = ((String)values[0]).substring(x+1, len);
+	    scopes[0] = ((String)values[0]).substring(x+1);
 	}	
 	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName",
 				 Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
