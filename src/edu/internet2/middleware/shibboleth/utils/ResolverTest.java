@@ -69,7 +69,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
-import edu.internet2.middleware.shibboleth.aa.AAConfig;
 import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 import edu.internet2.middleware.shibboleth.aa.AAAttributeSet.ShibAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
@@ -80,7 +79,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverExcept
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -221,13 +220,13 @@ public class ResolverTest
 		if (originxml != null) {
 			try {
 				Document originConfig = OriginConfig.getOriginConfig(originxml);
-				AAConfig configuration = new AAConfig(originConfig.getDocumentElement());
+				IdPConfig configuration = new IdPConfig(originConfig.getDocumentElement());
 
 				resolver = new AttributeResolver(configuration);
 
 				NodeList itemElements =
 					originConfig.getDocumentElement().getElementsByTagNameNS(
-							ShibbolethOriginConfig.originConfigNamespace,
+							IdPConfig.originConfigNamespace,
 							"ReleasePolicyEngine");
 
 				if (itemElements.getLength() > 1) {

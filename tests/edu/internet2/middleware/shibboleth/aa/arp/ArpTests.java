@@ -77,7 +77,7 @@ import org.xml.sax.InputSource;
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
 import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -134,9 +134,9 @@ public class ArpTests extends TestCase {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			memoryRepositoryElement =
-				placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
 			memoryRepositoryElement.setAttributeNS(
-				ShibbolethOriginConfig.originConfigNamespace,
+				IdPConfig.originConfigNamespace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.MemoryArpRepository");
 		} catch (ParserConfigurationException e) {
@@ -410,9 +410,9 @@ public class ArpTests extends TestCase {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			Element repositoryElement =
-				placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
 			repositoryElement.setAttributeNS(
-				ShibbolethOriginConfig.originConfigNamespace,
+				IdPConfig.originConfigNamespace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.Foo");
 
@@ -488,14 +488,14 @@ public class ArpTests extends TestCase {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			Element repositoryElement =
-				placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
 			repositoryElement.setAttributeNS(
-				ShibbolethOriginConfig.originConfigNamespace,
+				IdPConfig.originConfigNamespace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-			repositoryElement.setAttributeNS(ShibbolethOriginConfig.originConfigNamespace, "arpTTL", "65535");
+			repositoryElement.setAttributeNS(IdPConfig.originConfigNamespace, "arpTTL", "65535");
 
-			Element path = placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "Path");
+			Element path = placeHolder.createElementNS(IdPConfig.originConfigNamespace, "Path");
 			Text text = placeHolder.createTextNode(new File("data/").toURI().toString());
 			path.appendChild(text);
 

@@ -36,6 +36,7 @@ import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AARelyingParty;
 import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.Provider;
 
@@ -59,15 +60,15 @@ public abstract class ServiceProviderMapper {
 		this.metaData = metaData;
 	}
 
-	protected abstract ShibbolethOriginConfig getOriginConfig();
+	protected abstract IdPConfig getOriginConfig();
 
-	protected void verifyDefaultParty(ShibbolethOriginConfig configuration) throws ServiceProviderMapperException {
+	protected void verifyDefaultParty(IdPConfig configuration) throws ServiceProviderMapperException {
 		//Verify we have a proper default party
 		String defaultParty = configuration.getDefaultRelyingPartyName();
 		if (defaultParty == null || defaultParty.equals("")) {
 			if (relyingParties.size() != 1) {
 				log
-						.error("Default Relying Party not specified.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
+						.error("Default Relying Party not specified.  Add a (defaultRelyingParty) attribute to <IdPConfig>.");
 				throw new ServiceProviderMapperException("Required configuration not specified.");
 			} else {
 				log.debug("Only one Relying Party loaded.  Using this as the default.");

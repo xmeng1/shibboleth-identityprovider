@@ -61,7 +61,7 @@ import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -81,7 +81,7 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 	public FileSystemArpRepository(Element config) throws ArpRepositoryException {
 		super(config);
 
-		NodeList itemElements = config.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "Path");
+		NodeList itemElements = config.getElementsByTagNameNS(IdPConfig.originConfigNamespace, "Path");
 
 		if (itemElements.getLength() > 1) {
 			log.warn(

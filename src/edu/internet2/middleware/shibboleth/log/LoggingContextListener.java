@@ -50,7 +50,7 @@ import org.w3c.dom.NodeList;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 
 /**
  * {@link ServletContextListener}used to configure logging for other components.
@@ -96,7 +96,7 @@ public class LoggingContextListener implements ServletContextListener {
 
 	protected void loadConfiguration(Document originConfig) throws ShibbolethConfigurationException {
 		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
-				ShibbolethOriginConfig.originConfigNamespace, "Logging");
+				IdPConfig.originConfigNamespace, "Logging");
 		Node errorLogNode = null;
 		boolean encounteredLog4JConfig = false;
 

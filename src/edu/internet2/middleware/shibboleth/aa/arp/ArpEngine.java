@@ -59,7 +59,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 import edu.internet2.middleware.shibboleth.aa.arp.ArpAttributeSet.ArpAttributeIterator;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -113,7 +113,7 @@ public class ArpEngine {
 		}
 
 		NodeList itemElements =
-			config.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+			config.getElementsByTagNameNS(IdPConfig.originConfigNamespace, "ArpRepository");
 
 		if (itemElements.getLength() > 1) {
 			log.warn(
@@ -152,13 +152,13 @@ public class ArpEngine {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
 			Element defRepository =
-				placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "ArpRepository");
+				placeHolder.createElementNS(IdPConfig.originConfigNamespace, "ArpRepository");
 			defRepository.setAttributeNS(
-				ShibbolethOriginConfig.originConfigNamespace,
+				IdPConfig.originConfigNamespace,
 				"implementation",
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
 
-			Element path = placeHolder.createElementNS(ShibbolethOriginConfig.originConfigNamespace, "Path");
+			Element path = placeHolder.createElementNS(IdPConfig.originConfigNamespace, "Path");
 			Text text = placeHolder.createTextNode("/conf/arps/");
 			path.appendChild(text);
 

@@ -53,7 +53,6 @@ import org.apache.log4j.MDC;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
-import org.opensaml.*;
 import org.opensaml.InvalidCryptoException;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
@@ -62,6 +61,7 @@ import org.opensaml.SAMLAttributeQuery;
 import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLBinding;
+import org.opensaml.SAMLBindingFactory;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
@@ -74,7 +74,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import sun.misc.BASE64Decoder;
-import edu.internet2.middleware.shibboleth.aa.AAConfig;
 import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.aa.AARelyingParty;
 import edu.internet2.middleware.shibboleth.aa.AAResponder;
@@ -98,9 +97,7 @@ import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
-import edu.internet2.middleware.shibboleth.hs.HSConfig;
 import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
 import edu.internet2.middleware.shibboleth.hs.HSServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
@@ -124,16 +121,13 @@ public class IdPResponder extends TargetFederationComponent {
 
 	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
 	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
-    private static Random           idgen           = new Random();
+	private static Random idgen = new Random();
 
-    private SAMLBinding binding;
+	private SAMLBinding binding;
 	private Semaphore throttle;
 	private ArtifactMapper artifactMapper;
 	private SSOProfileHandler[] profileHandlers;
-
-	// TODO Obviously this has got to be unified
-	private AAConfig configuration;
-	private HSConfig hsConfiguration;
+	private IdPConfig configuration;
 	private NameMapper nameMapper;
 
 	// TODO unify
@@ -179,8 +173,7 @@ public class IdPResponder extends TargetFederationComponent {
 		// attribute resolver
 
 		// Load global configuration properties
-		// TODO make AA and HS config unified
-		configuration = new AAConfig(originConfig.getDocumentElement());
+		configuration = new IdPConfig(originConfig.getDocumentElement());
 
 		// Load name mappings
 		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
@@ -206,8 +199,8 @@ public class IdPResponder extends TargetFederationComponent {
 		Credentials credentials = new Credentials((Element) itemElements.item(0));
 
 		// Load metadata
-		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
-				ShibbolethOriginConfig.originConfigNamespace, "FederationProvider");
+		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.originConfigNamespace,
+				"FederationProvider");
 		for (int i = 0; i < itemElements.getLength(); i++) {
 			addFederationProvider((Element) itemElements.item(i));
 		}
@@ -232,8 +225,8 @@ public class IdPResponder extends TargetFederationComponent {
 
 			// Startup ARP Engine
 			ArpEngine arpEngine = null;
-			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
-					ShibbolethOriginConfig.originConfigNamespace, "ReleasePolicyEngine");
+			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.originConfigNamespace,
+					"ReleasePolicyEngine");
 
 			if (itemElements.getLength() > 1) {
 				log.warn("Encountered multiple <ReleasePolicyEngine> configuration elements.  Using first...");
@@ -566,8 +559,8 @@ public class IdPResponder extends TargetFederationComponent {
 			if (activeHandler.preProcessHook(request, response)) { return; }
 
 			// Get the authN info
-			String username = hsConfiguration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
-					.getRemoteUser() : request.getHeader(hsConfiguration.getAuthHeaderName());
+			String username = configuration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
+					.getRemoteUser() : request.getHeader(configuration.getAuthHeaderName());
 
 			// Select the appropriate Relying Party configuration for the request
 			HSRelyingParty relyingParty = null;
@@ -807,12 +800,11 @@ public class IdPResponder extends TargetFederationComponent {
 			log.debug("Returning SAML Error Response.");
 		} catch (SAMLException se) {
 			try {
-                binding.respond(httpResponse, null, exception);
-            }
-            catch (SAMLException e) {
-                log.error("Caught exception while responding to requester: " + e.getMessage());
-                httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
-            }
+				binding.respond(httpResponse, null, exception);
+			} catch (SAMLException e) {
+				log.error("Caught exception while responding to requester: " + e.getMessage());
+				httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+			}
 			log.error("Identity Provider failed to make an error message: " + se);
 		}
 	}
@@ -948,12 +940,11 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 
 			try {
-                binding.respond(resp, samlResponse, ourSE);
-            }
-            catch (SAMLException e) {
-                log.error("Caught exception while responding to requester: " + e.getMessage());
-                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
-            }
+				binding.respond(resp, samlResponse, ourSE);
+			} catch (SAMLException e) {
+				log.error("Caught exception while responding to requester: " + e.getMessage());
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+			}
 		}
 	}
 

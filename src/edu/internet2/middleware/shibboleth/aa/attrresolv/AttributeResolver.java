@@ -59,11 +59,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import edu.internet2.middleware.shibboleth.aa.AAConfig;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet.ResolverAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -81,7 +81,7 @@ public class AttributeResolver {
 	private ResolverCache resolverCache = new ResolverCache();
 	public static final String resolverNamespace = "urn:mace:shibboleth:resolver:1.0";
 
-	public AttributeResolver(AAConfig configuration) throws AttributeResolverException {
+	public AttributeResolver(IdPConfig configuration) throws AttributeResolverException {
 		
 		if (configuration == null || configuration.getResolverConfigLocation() == null) {
 			log.error("No Attribute Resolver configuration file specified.");

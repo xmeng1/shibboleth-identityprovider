@@ -40,7 +40,7 @@ import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 
 /**
@@ -52,7 +52,7 @@ import edu.internet2.middleware.shibboleth.metadata.Metadata;
 public class HSServiceProviderMapper extends ServiceProviderMapper {
 
 	private static Logger log = Logger.getLogger(HSServiceProviderMapper.class.getName());
-	private HSConfig configuration;
+	private IdPConfig configuration;
 	private Credentials credentials;
 	private NameMapper nameMapper;
 
@@ -70,7 +70,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	 * @throws ServiceProviderMapperException
 	 *             if the configuration is invalid
 	 */
-	public HSServiceProviderMapper(Element rawConfig, HSConfig configuration, Credentials credentials,
+	public HSServiceProviderMapper(Element rawConfig, IdPConfig configuration, Credentials credentials,
 			NameMapper nameMapper, Metadata metaData) throws ServiceProviderMapperException {
 
 		super(metaData);
@@ -78,7 +78,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		this.credentials = credentials;
 		this.nameMapper = nameMapper;
 
-		NodeList itemElements = rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace,
+		NodeList itemElements = rawConfig.getElementsByTagNameNS(IdPConfig.originConfigNamespace,
 				"RelyingParty");
 
 		for (int i = 0; i < itemElements.getLength(); i++) {
@@ -128,7 +128,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 
 	}
 
-	protected ShibbolethOriginConfig getOriginConfig() {
+	protected IdPConfig getOriginConfig() {
 
 		return configuration;
 	}
@@ -143,9 +143,9 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		private URL overridenAAUrl;
 		private URI overridenDefaultAuthMethod;
 		protected String hsNameFormatId;
-		private HSConfig configuration;
+		private IdPConfig configuration;
 
-		HSRelyingPartyImpl(Element partyConfig, HSConfig globalConfig, Credentials credentials, NameMapper nameMapper)
+		HSRelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials, NameMapper nameMapper)
 				throws ServiceProviderMapperException {
 
 			super(partyConfig);
@@ -175,7 +175,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 			//Load and verify the name format that the HS should use in
 			//assertions for this RelyingParty
 			NodeList hsNameFormats = ((Element) partyConfig).getElementsByTagNameNS(
-					ShibbolethOriginConfig.originConfigNamespace, "HSNameFormat");
+					IdPConfig.originConfigNamespace, "HSNameFormat");
 			//If no specification. Make sure we have a default mapping
 			if (hsNameFormats.getLength() < 1) {
 				if (nameMapper.getNameIdentifierMappingById(null) == null) {

@@ -35,7 +35,7 @@ import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 
 /**
@@ -47,7 +47,7 @@ import edu.internet2.middleware.shibboleth.metadata.Metadata;
 public class AAServiceProviderMapper extends ServiceProviderMapper {
 
 	private static Logger	log	= Logger.getLogger(AAServiceProviderMapper.class.getName());
-	private AAConfig		configuration;
+	private IdPConfig		configuration;
 	private Credentials		credentials;
 
 	/**
@@ -60,13 +60,13 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 	 * @throws ServiceProviderMapperException
 	 *             if the configuration is invalid
 	 */
-	public AAServiceProviderMapper(Element rawConfig, AAConfig configuration, Credentials credentials, Metadata metaData)
+	public AAServiceProviderMapper(Element rawConfig, IdPConfig configuration, Credentials credentials, Metadata metaData)
 			throws ServiceProviderMapperException {
 		super(metaData);
 		this.configuration = configuration;
 		this.credentials = credentials;
 
-		NodeList itemElements = rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace,
+		NodeList itemElements = rawConfig.getElementsByTagNameNS(IdPConfig.originConfigNamespace,
 				"RelyingParty");
 
 		for (int i = 0; i < itemElements.getLength(); i++) {
@@ -97,7 +97,7 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 		return (AARelyingParty) getRelyingPartyImpl(providerIdFromTarget);
 	}
 
-	protected ShibbolethOriginConfig getOriginConfig() {
+	protected IdPConfig getOriginConfig() {
 		return configuration;
 	}
 
@@ -108,11 +108,11 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 	 */
 	class AARelyingPartyImpl extends BaseRelyingPartyImpl implements AARelyingParty {
 
-		private AAConfig	aaConfig;
+		private IdPConfig	aaConfig;
 		private boolean		overridenPassThruErrors	= false;
 		private boolean		passThruIsOverriden		= false;
 
-		public AARelyingPartyImpl(Element partyConfig, AAConfig globalConfig, Credentials credentials)
+		public AARelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials)
 				throws ServiceProviderMapperException {
 			super(partyConfig);
 
