@@ -205,18 +205,19 @@ public class WayfService extends HttpServlet {
 	 */
 	private void handleLookup(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
-		if ((getSHIRE(req) == null) || (getTarget(req) == null)) {
-			throw new WayfException("Invalid or missing data from SHIRE");
-		}
-		req.setAttribute("shire", getSHIRE(req));
-		req.setAttribute("target", getTarget(req));
-		req.setAttribute("encodedShire", URLEncoder.encode(getSHIRE(req)));
-		req.setAttribute("encodedTarget", URLEncoder.encode(getTarget(req)));
-		req.setAttribute("requestURL", req.getRequestURI().toString());
-
-		log.debug("Displaying WAYF selection page.");
-		RequestDispatcher rd = req.getRequestDispatcher("/wayf.jsp");
 		try {
+			if ((getSHIRE(req) == null) || (getTarget(req) == null)) {
+				throw new WayfException("Invalid or missing data from SHIRE");
+			}
+			req.setAttribute("shire", getSHIRE(req));
+			req.setAttribute("target", getTarget(req));
+			req.setAttribute("encodedShire", URLEncoder.encode(getSHIRE(req), "UTF-8"));
+			req.setAttribute("encodedTarget", URLEncoder.encode(getTarget(req), "UTF-8"));
+			req.setAttribute("requestURL", req.getRequestURI().toString());
+
+			log.debug("Displaying WAYF selection page.");
+			RequestDispatcher rd = req.getRequestDispatcher("/wayf.jsp");
+
 			rd.forward(req, res);
 		} catch (IOException ioe) {
 			throw new WayfException("Problem displaying WAYF UI." + ioe.toString());
@@ -271,9 +272,9 @@ public class WayfService extends HttpServlet {
 			res.sendRedirect(
 				handleService
 					+ "?target="
-					+ URLEncoder.encode(target)
+					+ URLEncoder.encode(target, "UTF-8")
 					+ "&shire="
-					+ URLEncoder.encode(shire));
+					+ URLEncoder.encode(shire, "UTF-8"));
 		} catch (IOException ioe) {
 			throw new WayfException("Error forwarding to HS: " + ioe.toString());
 		}

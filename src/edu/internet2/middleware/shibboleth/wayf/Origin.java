@@ -49,6 +49,7 @@
 
 package edu.internet2.middleware.shibboleth.wayf;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -102,10 +103,9 @@ public class Origin {
     	}
     }
 
-    public String getUrlEncodedName() {
+    public String getUrlEncodedName() throws UnsupportedEncodingException {
 
-        return URLEncoder.encode(name);
-
+			return URLEncoder.encode(name, "UTF-8");
     }
 
     /**

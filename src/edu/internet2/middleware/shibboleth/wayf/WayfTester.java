@@ -52,8 +52,6 @@ package edu.internet2.middleware.shibboleth.wayf;
 import java.io.IOException;
 import java.net.URLEncoder;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -73,7 +71,7 @@ public class WayfTester extends HttpServlet {
 		
 		try {
 			res.sendRedirect(
-				"WAYF" + "?target=" + URLEncoder.encode(targetURL) + "&shire=" + URLEncoder.encode(acceptanceURL));
+				"WAYF" + "?target=" + URLEncoder.encode(targetURL, "UTF-8") + "&shire=" + URLEncoder.encode(acceptanceURL, "UTF-8"));
 		} catch (IOException ioe) {
 			System.out.println("WAYF Tester Error");
 		}
