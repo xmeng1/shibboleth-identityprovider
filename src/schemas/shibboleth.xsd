@@ -32,6 +32,7 @@
         </sequence>
         <attribute name="Name" type="string" use="required"/>
     </complexType>
+    
     <complexType name="OriginSiteType">
         <annotation>Origin sites add at least one handle service (with a name and optional KeyInfo), plus optional domains trusted for attribute scoping.</annotation>
         <complexContent>
@@ -43,6 +44,7 @@
                                 <element ref="ds:KeyInfo" minOccurs="0"/>
                             </sequence>
                             <attribute name="Name" type="string" use="required"/>
+                            <attribute name="Location" type="anyURI" use="required"/>
                         </complexType>
                     </element>
                     <element name="Domain" type="string" minOccurs="0" maxOccurs="unbounded"/>
@@ -50,15 +52,31 @@
             </extension>
         </complexContent>
     </complexType>
+
+    <complexType name="SiteGroupType">
+        <annotation>Used to logically group sites together.</annotation>
+        <sequence>
+            <choice maxOccurs="unbounded">
+                <element ref="shib:OriginSite"/>
+                <element ref="shib:DestinationSite"/>
+                <element ref="shib:SiteGroup"/>
+            </choice>
+        </sequence>
+        <attribute name="Name" type="string" use="required"/>
+    </complexType>    
+
     <element name="OriginSite" type="shib:OriginSiteType"/>
     <element name="DestinationSite" type="shib:SiteType"/>
+    <element name="SiteGroup" type="shib:SiteGroupType"/>
+
     <element name="Sites">
-        <annotation> The registry of sites plus an optional enveloped signature. </annotation>
+        <annotation>The registry of sites plus an optional enveloped signature.</annotation>
         <complexType>
             <sequence>
                 <choice maxOccurs="unbounded">
                     <element ref="shib:OriginSite"/>
                     <element ref="shib:DestinationSite"/>
+                    <element ref="shib:SiteGroup"/>
                 </choice>
                 <element ref="ds:Signature" minOccurs="0"/>
             </sequence>
