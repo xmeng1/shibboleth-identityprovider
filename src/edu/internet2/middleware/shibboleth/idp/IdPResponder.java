@@ -79,6 +79,9 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
+import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
+import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
+import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
@@ -88,13 +91,11 @@ import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
-import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
-import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
 import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Provider;
@@ -113,21 +114,13 @@ public class IdPResponder extends TargetFederationComponent {
 	// servlet
 
 	private static Logger			transactionLog	= Logger.getLogger("Shibboleth-TRANSACTION");
-
 	private static Logger			log				= Logger.getLogger(IdPResponder.class.getName());
-
 	private SAMLBinding				binding;
-
-	//TODO Need to init
-	private ArtifactRepository		artifactRepository;
+	private ArtifactMapper			artifactMapper;
 
 	//TODO Obviously this has got to be unified
 	private AAConfig				configuration;
-
-	//TODO Need to init
 	private NameMapper				nameMapper;
-
-	//TODO Need to init
 	private AAServiceProviderMapper	targetMapper;
 
 	//TODO Need to rename, rework, and init
@@ -142,6 +135,8 @@ public class IdPResponder extends TargetFederationComponent {
 		try {
 			binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
 			nameMapper = new NameMapper();
+			// TODO this needs to be pluggable
+			artifactMapper = new MemoryArtifactMapper();
 			loadConfiguration();
 			log.info("Identity Provider initialization complete.");
 
@@ -433,6 +428,7 @@ public class IdPResponder extends TargetFederationComponent {
 		// Pull credential from request
 		X509Certificate credential = getCredentialFromProvider(request);
 		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+			//The spec says that mutual authentication is required for the artifact profile
 			log.info("Request is from an unauthenticated service provider.");
 			throw new SAMLException(SAMLException.REQUESTER,
 					"SAML Artifacts cannot be dereferenced for unauthenticated requesters.");
@@ -445,14 +441,12 @@ public class IdPResponder extends TargetFederationComponent {
 		Iterator artifacts = samlRequest.getArtifacts();
 
 		int queriedArtifacts = 0;
-		StringBuffer dereferencedArtifacts = new StringBuffer(); //for
-		// transaction
-		// log
+		StringBuffer dereferencedArtifacts = new StringBuffer(); //for transaction log
 		while (artifacts.hasNext()) {
 			queriedArtifacts++;
 			String artifact = (String) artifacts.next();
 			log.debug("Attempting to dereference artifact: (" + artifact + ").");
-			ArtifactMapping mapping = artifactRepository.recoverAssertion(artifact);
+			ArtifactMapping mapping = artifactMapper.recoverAssertion(artifact);
 			if (mapping != null) {
 				SAMLAssertion assertion = mapping.getAssertion();
 
@@ -482,10 +476,11 @@ public class IdPResponder extends TargetFederationComponent {
 
 		//The spec requires that if any artifacts are dereferenced, they must
 		// all be dereferenced
-		if (assertions.size() > 0 & assertions.size() != queriedArtifacts) { throw new SAMLException(
+		if (assertions.size() > 0 && assertions.size() != queriedArtifacts) { throw new SAMLException(
 				SAMLException.REQUESTER, "Unable to successfully dereference all artifacts."); }
 
 		//Create and send response
+		// The spec says that we should send "success" in the case where no artifacts match
 		SAMLResponse samlResponse = new SAMLResponse(samlRequest.getId(), null, assertions, null);
 
 		if (log.isDebugEnabled()) {
@@ -504,13 +499,6 @@ public class IdPResponder extends TargetFederationComponent {
 		binding.respond(response, samlResponse, null);
 
 		transactionLog.info("Succesfully dereferenced the following artifacts: " + dereferencedArtifacts.toString());
-		//TODO make sure we can delete this junk below
-		/*
-		 * } catch (Exception e) { log.error("Error while processing request: " + e); try { sendFailure(res,
-		 * samlRequest, new SAMLException(SAMLException.RESPONDER, "General error processing request.")); return; }
-		 * catch (Exception ee) { log.fatal("Could not construct a SAML error response: " + ee); throw new
-		 * ServletException("Handle Service response failure."); } }
-		 */
 	}
 
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -806,49 +794,4 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 	}
 
-	abstract class ArtifactRepository {
-
-		// TODO figure out what to do about this interface long term
-		abstract String addAssertion(SAMLAssertion assertion, HSRelyingParty relyingParty);
-
-		abstract ArtifactMapping recoverAssertion(String artifact);
-	}
-
-	class ArtifactMapping {
-
-		//TODO figure out what to do about this interface long term
-		private String			assertionHandle;
-
-		private long			expirationTime;
-
-		private SAMLAssertion	assertion;
-
-		private String			serviceProviderId;
-
-		ArtifactMapping(String assertionHandle, SAMLAssertion assertion, ServiceProvider sp) {
-			this.assertionHandle = assertionHandle;
-			this.assertion = assertion;
-			expirationTime = System.currentTimeMillis() + (1000 * 60 * 5); //in 5
-			// minutes
-			serviceProviderId = sp.getProviderId();
-		}
-
-		boolean isExpired() {
-			if (System.currentTimeMillis() > expirationTime) { return true; }
-			return false;
-		}
-
-		boolean isCorrectProvider(ServiceProvider sp) {
-			if (sp.getProviderId().equals(serviceProviderId)) { return true; }
-			return false;
-		}
-
-		SAMLAssertion getAssertion() {
-			return assertion;
-		}
-
-		String getServiceProviderId() {
-			return serviceProviderId;
-		}
-	}
 }
