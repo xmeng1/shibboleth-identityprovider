@@ -10,7 +10,7 @@
 		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
 		<init-param>
 			<param-name>log4jConfigFileLocation</param-name>
-			<param-value>/WEB-INF/conf/log4j.properties</param-value>
+			<param-value>/conf/log4j.properties</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>

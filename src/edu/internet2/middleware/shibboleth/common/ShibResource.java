@@ -47,54 +47,73 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.log;
+package edu.internet2.middleware.shibboleth.common;
 
+import java.io.File;
 import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.UnavailableException;
-import javax.servlet.http.HttpServlet;
-
-import org.apache.log4j.Logger;
-import org.apache.log4j.MDC;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.xml.security.Init;
-
-import edu.internet2.middleware.shibboleth.common.ShibResource;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Properties;
 
 /**
- * 
- * Servlet used to configure logging for other components.
- * 
- * @author Walter Hoehn
- *
+ * Manages access to shibboleth file-based resources in a consistent fashion.  
  */
-public class LogServ extends HttpServlet {
+public class ShibResource {
 
-	private static Logger log = Logger.getLogger(LogServ.class.getName());
+	private URL resource;
+	private Class requester;
+
+	public ShibResource(String name) throws ResourceNotAvailableException {
+		this(name, Object.class);
+	}
+
+	public ShibResource(String name, Class requester) throws ResourceNotAvailableException {
+		this.requester = requester;
+		try {
+			resource = new URL(name);
+		} catch (MalformedURLException e) {
+			resource = requester.getResource(name);
+		}
+		if (resource == null) {
+			throw new ResourceNotAvailableException("ShibResource could not be found at the specified location.");
+		}
+		System.err.println(resource);
+	}
 
 	/**
-	 * @see javax.servlet.GenericServlet#init()
+	 * Returns an input stream to read the resource contents
 	 */
-	public void init() throws ServletException {
+	public InputStream getInputStream() throws IOException {
+		return resource.openStream();
+	}
 
-		super.init();
-		//Silliness to get around xmlsec doing its own configuration, ie: we might need to override it
-		Init.init();
-		String log4jConfigFileLocation = getServletConfig().getInitParameter("log4jConfigFileLocation");
-		if (log4jConfigFileLocation == null) {
-			log4jConfigFileLocation = "/conf/log4j.properties";
-		}
+	/**
+	 * Returns a <code>File</code> representation of the resource
+	 */
+	public File getFile() throws IOException {
 		try {
-			PropertyConfigurator.configure(new ShibResource(log4jConfigFileLocation, this.getClass()).getURL());
-		} catch (IOException e) {
-			getServletContext().log("Could not load Logger configuration from supplied location.", e);
-			System.err.println("Could not load Logger configuration from supplied location: " + e);
-			throw new UnavailableException("Could not load Logger configuration from supplied location: " + e);
+			File file = new File(new URI(resource.toString()));
+			return file;
+		} catch (URISyntaxException e) {
+			throw new ResourceNotAvailableException("File could not be loaded from specified resource: " + e);
 		}
-		MDC.put("serviceId", "[Logger] Core");
-		log.info("Logger initialized.");
+	}
+
+	/**
+	 * Returns a <code>URL</code> pointer to the resource
+	 */
+	public URL getURL() throws IOException {
+		return resource;
+	}
+
+	class ResourceNotAvailableException extends IOException {
+
+		public ResourceNotAvailableException(String message) {
+			super(message);
+		}
 	}
 
 }
-
