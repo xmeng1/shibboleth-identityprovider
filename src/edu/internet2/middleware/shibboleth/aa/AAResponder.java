@@ -120,7 +120,7 @@ public class AAResponder {
 				ShibArpAttribute arpAttribute = new ShibArpAttribute(potentialAttributes[i].toString());
 
 				Attributes attrs =
-					ctx.getAttributes(
+					userCtx.getAttributes(
 						"",
 						new String[] {
 							 arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1)});
