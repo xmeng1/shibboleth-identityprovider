@@ -1,4 +1,6 @@
 package edu.internet2.middleware.shibboleth.common;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
@@ -17,6 +19,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class AQHTest extends TestCase {
 	protected SecretKey goodKey;
+	protected URL testHs;
 	public AQHTest(String name) {
 		super(name);
 	}
@@ -32,6 +35,12 @@ public class AQHTest extends TestCase {
 		} catch (NoSuchAlgorithmException e) {
 			fail("Could not generate fixture (secret key)");
 		}
+		
+		try {
+			testHs = new URL("http://www.test.com/HS");
+		} catch (MalformedURLException e) {
+			fail("Error initializing test Hs URL.");
+		}
 	}
 	/**
 	 * Tests the basic, creation, serialization, and unmarshalling of the <code>AttributeQueryHandle</code>
@@ -41,7 +50,7 @@ public class AQHTest extends TestCase {
 
 			//Create an AQH
 			AttributeQueryHandle originalAQH =
-				new AttributeQueryHandle("Walter", goodKey, 300000l);
+				new AttributeQueryHandle("Walter", goodKey, 300000l, testHs);
 
 			//Ensure that a unique id was generated 
 			assertNotNull(
@@ -96,7 +105,7 @@ public class AQHTest extends TestCase {
 
 		try {
 			AttributeQueryHandle aqh =
-				new AttributeQueryHandle("Walter", goodKey, 1l);
+				new AttributeQueryHandle("Walter", goodKey, 1l, testHs);
 			Thread.sleep(2);
 			assertTrue(
 				"AttributeQueryHandle failed to expire appropriately",
@@ -106,5 +115,24 @@ public class AQHTest extends TestCase {
 			fail("Failed to create AttributeQueryHandle" + e);
 		}
 
+	}
+	
+	/**
+	 * Ensue that all of our UUIDs are not identical
+	 */
+	
+	public void testDups() {
+		
+		try {
+			AttributeQueryHandle aqh1 =
+					new AttributeQueryHandle("Walter", goodKey, 1l, testHs);
+			AttributeQueryHandle aqh2 =
+				new AttributeQueryHandle("Walter", goodKey, 1l, testHs);
+		assertTrue("Reusing a UUID when creating new AQH", !aqh1.getHandleID().equals(aqh2.getHandleID()));
+		} catch (HandleException e) {
+			fail("Failed to create AttributeQueryHandle" + e);
+		}
+		
+		
 	}
 }

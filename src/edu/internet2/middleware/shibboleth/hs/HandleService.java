@@ -2,6 +2,8 @@ package edu.internet2.middleware.shibboleth.hs;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.Security;
 import java.util.Date;
 
@@ -44,6 +46,7 @@ public class HandleService extends HttpServlet {
 	private String hsConfigFileLocation;
 	private String log4jConfigFileLocation;
 	private SecretKey key;
+	private URL hsURL;
 
 	/**
 	 * @see GenericServlet#init()
@@ -59,7 +62,7 @@ public class HandleService extends HttpServlet {
 		initSecretKey();
 		initAuthNFactory();
 	}
-	
+
 	/**
 	 * Initializes symmetric key for use in AQH creation
 	 */
@@ -67,12 +70,14 @@ public class HandleService extends HttpServlet {
 	private void initSecretKey() throws ServletException {
 
 		try {
-			
-//Change this to work with any JCE
+
+			//Change this to work with any JCE
 			Security.addProvider(new BouncyCastleProvider());
-			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DESede");
+			SecretKeyFactory keyFactory =
+				SecretKeyFactory.getInstance("DESede");
 			DESedeKeySpec keySpec =
-				new DESedeKeySpec(Base64.decode(HandleServiceConfig.getSecretKey()));
+				new DESedeKeySpec(
+					Base64.decode(HandleServiceConfig.getSecretKey()));
 			key = keyFactory.generateSecret(keySpec);
 		} catch (Exception t) {
 			log.fatal("Error reading Secret Key from configuration.", t);
@@ -87,11 +92,13 @@ public class HandleService extends HttpServlet {
 
 	private void loadInitParams() {
 
-		hsConfigFileLocation = getServletConfig().getInitParameter("HSConfigFileLocation");
+		hsConfigFileLocation =
+			getServletConfig().getInitParameter("HSConfigFileLocation");
 		if (hsConfigFileLocation == null) {
 			hsConfigFileLocation = "/WEB-INF/conf/shibboleth.xml";
 		}
-		log4jConfigFileLocation = getServletConfig().getInitParameter("log4jConfigFileLocation");
+		log4jConfigFileLocation =
+			getServletConfig().getInitParameter("log4jConfigFileLocation");
 		if (log4jConfigFileLocation == null) {
 			log4jConfigFileLocation = "/WEB-INF/conf/log4j.properties";
 		}
@@ -104,17 +111,32 @@ public class HandleService extends HttpServlet {
 
 	private void initConfig() throws ServletException {
 
-		InputStream is = getServletContext().getResourceAsStream(hsConfigFileLocation);
+		InputStream is =
+			getServletContext().getResourceAsStream(hsConfigFileLocation);
 		HsConfigDigester digester = new HsConfigDigester();
 		try {
 			digester.parse(is);
 		} catch (SAXException se) {
 			log.fatal("Error parsing HS configuration file.", se);
-			throw new ServletException("Error parsing HS configuration file.", se);
+			throw new ServletException(
+				"Error parsing HS configuration file.",
+				se);
 		} catch (IOException ioe) {
 			log.fatal("Error reading HS configuration file.", ioe);
-			throw new ServletException("Error reading HS configuration file.", ioe);
+			throw new ServletException(
+				"Error reading HS configuration file.",
+				ioe);
 		}
+		
+		try {
+			hsURL = new URL(HandleServiceConfig.getLocation());
+		} catch (MalformedURLException e) {
+			log.fatal("Error parsing HS location from configuration file.", e);
+			throw new ServletException(
+				"Error reading HS configuration file.",
+				e);
+		}
+
 	}
 
 	/**
@@ -137,8 +159,12 @@ public class HandleService extends HttpServlet {
 		getServletContext().setAttribute(
 			"hs_supportContact",
 			HandleServiceConfig.getSupportContact());
-		getServletContext().setAttribute("hs_logoLocation", HandleServiceConfig.getLogoLocation());
-		getServletContext().setAttribute("hs_helpText", HandleServiceConfig.getHelpText());
+		getServletContext().setAttribute(
+			"hs_logoLocation",
+			HandleServiceConfig.getLogoLocation());
+		getServletContext().setAttribute(
+			"hs_helpText",
+			HandleServiceConfig.getHelpText());
 		getServletContext().setAttribute(
 			"hs_detailedHelpURL",
 			HandleServiceConfig.getDetailedHelpURL());
@@ -157,7 +183,9 @@ public class HandleService extends HttpServlet {
 		try {
 			AABindingInfo[] binfo = new AABindingInfo[1];
 			binfo[0] =
-				new AABindingInfo(AABindingInfo.SAML_SOAP_HTTPS, HandleServiceConfig.getAaURL());
+				new AABindingInfo(
+					AABindingInfo.SAML_SOAP_HTTPS,
+					HandleServiceConfig.getAaURL());
 			String[] policies = { Policies.POLICY_URI_CLUBSHIB };
 			factory =
 				SAMLAuthenticationAssertionFactory.getInstance(
@@ -208,7 +236,10 @@ public class HandleService extends HttpServlet {
 	 * @param e The Exception to be handled
 	 */
 
-	private void handleError(HttpServletRequest req, HttpServletResponse res, Exception e) {
+	private void handleError(
+		HttpServletRequest req,
+		HttpServletResponse res,
+		Exception e) {
 
 		log.info("Handle Service Failure: " + e);
 
@@ -218,9 +249,11 @@ public class HandleService extends HttpServlet {
 		try {
 			rd.forward(req, res);
 		} catch (IOException ioe) {
-			log.error("Problem trying to display Handle Service error page: " + ioe);
+			log.error(
+				"Problem trying to display Handle Service error page: " + ioe);
 		} catch (ServletException se) {
-			log.error("Problem trying to display Handle Service error page: " + se);
+			log.error(
+				"Problem trying to display Handle Service error page: " + se);
 		}
 	}
 
@@ -230,7 +263,10 @@ public class HandleService extends HttpServlet {
 	 * @param assertion Base64 encoded SAML authN assertion
 	 */
 
-	private void handleForm(HttpServletRequest req, HttpServletResponse res, byte[] assertion)
+	private void handleForm(
+		HttpServletRequest req,
+		HttpServletResponse res,
+		byte[] assertion)
 		throws HandleServiceException {
 
 		try {
@@ -240,9 +276,11 @@ public class HandleService extends HttpServlet {
 			log.info("POSTing assertion to SHIRE.");
 			rd.forward(req, res);
 		} catch (IOException ioe) {
-			throw new HandleServiceException("Problem displaying Handle Service UI." + ioe);
+			throw new HandleServiceException(
+				"Problem displaying Handle Service UI." + ioe);
 		} catch (ServletException se) {
-			throw new HandleServiceException("Problem displaying Handle Service UI." + se);
+			throw new HandleServiceException(
+				"Problem displaying Handle Service UI." + se);
 		}
 	}
 
@@ -263,20 +301,30 @@ public class HandleService extends HttpServlet {
 				new AttributeQueryHandle(
 					remoteUser,
 					key,
-					Long.parseLong(HandleServiceConfig.getValidityPeriod()));
+					Long.parseLong(HandleServiceConfig.getValidityPeriod()),
+					hsURL);
 
 			log.info("Acquired Handle: " + aqh.getHandleID());
 
 			return factory
-				.getAssertion(aqh.serialize(), shireURL, clientAddress, authType, new Date(), null)
+				.getAssertion(
+					aqh.serialize(),
+					shireURL,
+					clientAddress,
+					authType,
+					new Date(),
+					null)
 				.toBase64();
 
 		} catch (SAMLException se) {
-			throw new HandleServiceException("Error creating SAML assertion: " + se);
+			throw new HandleServiceException(
+				"Error creating SAML assertion: " + se);
 		} catch (IOException ioe) {
-			throw new HandleServiceException("Error creating SAML assertion: " + ioe);
+			throw new HandleServiceException(
+				"Error creating SAML assertion: " + ioe);
 		} catch (HandleException he) {
-			throw new HandleServiceException("Error creating User Handle: " + he);
+			throw new HandleServiceException(
+				"Error creating User Handle: " + he);
 		}
 	}
 
@@ -285,21 +333,26 @@ public class HandleService extends HttpServlet {
 	 * for generation of an <code>AttributeQueryHandle</code>.
 	 */
 
-	private void validateRequestParameters(HttpServletRequest req) throws HandleServiceException {
+	private void validateRequestParameters(HttpServletRequest req)
+		throws HandleServiceException {
 
-		if ((req.getParameter("shire") == null) || (req.getParameter("shire").equals(""))) {
+		if ((req.getParameter("shire") == null)
+			|| (req.getParameter("shire").equals(""))) {
 			throw new HandleServiceException("Invalid data from SHIRE: No acceptance URL received.");
 		}
-		if ((req.getParameter("target") == null) || (req.getParameter("target").equals(""))) {
+		if ((req.getParameter("target") == null)
+			|| (req.getParameter("target").equals(""))) {
 			throw new HandleServiceException("Invalid data from SHIRE: No target URL received.");
 		}
-		if ((req.getRemoteUser() == null) || (req.getRemoteUser().equals(""))) {
+		if ((req.getRemoteUser() == null)
+			|| (req.getRemoteUser().equals(""))) {
 			throw new HandleServiceException("No authentication received from webserver.");
 		}
 		if ((req.getAuthType() == null) || (req.getAuthType().equals(""))) {
 			throw new HandleServiceException("Unable to ascertain authentication type.");
 		}
-		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) {
+		if ((req.getRemoteAddr() == null)
+			|| (req.getRemoteAddr().equals(""))) {
 			throw new HandleServiceException("Unable to ascertain client address.");
 		}
 	}

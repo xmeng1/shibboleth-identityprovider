@@ -1,9 +1,11 @@
 package edu.internet2.middleware.shibboleth.common;
 
+import java.net.URL;
 import java.util.StringTokenizer;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import org.doomdark.uuid.UUID;
 import org.doomdark.uuid.UUIDGenerator;
 
 /**
@@ -52,23 +54,28 @@ public class AttributeQueryHandle {
 	 * Creates a new <code>AttributeQueryHandle</code>
 	 * @param principal <code>String</code> representation of user that the handle should reference
 	 * @param ticketLength Time in milliseconds for which the handle should be valid
+	 * @param hsLocation URL of the Handle Service used to generate the AQH
+	 * @param key Symmetric key used to encrypt the AQH upon serialization
 	 * 
 	 */
 
 	public AttributeQueryHandle(
 		String principal,
 		SecretKey key,
-		long ticketLength)
+		long ticketLength,
+		URL hsLocation)
 		throws HandleException {
-			
-		UUIDGenerator uuidGen = UUIDGenerator.getInstance();
-//Need to create an actual UUID here
-		handleID = "12345";
+
 		this.principal = principal;
 		this.creationTime = System.currentTimeMillis();
 		this.expirationTime = creationTime + ticketLength;
 
 		try {
+			UUIDGenerator uuidGen = UUIDGenerator.getInstance();
+			UUID nameSpaceUUID = new UUID(UUID.NAMESPACE_URL);
+			handleID =
+			uuidGen.generateNameBasedUUID(nameSpaceUUID, hsLocation.toString())+ ":" + uuidGen.generateTimeBasedUUID();
+			
 			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			cipherTextHandle =
@@ -85,7 +92,6 @@ public class AttributeQueryHandle {
 
 	/**
 	 * Returns a <code>String</code> representation of the user that the handle references.
-	 * @return Returns a String
 	 */
 
 	public String getPrincipal() {
@@ -94,7 +100,6 @@ public class AttributeQueryHandle {
 
 	/**
 	 * Returns a <code>String</code> of ciphertext representing the <code>AttributeQueryHandle</code> instance.
-	 * @return Returns a String
 	 */
 
 	public String serialize() {
@@ -120,6 +125,7 @@ public class AttributeQueryHandle {
 	/**
 	 * Returns a <code>String</code> representation of the unique identifier for this handle.
 	 */
+	
 	public String getHandleID() {
 		return handleID;
 	}

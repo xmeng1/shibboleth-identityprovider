@@ -11,8 +11,7 @@
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
     <classpathentry kind="lib"
         path="webApplication/WEB-INF/lib/jce-bc.jar" sourcepath="/ShibTest/buildlibs/jce-bc-src.jar"/>
-    <classpathentry kind="lib" path="buildlibs/junit.jar" sourcepath="/ShibTest/buildlibs/junit-src.jar"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug.jar"
-        rootpath="" sourcepath="/ShibTest/buildlibs/jug-src.jar"/>
+    <classpathentry kind="lib" path="buildlibs/junit.jar" rootpath="" sourcepath="/shib-java/buildlibs/junit-src.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug.jar" sourcepath="/shib-java/webApplication/WEB-INF/lib/jug-src.jar"/>
     <classpathentry kind="output" path="webApplication\WEB-INF\classes"/>
 </classpath>
