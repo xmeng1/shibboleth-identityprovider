@@ -124,13 +124,11 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			log.debug("   Value: (" + propValue + ").");
 
 			if (propName == null || propName.equals("")) {
-				log.error("Property is malformed.");
-				throw new ResolutionPlugInException("Property (" + propName
-						+ ") is malformed.  Connot accept empty property name.");
+				log.error("Property (" + propName + ") is malformed.  Connot accept empty property name.");
+				throw new ResolutionPlugInException("Property is malformed.");
 			} else if (propValue == null || propValue.equals("")) {
-				log.error("Property is malformed.");
-				throw new ResolutionPlugInException("Property (" + propName
-						+ ") is malformed.  Cannot accept empty property value.");
+				log.error("Property (" + propName + ") is malformed.  Cannot accept empty property value.");
+				throw new ResolutionPlugInException("Property is malformed.");
 			} else {
 				properties.setProperty(propName, propValue);
 			}
