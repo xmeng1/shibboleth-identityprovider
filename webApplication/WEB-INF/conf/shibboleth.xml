@@ -44,7 +44,7 @@
 	<HsConfig 
 		supportContact="mailto:shib-test@internet2.org"
 		logoLocation="images/internet2.gif"
-		location = "http://blah.com/HS"
+		hsURL = "http://blah.com/HS"
 		validityPeriod = "1400000"
 		domain = "internet2.edu"
 		issuer = "shib2.internet2.edu"

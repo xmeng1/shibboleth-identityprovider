@@ -11,7 +11,7 @@ public class HandleServiceConfig {
 
 	private static String logoLocation = "images/internet2.gif";
 	private static String supportContact = "mailto:shib-support@internet2.org";
-	private static String location = "http://shib2.internet2.edu/shibboleth/HS";
+	private static String hsURL = "http://shib2.internet2.edu/shibboleth/HS";
 	private static String helpText =
 		"In order to fulfill the request for the web"
 			+ " resource you have just chosen, information must be sent from your home institution to the "
@@ -114,19 +114,19 @@ public class HandleServiceConfig {
 	}
 
 	/**
-	 * Gets the location.
+	 * Gets the hsURL.
 	 * @return Returns a String
 	 */
-	public static String getLocation() {
-		return location;
+	public static String getHsURL() {
+		return hsURL;
 	}
 
 	/**
-	 * Sets the location.
-	 * @param location The location to set
+	 * Sets the hsURL.
+	 * @param hsURL The hsURL to set
 	 */
-	public static void setLocation(String hs_location) {
-		HandleServiceConfig.location = hs_location;
+	public static void setHsURL(String hs_location) {
+		HandleServiceConfig.hsURL = hs_location;
 	}
 
 	/**

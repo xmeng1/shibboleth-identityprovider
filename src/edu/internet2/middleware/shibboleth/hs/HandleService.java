@@ -161,7 +161,7 @@ public class HandleService extends HttpServlet {
 			HandleServiceConfig.getDetailedHelpURL());
 		getServletContext().setAttribute(
 			"hs_location",
-			HandleServiceConfig.getLocation());
+			HandleServiceConfig.getHsURL());
 	}
 
 	/**
@@ -297,7 +297,7 @@ public class HandleService extends HttpServlet {
 					remoteUser,
 					key,
 					Long.parseLong(HandleServiceConfig.getValidityPeriod()),
-					HandleServiceConfig.getLocation());
+					HandleServiceConfig.getHsURL());
 
 			log.info("Acquired Handle: " + aqh.getHandleID());
 
