@@ -223,6 +223,7 @@ that arises. Please ensure that you have the
         </li>
         <li><a href="#4.d."><font color="black">Establishing default ARP&#39;s for 
         the origin community</font></a></li>
+        <li><a href="#4.e."><font color="black"><span class="fixed">metadatatool</span></font></a></li>
     </ol>
     </li>
     <li>
@@ -1028,6 +1029,30 @@ configuration</h4>
     information regarding how ARP&#39;s are processed or syntactically formed, 
     please refer to section <a href="#5.b.i.">5.b.i</a>.</p>
 </blockquote>
+<h4><a name="4.e."></a>4.e. <span class="fixed">metadatatool</span></h4>
+<blockquote>
+    <p>The Shibboleth origin leverages metadata distributed by relying parties and federations to validate the identity of requesters and the resource providers on whose behalf the request is being made.  This metadata is cached locally in the form of <span class="fixed">sites.xml</span> files.  Shibboleth includes a simple utility called <span class="fixed">metadatatool</span> which can be used to refresh a <span class="fixed">sites.xml</span> file.  These files are then pointed to by <a href="#confFederationProvider"><span class="fixed">FederationProvider</span></a> elements in <a href="#5.a."><span class="fixed">shibboleth.xml</span></a>.</p>
+<p>The following command is appropriate for most deployments and is run from the $SHIB_HOME directory.  This should be frequently run by adding it to a <span class="fixed">crontab/span> to ensure that the data is fresh.</p>
+<blockquote><span class="fixed">bin/metadatatool -i https://wayf.internet2.edu/InQueue/sites.xml -k conf/internet2.jks -p shib123 -a sitesigner  -o /your_path_here/sites.xml</span></blockquote>
+<p>This is a list of all the command-line parameters that may be specified:</p>
+<blockquote><span class="fixed">when signing:   -i <uri> -s -k <keystore> -a <alias> -p <pass> [-o
+<outfile>]<br>
+when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]<br>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr><td width="150">-i,--in</td><td>input file or url</td></tr>
+<tr><td width="150">-k,--keystore</td><td>pathname of Java keystore file</td></tr>
+<tr><td width="150">-a,--alias</td><td>alias of signing or verification key</td></tr>
+<tr><td width="150">-p,--password</td><td>keystore/key password</td></tr>
+<tr><td width="150">-o,--outfile</td><td>write signed copy to this file instead of stdout</td></tr>
+<tr><td width="150">-s,--sign</td><td>sign the input file and write out a signed version</td></tr>
+<tr><td width="150">-N,--noverify</td><td>allows update of file without signature check</td></tr>
+<tr><td width="150">-h,--help</td><td>print a list of configuration options</td></tr>
+<tr><td width="150">-x,--ns</td><td>XML namespace of root element</td></tr>
+<tr><td width="150">-n,--name</td><td>name of root element</td></tr>
+</table>
+</span></blockquote>
+    <p>Shibboleth 1.2 still utilizes <span class="fixed">mod_ssl</span> for verification of certificates presented by SHAR's when processing attribute requests.  This requires an updated <span class="fixed">ca-bundle.crt</span> to ensure that all appropriate certificate authorities used by relying parties are recognized.</p>
+</blockquote>
 <p><br>
 </p>
 <hr>
@@ -1223,7 +1248,7 @@ configuration</h4>
         Must be contained by a <a href="#confLogging"><span
         class="fixed">Logging</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;confFederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;/&gt;</span></dd>
+        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;FederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;/&gt;</span></dd>
         <dd class="value">Individual sets of targets in the form of a <span
         class="fixed">sites.xml</span> file that this origin will trust to make
         requests may be specified by adding <span
@@ -1232,7 +1257,8 @@ configuration</h4>
         class="fixed">ShibbolethOriginConfig</span></a> element for each.  The
         <span class="fixed">URI</span> points to a <span
         class="fixed">sites.xml</span> file, which is generally distributed by
-        federations.</dd>
+        federations.  This file should be regularly refreshed using
+        <a href="#4.e."><span class="fixedwidth">metadatatool</span></a>.</dd>
 
         <dd class="attribute"><a name="confFileResolver"><span class="fixed">&lt;FileResolver Id=&quot;<i>string</i>&quot;&gt;</span></dd>
         <dd class="value">This element defines a pair of files used to store a
