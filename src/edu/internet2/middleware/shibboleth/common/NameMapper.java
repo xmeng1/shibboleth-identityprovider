@@ -62,7 +62,6 @@ public class NameMapper {
 
 	private static Logger log = Logger.getLogger(NameMapper.class.getName());
 	private Map byFormat = new HashMap();
-	private Map byId = new HashMap();
 	private static Map registeredMappingTypes = Collections.synchronizedMap(new HashMap());
 
 	static {
@@ -142,10 +141,6 @@ public class NameMapper {
 
 	public NameIdentifierMapping getNameIdentifierMappingByFormat(String format) {
 		return (NameIdentifierMapping) byFormat.get(format);
-	}
-
-	public NameIdentifierMapping getNameIdentifierMappingById(String id) {
-		return (NameIdentifierMapping) byId.get(id);
 	}
 
 	protected NameIdentifierMapping loadNameIdentifierMapping(Class implementation, Element config)
