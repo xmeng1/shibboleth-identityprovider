@@ -33,6 +33,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collection;
@@ -135,6 +136,7 @@ public class ShibbolethTrust extends Trust {
 
 	private boolean pkixValidate(X509Certificate[] certChain, EntitiesDescriptor group) {
 
+		log.debug("Attemping to validate against parent group.");
 		if (group instanceof ExtendedEntitiesDescriptor) {
 			Iterator keyAuthorities = ((ExtendedEntitiesDescriptor) group).getKeyAuthorities();
 			// if we have any key authorities, construct a flat list of trust anchors representing each and attempt to
@@ -146,8 +148,8 @@ public class ShibbolethTrust extends Trust {
 
 		// If not, attempt to walk up the chain for validation
 		EntitiesDescriptor parent = group.getEntitiesDescriptor();
-		if (group != null) {
-			if (pkixValidate(certChain, group)) { return true; }
+		if (parent != null) {
+			if (pkixValidate(certChain, parent)) { return true; }
 		}
 
 		return false;
@@ -161,7 +163,7 @@ public class ShibbolethTrust extends Trust {
 			KeyInfo keyInfo = (KeyInfo) keyInfos.next();
 			if (keyInfo.containsX509Data()) {
 				try {
-					anchors.add(keyInfo.getX509Certificate());
+					anchors.add(new TrustAnchor(keyInfo.getX509Certificate(), null));
 				} catch (KeyResolverException e) {
 					log.error("Encountered an error constructing trust list from shibboleth metadata: " + e);
 				}
