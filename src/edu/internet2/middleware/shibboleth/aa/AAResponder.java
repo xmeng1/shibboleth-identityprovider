@@ -92,15 +92,31 @@ public class AAResponder{
     }
 
 
-    public SAMLAttribute[] getReleaseAttributes(String userName, String uidSyntax, String handle, String sharName, String url)
+    public SAMLAttribute[] getReleaseAttributes(String userName, String searchFilter, String handle, String sharName, String url)
 	throws AAException{
 
 	DirContext userCtx = null;
 
 	try{
-	    if(uidSyntax == null)
-		uidSyntax = "";
-	    userCtx = (DirContext)ctx.lookup(uidSyntax+userName);
+	    if(searchFilter == null)
+		searchFilter = "";
+	    int indx = searchFilter.indexOf("%s");
+	    if(indx  <0){
+		userCtx = (DirContext)ctx.lookup(searchFilter+userName);
+	    }else{
+		/* This is a search filter. Search after replacing %s with uid*/
+		StringBuffer tmp = new StringBuffer(searchFilter);
+		tmp.delete(indx, indx+2);
+		tmp.insert(indx, userName);
+		searchFilter = tmp.toString();
+		NamingEnumeration en = ctx.search("", searchFilter, null);
+		if(!en.hasMore())
+		    throw new AAException("No context found for "+userName+" as a result of searching "+searchFilter);
+		userCtx = (DirContext)en.next();
+		if(en.hasMore())
+		    throw new AAException("More than 1 context found for "+userName+" as a result of searching "+searchFilter);
+
+	    }		
 	}catch(NamingException e){
 	    throw new AAException("Cannot lookup context for "+userName+" :"+e);
 	}
