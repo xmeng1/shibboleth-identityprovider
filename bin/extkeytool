@@ -1,20 +1,21 @@
-#!/bin/sh
+@echo off
+setlocal
 
-##We need a JVM
-if [ ! -n "$JAVA_HOME" ] ; then
-  echo "Error: JAVA_HOME is not defined."
-  exit
-fi
+REM We need a JVM
+if not defined JAVA_HOME  (
+  echo Error: JAVA_HOME is not defined.
+  exit /b
+)
 
-if [ ! -n "$JAVACMD" ] ; then
-  JAVACMD=$JAVA_HOME/bin/java
-fi
+if not defined JAVACMD (
+  set JAVACMD=%JAVA_HOME\bin\java.exe
+)
 
-if [ ! -x "$JAVACMD" ] ; then
-  echo "Error: JAVA_HOME is not defined correctly."
-  echo "Cannot execute $JAVACMD"
-  exit
-fi
+if not exist %JAVACMD (
+  echo Error: JAVA_HOME is not defined correctly.
+  echo Cannot execute %JAVACMD
+  exit /b
+)
 
 
 ##Find the shibboleth components
@@ -22,6 +23,9 @@ if [ ! -n "$SHIB_HOME" ] ; then
   echo "Error: SHIB_HOME is not defined."
   exit
 fi
+
+## Where log4j config file is
+LOG_CONFIG=$SHIB_HOME/conf/log4j.properties
 
 if [ ! \( -f "$SHIB_HOME/lib/shib-util.jar" -a -r "$SHIB_HOME/lib/shib-util.jar" \) ] ; then
   echo "Error: Cannot find the shibboleth jar (shib-util.jar)."
@@ -51,4 +55,4 @@ done
 
 
 ##Here we go
-$JAVACMD -classpath $SHIB_UTIL_CLASSPATH  edu.internet2.middleware.shibboleth.utils.ExtKeyTool "$@"
+$JAVACMD -Dlog4j.configuration="$LOG_CONFIG" -cp $SHIB_UTIL_CLASSPATH  edu.internet2.middleware.shibboleth.utils.ExtKeyTool "$@"

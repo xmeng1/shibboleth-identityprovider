@@ -26,11 +26,16 @@ ENDORSED=$SHIB_HOME/endorsed
 ## Where log4j config file is
 LOG_CONFIG=$SHIB_HOME/conf/log4j.properties
 
+if [ ! \( -f "$SHIB_HOME/lib/shib-util.jar" -a -r "$SHIB_HOME/lib/shib-util.jar" \) ] ; then
+  echo "Error: Cannot find the shibboleth jar (shib-util.jar)."
+  echo "       If you downloaded the shibboleth source, you need to run \"ant build-util\""
+  exit
+fi
+
 ##Grab all the dependencies
 if [ -n "$CLASSPATH" ] ; then
   SHIB_UTIL_CLASSPATH=$CLASSPATH
 fi
-SHIB_UTIL_CLASSPATH=$SHIB_UTIL_CLASSPATH:$SHIB_HOME/webApplication/WEB-INF/classes
 
 DIRLIBS=${SHIB_HOME}/lib/*.jar
 for i in ${DIRLIBS}
