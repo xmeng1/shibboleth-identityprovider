@@ -119,7 +119,7 @@ import edu.internet2.middleware.shibboleth.metadata.SPProviderRole;
 
 public class IdPResponder extends TargetFederationComponent {
 
-	//TODO Maybe should rethink the inheritance here, since there is only one
+	// TODO Maybe should rethink the inheritance here, since there is only one
 	// servlet
 
 	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
@@ -129,16 +129,16 @@ public class IdPResponder extends TargetFederationComponent {
 	private ArtifactMapper artifactMapper;
 	private SSOProfileHandler[] profileHandlers;
 
-	//TODO Obviously this has got to be unified
+	// TODO Obviously this has got to be unified
 	private AAConfig configuration;
 	private HSConfig hsConfiguration;
 	private NameMapper nameMapper;
 
-	//TODO unify
+	// TODO unify
 	private AAServiceProviderMapper targetMapper;
 	private HSServiceProviderMapper hsTargetMapper;
 
-	//TODO Need to rename, rework, and init
+	// TODO Need to rename, rework, and init
 	private AAResponder responder;
 
 	public void init() throws ServletException {
@@ -168,19 +168,19 @@ public class IdPResponder extends TargetFederationComponent {
 
 		Document originConfig = OriginConfig.getOriginConfig(this.getServletContext());
 
-		//TODO I think some of the failure cases here are different than in the
+		// TODO I think some of the failure cases here are different than in the
 		// HS, so when the loadConfiguration() is unified, that must be taken
 		// into account
 
-		//TODO do we need to check active endpoints to determine which
+		// TODO do we need to check active endpoints to determine which
 		// components to load, for instance artifact repository, arp engine,
 		// attribute resolver
 
-		//Load global configuration properties
-		//TODO make AA and HS config unified
+		// Load global configuration properties
+		// TODO make AA and HS config unified
 		configuration = new AAConfig(originConfig.getDocumentElement());
 
-		//Load name mappings
+		// Load name mappings
 		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
 				NameIdentifierMapping.mappingNamespace, "NameMapping");
 
@@ -192,7 +192,7 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 		}
 
-		//Load signing credentials
+		// Load signing credentials
 		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(Credentials.credentialsNamespace,
 				"Credentials");
 		if (itemElements.getLength() < 1) {
@@ -203,7 +203,7 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 		Credentials credentials = new Credentials((Element) itemElements.item(0));
 
-		//Load metadata
+		// Load metadata
 		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
 				ShibbolethOriginConfig.originConfigNamespace, "FederationProvider");
 		for (int i = 0; i < itemElements.getLength(); i++) {
@@ -214,9 +214,9 @@ public class IdPResponder extends TargetFederationComponent {
 			throw new ShibbolethConfigurationException("Could not load federation metadata.");
 		}
 
-		//Load relying party config
+		// Load relying party config
 		try {
-			//TODO unify the service provider mapper
+			// TODO unify the service provider mapper
 			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
 					this);
 		} catch (ServiceProviderMapperException e) {
@@ -225,10 +225,10 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 
 		try {
-			//Startup Attribute Resolver
+			// Startup Attribute Resolver
 			AttributeResolver resolver = new AttributeResolver(configuration);
 
-			//Startup ARP Engine
+			// Startup ARP Engine
 			ArpEngine arpEngine = null;
 			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
 					ShibbolethOriginConfig.originConfigNamespace, "ReleasePolicyEngine");
@@ -242,7 +242,7 @@ public class IdPResponder extends TargetFederationComponent {
 				arpEngine = new ArpEngine((Element) itemElements.item(0));
 			}
 
-			//Startup responder
+			// Startup responder
 			responder = new AAResponder(arpEngine, resolver);
 
 		} catch (ArpException ae) {
@@ -273,6 +273,20 @@ public class IdPResponder extends TargetFederationComponent {
 				throw new SAMLException("Invalid request data.");
 			}
 
+			// If we have DEBUGing turned on, dump out the request to the log
+			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
+				try {
+					log.debug("Dumping generated SAML Request:"
+							+ System.getProperty("line.separator")
+							+ new String(new BASE64Decoder().decodeBuffer(new String(samlRequest.toBase64(), "ASCII")),
+									"UTF8"));
+				} catch (SAMLException e) {
+					log.error("Encountered an error while decoding SAMLRequest for logging purposes.");
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLRequest for logging purposes.");
+				}
+			}
+
 			// Determine the request type
 			Iterator artifacts = samlRequest.getArtifacts();
 			if (artifacts.hasNext()) {
@@ -294,9 +308,9 @@ public class IdPResponder extends TargetFederationComponent {
 		} catch (InvalidNameIdentifierException invalidNameE) {
 			log.info("Could not associate the request subject with a principal: " + invalidNameE);
 			try {
-				//TODO once again, ifgure out passThruErrors
+				// TODO once again, ifgure out passThruErrors
 				if (false) {
-					//if (relyingParty.passThruErrors()) {
+					// if (relyingParty.passThruErrors()) {
 					sendSAMLFailureResponse(response, samlRequest, new SAMLException(Arrays.asList(invalidNameE
 							.getSAMLErrorCodes()), "The supplied Subject was unrecognized.", invalidNameE));
 
@@ -312,9 +326,9 @@ public class IdPResponder extends TargetFederationComponent {
 		} catch (Exception e) {
 			log.error("Error while processing request: " + e);
 			try {
-				//TODO figure out how to implement the passThru error handling
+				// TODO figure out how to implement the passThru error handling
 				// below
-				//if (relyingParty != null && relyingParty.passThruErrors()) {
+				// if (relyingParty != null && relyingParty.passThruErrors()) {
 				if (false) {
 					sendSAMLFailureResponse(response, samlRequest, new SAMLException(SAMLException.RESPONDER,
 							"General error processing request.", e));
@@ -333,12 +347,12 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 	}
 
-	//TODO get rid of this AAException thing
+	// TODO get rid of this AAException thing
 	private void processAttributeQuery(SAMLRequest samlRequest, HttpServletRequest request, HttpServletResponse response)
 			throws SAMLException, IOException, ServletException, AAException, InvalidNameIdentifierException,
 			NameIdentifierMappingException {
 
-		//TODO validate that the endpoint is valid for the request type
+		// TODO validate that the endpoint is valid for the request type
 
 		AARelyingParty relyingParty = null;
 
@@ -348,7 +362,7 @@ public class IdPResponder extends TargetFederationComponent {
 			log.info("Remote provider has identified itself as: (" + attributeQuery.getResource() + ").");
 		}
 
-		//This is the requester name that will be passed to subsystems
+		// This is the requester name that will be passed to subsystems
 		String effectiveName = null;
 
 		X509Certificate credential = getCredentialFromProvider(request);
@@ -356,7 +370,7 @@ public class IdPResponder extends TargetFederationComponent {
 			log.info("Request is from an unauthenticated service provider.");
 		} else {
 
-			//Identify a Relying Party
+			// Identify a Relying Party
 			relyingParty = targetMapper.getRelyingParty(attributeQuery.getResource());
 
 			try {
@@ -373,7 +387,7 @@ public class IdPResponder extends TargetFederationComponent {
 			relyingParty = targetMapper.getRelyingParty(null);
 		}
 
-		//Fail if we can't honor SAML Subject Confirmation
+		// Fail if we can't honor SAML Subject Confirmation
 		if (!fromLegacyProvider(request)) {
 			Iterator iterator = attributeQuery.getSubject().getConfirmationMethods();
 			boolean hasConfirmationMethod = false;
@@ -384,7 +398,7 @@ public class IdPResponder extends TargetFederationComponent {
 					"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method."); }
 		}
 
-		//Map Subject to local principal
+		// Map Subject to local principal
 		Principal principal = nameMapper.getPrincipal(attributeQuery.getSubject().getName(), relyingParty, relyingParty
 				.getIdentityProvider());
 		log.info("Request is for principal (" + principal.getName() + ").");
@@ -439,13 +453,13 @@ public class IdPResponder extends TargetFederationComponent {
 	private void processArtifactDereference(SAMLRequest samlRequest, HttpServletRequest request,
 			HttpServletResponse response) throws SAMLException, IOException {
 
-		//TODO validate that the endpoint is valid for the request type
-		//TODO how about signatures on artifact dereferencing
+		// TODO validate that the endpoint is valid for the request type
+		// TODO how about signatures on artifact dereferencing
 
 		// Pull credential from request
 		X509Certificate credential = getCredentialFromProvider(request);
 		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
-			//The spec says that mutual authentication is required for the
+			// The spec says that mutual authentication is required for the
 			// artifact profile
 			log.info("Request is from an unauthenticated service provider.");
 			throw new SAMLException(SAMLException.REQUESTER,
@@ -459,7 +473,7 @@ public class IdPResponder extends TargetFederationComponent {
 		Iterator artifacts = samlRequest.getArtifacts();
 
 		int queriedArtifacts = 0;
-		StringBuffer dereferencedArtifacts = new StringBuffer(); //for
+		StringBuffer dereferencedArtifacts = new StringBuffer(); // for
 		// transaction
 		// log
 		while (artifacts.hasNext()) {
@@ -470,14 +484,14 @@ public class IdPResponder extends TargetFederationComponent {
 			if (mapping != null) {
 				SAMLAssertion assertion = mapping.getAssertion();
 
-				//See if we have metadata for this provider
+				// See if we have metadata for this provider
 				Provider provider = lookup(mapping.getServiceProviderId());
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + mapping.getServiceProviderId() + ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider.");
 				}
 
-				//Make sure that the suppplied credential is valid for the
+				// Make sure that the suppplied credential is valid for the
 				// provider to which the artifact was issued
 				if (!isValidCredential(provider, credential)) {
 					log.error("Supplied credential ("
@@ -494,12 +508,12 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 		}
 
-		//The spec requires that if any artifacts are dereferenced, they must
+		// The spec requires that if any artifacts are dereferenced, they must
 		// all be dereferenced
 		if (assertions.size() > 0 && assertions.size() != queriedArtifacts) { throw new SAMLException(
 				SAMLException.REQUESTER, "Unable to successfully dereference all artifacts."); }
 
-		//Create and send response
+		// Create and send response
 		// The spec says that we should send "success" in the case where no
 		// artifacts match
 		SAMLResponse samlResponse = new SAMLResponse(samlRequest.getId(), null, assertions, null);
@@ -532,10 +546,10 @@ public class IdPResponder extends TargetFederationComponent {
 		try {
 			throttle.enter();
 
-			//Ensure that we have the required data from the servlet container
+			// Ensure that we have the required data from the servlet container
 			validateEngineData(request);
 
-			//Determine which profile of SAML we are responding to (at this point, Shib vs. EAuth)
+			// Determine which profile of SAML we are responding to (at this point, Shib vs. EAuth)
 			SSOProfileHandler activeHandler = null;
 			for (int i = 0; i < profileHandlers.length; i++) {
 				if (profileHandlers[i].validForRequest(request)) {
@@ -546,17 +560,17 @@ public class IdPResponder extends TargetFederationComponent {
 			if (activeHandler == null) { throw new InvalidClientDataException(
 					"The request did not contain sufficient parameter data to determine the protocol."); }
 
-			//Run profile specific preprocessing
+			// Run profile specific preprocessing
 			if (activeHandler.preProcessHook(request, response)) { return; }
 
-			//Get the authN info
+			// Get the authN info
 			String username = hsConfiguration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
 					.getRemoteUser() : request.getHeader(hsConfiguration.getAuthHeaderName());
 
-			//Select the appropriate Relying Party configuration for the request
+			// Select the appropriate Relying Party configuration for the request
 			HSRelyingParty relyingParty = null;
 			String remoteProviderId = activeHandler.getRemoteProviderId(request);
-			//If the target did not send a Provider Id, then assume it is a Shib
+			// If the target did not send a Provider Id, then assume it is a Shib
 			// 1.1 or older target
 			if (remoteProviderId == null) {
 				relyingParty = hsTargetMapper.getLegacyRelyingParty();
@@ -567,14 +581,14 @@ public class IdPResponder extends TargetFederationComponent {
 				relyingParty = hsTargetMapper.getRelyingParty(remoteProviderId);
 			}
 
-			//Grab the metadata for the provider
+			// Grab the metadata for the provider
 			Provider provider = lookup(relyingParty.getProviderId());
 
-			//Use profile-specific method for determining the acceptance URL
+			// Use profile-specific method for determining the acceptance URL
 			String acceptanceURL = activeHandler.getAcceptanceURL(request, relyingParty, provider);
 
-			//Make sure that the selected relying party configuration is appropriate for this
-			//acceptance URL
+			// Make sure that the selected relying party configuration is appropriate for this
+			// acceptance URL
 			if (!relyingParty.isLegacyProvider()) {
 
 				if (provider == null) {
@@ -593,7 +607,7 @@ public class IdPResponder extends TargetFederationComponent {
 				}
 			}
 
-			//Create SAML Name Identifier
+			// Create SAML Name Identifier
 			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(relyingParty.getHSNameFormatId(),
 					new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
 
@@ -606,7 +620,7 @@ public class IdPResponder extends TargetFederationComponent {
 				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
 			}
 
-			//We might someday want to provide a mechanism for the authenticator to specify the auth time
+			// We might someday want to provide a mechanism for the authenticator to specify the auth time
 			SAMLAssertion[] assertions = activeHandler.processHook(request, relyingParty, provider, nameId,
 					authenticationMethod, new Date(System.currentTimeMillis()));
 
@@ -626,7 +640,7 @@ public class IdPResponder extends TargetFederationComponent {
 				destination.append(URLEncoder.encode(activeHandler.getSAMLTargetParameter(request, relyingParty,
 						provider), "UTF-8"));
 				Iterator iterator = artifacts.iterator();
-				StringBuffer artifactBuffer = new StringBuffer(); //Buffer for the transaction log
+				StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
 				while (iterator.hasNext()) {
 					destination.append("&SAMLart=");
 					String artifact = (String) iterator.next();
@@ -634,7 +648,7 @@ public class IdPResponder extends TargetFederationComponent {
 					artifactBuffer.append("(" + artifact + ")");
 				}
 				log.debug("Redirecting to (" + destination.toString() + ").");
-				response.sendRedirect(destination.toString()); //Redirect to the artifact receiver
+				response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
 
 				transactionLog.info("Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
 						+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal (" + username
@@ -665,7 +679,7 @@ public class IdPResponder extends TargetFederationComponent {
 				}
 			}
 
-			//TODO profile specific error handling
+			// TODO profile specific error handling
 		} catch (NameIdentifierMappingException ex) {
 			log.error(ex);
 			handleSSOError(request, response, ex);
@@ -702,7 +716,7 @@ public class IdPResponder extends TargetFederationComponent {
 			log.info("Inappropriate metadata for provider.");
 			return false;
 		}
-		//TODO figure out what to do about this role business here
+		// TODO figure out what to do about this role business here
 		for (int i = 0; roles.length > i; i++) {
 			if (roles[i] instanceof AttributeConsumerRole) {
 				KeyDescriptor[] descriptors = roles[i].getKeyDescriptors();
@@ -712,7 +726,7 @@ public class IdPResponder extends TargetFederationComponent {
 						for (int l = 0; keyInfo[k].lengthKeyName() > l; l++) {
 							try {
 
-								//First, try to match DN against metadata
+								// First, try to match DN against metadata
 								try {
 									if (certificate.getSubjectX500Principal().getName(X500Principal.RFC2253).equals(
 											new X500Principal(keyInfo[k].itemKeyName(l).getKeyName())
@@ -721,11 +735,11 @@ public class IdPResponder extends TargetFederationComponent {
 										return true;
 									}
 								} catch (IllegalArgumentException iae) {
-									//squelch this runtime exception, since
+									// squelch this runtime exception, since
 									// this might be a valid case
 								}
 
-								//If that doesn't work, we try matching against
+								// If that doesn't work, we try matching against
 								// some Subject Alt Names
 								try {
 									Collection altNames = certificate.getSubjectAlternativeNames();
@@ -733,7 +747,7 @@ public class IdPResponder extends TargetFederationComponent {
 										for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
 											List altName = (List) nameIterator.next();
 											if (altName.get(0).equals(new Integer(2))
-													|| altName.get(0).equals(new Integer(6))) { //2 is
+													|| altName.get(0).equals(new Integer(6))) { // 2 is
 												// DNS,
 												// 6 is
 												// URI
@@ -750,7 +764,7 @@ public class IdPResponder extends TargetFederationComponent {
 													+ e1);
 								}
 
-								//If that doesn't work, try to match using
+								// If that doesn't work, try to match using
 								// SSL-style hostname matching
 								if (ShibPOSTProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
 										keyInfo[k].itemKeyName(l).getKeyName())) {
@@ -809,7 +823,7 @@ public class IdPResponder extends TargetFederationComponent {
 	private String getEffectiveName(HttpServletRequest req, AARelyingParty relyingParty)
 			throws InvalidProviderCredentialException {
 
-		//X500Principal credentialName = getCredentialName(req);
+		// X500Principal credentialName = getCredentialName(req);
 		X509Certificate credential = getCredentialFromProvider(req);
 
 		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
@@ -819,7 +833,7 @@ public class IdPResponder extends TargetFederationComponent {
 		} else {
 			log.info("Request contains credential: ("
 					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
-			//Mockup old requester name for requests from < 1.2 targets
+			// Mockup old requester name for requests from < 1.2 targets
 			if (fromLegacyProvider(req)) {
 				String legacyName = ShibPOSTProfile.getHostNameFromDN(credential.getSubjectX500Principal());
 				if (legacyName == null) {
@@ -831,7 +845,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 			} else {
 
-				//See if we have metadata for this provider
+				// See if we have metadata for this provider
 				Provider provider = lookup(relyingParty.getProviderId());
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
@@ -839,7 +853,7 @@ public class IdPResponder extends TargetFederationComponent {
 					return null;
 				}
 
-				//Make sure that the suppplied credential is valid for the
+				// Make sure that the suppplied credential is valid for the
 				// selected relying party
 				if (isValidCredential(provider, credential)) {
 					log.info("Supplied credential validated for this provider.");
@@ -855,7 +869,7 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 	}
 
-	//TODO this should be renamed, since it is now only one type of response
+	// TODO this should be renamed, since it is now only one type of response
 	// that we can send
 	public void sendSAMLResponse(HttpServletResponse resp, SAMLAttribute[] attrs, SAMLRequest samlRequest,
 			RelyingParty relyingParty, SAMLException exception) throws IOException {
@@ -865,16 +879,16 @@ public class IdPResponder extends TargetFederationComponent {
 
 		try {
 			if (attrs == null || attrs.length == 0) {
-				//No attribute found
+				// No attribute found
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, exception);
 			} else {
 
 				SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
-				//Reference requested subject
+				// Reference requested subject
 				SAMLSubject rSubject = (SAMLSubject) attributeQuery.getSubject().clone();
 
-				//Set appropriate audience
+				// Set appropriate audience
 				ArrayList audiences = new ArrayList();
 				if (relyingParty.getProviderId() != null) {
 					audiences.add(relyingParty.getProviderId());
@@ -884,10 +898,10 @@ public class IdPResponder extends TargetFederationComponent {
 				}
 				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
 
-				//Put all attributes into an assertion
+				// Put all attributes into an assertion
 				SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
 
-				//Set assertion expiration to longest attribute expiration
+				// Set assertion expiration to longest attribute expiration
 				long max = 0;
 				for (int i = 0; i < attrs.length; i++) {
 					if (max < attrs[i].getLifetime()) {
@@ -895,7 +909,7 @@ public class IdPResponder extends TargetFederationComponent {
 					}
 				}
 				Date now = new Date();
-				Date then = new Date(now.getTime() + (max * 1000)); //max is in
+				Date then = new Date(now.getTime() + (max * 1000)); // max is in
 				// seconds
 
 				SAMLAssertion sAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(), now,
@@ -911,7 +925,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 		} finally {
 
-			if (log.isDebugEnabled()) {
+			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
 				try {
 					log.debug("Dumping generated SAML Response:"
 							+ System.getProperty("line.separator")
@@ -931,9 +945,9 @@ public class IdPResponder extends TargetFederationComponent {
 
 	private static void addSignatures(SAMLResponse reponse, RelyingParty relyingParty) throws SAMLException {
 
-		//TODO make sure this signing optionally happens according to origin.xml params
+		// TODO make sure this signing optionally happens according to origin.xml params
 
-		//Sign the assertions, if appropriate
+		// Sign the assertions, if appropriate
 		if (relyingParty.getIdentityProvider().getAssertionSigningCredential() != null
 				&& relyingParty.getIdentityProvider().getAssertionSigningCredential().getPrivateKey() != null) {
 
@@ -952,7 +966,7 @@ public class IdPResponder extends TargetFederationComponent {
 					.getIdentityProvider().getAssertionSigningCredential().getX509CertificateChain()));
 		}
 
-		//Sign the response, if appropriate
+		// Sign the response, if appropriate
 		if (relyingParty.getIdentityProvider().getResponseSigningCredential() != null
 				&& relyingParty.getIdentityProvider().getResponseSigningCredential().getPrivateKey() != null) {
 
@@ -974,10 +988,10 @@ public class IdPResponder extends TargetFederationComponent {
 
 	private boolean useArtifactProfile(Provider provider, String acceptanceURL) {
 
-		//Default to POST if we have no metadata
+		// Default to POST if we have no metadata
 		if (provider == null) { return false; }
 
-		//Default to POST if we have incomplete metadata
+		// Default to POST if we have incomplete metadata
 		ProviderRole[] roles = provider.getRoles();
 		if (roles.length == 0) { return false; }
 
@@ -991,7 +1005,7 @@ public class IdPResponder extends TargetFederationComponent {
 				}
 			}
 		}
-		//Default to POST if we have incomplete metadata
+		// Default to POST if we have incomplete metadata
 		return false;
 	}
 
@@ -1027,7 +1041,7 @@ public class IdPResponder extends TargetFederationComponent {
 	protected void createPOSTForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,
 			ServletException {
 
-		//Hardcoded to ASCII to ensure Base64 encoding compatibility
+		// Hardcoded to ASCII to ensure Base64 encoding compatibility
 		req.setAttribute("assertion", new String(buf, "ASCII"));
 
 		if (log.isDebugEnabled()) {
@@ -1039,7 +1053,7 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 		}
 
-		//TODO rename from hs.jsp to more appropriate name
+		// TODO rename from hs.jsp to more appropriate name
 		RequestDispatcher rd = req.getRequestDispatcher("/hs.jsp");
 		rd.forward(req, res);
 	}
@@ -1050,7 +1064,7 @@ public class IdPResponder extends TargetFederationComponent {
 		req.setAttribute("errorText", e.toString());
 		req.setAttribute("requestURL", req.getRequestURI().toString());
 		RequestDispatcher rd = req.getRequestDispatcher("/hserror.jsp");
-		//TODO rename hserror.jsp to a more appropriate name
+		// TODO rename hserror.jsp to a more appropriate name
 		rd.forward(req, res);
 	}
 
