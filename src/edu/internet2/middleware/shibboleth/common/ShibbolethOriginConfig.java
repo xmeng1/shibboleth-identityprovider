@@ -49,7 +49,6 @@ package edu.internet2.middleware.shibboleth.common;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Enumeration;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -63,100 +62,60 @@ import edu.internet2.middleware.shibboleth.hs.HSConfigurationException;
  *
  */
 public class ShibbolethOriginConfig {
-	
+
 	private static Logger log = Logger.getLogger(ShibbolethOriginConfig.class.getName());
-	protected Properties properties;
-	
+	protected Properties properties = new Properties();
+
 	public ShibbolethOriginConfig(Element config) throws HSConfigurationException {
-//		Set defaults
-			  Properties defaultProps = new Properties();
-			  defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username", "REMOTE_USER");
-			  defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads", "5");
-			  defaultProps.setProperty(
-				  "edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation",
-				  "edu.internet2.middleware.shibboleth.hs.provider.MemoryHandleRepository");
-			  defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.BaseHandleRepository.handleTTL", "1800000");
-			  defaultProps.setProperty(
-				  "edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
-				  "/conf/handle.jks");
-			  defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:inqueue");
-			  defaultProps.setProperty(
-				  "edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
-				  SAMLAuthenticationStatement.AuthenticationMethod_Unspecified);
 
-			  //Load from file
-			  properties = new Properties(defaultProps);
-			  //TODO fix this!!!
-			  String propertiesFileLocation = "foo";//= getInitParameter("OriginPropertiesFile");
-			  
-			  if (propertiesFileLocation == null) {
-				  propertiesFileLocation = "/conf/origin.properties";
-			  }
-			  try {
-				  log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
-				  properties.load(new ShibResource(propertiesFileLocation, this.getClass()).getInputStream());
+		if (!config.getTagName().equals("ShibbolethOriginConfig")) {
+			throw new HSConfigurationException("Unexpected configuration data.  <ShibbolethOriginConfig> is needed.");
+		}
 
-				  //Make sure we have all required parameters
-				  StringBuffer missingProperties = new StringBuffer();
-				  String[] requiredProperties =
-					  {
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer",
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName",
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl",
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath",
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword",
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias",
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword",
-						  "edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
-						  "edu.internet2.middleware.shibboleth.audiences" };
+		//Set defaults
+		//TODO need a way to set this
+		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username", "REMOTE_USER");
+		//TODO need a way to set this, remember to test for number format
+		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads", "5");
+		//TODO need a way to set this
+		properties.setProperty(
+			"edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
+			SAMLAuthenticationStatement.AuthenticationMethod_Unspecified);
 
-				  for (int i = 0; i < requiredProperties.length; i++) {
-					  if (properties.getProperty(requiredProperties[i]) == null) {
-						  missingProperties.append("\"");
-						  missingProperties.append(requiredProperties[i]);
-						  missingProperties.append("\" ");
-					  }
-				  }
-				  if (missingProperties.length() > 0) {
-					  log.error(
-						  "Missing configuration data.  The following configuration properites have not been set: "
-							  + missingProperties.toString());
-					  throw new HSConfigurationException("Missing configuration data.");
-				  }
+		//TODO default relying party group
 
-			  } catch (IOException e) {
-				  log.error("Could not load HS servlet configuration: " + e);
-				  throw new HSConfigurationException("Could not load HS servlet configuration.");
-			  }
+		log.debug("Loading global configuration properties.");
 
-			  if (log.isDebugEnabled()) {
-				  ByteArrayOutputStream debugStream = new ByteArrayOutputStream();
-				  PrintStream debugPrinter = new PrintStream(debugStream);
-				  properties.list(debugPrinter);
-				  log.debug(
-					  "Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
-				  try {
-					  debugStream.close();
-				  } catch (IOException e) {
-					  log.error("Encountered a problem cleaning up resources: could not close debug stream.");
-				  }
-			  }
-		
-			  //Be nice and trim "extra" whitespace from config properties
-			  Enumeration propNames = properties.propertyNames();
-			  while (propNames.hasMoreElements()) {
-				  String propName = (String) propNames.nextElement();
-				  if (properties.getProperty(propName, "").matches(".+\\s$")) {
-					  log.debug(
-						  "The configuration property ("
-							  + propName
-							  + ") contains trailing whitespace.  Trimming... ");
-					  properties.setProperty(propName, properties.getProperty(propName).trim());
-				  }
-			  }
+		String attribute = ((Element) config).getAttribute("providerId");
+		if (attribute == null || attribute.equals("")) {
+			log.error("Global providerId not set.  Add a (providerId) attribute to <ShibbolethOriginConfig>.");
+			throw new HSConfigurationException("Required configuration not specified.");
+		}
+		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId", attribute);
 
+		attribute = ((Element) config).getAttribute("AAUrl");
+		if (attribute == null || attribute.equals("")) {
+			log.error("Global providerId not set.  Add a (AAUrl) attribute to <ShibbolethOriginConfig>.");
+			throw new HSConfigurationException("Required configuration not specified.");
+		}
+		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl", attribute);
+
+		if (log.isDebugEnabled()) {
+			ByteArrayOutputStream debugStream = new ByteArrayOutputStream();
+			PrintStream debugPrinter = new PrintStream(debugStream);
+			properties.list(debugPrinter);
+			log.debug(
+				"Global Runtime configuration parameters: "
+					+ System.getProperty("line.separator")
+					+ debugStream.toString());
+			try {
+				debugStream.close();
+			} catch (IOException e) {
+				log.error("Encountered a problem cleaning up resources: could not close debug stream.");
+			}
+		}
 	}
-	
+
 	public String getConfigProperty(String key) {
 		return properties.getProperty(key);
 	}

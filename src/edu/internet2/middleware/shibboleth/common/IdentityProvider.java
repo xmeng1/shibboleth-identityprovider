@@ -51,5 +51,8 @@ package edu.internet2.middleware.shibboleth.common;
  * @author Walter Hoehn
  */
 public interface IdentityProvider {
-	public String getId();
+	public String getProviderId();
+	public Credential getResponseSigningCredential();
+	public Credential getAssertionSigningCredential();
+
 }

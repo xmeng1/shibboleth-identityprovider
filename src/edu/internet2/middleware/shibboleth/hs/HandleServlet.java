@@ -48,8 +48,10 @@
 package edu.internet2.middleware.shibboleth.hs;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Date;
+import java.util.StringTokenizer;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -70,19 +72,22 @@ import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLResponse;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credentials;
+import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
-import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 
 public class HandleServlet extends HttpServlet {
 
@@ -90,30 +95,29 @@ public class HandleServlet extends HttpServlet {
 	private Semaphore throttle;
 	private ShibbolethOriginConfig configuration;
 	private Credentials credentials;
-	private HSNameMapper nameMapper = new HSNameMapper();
+	private HSNameMapper nameMapper;
 	private ShibPOSTProfile postProfile = new ShibPOSTProfile();
-
-	//TODO this is temporary, until we have the mapper
-	private RelyingParty relyingParty;
+	private ServiceProviderMapper targetMapper = new ServiceProviderMapper();
 
 	protected void loadConfiguration() throws HSConfigurationException {
 
-		//TODO This should be setup to do schema checking
-		DOMParser parser = new DOMParser();
+		DOMParser parser = loadParser(true);
+
 		String originConfigFile = getInitParameter("OriginConfigFile");
+		if (originConfigFile == null) {
+			originConfigFile = "/conf/origin.xml";
+		}
 		log.debug("Loading Configuration from (" + originConfigFile + ").");
+
 		try {
 			parser.parse(new InputSource(new ShibResource(originConfigFile, this.getClass()).getInputStream()));
 
-		} catch (ResourceNotAvailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Error while parsing origin configuration: " + e);
+			throw new HSConfigurationException("Error while parsing origin configuration.");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Could not load origin configuration: " + e);
+			throw new HSConfigurationException("Could not load origin configuration.");
 		}
 
 		//Load global configuration properties
@@ -130,7 +134,7 @@ public class HandleServlet extends HttpServlet {
 		}
 
 		if (itemElements.getLength() > 1) {
-			log.error("Multiple Credentials specifications, using first.");
+			log.error("Multiple Credentials specifications found, using first.");
 		}
 
 		credentials = new Credentials((Element) itemElements.item(0));
@@ -144,15 +148,67 @@ public class HandleServlet extends HttpServlet {
 		for (int i = 0; i < itemElements.getLength(); i++) {
 			try {
 				nameMapper.addNameMapping((Element) itemElements.item(i));
-			} catch (NameIdentifierMappingException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			} catch (NameIdentifierMappingException e) {
+				log.error("Name Identifier mapping could not be loaded: " + e);
 			}
 		}
+	}
 
-		//TODO this is temporary, until we have the mapper
-		relyingParty = new RelyingParty(null, configuration);
+	private DOMParser loadParser(boolean schemaChecking) throws HSConfigurationException {
 
+		DOMParser parser = new DOMParser();
+
+		if (!schemaChecking) {
+			return parser;
+		}
+
+		try {
+			parser.setFeature("http://xml.org/sax/features/validation", true);
+			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
+
+			parser.setEntityResolver(new EntityResolver() {
+				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
+					log.debug("Resolving entity for System ID: " + systemId);
+					if (systemId != null) {
+						StringTokenizer tokenString = new StringTokenizer(systemId, "/");
+						String xsdFile = "";
+						while (tokenString.hasMoreTokens()) {
+							xsdFile = tokenString.nextToken();
+						}
+						if (xsdFile.endsWith(".xsd")) {
+							InputStream stream;
+							try {
+								stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
+							} catch (IOException ioe) {
+								log.error("Error loading schema: " + xsdFile + ": " + ioe);
+								return null;
+							}
+							if (stream != null) {
+								return new InputSource(stream);
+							}
+						}
+					}
+					return null;
+				}
+			});
+
+			parser.setErrorHandler(new ErrorHandler() {
+				public void error(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void fatalError(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void warning(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+			});
+
+		} catch (SAXException e) {
+			log.error("Unable to setup a workable XML parser: " + e);
+			throw new HSConfigurationException("Unable to setup a workable XML parser.");
+		}
+		return parser;
 	}
 
 	public void init() throws ServletException {
@@ -161,6 +217,7 @@ public class HandleServlet extends HttpServlet {
 		try {
 			log.info("Initializing Handle Service.");
 
+			nameMapper = new HSNameMapper();
 			loadConfiguration();
 
 			throttle =
@@ -190,23 +247,27 @@ public class HandleServlet extends HttpServlet {
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
 
-			//TODO this is temporary, the first thing to do here is to lookup
-			// the relyingParty
+			RelyingParty relyingParty = targetMapper.getRelyingParty(req.getParameter("providerId"));
 
 			String header =
 				relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
 			String username = header.equalsIgnoreCase("REMOTE_USER") ? req.getRemoteUser() : req.getHeader(header);
 
-			//TODO get right data in here
 			SAMLNameIdentifier nameId =
-				nameMapper.getNameIdentifierName(null, new AuthNPrincipal(username), relyingParty, null);
+				nameMapper.getNameIdentifierName(
+					relyingParty.getHSNameFormatId(),
+					new AuthNPrincipal(username),
+					relyingParty,
+					relyingParty.getIdentityProvider());
 
 			//Print out something better here
 			//log.info("Issued Handle (" + handle + ") to (" + username +
 			// ")");
 
+			//TODO decide what to do about authMethod
 			byte[] buf =
 				generateAssertion(
+					relyingParty,
 					nameId,
 					req.getParameter("shire"),
 					req.getRemoteAddr(),
@@ -236,6 +297,7 @@ public class HandleServlet extends HttpServlet {
 	}
 
 	protected byte[] generateAssertion(
+		RelyingParty relyingParty,
 		SAMLNameIdentifier nameId,
 		String shireURL,
 		String clientAddress,
@@ -258,11 +320,7 @@ public class HandleServlet extends HttpServlet {
 				clientAddress,
 				authType,
 				new Date(System.currentTimeMillis()),
-				Collections.singleton(binding),
-				credentials.getCredential(
-					relyingParty.getConfigProperty(
-						"edu.internet2.middleware.shibboleth.hs.HandleServlet.responseCredential")),
-				null);
+				Collections.singleton(binding));
 
 		return r.toBase64();
 	}
@@ -337,6 +395,18 @@ public class HandleServlet extends HttpServlet {
 		public synchronized void exit() {
 			++value;
 			notify();
+		}
+	}
+	//TODO This is just a stub... and should be moved out when meat is added
+	class ServiceProviderMapper {
+
+		/**
+		 * @param providerIdFromTarget
+		 * @return
+		 */
+		public RelyingParty getRelyingParty(String providerIdFromTarget) {
+
+			return new RelyingParty(null, configuration, credentials);
 		}
 	}
 }

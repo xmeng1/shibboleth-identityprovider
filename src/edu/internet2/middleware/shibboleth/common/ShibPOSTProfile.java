@@ -295,11 +295,6 @@ public class ShibPOSTProfile {
 	 * @param bindings
 	 *            Set of SAML authorities the relying party may contact
 	 *            (optional)
-	 * @param responseCredential
-	 *            Credential to use for signing the SAML Response
-	 * @param assertaionCredential
-	 *            Credential to use for signing any SAML Assertions contained
-	 *            in the Response
 	 * @return SAML response to send to accepting site
 	 * @exception SAMLException
 	 *                Base class of exceptions that may be thrown during
@@ -312,21 +307,21 @@ public class ShibPOSTProfile {
 		String subjectIP,
 		String authMethod,
 		Date authInstant,
-		Collection bindings,
-		Credential responseCredential,
-		Credential assertionCredential)
+		Collection bindings)
 		throws SAMLException {
 
-		if (responseCredential == null || responseCredential.getPrivateKey() == null) {
+		if (relyingParty.getIdentityProvider().getResponseSigningCredential() == null
+			|| relyingParty.getIdentityProvider().getResponseSigningCredential().getPrivateKey() == null) {
 			throw new InvalidCryptoException(
 				SAMLException.RESPONDER,
 				"ShibPOSTProfile.prepare() requires a response key.");
 		}
-		
+
 		String responseAlgorithm;
-		if (responseCredential.getCredentialType() == Credential.RSA) {
+		if (relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.RSA) {
 			responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-		} else if (responseCredential.getCredentialType() == Credential.DSA) {
+		} else if (
+			relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.DSA) {
 			responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 		} else {
 			throw new InvalidCryptoException(
@@ -338,26 +333,31 @@ public class ShibPOSTProfile {
 
 		ArrayList audiences = new ArrayList();
 		audiences.add(relyingParty.getProviderId());
-		audiences.add(relyingParty.getName());
+		if (!relyingParty.getProviderId().equals(relyingParty.getName()))
+			audiences.add(relyingParty.getName());
+
+		String issuer;
+		if (relyingParty.isLegacyProvider()) {
+			//TODO must resolve this
+			issuer = "fooIssuer";
+		} else {
+			issuer = relyingParty.getProviderId();
+		}
 
 		SAMLResponse r =
-			SAMLPOSTProfile.prepare(
-				recipient,
-				relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"),
-				audiences,
-				nameId,
-				subjectIP,
-				authMethod,
-				authInstant,
-				bindings);
+			SAMLPOSTProfile.prepare(recipient, issuer, audiences, nameId, subjectIP, authMethod, authInstant, bindings);
 		r.toDOM(doc);
 
-		if (assertionCredential != null & assertionCredential.getPrivateKey() != null) {
+		if (relyingParty.getIdentityProvider().getAssertionSigningCredential() != null
+			&& relyingParty.getIdentityProvider().getAssertionSigningCredential().getPrivateKey() != null) {
 
 			String assertionAlgorithm;
-			if (assertionCredential.getCredentialType() == Credential.RSA) {
+			if (relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType()
+				== Credential.RSA) {
 				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (assertionCredential.getCredentialType() == Credential.DSA) {
+			} else if (
+				relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType()
+					== Credential.DSA) {
 				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(
@@ -367,14 +367,15 @@ public class ShibPOSTProfile {
 
 			((SAMLAssertion) r.getAssertions().next()).sign(
 				assertionAlgorithm,
-				assertionCredential.getPrivateKey(),
-				Arrays.asList(assertionCredential.getX509CertificateChain()));
+				relyingParty.getIdentityProvider().getAssertionSigningCredential().getPrivateKey(),
+				Arrays.asList(
+					relyingParty.getIdentityProvider().getAssertionSigningCredential().getX509CertificateChain()));
 		}
 
 		r.sign(
 			responseAlgorithm,
-			responseCredential.getPrivateKey(),
-			Arrays.asList(responseCredential.getX509CertificateChain()));
+			relyingParty.getIdentityProvider().getResponseSigningCredential().getPrivateKey(),
+			Arrays.asList(relyingParty.getIdentityProvider().getResponseSigningCredential().getX509CertificateChain()));
 
 		return r;
 	}
