@@ -50,7 +50,7 @@ public class AAResponder{
 	try{
 	    if(uidSyntax == null)
 		uidSyntax = "";
-	    userCtx = (DirContext)ctx.lookup(uidSyntax+"="+userName);
+	    userCtx = (DirContext)ctx.lookup(uidSyntax+userName);
 	}catch(NamingException e){
 	    throw new AAException("Cannot lookup context for "+userName+" :"+e);
 	}
@@ -234,6 +234,7 @@ public class AAResponder{
 	    System.out.println("Got constructors for "+attrClass);
 	    System.out.println("number of constructors "+cons.length);
 	    System.out.println("first constructor is "+cons[0]);
+	    System.out.println("Make a SAML attribute with: "+scopes[0]+", "+vals.get(0));
 	    return (SAMLAttribute)cons[0].newInstance(args);
 	}catch(Exception e){
 	    throw new AAException("Failed to read the class for attribute "+id+" :"+e);
