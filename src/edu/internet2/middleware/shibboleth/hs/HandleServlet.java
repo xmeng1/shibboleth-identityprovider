@@ -258,8 +258,6 @@ public class HandleServlet extends OriginComponent {
 				relyingParty.getAAUrl().toString(),
 				new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
 
-		//TODO Scott mentioned the clientAddress should be optional at some
-		// point
 		SAMLResponse r =
 			postProfile.prepare(
 				shireURL,
