@@ -54,13 +54,8 @@
 				<xs:element name="CustomDataConnector" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:complexContent>
-							<xs:extension base="resolver:BaseResolutionPlugIn">
+							<xs:extension base="resolver:BaseDataConnector">
 								<xs:sequence>
-									<xs:element name="FailoverDependency" minOccurs="0">
-										<xs:complexType>
-											<xs:attribute name="requires" type="xs:string" use="required"/>
-										</xs:complexType>
-									</xs:element>
 									<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 								</xs:sequence>
 								<xs:attribute name="class" type="xs:string" use="required"/>
@@ -72,13 +67,8 @@
 				<xs:element name="JNDIDirectoryDataConnector" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:complexContent>
-							<xs:extension base="resolver:BaseResolutionPlugIn">
+							<xs:extension base="resolver:BaseDataConnector">
 								<xs:sequence>
-									<xs:element name="FailoverDependency" minOccurs="0">
-										<xs:complexType>
-											<xs:attribute name="requires" type="xs:string" use="required"/>
-										</xs:complexType>
-									</xs:element>
 									<xs:element name="Search">
 										<xs:complexType>
 											<xs:sequence minOccurs="0">
@@ -109,13 +99,8 @@
 				<xs:element name="JDBCDataConnector" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:complexContent>
-							<xs:extension base="resolver:BaseResolutionPlugIn">
+							<xs:extension base="resolver:BaseDataConnector">
 								<xs:sequence>
-									<xs:element name="FailoverDependency" minOccurs="0">
-										<xs:complexType>
-											<xs:attribute name="requires" type="xs:string" use="required"/>
-										</xs:complexType>
-									</xs:element>
 									<xs:element name="Query" type="xs:string"/>
 									<xs:element name="AttributeExtractor" minOccurs="0">
 										<xs:complexType>
@@ -156,6 +141,19 @@
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
+	<xs:complexType name="BaseDataConnector">
+		<xs:complexContent>
+			<xs:extension base="resolver:BaseResolutionPlugIn">
+				<xs:sequence>
+					<xs:element name="FailoverDependency" minOccurs="0">
+						<xs:complexType>
+							<xs:attribute name="requires" type="xs:string" use="required"/>
+						</xs:complexType>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
 	<xs:complexType name="BaseResolutionPlugIn">
 		<xs:choice minOccurs="0" maxOccurs="unbounded">
 			<xs:element name="DataConnectorDependency">
@@ -171,5 +169,6 @@
 		</xs:choice>
 		<xs:attribute name="id" type="xs:string" use="required"/>
 		<xs:attribute name="cacheTime" type="xs:string" use="optional"/>
+		<xs:attribute name="propagateErrors" type="xs:boolean" use="optional" default="true"/>
 	</xs:complexType>
 </xs:schema>
