@@ -8,9 +8,9 @@
 package edu.internet2.middleware.shibboleth.xml;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +21,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.apache.log4j.Logger;
-import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -127,27 +126,28 @@ public class SchemasDirectoryImpl implements Schemas {
             }
             bucket.put(targetNamespace,xsddom);
         }
+        
         // Ok, so now we have a bucket of DOM objects keyed by the 
         // namespaces that they internally declare they define
         
-        
         // Now we have a list of Namespaces in the order we need 
         // to process them (imported dependencies first)
-        Source[] sources = new Source[namespaces.length];
+        ArrayList sources = new ArrayList();
         for (int i=0;i<namespaces.length;i++) {
             Document doc = (Document) bucket.get(namespaces[i]);
-            if (doc==null) 
-                log.error("Schema missing for namespace "+namespaces[i]);
-            sources[i]= new DOMSource(doc);
+            if (doc==null) {
+                log.error("Schema missing for namespace (" +namespaces[i] + ").");
+            } else {
+            sources.add(new DOMSource(doc));
+            }
         }
         
         // Now compile all the XSD files into a single composite Schema object
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
-            schema = factory.newSchema(sources);
+            schema = factory.newSchema((Source[]) sources.toArray(new Source[0]));
         } catch (SAXException e) {
-            log.error("Schemas failed to compile, dependencies may have changed "+e);
-            System.out.println(e);
+            log.error("Schemas failed to compile, dependencies may be corrupt: " +e);
         }
         return schema;
         
