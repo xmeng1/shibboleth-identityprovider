@@ -123,6 +123,7 @@ public class XML
                 throw new RuntimeException("XML static initializer unable to locate Shibboleth trust schema");
             else {
                 int b;
+                buf.setLength(0);
                 while ((b = xmlin.read()) != -1)
                     buf.append((char)b);
                 Trust_schema = buf.toString().getBytes();
