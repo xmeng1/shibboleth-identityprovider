@@ -34,7 +34,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Hashtable;
+import java.util.Properties;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
@@ -67,7 +67,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
 public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
 
 	private static Logger log = Logger.getLogger(JDBCDataConnector.class.getName());
-	private Hashtable env = new Hashtable();
+	private Properties props = new Properties();
 	private String searchVal = null;
 	private String aeClassName = null;
 
@@ -75,11 +75,7 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 	final private static String AttributeExtractorAtt = "attributeExtractor";
 	final private static String DBDriverAtt = "dbDriver";
 	final private static String AEInstanceMethodAtt = "instance";
-	final private static String DBSubProtocolAtt = "dbSubProtocol";
-	final private static String DBHostAtt = "dbHost";
-	final private static String DBNameAtt = "dbName";
-	final private static String UserNameAtt = "userName";
-	final private static String PasswordAtt = "password";
+	final private static String URLAtt = "dbURL";
 
 	public JDBCDataConnector(Element e) throws ResolutionPlugInException {
 
@@ -87,9 +83,6 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 
 		NodeList propertiesNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
 		NodeList searchNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
-
-		String propertiesName = null;
-		String propertiesValue = null;
 
 		/**
 		 * Gets and sets the search parameter and the attribute extractor
@@ -109,14 +102,14 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		 */
 		for (int i = 0; propertiesNode.getLength() > i; i++) {
 			Element property = (Element) propertiesNode.item(i);
-			propertiesName = property.getAttribute("name");
-			propertiesValue = property.getAttribute("value");
+			String propertiesName = property.getAttribute("name");
+			String propertiesValue = property.getAttribute("value");
 
 			if (propertiesName != null
 				&& !propertiesName.equals("")
 				&& propertiesValue != null
 				&& !propertiesValue.equals("")) {
-				env.put(propertiesName, propertiesValue);
+				props.setProperty(propertiesName, propertiesValue);
 				log.debug("Property: (" + propertiesName + ")");
 				log.debug("   Value: (" + propertiesValue + ")");
 			} else {
@@ -124,13 +117,16 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 				throw new ResolutionPlugInException("Property is malformed.");
 			}
 		}
+        
+        if (props.getProperty(URLAtt) == null) {
+            log.error("JDBC connection requires a dbURL property");
+            throw new ResolutionPlugInException("JDBCDataConnection requires a \"dbURL\" property");
+        }
 	}
 
 	public Attributes resolve(Principal principal) throws ResolutionPlugInException {
 		Connection conn = null;
 		ResultSet rs = null;
-		ResultSetMetaData rsmd = null;
-		BasicAttributes attributes = new BasicAttributes();
 		JDBCAttributeExtractor aeClassObj = null;
 
 		log.debug("Resolving connector: (" + getId() + ")");
@@ -143,7 +139,7 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 
 		try {
 			//Loads the database driver
-			loadDriver((String) env.get(DBDriverAtt));
+			loadDriver((String) props.get(DBDriverAtt));
 		} catch (ClassNotFoundException e) {
 			log.error("An ClassNotFoundException occured while loading database driver");
 			throw new ResolutionPlugInException(
@@ -160,13 +156,7 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 
 		try {
 			//Makes the connection to the database
-			conn =
-				connect(
-					(String) env.get(DBSubProtocolAtt),
-					(String) env.get(DBHostAtt),
-					(String) env.get(DBNameAtt),
-					(String) env.get(UserNameAtt),
-					(String) env.get(PasswordAtt));
+			conn = connect();
 		} catch (SQLException e) {
 			log.error("An ERROR occured while connecting to database");
 			throw new ResolutionPlugInException("An ERROR occured while connecting to the database: " + e.getMessage());
@@ -256,21 +246,15 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 	}
 
 	/** 
-	 * Makes a connection to the database
-	 * @param subProtocal Specifies the sub protocal to use when connecting
-	 * @param hostName  The host name for the database
-	 * @param dbName The database to access
-	 * @param userName The username to connect with
-	 * @param password The password to connect with
-	 * @return Connection objecet
+	 * Makes a connection to the database using the property set.
+	 * @return Connection object
 	 * @throws SQLException If there is a failure to make a database connection
 	 */
-	public Connection connect(String subProtocol, String hostName, String dbName, String userName, String password)
+	public Connection connect()
 		throws SQLException {
-		log.debug(
-			"jdbc:" + subProtocol + "://" + hostName + "/" + dbName + "?user=" + userName + "&password=" + password);
-		Connection conn =
-			DriverManager.getConnection("jdbc:" + subProtocol + "://" + hostName + "/" + dbName, userName, password);
+        String url = props.getProperty(URLAtt);
+		log.debug(url);
+		Connection conn = DriverManager.getConnection(url,props);
 		log.debug("Connection with database established");
 
 		return conn;
@@ -318,48 +302,49 @@ class DefaultAE implements JDBCAttributeExtractor {
 	 * @throws JDBCAttributeExtractorException If there is a complication in retrieving the attributes
 	 */
 	public BasicAttributes extractAttributes(ResultSet rs) throws JDBCAttributeExtractorException {
-		String columnName = null;
-		String columnType = null;
-		int numRows = 0, numColumns = 0;
-		ResultSetMetaData rsmd = null;
 		BasicAttributes attributes = new BasicAttributes();
-		Object columnValue = new Object();
 
 		log.debug("Using default Attribute Extractor");
 
 		try {
-			rs.last();
-			numRows = rs.getRow();
-			rs.first();
-		} catch (SQLException e) {
-			log.error("An ERROR occured while determining result set row size");
+            // No rows returned...
+			if (!rs.first())
+                return attributes;
+		}
+        catch (SQLException e) {
+			log.error("An error occured while accessing result set");
 			throw new JDBCAttributeExtractorException(
-				"An ERROR occured while determining result set row size: " + e.getMessage());
+				"An error occured while accessing result set: " + e.getMessage());
 		}
 
-		log.debug("The number of rows returned is: " + numRows);
-
-		if (numRows > 1)
-			throw new JDBCAttributeExtractorException("Query returned more than one result set.");
-
 		try {
-			rsmd = rs.getMetaData();
-			numColumns = rsmd.getColumnCount();
+            ResultSetMetaData rsmd = rs.getMetaData();
+			int numColumns = rsmd.getColumnCount();
 			log.debug("Number of returned columns: " + numColumns);
 
 			for (int i = 1; i <= numColumns; i++) {
-				columnName = rsmd.getColumnName(i);
-				columnType = rsmd.getColumnTypeName(i);
-				columnValue = rs.getObject(columnName);
+				String columnName = rsmd.getColumnName(i);
+				String columnType = rsmd.getColumnTypeName(i);
+				Object columnValue = rs.getObject(columnName);
 				log.debug(
-					"(" + i + ". ColumnType = " + columnType + ") " + columnName + " -> " + columnValue.toString());
+					"(" + i + ". ColumnType = " + columnType + ") " + columnName + " -> " + (columnValue!=null ? columnValue.toString() : "(null)"));
 				attributes.put(new BasicAttribute(columnName, columnValue));
 			}
-		} catch (SQLException e) {
+		}
+        catch (SQLException e) {
 			log.error("An ERROR occured while retrieving result set meta data");
 			throw new JDBCAttributeExtractorException(
 				"An ERROR occured while retrieving result set meta data: " + e.getMessage());
 		}
+
+        // Check for multiple rows.
+        try {
+            rs.last();
+            if (rs.getRow() > 1)
+                throw new JDBCAttributeExtractorException("Query returned more than one result set.");
+        }
+        catch (SQLException e) {
+        }
 
 		return attributes;
 	}
