@@ -59,14 +59,12 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import javax.crypto.SecretKey;
-
-import org.apache.log4j.Logger;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.*;
 import org.w3c.dom.*;
-
+import org.apache.log4j.Logger;
 
 /**
  *  Basic Shibboleth POST browser profile implementation with basic support for
@@ -77,8 +75,6 @@ import org.w3c.dom.*;
  */
 public class ShibPOSTProfile
 {
-	private static Logger log = Logger.getLogger(ShibPOSTProfile.class.getName());
-	
     /**  XML Signature algorithm to apply */
     protected String algorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
 
@@ -96,6 +92,8 @@ public class ShibPOSTProfile
 
     /**  Seconds allowed to elapse from issuance of response */
     protected int ttlSeconds = 0;
+
+    private static Logger log = Logger.getLogger(ShibPOSTProfile.class.getName());
 
     /**
      *  SHIRE-side constructor for a ShibPOSTProfile object
@@ -356,8 +354,10 @@ public class ShibPOSTProfile
         try
         {
             XMLSignature sig = (obj != null) ? obj.getSignature() : null;
-            if (sig == null)
+            if (sig == null) {
+                log.warn("verifySignature() unable to find a signature");
                 return false;
+            }
             KeyInfo ki = sig.getKeyInfo();
             if (ks != null && ki != null)
             {
@@ -365,14 +365,19 @@ public class ShibPOSTProfile
                 if (cert != null)
                 {
                     cert.checkValidity();
-                    if (!sig.checkSignatureValue(cert))
+                    if (!sig.checkSignatureValue(cert)) {
+                        log.warn("verifySignature() failed to verify signature using embedded certificate");
                         return false;
+                    }
                     if (signerName != null)
                     {
                         String dname = cert.getSubjectDN().getName();
+                        log.debug("verifySignature() found cert with DN: " + dname);
                         String cname = "CN=" + signerName;
-                        if (!dname.equalsIgnoreCase(cname) && !dname.regionMatches(true, 0, cname + ',', 0, cname.length() + 1))
+                        if (!dname.equalsIgnoreCase(cname) && !dname.regionMatches(true, 0, cname + ',', 0, cname.length() + 1)) {
+                            log.warn("verifySignature() found a mismatch between the certificate DN and the expected signer: " + signerName);
                             return false;
+                        }
                     }
 
                     String iname = cert.getIssuerDN().getName();
@@ -391,7 +396,7 @@ public class ShibPOSTProfile
                             return true;
                         }
                     }
-
+                    log.warn("verifySignature() unable to locate the cert issuer (" + iname + ") in the CA store");
                     return false;
                 }
             }
@@ -399,12 +404,12 @@ public class ShibPOSTProfile
         }
         catch (XMLSecurityException e)
         {
-            log.warn("Problem verifying signature: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
         catch (GeneralSecurityException e)
         {
-            log.warn("Problem verifying signature: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
