@@ -157,7 +157,11 @@ public class HandleServlet extends HttpServlet {
 		//Load relying party config
 		try {
 			targetMapper =
-				new ServiceProviderMapper(parser.getDocument().getDocumentElement(), configuration, credentials, nameMapper);
+				new ServiceProviderMapper(
+					parser.getDocument().getDocumentElement(),
+					configuration,
+					credentials,
+					nameMapper);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new HSConfigurationException("Could not load origin configuration.");
@@ -271,9 +275,18 @@ public class HandleServlet extends HttpServlet {
 					relyingParty,
 					relyingParty.getIdentityProvider());
 
-			//Print out something better here
-			//log.info("Issued Handle (" + handle + ") to (" + username +
-			// ")");
+			String authenticationMethod = req.getHeader("SAMLAuthenticationMethod");
+			if (authenticationMethod == null || authenticationMethod.equals("")) {
+				authenticationMethod =
+					relyingParty.getConfigProperty(
+						"edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod");
+				log.debug(
+					"User was authenticated via the default method for this relying party ("
+						+ authenticationMethod
+						+ ").");
+			} else {
+				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
+			}
 
 			//TODO decide what to do about authMethod
 			byte[] buf =
@@ -282,7 +295,7 @@ public class HandleServlet extends HttpServlet {
 					nameId,
 					req.getParameter("shire"),
 					req.getRemoteAddr(),
-					relyingParty.getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod"));
+					authenticationMethod);
 
 			createForm(req, res, buf);
 

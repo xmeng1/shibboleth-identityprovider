@@ -79,12 +79,6 @@ public class ShibbolethOriginConfig {
 		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username", "REMOTE_USER");
 		//TODO need a way to set this, remember to test for number format
 		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.maxThreads", "5");
-		//TODO need a way to set this
-		properties.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
-			SAMLAuthenticationStatement.AuthenticationMethod_Unspecified);
-
-		//TODO default relying party group
 
 		log.debug("Loading global configuration properties.");
 
@@ -94,13 +88,15 @@ public class ShibbolethOriginConfig {
 			throw new HSConfigurationException("Required configuration not specified.");
 		}
 		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId", attribute);
-		
+
 		attribute = ((Element) config).getAttribute("defaultRelyingParty");
 		if (attribute == null || attribute.equals("")) {
 			log.error("Global providerId not set.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
 			throw new HSConfigurationException("Required configuration not specified.");
 		}
-		properties.setProperty("edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty", attribute);
+		properties.setProperty(
+			"edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty",
+			attribute);
 
 		attribute = ((Element) config).getAttribute("AAUrl");
 		if (attribute == null || attribute.equals("")) {
@@ -108,6 +104,14 @@ public class ShibbolethOriginConfig {
 			throw new HSConfigurationException("Required configuration not specified.");
 		}
 		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl", attribute);
+
+		attribute = ((Element) config).getAttribute("defaultAuthMethod");
+		if (attribute == null || attribute.equals("")) {
+			properties.setProperty(
+				"edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod",
+				"urn:oasis:names:tc:SAML:1.0:am:unspecified");
+		}
+		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod", attribute);
 
 		if (log.isDebugEnabled()) {
 			ByteArrayOutputStream debugStream = new ByteArrayOutputStream();

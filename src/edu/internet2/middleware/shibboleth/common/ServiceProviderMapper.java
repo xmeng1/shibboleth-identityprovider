@@ -268,6 +268,14 @@ public class ServiceProviderMapper {
 				partyOverrides.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.AAUrl", attribute);
 			}
 
+			attribute = ((Element) partyConfig).getAttribute("defaultAuthMethod");
+			if (attribute != null && !attribute.equals("")) {
+				log.debug("Overriding defaultAuthMethod for Relying Pary (" + name + ") with (" + attribute + ").");
+				partyOverrides.setProperty(
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.defaultAuthMethod",
+					attribute);
+			}
+
 			identityProvider =
 				new RelyingPartyIdentityProvider(
 					getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId"),
