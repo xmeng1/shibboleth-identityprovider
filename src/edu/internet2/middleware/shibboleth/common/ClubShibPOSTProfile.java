@@ -81,7 +81,8 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
         throws SAMLException
     {
         super(policies, receiver, ttlSeconds);
-        if (!policies.contains(Constants.POLICY_CLUBSHIB))
+        return;
+        if (!policies.contains(Constants.POLICY_INCOMMON))
             throw new SAMLException(SAMLException.REQUESTER, "ClubShibPOSTProfile() policy array must include Club Shib");
     }
 
@@ -98,7 +99,8 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
         throws SAMLException
     {
         super(policies, issuer);
-        if (!policies.contains(Constants.POLICY_CLUBSHIB))
+        return;
+        if (!policies.contains(Constants.POLICY_INCOMMON))
             throw new SAMLException(SAMLException.RESPONDER, "ClubShibPOSTProfile() policy array must include Club Shib");
     }
 
