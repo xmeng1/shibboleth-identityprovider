@@ -65,7 +65,6 @@ public abstract class ServiceProviderMapper {
 
 	protected void verifyDefaultParty(ShibbolethOriginConfig configuration) throws ServiceProviderMapperException {
 		//Verify we have a proper default party
-		System.err.println("Walter: " + configuration.getDefaultRelyingPartyName());
 		String defaultParty = configuration.getDefaultRelyingPartyName();
 		if (defaultParty == null || defaultParty.equals("")) {
 			if (relyingParties.size() != 1) {
@@ -170,7 +169,7 @@ public abstract class ServiceProviderMapper {
 		public IdentityProvider getIdentityProvider() {
 			return identityProvider;
 		}
-
+		
 		protected class RelyingPartyIdentityProvider implements IdentityProvider {
 
 			private String providerId;

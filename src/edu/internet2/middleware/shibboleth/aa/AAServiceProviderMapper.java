@@ -92,6 +92,7 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 	}
 
 	public AARelyingParty getRelyingParty(String providerIdFromTarget) {
+		//TODO hmmm...
 		return (AARelyingParty) getRelyingPartyImpl(providerIdFromTarget);
 	}
 
@@ -113,7 +114,10 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 				passThruIsOverriden = true;
 			}
 
-			identityProvider = new RelyingPartyIdentityProvider(overridenOriginProviderId, null);
+			identityProvider =
+				new RelyingPartyIdentityProvider(
+					overridenOriginProviderId != null ? overridenOriginProviderId : configuration.getProviderId(),
+					null);
 		}
 
 		public boolean passThruErrors() {

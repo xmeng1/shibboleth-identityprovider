@@ -109,7 +109,6 @@ public class HandleServlet extends OriginComponent {
 
 		//Load global configuration properties
 		configuration = new HSConfig(parser.getDocument().getDocumentElement());
-		System.out.println("Walter 3: " + configuration.getDefaultRelyingPartyName());
 
 		//Load signing credentials
 		NodeList itemElements =

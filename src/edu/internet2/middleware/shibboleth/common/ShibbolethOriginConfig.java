@@ -71,14 +71,14 @@ public abstract class ShibbolethOriginConfig {
 		log.debug("Loading global configuration properties.");
 
 		//Global providerId
-		String providerId = ((Element) config).getAttribute("providerId");
+		providerId = ((Element) config).getAttribute("providerId");
 		if (providerId == null || providerId.equals("")) {
 			log.error("Global providerId not set.  Add a (providerId) attribute to <ShibbolethOriginConfig>.");
 			throw new ShibbolethConfigurationException("Required configuration not specified.");
 		}
 
 		//Default Relying Party
-		String defaultRelyingPartyName = ((Element) config).getAttribute("defaultRelyingParty");
+		defaultRelyingPartyName = ((Element) config).getAttribute("defaultRelyingParty");
 		if (defaultRelyingPartyName == null || defaultRelyingPartyName.equals("")) {
 			log.error("Default Relying Party not set.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
 			throw new ShibbolethConfigurationException("Required configuration not specified.");
