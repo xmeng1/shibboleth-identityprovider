@@ -169,8 +169,10 @@ public class HandleServlet extends HttpServlet {
 			KeyStore keyStore = KeyStore.getInstance("JKS");
 
 			keyStore.load(
-				getServletContext().getResourceAsStream(
-					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath")),
+				new ShibResource(
+					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath"),
+					this.getClass())
+					.getInputStream(),
 				configuration
 					.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword")
 					.toCharArray());
