@@ -50,7 +50,7 @@
 package edu.internet2.middleware.shibboleth.aa;
 
 /**
- *  Attribute Authority & Release Policy
+ *  Attribute Authority &amp; Release Policy
  *  Main logic that decides what to release 
  *
  * @author     Parviz Dousti (dousti@cmu.edu)
@@ -68,7 +68,6 @@ import org.opensaml.SAMLException;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
-import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
 public class AAResponder {
 
@@ -76,7 +75,7 @@ public class AAResponder {
 	private AttributeResolver resolver;
 	private static Logger log = Logger.getLogger(AAResponder.class.getName());
 
-	public AAResponder(ArpEngine arpEngine, AttributeResolver resolver) throws ShibbolethConfigurationException {
+	public AAResponder(ArpEngine arpEngine, AttributeResolver resolver) {
 
 		this.arpEngine = arpEngine;
 		this.resolver = resolver;
