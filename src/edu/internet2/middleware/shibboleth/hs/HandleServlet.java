@@ -241,9 +241,11 @@ public class HandleServlet extends HttpServlet {
 		} catch (HandleException ex) {
 			log.error(ex);
 			handleError(req, res, ex);
+			return;
 		} catch (SAMLException ex) {
 			log.error(ex);
 			handleError(req, res, ex);
+			return;
 		}
 
 	}
