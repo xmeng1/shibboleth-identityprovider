@@ -300,9 +300,11 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 		Vector conditions = new Vector(1);
 		if (audiences != null && audiences.size() > 0) conditions.add(new SAMLAudienceRestrictionCondition(audiences));
 
-		String[] confirmationMethods = null;
+		String[] confirmationMethods = new String[0];
 		if (bearerConfirmation) {
 			confirmationMethods = new String[]{SAMLSubject.CONF_BEARER};
+		} else {
+			confirmationMethods = new String[]{SAMLSubject.CONF_ARTIFACT};
 		}
 
 		SAMLSubject subject = new SAMLSubject(nameId, Arrays.asList(confirmationMethods), null, null);
