@@ -204,8 +204,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 			long decodedExpirationTime = dataStream.readLong();
 			String decodedPrincipal = dataStream.readUTF();
 
-			HMACHandleEntry macHandleEntry = new HMACHandleEntry(
-					createHandleEntry(new AuthNPrincipal(decodedPrincipal)));
+			HMACHandleEntry macHandleEntry = createHMACHandleEntry(new AuthNPrincipal(decodedPrincipal));
 			macHandleEntry.setExpirationTime(decodedExpirationTime);
 			byte[] generatedMac = macHandleEntry.getMAC(mac);
 
@@ -262,8 +261,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 
 			Mac mac = Mac.getInstance(macAlgorithm);
 			mac.init(secret);
-			HandleEntry handleEntry = createHandleEntry(principal);
-			HMACHandleEntry macHandleEntry = new HMACHandleEntry(handleEntry);
+			HMACHandleEntry macHandleEntry = createHMACHandleEntry(principal);
 
 			Cipher cipher = Cipher.getInstance(cipherAlgorithm);
 			byte[] iv = new byte[cipher.getBlockSize()];
@@ -396,6 +394,11 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 		return Arrays.equals(defaultKey, encodedKey);
 	}
 
+	protected HMACHandleEntry createHMACHandleEntry(AuthNPrincipal principal) {
+
+		return new HMACHandleEntry(principal, handleTTL);
+	}
+
 }
 
 /**
@@ -407,11 +410,6 @@ class HMACHandleEntry extends HandleEntry {
 	protected HMACHandleEntry(AuthNPrincipal principal, long TTL) {
 
 		super(principal, TTL);
-	}
-
-	protected HMACHandleEntry(HandleEntry handleEntry) {
-
-		super(handleEntry.principal, handleEntry.expirationTime);
 	}
 
 	private static byte[] getLongBytes(long longValue) {
