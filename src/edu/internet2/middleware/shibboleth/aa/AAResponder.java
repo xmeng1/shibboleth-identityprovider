@@ -74,19 +74,26 @@ import org.apache.log4j.Logger;
 
 public class AAResponder{
 
-    ArpFactory arpFactory;
+    ArpRepository arpFactory;
     Arp adminArp;
     DirContext ctx;
     String domain;
     private static Logger log = Logger.getLogger(AAResponder.class.getName());    
 
-    public AAResponder(ArpFactory arpFactory, DirContext ctx, String domain)
+    public AAResponder(ArpRepository arpFactory, DirContext ctx, String domain)
 	throws AAException{
 
 	this.arpFactory = arpFactory;
-	adminArp = arpFactory.getInstance("admin", true);
-	if(adminArp.isNew())
-	    throw new AAException("Admin Arp not found in "+arpFactory);
+	try {
+		adminArp = arpFactory.lookupArp("admin", true);
+	} catch (ArpRepositoryException e) {
+		log.error("Error while searching Arp Repository (" + arpFactory + ") : " + e.getMessage());
+	    throw new AAException("Unable to load admin ARP.");
+	}
+	if(adminArp ==  null) {
+		log.error("Admin ARP not found in Arp Repository (" + arpFactory + ").");
+	    throw new AAException("Unable to load admin ARP.");
+	}
 	this.ctx = ctx;
 	this.domain = domain;
     }
@@ -144,53 +151,63 @@ public class AAResponder{
     }
 
 
-    private Set getCombinedReleaseSet(Arp admin, String sharName, String url, String userName)
-	throws AAException {
-	
-	Set adminSet;
-	Set userSet;
+	private Set getCombinedReleaseSet(Arp admin, String sharName, String url, String userName)
+		throws AAException {
 
+		try {
+			Set adminSet;
+			Set userSet;
+			Arp userArp;
 
-	Arp userArp = arpFactory.getInstance(userName, false);	
-	if(userArp.isNew()){
-	    // no user ARP just use the admin
-	    // only go throu and drop the exclude ones
-	    adminSet = getReleaseSet(adminArp, sharName, url, adminArp);
-	    Iterator it = adminSet.iterator();
-	    while(it.hasNext()){
-		ArpAttribute attr = (ArpAttribute)it.next();
-		if(attr.mustExclude())
-		    adminSet.remove(attr);
-	    }
-	    return adminSet;
-	}
+			userArp = arpFactory.lookupArp(userName, false);
 
-	adminSet = getReleaseSet(adminArp, sharName, url, adminArp);
-	userSet = getReleaseSet(userArp, sharName, url, adminArp);
-	// combine the two
-	Iterator it = adminSet.iterator();
-	while(it.hasNext()){
-	    ArpAttribute aAttr = (ArpAttribute)it.next();
-	    if(aAttr.mustExclude()){
-		userSet.remove(aAttr);  // ok if not there
-		adminSet.remove(aAttr);
-	    }
-	    if(userSet.contains(aAttr)){
-		// in both. Combine filters
-		ArpFilter f = combineFilters(aAttr, getAttr(userSet, aAttr));
-		log.info("Combining filters: "+
-				   aAttr.getFilter()+ " AND "+
-				   getAttr(userSet, aAttr).getFilter()+
-				   " = " + f);
-		if(f != null)
-		    aAttr.setFilter(f, true); // force it
-		userSet.remove(aAttr);
-	    }
-	}
-	adminSet.addAll(userSet);
-	return adminSet;
+			if (userArp == null) {
+				// no user ARP just use the admin
+				// only go throu and drop the exclude ones
+				adminSet = getReleaseSet(adminArp, sharName, url, adminArp);
+				Iterator it = adminSet.iterator();
+				while (it.hasNext()) {
+					ArpAttribute attr = (ArpAttribute) it.next();
+					if (attr.mustExclude())
+						adminSet.remove(attr);
+				}
+				return adminSet;
+			}
 
-    }		    
+			adminSet = getReleaseSet(adminArp, sharName, url, adminArp);
+			userSet = getReleaseSet(userArp, sharName, url, adminArp);
+			// combine the two
+			Iterator it = adminSet.iterator();
+			while (it.hasNext()) {
+				ArpAttribute aAttr = (ArpAttribute) it.next();
+				if (aAttr.mustExclude()) {
+					userSet.remove(aAttr); // ok if not there
+					adminSet.remove(aAttr);
+				}
+				if (userSet.contains(aAttr)) {
+					// in both. Combine filters
+					ArpFilter f = combineFilters(aAttr, getAttr(userSet, aAttr));
+					log.info(
+						"Combining filters: "
+							+ aAttr.getFilter()
+							+ " AND "
+							+ getAttr(userSet, aAttr).getFilter()
+							+ " = "
+							+ f);
+					if (f != null)
+						aAttr.setFilter(f, true); // force it
+					userSet.remove(aAttr);
+				}
+			}
+			adminSet.addAll(userSet);
+			return adminSet;
+
+		} catch (ArpRepositoryException e) {
+			log.error("Error while searching Arp Repository (" + arpFactory + ") : " + e.getMessage());
+			throw new AAException("Unable to load user ARP.");
+		}
+
+	}		    
 		    
 
     private Set getReleaseSet(Arp arp, String sharName, String url, Arp admin)

@@ -70,7 +70,7 @@ class ArpUtil{
 
     private static Logger log = Logger.getLogger(ArpUtil.class.getName());
     static Principal user;
-    static ArpFactory arpFactory;
+    static ArpRepository arpFactory;
     static String listUsage = "\tArpUtil list <arp name> [-acls] [-dir <ldap url> <user id>]";
     static String addUsage = "\tArpUtil add <arp name> [-admin] <shar name> [-default] <url> [-title comment] <attribute name> [-exclude] [-filter [!]<val1> [!]<val2> ...]";    
     static String removeUsage = "\tArpUtil remove <arp name> [<shar name> [<url> [<attribute name>]]]";
@@ -79,7 +79,9 @@ class ArpUtil{
 
     public static void main(String [] args)throws AAException{
 
-	arpFactory = ArpRepository.getInstance("file", 	System.getProperty("arp.dir"));
+	Properties props = new Properties();
+	props.setProperty("arpFactoryRealpath", System.getProperty("arp.dir"));
+	arpFactory = ArpRepositoryFactory.getInstance("edu.internet2.middleware.shibboleth.aa.FileArpRepository", props);
 
 	PropertyConfigurator.configure(System.getProperty("log.config"));
 	
@@ -136,7 +138,7 @@ class ArpUtil{
 		}
 	    }
 
-	    Arp arp = arpFactory.getInstance(arpName, false);
+	    Arp arp = arpFactory.lookupArp(arpName, false);
 	    if(arp.isNew() == true){
 		System.out.println("Arp not Found: "+arpName);
 	    }
@@ -250,7 +252,7 @@ class ArpUtil{
 	   
 
 	try{
-	    Arp arp = arpFactory.getInstance(arpName, isAdmin);
+	    Arp arp = arpFactory.lookupArp(arpName, isAdmin);
 	    ArpShar s = arp.getShar(sharName);
 
 	    if(s == null)
@@ -280,7 +282,7 @@ class ArpUtil{
 	    r.addAnAttribute(a);
 	    s.addAResource(r);
 	    arp.addAShar(s);
-	    arpFactory.write(arp);
+	    arpFactory.update(arp);
 	}catch(AAPermissionException pe){
 	    System.out.println("Permission denied: "+pe);
 	}catch(Exception e){
@@ -316,7 +318,7 @@ class ArpUtil{
 	}
 
 	try{
-	    Arp arp = arpFactory.getInstance(arpName, false/* does not matter here */);
+	    Arp arp = arpFactory.lookupArp(arpName, false/* does not matter here */);
 	    if(arp.isNew()){
 		System.out.println("ARP not found: "+arp);
 		return;
@@ -334,7 +336,7 @@ class ArpUtil{
 	    if(resourceName == null){
 		// remove the whole shar
 		arp.removeAShar(sharName);
-		arpFactory.write(arp);
+		arpFactory.update(arp);
 		return;
 	    }
 	    ArpResource r = s.getResource(resourceName);
@@ -345,7 +347,7 @@ class ArpUtil{
 	    if(attrName == null){
 		// remove the whole resource
 		s.removeAResource(resourceName);
-		arpFactory.write(arp);
+		arpFactory.update(arp);
 		return;
 	    }
 	    ArpAttribute a = r.getAttribute(attrName);
@@ -354,7 +356,7 @@ class ArpUtil{
 		return;
 	    }
 	    r.removeAnAttribute(attrName);
-	    arpFactory.write(arp);
+	    arpFactory.update(arp);
 	}catch(AAPermissionException pe){
 	    System.out.println("Permission denied: "+pe);
 	}catch(Exception e){
@@ -403,7 +405,7 @@ class ArpUtil{
 	  
 
 	try{
-	    Arp arp = arpFactory.getInstance(arpName, false/* does not matter here */);
+	    Arp arp = arpFactory.lookupArp(arpName, false/* does not matter here */);
 	    if(arp.isNew()){
 		System.out.println("ARP not found: "+arp);
 		return;
@@ -411,7 +413,7 @@ class ArpUtil{
 	    if(sharName == null){
 		// set ACL fo the whole arp
 		arp.setAcl(user, acl);
-		arpFactory.write(arp);
+		arpFactory.update(arp);
 		return;
 	    }
 	    ArpShar s = arp.getShar(sharName);
@@ -422,7 +424,7 @@ class ArpUtil{
 	    if(resourceName == null){
 		// set ACL the whole shar
 		s.setAcl(user, acl);
-		arpFactory.write(arp);
+		arpFactory.update(arp);
 		return;
 	    }
 	    ArpResource r = s.getResource(resourceName);
@@ -432,7 +434,7 @@ class ArpUtil{
 	    }
 	    // set ACL the resource
 	    r.setAcl(user, acl);
-	    arpFactory.write(arp);
+	    arpFactory.update(arp);
 	    return;
 	}catch(AAPermissionException pe){
 	    System.out.println("Permission denied: "+pe);

@@ -72,113 +72,91 @@ import org.apache.log4j.Logger;
  * @created    June, 2002
  */
 
-public class ArpFileFactory implements ArpFactory {
+public class FileArpRepository implements ArpRepository {
 
-	static String dataStore;
-	private static Logger log = Logger.getLogger(ArpFileFactory.class.getName());
-	public ArpFileFactory(Properties props) {
-		String pathData = props.getProperty("arpFactoryData");
-		if (pathData == null) {
-			String realPath = props.getProperty("arpFactoryRealPath");
-			realPath += "arps";
-			log.debug("shib dir = " + realPath);
-			pathData = realPath;
+	private String dataStorePath;
+	private static Logger log = Logger.getLogger(FileArpRepository.class.getName());
+	public FileArpRepository(Properties props) throws ArpRepositoryException {
+		
+		if (props.getProperty("edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path", null) == null) {
+			log.error("Cannot initialize FileArpRepository: attribute (edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path) not specified");
+			throw new ArpRepositoryException("Cannot initialize FileArpRepository");
 		}
-		dataStore = pathData;
+		
+		File givenPath = new File(props.getProperty("edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path"));
+		if (!givenPath.isDirectory()) {
+			log.error("Cannot initialize FileArpRepository: specified path is not a directory.");
+			throw new ArpRepositoryException("Cannot initialize FileArpRepository");		
+		}
+		
+		log.info("Initializing File Arp Repository with a root of (" + givenPath.getAbsolutePath() + ").");
+		dataStorePath = props.getProperty("edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path");
 	}
 
-	/**
-	 * returns an Arp instance. It tries to retrieve the Arp from file system
-	 * If not found then creates a new emplty Arp.  
-	 * Arp can be check by its isNew() to see how it was generated
-	 */
-
-	public Arp getInstance(String arpName, boolean isAdmin) throws AAException {
+	public Arp lookupArp(String arpName, boolean isAdmin) throws ArpRepositoryException {
 		try {
 
-			String fileName = dataStore + System.getProperty("file.separator") + arpName;
-			log.info("AA: Looking for ARP " + fileName);
+			String fileName = dataStorePath + System.getProperty("file.separator") + arpName;
+			log.info("Searching for ARP " + arpName);
+			log.debug("Looking at : " + fileName);
+			
+			File arpFile = new File(fileName);
+			if (!arpFile.exists()) {
+				return null;	
+			}
 
 			FileInputStream f = new FileInputStream(fileName);
 			ObjectInput s = new ObjectInputStream(f);
 			Arp arp = (Arp) s.readObject();
-			if (!arpName.equals(arp.getName()))
-				throw new AAException("Wrong ARP name.  ARP maybe renamed in datastore. ");
+			if (!arpName.equals(arp.getName())) {
+				log.warn("Unexpected ARP name: expected - (" + arpName + ") actual - (" + arp.getName() + ")");
+			}
 			arp.setNew(false);
 			arp.setLastRead(new Date());
 			log.info("AA: Found and using ARP " + arpName);
 			return arp;
-
-		} catch (FileNotFoundException e) {
-			// check the IO error to make sure "file not found"
-			log.info("AA: Got File Not Found for " + arpName + " in " + dataStore);
-			try {
-				Arp arp = new Arp(arpName, isAdmin);
-				arp.setNew(true);
-				arp.setLastRead(new Date());
-				return arp;
-			} catch (NotOwnerException noe) {
-				throw new AAException("Cannot create an ARP. Not owner.");
-			}
-
-		} catch (IOException fe) {
-			throw new AAException("Reading ARP failed: " + fe);
-		} catch (ClassNotFoundException ce) {
-			throw new AAException("ARP retrival failed: " + ce);
-		} catch (Exception oe) {
-			throw new AAException(oe.toString());
+		} catch (FileNotFoundException fnfe) {
+			log.error("Unable to read ARP storage: " + fnfe.getMessage());
+			throw new ArpRepositoryException("Unable to read ARP storage.");			
+		} catch (IOException ioe) {
+			log.error("Unable to unmarshall ARP from file: " + ioe.getMessage());
+			throw new ArpRepositoryException("Unable to unmarshall ARP.");	
+		} catch (ClassNotFoundException cnfe) {
+			log.error("Serious Problem! Unable to unmarhsall ARP because (Arp) class not found: " + cnfe.getMessage());
+			throw new ArpRepositoryException("Unable to unmarshall ARP.");	
 		}
 	}
 
-	public void write(Arp arp) throws AAException {
-		// XXX do we need to check any permissions?
+	public void update(Arp arp) throws ArpRepositoryException {
+
 		try {
-			String fileName = dataStore + System.getProperty("file.separator") + arp.getName();
+			String fileName = dataStorePath + System.getProperty("file.separator") + arp.getName();
 			FileOutputStream f = new FileOutputStream(fileName);
 			ObjectOutput s = new ObjectOutputStream(f);
-			arp.setNew(false);
 			s.writeObject(arp);
 			s.flush();
-		} catch (IOException e) {
-			throw new AAException("IO Problem:" + e);
+			arp.setNew(false);
+		} catch (FileNotFoundException e) {
+			log.error("Unable to write ARP to file:" + e.getMessage());
+			throw new ArpRepositoryException("Unable to update ARP.");
+		} catch (IOException ioe) {
+			log.error("Error serializing ARP:" + ioe.getMessage());
+			throw new ArpRepositoryException("Unable to update ARP.");
 		}
 	}
 
-	/**
-	 * Reread the arp from file system if the copy on disk
-	 * is newer than the copy in memory.
-	 */
-
-	public Arp reread(Arp arp) throws AAException {
-		String fileName = dataStore + System.getProperty("file.separator") + arp.getName();
-		File file = new File(fileName);
-		if (file == null)
-			throw new AAException("Arp not found on disk while trying to re-read. :" + arp);
-		Date timeStamp = new Date(file.lastModified());
-		log.info(
-			"AA: Check ARP's freshness: in memory ("
-				+ arp.getLastRead()
-				+ ") vs on disk ("
-				+ timeStamp
-				+ ")");
-		if (timeStamp.after(arp.getLastRead())) {
-			log.info("AA: ARP has been modified on disk. Re-read " + arp.getName());
-			return getInstance(arp.getName(), arp.isAdmin());
-		}
-		return arp; // return the old one.
-	}
-
-	public void remove(Arp arp) throws AAException {
+	public void remove(Arp arp) throws ArpRepositoryException {
 		try {
-			String fileName = dataStore + System.getProperty("file.separator") + arp.getName();
-			File f = new File(fileName);
-			f.delete();
-		} catch (Exception e) {
-			throw new AAException("IO Problem:" + e);
+		String fileName = dataStorePath + System.getProperty("file.separator") + arp.getName();
+		File f = new File(fileName);
+		f.delete();
+		} catch (SecurityException e) {
+			log.error("Cannot write ARP with current Security Manager configuration" + e.getMessage());
+			throw new ArpRepositoryException("Unable to remove ARP.");
 		}
 	}
 
 	public String toString() {
-		return "ArpFileFactory:dir=" + dataStore;
+		return "FileArpRepository:dir=" + dataStorePath;
 	}
 }

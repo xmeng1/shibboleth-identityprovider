@@ -48,35 +48,17 @@
  */
 
 package edu.internet2.middleware.shibboleth.aa;
-
+ 
 /**
- *  Defines interaction with an ARP storage/retrieval mechanism.
- *
- * @author Parviz Dousti (dousti@cmu.edu)
+ * Indicates an error occurred while manipulating an Arp Repository
+ * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public interface ArpRepository {
-
-	/**
-	 * Searches the repository for the named ARP.
-	 * @return an instance of <code>Arp</code> or null
-	 *  if the ARP is not found in the repository 
-	 */
-
-	public Arp lookupArp(String arpName, boolean isDefault) throws ArpRepositoryException ;
-
-	/**
-	 * If an ARP is found in the repository that matches the results of getName(), 
-	 * it is replaced with the specified ARP.  If not, the specified ARP is added to the repository
-	 */
-
-	public void update(Arp arp) throws ArpRepositoryException;
-
-	/**
-	 * Removes the specified ARP from the repository if it exists
-	 */
-
-	public void remove(Arp arp) throws ArpRepositoryException;
+class ArpRepositoryException extends Exception {
+	
+	ArpRepositoryException(String message) {
+		super(message);	
+	}	
 
 }

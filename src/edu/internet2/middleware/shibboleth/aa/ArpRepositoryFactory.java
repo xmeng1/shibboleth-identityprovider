@@ -49,46 +49,41 @@
 
 package edu.internet2.middleware.shibboleth.aa;
 
+import java.lang.reflect.Constructor;
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
+
 /**
- *  Attribute Authority & Release Policy
- *  Common interface for all ARP repositories.
+ * Factory for generating instances of <code>ArpRepository</code>.  Configuration
+ * is delegated to the Arp Repository.  Runtime options are passed to conrecte constructors
+ * via a <code>Properties</code> object.
  *
  * @author     Parviz Dousti (dousti@cmu.edu)
  * @created    June, 2002
  */
 
+public class ArpRepositoryFactory {
 
-public interface ArpFactory{
+	private static Logger log = Logger.getLogger(AAServlet.class.getName());
 
+	public static ArpRepository getInstance(String repositoryClassName, Properties props)
+		throws AAException {
 
-    /**
-     * Returns an Arp instance. It tries to retrieve the Arp from a repository
-     * If not found then creates a new emplty Arp.  
-     * Arp can be check by its isNew() to see how it was generated
-     */
+		try {
+			Class implementorClass = Class.forName(repositoryClassName);
+			Class[] params = new Class[1];
+			params[0] = Class.forName("java.util.Properties");
+			Constructor implementorConstructor = implementorClass.getConstructor(params);
+			Object[] args = new Object[1];
+			args[0] = props;
+			log.debug("Initializing Arp Repository of type (" + implementorClass.getName() + ").");
+			return (ArpRepository) implementorConstructor.newInstance(args);
 
-    public Arp getInstance(String arpName, boolean isDefault)
-	throws AAException;
+		} catch (Exception e) {
+			log.error("Failed to instantiate an Arp Repository: " + e.getMessage());
+			throw new AAException("Failed to instantiate an Arp Repository.");
 
-    
-    /**
-     * Writes the given ARP back to the repository.
-     */
-
-    public void write(Arp arp) throws AAException;
-
-    /**
-     * Rereads the ARP if the version on storage is newer
-     * than the one in memory.
-     */
-
-    public Arp reread(Arp arp) throws AAException;
-
-    /**
-     * Permanently removes the given ARP from the repository
-     */
-
-    public void remove(Arp arp) throws AAException;
-
+		}
+	}
 }
-

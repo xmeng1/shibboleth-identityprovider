@@ -82,7 +82,7 @@ public class AAServlet extends HttpServlet {
     String ctxFactory;
     AAResponder responder;
     HandleRepositoryFactory hrf;
-    ArpFactory arpFactory;
+    ArpRepository arpFactory;
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
     public void init()
@@ -102,19 +102,21 @@ public class AAServlet extends HttpServlet {
             // build a properties object to be handed to ArpFactories
             // include all parameters :-(
             Enumeration en = getInitParameterNames();
-            Properties props = new Properties();
+            Properties defaultProps = new Properties();
+            defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path", getServletContext().getRealPath("/WEB-INF/conf/arps"));
+            Properties props = new Properties(defaultProps);
             while(en.hasMoreElements()){
                 String key = (String)en.nextElement();
                 String val = getInitParameter(key);
                 props.setProperty(key, val);
             }
-            props.setProperty("arpFactoryRealPath",
-                              getServletContext().getRealPath("/"));
 
             arpFactoryMethod = getInitParameter("arpFactoryMethod");
-
+			if (arpFactoryMethod == null) {
+				arpFactoryMethod = "edu.internet2.middleware.shibboleth.aa.FileArpRepository";	
+			}
    
-            arpFactory = ArpRepository.getInstance(arpFactoryMethod, props);
+            arpFactory = ArpRepositoryFactory.getInstance(arpFactoryMethod, props);
 
 	    log.info("Using "+ctxFactory+" as directory for attributes.");
 
