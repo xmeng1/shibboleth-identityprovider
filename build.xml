@@ -2,7 +2,6 @@
 
 <project default="dist-all" basedir=".">
 
-
 	<!-- Set global properties for this build -->
 	<property name="distname" value="shibboleth" />
 	<property name="root" value="." />
@@ -79,6 +78,5 @@
 		</junit>
 	</target>
 
-	
 </project>
 
