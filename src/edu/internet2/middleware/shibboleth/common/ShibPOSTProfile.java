@@ -43,6 +43,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.NDC;
@@ -69,15 +71,14 @@ import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
  * @author Scott Cantor @created April 11, 2002
  */
 public class ShibPOSTProfile {
+	
+	private Pattern regex = Pattern.compile(".*CN=([^,/]+).*");
 
 	/** XML Signature algorithm to apply */
 	protected String		algorithm	= XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
 
 	/** Policy URIs to attach or check against */
 	protected ArrayList		policies	= new ArrayList();
-
-	/** Official name of issuing site */
-	protected String		issuer		= null;
 
 	/** The URL of the receiving SHIRE */
 	protected String		receiver	= null;
@@ -181,7 +182,8 @@ public class ShibPOSTProfile {
 		// tossed out as an exception.
 		SAMLResponse r = SAMLPOSTProfile.accept(buf, receiver, ttlSeconds, false);
 
-		if (originSite == null) originSite = new StringBuffer();
+		if (originSite == null)
+			originSite = new StringBuffer();
 
 		// Now we do some more non-crypto (ie. cheap) work to match up the origin site
 		// with its associated data. If we can't even find a SSO statement in
@@ -214,7 +216,8 @@ public class ShibPOSTProfile {
 		Iterator hsNames = mapper.getHandleServiceNames(originSite.toString());
 		boolean bFound = false;
 		while (!bFound && hsNames.hasNext())
-			if (hsNames.next().equals(handleService)) bFound = true;
+			if (hsNames.next().equals(handleService))
+				bFound = true;
 		if (!bFound)
 			throw new TrustException(SAMLException.RESPONDER,
 					"ShibPOSTProfile.accept() detected an untrusted HS for the origin site");
@@ -273,21 +276,22 @@ public class ShibPOSTProfile {
 			audiences.add(relyingParty.getName());
 		}
 
-		String issuer;
+		String issuer = null;
 		if (relyingParty.isLegacyProvider()) {
 			log.debug("Service Provider is running Shibboleth <= 1.1.  Using old style issuer.");
 
 			if (relyingParty.getIdentityProvider().getResponseSigningCredential() == null
-					|| relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate() == null) { throw new SAMLException(
-					"Cannot serve legacy style assertions without an X509 certificate"); }
-
-			String[] splitDN = relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate()
-					.getSubjectDN().getName().split("([Cc][Nn]=|,)");
-			if (splitDN != null && !(splitDN.equals(""))) {
-				issuer = splitDN[1];
-			} else {
-				throw new SAMLException("Error parsing certificate DN while determining legacy issuer name.");
+					|| relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate() == null) {
+				throw new SAMLException("Cannot serve legacy style assertions without an X509 certificate");
 			}
+
+			Matcher matches = regex.matcher(relyingParty.getIdentityProvider().getResponseSigningCredential()
+					.getX509Certificate().getSubjectDN().getName());
+			if (!matches.find() || matches.group(1).equals("")) {
+				throw new SAMLException("Error parsing certificate DN while determining legacy issuer name.");
+
+			}
+			issuer = matches.group(1);
 
 		} else {
 			issuer = relyingParty.getIdentityProvider().getProviderId();
