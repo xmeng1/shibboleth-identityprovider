@@ -73,6 +73,7 @@ import javax.servlet.http.HttpUtils;
 import org.apache.log4j.Logger;
 import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.SAMLAuthenticationStatement;
+import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 import sun.misc.BASE64Decoder;
@@ -269,7 +270,9 @@ public class ShireServlet extends HttpServlet {
 			log.debug("Target URL from client: " + request.getParameter("TARGET"));
 			validateRequest(request);
 
-			SAMLAuthenticationStatement s = processAssertion(request);
+			SAMLAuthenticationStatement s = processAssertion(request,response);
+                        if (s==null)
+                            return;
 			shareSession(
 				response,
 				s.getSubject().getName(),
@@ -293,11 +296,12 @@ public class ShireServlet extends HttpServlet {
 	 * checks on the same. 
 	 *
 	 * @param  request The <code>HttpServletRequest</code> object for the current request
+	 * @param  response The <code>HttpServletResponse</code> object for the current request
 	 * @exception  ShireException  Thrown if any error is encountered parsing or validating the assertion 
 	 * that is retreived from the request object.
 	 */
 
-	private SAMLAuthenticationStatement processAssertion(HttpServletRequest request) throws ShireException {
+	private SAMLAuthenticationStatement processAssertion(HttpServletRequest request, HttpServletResponse response) throws ShireException {
 
 		log.info("Processing SAML Assertion.");
 		try {
@@ -328,19 +332,38 @@ public class ShireServlet extends HttpServlet {
 
 			// We've got a valid signed response we can trust (or the whole response was empty...)
 
-			ByteArrayOutputStream bytestr = new ByteArrayOutputStream();
-			try {
+			if (log.isDebugEnabled()) {
+			    ByteArrayOutputStream bytestr = new ByteArrayOutputStream();
+			    try {
 				r.toStream(bytestr);
-			} catch (IOException e) {
-				log.error(
-					"Very Strange... problem converting SAMLResponse to a Stream for logging purposes.");
+			    } catch (IOException e) {
+				log.error("Very Strange... problem converting SAMLResponse to a Stream for logging purposes.");
+			    }
+
+			    log.debug(
+				"Dumping parsed SAML Response:" + System.getProperty("line.separator") + bytestr.toString());
 			}
 
-			log.debug(
-				"Dumping parsed SAML Response:" + System.getProperty("line.separator") + bytestr.toString());
+			// Get the assertion we need.
+			SAMLAssertion a = profile.getSSOAssertion(r);
+			if (a == null) {
+				throw new ShireException("The assertion of your Shibboleth identity was missing or incompatible with the policies of this site.");
+			}
+
+			// Check for replay, in which case we just redirect to the target.
+
+			if (!profile.checkReplayCache(a)) {
+			    log.debug("Detected a replayed assertion, forwarding to target");
+			    try {
+				response.sendRedirect(request.getParameter("TARGET"));
+				return null;
+			    } catch (IOException e) {
+				throw new ShireException("Unable to redirect browser to target after detecting replay.");
+			    }
+			}
 
 			// Get the statement we need.
-			SAMLAuthenticationStatement s = profile.getSSOStatement(profile.getSSOAssertion(r));
+			SAMLAuthenticationStatement s = profile.getSSOStatement(a);
 			if (s == null) {
 				throw new ShireException("The assertion of your Shibboleth identity was missing or incompatible with the policies of this site.");
 			}
