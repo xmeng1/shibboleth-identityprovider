@@ -1,3 +1,5 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="sites.xsl"?>
 <Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <OriginSite Name="example.edu">
         <Alias>Example State University</Alias>

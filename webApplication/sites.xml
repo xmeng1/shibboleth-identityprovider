@@ -1,3 +1,4 @@
+<?xml-stylesheet type="text/xsl" href="sites.xsl"?>
 <Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <OriginSite Name="example.edu">
         <Alias>Example State University</Alias>
@@ -30,15 +31,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>c/D9OBd8RhV8sbyULtTsx9KYqNI=</ds:DigestValue>
+<ds:DigestValue>ZEh0QhIrku42FwRPPe/b5Ffqzs0=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-H8KIheXsCY+/sqaJju73H6INWrRMbsJitFNTv4pFRXhvRMgYmosz+twnnCsM4V9GD/V0HVlGRxtJ
-geRI4lCQ7B8l7wi5Puxx+32RlNModR6BbgIaRae7Rycz4nZ0ZtvPUSavyMfFPyak+/5qzcRH7n59
-EwVuwG/PUQBsutwA+5zTaWJOE80WojZe6KirVTD8xE4DmXgfsxD887Rc9W3sLQNs71mMC7JjoctE
-ItQtw7FX5hppEkCT+KPUsIw0GXdE73hML7rS53jp1kAhgismsmbJIRj9stAUpEKeMzKgZacV3xRb
-SRxwpPAUChK+qb1P69GLIOReoCeb5GsZZb0kpA==
+R/ebFhywEo8KVsWePMtdDFHP2/Kmo0AulfiyPa6W7VRz0FgOA/797QQA5f+Ry2bud+N8JZ9LJc33
+EdybPgszT47kcVNVaFxajZ55LdJtLFipozGBj2ci/Jlgej8WiBzoNLPzKjxgrgIVMDmMZTeanQdX
+CBoIbGPvbXvLLKNztefQZvXP34/BFOjjLznsXIo5nHGRluwObAGfO10yn8Vz5ZMIpFanDyDY6Z5i
+5TmTbRJGuttabGemAuj0EBATrHuJFmDwlmK0Bmehk87YRfAjrkwYx1IlpE9TEH+RrJIRuv84PrSB
+hYQ0xk5XcOKqrYMls+u6FoGbRUWSnmyD5bM/mA==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
