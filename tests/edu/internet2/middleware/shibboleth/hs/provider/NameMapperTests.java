@@ -103,7 +103,6 @@ public class NameMapperTests extends TestCase {
 		super.setUp();
 		try {
 
-			//TODO turn on validation
 			parser.setFeature("http://xml.org/sax/features/validation", true);
 			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
 			parser.setEntityResolver(new EntityResolver() {
