@@ -165,9 +165,9 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 			results.addAll(Arrays.asList(getValuesFromConnectors(depends)));
 		}
 
-		//if (!attributeDependencyIds.isEmpty()) {
-			//results.addAll(Arrays.asList(getValuesFromAttributes(depends)));
-		//}
+		if (!attributeDependencyIds.isEmpty()) {
+			results.addAll(Arrays.asList(getValuesFromAttributes(depends)));
+		}
 
 		if (lifeTime != -1) {
 			attribute.setLifetime(lifeTime);
