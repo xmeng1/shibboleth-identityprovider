@@ -82,6 +82,7 @@ import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
+import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 
 /**
  *  Attribute Authority & Release Policy
@@ -250,24 +251,6 @@ public class AAServlet extends HttpServlet {
 				principal = new AuthNPrincipal("test-handle");
 			} else {
 				principal = handleRepository.getPrincipal(saml.getHandle());
-				if (principal == null) {
-					log.info("Could not associate the Attribute Query Handle with a principal.");
-					try {
-						QName[] codes =
-							{
-								SAMLException.REQUESTER,
-								new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
-						saml.fail(
-							resp,
-							new SAMLException(
-								Arrays.asList(codes),
-								"The supplied Attribute Query Handle was unrecognized or expired."));
-						return;
-					} catch (Exception ee) {
-						log.fatal("Could not construct a SAML error response: " + ee);
-						throw new ServletException("Attribute Authority response failure.");
-					}
-				}
 			}
 
 			URL resource = null;
@@ -279,29 +262,51 @@ public class AAServlet extends HttpServlet {
 						+ "handle request without one.");
 			}
 
-			String shar = saml.getShar();
-			log.info("AA: shar:" + shar);
+			if (saml.getShar() == null) {
+				log.info("Request is from an unauthenticated SHAR.");
+			} else {
+				log.info("Request is from SHAR: (" + saml.getShar() + ").");
+			}
 
 			List attrs =
 				Arrays.asList(
 					responder.getReleaseAttributes(
 						principal,
 						configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
-						shar,
+						saml.getShar(),
 						resource));
 			log.info("Got " + attrs.size() + " attributes for " + principal.getName());
 			saml.respond(resp, attrs, null);
 			log.info("Successfully responded about " + principal.getName());
 
-		} catch (SAMLException se) {
-			//log.error("AA failed for " + principal.getName() + " because of: " + se);
+		} catch (InvalidHandleException e) {
+			log.info("Could not associate the Attribute Query Handle with a principal: " + e);
 			try {
-				saml.fail(resp, se);
+				QName[] codes =
+					{
+						SAMLException.REQUESTER,
+						new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
+				saml.fail(
+					resp,
+					new SAMLException(
+						Arrays.asList(codes),
+						"The supplied Attribute Query Handle was unrecognized or expired."));
 				return;
 			} catch (Exception ee) {
 				log.fatal("Could not construct a SAML error response: " + ee);
 				throw new ServletException("Attribute Authority response failure.");
 			}
+			
+		} catch (SAMLException se) {
+			log.error("Error while prcessing request: " + se);
+			try {
+				saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+				return;
+			} catch (Exception ee) {
+				log.fatal("Could not construct a SAML error response: " + ee);
+				throw new ServletException("Attribute Authority response failure.");
+			}
+			
 		} catch (Exception e) {
 			log.error("Error while processing request: " + e);
 			try {
