@@ -8,7 +8,8 @@ import java.util.StringTokenizer;
 
 /**
  * This class represents an Origin site in the shibboleth parlance.
- * @author		Walter Hoehn
+ * 
+ * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
 public class Origin {

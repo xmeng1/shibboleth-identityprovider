@@ -6,7 +6,8 @@ import java.util.Iterator;
 
 /**
  * This class is a container for OriginSets, allowing lookup and searching of the same.
- * @author		Walter Hoehn
+ * 
+ * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
 public class WayfOrigins {

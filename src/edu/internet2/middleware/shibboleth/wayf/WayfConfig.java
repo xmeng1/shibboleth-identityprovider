@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 /**
  * Class used by the  WAYF service to determine runtime options
  * Most of the fields of this class should have reasonable defaults set
- * @author        Walter Hoehn
+ * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
 public class WayfConfig {
@@ -30,105 +30,54 @@ public class WayfConfig {
 
 	private static String cache = "SESSION";
 
-	/**
-	 * Constructor for WayfConfig.
-	 */
 	public WayfConfig() {
 		super();
 	}
 
-	/**
-	 * Gets the wd.
-	 * @return Returns a WayfOrigins
-	 */
 	public static WayfOrigins getWAYFData() {
 		return wd;
 	}
 
-	/**
-	 * Sets the wd.
-	 * @param wd The wd to set
-	 */
 	public void setWAYFData(WayfOrigins wd) {
 		WayfConfig.wd = wd;
 	}
 
-	/**
-	 * Gets the searchResultEmptyText.
-	 * @return Returns a String
-	 */
 	public static String getSearchResultEmptyText() {
 		return searchResultEmptyText;
 	}
 
-	/**
-	 * Sets the searchResultEmptyText.
-	 * @param searchResultEmptyText The searchResultEmptyText to set
-	 */
 	public void setSearchResultEmptyText(String searchResultEmptyText) {
 		WayfConfig.searchResultEmptyText = searchResultEmptyText;
 	}
 
-	/**
-	 * Gets the helpText.
-	 * @return Returns a String
-	 */
 	public static String getHelpText() {
 		return helpText;
 	}
 
-	/**
-	 * Sets the helpText.
-	 * @param helpText The helpText to set
-	 */
 	public void setHelpText(String helpText) {
 		WayfConfig.helpText = helpText;
 	}
 
-	/**
-	 * Gets the supportContact.
-	 * @return Returns a String
-	 */
 	public static String getSupportContact() {
 		return supportContact;
 	}
 
-	/**
-	 * Sets the supportContact.
-	 * @param supportContact The supportContact to set
-	 */
 	public void setSupportContact(String supportContact) {
 		WayfConfig.supportContact = supportContact;
 	}
 
-	/**
-	 * Gets the logoLocation.
-	 * @return Returns a String
-	 */
 	public static String getLogoLocation() {
 		return logoLocation;
 	}
 
-	/**
-	 * Sets the logoLocation.
-	 * @param logoLocation The logoLocation to set
-	 */
 	public void setLogoLocation(String logoLocation) {
 		WayfConfig.logoLocation = logoLocation;
 	}
 
-	/**
-	 * Gets the location.
-	 * @return Returns a String
-	 */
 	public static String getLocation() {
 		return location;
 	}
 
-	/**
-	 * Sets the location.
-	 * @param location The location to set
-	 */
 	public void setLocation(String location) {
 		WayfConfig.location = location;
 	}
@@ -155,18 +104,10 @@ public class WayfConfig {
 		ignoredForMatch.add(s.toLowerCase());
 	}
 
-	/**
-	* Gets the cache.
-	* @return Returns a String
-	*/
 	public static String getCache() {
 		return cache;
 	}
 
-	/**
-	 * Sets the cache.
-	 * @param cache The cache to set
-	 */
 	public void setCache(String cache) {
 		if (cache.toUpperCase().equals("NONE")
 			|| cache.toUpperCase().equals("SESSION")

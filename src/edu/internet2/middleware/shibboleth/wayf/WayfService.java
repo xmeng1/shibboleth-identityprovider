@@ -15,11 +15,11 @@ import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
 /**
- * This is the main handler servlet for the WAYF service.  It configures itself, chooses among 
- * several handler methods for each request, populates some beans (model), and then passes to an
- * appropriate jsp page.
+ * A servlet implementation of the Shibboleth WAYF service.  Allows a browser user to 
+ * select from among a group of origin sites.  User selection is optionally cached 
+ * and the user is forwarded to the HandleService appropriate to his selection.
  *
- * @author		Walter Hoehn
+ * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
 public class WayfService extends HttpServlet {
@@ -27,6 +27,9 @@ public class WayfService extends HttpServlet {
 	private String wayfConfigFileLocation;
 	private static Logger log = Logger.getLogger(WayfService.class.getName());
 
+	/**
+	 * @see GenericServlet#init()
+	 */
 	public void init() throws ServletException {
 
 		super.init();
@@ -71,6 +74,9 @@ public class WayfService extends HttpServlet {
 			WayfConfig.getLogoLocation());
 	}
 
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest, HttpServletResponse)
+	 */
 	public void doGet(HttpServletRequest req, HttpServletResponse res) {
 
 		//Tell the browser not to cache the WAYF page
