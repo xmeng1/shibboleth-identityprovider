@@ -269,6 +269,7 @@ public class ResolverTest
 			} 
 			catch (AttributeResolverException e) {
 				System.err.println("Error initializing the Attribute Resolver: " + e.getMessage());
+				System.exit(1);
 			}
 		}
 	}
