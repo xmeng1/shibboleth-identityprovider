@@ -49,8 +49,11 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -67,6 +70,8 @@ import org.w3c.dom.NodeList;
 public class Rule {
 
 	private String description;
+	private Target target;
+	private static Logger log = Logger.getLogger(Rule.class.getName());
 
 	/**
 	 * Returns the description for this <code>Rule</code>.
@@ -110,11 +115,12 @@ public class Rule {
 	 * Creates an ARP Rule from an xml representation.
 	 * @param the xml <code>Element</code> containing the ARP Rule.
 	 */
-	
+
 	public void marshall(Element element) throws ArpMarshallingException {
 
-		//Make sure we are deling with a Rule
+		//Make sure we are dealing with a Rule
 		if (!element.getTagName().equals("Rule")) {
+			log.error("Element data does not represent an ARP Rule.");
 			throw new ArpMarshallingException("Element data does not represent an ARP Rule.");
 		}
 
@@ -127,6 +133,19 @@ public class Rule {
 				description = ((CharacterData) descriptionNode.getFirstChild()).getData();
 			}
 		}
+
+		//Create the Target
+		NodeList targetNodes = element.getElementsByTagName("Target");
+		if (targetNodes.getLength() != 1) {
+			log.error(
+				"Element data does not represent an ARP Rule.  An ARP Rule must contain 1 and "
+					+ "only 1 Target definition.");
+			throw new ArpMarshallingException(
+				"Element data does not represent an ARP Rule.  An"
+					+ " ARP Rule must contain 1 and only 1 Target definition.");
+		}
+		target = new Target();
+		target.marshall((Element) targetNodes.item(0));
 	}
 
 	/**
@@ -136,7 +155,130 @@ public class Rule {
 	 * @return boolean
 	 */
 	public boolean matchesRequest(String requester, URL resource) {
-		return false;
+		if (target.matchesAny()) {
+			return true;
+		}
+		try {
+			MatchFunction requesterFunction =
+				ArpEngine.lookupMatchFunction(target.getRequester().getMatchFunctionIdentifier());
+			if (!requesterFunction.match(target.getRequester().getValue(), requester)) {
+				return false;
+			}
+			if (target.getResource().matchesAny()) {
+				return true;
+			}
+			MatchFunction resourceFunction =
+				ArpEngine.lookupMatchFunction(target.getResource().getMatchFunctionIdentifier());
+			if (resourceFunction.match(target.getResource().getValue(), resource)) {
+				return true;
+			}
+			return false;
+		} catch (ArpException e) {
+			log.warn("Encountered a problem while trying to find matching ARP rules: " + e);
+			return false;
+		}
+	}
+
+	class Target {
+		private Requester requester = null;
+		private Resource resource = null;
+		private boolean matchesAny = false;
+
+		void marshall(Element element) throws ArpMarshallingException {
+
+			//Make sure we are deling with a Target
+			if (!element.getTagName().equals("Target")) {
+				log.error("Element data does not represent an ARP Rule Target.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+			}
+			NodeList targetNodeList = element.getChildNodes();
+			if (targetNodeList.getLength() < 1 || targetNodeList.getLength() > 2) {
+				log.error("ARP Rule Target contains invalid data: incorrect number of elements");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrect number of elements");
+			}
+
+			//Handle <AnyTarget/> definitions
+			if (targetNodeList.getLength() == 1) {
+				if (targetNodeList.item(0).getNodeType() == Node.ELEMENT_NODE
+					&& ((Element) targetNodeList.item(0)).getTagName().equals("AnyTarget")) {
+					matchesAny = true;
+					return;
+				}
+				log.error("ARP Rule Target contains invalid data.");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data.");
+			}
+
+			//Create Requester
+			if (targetNodeList.item(0).getNodeType() == Node.ELEMENT_NODE
+				&& ((Element) targetNodeList.item(0)).getTagName().equals("Requester")) {
+				requester = new Requester();
+				requester.marshall((Element) targetNodeList.item(0));
+			} else {
+				log.error("ARP Rule Target contains invalid data.");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data.");
+			}
+			//Handle <AnyResource/>
+			//Create Resource
+		}
+
+		boolean matchesAny() {
+			return matchesAny;
+		}
+		Requester getRequester() {
+			return requester;
+		}
+		Resource getResource() {
+			return resource;
+		}
+	}
+
+	class Resource {
+		private String value;
+		private URI matchFunctionIdentifier;
+		private boolean matchesAny;
+		boolean matchesAny() {
+			return matchesAny;
+		}
+		URI getMatchFunctionIdentifier() {
+			return matchFunctionIdentifier;
+		}
+		String getValue() {
+			return value;
+		}
+	}
+
+	class Requester {
+		private String value;
+		private URI matchFunctionIdentifier;
+		URI getMatchFunctionIdentifier() {
+			return matchFunctionIdentifier;
+		}
+		String getValue() {
+			return value;
+		}
+		void marshall(Element element) throws ArpMarshallingException {
+			//Make sure we are deling with a Requester
+			if (!element.getTagName().equals("Requester")) {
+				log.error("Element data does not represent an ARP Rule Target.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+			}
+			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
+				value = ((CharacterData) element.getFirstChild()).getData();
+			} else {
+				log.error("Element data does not represent an ARP Rule Target.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+			}
+			try {
+				if (element.hasAttribute("matchFunction")) {
+					matchFunctionIdentifier = new URI(element.getAttribute("matchFunction"));
+				} else {
+					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:exactShar");
+				}
+			} catch (URISyntaxException e) {
+				log.error("ARP match function not identified by a proper URI.");
+				throw new ArpMarshallingException("ARP match function not identified by a proper URI.");
+			}
+		}
 	}
 
 }

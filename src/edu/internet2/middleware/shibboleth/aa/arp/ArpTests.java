@@ -101,7 +101,7 @@ public class ArpTests extends TestCase {
 				arp1.getAllRules()[0].getDescription(),
 				"Example Rule Description.");
 		} catch (Exception e) {
-			fail("Failed to marshall ARP.");
+			fail("Failed to marshall ARP: " + e);
 		}
 
 		//Test case where ARP description does not exist
