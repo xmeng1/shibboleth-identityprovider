@@ -52,6 +52,9 @@
         <copy todir="${build}/schemas">
             <fileset dir="${src}/schemas"/>
         </copy>
+        <copy todir="${build}/conf">
+            <fileset dir="${src}/conf"/>
+        </copy>
     </target>
 
 
@@ -122,7 +125,7 @@
     <!-- Run automated tests on compiled code -->
     <target name="test-all" depends="test-origin, test-wayf" />
     <target name="test-origin" depends="test-common">
-        <junit printsummary="no" fork="no" haltonfailure="yes" haltonerror="no">
+        <junit printsummary="no" fork="yes" haltonfailure="no" haltonerror="no">
             <classpath refid="build.path" />
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
