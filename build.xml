@@ -19,7 +19,7 @@
     <property name="docs" value="${root}/doc/" />
     <property name="javadocs" value="${docs}/api/" />
 
-    <property name="year" value="2002"/>
+    <property name="year" value="2002-2005"/>
     <property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
 
   	<!-- Configure properties to find Tomcat and access the Manager application -->
@@ -181,6 +181,16 @@
     <target name="undeploy" description="Undeploy using Tomcat manager">
         <tomcatUndeploy url="${url}" username="${username}" password="${password}" path="/${distname}"/>
     </target>
+	
+	<target name="distcopy">
+		<!-- Deploy war file by copy and delete. Tomcat must not be
+		     running when this occurs. --> 
+		<copy file="${dist}/${distname}.war" 
+			tofile="${tomcat.home}/webapps/${distname}.war" 
+		/>
+		<delete dir="${tomcat.home}/webapps/${distname}" quiet="yes" />
+	</target>
+	
     
     <!-- Automated key generation -->
 	<target name="genSecret" depends="compile">
