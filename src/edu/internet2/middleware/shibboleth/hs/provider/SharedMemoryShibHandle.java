@@ -70,7 +70,7 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 			throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
 		}
 
-		String handle = new String(config.getDefaultIDProvider().generateRandomBytes(36));
+		String handle = new String(config.getDefaultIDProvider().generateRandomBytes(16));
 		log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
 		synchronized (cache.handleEntries) {
 			cache.handleEntries.put(handle, createHandleEntry(principal));
