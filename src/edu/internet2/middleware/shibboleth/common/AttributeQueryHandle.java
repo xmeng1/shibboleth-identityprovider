@@ -81,7 +81,7 @@ public class AttributeQueryHandle {
 			cipherTextHandle =
 				cipher.doFinal(
 					(principal + "||" + expirationTime + "||" + handleID)
-						.getBytes());
+						.getBytes("UTF-8"));
 
 		} catch (Exception e) {
 			throw new HandleException("Error creating handle: " + e);
