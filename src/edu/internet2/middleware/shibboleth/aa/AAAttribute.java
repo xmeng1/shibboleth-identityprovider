@@ -50,6 +50,7 @@
 package edu.internet2.middleware.shibboleth.aa;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -220,19 +221,30 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	 */
 	public boolean equals(Object object) {
 
-		if (!(object instanceof AAAttribute)) {System.err.println("hey hey hey");
+		if (!(object instanceof AAAttribute)) {
 			return false;
 		}
-		if (lifetime != ((AAAttribute) object).lifetime) {System.err.println("hey hey hey");
+		if (lifetime != ((AAAttribute) object).lifetime) {
 			return false;
 		}
-		if (name != ((AAAttribute) object).name) {System.err.println("hey hey hey");
+		if (name != ((AAAttribute) object).name) {
 			return false;
 		}
-		if (!valueHandler.equals(((AAAttribute) object).valueHandler)) {System.err.println("hey hey yo");
+		if (!valueHandler.equals(((AAAttribute) object).valueHandler)) {
 			return false;
 		}
-		return values.equals(((AAAttribute) object).values);
+		
+		ArrayList localValues = new ArrayList();
+		for (Iterator iterator = getValues();iterator.hasNext();) {
+			localValues.add(iterator.next());
+		}
+		
+		ArrayList objectValues = new ArrayList();
+		for (Iterator iterator = ((AAAttribute) object).getValues();iterator.hasNext();) {
+			objectValues.add(iterator.next());
+		}
+		
+		return localValues.equals(objectValues);
 	}
 
 }

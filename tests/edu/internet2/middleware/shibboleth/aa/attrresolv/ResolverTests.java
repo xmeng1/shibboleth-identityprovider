@@ -158,9 +158,6 @@ public class ResolverTests extends TestCase {
 				});
 
 			ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", inputAttributes);
-			System.err.println(inputAttributes);
-			System.err.println("---");
-			System.err.println(outputAttributes);
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
 		} catch (AttributeResolverException e) {
