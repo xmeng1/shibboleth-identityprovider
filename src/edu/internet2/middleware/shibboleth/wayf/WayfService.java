@@ -1,50 +1,27 @@
-/* 
- * The Shibboleth License, Version 1. 
- * Copyright (c) 2002 
- * University Corporation for Advanced Internet Development, Inc. 
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this 
- * list of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation 
- * and/or other materials provided with the distribution, if any, must include 
- * the following acknowledgment: "This product includes software developed by 
- * the University Corporation for Advanced Internet Development 
- * <http://www.ucaid.edu>Internet2 Project. Alternately, this acknowledegement 
- * may appear in the software itself, if and wherever such third-party 
- * acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor 
- * Internet2, nor the University Corporation for Advanced Internet Development, 
- * Inc., nor UCAID may be used to endorse or promote products derived from this 
- * software without specific prior written permission. For written permission, 
- * please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, 
- * UCAID, or the University Corporation for Advanced Internet Development, nor 
- * may Shibboleth appear in their name, without prior written permission of the 
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK 
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY 
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
+ * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
+ * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu>Internet2
+ * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
+ * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please
+ * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
+ * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
+ * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
+ * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
+ * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.wayf;
@@ -70,21 +47,21 @@ import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionExcep
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 
 /**
- * A servlet implementation of the Shibboleth WAYF service.  Allows a browser user to 
- * select from among a group of origin sites.  User selection is optionally cached 
- * and the user is forwarded to the HandleService appropriate to his selection.
- *
+ * A servlet implementation of the Shibboleth WAYF service. Allows a browser user to select from among a group of
+ * origin sites. User selection is optionally cached and the user is forwarded to the HandleService appropriate to his
+ * selection.
+ * 
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 public class WayfService extends HttpServlet {
 
-	private String wayfConfigFileLocation;
-	private String siteConfigFileLocation;
-	private WayfConfig config;
-	private WayfOrigins originConfig;
-	private WayfCacheOptions wOptions = new WayfCacheOptions();
-	private static Logger log = Logger.getLogger(WayfService.class.getName());
-	ResourceWatchdog watchdog;
+	private String				wayfConfigFileLocation;
+	private String				siteConfigFileLocation;
+	private WayfConfig			config;
+	private WayfOrigins			originConfig;
+	private WayfCacheOptions	wOptions	= new WayfCacheOptions();
+	private static Logger		log			= Logger.getLogger(WayfService.class.getName());
+	ResourceWatchdog			watchdog;
 
 	/**
 	 * @see GenericServlet#init()
@@ -214,7 +191,7 @@ public class WayfService extends HttpServlet {
 			handleError(req, res, we);
 		}
 	}
-	
+
 	public void destroy() {
 		if (watchdog != null && watchdog.isAlive()) {
 			watchdog.interrupt();
@@ -235,8 +212,8 @@ public class WayfService extends HttpServlet {
 			String providerId = getProviderId(req);
 			if (providerId != null) {
 				req.setAttribute("providerId", providerId);
-				req.setAttribute("time", new Long(new Date().getTime() / 1000).toString()); // Unix Time
 			}
+			req.setAttribute("time", new Long(new Date().getTime() / 1000).toString()); // Unix Time
 			req.setAttribute("requestURL", req.getRequestURI().toString());
 
 			log.debug("Displaying WAYF selection page.");
@@ -286,10 +263,12 @@ public class WayfService extends HttpServlet {
 
 	/**
 	 * Uses an HTTP Status 307 redirect to forward the user the HS.
-	 * @param handleService The URL of the Shiboleth HS.
+	 * 
+	 * @param handleService
+	 *            The URL of the Shiboleth HS.
 	 */
 	private void forwardToHS(HttpServletRequest req, HttpServletResponse res, String handleService)
-		throws WayfException {
+			throws WayfException {
 
 		log.info("Redirecting to selected Handle Service");
 		try {
@@ -297,10 +276,11 @@ public class WayfService extends HttpServlet {
 					+ URLEncoder.encode(getTarget(req), "UTF-8") + "&shire="
 					+ URLEncoder.encode(getSHIRE(req), "UTF-8"));
 			String providerId = getProviderId(req);
+			log.debug("WALTER: (" + providerId + ").");
 			if (providerId != null) {
 				buffer.append("&providerId=" + URLEncoder.encode(getProviderId(req), "UTF-8"));
-				buffer.append("&time=" + new Long(new Date().getTime() / 1000).toString()); // Unix Time
 			}
+			buffer.append("&time=" + new Long(new Date().getTime() / 1000).toString()); // Unix Time
 			res.sendRedirect(buffer.toString());
 		} catch (IOException ioe) {
 			throw new WayfException("Error forwarding to HS: " + ioe.toString());
@@ -309,9 +289,11 @@ public class WayfService extends HttpServlet {
 	}
 
 	/**
-	 * Handles all "recoverable" errors in WAYF processing by logging the error
-	 * and forwarding the user to an appropriate error page.
-	 * @param we The WayfException respective to the error being handled
+	 * Handles all "recoverable" errors in WAYF processing by logging the error and forwarding the user to an
+	 * appropriate error page.
+	 * 
+	 * @param we
+	 *            The WayfException respective to the error being handled
 	 */
 	private void handleError(HttpServletRequest req, HttpServletResponse res, WayfException we) {
 
@@ -329,9 +311,12 @@ public class WayfService extends HttpServlet {
 			log.error("Problem trying to display WAYF error page: " + se.toString());
 		}
 	}
+
 	/**
 	 * Retrieves the SHIRE from the request.
-	 * @throws WayfException If the request does not contain a shire parameter.
+	 * 
+	 * @throws WayfException
+	 *             If the request does not contain a shire parameter.
 	 */
 	private String getSHIRE(HttpServletRequest req) throws WayfException {
 
@@ -344,9 +329,12 @@ public class WayfService extends HttpServlet {
 		}
 		return shire;
 	}
+
 	/**
 	 * Retrieves the user's target URL from the request.
-	 * @throws WayfException If the request does not contain a target parameter
+	 * 
+	 * @throws WayfException
+	 *             If the request does not contain a target parameter
 	 */
 	private String getTarget(HttpServletRequest req) throws WayfException {
 
@@ -359,12 +347,17 @@ public class WayfService extends HttpServlet {
 		}
 		return target;
 	}
-	
+
 	private String getProviderId(HttpServletRequest req) {
-		if (req.getParameter("providerId") != null) {
+		if (req.getParameter("providerId") != null && !(req.getParameter("providerId").length() == 0)) {
 			return req.getParameter("providerId");
+
 		} else {
-			return (String) req.getAttribute("providerId");
+			String attr = (String) req.getAttribute("providerId");
+			if (attr == null || attr.length() == 0) {
+				return null;
+			}
+			return attr;
 		}
 	}
 
@@ -394,9 +387,10 @@ public class WayfService extends HttpServlet {
 
 	private class SitesFileWatchdog extends ResourceWatchdog {
 
-		private WayfService wayfService;
+		private WayfService	wayfService;
+
 		private SitesFileWatchdog(String sitesFileLocation, WayfService wayfService)
-			throws ResourceNotAvailableException {
+				throws ResourceNotAvailableException {
 
 			super(new ShibResource(sitesFileLocation, wayfService.getClass()));
 			this.wayfService = wayfService;
@@ -410,14 +404,10 @@ public class WayfService extends HttpServlet {
 				wayfService.reloadOriginMetadata();
 			} catch (UnavailableException e) {
 				try {
-						log.error(
-							"Sites file at ("
-								+ resource.getURL().toString()
-								+ ") could not be loaded: " + e);
+					log.error("Sites file at (" + resource.getURL().toString() + ") could not be loaded: " + e);
 				} catch (IOException ioe) {
 					log.error("Sites file could not be loaded.");
-				}
-				finally {
+				} finally {
 					throw new ResourceWatchdogExecutionException("Watchdog reload failed.");
 				}
 			}
