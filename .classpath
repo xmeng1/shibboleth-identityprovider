@@ -20,7 +20,8 @@
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xml-apis-2.4.1.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlParserAPIs-2.2.1.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlsec-1.0.5.jar"/>
-    <classpathentry kind="lib" path="lib/xercesImpl-2.2.1.jar"
-        rootpath="" sourcepath="/Shibboleth/lib/xercesImpl-2.2.1-src.jar"/>
+    <classpathentry kind="lib" path="lib/xercesImpl-2.2.1.jar" sourcepath="/Shibboleth/lib/xercesImpl-2.2.1-src.jar"/>
+    <classpathentry kind="lib" path="lib/ant-1.5.1.jar"/>
+    <classpathentry kind="lib" path="lib/ant-optional-1.5.1.jar"/>
     <classpathentry kind="output" path="webApplication\WEB-INF\classes"/>
 </classpath>
