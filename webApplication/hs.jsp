@@ -17,7 +17,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     <jsp:useBean id="hs_helpText" scope="application" class="java.lang.String"/>
     <jsp:useBean id="hs_detailedHelpURL" scope="application" class="java.lang.String"/>
 	
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml"" xml:lang="en" lang="en">
 <head>
     <link rel="stylesheet" type="text/css" href="main.css" />
     <title>Shibboleth Handle Request Processed</title>
@@ -25,12 +25,26 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
 <body onLoad="document.forms[0].submit()">
 
+<% 
+	if (request.getAttribute("shire") == null
+		|| request.getAttribute("shire").equals("")
+		|| request.getAttribute("target") == null
+		|| request.getAttribute("target").equals("")
+		|| request.getAttribute("assertion") == null
+		|| request.getAttribute("assertion").equals("")) 
+	{
+		request.setAttribute("requestURL", request.getRequestURI()); 
+		request.setAttribute("errorText", "This page cannot be accessed directly"); 
+        request.getRequestDispatcher("/hserror.jsp").forward(request, response);
+	}
+%>
+
 <h1>Shibboleth Handle Request Processed</h1>
 
 <!-- <p><bean:write name="hs_helpText" /></p> -->
 
 <script language="JavaScript">
-<!--
+<!--	
 document.write("<p>You are automatically being redirected to the requested site. ");
 document.write("If the browser appears to be hung up after 15-20 seconds, try reloading ");
 document.write("the page before contacting the technical support staff in charge of the ");
