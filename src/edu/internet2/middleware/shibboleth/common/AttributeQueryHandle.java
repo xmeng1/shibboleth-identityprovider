@@ -70,6 +70,7 @@ public class AttributeQueryHandle {
 		this.expirationTime = creationTime + validityPeriod;
 
 		try {
+			//create a unique id based on the url of the HS and the current time
 			UUIDGenerator uuidGen = UUIDGenerator.getInstance();
 			UUID nameSpaceUUID = new UUID(UUID.NAMESPACE_URL);
 			handleID =
