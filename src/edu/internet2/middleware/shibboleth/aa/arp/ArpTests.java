@@ -75,6 +75,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import edu.internet2.middleware.shibboleth.common.*;
+
 /**
  * Validation suite for <code>Arp</code> processing.
  * 
@@ -440,7 +442,7 @@ public class ArpTests extends TestCase {
 			fail("Error adding User ARP to Memory Repository.");
 		}
 
-		Arp userArp2 = new Arp(new AAPrincipal("TestPrincipal"));
+		Arp userArp2 = new Arp(new AuthNPrincipal("TestPrincipal"));
 		userArp2.setDescription("Test User Arp 2.");
 		try {
 			repository.update(userArp2);
@@ -497,7 +499,7 @@ public class ArpTests extends TestCase {
 				directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
 					processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
 
-			Arp userArp = repository.getUserPolicy(new AAPrincipal("test"));
+			Arp userArp = repository.getUserPolicy(new AuthNPrincipal("test"));
 
 			inStream = new FileInputStream("data/arp.user.test.xml");
 			parser.parse(new InputSource(inStream));
@@ -513,7 +515,7 @@ public class ArpTests extends TestCase {
 				directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
 					processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
 
-			Arp[] allArps = repository.getAllPolicies(new AAPrincipal("test"));
+			Arp[] allArps = repository.getAllPolicies(new AuthNPrincipal("test"));
 
 			assertTrue("File-based ARP Repository did not return the correct number of ARPs.", (allArps.length == 2));
 		
@@ -536,7 +538,7 @@ public class ArpTests extends TestCase {
 		}
 
 		try {
-			Principal principal1 = new AAPrincipal("TestPrincipal");
+			Principal principal1 = new AuthNPrincipal("TestPrincipal");
 			URL url1 = new URL("http://www.example.edu/");
 			URI[] list1 = { new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation")};
 			URI[] list2 =
@@ -688,7 +690,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -738,7 +740,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute1 =
 			new TestAttribute(
@@ -792,7 +794,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -847,7 +849,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -907,7 +909,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -970,7 +972,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1028,7 +1030,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1088,7 +1090,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1145,7 +1147,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1198,7 +1200,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1249,7 +1251,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1300,7 +1302,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1351,7 +1353,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("https://foo.com/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1402,7 +1404,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1453,7 +1455,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/index.html");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1504,7 +1506,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1572,7 +1574,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
 		TestAttribute testAttribute1 =
 			new TestAttribute(
@@ -1633,7 +1635,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute1 =
 			new TestAttribute(
@@ -1687,7 +1689,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		TestAttribute testAttribute =
 			new TestAttribute(
@@ -1796,7 +1798,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/test/index.html");
 
 		TestAttribute entitlementInput =
@@ -1953,7 +1955,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AAPrincipal("TestPrincipal");
+		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.external.com/");
 
 		TestAttribute entitlementInput =

@@ -49,7 +49,7 @@
 
 package edu.internet2.middleware.shibboleth.hs;
 
-import java.security.Principal;
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 
 /**
  * Defines a mechanism for communicating identities between the Shibboleth Handle
@@ -61,13 +61,13 @@ public interface HandleRepository {
 
 	/**
 	 * Creates an opaque identifier that may be shared with target sites and subsequently 
-	 * used in attribute requests for the given <code>Principal</code>.
+	 * used in attribute requests for the given <code>AuthNPrincipal</code>.
 	 */
-	public String getHandle(Principal principal);
+	public String getHandle(AuthNPrincipal principal);
 
 	/**
-	 * Finds the <code>Principal</code> associated with a given opaque identifier.
+	 * Finds the <code>AuthNPrincipal</code> associated with a given opaque identifier.
 	 */
-	public Principal getPrincipal(String handle);
+	public AuthNPrincipal getPrincipal(String handle);
 
 }

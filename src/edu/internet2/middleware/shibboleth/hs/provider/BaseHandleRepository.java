@@ -49,11 +49,11 @@
 
 package edu.internet2.middleware.shibboleth.hs.provider;
 
-import java.security.Principal;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 
@@ -92,7 +92,7 @@ public abstract class BaseHandleRepository implements HandleRepository {
 
 	}
 	
-	protected HandleEntry createHandleEntry(Principal principal) {
+	protected HandleEntry createHandleEntry(AuthNPrincipal principal) {
 		return new HandleEntry(principal, handleTTL);
 	}
 		
@@ -101,10 +101,10 @@ public abstract class BaseHandleRepository implements HandleRepository {
 }
 
 class HandleEntry {
-	protected Principal principal;
+	protected AuthNPrincipal principal;
 	protected long expirationTime;
 
-	protected HandleEntry(Principal principal, long TTL) {
+	protected HandleEntry(AuthNPrincipal principal, long TTL) {
 		this.principal = principal;
 		expirationTime = System.currentTimeMillis() + TTL;
 	}

@@ -81,7 +81,7 @@ import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 import sun.misc.BASE64Decoder;
 
-import edu.internet2.middleware.shibboleth.aa.arp.AAPrincipal;
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
@@ -230,7 +230,7 @@ public class HandleServlet extends HttpServlet {
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
 
-			String handle = handleRepository.getHandle(new AAPrincipal(req.getRemoteUser()));
+			String handle = handleRepository.getHandle(new AuthNPrincipal(req.getRemoteUser()));
 			log.info("Issued Handle (" + handle + ") to (" + req.getRemoteUser() + ")");
 
 			byte[] buf =

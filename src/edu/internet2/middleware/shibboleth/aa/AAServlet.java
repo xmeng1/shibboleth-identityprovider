@@ -75,9 +75,9 @@ import org.opensaml.SAMLException;
 import org.opensaml.SAMLIdentifier;
 
 import edu.internet2.middleware.eduPerson.Init;
-import edu.internet2.middleware.shibboleth.aa.arp.AAPrincipal;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
@@ -209,7 +209,7 @@ public class AAServlet extends HttpServlet {
 			Principal principal = null;
 			if (saml.getHandle().equalsIgnoreCase("foo")) {
 				// for testing
-				principal = new AAPrincipal("test-handle");
+				principal = new AuthNPrincipal("test-handle");
 			} else {
 				principal = handleRepository.getPrincipal(saml.getHandle());
 				if (principal == null) {

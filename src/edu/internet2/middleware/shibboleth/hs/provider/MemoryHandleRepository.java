@@ -49,7 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.hs.provider;
 
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -61,6 +60,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.doomdark.uuid.UUIDGenerator;
 
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 
@@ -82,7 +82,7 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
-	public String getHandle(Principal principal) {
+	public String getHandle(AuthNPrincipal principal) {
 		String handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
 		log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
 		synchronized (cache.handleEntries) {
@@ -94,7 +94,7 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
-	public Principal getPrincipal(String handle) {
+	public AuthNPrincipal getPrincipal(String handle) {
 		synchronized (cache.handleEntries) {
 			if (!cache.handleEntries.containsKey(handle)) {
 				log.debug("Repository does not contain an entry for this Attribute Query Handle.");

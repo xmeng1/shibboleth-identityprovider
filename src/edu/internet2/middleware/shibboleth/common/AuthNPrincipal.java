@@ -47,25 +47,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.aa.arp;
+package edu.internet2.middleware.shibboleth.common;
 
+import java.io.Serializable;
 import java.security.Principal;
 
 /**
- * <code>Principal</code> for use within the Shibboleth Attribute Authority.
+ * Shibboleth <code>Principal</code> that represents an Authenticated individual.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public class AAPrincipal implements Principal {
+public class AuthNPrincipal implements Principal, Serializable {
 
 	private String principalName;
 
 	/**
-	 * Constructor for AAPrincipal.
+	 * Constructor for AuthNPrincipal.
 	 */
 
-	public AAPrincipal(String principalName) {
+	public AuthNPrincipal(String principalName) {
 		this.principalName = principalName;
 	}
 
@@ -81,17 +82,17 @@ public class AAPrincipal implements Principal {
 	 * @see java.lang.Object#equals(Object)
 	 */
 	public boolean equals(Object obj) {
-		if (!(obj instanceof AAPrincipal)) {
+		if (!(obj instanceof AuthNPrincipal)) {
 			return false;
 		}
-		return ((AAPrincipal) obj).getName().equals(getName());
+		return ((AuthNPrincipal) obj).getName().equals(getName());
 	}
 
 	/**
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
-		return "AAPrincipal".hashCode() + principalName.hashCode();
+		return "AuthNPrincipal".hashCode() + principalName.hashCode();
 	}
 
 }

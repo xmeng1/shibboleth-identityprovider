@@ -49,9 +49,9 @@
 
 package edu.internet2.middleware.shibboleth.hs.provider;
 
-import java.security.Principal;
 import java.util.Properties;
 
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 
@@ -70,14 +70,14 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
-	public String getHandle(Principal principal) {
+	public String getHandle(AuthNPrincipal principal) {
 		return null;
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
-	public Principal getPrincipal(String handle) {
+	public AuthNPrincipal getPrincipal(String handle) {
 		return null;
 	}
 
