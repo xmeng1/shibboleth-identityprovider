@@ -210,7 +210,8 @@ public class AAServlet extends HttpServlet {
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Original problem: "+he);
 	    }
 	}catch (Exception e) {
-	    log.error("Attribute Authority Error for principal ("+userName+") : " + e.getMessage());
+        e.printStackTrace();
+	    log.error("Attribute Authority Error for principal (" + userName + ") : " + e.getClass().getName() + " : " + e.getMessage());
 	    try{
 		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "Attribute Authority Error: " + e.getMessage()));
 	    }catch(Exception ee){
