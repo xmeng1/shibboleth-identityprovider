@@ -33,7 +33,7 @@ import java.util.Iterator;
  * 
  * @author Scott Cantor
  */
-public interface AttributeAuthorityDescriptor extends SSODescriptor {
+public interface AttributeAuthorityDescriptor extends RoleDescriptor {
 
     public EndpointManager getAttributeServiceManager();
     

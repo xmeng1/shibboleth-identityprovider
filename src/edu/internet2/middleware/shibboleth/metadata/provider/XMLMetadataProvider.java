@@ -655,7 +655,7 @@ public class XMLMetadataProvider implements Metadata {
                     if (ext1 != null && ext1.hasChildNodes())
                         sourceId=ext1.getFirstChild().getNodeValue();
                     // Save off any domain elements for later.
-                    domains = ext.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"Domain");
+                    domains = ext.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"Scope");
                 }
                 
                 int i;
@@ -765,7 +765,7 @@ public class XMLMetadataProvider implements Metadata {
         }
     }
 
-    class AARole extends SSORole implements AttributeAuthorityDescriptor, ScopedRoleDescriptor {
+    class AARole extends Role implements AttributeAuthorityDescriptor, ScopedRoleDescriptor {
         private ArrayList /* <Scope> */ scopes = new ArrayList();
         private XMLEndpointManager query = new XMLEndpointManager();
         private XMLEndpointManager idreq = new XMLEndpointManager();
@@ -784,7 +784,7 @@ public class XMLMetadataProvider implements Metadata {
                 Element ext=XML.getFirstChildElement(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"Extensions");
                 if (ext != null) {
                     // Save off any domain elements for later.
-                    domains = ext.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"Domain");
+                    domains = ext.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SHIBMETA_NS,"Scope");
                 }
                 
                 int i;
@@ -828,6 +828,7 @@ public class XMLMetadataProvider implements Metadata {
                 protocolEnum.add(XML.SAML11_PROTOCOL_ENUM);
                 formats.add(Constants.SHIB_NAMEID_FORMAT_URI);
                 attrprofs.add(Constants.SHIB_ATTRIBUTE_NAMESPACE_URI);
+                domains = e.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,"Domain");
                 int i;
                 NodeList nlist=e.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,"AttributeAuthority");
                 for (i=0; i<nlist.getLength(); i++) {
@@ -884,6 +885,10 @@ public class XMLMetadataProvider implements Metadata {
 
         public Iterator getAttributes() {
             return attrs.iterator();
+        }
+
+        public Iterator getNameIDFormats() {
+            return formats.iterator();
         }
     }
     
