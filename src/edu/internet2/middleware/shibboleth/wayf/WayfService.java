@@ -108,7 +108,6 @@ public class WayfService extends HttpServlet {
 			InputStream is = new ShibResource(wayfConfigFileLocation, this.getClass()).getInputStream();
 			WayfConfigDigester digester = new WayfConfigDigester();
 			digester.setValidating(true);
-			System.err.println(is);
 			config = (WayfConfig) digester.parse(is);
 
 		} catch (SAXException se) {
@@ -253,7 +252,9 @@ public class WayfService extends HttpServlet {
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
-			WayfCacheFactory.getInstance(config.getCacheType(), wOptions).addHsToCache(handleService, req, res);
+			if (req.getParameter("noCache") != null && !(req.getParameter("noCache").equalsIgnoreCase("TRUE"))) {
+				WayfCacheFactory.getInstance(config.getCacheType(), wOptions).addHsToCache(handleService, req, res);
+			}
 			forwardToHS(req, res, handleService);
 		}
 
