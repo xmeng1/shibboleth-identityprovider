@@ -74,7 +74,6 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
@@ -296,13 +295,8 @@ public class AAServlet extends TargetFederationComponent {
 
 			Principal principal = null;
 			try {
-				// for testing
-				if (attributeQuery.getSubject().getName().getFormat().equals("urn:mace:shibboleth:test:nameIdentifier")) {
-					principal = new AuthNPrincipal("test-handle");
-				} else {
-					principal = nameMapper.getPrincipal(attributeQuery.getSubject().getName(), relyingParty,
+				principal = nameMapper.getPrincipal(attributeQuery.getSubject().getName(), relyingParty,
 							relyingParty.getIdentityProvider());
-				}
 				log.info("Request is for principal (" + principal.getName() + ").");
 
 			} catch (InvalidNameIdentifierException invalidNameE) {
