@@ -46,7 +46,7 @@
 
 	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
 		<FileResolver Id="foo">
-			<Key format="DER">
+			<Key format="PEM">
 				<Path>/conf/shib2.key</Path>
 			</Key>
 			<Certificate format="PEM">
