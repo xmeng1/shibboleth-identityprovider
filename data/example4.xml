@@ -6,12 +6,12 @@
 			<Requester>shar.example.edu</Requester>
 			<Resource>http://www.example.edu/</Resource>
 		</Target>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
 			<Value release="permit">member@example.edu</Value>
 		</Attribute>
 		<AttributeReference identifier="http://example.edu/attributes/attribute1"/>
 	</Rule>
-	<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation" identifier="http://example.edu/attributes/attribute1">
+	<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation" identifier="http://example.edu/attributes/attribute1">
 		<Value release="permit">student@example.edu</Value>
 	</Attribute>
 </AttributeReleasePolicy>

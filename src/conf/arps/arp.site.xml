@@ -5,7 +5,7 @@
 		<Target>
 			<AnyTarget/>
 		</Target>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonScopedAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation">
 			<AnyValue release="permit"/>
 		</Attribute>
 	</Rule>

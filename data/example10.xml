@@ -5,7 +5,7 @@
 		<Target>
 			<AnyTarget/>
 		</Target>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
 			<Value release="permit">member@example.edu</Value>
 		</Attribute>
 	</Rule>
@@ -14,7 +14,7 @@
 			<Requester matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">shar[1-9]\.example\.edu</Requester>
 			<Resource matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^https?://.+\.example\.edu/.*$</Resource>
 		</Target>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
 			<Value release="permit">faculty@example.edu</Value>
 		</Attribute>
 	</Rule>
@@ -23,7 +23,7 @@
 			<Requester>shar.example.edu</Requester>
 			<Resource>http://www.example.edu/example1/</Resource>
 		</Target>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
 			<Value release="deny">faculty@example.edu</Value>
 		</Attribute>
 	</Rule>
@@ -32,7 +32,7 @@
 			<Requester>shar.example.edu</Requester>
 			<Resource>http://www.example.edu/example2/</Resource>
 		</Target>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
 			<AnyValue release="permit"/>
 		</Attribute>
 	</Rule>

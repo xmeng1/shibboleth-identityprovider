@@ -1,6 +1,6 @@
 <AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
 	
-	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonPrincipalName" smartScope="example.edu">
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="example.edu">
 		<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	

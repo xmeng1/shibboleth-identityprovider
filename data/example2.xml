@@ -5,10 +5,10 @@
 		<Target>
 			<AnyTarget/>
 		</Target>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonPrincipalName">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonPrincipalName">
 			<AnyValue release="permit"/>
 		</Attribute>
-		<Attribute name="urn:mace:dir:eduperson#eduPersonAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
 			<Value release="permit">member@example.edu</Value>
 		</Attribute>
 	</Rule>

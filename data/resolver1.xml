@@ -1,18 +1,18 @@
 <AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
 	
-	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonPrincipalName" smartScope="columbia.edu">
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="columbia.edu">
 		<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	
-	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonNickName">
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonNickName">
 		<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	
-	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonEntitlement">
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonEntitlement">
 		<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	
-	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonAffiliation">
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonAffiliation">
 		<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	
