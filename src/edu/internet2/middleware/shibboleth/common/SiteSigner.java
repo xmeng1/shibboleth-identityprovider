@@ -4,25 +4,24 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.*;
 import javax.xml.parsers.*;
-import org.apache.xml.security.Init;
 import org.apache.xml.security.c14n.*;
 import org.apache.xml.security.signature.*;
 import org.apache.xml.security.transforms.*;
 import org.w3c.dom.*;
 
 /**
- *  Description of the Class
+ *  Validates and signs a Shibboleth site file
  *
- * @author     cantor
+ * @author     Scott Cantor
  * @created    June 11, 2002
  */
 public class SiteSigner
 {
     /**
-     *  Description of the Method
+     *  Validates and signs a Shibboleth site file
      *
-     * @param  argv           Description of Parameter
-     * @exception  Exception  Description of Exception
+     * @param  argv           The command line arguments
+     * @exception  Exception  One of about fifty different kinds of possible errors
      */
     public static void main(String argv[])
         throws Exception
@@ -36,7 +35,7 @@ public class SiteSigner
         String cert_alias = null;
         String key_pass = null;
         String outfile = null;
-        String arg=null;
+        String arg = null;
 
         // process arguments
         for (int i = 0; i < argv.length; i++)
@@ -110,14 +109,15 @@ public class SiteSigner
             }
         }
 
-        if (keystore == null || keystore.length() == 0 || key_alias == null || key_alias.length() == 0 ||
+        if (keystore == null || keystore.length() == 0 || ks_pass == null || ks_pass.length() == 0 ||
+            key_alias == null || key_alias.length() == 0 || key_pass == null || key_pass.length() == 0 ||
             cert_alias == null || cert_alias.length() == 0)
             printUsage();
 
         KeyStore ks = KeyStore.getInstance("JKS");
         FileInputStream fis = new FileInputStream(keystore);
-        ks.load(fis, ks_pass == null ? null : ks_pass.toCharArray());
-        PrivateKey privateKey = (PrivateKey)ks.getKey(key_alias, key_pass == null ? null : key_pass.toCharArray());
+        ks.load(fis, ks_pass.toCharArray());
+        PrivateKey privateKey = (PrivateKey)ks.getKey(key_alias, key_pass.toCharArray());
         X509Certificate cert = (X509Certificate)ks.getCertificate(cert_alias);
         if (privateKey == null || cert == null)
         {
@@ -172,11 +172,11 @@ public class SiteSigner
         System.err.println("required options:");
         System.err.println("  -k keystore   pathname of Java keystore file");
         System.err.println("  -a key alias  alias of signing key");
+        System.err.println("  -P password   keystore password");
+        System.err.println("  -p password   private key password");
         System.err.println("  -c cert alias alias of signing cert");
         System.err.println();
         System.err.println("optional options:");
-        System.err.println("  -P password   keystore password");
-        System.err.println("  -p password   private key password");
         System.err.println("  -o outfile    write signed copy to this file instead of stdout");
         System.err.println("  -h            print this message");
         System.err.println();
@@ -185,7 +185,7 @@ public class SiteSigner
 
     static
     {
-        org.apache.xml.security.Init.init();
+        Init.init();
     }
 }
 
