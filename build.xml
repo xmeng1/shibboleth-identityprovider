@@ -147,4 +147,8 @@
 		<genSecret keyStorePath="${appconfig}/handle.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
 	</target>
 
+        <target name="genSalt" depends="compile">
+        <taskdef name="genSalt" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
+                <genSalt keyStorePath="${appconfig}/persistent.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
+        </target>
 </project>
