@@ -297,6 +297,13 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 			return samlResponse;
 
+		} catch (SAMLException e) {
+			if (relyingParty.passThruErrors()) {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+			} else {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			}
+
 		} catch (InvalidNameIdentifierException e) {
 			log.error("Could not associate the request's subject with a principal: " + e);
 			if (relyingParty.passThruErrors()) {
@@ -307,17 +314,23 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			}
 
 		} catch (NameIdentifierMappingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			log.error("Encountered an error while mapping the name identifier from the request: " + e);
+			if (relyingParty.passThruErrors()) {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+			} else {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			}
+
 		} catch (AAException e) {
-			//TODO get rid of AAException, I think
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			log.error("Encountered an error while resolving resolving attributes: " + e);
+			if (relyingParty.passThruErrors()) {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+			} else {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			}
 
 		} catch (CloneNotSupportedException e) {
-			log.error("Could not associate the request subject with a principal: " + e);
+			log.error("Encountered an error while cloning request subject for use in response: " + e);
 			if (relyingParty.passThruErrors()) {
 				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
 			} else {

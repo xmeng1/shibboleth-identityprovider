@@ -75,14 +75,14 @@ import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
 public class IdPResponder extends HttpServlet {
 
-	private static Logger		transactionLog		= Logger.getLogger("Shibboleth-TRANSACTION");
-	private static Logger		log					= Logger.getLogger(IdPResponder.class.getName());
-	private static Random		idgen				= new Random();
-	private SAMLBinding			binding;
-	private Semaphore			throttle;
-	private IdPConfig			configuration;
-	private HashMap				protocolHandlers	= new HashMap();
-	private IdPProtocolSupport	protocolSupport;
+	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
+	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
+	private static Random idgen = new Random();
+	private SAMLBinding binding;
+	private Semaphore throttle;
+	private IdPConfig configuration;
+	private HashMap protocolHandlers = new HashMap();
+	private IdPProtocolSupport protocolSupport;
 
 	/*
 	 * @see javax.servlet.GenericServlet#init()
@@ -336,7 +336,7 @@ public class IdPResponder extends HttpServlet {
 
 	private class Semaphore {
 
-		private int	value;
+		private int value;
 
 		public Semaphore(int value) {
 
@@ -366,7 +366,7 @@ public class IdPResponder extends HttpServlet {
 
 class FederationProviderFactory {
 
-	private static Logger	log	= Logger.getLogger(FederationProviderFactory.class.getName());
+	private static Logger log = Logger.getLogger(FederationProviderFactory.class.getName());
 
 	public static Metadata loadProvider(Element e) throws MetadataException {
 

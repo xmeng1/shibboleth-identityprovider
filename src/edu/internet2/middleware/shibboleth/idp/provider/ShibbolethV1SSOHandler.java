@@ -59,6 +59,7 @@ import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
@@ -72,7 +73,7 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
  */
 public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 
-	private static Logger	log	= Logger.getLogger(ShibbolethV1SSOHandler.class.getName());
+	private static Logger log = Logger.getLogger(ShibbolethV1SSOHandler.class.getName());
 
 	/*
 	 * @see edu.internet2.middleware.shibboleth.idp.IdPResponder.ProtocolHandler#processRequest(javax.servlet.http.HttpServletRequest,
@@ -87,6 +88,7 @@ public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 			log.error("Protocol Handler received a SAML Request, but is unable to handle it.");
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
 		}
+		
 		try {
 			// Ensure that we have the required data from the servlet container
 			IdPProtocolSupport.validateEngineData(request);
@@ -236,7 +238,7 @@ public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 
 		Document doc = org.opensaml.XML.parserPool.newDocument();
 
-		// Determine audiences and issuer
+		// Determine the correct audiences
 		ArrayList audiences = new ArrayList();
 		if (relyingParty.getProviderId() != null) {
 			audiences.add(relyingParty.getProviderId());
@@ -245,19 +247,19 @@ public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 			audiences.add(relyingParty.getName());
 		}
 
+		// Determine the correct issuer
 		String issuer = null;
 		if (relyingParty.isLegacyProvider()) {
-			// TODO figure this out
-			/*
-			 * log.debug("Service Provider is running Shibboleth <= 1.1. Using old style issuer."); if
-			 * (relyingParty.getIdentityProvider().getResponseSigningCredential() == null ||
-			 * relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate() == null) { throw
-			 * new SAMLException( "Cannot serve legacy style assertions without an X509 certificate"); } issuer =
-			 * ShibBrowserProfile.getHostNameFromDN(relyingParty.getIdentityProvider()
-			 * .getResponseSigningCredential().getX509Certificate().getSubjectX500Principal()); if (issuer == null ||
-			 * issuer.equals("")) { throw new SAMLException( "Error parsing certificate DN while determining legacy
-			 * issuer name."); }
-			 */
+
+			log.debug("Service Provider is running Shibboleth <= 1.1. Using old style issuer.");
+			if (relyingParty.getIdentityProvider().getSigningCredential() == null
+					|| relyingParty.getIdentityProvider().getSigningCredential().getX509Certificate() == null) { throw new SAMLException(
+					"Cannot serve legacy style assertions without an X509 certificate"); }
+			issuer = ShibBrowserProfile.getHostNameFromDN(relyingParty.getIdentityProvider().getSigningCredential()
+					.getX509Certificate().getSubjectX500Principal());
+			if (issuer == null || issuer.equals("")) { throw new SAMLException(
+					"Error parsing certificate DN while determining legacy issuer name."); }
+
 		} else {
 			issuer = relyingParty.getIdentityProvider().getProviderId();
 		}
@@ -338,11 +340,11 @@ public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 		SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 		if (sp == null) { return false; }
 
-		// TODO: This will actually favor artifact, since a given location could support
-		// both profiles. If that's not what we want, needs adjustment...
+		// Look at the bindings.. prefer POST if we have multiple
 		Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
 		while (endpoints.hasNext()) {
 			Endpoint ep = (Endpoint) endpoints.next();
+			if (acceptanceURL.equals(ep.getLocation()) && SAMLBrowserProfile.PROFILE_POST_URI.equals(ep.getBinding())) { return false; }
 			if (acceptanceURL.equals(ep.getLocation())
 					&& SAMLBrowserProfile.PROFILE_ARTIFACT_URI.equals(ep.getBinding())) { return true; }
 		}
