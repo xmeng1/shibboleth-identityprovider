@@ -100,7 +100,7 @@ public class AAServlet extends HttpServlet {
 	public void init() throws ServletException {
 		super.init();
 
-		MDC.put("serviceId", "[AA Core]");
+		MDC.put("serviceId", "[AA] Core");
 		log.info("Initializing Attribute Authority.");
 
 		try {
@@ -197,7 +197,7 @@ public class AAServlet extends HttpServlet {
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		log.debug("Recieved a request.");
-		MDC.put("serviceId", new SAMLIdentifier().toString());
+		MDC.put("serviceId", "[AA] " + new SAMLIdentifier().toString());
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
 

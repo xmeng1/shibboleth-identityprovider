@@ -82,7 +82,7 @@ public class LogServ extends HttpServlet {
 			log4jConfigFileLocation = "/WEB-INF/conf/log4j.properties";
 		}
 		PropertyConfigurator.configure(getServletContext().getRealPath("/") + log4jConfigFileLocation);
-			MDC.put("serviceId", "[Logging Core]");
+			MDC.put("serviceId", "[Logger] Core");
 		log.info("Logger initialized.");
 	}
 

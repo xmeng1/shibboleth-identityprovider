@@ -140,7 +140,7 @@ public class HandleServlet extends HttpServlet {
 
 	public void init() throws ServletException {
 		super.init();
-		MDC.put("serviceId", "[HS Core]");
+		MDC.put("serviceId", "[HS] Core");
 		try {
 			log.info("Initializing Handle Service.");
 			configuration = loadConfiguration();
@@ -223,7 +223,7 @@ public class HandleServlet extends HttpServlet {
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
 		log.debug("Recieved a request.");
-		MDC.put("serviceId", UUIDGenerator.getInstance().generateRandomBasedUUID());
+		MDC.put("serviceId", "[HS] " + UUIDGenerator.getInstance().generateRandomBasedUUID());
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
 
