@@ -18,7 +18,7 @@ import org.opensaml.*;
 
 public class eduPersonPrincipalName implements ShibAttribute{
 	
-	private static Logger log = Logger.getLogger(SAMLResponse.class.getName());
+	private static Logger log = Logger.getLogger(eduPersonPrincipalName.class.getName());
     
 
     public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values)
