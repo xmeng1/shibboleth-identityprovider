@@ -144,7 +144,7 @@ public class HandleServlet extends HttpServlet {
 			req.getParameter("shire")+"\" method=\"POST\">");
 	    out.println("<input type=\"hidden\" name=\"TARGET\"" +
 			" value=\"" + req.getParameter("target") + "\">");
-	    out.println("<input type=\"hidden\" name=\"SAMLAssertion\""+
+	    out.println("<input type=\"hidden\" name=\"SAMLResponse\""+
 			"value=\"" + buf + "\">");
 	    out.println("<input type=\"submit\" value=\"Transmit\">");
 	    out.println("</form>");

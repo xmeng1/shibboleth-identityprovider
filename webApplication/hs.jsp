@@ -25,7 +25,7 @@
 <p>
 <form name="shib"  action="<bean:write name="shire" />" method="POST">
 <input type="hidden" name="TARGET" value="<bean:write name="target" />">
-<input type="hidden" name="SAMLAssertion"value="<bean:write name="assertion" />">
+<input type="hidden" name="SAMLResponse" value="<bean:write name="assertion" />">
 <input type="submit" value="Transmit">
 </form>
 </p>
