@@ -191,34 +191,40 @@ public class Rule {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
-			NodeList targetNodeList = element.getChildNodes();
-			if (targetNodeList.getLength() < 1 || targetNodeList.getLength() > 2) {
-				log.error("ARP Rule Target contains invalid data: incorrect number of elements");
-				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrect number of elements");
-			}
-
+			
 			//Handle <AnyTarget/> definitions
-			if (targetNodeList.getLength() == 1) {
-				if (targetNodeList.item(0).getNodeType() == Node.ELEMENT_NODE
-					&& ((Element) targetNodeList.item(0)).getTagName().equals("AnyTarget")) {
+			NodeList anyTargetNodeList = element.getElementsByTagName("AnyTarget");
+			if (anyTargetNodeList.getLength() == 1) {
 					matchesAny = true;
 					return;
-				}
-				log.error("ARP Rule Target contains invalid data.");
-				throw new ArpMarshallingException("ARP Rule Target contains invalid data.");
 			}
 
 			//Create Requester
-			if (targetNodeList.item(0).getNodeType() == Node.ELEMENT_NODE
-				&& ((Element) targetNodeList.item(0)).getTagName().equals("Requester")) {
+			NodeList requesterNodeList = element.getElementsByTagName("Requester");
+			if (requesterNodeList.getLength() == 1) {
 				requester = new Requester();
-				requester.marshall((Element) targetNodeList.item(0));
+				requester.marshall((Element) requesterNodeList.item(0));
 			} else {
-				log.error("ARP Rule Target contains invalid data.");
-				throw new ArpMarshallingException("ARP Rule Target contains invalid data.");
+				log.error("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
 			}
+			
 			//Handle <AnyResource/>
+			NodeList anyResourceNodeList = element.getElementsByTagName("AnyResource");
+			if (anyResourceNodeList.getLength() == 1) {
+					resource = new Resource();
+					return;
+			}
+			
 			//Create Resource
+			NodeList resourceNodeList = element.getElementsByTagName("Resource");
+			if (resourceNodeList.getLength() == 1) {
+				resource = new Resource();
+				resource.marshall((Element) resourceNodeList.item(0));
+			} else {
+				log.error("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Resource>.");
+			}
 		}
 
 		boolean matchesAny() {
@@ -236,6 +242,9 @@ public class Rule {
 		private String value;
 		private URI matchFunctionIdentifier;
 		private boolean matchesAny;
+		Resource() {
+			matchesAny = true;	
+		}
 		boolean matchesAny() {
 			return matchesAny;
 		}
@@ -244,6 +253,33 @@ public class Rule {
 		}
 		String getValue() {
 			return value;
+		}
+		void marshall(Element element) throws ArpMarshallingException {
+			//Make sure we are deling with a Resource
+			if (!element.getTagName().equals("Resource")) {
+				log.error("Element data does not represent an ARP Rule Target.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+			}
+			
+			//Grab the value
+			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
+				value = ((CharacterData) element.getFirstChild()).getData();
+			} else {
+				log.error("Element data does not represent an ARP Rule Target.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+			}
+			
+			//Grab the match function
+			try {
+				if (element.hasAttribute("matchFunction")) {
+					matchFunctionIdentifier = new URI(element.getAttribute("matchFunction"));
+				} else {
+					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree");
+				}
+			} catch (URISyntaxException e) {
+				log.error("ARP match function not identified by a proper URI.");
+				throw new ArpMarshallingException("ARP match function not identified by a proper URI.");
+			}
 		}
 	}
 
@@ -262,12 +298,16 @@ public class Rule {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
+			
+			//Grab the value
 			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
 				value = ((CharacterData) element.getFirstChild()).getData();
 			} else {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
+			
+			//Grab the match function
 			try {
 				if (element.hasAttribute("matchFunction")) {
 					matchFunctionIdentifier = new URI(element.getAttribute("matchFunction"));
