@@ -91,7 +91,8 @@ function formCancel()
 
 <%
       for (int i=0; i<allAttrs.length; i++) {
-	ArpAttribute adminAttr = getAdminAttr(adminArp, resource, allAttrs[i]);
+	ArpAttribute adminAttr = getAdminAttr(adminArp, resource.getName(), 
+						allAttrs[i]);
 	ArpAttribute aAttr = new ArpAttribute(allAttrs[i], false);
 	Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
 	if (dAttr != null && dAttr.size() > 0) {
@@ -124,7 +125,10 @@ function formCancel()
 	  out.println("</td><td>");
 
 	  String checkoption = "";
+	  String adminInput = "";
 	  if (adminAttr != null) {
+	    adminInput = "<input type=hidden name=\"adminAttrs\" value=\""+
+	     allAttrs[i]+"\">";
 	    if (adminAttr.mustExclude())
 	      checkoption = "NO";
 	    else 
@@ -143,6 +147,7 @@ function formCancel()
 <% } %>
 	</td>
 	<td>
+	  <%=adminInput%>
 	  <%=checkoption%>
 	</td>
 
@@ -158,6 +163,7 @@ function formCancel()
 	
       <hr>
 	<input type="hidden" name="username" value="<bean:write name="username"/>">	
+
       <input type="submit" name="Submit" value="Save" onClick="return formSubmit();">&nbsp;&nbsp;
 
 	<input type="submit" name="Submit" value="Cancel" onClick="return formCancel();" >
@@ -165,14 +171,14 @@ function formCancel()
     <hr>
 <%!
 public ArpAttribute getAdminAttr(Arp admin, 
-			ArpResource resource, String attr) {
-    ArpShar s = admin.getShar(resource.getName());
+			String resource, String attr) {
+    ArpShar s = admin.getShar(resource);
     if (s == null) {
 	s = admin.getDefaultShar();
     }
     if (s == null)
 	return null;
-    ArpResource r = s.bestFit(resource.getName());
+    ArpResource r = s.bestFit(resource);
     if (r == null)
 	return null;
     ArpAttribute a = r.getAttribute(attr);

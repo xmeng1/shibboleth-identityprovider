@@ -39,7 +39,8 @@
 	
 <% 
     ArpAttribute adminAttr = getAdminAttr(adminArp, resource, userAttr.getName());
-    ArpFilter filter = combineFilters(adminAttr, userAttr);
+    ArpFilter admFilter = adminAttr.getFilter();
+    ArpFilter filter = userAttr.getFilter();
 
     Attribute dAttr = attr.getDirAttribute(userCtx, true);
 
@@ -48,15 +49,26 @@
       String checked = "";
       if (filter != null) {
 	ArpFilterValue afv = new ArpFilterValue(dAttr.get(j), false);
-	ArpFilterValue[] afva = filter.getFilterValues();	
-	for (int k=0;k<afva.length;k++) { 
-	  if (afva[k].equals(afv))  
-	    checked = "checked";
+	ArpFilterValue afvt = new ArpFilterValue(dAttr.get(j), true);
+	ArpFilterValue[] afva = filter.getFilterValues();
+	if (filter.contains(afv)) {
+	    checked = "<input type=\"checkbox\" name=\"filterval\" value=\""+dAttr.get(j)+"\" checked> Yes";
+	} else {
+	    checked = "<input type=\"checkbox\" name=\"filterval\" value=\""+dAttr.get(j)+"\"> Yes";
+	}
+	ArpFilterValue[] afvi = admFilter.getFilterValues();
+	for (int k=0;k<afvi.length;k++) {
+	    if (afvi[k].equals(afv) && (afvi[k].mustInclude() == false)) {
+	        checked = "<i>filtered</i>";
+ 	    }
+	    if (afvi[k].equals(afvt) && (afvi[k].mustInclude())) {
+	        checked = "<i>released</i>";
+ 	    }
 	}
       }
 
       out.println("<tr><td>"+dAttr.get(j)+"</td>");
-      out.println("<td><input type=\"checkbox\" name=\"filterval\" value=\""+dAttr.get(j)+"\" "+checked+">&nbsp;Yes</td></tr>");
+      out.println("<td>"+checked+"</td></tr>");
     } 
   }
 %>

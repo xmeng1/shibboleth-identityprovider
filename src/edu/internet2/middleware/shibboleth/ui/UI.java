@@ -90,6 +90,12 @@ public class UI extends HttpServlet {
 	    arpFactory = ArpRepositoryFactory.getInstance("edu.internet2.middleware.shibboleth.aa.FileArpRepository", props);
 	    responder = new AAResponder(arpFactory, getDirCtx(), 
 					getInitParameter("domain"));
+	    adminArp = arpFactory.lookupArp(adminArpName, true);
+	    if(adminArp ==  null) {
+		log.error("Admin ARP not found in Arp Repository ("+arpFactory+")");
+		throw new ServletException("Unable to load admin ARP.");
+	}
+
 	} catch (Exception ex) {
 	    throw new ServletException(ex);
 	}
@@ -115,11 +121,6 @@ public class UI extends HttpServlet {
 	throws ServletException, IOException
     {
 	String username = req.getParameter("username");
-        adminArp = arpFactory.lookupArp(adminArpName, true);
-	if(adminArp ==  null) {
-	   log.error("Admin ARP not found in Arp Repository ("+arpFactory+")");
-	   throw new UIException("Unable to load admin ARP.");
-	}
 
 	req.setAttribute("username", username);
 	req.setAttribute("requestURL", req.getRequestURI().toString());
@@ -366,6 +367,7 @@ public class UI extends HttpServlet {
 	try{ 
 	    Arp arp = arpFactory.lookupArp(username, false);
 	    String []subAttrs = req.getParameterValues("attr");
+	    String []admAttrs = req.getParameterValues("adminAttrs");
 	    ArpShar s = arp.getShar(resource);
 	    if (s==null) 
 		s = new ArpShar(resource, false); 
@@ -382,6 +384,17 @@ public class UI extends HttpServlet {
 			nr.addAnAttribute(a);
 		    else {
 			a = new ArpAttribute(subAttrs[i], false);
+			nr.addAnAttribute(a);
+		    }
+		}
+	    }
+	    if (admAttrs!=null){
+		for (int i = 0; i < admAttrs.length; i++) {
+		    ArpAttribute a = r.getAttribute(admAttrs[i]);
+		    if (a!=null) 
+			nr.addAnAttribute(a);
+		    else {
+			a = new ArpAttribute(admAttrs[i], false);
 			nr.addAnAttribute(a);
 		    }
 		}
