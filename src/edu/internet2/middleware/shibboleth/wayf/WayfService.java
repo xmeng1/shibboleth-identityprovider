@@ -212,6 +212,7 @@ public class WayfService extends HttpServlet {
 		req.setAttribute("target", getTarget(req));
 		req.setAttribute("encodedShire", URLEncoder.encode(getSHIRE(req)));
 		req.setAttribute("encodedTarget", URLEncoder.encode(getTarget(req)));
+		req.setAttribute("requestURL", req.getRequestURI().toString());
 
 		log.debug("Displaying WAYF selection page.");
 		RequestDispatcher rd = req.getRequestDispatcher("/wayf.jsp");
