@@ -1732,9 +1732,9 @@ resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></a></dd>
         which the target definition is formed. The <span class="fixed">
         Attribute</span> elements specifies the name and values of the 
         attributes that may be released.</p>
-        <p>The simplest possible ARP is as follows, which releases <span
-        class="fixed">eduPersonScopedAffiliation</span> to the given <span
-        class="fixed">providerId</span> for the users the ARP applies to:</p>
+        <p>The simplest possible ARP is as follows, which releases
+        <span class="fixed">eduPersonScopedAffiliation</span> to any target 
+        for the users the ARP applies to:</p>
         <blockquote>
             <p><span class="fixed">&lt;?xml version=&quot;1.0&quot;?&gt;<br>
             &lt;AttributeReleasePolicy xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; 
@@ -1746,7 +1746,7 @@ resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></a></dd>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
             &lt;Target&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Requester&gt;providerId&lt;/Requester&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;AnyTarget/&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
             &lt;/Target&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
@@ -1765,12 +1765,12 @@ resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></a></dd>
     sub-populated follows:</p>
     <p>The <span class="fixed">Target</span> element:</p>
     <blockquote>
-        <p><span class="fixed">Target</span> operates differently when releasing to 1.2 or 1.1 targets.  When releasing to 1.2 targets, this must only contain one <span class="fixed">Resource</span> element, which contains the <span class="fixed">providerId</span> for requests this ARP will relate to.  For 1.1, this may contain either the
+        <p><span class="fixed">Target</span> may contain either the
         <span class="fixed">AnyTarget</span> element, which will cause the
         <span class="fixed">Target</span> to always return
         <span class="fixed">TRUE</span>, or both the
         <span class="fixed">Requester</span> element, which provides for 
-        matches to be performed against the SHAR name for 1.1 targets, as compared to <span class="fixed">providerId</span> for 1.2 targets, and the
+        matches to be performed against the SHAR name for 1.1 targets or the <span class="fixed">providerId</span> for 1.2 targets, and the
         <span class="fixed">Resource</span> element, which provides for 
         matches to be performed against the requested URL.</p>
         <p>When going against 1.1 targets, the <span
@@ -1778,8 +1778,9 @@ resolverConfig=&quot;<i>pathname</i>&quot;&gt;</span></a></dd>
         protected by a given SHAR.  However, due to the nature of application
         identifiers, the <span class="fixed">Resource</span> element has no
         meaning when releasing to 1.2 targets.  These will always function as
-        though <span class="fixed">&lt;AnyResource/&gt;</span> and <span
-        class="fixed">&lt;AnyTarget/&gt;</span> are specified.</p>
+        though <span class="fixed">&lt;AnyResource/&gt;</span> is specified,
+        making the entire <span class="fixed">Resource</span> element necessary
+        only if this origin will be applying this ARP to 1.1 targets.</p>
         <p>There are three matches that may be performed by the AA in evaluating 
         ARP&#39;s by using the <span class="fixed">matchFunction</span> 
         component of the <span class="fixed">Requester</span> and
