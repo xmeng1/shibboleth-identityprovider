@@ -30,15 +30,19 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServletRequest;
@@ -83,6 +87,7 @@ import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
+import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
@@ -105,7 +110,6 @@ public class AAServlet extends TargetFederationComponent {
 	private AAServiceProviderMapper	targetMapper;
 
 	private static Logger			log				= Logger.getLogger(AAServlet.class.getName());
-	protected Pattern				regex			= Pattern.compile(".*CN=([^,/]+).*");
 
 	public void init() throws ServletException {
 		super.init();
@@ -246,8 +250,8 @@ public class AAServlet extends TargetFederationComponent {
 			//This is the requester name that will be passed to subsystems
 			String effectiveName = null;
 
-			String credentialName = getCredentialName(req);
-			if (credentialName == null || credentialName.toString().equals("")) {
+			X509Certificate credential = getCredentialFromProvider(req);
+			if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
 				log.info("Request is from an unauthenticated service provider.");
 			} else {
 
@@ -393,16 +397,23 @@ public class AAServlet extends TargetFederationComponent {
 	protected String getEffectiveName(HttpServletRequest req, AARelyingParty relyingParty)
 			throws InvalidProviderCredentialException {
 
-		String credentialName = getCredentialName(req);
-		if (credentialName == null || credentialName.toString().equals("")) {
+		//X500Principal credentialName = getCredentialName(req);
+		X509Certificate credential = getCredentialFromProvider(req);
+
+		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
 			log.info("Request is from an unauthenticated service provider.");
 			return null;
 
 		} else {
-			log.info("Request contains credential: (" + credentialName + ").");
+			log.info("Request contains credential: ("
+					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
 			//Mockup old requester name for requests from < 1.2 targets
 			if (fromLegacyProvider(req)) {
-				String legacyName = getLegacyRequesterName(credentialName);
+				String legacyName = ShibPOSTProfile.getHostNameFromDN(credential.getSubjectX500Principal());
+				if (legacyName == null) {
+					log.error("Unable to extract legacy requester name from certificate subject.");
+				}
+
 				log.info("Request from legacy service provider: (" + legacyName + ").");
 				return legacyName;
 
@@ -417,26 +428,18 @@ public class AAServlet extends TargetFederationComponent {
 				}
 
 				//Make sure that the suppplied credential is valid for the selected relying party
-				if (isValidCredential(provider, credentialName.toString())) {
+				if (isValidCredential(provider, credential)) {
 					log.info("Supplied credential validated for this provider.");
 					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
 					return relyingParty.getProviderId();
 				} else {
-					log.error("Supplied credential (" + credentialName.toString() + ") is NOT valid for provider ("
-							+ relyingParty.getProviderId() + ").");
+					log.error("Supplied credential ("
+							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
+							+ ") is NOT valid for provider (" + relyingParty.getProviderId() + ").");
 					throw new InvalidProviderCredentialException("Invalid credential.");
 				}
 			}
 		}
-	}
-
-	private String getLegacyRequesterName(String credentialName) {
-		Matcher matches = regex.matcher(credentialName);
-		if (!matches.find() || matches.groupCount() > 1) {
-			log.error("Unable to extract legacy requester name from certificate subject.");
-			return null;
-		}
-		return matches.group(1);
 	}
 
 	public void destroy() {
@@ -585,7 +588,7 @@ public class AAServlet extends TargetFederationComponent {
 		}
 	}
 
-	protected boolean isValidCredential(Provider provider, String credentialName) {
+	protected boolean isValidCredential(Provider provider, X509Certificate certificate) {
 
 		ProviderRole[] roles = provider.getRoles();
 		if (roles.length == 0) {
@@ -601,9 +604,47 @@ public class AAServlet extends TargetFederationComponent {
 					for (int k = 0; keyInfo.length > k; k++) {
 						for (int l = 0; keyInfo[k].lengthKeyName() > l; l++) {
 							try {
-								if (credentialName.equals(keyInfo[k].itemKeyName(l).getKeyName())) {
+
+								//First, try to match DN against metadata
+								try {
+									if (certificate.getSubjectX500Principal().getName(X500Principal.RFC2253).equals(
+											new X500Principal(keyInfo[k].itemKeyName(l).getKeyName())
+													.getName(X500Principal.RFC2253))) {
+										log.debug("Matched against DN.");
+										return true;
+									}
+								} catch (IllegalArgumentException iae) {
+									//squelch this runtime exception, since this might be a valid case
+								}
+
+								//If that doesn't work, we try matching against some Subject Alt Names
+								try {
+									Collection altNames = certificate.getSubjectAlternativeNames();
+									if (altNames != null) {
+										for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
+											List altName = (List) nameIterator.next();
+											if (altName.get(0).equals(new Integer(2))
+													|| altName.get(0).equals(new Integer(6))) { //2 is DNS, 6 is URI
+												if (altName.get(1).equals(keyInfo[k].itemKeyName(l).getKeyName())) {
+													log.debug("Matched against SubjectAltName.");
+													return true;
+												}
+											}
+										}
+									}
+								} catch (CertificateParsingException e1) {
+									log
+											.error("Encountered an problem trying to extract Subject Alternate Name from supplied certificate: "
+													+ e1);
+								}
+
+								//If that doesn't work, try to match using SSL-style hostname matching
+								if (ShibPOSTProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
+										keyInfo[k].itemKeyName(l).getKeyName())) {
+									log.debug("Matched against hostname.");
 									return true;
 								}
+
 							} catch (XMLSecurityException e) {
 								log.error("Encountered an error reading federation metadata: " + e);
 							}
@@ -626,10 +667,10 @@ public class AAServlet extends TargetFederationComponent {
 		return true;
 	}
 
-	protected String getCredentialName(HttpServletRequest req) {
+	protected X509Certificate getCredentialFromProvider(HttpServletRequest req) {
 		X509Certificate[] certArray = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
 		if (certArray != null && certArray.length > 0) {
-			return certArray[0].getSubjectDN().getName();
+			return certArray[0];
 		}
 		return null;
 	}

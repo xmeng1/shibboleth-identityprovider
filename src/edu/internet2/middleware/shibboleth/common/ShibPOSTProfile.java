@@ -46,6 +46,8 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.security.auth.x500.X500Principal;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.NDC;
 import org.apache.xml.security.signature.XMLSignature;
@@ -71,8 +73,8 @@ import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
  * @author Scott Cantor @created April 11, 2002
  */
 public class ShibPOSTProfile {
-	
-	private Pattern regex = Pattern.compile(".*CN=([^,/]+).*");
+
+	private static Pattern	regex		= Pattern.compile(".*CN=([^,/]+).*");
 
 	/** XML Signature algorithm to apply */
 	protected String		algorithm	= XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
@@ -278,20 +280,17 @@ public class ShibPOSTProfile {
 
 		String issuer = null;
 		if (relyingParty.isLegacyProvider()) {
+			
 			log.debug("Service Provider is running Shibboleth <= 1.1.  Using old style issuer.");
-
 			if (relyingParty.getIdentityProvider().getResponseSigningCredential() == null
 					|| relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate() == null) {
 				throw new SAMLException("Cannot serve legacy style assertions without an X509 certificate");
 			}
-
-			Matcher matches = regex.matcher(relyingParty.getIdentityProvider().getResponseSigningCredential()
-					.getX509Certificate().getSubjectDN().getName());
-			if (!matches.find() || matches.group(1).equals("")) {
+			issuer = getHostNameFromDN(relyingParty.getIdentityProvider().getResponseSigningCredential()
+					.getX509Certificate().getSubjectX500Principal());
+			if (issuer == null || issuer.equals("")) {
 				throw new SAMLException("Error parsing certificate DN while determining legacy issuer name.");
-
 			}
-			issuer = matches.group(1);
 
 		} else {
 			issuer = relyingParty.getIdentityProvider().getProviderId();
@@ -448,5 +447,14 @@ public class ShibPOSTProfile {
 		} finally {
 			NDC.pop();
 		}
+	}
+
+	public static String getHostNameFromDN(X500Principal dn) {
+		Matcher matches = regex.matcher(dn.getName(X500Principal.RFC2253));
+		if (!matches.find() || matches.groupCount() > 1) {
+			log.error("Unable to extract host name name from certificate subject DN.");
+			return null;
+		}
+		return matches.group(1);
 	}
 }
