@@ -28,10 +28,13 @@
 		</ArpRepository>
 	</ReleasePolicyEngine>
 
+	<!-- Uncomment one of the following configuration sections to customize the logging behavior -->
 	<!--
 	<Logging>
 		<Log4JConfig location="file:///tmp/log4j.properties" />
 	</Logging>
+	-->
+	<!--
 	<Logging>
 		<ErrorLog level="DEBUG" location="file:///tmp/shib-error.log" />
 		<TransactionLog location="file:///tmp/shib-access.log" />
