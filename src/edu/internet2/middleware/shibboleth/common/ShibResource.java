@@ -63,14 +63,11 @@ import java.net.URL;
 public class ShibResource {
 
 	private URL resource;
-	private Class requester;
-
 	public ShibResource(String name) throws ResourceNotAvailableException {
 		this(name, Object.class);
 	}
 
 	public ShibResource(String name, Class requester) throws ResourceNotAvailableException {
-		this.requester = requester;
 		try {
 			resource = new URL(name);
 		} catch (MalformedURLException e) {
