@@ -47,6 +47,7 @@
 package edu.internet2.middleware.shibboleth.hs;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.opensaml.SAMLNameIdentifier;
@@ -77,6 +78,21 @@ public class HSNameMapper extends NameMapper {
 	}
 
 	public HSNameIdentifierMapping getNameIdentifierMappingById(String id) {
+
+		if (id == null || id.equals("")) {
+			if (!initialized) {
+				return defaultMapping;
+			}
+
+			if (byFormat.size() == 1) {
+				Iterator values = byFormat.values().iterator();
+				Object mapping = values.next();
+				if (mapping instanceof HSNameIdentifierMapping) {
+					return (HSNameIdentifierMapping) mapping;
+				}
+			}
+		}
+
 		return (HSNameIdentifierMapping) byId.get(id);
 	}
 

@@ -47,6 +47,7 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
+import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -55,8 +56,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.apache.xerces.parsers.DOMParser;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 
 import edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle;
 
@@ -66,9 +69,10 @@ import edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle;
 public class NameMapper {
 
 	private static Logger log = Logger.getLogger(NameMapper.class.getName());
-	private Map byFormat = new HashMap();
+	protected Map byFormat = new HashMap();
 	private static Map registeredMappingTypes = Collections.synchronizedMap(new HashMap());
 	protected boolean initialized = false;
+	protected SharedMemoryShibHandle defaultMapping;
 
 	static {
 		try {
@@ -87,6 +91,27 @@ public class NameMapper {
 		} catch (ClassNotFoundException e) {
 			log.error("Unable to pre-register Name mapping implementation types.");
 		}
+	}
+
+	public NameMapper() {
+		try {
+			String rawConfig =
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "		handleTTL=\"1800\"/>";
+			DOMParser parser = new DOMParser();
+			parser.parse(new InputSource(new StringReader(rawConfig)));
+			defaultMapping = new SharedMemoryShibHandle(parser.getDocument().getDocumentElement());
+
+		} catch (Exception e) {
+			log.error("Unable to register default Name Identifier Mapping.");
+			initialize();
+		}
+	}
+
+	protected void initialize() {
+		initialized = true;
+		defaultMapping = null;
 	}
 
 	public void addNameMapping(Element e) throws NameIdentifierMappingException {
@@ -137,7 +162,8 @@ public class NameMapper {
 
 	public void addNameMapping(NameIdentifierMapping mapping) {
 
-		initialized = true;
+		initialize();
+
 		if (byFormat.containsKey(mapping.getNameIdentifierFormat())) {
 			log.error("Attempted to register multiple Name Mappings with the same format.  Skipping duplicates...");
 			return;
@@ -148,11 +174,7 @@ public class NameMapper {
 
 	public NameIdentifierMapping getNameIdentifierMapping(URI format) {
 		if (!initialized) {
-			try {
-				return new SharedMemoryShibHandle(null);
-			} catch (NameIdentifierMappingException e) {
-				return null;
-			}
+			return defaultMapping;
 		}
 		return (NameIdentifierMapping) byFormat.get(format);
 	}

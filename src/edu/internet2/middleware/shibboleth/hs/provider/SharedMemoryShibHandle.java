@@ -76,7 +76,6 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 
 	public SharedMemoryShibHandle(Element config) throws NameIdentifierMappingException {
 		super(config);
-		//If we add anything to this constructor, 
 	}
 
 	public SAMLNameIdentifier getNameIdentifierName(

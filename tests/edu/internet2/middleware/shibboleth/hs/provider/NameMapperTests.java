@@ -72,6 +72,7 @@ import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
+import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.hs.HSNameMapper;
 
 /**
@@ -82,20 +83,19 @@ import edu.internet2.middleware.shibboleth.hs.HSNameMapper;
 
 public class NameMapperTests extends TestCase {
 
-	private static Logger log = Logger.getLogger(NameMapperTests.class.getName());
 	private DOMParser parser = new DOMParser();
 
 	public NameMapperTests(String name) {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	public static void main(String[] args) {
 		junit.textui.TestRunner.run(NameMapperTests.class);
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	protected void setUp() throws Exception {
@@ -164,9 +164,14 @@ public class NameMapperTests extends TestCase {
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
 			SAMLNameIdentifier nameId =
-				nameMapper.getNameIdentifierName("cryptotest", new AuthNPrincipal("testprincipal"), null, null);
+				nameMapper.getNameIdentifierName(
+					"cryptotest",
+					new AuthNPrincipal("testprincipal"),
+					new BasicServiceProvider(),
+					new BasicIdentityProvider("urn-x:testid"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, null, null);
+			AuthNPrincipal principal =
+				nameMapper.getPrincipal(nameId, new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
 
 		} catch (MalformedURLException e) {
@@ -183,19 +188,10 @@ public class NameMapperTests extends TestCase {
 		try {
 
 			HSNameMapper nameMapper = new HSNameMapper();
-/*
-			String rawConfig =
-				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping id=\"memorytest\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
-					+ "		type=\"SharedMemoryShibHandle\" handleTTL=\"1800\"/>";
-*/
-			//parser.parse(new InputSource(new StringReader(rawConfig)));
-			//nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
-			
-			//TODO fix
+
 			SAMLNameIdentifier nameId =
 				nameMapper.getNameIdentifierName(
-					"",
+					null,
 					new AuthNPrincipal("testprincipal"),
 					new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
@@ -211,6 +207,109 @@ public class NameMapperTests extends TestCase {
 			fail("Error exercising NameMaper: " + e.getMessage());
 		}
 	}
+
+	public void testDefaultingId() {
+
+		try {
+
+			HSNameMapper nameMapper = new HSNameMapper();
+
+			File file = new File("data/handle.jks");
+
+			String rawConfig =
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "		type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
+					+ "		<KeyStorePath>"
+					+ file.toURL().toString()
+					+ "</KeyStorePath>"
+					+ "		<KeyStorePassword>shibhs</KeyStorePassword>"
+					+ "		<KeyStoreKeyAlias>handlekey</KeyStoreKeyAlias>"
+					+ "		<KeyStoreKeyPassword>shibhs</KeyStoreKeyPassword>"
+					+ "	</NameMapping>";
+
+			parser.parse(new InputSource(new StringReader(rawConfig)));
+			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
+
+			SAMLNameIdentifier nameId =
+				nameMapper.getNameIdentifierName(
+					null,
+					new AuthNPrincipal("testprincipal"),
+					new BasicServiceProvider(),
+					new BasicIdentityProvider("urn-x:testid"));
+
+			AuthNPrincipal principal =
+				nameMapper.getPrincipal(nameId, new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
+
+			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
+
+			HSNameIdentifierMapping nameMapping = nameMapper.getNameIdentifierMappingById(null);
+			if (!(nameMapping instanceof CryptoShibHandle)) {
+				fail("HSNameMapper defaulted to incorrect name mapping.");
+			}
+
+		} catch (NameIdentifierMappingException e) {
+			fail("Error exercising NameMaper: " + e.getMessage());
+		} catch (Exception e) {
+			fail("Error exercising NameMaper: " + e.getMessage());
+		}
+	}
+
+	public void testDefaultingAmbiguousId() {
+
+		try {
+
+			HSNameMapper nameMapper = new HSNameMapper();
+
+			File file = new File("data/handle.jks");
+
+			String rawConfig =
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "		type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
+					+ "		<KeyStorePath>"
+					+ file.toURL().toString()
+					+ "</KeyStorePath>"
+					+ "		<KeyStorePassword>shibhs</KeyStorePassword>"
+					+ "		<KeyStoreKeyAlias>handlekey</KeyStoreKeyAlias>"
+					+ "		<KeyStoreKeyPassword>shibhs</KeyStoreKeyPassword>"
+					+ "	</NameMapping>";
+
+			parser.parse(new InputSource(new StringReader(rawConfig)));
+			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
+
+			String rawConfig2 =
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<NameMapping format=\"urn-x:testNameIdentifier\""
+					+ "		type=\"CryptoHandleGenerator\" handleTTL=\"1800\">"
+					+ "		<KeyStorePath>"
+					+ file.toURL().toString()
+					+ "</KeyStorePath>"
+					+ "		<KeyStorePassword>shibhs</KeyStorePassword>"
+					+ "		<KeyStoreKeyAlias>handlekey</KeyStoreKeyAlias>"
+					+ "		<KeyStoreKeyPassword>shibhs</KeyStoreKeyPassword>"
+					+ "	</NameMapping>";
+
+			parser.parse(new InputSource(new StringReader(rawConfig2)));
+
+			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
+
+			nameMapper.getNameIdentifierName(
+				null,
+				new AuthNPrincipal("testprincipal"),
+				new BasicServiceProvider(),
+				new BasicIdentityProvider("urn-x:testid"));
+
+			fail("HSNameMapper defaulted to incorrect name mapping.");
+
+			//This is only a failure if we don't get this exception
+		} catch (NameIdentifierMappingException e) {
+
+		} catch (Exception e) {
+
+			fail("Error exercising NameMaper: " + e.getMessage());
+		}
+	}
 	public void testMemoryMapping() {
 
 		try {
@@ -218,22 +317,22 @@ public class NameMapperTests extends TestCase {
 			HSNameMapper nameMapper = new HSNameMapper();
 
 			String rawConfig =
-			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-			+ "<NameMapping id=\"memorytest\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
-			+ "		type=\"SharedMemoryShibHandle\" handleTTL=\"1800\"/>";
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<NameMapping id=\"memorytest\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "		type=\"SharedMemoryShibHandle\" handleTTL=\"1800\"/>";
 
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
 			SAMLNameIdentifier nameId =
-			nameMapper.getNameIdentifierName(
+				nameMapper.getNameIdentifierName(
 					"memorytest",
 					new AuthNPrincipal("testprincipal"),
 					new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			AuthNPrincipal principal =
-			nameMapper.getPrincipal(nameId, new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
+				nameMapper.getPrincipal(nameId, new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
 
