@@ -136,8 +136,10 @@ public class NameMapper {
 	 *             supplied configuration
 	 */
 	public void addNameMapping(Element e) throws NameIdentifierMappingException {
-
-		if (!e.getTagName().equals("NameMapping")) {
+		
+		if (!e.getTagName().equals("NameMapping")
+			&& (!(e.getNamespaceURI().equals(NameIdentifierMapping.mappingNamespace))
+				|| !e.getTagName().endsWith(":NameMapping"))) {
 			throw new IllegalArgumentException();
 		}
 

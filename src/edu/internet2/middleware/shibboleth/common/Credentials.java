@@ -97,7 +97,8 @@ public class Credentials {
 
 	public Credentials(Element e) {
 
-		if (!e.getTagName().equals("Credentials")) {
+		if (!e.getTagName().equals("Credentials")
+			&& (!(e.getNamespaceURI().equals(Credentials.credentialsNamespace)) || !e.getTagName().endsWith(":Credentials"))) {
 			throw new IllegalArgumentException();
 		}
 
