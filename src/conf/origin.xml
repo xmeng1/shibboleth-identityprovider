@@ -30,14 +30,14 @@
 	</Logging>
 	-->
 
-	<name:NameMapping 
+	<NameMapping 
 		xmlns="urn:mace:shibboleth:namemapper:1.0" 
 		id="crypto" 
 		format="urn:mace:shibboleth:1.0:nameIdentifier" 
 		type="SharedMemoryShibHandle" 
 		handleTTL="1800"/>
 
-	<cred:Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
+	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
 		<FileResolver Id="foo">
 			<Key format="DER">
 				<Path>/conf/shib2.key</Path>
@@ -46,7 +46,7 @@
 				<Path>/conf/shib2.crt</Path>
 			</Certificate>
 		</FileResolver>
-	</cred:Credentials>
+	</Credentials>
 
 </ShibbolethOriginConfig>
 
