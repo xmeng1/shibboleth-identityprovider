@@ -92,4 +92,10 @@ public class SampleConnector extends BaseResolutionPlugIn implements DataConnect
 		return attributes;
 	}
 
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
+     */
+    public String getFailoverDependencyId() {
+        return null;
+    }
 }

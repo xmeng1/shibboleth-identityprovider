@@ -88,4 +88,11 @@ public class ScopeTestConnector extends BaseResolutionPlugIn implements DataConn
 		return attributes;
 	}
 
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
+     */
+    public String getFailoverDependencyId() {
+        return null;
+    }
+
 }
