@@ -59,6 +59,8 @@ import javax.servlet.http.*;
 import javax.naming.*;
 import javax.naming.directory.*;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+
 import edu.internet2.middleware.shibboleth.aa.*;
 
 public class UI extends HttpServlet {
@@ -74,9 +76,9 @@ public class UI extends HttpServlet {
     AAResponder responder;
     ArpRepository arpFactory;
     Arp adminArp;
+    Arp userArp;
 
-    private static Logger log = 
-	Logger.getLogger(UI.class.getName());; 
+    private static Logger log = Logger.getLogger(UI.class.getName());
     
     public void init(ServletConfig conf)
 	throws ServletException
@@ -90,12 +92,16 @@ public class UI extends HttpServlet {
 	    arpFactory = ArpRepositoryFactory.getInstance("edu.internet2.middleware.shibboleth.aa.FileArpRepository", props);
 	    responder = new AAResponder(arpFactory, getDirCtx(), 
 					getInitParameter("domain"));
+	    log.info("Loading Responder");
 	    adminArp = arpFactory.lookupArp(adminArpName, true);
 	    if(adminArp ==  null) {
-		log.error("Admin ARP not found in Arp Repository ("+arpFactory+")");
-		throw new ServletException("Unable to load admin ARP.");
-	}
-
+		adminArp = new Arp(adminArpName, true);
+		adminArp.setNew(true);
+		adminArp.setLastRead(new Date());
+		log.info("Admin ARP not found. Creating new.");
+	    } else {
+		log.info("Loaded admin ARP.");
+	    }
 	} catch (Exception ex) {
 	    throw new ServletException(ex);
 	}
@@ -105,15 +111,17 @@ public class UI extends HttpServlet {
 	arpDir = getInitParameter("ARPdir");
 	if (arpDir == null || arpDir.equals("")) 
 	    throw new ServletException("Cannot find location of ARPs in init parameters");
+	log.info("Reading ARPs from arpDir: "+arpDir);
 
 	ldapUrl = getInitParameter("LDAPurl");
 	if (ldapUrl == null || ldapUrl.equals("")) 
 	    throw new ServletException("Cannot find URL of LDAP directory in init parameters");
-	
+	log.info("Searching LDAP database at url: "+ldapUrl);
+
 	attrFile = getInitParameter("AttrJarfile");
 	if (attrFile == null || attrFile.equals("")) 
 	    throw new ServletException("Cannot find location of attribute jarfile in init parameters");
-
+	log.info("Reading attribute file "+attrFile);
     }
 
     public void service(HttpServletRequest req, 
@@ -137,6 +145,17 @@ public class UI extends HttpServlet {
 	    if (username !=null) {
 		try{
 		    DirContext userCtx = getUserCtx(username);
+		    userArp = arpFactory.lookupArp(username, false);
+		    if (userArp == null) {
+			userArp = new Arp(username, false);
+			userArp.setNew(true);
+			userArp.setLastRead(new Date());
+			System.out.println("creating ARP");
+			log.info("No ARP found for "+username+". Creating new.");
+		    }
+		    else {
+			log.info("Listing existing ARP for "+username+".");
+		    }
 		} catch (UIException ex) {
 		    err = "Error: No record found for user "+username;
 		    username = "";
@@ -144,27 +163,32 @@ public class UI extends HttpServlet {
 	    }
 	    if (username==null || username.equals("") || action==null) {
 		getLogin(req, res, err); 
+		log.info("No username found.  Logging in.");
 	    }
 	    else {
 	    if (action.equals("Change user")) {
 		getLogin(req, res, err); 
+		log.info("Change User action requested");
 	    }
 	    if (action.equals("Login") || action.equals("Cancel")) {
 		String isNew = req.getParameter("isNew");
-		if (isNew!=null && isNew.equals("true"))
+		if (isNew!=null && isNew.equals("true")) {
+		    log.info("User cancelled ARP edit without saving.  Deleting changes.");
 		    deleteArp(username, resource);
+		}
 		listArps(username, req, res);
 	    }
 	    if (action.equals("Edit")) {
 		editArp(username, resource, req, res, "false");
 	    }
 	    if (action.equals("Add new resource") || action.equals("Copy")) {
+		log.info("Creating new ARP for resource "+resource);
 		editArp(username, resource, req, res, "true");
 	    }
 	    if (action.equals("Save")) {
 		saveArp(username, resource, req, res);
 	    }
-	    if (action.equals("Delete") || action.equals("Delete entire ARP")) {
+	    if (action.equals("Delete") || action.equals("Delete all ARPs")) {
 		deleteArp(username, resource);
 		listArps(username, req, res);
 	    }
@@ -174,9 +198,10 @@ public class UI extends HttpServlet {
 	    if (action.equals("Save Filter")) {
 		saveFilter(username, resource, req, res);
 	    }
-	      }	    
-        } catch (UIException ex) {
+	    }
+        } catch (Exception ex) {
 	    	System.out.println(ex);
+		log.error(ex);
 		handleError(req, res, ex);
 	    }
     }
@@ -213,14 +238,11 @@ public class UI extends HttpServlet {
 	throws UIException
     {
 	try{
-	    Arp arp = arpFactory.lookupArp(username, false);
-	    if (arp == null) 
-		System.err.println("no arp found for "+username);
-	    req.setAttribute("shars", arp.getShars());
+	    req.setAttribute("shars", userArp.getShars());
 	    req.setAttribute("debug", debug);
 	    req.setAttribute("userCtx", getUserCtx(username));
 	} catch (Exception ex) {
-	    throw new UIException("Error retrieving user" +ex);
+	    throw new UIException("Error retrieving user " +username+". "+ex);
 	}
 
 	loadJsp("/UIlist.jsp", req, res);
@@ -235,8 +257,8 @@ public class UI extends HttpServlet {
 	throws UIException
     {
 	try{
-	Arp arp = arpFactory.lookupArp(username, false);
-	ArpShar s = arp.getShar(resource);
+	ArpShar s = userArp.getShar(resource);
+	log.info("Editing ARP for "+username+". SHAR: "+resource+" Resource: "+resource);
 
 	AAAttributes aaa = new AAAttributes(attrFile);
 
@@ -246,6 +268,7 @@ public class UI extends HttpServlet {
 	req.setAttribute("isNew", isNew);
 
 	} catch (Exception ex) {
+	    log.error("Error retrieving filter." +ex);
 	    throw new UIException("Error retrieving filter." +ex);
 	}
 
@@ -265,8 +288,9 @@ public class UI extends HttpServlet {
     {
 	try{
 	String attr = req.getParameter("Attr");
-	Arp arp = arpFactory.lookupArp(username, false);
-	ArpShar s = arp.getShar(resource);
+	log.info("Editing filter for user "+username+", resource "
+		 +resource+", attribute "+ attr);
+	ArpShar s = userArp.getShar(resource);
 	ArpResource r = null;
 	ArpAttribute a = null;
 	if (s!=null)
@@ -298,6 +322,7 @@ public class UI extends HttpServlet {
 	try { 
 	    ctx = new InitialDirContext(env);
 	} catch (Exception ex) {
+	    log.error("Error getting directory context. "+ex);
 	    throw new UIException
 		("Error getting context. "+ex);
 	}
@@ -311,6 +336,7 @@ public class UI extends HttpServlet {
 	    DirContext ctx = getDirCtx();
 	    userCtx = (DirContext)ctx.lookup("uid="+username);
 	} catch (Exception ex) {
+	    log.error("Error getting user context for "+username+". "+ex);
 	    throw new UIException
 		("Error getting user context for "+username+". "+ex);
 	}
@@ -334,11 +360,11 @@ public class UI extends HttpServlet {
     private void deleteArp(String username, String resource)
     {
 	try{ 
-	    Arp arp = arpFactory.lookupArp(username, false);
-	    if (arp.isNew())
+	    if (userArp==null)
 		return;
 	    if (resource==null || resource.equals("")) {
-		arpFactory.remove(arp);
+		arpFactory.remove(userArp);
+		log.info("Deleting entire ARP for user "+username);
 		return;
 	    }
 	    /* NOTE: at the time of this interface, SHAR was required for 
@@ -346,15 +372,16 @@ public class UI extends HttpServlet {
 	       resource and shar are the same thing. Thus, to delete a 
 	       resource, delete both resource and shar.  If these two 
 	       concepts get separated out again, do it individually */
-	    ArpShar s = arp.getShar(resource);
+	    ArpShar s = userArp.getShar(resource);
 	    if (s==null) 
 		return;
 	    ArpResource r = s.getResource(resource);
 	    if (r==null)
 		return;
 	    s.removeAResource(resource);
-	    arp.removeAShar(resource);
-	    arpFactory.update(arp);
+	    userArp.removeAShar(resource);
+	    arpFactory.update(userArp);
+	    log.info("Deleting ARP for user "+username+", resource "+resource);
 	} catch (Exception e)  {
 	}
     }
@@ -365,10 +392,9 @@ public class UI extends HttpServlet {
 			 HttpServletResponse res)
     {
 	try{ 
-	    Arp arp = arpFactory.lookupArp(username, false);
 	    String []subAttrs = req.getParameterValues("attr");
 	    String []admAttrs = req.getParameterValues("adminAttrs");
-	    ArpShar s = arp.getShar(resource);
+	    ArpShar s = userArp.getShar(resource);
 	    if (s==null) 
 		s = new ArpShar(resource, false); 
 	    ArpResource r = s.getResource(resource);
@@ -400,8 +426,9 @@ public class UI extends HttpServlet {
 		}
 	    }
 	    s.addAResource(nr, true);
-	    arp.addAShar(s);
-	    arpFactory.update(arp);
+	    userArp.addAShar(s);
+	    arpFactory.update(userArp);
+	    log.info("ARP edited for user "+username+", resource "+resource+".  Saving.");
 
 	    listArps(username, req, res);
 
@@ -417,8 +444,7 @@ public class UI extends HttpServlet {
     {
 	try{
 	String attr = req.getParameter("Attr");
-	Arp arp = arpFactory.lookupArp(username, false);
-	ArpShar s = arp.getShar(resource);
+	ArpShar s = userArp.getShar(resource);
 	if (s==null)
 	    s = new ArpShar(resource, false);
 	ArpResource r = s.getResource(resource);
@@ -440,12 +466,15 @@ public class UI extends HttpServlet {
 	a.setFilter(filter, true);
 	r.addAnAttribute(a);
 	s.addAResource(r);
-	arp.addAShar(s);
-	arpFactory.update(arp);
+	userArp.addAShar(s);
+	arpFactory.update(userArp);
+	log.info("Saved filter for user "+username+". resource: "
+		 +resource+" attribute: "+attr);
 
 	editFilter(username, resource, req, res, "true");
 
 	} catch (Exception ex) {
+	    log.error("Error: "+ex);
 	    System.err.println("error: " +ex);
 	}
 

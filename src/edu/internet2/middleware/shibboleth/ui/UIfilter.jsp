@@ -49,8 +49,6 @@
       String checked = "";
       if (filter != null) {
 	ArpFilterValue afv = new ArpFilterValue(dAttr.get(j), false);
-	ArpFilterValue afvt = new ArpFilterValue(dAttr.get(j), true);
-	ArpFilterValue[] afva = filter.getFilterValues();
 	if (filter.contains(afv)) {
 	    checked = "<input type=\"checkbox\" name=\"filterval\" value=\""+dAttr.get(j)+"\" checked> Yes";
 	} else {
@@ -61,7 +59,7 @@
 	    if (afvi[k].equals(afv) && (afvi[k].mustInclude() == false)) {
 	        checked = "<i>filtered</i>";
  	    }
-	    if (afvi[k].equals(afvt) && (afvi[k].mustInclude())) {
+	    if (afvi[k].equals(afv) && (afvi[k].mustInclude())) {
 	        checked = "<i>released</i>";
  	    }
 	}
@@ -98,32 +96,6 @@ public ArpAttribute getAdminAttr(Arp admin,
     return a;
 }
 
-public ArpFilter combineFilters(ArpAttribute attr1, ArpAttribute attr2){
-    ArpFilter filt2 = attr2.getFilter();
-    if (attr1 == null) 
- 	return filt2;
-    ArpFilter filt1 = attr1.getFilter();
-    if(filt1 == null)
-	return filt2;
-
-    if(filt2 == null)
-	return filt1;
-
-    ArpFilterValue[]  fv1Array = filt1.getFilterValues();
-	
-    for(int i=0; i<fv1Array.length; i++){
-	ArpFilterValue afv = fv1Array[i];
-
-        if(afv.mustInclude()){  // cannot be filtered out
-	    filt2.removeFilterValue(afv); // ok if not there
-	}else{
-	    filt2.addAFilterValue(afv);
-	}
-    }
-    return filt2;
-}
-    
-    
 %>	
   </body>	
 </html>	  

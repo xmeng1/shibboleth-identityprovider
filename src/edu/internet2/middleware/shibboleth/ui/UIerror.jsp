@@ -21,7 +21,7 @@
 
 <p>The inter-institutional access system experienced a technical failure.</p>
 <hr>
-<p class="error">Handle Service failure at (<bean:write name="requestURL" />)</p
+<p class="error">Shib UI failure at (<bean:write name="requestURL" />)</p
 >
 
 <p><bean:write name="errorText" /></p>

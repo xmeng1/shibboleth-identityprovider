@@ -172,6 +172,8 @@ function formCancel()
 <%!
 public ArpAttribute getAdminAttr(Arp admin, 
 			String resource, String attr) {
+    if (resource==null || resource.equals(""))
+	return null;
     ArpShar s = admin.getShar(resource);
     if (s == null) {
 	s = admin.getDefaultShar();
