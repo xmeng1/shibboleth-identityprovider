@@ -177,6 +177,8 @@ public class HandleServlet extends TargetFederationComponent {
 			String remoteProviderId = req.getParameter("providerId");
 			if (remoteProviderId == null) {
 				relyingParty = targetMapper.getLegacyRelyingParty();
+			} else if (remoteProviderId.equals("")) {
+				throw new InvalidClientDataException("Invalid service provider id.");
 			} else {
 				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
 				relyingParty = targetMapper.getRelyingParty(req.getParameter("providerId"));
