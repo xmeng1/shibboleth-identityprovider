@@ -133,4 +133,11 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 	public String[] getDataConnectorDependencyIds() {
 		return custom.getDataConnectorDependencyIds();
 	}
+
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugIn#getPropagateErrors()
+     */
+    public boolean getPropagateErrors() {
+        return custom.getPropagateErrors();
+    }
 }

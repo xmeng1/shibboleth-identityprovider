@@ -136,4 +136,11 @@ public class CustomDataConnector implements DataConnectorPlugIn {
     public String getFailoverDependencyId() {
         return custom.getFailoverDependencyId();
     }
+
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugIn#getPropagateErrors()
+     */
+    public boolean getPropagateErrors() {
+        return custom.getPropagateErrors();
+    }
 }
