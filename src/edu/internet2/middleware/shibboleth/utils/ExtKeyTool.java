@@ -599,11 +599,12 @@ public class ExtKeyTool {
 
 	protected void startLogger(Properties arguments) {
 		Logger root = Logger.getRootLogger();
-		root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
 		if (arguments.getProperty("verbose", null) == null
 			|| arguments.getProperty("verbose", null).equals("false")) {
+			root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
 			root.setLevel(Level.WARN);
 		} else {
+			root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
 			root.setLevel(Level.DEBUG);
 		}
 	}
