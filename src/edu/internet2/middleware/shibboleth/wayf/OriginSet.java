@@ -6,6 +6,7 @@ import java.util.ArrayList;
  * This class is used to create logical groupings of shibboleth Origin Sites.
  * Each grouping is associated with a textual name that might be displayed 
  * in a UI to accommodate user selection.
+ * 
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 

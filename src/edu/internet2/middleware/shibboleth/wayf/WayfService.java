@@ -6,12 +6,11 @@ import java.net.URLEncoder;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.xml.sax.SAXException;
 
 /**
@@ -26,6 +25,7 @@ public class WayfService extends HttpServlet {
 
 	private String wayfConfigFileLocation;
 	private static Logger log = Logger.getLogger(WayfService.class.getName());
+	private String log4jConfigFileLocation;
 
 	/**
 	 * @see GenericServlet#init()
@@ -33,8 +33,8 @@ public class WayfService extends HttpServlet {
 	public void init() throws ServletException {
 
 		super.init();
-
 		loadInitParams();
+		initLogger();
 		//initialize configuration from file
 		InputStream is =
 			getServletContext().getResourceAsStream(wayfConfigFileLocation);
@@ -74,6 +74,32 @@ public class WayfService extends HttpServlet {
 			WayfConfig.getLogoLocation());
 	}
 
+	private void loadInitParams() {
+
+		wayfConfigFileLocation =
+			getServletConfig().getInitParameter("WAYFConfigFileLocation");
+		if (wayfConfigFileLocation == null) {
+			wayfConfigFileLocation = "/WEB-INF/conf/shibboleth.xml";
+		}
+		log4jConfigFileLocation =
+			getServletConfig().getInitParameter("log4jConfigFileLocation");
+		if (log4jConfigFileLocation == null) {
+			log4jConfigFileLocation = "/WEB-INF/conf/log4j.properties";
+		}
+
+	}
+
+	/**
+	 * Starts up Log4J.
+	 */
+
+	private void initLogger() {
+
+		PropertyConfigurator.configure(
+			getServletContext().getRealPath("/") + log4jConfigFileLocation);
+
+	}
+
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest, HttpServletResponse)
 	 */
@@ -82,7 +108,7 @@ public class WayfService extends HttpServlet {
 		//Tell the browser not to cache the WAYF page
 		res.setHeader("Cache-Control", "no-cache");
 		res.setHeader("Pragma", "no-cache");
-		res.setDateHeader("Expires", 0 );
+		res.setDateHeader("Expires", 0);
 
 		//Decide how to route the request based on query string
 		String requestType = req.getParameter("action");
@@ -91,9 +117,13 @@ public class WayfService extends HttpServlet {
 		}
 		try {
 			if (requestType.equals("deleteFromCache")) {
-				handleDeleteFromCache(req, res);
-			} else if (hasCachedHS(req)) {
-				handleRedirect(req, res, getCachedHS(req));
+				WayfCacheFactory.getInstance().deleteHsFromCache(req, res);
+				handleLookup(req, res);
+			} else if (WayfCacheFactory.getInstance().hasCachedHS(req)) {
+				handleRedirect(
+					req,
+					res,
+					WayfCacheFactory.getInstance().getCachedHS(req));
 			} else if (requestType.equals("search")) {
 				handleSearch(req, res);
 			} else if (requestType.equals("selection")) {
@@ -104,16 +134,6 @@ public class WayfService extends HttpServlet {
 		} catch (WayfException we) {
 			handleError(req, res, we);
 		}
-	}
-
-	private void loadInitParams() {
-
-		wayfConfigFileLocation =
-			getServletConfig().getInitParameter("WAYFConfigFileLocation");
-		if (wayfConfigFileLocation == null) {
-			wayfConfigFileLocation = "/WEB-INF/conf/shibboleth.xml";
-		}
-
 	}
 
 	private void handleLookup(HttpServletRequest req, HttpServletResponse res)
@@ -156,34 +176,6 @@ public class WayfService extends HttpServlet {
 
 	}
 
-	private void handleDeleteFromCache(
-		HttpServletRequest req,
-		HttpServletResponse res)
-		throws WayfException {
-
-		if (WayfConfig.getCache().equals("SESSION")) {
-
-			HttpSession session = req.getSession(false);
-			if (session != null) {
-				session.removeAttribute("selectedHandleService");
-			}
-
-		} else if (WayfConfig.getCache().equals("COOKIES")) {
-
-			Cookie[] cookies = req.getCookies();
-			for (int i = 0; i < cookies.length; i++) {
-				if (cookies[i].getName().equals("selectedHandleService")) {
-					cookies[i].setMaxAge(0);
-					res.addCookie(cookies[i]);
-				}
-			}
-
-		}
-
-		handleLookup(req, res);
-
-	}
-
 	private void handleSelection(
 		HttpServletRequest req,
 		HttpServletResponse res)
@@ -194,42 +186,13 @@ public class WayfService extends HttpServlet {
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
-			addHsToCache(req, res, handleService);
+			WayfCacheFactory.getInstance().addHsToCache(
+				handleService,
+				req,
+				res);
 			handleRedirect(req, res, handleService);
 		}
 
-	}
-
-	private void addHsToCache(
-		HttpServletRequest req,
-		HttpServletResponse res,
-		String handleService) {
-
-		if (WayfConfig.getCache().equals("NONE")) {
-			return;
-		} else if (WayfConfig.getCache().equals("SESSION")) {
-
-			HttpSession session = req.getSession(true);
-			session.setMaxInactiveInterval(7200);
-			session.setAttribute("selectedHandleService", handleService);
-		} else if (WayfConfig.getCache().equals("COOKIES")) {
-
-			Cookie cacheCookie =
-				new Cookie("selectedHandleService", handleService);
-			cacheCookie.setComment(
-				"Used to cache selection of a user's Handle Service");
-
-			//Should probably get this stuff from config
-			/**     
-			 cacheCookie.setMaxAge();
-			 cacheCookie.setDomain();
-			 **/
-			res.addCookie(cacheCookie);
-
-		} else {
-			log.warn(
-				"Invalid Cache type specified: running with cache type NONE.");
-		}
 	}
 
 	private void handleRedirect(
@@ -297,40 +260,6 @@ public class WayfService extends HttpServlet {
 			throw new WayfException("Invalid data from SHIRE: No target URL received.");
 		}
 		return target;
-	}
-
-	private boolean hasCachedHS(HttpServletRequest req) {
-
-		if (getCachedHS(req) == null) {
-			return false;
-		} else {
-			return true;
-		}
-	}
-	private String getCachedHS(HttpServletRequest req) {
-
-		if (WayfConfig.getCache().equals("NONE")) {
-			return null;
-		} else if (WayfConfig.getCache().equals("SESSION")) {
-			HttpSession session = req.getSession(false);
-			if (session == null) {
-				return null;
-			}
-			return (String) session.getAttribute("selectedHandleService");
-
-		} else if (WayfConfig.getCache().equals("COOKIES")) {
-
-			Cookie[] cookies = req.getCookies();
-			for (int i = 0; i < cookies.length; i++) {
-				if (cookies[i].getName().equals("selectedHandleService")) {
-					return cookies[i].getValue();
-				}
-			}
-
-		}
-		log.warn("Invalid Cache type specified: running with cache type NONE.");
-		return null;
-
 	}
 
 }
