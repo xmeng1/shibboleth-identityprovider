@@ -230,7 +230,6 @@ public class AAServlet extends HttpServlet {
 						throw new ServletException("Attribute Authority response failure.");
 					}
 				}
-				throw new Exception("asdf");
 			}
 
 			URL resource = null;
