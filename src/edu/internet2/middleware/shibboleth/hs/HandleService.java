@@ -159,9 +159,6 @@ public class HandleService extends HttpServlet {
 		getServletContext().setAttribute(
 			"hs_detailedHelpURL",
 			HandleServiceConfig.getDetailedHelpURL());
-		getServletContext().setAttribute(
-			"hs_location",
-			HandleServiceConfig.getHsURL());
 	}
 
 	/**
@@ -209,7 +206,8 @@ public class HandleService extends HttpServlet {
 					req.getParameter("shire"),
 					req.getRemoteAddr(),
 					req.getRemoteUser(),
-					req.getAuthType());
+					req.getAuthType(),
+					req.getRequestURL().toString());
 			log.info(
 				"Assertion Generated: "
 					+ "elapsed time "
@@ -238,6 +236,7 @@ public class HandleService extends HttpServlet {
 		log.warn("Handle Service Failure: " + e);
 
 		req.setAttribute("errorText", e.toString());
+		req.setAttribute("requestURL", req.getRequestURL().toString());
 		RequestDispatcher rd = req.getRequestDispatcher("/hserror.jsp");
 
 		try {
@@ -289,7 +288,8 @@ public class HandleService extends HttpServlet {
 		String shireURL,
 		String clientAddress,
 		String remoteUser,
-		String authType)
+		String authType,
+		String hsURL)
 		throws HandleServiceException {
 		try {
 
@@ -298,7 +298,7 @@ public class HandleService extends HttpServlet {
 					remoteUser,
 					key,
 					Long.parseLong(HandleServiceConfig.getValidityPeriod()),
-					HandleServiceConfig.getHsURL());
+					hsURL);
 
 			log.info("Acquired Handle: " + aqh.getHandleID());
 

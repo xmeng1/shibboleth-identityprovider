@@ -5,7 +5,7 @@
 	<%@ taglib uri="/WEB-INF/tlds/struts-logic.tld" prefix="logic" %>
 	<%@ taglib uri="/WEB-INF/tlds/struts-bean.tld" prefix="bean" %>
 	
-	<jsp:useBean id="hs_location" scope="application" class="java.lang.String"/>
+	<jsp:useBean id="requestURL" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="errorText" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="hs_supportContact" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="hs_logoLocation" scope="application" class="java.lang.String"/>
@@ -26,7 +26,7 @@
 
 <p>Please email <a href="mailto:<bean:write name="hs_supportContact" />"><bean:write name="hs_supportContact" /></a> and include the following error message:</p>
 
-<p class="error">Handle Service failure at (<bean:write name="hs_location" />)</p>
+<p class="error">Handle Service failure at (<bean:write name="requestURL" />)</p>
 
 <p><bean:write name="errorText" /></p>
 

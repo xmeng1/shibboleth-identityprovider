@@ -3,7 +3,7 @@
     <classpathentry kind="var" path="JRE_LIB" rootpath="JRE_SRCROOT" sourcepath="JRE_SRC"/>
     <classpathentry kind="src" path="source"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/shibboleth.jar"/>
-    <classpathentry kind="lib" path="buildlibs/servlet.jar" sourcepath="/ShibTest/buildlibs/servlet-src.jar"/>
+    <classpathentry kind="lib" path="buildlibs/servlet.jar" rootpath="" sourcepath="/shib-java/buildlibs/servlet-src.jar"/>
     <classpathentry kind="lib" path="buildlibs/xerces.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/log4j-1.2.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
@@ -11,7 +11,7 @@
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
     <classpathentry kind="lib"
         path="webApplication/WEB-INF/lib/jce-bc.jar" sourcepath="/ShibTest/buildlibs/jce-bc-src.jar"/>
-    <classpathentry kind="lib" path="buildlibs/junit.jar" rootpath="" sourcepath="/shib-java/buildlibs/junit-src.jar"/>
+    <classpathentry kind="lib" path="buildlibs/junit.jar" sourcepath="/shib-java/buildlibs/junit-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug.jar" sourcepath="/shib-java/webApplication/WEB-INF/lib/jug-src.jar"/>
     <classpathentry kind="output" path="webApplication\WEB-INF\classes"/>
 </classpath>
