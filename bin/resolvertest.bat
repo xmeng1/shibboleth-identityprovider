@@ -42,7 +42,7 @@ REM add in the dependency .jar files
 for %%i in (%SHIB_HOME%\lib\*.jar) do (
 	call %SHIB_HOME%\cpappend.bat %%i
 )
-for %%i in (%SHIB_HOME%\webApplication\WEB-INF\*.jar) do (
+for %%i in (%SHIB_HOME%\webApplication\WEB-INF\lib\*.jar) do (
 	call %SHIB_HOME%\cpappend.bat %%i
 )
 
