@@ -44,6 +44,5 @@ public interface IdPProtocolHandler {
 	public String getHandlerName();
 
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, InvalidClientDataException,
-			IOException, ServletException;
+			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException;
 }

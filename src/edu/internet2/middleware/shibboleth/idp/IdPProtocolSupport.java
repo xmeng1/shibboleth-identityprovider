@@ -64,14 +64,14 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
  */
 public class IdPProtocolSupport implements Metadata {
 
-	private static Logger log = Logger.getLogger(IdPProtocolSupport.class.getName());
-	private Logger transactionLog;
-	private IdPConfig config;
-	private ArrayList fedMetadata = new ArrayList();
-	private NameMapper nameMapper;
-	private ServiceProviderMapper spMapper;
-	private ArpEngine arpEngine;
-	private AttributeResolver resolver;
+	private static Logger			log			= Logger.getLogger(IdPProtocolSupport.class.getName());
+	private Logger					transactionLog;
+	private IdPConfig				config;
+	private ArrayList				fedMetadata	= new ArrayList();
+	private NameMapper				nameMapper;
+	private ServiceProviderMapper	spMapper;
+	private ArpEngine				arpEngine;
+	private AttributeResolver		resolver;
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
 			ArpEngine arpEngine, AttributeResolver resolver) {
@@ -87,8 +87,8 @@ public class IdPProtocolSupport implements Metadata {
 
 	public static void validateEngineData(HttpServletRequest req) throws InvalidClientDataException {
 
-		if ((req.getRemoteUser() == null) || (req.getRemoteUser().equals(""))) { throw new InvalidClientDataException(
-				"Unable to authenticate remote user"); }
+		//TODO this should be pulled out into handlers
+
 		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) { throw new InvalidClientDataException(
 				"Unable to obtain client address."); }
 	}

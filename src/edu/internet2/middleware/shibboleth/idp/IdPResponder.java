@@ -75,14 +75,14 @@ import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
 public class IdPResponder extends HttpServlet {
 
-	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
-	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
-	private static Random idgen = new Random();
-	private SAMLBinding binding;
-	private Semaphore throttle;
-	private IdPConfig configuration;
-	private HashMap protocolHandlers = new HashMap();
-	private IdPProtocolSupport protocolSupport;
+	private static Logger		transactionLog		= Logger.getLogger("Shibboleth-TRANSACTION");
+	private static Logger		log					= Logger.getLogger(IdPResponder.class.getName());
+	private static Random		idgen				= new Random();
+	private SAMLBinding			binding;
+	private Semaphore			throttle;
+	private IdPConfig			configuration;
+	private HashMap				protocolHandlers	= new HashMap();
+	private IdPProtocolSupport	protocolSupport;
 
 	/*
 	 * @see javax.servlet.GenericServlet#init()
@@ -206,28 +206,27 @@ public class IdPResponder extends HttpServlet {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via GET.");
+		log.debug("Recieved a request via GET for endpoint (" + request.getRequestURI() + ").");
 
 		try {
 			// TODO this throttle should probably just wrap signing operations...
 			throttle.enter();
 
-			// Determine which protocol we are responding to (at this point, Shibv1 vs. EAuth)
-			IdPProtocolHandler activeHandler = null;
-			activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURI());
-
-			if (activeHandler == null) { throw new InvalidClientDataException(
-					"The request did not contain sufficient parameter data to determine the protocol."); }
+			// Determine which protocol we are responding to (at this point normally Shibv1 vs. EAuth)
+			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURI());
+			if (activeHandler == null) {
+				log.error("No protocol handler registered for endpoint (" + request.getRequestURI() + ").");
+				throw new SAMLException("Request submitted to an invalid endpoint.");
+			}
 
 			// Pass request to the appropriate handler
 			log.info("Processing " + activeHandler.getHandlerName() + " request.");
-			activeHandler.processRequest(request, response, null, protocolSupport);
+			if (activeHandler.processRequest(request, response, null, protocolSupport) != null) {
+				// This shouldn't happen unless somebody configures a protocol handler incorrectly
+				log.error("Protocol Handler returned a SAML Response, but there is no binding to handle it.");
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			}
 
-			// TODO hmmm... there is kind of an assupmtion here that we don't get a response... how to handle?
-		} catch (InvalidClientDataException ex) {
-			log.error(ex);
-			displayBrowserError(request, response, ex);
-			return;
 		} catch (SAMLException ex) {
 			log.error(ex);
 			displayBrowserError(request, response, ex);
@@ -245,7 +244,7 @@ public class IdPResponder extends HttpServlet {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via POST.");
+		log.debug("Recieved a request via POST for endpoint (" + request.getRequestURI() + ").");
 
 		// Parse SOAP request and marshall SAML request object
 		SAMLRequest samlRequest = null;
@@ -273,43 +272,27 @@ public class IdPResponder extends HttpServlet {
 			}
 
 			// Determine which protocol handler is active for this endpoint
-			IdPProtocolHandler activeHandler = null;
-			activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURI());
+			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURI());
 			if (activeHandler == null) {
-				log.fatal("No protocol handler registered for endpoint (" + request.getRequestURI() + ").");
-				throw new SAMLException("Invalid request endpoint.");
+				log.error("No protocol handler registered for endpoint (" + request.getRequestURI() + ").");
+				throw new SAMLException("Request submitted to an invalid endpoint.");
 			}
 
 			// Pass request to the appropriate handler and respond
 			log.info("Processing " + activeHandler.getHandlerName() + " request.");
-			try {
-				SAMLResponse samlResponse = activeHandler.processRequest(request, response, samlRequest,
-						protocolSupport);
-				binding.respond(response, samlResponse, null);
 
-			} catch (InvalidClientDataException e1) {
-				// TODO throw SAML Exception here
-				e1.printStackTrace();
-			}
+			SAMLResponse samlResponse = activeHandler.processRequest(request, response, samlRequest, protocolSupport);
+			binding.respond(response, samlResponse, null);
 
 		} catch (SAMLException e) {
-			log.error("Error while processing request: " + e);
-			try {
-				// TODO pass thru SAML Exception
-				sendSAMLFailureResponse(response, samlRequest, new SAMLException(SAMLException.RESPONDER,
-						"General error processing request."));
-				return;
-			} catch (Exception ee) {
-				log.fatal("Could not construct a SAML error response: " + ee);
-				throw new ServletException("Identity Provider response failure.");
-			}
+			sendFailureToSAMLBinding(response, samlRequest, e);
 		}
-
 	}
 
-	private void sendSAMLFailureResponse(HttpServletResponse httpResponse, SAMLRequest samlRequest,
-			SAMLException exception) throws IOException {
+	private void sendFailureToSAMLBinding(HttpServletResponse httpResponse, SAMLRequest samlRequest,
+			SAMLException exception) throws ServletException {
 
+		log.error("Error while processing request: " + exception);
 		try {
 			SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
 					null, exception);
@@ -331,7 +314,12 @@ public class IdPResponder extends HttpServlet {
 				binding.respond(httpResponse, null, exception);
 			} catch (SAMLException e) {
 				log.error("Caught exception while responding to requester: " + e.getMessage());
-				httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+				try {
+					httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+				} catch (IOException ee) {
+					log.fatal("Could not construct a SAML error response: " + ee);
+					throw new ServletException("Identity Provider response failure.");
+				}
 			}
 			log.error("Identity Provider failed to make an error message: " + se);
 		}
@@ -348,7 +336,7 @@ public class IdPResponder extends HttpServlet {
 
 	private class Semaphore {
 
-		private int value;
+		private int	value;
 
 		public Semaphore(int value) {
 
@@ -378,7 +366,7 @@ public class IdPResponder extends HttpServlet {
 
 class FederationProviderFactory {
 
-	private static Logger log = Logger.getLogger(FederationProviderFactory.class.getName());
+	private static Logger	log	= Logger.getLogger(FederationProviderFactory.class.getName());
 
 	public static Metadata loadProvider(Element e) throws MetadataException {
 

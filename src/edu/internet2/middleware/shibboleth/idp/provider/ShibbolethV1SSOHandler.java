@@ -1,9 +1,28 @@
 /*
- * Created on Mar 10, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Generation - Code and Comments
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution, if any, must include the following acknowledgment: "This product includes software
+ * developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2 Project.
+ * Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor
+ * the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please contact
+ * shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the
+ * University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name, without prior
+ * written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS PROVIDED BY THE
+ * COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE
+ * DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO
+ * EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC.
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.internet2.middleware.shibboleth.idp.provider;
 
 import java.io.IOException;
@@ -48,184 +67,172 @@ import edu.internet2.middleware.shibboleth.metadata.Endpoint;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
-
 /**
  * @author Walter Hoehn
  */
 public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 
-	private static Logger log = Logger.getLogger(ShibbolethV1SSOHandler.class.getName());
+	private static Logger	log	= Logger.getLogger(ShibbolethV1SSOHandler.class.getName());
 
 	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see edu.internet2.middleware.shibboleth.idp.IdPResponder.ProtocolHandler#validForRequest(javax.servlet.http.HttpServletRequest)
-	 */
-	// TODO move this into the process method
-	boolean validForRequest(HttpServletRequest request) {
-
-		if (request.getParameter("target") != null && !request.getParameter("target").equals("")
-				&& request.getParameter("shire") != null && !request.getParameter("shire").equals("")) {
-			log.debug("Found (target) and (shire) parameters.  Request "
-					+ "appears to be valid for the Shibboleth v1 profile.");
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see edu.internet2.middleware.shibboleth.idp.IdPResponder.ProtocolHandler#processRequest(javax.servlet.http.HttpServletRequest,
 	 *      javax.servlet.http.HttpServletResponse)
 	 */
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws InvalidClientDataException, SAMLException,
-			ServletException, IOException {
+			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, ServletException, IOException {
 
-		// TODO make sure the saml request is null for now
+		//TODO attribute push?
 
-		// Ensure that we have the required data from the servlet container
-		IdPProtocolSupport.validateEngineData(request);
-
-		// Get the authN info
-		String username = support.getIdPConfig().getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
-				.getRemoteUser() : request.getHeader(support.getIdPConfig().getAuthHeaderName());
-
-		// Select the appropriate Relying Party configuration for the request
-		RelyingParty relyingParty = null;
-		String remoteProviderId = request.getParameter("providerId");
-
-		// If the target did not send a Provider Id, then assume it is a Shib
-		// 1.1 or older target
-		if (remoteProviderId == null) {
-			relyingParty = support.getServiceProviderMapper().getLegacyRelyingParty();
-		} else if (remoteProviderId.equals("")) {
-			throw new InvalidClientDataException("Invalid service provider id.");
-		} else {
-			log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
-			relyingParty = support.getServiceProviderMapper().getRelyingParty(remoteProviderId);
+		if (request != null) {
+			log.error("Protocol Handler received a SAML Request, but is unable to handle it.");
+			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
 		}
+		try {
+			// Ensure that we have the required data from the servlet container
+			IdPProtocolSupport.validateEngineData(request);
+			validateShibSpecificData(request);
 
-		// Grab the metadata for the provider
-		EntityDescriptor provider = support.lookup(relyingParty.getProviderId());
+			// Get the authN info
+			String username = support.getIdPConfig().getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
+					.getRemoteUser() : request.getHeader(support.getIdPConfig().getAuthHeaderName());
+			if ((username == null) || (username.equals(""))) { throw new InvalidClientDataException(
+					"Unable to authenticate remote user"); }
 
-		// Determine the acceptance URL
-		String acceptanceURL = request.getParameter("shire");
-
-		// Make sure that the selected relying party configuration is appropriate for this
-		// acceptance URL
-		if (!relyingParty.isLegacyProvider()) {
-
-			if (provider == null) {
-				log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-				relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
-
+			// Select the appropriate Relying Party configuration for the request
+			RelyingParty relyingParty = null;
+			String remoteProviderId = request.getParameter("providerId");
+			// If the target did not send a Provider Id, then assume it is a Shib
+			// 1.1 or older target
+			if (remoteProviderId == null) {
+				relyingParty = support.getServiceProviderMapper().getLegacyRelyingParty();
+			} else if (remoteProviderId.equals("")) {
+				throw new InvalidClientDataException("Invalid service provider id.");
 			} else {
+				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
+				relyingParty = support.getServiceProviderMapper().getRelyingParty(remoteProviderId);
+			}
 
-				if (isValidAssertionConsumerURL(provider, acceptanceURL)) {
-					log.info("Supplied consumer URL validated for this provider.");
+			// Grab the metadata for the provider
+			EntityDescriptor provider = support.lookup(relyingParty.getProviderId());
+
+			// Determine the acceptance URL
+			String acceptanceURL = request.getParameter("shire");
+
+			// Make sure that the selected relying party configuration is appropriate for this
+			// acceptance URL
+			if (!relyingParty.isLegacyProvider()) {
+
+				if (provider == null) {
+					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+					relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
+
 				} else {
-					log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
-							+ relyingParty.getProviderId() + ").");
-					throw new InvalidClientDataException("Invalid assertion consumer service URL.");
+
+					if (isValidAssertionConsumerURL(provider, acceptanceURL)) {
+						log.info("Supplied consumer URL validated for this provider.");
+					} else {
+						log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
+								+ relyingParty.getProviderId() + ").");
+						throw new InvalidClientDataException("Invalid assertion consumer service URL.");
+					}
 				}
 			}
-		}
 
-		// Create SAML Name Identifier
-		SAMLNameIdentifier nameId;
-		try {
-			nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(),
-					new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
-		} catch (NameIdentifierMappingException e) {
-			log.error("Error converting principal to SAML Name Identifier: " + e);
-			throw new SAMLException("Error converting principal to SAML Name Identifier.", e);
-		}
-
-		String authenticationMethod = request.getHeader("SAMLAuthenticationMethod");
-		if (authenticationMethod == null || authenticationMethod.equals("")) {
-			authenticationMethod = relyingParty.getDefaultAuthMethod().toString();
-			log.debug("User was authenticated via the default method for this relying party (" + authenticationMethod
-					+ ").");
-		} else {
-			log.debug("User was authenticated via the method (" + authenticationMethod + ").");
-		}
-
-		// TODO change name!!!
-		// TODO We might someday want to provide a mechanism for the authenticator to specify the auth time
-		SAMLAssertion[] assertions = foo(request, relyingParty, provider, nameId, authenticationMethod, new Date(System
-				.currentTimeMillis()));
-
-		// TODO do assertion signing for artifact stuff
-
-		// SAML Artifact profile
-		if (useArtifactProfile(provider, acceptanceURL)) {
-			log.debug("Responding with Artifact profile.");
-
-			// Create artifacts for each assertion
-			ArrayList artifacts = new ArrayList();
-			for (int i = 0; i < assertions.length; i++) {
-				// TODO replace the artifact stuff here!!!
-				// artifacts.add(artifactMapper.generateArtifact(assertions[i], relyingParty));
+			// Create SAML Name Identifier
+			SAMLNameIdentifier nameId;
+			try {
+				nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(),
+						new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
+			} catch (NameIdentifierMappingException e) {
+				log.error("Error converting principal to SAML Name Identifier: " + e);
+				throw new SAMLException("Error converting principal to SAML Name Identifier.", e);
 			}
 
-			// Assemble the query string
-			StringBuffer destination = new StringBuffer(acceptanceURL);
-			destination.append("?TARGET=");
-
-			destination.append(URLEncoder.encode(request.getParameter("target"), "UTF-8"));
-
-			Iterator iterator = artifacts.iterator();
-			StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
-			while (iterator.hasNext()) {
-				destination.append("&SAMLart=");
-				String artifact = (String) iterator.next();
-
-				destination.append(URLEncoder.encode(artifact, "UTF-8"));
-				artifactBuffer.append("(" + artifact + ")");
-
-			}
-			log.debug("Redirecting to (" + destination.toString() + ").");
-			response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
-
-			support.getTransactionLog().info(
-					"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
-							+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
-							+ username + "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
-							+ nameId.getFormat() + ").");
-
-			// SAML POST profile
-		} else {
-			log.debug("Responding with POST profile.");
-			request.setAttribute("acceptanceURL", acceptanceURL);
-			request.setAttribute("target", request.getParameter("target"));
-
-			SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, Arrays.asList(assertions), null);
-			IdPProtocolSupport.addSignatures(samlResponse, relyingParty, provider, true);
-			createPOSTForm(request, response, samlResponse.toBase64());
-
-			// Make transaction log entry
-			if (relyingParty.isLegacyProvider()) {
-				support.getTransactionLog().info(
-						"Authentication assertion issued to legacy provider (SHIRE: " + request.getParameter("shire")
-								+ ") on behalf of principal (" + username + ") for resource ("
-								+ request.getParameter("target") + "). Name Identifier: (" + nameId.getName()
-								+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+			String authenticationMethod = request.getHeader("SAMLAuthenticationMethod");
+			if (authenticationMethod == null || authenticationMethod.equals("")) {
+				authenticationMethod = relyingParty.getDefaultAuthMethod().toString();
+				log.debug("User was authenticated via the default method for this relying party ("
+						+ authenticationMethod + ").");
 			} else {
+				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
+			}
+
+			// TODO Provide a mechanism for the authenticator to specify the auth time
+			SAMLAssertion[] assertions = generateAssertion(request, relyingParty, provider, nameId,
+					authenticationMethod, new Date(System.currentTimeMillis()));
+
+			// TODO do assertion signing for artifact stuff
+
+			// SAML Artifact profile
+			if (useArtifactProfile(provider, acceptanceURL)) {
+				log.debug("Responding with Artifact profile.");
+
+				// Create artifacts for each assertion
+				ArrayList artifacts = new ArrayList();
+				for (int i = 0; i < assertions.length; i++) {
+					// TODO replace the artifact stuff here!!!
+					// artifacts.add(artifactMapper.generateArtifact(assertions[i], relyingParty));
+				}
+
+				// Assemble the query string
+				StringBuffer destination = new StringBuffer(acceptanceURL);
+				destination.append("?TARGET=");
+
+				destination.append(URLEncoder.encode(request.getParameter("target"), "UTF-8"));
+
+				Iterator iterator = artifacts.iterator();
+				StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
+				while (iterator.hasNext()) {
+					destination.append("&SAMLart=");
+					String artifact = (String) iterator.next();
+
+					destination.append(URLEncoder.encode(artifact, "UTF-8"));
+					artifactBuffer.append("(" + artifact + ")");
+
+				}
+				log.debug("Redirecting to (" + destination.toString() + ").");
+				response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
+
 				support.getTransactionLog().info(
-						"Authentication assertion issued to provider ("
+						"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
 								+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
 								+ username + "). Name Identifier: (" + nameId.getName()
 								+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+
+				// SAML POST profile
+			} else {
+				log.debug("Responding with POST profile.");
+				request.setAttribute("acceptanceURL", acceptanceURL);
+				request.setAttribute("target", request.getParameter("target"));
+
+				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, Arrays.asList(assertions), null);
+				IdPProtocolSupport.addSignatures(samlResponse, relyingParty, provider, true);
+				createPOSTForm(request, response, samlResponse.toBase64());
+
+				// Make transaction log entry
+				if (relyingParty.isLegacyProvider()) {
+					support.getTransactionLog().info(
+							"Authentication assertion issued to legacy provider (SHIRE: "
+									+ request.getParameter("shire") + ") on behalf of principal (" + username
+									+ ") for resource (" + request.getParameter("target") + "). Name Identifier: ("
+									+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
+				} else {
+					support.getTransactionLog().info(
+							"Authentication assertion issued to provider ("
+									+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+									+ username + "). Name Identifier: (" + nameId.getName()
+									+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+				}
 			}
+		} catch (InvalidClientDataException e) {
+			throw new SAMLException(SAMLException.RESPONDER, e.getMessage());
 		}
 		return null;
 	}
 
-	SAMLAssertion[] foo(HttpServletRequest request, RelyingParty relyingParty, EntityDescriptor provider,
-			SAMLNameIdentifier nameId, String authenticationMethod, Date authTime) throws SAMLException, IOException {
+	private SAMLAssertion[] generateAssertion(HttpServletRequest request, RelyingParty relyingParty,
+			EntityDescriptor provider, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime)
+			throws SAMLException, IOException {
 
 		Document doc = org.opensaml.XML.parserPool.newDocument();
 
@@ -293,6 +300,14 @@ public class ShibbolethV1SSOHandler implements IdPProtocolHandler {
 	public String getHandlerName() {
 
 		return "Shibboleth v1.x SSO";
+	}
+
+	private void validateShibSpecificData(HttpServletRequest request) throws InvalidClientDataException {
+
+		if (request.getParameter("target") == null || request.getParameter("target").equals("")) { throw new InvalidClientDataException(
+				"Invalid data from Service Provider: no target URL received."); }
+		if ((request.getParameter("shire") == null) || (request.getParameter("shire").equals(""))) { throw new InvalidClientDataException(
+				"Invalid data from Service Provider: No acceptance URL received."); }
 	}
 
 	private static void createPOSTForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,

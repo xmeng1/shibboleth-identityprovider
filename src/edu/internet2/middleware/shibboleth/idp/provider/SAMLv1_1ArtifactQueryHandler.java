@@ -48,7 +48,6 @@ import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMappe
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
-import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 
 /**
@@ -62,7 +61,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 	private static Logger	log	= Logger.getLogger(SAMLv1_1ArtifactQueryHandler.class.getName());
 
 	SAMLv1_1ArtifactQueryHandler() throws ShibbolethConfigurationException {
-
+		//TODO move the mapper out into protocol support
 		artifactMapper = new MemoryArtifactMapper();
 	}
 
@@ -81,8 +80,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 	 *      javax.servlet.http.HttpServletResponse, edu.internet2.middleware.shibboleth.idp.ProtocolSupport)
 	 */
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, InvalidClientDataException,
-			IOException, ServletException {
+			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
 		log.info("Recieved a request to dereference an assertion artifact.");
 

@@ -63,7 +63,6 @@ import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
-import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 
 /**
@@ -135,8 +134,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 	 *      edu.internet2.middleware.shibboleth.idp.ProtocolSupport)
 	 */
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, InvalidClientDataException,
-			IOException, ServletException {
+			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
 		// TODO negate this and throw an error if it isn't
 		if (samlRequest.getQuery() != null && (samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
@@ -322,6 +320,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		/*
+		 * this needs to go in here for no passthru sendSAMLFailureResponse(response, samlRequest, new
+		 * SAMLException(SAMLException.RESPONDER, "General error processing request."));
+		 */
 
 		// TODO not NULL!!!
 		return null;
