@@ -114,7 +114,7 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 		defineSearchControls(((Element) searchNodes.item(0)));
 
 		NodeList propertyNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
-		properties = System.getProperties();
+		properties = new Properties(System.getProperties());
 		for (int i = 0; propertyNodes.getLength() > i; i++) {
 			Element property = (Element) propertyNodes.item(i);
 			String propName = property.getAttribute("name");
