@@ -1,64 +1,69 @@
-7/31/03
-Version 1.1
+4/30/04
+Version 1.2
 
-This release represents a fully compatible minor update to the Shibboleth 1.0 release,
-and is considered to be ready for production use.
+This release represents a fully compatible minor update 
+to the Shibboleth 1.0 release, and is considered to be 
+ready for production use.
 
-Features and Changes in 1.0 and 1.1
+New features in 1.2
 
 Origin
+-----------------
 
-New OpenSAML jarfile (see OpenSAML NEWS file)
+Multi-federation support.  Most origin configuration,
+including signing credentials and identifiers, can be
+overriden depending on the recipient of the assertions.
 
-Rewritten Attribute Resolver system in AA to support easy
-addition of attributes at runtime and simpler development
-of alternate attribute sources using Java.
+Simplified application architecture.  Both origins
+and targets are now referred to using a single 
+identifier called a "provider id".
 
-Bug fixes to attribute-specific queries
+The Attribute Authority can be configured to answer 
+requests with multiple SAML Subject formats, 
+increasing interoperability with other SAML-based 
+software.
 
-Support for SAML authentication method
+Signing credentials can now be loaded from a variety
+of formats, including those commonly used with OpenSSL.
 
-A sample resolver file for using standard LDAP person and 
-inetOrgPerson attributes is included. [1.1]
+The origin now validates all requests from 1.2+ targets
+against federation metadata.
 
-Support for a runtime-derived per-requester persistent 
-identifier attribute to support anonymous personalization 
-by targets has been added via an attribute plugin. [1.1]
+Compatibility with 1.1 targets.
 
-Specialized sites without privacy needs can configure 
-identity-based handles interoperable with other SAML 
-deployments. [1.1]
+Separate logs are created for errors and transaction 
+auditing.
 
-Security enhancements in the Crypto Handle Repository. [1.1]
+Easier logging configuration.
+
+Support is included for pulling attribute data from SQL 
+databases using JDBC.  The JDBC Data Connector includes 
+support for conection pooling and prepared statements. 
+
+Mechanism for throttling requests to the Handle Service.  
+This improves performance by preventing the server from 
+becoming saturated with signing requests.
+
+Support for signatures on all SAML Assertions and 
+Responses, which allows for more interoperability
+with other SAML-based software.
+
+Attribute Release Policies can contain match functions 
+on attribute values.  This allows the release of specific 
+values based on regular expression.
+
+Support has been added to the Attribute Authority for 
+using alternate data connectors in the event of a 
+failure.
+
+The resolvertest program can now process and enforce 
+Attribute Release Policies.
+
+Updated library dependencies, including OpenSAML and XML 
+Security.
+
+Many important bug fixes
 
 
 Target
-
-Revamped security layer with XML-based trust metadata
-
-Support for runtime refreshing of metadata from multiple sources
-
-Command-line tool to download and verify metadata files
-
-Bug fixes to attribute handling
-
-Support for contact information in error pages
-
-Fixes to handling of Unicode characters
-
-Support for alternate session backing stores
-
-The SHAR can use TCP sockets when responding to the Apache 
-module, for specialized deployment behind firewalls. [1.1]
-
-Attribute acceptance policies have been greatly enhanced, and 
-are now used to configure all aspects of attribute handling by 
-the target, except for requesting specific attributes by 
-sitename. Adding attributes now takes place in one configuration 
-step. [1.1]
-
-Support for Apache 1.3 on Windows NT/2000/XP/2003 has been added. 
-[1.1]
-
-Microsoft IIS web server support has been added via an ISAPI 
-filter and extension. [1.1] 
+-----------------
