@@ -318,7 +318,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
         boolean alive = true;
         long now = System.currentTimeMillis();
         synchronized(this) {
-        	if (deadSince > 0 && now - deadSince < retryInterval) {
+        	if (deadSince > 0 && now - deadSince < (1000*retryInterval)) {
                 alive = false;
             }
             else {
