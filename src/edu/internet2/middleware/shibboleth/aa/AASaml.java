@@ -74,11 +74,9 @@ public class AASaml {
 					       sub.getConfirmationMethods(),
 					       sub.getConfirmationData());
             
-	    SAMLStatement[] statements = null;
-	    if(attrs != null && attrs.length > 0){
-		statements = new SAMLStatement[1];
-		statements[0] = new SAMLAttributeStatement(rSubject, attrs);
-	    }
+	    SAMLStatement[] statements = new SAMLStatement[1];
+	    statements[0] = new SAMLAttributeStatement(rSubject, attrs);
+	    
 
 	    Date now = new Date();
 	    Date  then = null;
@@ -94,15 +92,19 @@ public class AASaml {
 	    }
 	    SAMLCondition[] conditions = new SAMLCondition[1];
 	    conditions[0] = new SAMLAudienceRestrictionCondition(policies);
-	    SAMLAssertion sAssertion = new SAMLAssertion(myName,
+
+	    SAMLAssertion[] assertions= null;
+	    if(attrs != null && attrs.length > 0){
+		SAMLAssertion sAssertion = new SAMLAssertion(myName,
 					     now,
 					     then,
 					     conditions,
 					     statements,
 					     /* sig */ null);
-	    SAMLAssertion[] assertions= new SAMLAssertion[1];
-	    assertions[0] = sAssertion;
-	
+		assertions= new SAMLAssertion[1];
+		assertions[0] = sAssertion;
+	    }
+
 	    sResp = new SAMLResponse(reqID,
 				     /* recipient URL*/ null,
 				     /* sig */ null,
