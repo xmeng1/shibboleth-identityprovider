@@ -252,6 +252,16 @@ class StringValueHandler implements ValueHandler {
 		return internalValues.iterator();
 	}
 
+	/**
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	public boolean equals(Object object) {
+		if (object instanceof StringValueHandler) {
+			return true;
+		}
+		return false;
+	}
+
 }
 
 
