@@ -70,7 +70,7 @@ import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
  */
 public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
 
-	private static Logger	log	= Logger.getLogger(SAMLv1_AttributeQueryHandler.class.getName());
+	private static Logger log = Logger.getLogger(SAMLv1_AttributeQueryHandler.class.getName());
 
 	/*
 	 * @see edu.internet2.middleware.shibboleth.idp.ProtocolHandler#getHandlerName()
@@ -136,11 +136,9 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
-		// TODO negate this and throw an error if it isn't
-		if (samlRequest.getQuery() != null && (samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
-			log.info("Recieved an attribute query.");
-			// processAttributeQuery(samlRequest, request, response);
-
+		if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+			log.error("Protocol Handler can only respond to SAML Attribute Queries.");
+			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
 		}
 
 		RelyingParty relyingParty = null;
@@ -165,10 +163,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			try {
 				effectiveName = getEffectiveName(request, relyingParty, support);
 			} catch (InvalidProviderCredentialException ipc) {
-				//TODO no, throw an exception
-				//sendSAMLFailureResponse(response, samlRequest, new SAMLException(SAMLException.RESPONDER,
-				//		"Invalid credentials for request."));
-				return null;
+				throw new SAMLException(SAMLException.REQUESTER, "Invalid credentials for request.");
 			}
 		}
 
@@ -207,9 +202,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 						log.debug("Designated attribute: (" + attribute.getName() + ")");
 						requestedAttrs.add(new URI(attribute.getName()));
 					} catch (URISyntaxException use) {
-						log
-								.error("Request designated an attribute name that does not conform to the required URI syntax ("
-										+ attribute.getName() + ").  Ignoring this attribute");
+						log.error("Request designated an attribute name that does not conform "
+								+ "to the required URI syntax (" + attribute.getName() + ").  Ignoring this attribute");
 					}
 				}
 
@@ -227,20 +221,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			if (attrs == null || attrs.length == 0) {
 				// No attribute found
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, null);
+
 			} else {
-
-				//	SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
-
-				//TODO catch clonenotsupportedexception
-				//TODO no, put the use inside this blcok so we don't have to init
 				// Reference requested subject
-				SAMLSubject rSubject = null;
-				try {
-					rSubject = (SAMLSubject) attributeQuery.getSubject().clone();
-				} catch (CloneNotSupportedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				SAMLSubject rSubject = (SAMLSubject) attributeQuery.getSubject().clone();
+
 				ArrayList audiences = new ArrayList();
 				if (relyingParty.getProviderId() != null) {
 					audiences.add(relyingParty.getProviderId());
@@ -286,7 +271,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				}
 			}
 
-			log.info("Successfully responded about " + principal.getName());
+			log.info("Successfully created response for principal (" + principal.getName() + ").");
 
 			if (effectiveName == null) {
 				if (fromLegacyProvider(request)) {
@@ -309,38 +294,36 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 									+ principal.getName() + ").");
 				}
 			}
+
+			return samlResponse;
+
 		} catch (InvalidNameIdentifierException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Could not associate the request's subject with a principal: " + e);
+			if (relyingParty.passThruErrors()) {
+				throw new SAMLException(Arrays.asList(e.getSAMLErrorCodes()), "The supplied Subject was unrecognized.",
+						e);
+			} else {
+				throw new SAMLException(Arrays.asList(e.getSAMLErrorCodes()), "The supplied Subject was unrecognized.");
+			}
+
 		} catch (NameIdentifierMappingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return null;
 		} catch (AAException e) {
 			//TODO get rid of AAException, I think
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return null;
+
+		} catch (CloneNotSupportedException e) {
+			log.error("Could not associate the request subject with a principal: " + e);
+			if (relyingParty.passThruErrors()) {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+			} else {
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			}
 		}
-
-		/*
-		 * this needs to go in here for no passthru sendSAMLFailureResponse(response, samlRequest, new
-		 * SAMLException(SAMLException.RESPONDER, "General error processing request."));
-		 */
-
-		// TODO not NULL!!!
-		return null;
-
-		/*
-		 * throw new SAMLException(SAMLException.REQUESTER, "Identity Provider unable to respond to this SAML Request
-		 * type."); } catch (InvalidNameIdentifierException invalidNameE) { log.info("Could not associate the request
-		 * subject with a principal: " + invalidNameE); try { // TODO once again, ifgure out passThruErrors if (false) { //
-		 * if (relyingParty.passThruErrors()) { sendSAMLFailureResponse(response, samlRequest, new
-		 * SAMLException(Arrays.asList(invalidNameE .getSAMLErrorCodes()), "The supplied Subject was unrecognized.",
-		 * invalidNameE)); } else { sendSAMLFailureResponse(response, samlRequest, new
-		 * SAMLException(Arrays.asList(invalidNameE .getSAMLErrorCodes()), "The supplied Subject was unrecognized.")); }
-		 * return; } catch (Exception ee) { log.fatal("Could not construct a SAML error response: " + ee); throw new
-		 * ServletException("Identity Provider response failure."); }
-		 */
-
 	}
 
 	private static boolean fromLegacyProvider(HttpServletRequest request) {
