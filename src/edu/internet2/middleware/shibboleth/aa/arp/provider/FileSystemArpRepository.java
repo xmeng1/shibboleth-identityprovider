@@ -98,14 +98,14 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path"));
 		if (!givenPath.isDirectory()) {
 			log.error(
-				"Cannot initialize FileSystemArpRepository: specified path is not a directory.");
+				"Cannot initialize FileSystemArpRepository: specified path is not a directory: ("
+					+ givenPath.getPath()
+					+ ").");
 			throw new ArpRepositoryException("Cannot initialize FileSystemArpRepository");
 		}
 
 		log.info(
-			"Initializing File System Arp Repository with a root of ("
-				+ givenPath.getAbsolutePath()
-				+ ").");
+			"Initializing File System Arp Repository with a root of (" + givenPath.getAbsolutePath() + ").");
 		dataStorePath =
 			props.getProperty(
 				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path");

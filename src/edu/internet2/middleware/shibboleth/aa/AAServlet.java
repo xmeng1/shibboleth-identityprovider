@@ -117,8 +117,10 @@ public class AAServlet extends HttpServlet {
 			log.fatal("AA init failed: " + ne);
 			throw new ServletException("Init failed: " + ne);
 		} catch (ArpException ae) {
-			log.fatal("AA init failed: " + ae);
-			throw new ServletException("Init failed: " + ae);
+			log.fatal(
+				"Attribute Authority could not be initialized due to a problem with the ARP Engine configuration: "
+					+ ae);
+			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (AAException ae) {
 			log.fatal("AA init failed: " + ae);
 			throw new ServletException("Init failed: " + ae);
@@ -133,7 +135,7 @@ public class AAServlet extends HttpServlet {
 		Properties defaultProps = new Properties();
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
-			getServletContext().getRealPath("/WEB-INF/conf/arps"));
+			getServletContext().getRealPath("/WEB-INF/conf/arps/"));
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
