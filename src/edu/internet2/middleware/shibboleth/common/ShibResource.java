@@ -64,7 +64,7 @@ public class ShibResource {
 
 	private URL resource;
 	public ShibResource(String name) throws ResourceNotAvailableException {
-		this(name, Object.class);
+		this(name, ShibResource.class);
 	}
 
 	public ShibResource(String name, Class requester) throws ResourceNotAvailableException {
