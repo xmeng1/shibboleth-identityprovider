@@ -55,12 +55,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
@@ -69,8 +71,10 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 
 import org.apache.log4j.Logger;
 
@@ -93,7 +97,8 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 
 	private static Logger log = Logger.getLogger(CryptoHandleRepository.class.getName());
 	protected SecretKey secret;
-
+	private SecureRandom random = new SecureRandom();
+	
 	public CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
 		try {
@@ -220,29 +225,41 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			}
 
 			HandleEntry handleEntry = createHandleEntry(principal);
+
+			Mac mac = Mac.getInstance("HmacSHA1");
+			mac.init(secret);
+			HMACHandleEntry macHandleEntry = new HMACHandleEntry(handleEntry, mac);
+
 			ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-			GZIPOutputStream zipStream = new GZIPOutputStream(outStream);
-			ObjectOutput objectStream = new ObjectOutputStream(zipStream);
-			objectStream.writeObject(handleEntry);
-			objectStream.flush();
+			ByteArrayOutputStream encStream = new ByteArrayOutputStream();
+
+			Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+			byte[] iv = new byte[8];
+			random.nextBytes(iv);
+			IvParameterSpec ivSpec = new IvParameterSpec(iv);
+			cipher.init(Cipher.ENCRYPT_MODE, secret, ivSpec);
+
+			//Handle contains 8 byte IV, followed by cipher text
+			outStream.write(cipher.getIV());
+
+			ObjectOutput objectStream = new ObjectOutputStream(new GZIPOutputStream(encStream));
+			objectStream.writeObject(macHandleEntry);
 			objectStream.close();
 
-			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
-			cipher.init(Cipher.ENCRYPT_MODE, secret);
-			byte[] cipherTextHandle = cipher.doFinal(outStream.toByteArray());
-			zipStream.close();
+			outStream.write(cipher.doFinal(encStream.toByteArray()));
+			encStream.close();
+
+			String handle = new BASE64Encoder().encode(outStream.toByteArray());
 			outStream.close();
 
-			String handle = new BASE64Encoder().encode(cipherTextHandle);
-            
-            format.setLength(0);
-            format.append(Constants.SHIB_NAMEID_FORMAT_URI);
+			format.setLength(0);
+			format.append(Constants.SHIB_NAMEID_FORMAT_URI);
 
 			return handle.replaceAll(System.getProperty("line.separator"), "");
 
 		} catch (KeyException e) {
-			log.error("Could not use the supplied secret key for Triple DES encryption: " + e);
-			throw new HandleRepositoryException("Could not use the supplied secret key for Triple DES encryption.");
+			log.error("Could not use the supplied secret key: " + e);
+			throw new HandleRepositoryException("Could not use the supplied secret key.");
 		} catch (GeneralSecurityException e) {
 			log.error("Appropriate JCE provider not found in the java environment.  Could not load Cipher: " + e);
 			throw new HandleRepositoryException("Appropriate JCE provider not found in the java environment.  Could not load Cipher.");
@@ -255,30 +272,56 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getPrincipal(String)
 	 */
-	public AuthNPrincipal getPrincipal(String handle, String format) throws HandleRepositoryException, InvalidHandleException {
-        if (!Constants.SHIB_NAMEID_FORMAT_URI.equals(format)) {
-            log.debug("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
-            throw new InvalidHandleException("This Repository does not understand handles with a format URI of " + (format==null ? "null" : format));
-        }
+	public AuthNPrincipal getPrincipal(String handle, String format)
+		throws HandleRepositoryException, InvalidHandleException {
+		if (!Constants.SHIB_NAMEID_FORMAT_URI.equals(format)) {
+			log.debug(
+				"This Repository does not understand handles with a format URI of "
+					+ (format == null ? "null" : format));
+			throw new InvalidHandleException(
+				"This Repository does not understand handles with a format URI of "
+					+ (format == null ? "null" : format));
+		}
 
 		try {
-			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
-			cipher.init(Cipher.DECRYPT_MODE, secret);
+			//Separate the IV and handle
+			byte[] in = new BASE64Decoder().decodeBuffer(handle);
+			if (in.length < 9) {
+				log.debug("Attribute Query Handle is malformed (not enough bytes).");
+				throw new InvalidHandleException("Attribute Query Handle is malformed (not enough bytes).");
+			}
+			byte[] iv = new byte[8];
+			System.arraycopy(in, 0, iv, 0, 8);
+			byte[] encryptedHandle = new byte[in.length - iv.length];
+			System.arraycopy(in, 8, encryptedHandle, 0, in.length - iv.length);
 
-			byte[] objectArray = cipher.doFinal(new BASE64Decoder().decodeBuffer(handle));
+			Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+			IvParameterSpec ivSpec = new IvParameterSpec(iv);
+			cipher.init(Cipher.DECRYPT_MODE, secret, ivSpec);
 
-			ObjectInputStream objectStream =
-				new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(objectArray)));
-			HandleEntry handleEntry = (HandleEntry) objectStream.readObject();
+			byte[] objectArray = cipher.doFinal(encryptedHandle);
+			GZIPInputStream zipBytesIn = new GZIPInputStream(new ByteArrayInputStream(objectArray));
+
+			ObjectInputStream objectStream = new ObjectInputStream(zipBytesIn);
+
+			HMACHandleEntry handleEntry = (HMACHandleEntry) objectStream.readObject();
 			objectStream.close();
 
 			if (handleEntry.isExpired()) {
 				log.debug("Attribute Query Handle is expired.");
 				throw new InvalidHandleException("Attribute Query Handle is expired.");
-			} else {
-				log.debug("Attribute Query Handle recognized.");
-				return handleEntry.principal;
 			}
+
+			Mac mac = Mac.getInstance("HmacSHA1");
+			mac.init(secret);
+			if (!handleEntry.isValid(mac)) {
+				log.warn("Attribute Query Handle failed integrity check.");
+				throw new InvalidHandleException("Attribute Query Handle failed integrity check.");
+			}
+
+			log.debug("Attribute Query Handle recognized.");
+			return handleEntry.principal;
+
 		} catch (NoSuchAlgorithmException e) {
 			log.error("Appropriate JCE provider not found in the java environment.  Could not load Algorithm: " + e);
 			throw new HandleRepositoryException("Appropriate JCE provider not found in the java environment.  Could not load Algorithm.");
@@ -287,8 +330,8 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 				"Appropriate JCE provider not found in the java environment.  Could not load Padding method: " + e);
 			throw new HandleRepositoryException("Appropriate JCE provider not found in the java environment.  Could not load Padding method.");
 		} catch (InvalidKeyException e) {
-			log.error("Could not use the supplied secret key for Triple DES decryption: " + e);
-			throw new HandleRepositoryException("Could not use the supplied secret key for Triple DES decryption.");
+			log.error("Could not use the supplied secret key: " + e);
+			throw new HandleRepositoryException("Could not use the supplied secret key.");
 		} catch (GeneralSecurityException e) {
 			log.warn("Unable to decrypt the supplied Attribute Query Handle: " + e);
 			throw new InvalidHandleException("Unable to decrypt the supplied Attribute Query Handle.");
@@ -320,6 +363,56 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			log.error("Round trip encryption/decryption test unsuccessful.  Decrypted text did not match.");
 			throw new HandleRepositoryException("Round trip encryption/decryption test unsuccessful.");
 		}
+
+		byte[] code;
+		try {
+			Mac mac = Mac.getInstance("HmacSHA1");
+			mac.init(secret);
+			mac.update("foo".getBytes());
+			code = mac.doFinal();
+
+		} catch (Exception e) {
+			log.error("Message Authentication test unsuccessful: " + e);
+			throw new HandleRepositoryException("Message Authentication test unsuccessful.");
+		}
+
+		if (code == null) {
+			log.error("Message Authentication test unsuccessful.");
+			throw new HandleRepositoryException("Message Authentication test unsuccessful.");
+		}
 	}
 
+}
+
+
+
+/**
+ * <code>HandleEntry</code> extension class that performs message authentication.
+ * 
+ */
+class HMACHandleEntry extends HandleEntry implements Serializable {
+
+	static final long serialVersionUID = 1L;
+	protected byte[] code;
+
+	protected HMACHandleEntry(AuthNPrincipal principal, long TTL, Mac mac) {
+		super(principal, TTL);
+		mac.update(this.principal.getName().getBytes());
+		mac.update(new Long(this.expirationTime).byteValue());
+		code = mac.doFinal();
+	}
+
+	protected HMACHandleEntry(HandleEntry handleEntry, Mac mac) {
+		super(handleEntry.principal, handleEntry.expirationTime);
+		mac.update(this.principal.getName().getBytes());
+		mac.update(new Long(this.expirationTime).byteValue());
+		code = mac.doFinal();
+	}
+
+	boolean isValid(Mac mac) {
+		mac.update(this.principal.getName().getBytes());
+		mac.update(new Long(this.expirationTime).byteValue());
+		byte[] validationCode = mac.doFinal();
+		return Arrays.equals(code, validationCode);
+	}
 }
