@@ -104,6 +104,11 @@
         <HandleService Location="http://gabriel.lse.ac.uk/shibboleth/HS" Name="gabriel.lse.ac.uk"></HandleService>
         <Domain>lse.ac.uk</Domain>
     </OriginSite>
+    <OriginSite Name="uth.tmc.edu">
+        <Alias>UT-Houston</Alias>
+        <HandleService Location="https://oac37.hsc.uth.tmc.edu/shibboleth/HS" Name="oac37.hsc.uth.tmc.edu"></HandleService>
+        <Domain>uth.tmc.edu</Domain>
+    </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
@@ -113,15 +118,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>200eiBmvSknU5kAVFzadQrofI7w=</ds:DigestValue>
+<ds:DigestValue>LVQizuZ8VBo8liHcBwMZS6EF9j8=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-Po6JLqR9ddrk9d8rQyGwC6yxrEQ3IYiKrtwlKmVDEW9a1EnCUw2cWjn44JaAS2v2pi4ZNfgmCLUZ
-UOQwJnG94//AZP6YX7WwriHRsO8WcpIoc1IVTGaqc01qMYLpZl6bwmiu/Yckq/x7Acv2/dVlpLMB
-LMV3yMuXZyvrtdvTxsmye1MO19JJgMlQ3UkKllSl0bQE2hK6XkI9KIAYXIMsgj2SlT9lrhymSkVG
-2sLpEkyTS0enqRQZPaiDhYAIRzZ+/Y9R6X5HP582ZCAgT/0wRZY6OTQO32LIBiDM5NJO7OWNjMZM
-zOgJlswEf2W1nhsKdQ18G1OFv9LkhK2Ay5lxDg==
+NuMKif+AQ7F8L0tKPEn2ZgvwpLrEUtv/X7fngG+lpe5g0e1t1UBYvCY1N+ZOq0hz/ZTech+s1bE7
+yBn99qmRdEk0CCIOpK9TjCBVcvkBU7KLOF10b5HYUXXRcaAxhwgVkxjMvbvxDbXg3BgeQ8ugrFmi
+MDP8V79ddeqMYoVjp/akVlRjgQEK6pCC+aTn50tnXVNu/AjEXAEIJDtqK91UciSkeW7EOXZr08wr
+XTZKathB4DDjHXcBBlJGnzVJpJSImR1/jCqJTAI64ywKWybKPS80uE5/iswD7FFtT8KsYD5e+cwK
+u/dCCAQ+udTlBl8kUE/VPwu8cdeP7c86RzZRlA==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>

@@ -104,4 +104,9 @@
         <HandleService Location="http://gabriel.lse.ac.uk/shibboleth/HS" Name="gabriel.lse.ac.uk"/>
         <Domain>lse.ac.uk</Domain>
     </OriginSite>
+    <OriginSite Name="uth.tmc.edu">
+        <Alias>UT-Houston</Alias>
+        <HandleService Location="https://oac37.hsc.uth.tmc.edu/shibboleth/HS" Name="oac37.hsc.uth.tmc.edu"/>
+        <Domain>uth.tmc.edu</Domain>
+    </OriginSite>
 </Sites>
