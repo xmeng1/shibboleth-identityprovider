@@ -5,7 +5,7 @@
     </OriginSite>
     <OriginSite Name="brown.edu">
         <Alias>Brown University</Alias>
-        <HandleService Location="http://dilbert2.cis.brown.edu:1080/shibboleth/HS" Name="dilbert2.cis.brown.edu"/>
+        <HandleService Location="http://portsmouth.services.brown.edu:1080/shibboleth/HS" Name="dilbert2.cis.brown.edu"/>
     </OriginSite>
     <OriginSite Name="washington.edu">
         <Alias>UDub</Alias>
