@@ -5,15 +5,14 @@
 	<%@ page import="edu.internet2.middleware.shibboleth.aa.*" %>
 	<%@ page import="javax.naming.*" %>
 	<%@ page import="javax.naming.directory.*" %>
+	<%@ page import="org.opensaml.*" %>
         <%@ taglib uri="/WEB-INF/tlds/struts-logic.tld" prefix="logic" %>
         <%@ taglib uri="/WEB-INF/tlds/struts-bean.tld" prefix="bean" %>
         <jsp:useBean id="requestURL" scope="request" class="java.lang.String"/>
         <jsp:useBean id="username" scope="request" class="java.lang.String"/>
-        <jsp:useBean id="userCtx" scope="request" class="javax.naming.directory.DirContext"/>
 	<jsp:useBean id="shars" scope="request" class="edu.internet2.middleware.shibboleth.aa.ArpShar[]"/>
 	<jsp:useBean id="debug" scope="request" class="java.lang.String"/>
-	<jsp:useBean id="adminArp" scope="request" class="edu.internet2.middleware.shibboleth.aa.Arp"/>
-	<jsp:useBean id="responder scope="request" class="edu.internet2.middleware.shibboleth.aa.AAResponder"/>
+	<jsp:useBean id="responder" scope="request" class="edu.internet2.middleware.shibboleth.aa.AAResponder"/>
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
@@ -28,37 +27,7 @@
     </div>
 
     <p><b>ARP for <bean:write name="username" /></b></p>
-    
-    <table width="100%" border=1>
-	<tr>
-	  <th width="20%">Resource Name</th>
-	  <th width="20%">Notes</th> 
-	  <th width="30%">Attributes Released</th>
-	  <th>Actions</th>
-	</tr>
-	<tr>
-	  <td>(*)</td>
-	  <td><i>Default release policy</i></td>
-	  <td>
-<%
-  Set adminSet = responder.getReleaseSet(adminArp, resouce, resource, adminArp);
-  Iterator it = adminSet.iterator();
-  while (it.hasNext()) {
-    ArpAttribute attr = (ArpAttribute) it.next();
-    if (attr.mustExclude())
-	adminSet.remove(attr);
-  }
-  it = 	adminSet.iterator();
-  while (it.hasNext()) {
-    ArpAttribute aAttr = (ArpAttribute)it.next();
-    out.println(aAttr.getName() + "<br>");
-  }
-%>
-	  </td>
-	  <td></td>
-	</tr>
-    </table>
-<p><hr><p>
+
 <% if (shars.length > 0) { 
 %>
     <table width="100%" border=1>
@@ -72,6 +41,7 @@
   <logic:iterate id="resource" name="shar" property="resources">
     <tr>
 <%
+    String sharname = ((edu.internet2.middleware.shibboleth.aa.ArpShar)shar).getName();
     String res = ((edu.internet2.middleware.shibboleth.aa.ArpResource)resource).getName();
     String resourceUrl = (res.startsWith("http")) ? 
 	resourceUrl = res.substring(res.indexOf(":")+3) : res;
@@ -81,17 +51,16 @@
 	<td><jsp:getProperty name="resource" property="comment" /></td>
 	<td>
 <%
-  Set attrSet = responder.getCombinedReleaseSet(adminArp, resource, resource, username);
-    Iterator it = s.iterator();
-    while(it.hasNext()){
-	ArpAttribute aAttr = (ArpAttribute)it.next();
-	Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
-        if (dAttr != null && dAttr.size() > 0) {
-	  for (int j=0; j < dAttr.size(); j++)  {	
-	    out.println(dAttr.get(j) + "<br>");
-	  }
-  	}
+  SAMLAttribute[] attrSet = responder.getReleaseAttributes(
+		username, "uid=", "", 	
+		sharname, res );
+
+  for (int j=0; j<attrSet.length; j++) {
+    Object[] vals = attrSet[j].getValues();
+    for (int k=0; k<vals.length; k++) {
+      out.println(vals[k] + "<br>");
     }
+  }
 %>
 	</td>
 	<input type=hidden name="username" value="<bean:write name="username"/>">
@@ -119,29 +88,3 @@
   </body>
 </html>
 
-<%!
-public String[] getAttrVals(ArpResource r, DirContext userCtx) {
-    String[] buf = new String[1];
-    buf[0] = "";
-    try{ 
-    Vector v = new Vector();
-    ArpAttribute[] aa = r.getAttributes();
-    if (aa==null) 
-	return buf;
-    for (int i=0; i < aa.length; i++) {
-	ArpAttribute a = aa[i];
-	Attribute dAttr = a.getDirAttribute(userCtx, true);
-	if (dAttr != null && dAttr.size() > 0) {
-	  for (int j=0; j < dAttr.size(); j++)  {	
-	    v.add(dAttr.get(j));
-	  }
-	}
-    }
-    buf = new String[v.size()];
-    for (int i = 0; i < v.size(); i++) 
-	buf[i] = (String)v.get(i) + "<br>";
-    
-    } catch (Exception ex) {}
-    return buf;
-}
-%>

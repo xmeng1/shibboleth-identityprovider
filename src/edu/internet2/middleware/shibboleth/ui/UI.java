@@ -69,6 +69,7 @@ public class UI extends HttpServlet {
     private String arpDir;
     private String ldapUrl;
     private String attrFile;
+    private String domain;
 
     AAResponder responder;
     ArpRepository arpFactory;
@@ -85,13 +86,8 @@ public class UI extends HttpServlet {
 	log.info("UI: Loading init params");
 	try {
 	    Properties props = new Properties();
-	    props.setProperty("arpFactoryRealpath", arpDir);
+	    props.setProperty("edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path", "/tmp/shib2");
 	    arpFactory = ArpRepositoryFactory.getInstance("edu.internet2.middleware.shibboleth.aa.FileArpRepository", props);
-	    adminArp = arpFactory.lookupArp("adminArpName", true);
-	    if(adminArp ==  null) {
-		log.error("Admin ARP not found in Arp Repository (" + arpFactory + ").");
-		throw new ServletException("Unable to load admin ARP.");
-	    }
 	    responder = new AAResponder(arpFactory, getDirCtx(), 
 					getInitParameter("domain"));
 	} catch (Exception ex) {
@@ -111,6 +107,7 @@ public class UI extends HttpServlet {
 	attrFile = getInitParameter("AttrJarfile");
 	if (attrFile == null || attrFile.equals("")) 
 	    throw new ServletException("Cannot find location of attribute jarfile in init parameters");
+
     }
 
     public void service(HttpServletRequest req, 
@@ -118,12 +115,18 @@ public class UI extends HttpServlet {
 	throws ServletException, IOException
     {
 	String username = req.getParameter("username");
+        adminArp = arpFactory.lookupArp(adminArpName, true);
+	if(adminArp ==  null) {
+	   log.error("Admin ARP not found in Arp Repository ("+arpFactory+")");
+	   throw new UIException("Unable to load admin ARP.");
+	}
 
 	req.setAttribute("username", username);
 	req.setAttribute("requestURL", req.getRequestURI().toString());
 	req.setAttribute("attrFile", attrFile);
 	req.setAttribute("ldapUrl", ldapUrl);
 	req.setAttribute("responder", responder);
+	req.setAttribute("adminArp", adminArp);
 
 	String action = req.getParameter("Submit");
 	String resource = req.getParameter("Resource");
@@ -172,7 +175,7 @@ public class UI extends HttpServlet {
 	    }
 	      }	    
         } catch (UIException ex) {
-	    //		System.out.println(ex);
+	    	System.out.println(ex);
 		handleError(req, res, ex);
 	    }
     }
@@ -210,8 +213,9 @@ public class UI extends HttpServlet {
     {
 	try{
 	    Arp arp = arpFactory.lookupArp(username, false);
+	    if (arp == null) 
+		System.err.println("no arp found for "+username);
 	    req.setAttribute("shars", arp.getShars());
-	    req.setAttribute("adminArp", adminArp);
 	    req.setAttribute("debug", debug);
 	    req.setAttribute("userCtx", getUserCtx(username));
 	} catch (Exception ex) {
@@ -235,7 +239,6 @@ public class UI extends HttpServlet {
 
 	AAAttributes aaa = new AAAttributes(attrFile);
 
-	req.setAttribute("adminArp", adminArp);
 	req.setAttribute("userCtx", getUserCtx(username));
 	req.setAttribute("allAttrs", aaa.list());
 	req.setAttribute("resource", (s==null) ? new ArpResource("", "") : s.getResource(resource));

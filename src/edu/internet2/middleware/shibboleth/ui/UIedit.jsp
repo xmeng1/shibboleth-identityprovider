@@ -90,10 +90,8 @@ function formCancel()
       </tr>
 
 <%
-   Set s = getReleaseSet(adminArp, resource, resource, adminArp);
-
       for (int i=0; i<allAttrs.length; i++) {
-	ArpAttribute adminAttr = getAttr(s, allAttrs[i]);
+	ArpAttribute adminAttr = getAdminAttr(adminArp, resource, allAttrs[i]);
 	ArpAttribute aAttr = new ArpAttribute(allAttrs[i], false);
 	Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
 	if (dAttr != null && dAttr.size() > 0) {
@@ -125,13 +123,14 @@ function formCancel()
 
 	  out.println("</td><td>");
 
+	  String checkoption = "";
 	  if (adminAttr != null) {
-	    if (adminAttr.mustExclude)
-	      String checkoption = "NO";
+	    if (adminAttr.mustExclude())
+	      checkoption = "NO";
 	    else 
-	      String checkoption = "YES";
+	      checkoption = "YES";
 	  } else
-	    String checkoption = "<input type=\"checkbox\" name=\"attr\" value=\""+a.getName()+"\" "+checkbool+" Yes>";
+	    checkoption = "<input type=checkbox name=\"attr\" value=\""+a.getName()+"\" "+checkbool+" Yes>";
 	
 	  if (dAttr.size() > 1) {
 	  String filtStr="add";
@@ -164,4 +163,21 @@ function formCancel()
 	<input type="submit" name="Submit" value="Cancel" onClick="return formCancel();" >
       </form>
     <hr>
-	  
+<%!
+public ArpAttribute getAdminAttr(Arp admin, 
+			ArpResource resource, String attr) {
+    ArpShar s = admin.getShar(resource.getName());
+    if (s == null) {
+	s = admin.getDefaultShar();
+    }
+    if (s == null)
+	return null;
+    ArpResource r = s.bestFit(resource.getName());
+    if (r == null)
+	return null;
+    ArpAttribute a = r.getAttribute(attr);
+    return a;
+}
+%>	
+  </body>	
+</html>	  

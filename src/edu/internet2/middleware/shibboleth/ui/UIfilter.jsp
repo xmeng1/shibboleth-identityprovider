@@ -38,10 +38,8 @@
 	<table>
 	
 <% 
-    Set s = getReleaseSet(adminArp, resource, resource, adminArp);
-    ArpAttribute adminAttr = getAttr(s, attr);
-    ArpFilter filter = combineFilters(userAttr.getFilter(), 
- 				      adminAttr.getFilter());
+    ArpAttribute adminAttr = getAdminAttr(adminArp, resource, userAttr.getName());
+    ArpFilter filter = combineFilters(adminAttr, userAttr);
 
     Attribute dAttr = attr.getDirAttribute(userCtx, true);
 
@@ -72,4 +70,49 @@
       <input type=submit name="Submit" value="Cancel" onClick="javascript:window.close();">
   </form>
   
+<%!
+public ArpAttribute getAdminAttr(Arp admin, 
+			String resource, String attr) {
+    ArpShar s = admin.getShar(resource);
+    if (s == null) {
+	s = admin.getDefaultShar();
+    }
+    if (s == null)
+	return null;
+    ArpResource r = s.bestFit(resource);
+    if (r == null)
+	return null;
+    ArpAttribute a = r.getAttribute(attr);
+    return a;
+}
+
+public ArpFilter combineFilters(ArpAttribute attr1, ArpAttribute attr2){
+    ArpFilter filt2 = attr2.getFilter();
+    if (attr1 == null) 
+ 	return filt2;
+    ArpFilter filt1 = attr1.getFilter();
+    if(filt1 == null)
+	return filt2;
+
+    if(filt2 == null)
+	return filt1;
+
+    ArpFilterValue[]  fv1Array = filt1.getFilterValues();
+	
+    for(int i=0; i<fv1Array.length; i++){
+	ArpFilterValue afv = fv1Array[i];
+
+        if(afv.mustInclude()){  // cannot be filtered out
+	    filt2.removeFilterValue(afv); // ok if not there
+	}else{
+	    filt2.addAFilterValue(afv);
+	}
+    }
+    return filt2;
+}
+    
+    
+%>	
+  </body>	
+</html>	  
 
