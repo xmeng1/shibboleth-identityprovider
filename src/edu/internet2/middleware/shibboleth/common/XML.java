@@ -49,14 +49,9 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 /**
- *  Utility class for XML constants and schema handling
+ *  Utility class for XML constants
  *
  * @author     Scott Cantor
  * @created    January 2, 2002
@@ -65,10 +60,10 @@ public class XML
 {
     /**  Shibboleth XML namespace */
     public final static String SHIB_NS = "urn:mace:shibboleth:1.0";
-
+    
     /**  Shibboleth XML schema identifier */
     public final static String SHIB_SCHEMA_ID = "shibboleth.xsd";
-
+    
     /**  Shibboleth trust metadata XML namespace */
     public final static String TRUST_NS = "urn:mace:shibboleth:trust:1.0";
     
@@ -76,69 +71,11 @@ public class XML
     public final static String TRUST_SCHEMA_ID = "shibboleth-trust-1.0.xsd";
     
     public final static String MAIN_SHEMA_ID = "shibboleth-targetconfig-1.0.xsd";
+    public final static String ORIGIN_SHEMA_ID = "origin.xsd";
     
-	public final static String XMLSIG_RETMETHOD_RAWX509    = "http://www.w3.org/2000/09/xmldsig#rawX509Certificate";
+    public final static String XMLSIG_RETMETHOD_RAWX509    = "http://www.w3.org/2000/09/xmldsig#rawX509Certificate";
     public final static String XMLSIG_RETMETHOD_RAWX509CRL = "http://www.w3.org/2000/09/xmldsig-more#rawX509CRL";
     public final static String SHIB_RETMETHOD_PEMX509      = "urn:mace:shibboleth:RetrievalMethod:pemX509Certificate";
     public final static String SHIB_RETMETHOD_PEMX509CRL   = "urn:mace:shibboleth:RetrievalMethod:pemX509CRL";
     
-    private static byte[] Shib_schema;
-    private static byte[] Trust_schema;
-
-    /**
-     *  Custom schema resolver class
-     *
-     * @author     Scott Cantor
-     * @created    May 18, 2002
-     */
-    public static class SchemaResolver implements EntityResolver {
-        /**
-         *  A customized entity resolver for the Shibboleth extension schema
-         *
-         * @param  publicId                 The public identifier of the entity
-         * @param  systemId                 The system identifier of the entity
-         * @return                          A source of bytes for the entity or null
-         * @exception  SAXException         Raised if an XML parsing problem occurs
-         * @exception  java.io.IOException  Raised if an I/O problem is detected
-         */
-        public InputSource resolveEntity(String publicId, String systemId) throws SAXException, java.io.IOException {
-            InputSource src = null;
-            if (systemId.endsWith(SHIB_SCHEMA_ID) && Shib_schema != null)
-                src = new InputSource(new ByteArrayInputStream(Shib_schema));
-            else if (systemId.endsWith(TRUST_SCHEMA_ID) && Trust_schema != null)
-                src = new InputSource(new ByteArrayInputStream(Trust_schema));
-            return src;
-        }
-    }
-
-    static {
-        try {
-            StringBuffer buf = new StringBuffer(4096);
-            InputStream xmlin = XML.class.getResourceAsStream("/schemas/" + SHIB_SCHEMA_ID);
-            if (xmlin == null)
-                throw new RuntimeException("XML static initializer unable to locate Shibboleth schema");
-            else {
-                int b;
-                while ((b = xmlin.read()) != -1)
-                    buf.append((char)b);
-                Shib_schema = buf.toString().getBytes();
-                xmlin.close();
-            }
-
-            xmlin = XML.class.getResourceAsStream("/schemas/" + TRUST_SCHEMA_ID);
-            if (xmlin == null)
-                throw new RuntimeException("XML static initializer unable to locate Shibboleth trust schema");
-            else {
-                int b;
-                buf.setLength(0);
-                while ((b = xmlin.read()) != -1)
-                    buf.append((char)b);
-                Trust_schema = buf.toString().getBytes();
-                xmlin.close();
-            }
-        }
-        catch (java.io.IOException e) {
-            throw new RuntimeException("XML static initializer caught an I/O error");
-        }
-    }
 }

@@ -71,9 +71,6 @@ import junit.framework.TestCase;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
-import org.apache.xml.serialize.OutputFormat;
-import org.apache.xml.serialize.XMLSerializer;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -87,6 +84,7 @@ import edu.internet2.middleware.shibboleth.aa.AAAttribute;
 import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Validation suite for <code>Arp</code> processing.
@@ -96,7 +94,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 public class ArpTests extends TestCase {
 
-	private DOMParser parser = new DOMParser();
+	private Parser.DOMParser parser = new Parser.DOMParser(true);
 	Element memoryRepositoryElement;
 	private String[] arpExamples =
 		{
@@ -133,43 +131,6 @@ public class ArpTests extends TestCase {
 		super.setUp();
 
 		// Setup an xml parser
-		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-
-					if (systemId.endsWith("shibboleth-arp-1.0.xsd")) {
-						InputStream stream;
-						try {
-							stream = new FileInputStream("src/schemas/shibboleth-arp-1.0.xsd");
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-							throw new SAXException("Could not load entity: Null input stream");
-						} catch (FileNotFoundException e) {
-							throw new SAXException("Could not load entity: " + e);
-						}
-					} else {
-						return null;
-					}
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-		} catch (Exception e) {
-			fail("Failed to setup xml parser: " + e);
-		}
 
 		//Setup a dummy xml config for a Memory-based repository
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -561,11 +522,9 @@ public class ArpTests extends TestCase {
 
 			InputStream inStream = new FileInputStream("data/arp.site.xml");
 			parser.parse(new InputSource(inStream));
-			ByteArrayOutputStream directXML = new ByteArrayOutputStream();
-			new XMLSerializer(directXML, new OutputFormat()).serialize(parser.getDocument().getDocumentElement());
+			String directXML = Parser.serialize(parser.getDocument().getDocumentElement());
 
-			ByteArrayOutputStream processedXML = new ByteArrayOutputStream();
-			new XMLSerializer(processedXML, new OutputFormat()).serialize(siteArp.unmarshall());
+			String processedXML = Parser.serialize(siteArp.unmarshall());
 
 			assertTrue(
 				"File-based ARP Repository did not return the correct site ARP.",
@@ -576,11 +535,9 @@ public class ArpTests extends TestCase {
 
 			inStream = new FileInputStream("data/arp.user.test.xml");
 			parser.parse(new InputSource(inStream));
-			directXML = new ByteArrayOutputStream();
-			new XMLSerializer(directXML, new OutputFormat()).serialize(parser.getDocument().getDocumentElement());
+			directXML = Parser.serialize(parser.getDocument().getDocumentElement());
 
-			processedXML = new ByteArrayOutputStream();
-			new XMLSerializer(processedXML, new OutputFormat()).serialize(userArp.unmarshall());
+			processedXML = Parser.serialize(userArp.unmarshall());
 
 			assertTrue(
 				"File-based ARP Repository did not return the correct user ARP.",
@@ -713,14 +670,12 @@ public class ArpTests extends TestCase {
 
 				InputStream inStream = new FileInputStream(arpExamples[i]);
 				parser.parse(new InputSource(inStream));
-				ByteArrayOutputStream directXML = new ByteArrayOutputStream();
-				new XMLSerializer(directXML, new OutputFormat()).serialize(parser.getDocument().getDocumentElement());
+				String directXML = Parser.serialize(parser.getDocument().getDocumentElement());
 
 				Arp arp1 = new Arp();
 				arp1.marshall(parser.getDocument().getDocumentElement());
 
-				ByteArrayOutputStream processedXML = new ByteArrayOutputStream();
-				new XMLSerializer(processedXML, new OutputFormat()).serialize(arp1.unmarshall());
+				String processedXML = Parser.serialize(arp1.unmarshall());
 
 				assertTrue(
 					"Round trip marshall/unmarshall failed for file (" + arpExamples[i] + ")",
@@ -738,7 +693,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest1(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest1(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -786,7 +741,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release, implicit deny
 	 */
-	void arpApplicationTest2(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest2(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -841,7 +796,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: One value release
 	 */
-	void arpApplicationTest3(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest3(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -888,7 +843,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, canonical representation
 	 */
-	void arpApplicationTest4(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest4(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -936,7 +891,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, expanded representation
 	 */
-	void arpApplicationTest5(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest5(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -986,7 +941,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except two release, expanded representation
 	 */
-	void arpApplicationTest6(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest6(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1039,7 +994,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, canonical representation
 	 */
-	void arpApplicationTest7(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest7(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1087,7 +1042,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, expanded representation
 	 */
-	void arpApplicationTest8(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest8(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1137,7 +1092,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny
 	 */
-	void arpApplicationTest9(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest9(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1179,7 +1134,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny trumps explicit permit expanded representation
 	 */
-	void arpApplicationTest10(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest10(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1224,7 +1179,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny trumps explicit permit canonical representation
 	 */
-	void arpApplicationTest11(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest11(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1267,7 +1222,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Any Resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest12(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest12(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1315,7 +1270,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Any Resource (another example)
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest13(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest13(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1363,7 +1318,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar (no match), Any Resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest14(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest14(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1406,7 +1361,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest15(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest15(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1454,7 +1409,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource (no match)
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest16(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest16(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1497,7 +1452,7 @@ public class ArpTests extends TestCase {
 	 * Target: Multiple matching rules
 	 * Attribute: various
 	 */
-	void arpApplicationTest17(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest17(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1573,7 +1528,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release of two attributes in one rule
 	 */
-	void arpApplicationTest18(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest18(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1634,7 +1589,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest19(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest19(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1682,7 +1637,7 @@ public class ArpTests extends TestCase {
 	 * Target: various
 	 * Attribute: various combinations
 	 */
-	void arpApplicationTest20(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest20(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawSiteArp =
@@ -1819,7 +1774,7 @@ public class ArpTests extends TestCase {
 	 * Target: various
 	 * Attribute: various combinations (same ARPs as 20, different requester)
 	 */
-	void arpApplicationTest21(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest21(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawSiteArp =
@@ -1952,7 +1907,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: Release values by regex
 	 */
-	void arpApplicationTest22(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest22(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1999,7 +1954,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: Deny specific values by regex
 	 */
-	void arpApplicationTest23(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest23(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -2048,7 +2003,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: No matches on specific values should yield no attribute
 	 */
-	void arpApplicationTest24(ArpRepository repository, DOMParser parser) throws Exception {
+	void arpApplicationTest24(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =

@@ -37,7 +37,6 @@ import junit.framework.TestCase;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.opensaml.SAMLNameIdentifier;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
@@ -52,6 +51,8 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
+import edu.internet2.middleware.shibboleth.xml.Parser;
+
 
 
 /**
@@ -62,7 +63,7 @@ import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 public class NameMapperTests extends TestCase {
 
-	private DOMParser parser = new DOMParser();
+	private Parser.DOMParser parser = new Parser.DOMParser(true);
 
 	public NameMapperTests(String name) {
 
@@ -82,49 +83,7 @@ public class NameMapperTests extends TestCase {
 	protected void setUp() throws Exception {
 
 		super.setUp();
-		try {
 
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-			parser.setEntityResolver(new EntityResolver() {
-
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-
-					if (systemId.endsWith("namemapper.xsd")) {
-						InputStream stream;
-						try {
-							stream = new FileInputStream("src/schemas/namemapper.xsd");
-							if (stream != null) { return new InputSource(stream); }
-							throw new SAXException("Could not load entity: Null input stream");
-						} catch (FileNotFoundException e) {
-							throw new SAXException("Could not load entity: " + e);
-						}
-					} else {
-						return null;
-					}
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-
-				public void error(SAXParseException arg0) throws SAXException {
-
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void fatalError(SAXParseException arg0) throws SAXException {
-
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void warning(SAXParseException arg0) throws SAXException {
-
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-		} catch (Exception e) {
-			fail("Failed to setup xml parser: " + e);
-		}
 	}
 
 	public void testCryptoMapping() {

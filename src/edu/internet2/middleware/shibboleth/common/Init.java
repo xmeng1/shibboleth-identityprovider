@@ -70,7 +70,6 @@ public class Init
 
         initialized = true;
         
-        org.opensaml.XML.parserPool.registerSchema(XML.SHIB_NS, XML.SHIB_SCHEMA_ID, new XML.SchemaResolver());
     }
 
     static

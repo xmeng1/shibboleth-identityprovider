@@ -52,21 +52,17 @@ import java.io.IOException;
 import java.security.Principal;
 
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Simple <code>ArpRepository</code> implementation that uses a filesystem
@@ -156,36 +152,7 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 				return null;
 			}
 
-			DOMParser parser = new DOMParser();
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-
-					if (systemId.endsWith("shibboleth-arp-1.0.xsd")) {
-						try {
-							return new InputSource(
-								new ShibResource("/schemas/shibboleth-arp-1.0.xsd", this.getClass()).getInputStream());
-						} catch (IOException e) {
-							throw new SAXException("Could not load entity: " + e);
-						}
-					} else {
-						return null;
-					}
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
+			Parser.DOMParser parser = new Parser.DOMParser(true);
 			parser.parse(new InputSource(resource.getInputStream()));
 			return parser.getDocument().getDocumentElement();
 

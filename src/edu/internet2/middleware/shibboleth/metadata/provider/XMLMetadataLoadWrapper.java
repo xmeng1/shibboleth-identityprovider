@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
@@ -40,6 +41,7 @@ import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvaila
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.metadata.Provider;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * @author Walter Hoehn (wassa@columbia.edu)
@@ -56,15 +58,8 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 	public XMLMetadataLoadWrapper(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
 		super(new ShibResource(sitesFileLocation, XMLMetadataLoadWrapper.class));
 		try {
-			org.opensaml.XML.parserPool.registerSchema(XML.SHIB_NS, XML.SHIB_SCHEMA_ID, new XML.SchemaResolver());
-			Document doc = org.opensaml.XML.parserPool.parse(resource.getInputStream());
+			Document doc = Parser.loadDom(new InputSource(resource.getInputStream()),true);
 			currentMeta = new XMLMetadata(doc.getDocumentElement());
-		} catch (SAMLException e) {
-			log.error("Encountered a problem parsing federation metadata source: " + e);
-			throw new MetadataException("Unable to parse federation metadata.");
-		} catch (SAXException e) {
-			log.error("Encountered a problem parsing federation metadata source: " + e);
-			throw new MetadataException("Unable to parse federation metadata.");
 		} catch (IOException e) {
 			log.error("Encountered a problem reading federation metadata source: " + e);
 			throw new MetadataException("Unable to read federation metadata.");
@@ -94,14 +89,8 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 
 		//Load new, but keep the old in place
 		try {
-            newDoc = org.opensaml.XML.parserPool.parse(resource.getInputStream());
-        } catch (SAMLException e) {
-            log.error("Encountered an error parsing updated federation metadata, continuing to use stale copy.");
-            return;
-		} catch (SAXException e) {
-			log.error("Encountered an error parsing updated federation metadata, continuing to use stale copy.");
-			return;
-		} catch (IOException e) {
+            newDoc = Parser.loadDom(new InputSource(resource.getInputStream()),true);
+        } catch (IOException e) {
 			log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy.");
 			return;
 		}

@@ -37,7 +37,6 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
-import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -54,8 +53,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
-import org.apache.xml.serialize.OutputFormat;
-import org.apache.xml.serialize.XMLSerializer;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -63,6 +60,7 @@ import org.w3c.dom.Text;
 
 import edu.internet2.middleware.shibboleth.aa.arp.ArpAttributeSet.ArpAttributeIterator;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Defines a processing engine for Attribute Release Policies.
@@ -214,12 +212,8 @@ public class ArpEngine {
 				log.debug("Creating effective ARP from (" + userPolicies.length + ") polic(y|ies).");
 				try {
 					for (int i = 0; userPolicies.length > i; i++) {
-						StringWriter writer = new StringWriter();
-						OutputFormat format = new OutputFormat();
-						format.setIndent(4);
-						XMLSerializer serializer = new XMLSerializer(writer, format);
-						serializer.serialize(userPolicies[i].unmarshall());
-						log.debug("Dumping ARP:" + System.getProperty("line.separator") + writer.toString());
+						String dump=Parser.serialize(userPolicies[i].unmarshall());
+						log.debug("Dumping ARP:" + System.getProperty("line.separator") + dump);
 					}
 				} catch (Exception e) {
 					log.error(

@@ -66,6 +66,7 @@ import org.apache.xml.security.transforms.*;
 import org.w3c.dom.*;
 
 import edu.internet2.middleware.shibboleth.common.XML;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  *  Signs/verifies/maintains Shibboleth metadata files
@@ -180,11 +181,9 @@ public class MetadataTool
             System.exit(1);
         }
         
-        org.opensaml.XML.parserPool.registerSchema(XML.SHIB_NS, XML.SHIB_SCHEMA_ID, new XML.SchemaResolver());
-        org.opensaml.XML.parserPool.registerSchema(XML.TRUST_NS, XML.TRUST_SCHEMA_ID, new XML.SchemaResolver());
         
         // Parse file and verify root element.
-        Document doc = org.opensaml.XML.parserPool.parse(infile);
+        Document doc = Parser.loadDom(infile,true);
         Element e = doc.getDocumentElement();
         if (ns != null && name != null && !org.opensaml.XML.isElementNamed(e,ns,name)) {
             System.err.println("error: root element did not match ns and name parameters");

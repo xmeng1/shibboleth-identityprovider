@@ -35,13 +35,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
 import edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Facility for managing mappings from SAML Name Identifiers to local {@link AuthNPrincipal}objects. Mappings are
@@ -88,7 +88,7 @@ public class NameMapper {
 			//Load the default mapping
 			String rawConfig = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\"" + "		handleTTL=\"1800\"/>";
-			DOMParser parser = new DOMParser();
+			Parser.DOMParser parser = new Parser.DOMParser(false);
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			defaultMapping = new SharedMemoryShibHandle(parser.getDocument().getDocumentElement());
 

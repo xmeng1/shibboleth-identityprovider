@@ -52,7 +52,6 @@ package edu.internet2.middleware.shibboleth.utils;
 import jargs.gnu.CmdLineParser;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URL;
@@ -63,8 +62,6 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.apache.xml.serialize.OutputFormat;
-import org.apache.xml.serialize.XMLSerializer;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -84,6 +81,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Utility for testing an Attribute Resolver configuration.
@@ -288,22 +286,12 @@ public class ResolverTest
 					System.err.println("Received bad Element data from SAML library.");
 					System.exit(1);
 				}
-				OutputFormat format = new OutputFormat();
-				format.setIndenting(true);
-				format.setIndent(4);
-
-				new XMLSerializer(xml, format).serialize((Element) node);
-
-				out.println(xml.toString());
+				out.println(Parser.serialize(node));
 				out.println();
 			}
 		}
 		catch (SAMLException e) {
 			System.err.println("Error creating SAML attribute: " + e.getMessage());
-			System.exit(1);
-		}
-		catch (IOException e) {
-			System.err.println("Error serializing output from Resolver: " + e.getMessage());
 			System.exit(1);
 		}
 	}

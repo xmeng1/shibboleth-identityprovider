@@ -27,9 +27,6 @@
 package edu.internet2.middleware.shibboleth.metadata;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
@@ -37,12 +34,6 @@ import junit.framework.TestCase;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper;
 
@@ -54,7 +45,6 @@ import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrap
 
 public class MetadataTests extends TestCase {
 
-	private DOMParser	parser	= new DOMParser();
 
 	public MetadataTests(String name) {
 		super(name);
@@ -71,58 +61,6 @@ public class MetadataTests extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
-		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-			parser.setEntityResolver(new EntityResolver() {
-
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-
-					if (systemId.endsWith("credentials.xsd")) {
-						InputStream stream;
-						try {
-							stream = new FileInputStream("src/schemas/shibboleth.xsd");
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-							throw new SAXException("Could not load entity: Null input stream");
-						} catch (FileNotFoundException e) {
-							throw new SAXException("Could not load entity: " + e);
-						}
-					} else if (systemId.endsWith("xmldsig-core-schema.xsd")) {
-						InputStream stream;
-						try {
-							stream = new FileInputStream("src/schemas/xmldsig-core-schema.xsd");
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-							throw new SAXException("Could not load entity: Null input stream");
-						} catch (FileNotFoundException e) {
-							throw new SAXException("Could not load entity: " + e);
-						}
-					} else {
-						return null;
-					}
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-		} catch (Exception e) {
-			fail("Failed to setup xml parser: " + e);
-		}
 
 	}
 

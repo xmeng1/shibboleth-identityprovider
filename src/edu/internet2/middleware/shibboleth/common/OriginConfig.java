@@ -26,20 +26,11 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.StringTokenizer;
-
 import javax.servlet.ServletContext;
-
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
+
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Constructs a DOM tree for the origin configuration XML file.
@@ -82,73 +73,10 @@ public class OriginConfig {
 					+ configFileLocation + "). This probably indicates a bug in shibboleth.");
 			originConfigFile = configFileLocation;
 		}
-
-		DOMParser parser = new DOMParser();
-
-		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-
-			parser.setEntityResolver(new EntityResolver() {
-
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-					log.debug("Resolving entity for System ID: " + systemId);
-					if (systemId != null) {
-						StringTokenizer tokenString = new StringTokenizer(systemId, "/");
-						String xsdFile = "";
-						while (tokenString.hasMoreTokens()) {
-							xsdFile = tokenString.nextToken();
-						}
-						if (xsdFile.endsWith(".xsd")) {
-							InputStream stream;
-							try {
-								stream = new ShibResource("/schemas/" + xsdFile, OriginConfig.class).getInputStream();
-							} catch (IOException ioe) {
-								log.error("Error loading schema: " + xsdFile + ": " + ioe);
-								return null;
-							}
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-						}
-					}
-					return null;
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-
-		} catch (SAXException e) {
-			log.error("Unable to setup a workable XML parser: " + e);
-			throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
-		}
-
-		log.debug("Loading Configuration from (" + originConfigFile + ").");
-
-		try {
-			parser.parse(new InputSource(new ShibResource(originConfigFile, OriginConfig.class).getInputStream()));
-		} catch (SAXException e) {
-			log.error("Error while parsing origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Error while parsing origin configuration:" + e);
-		} catch (IOException e) {
-			log.error("Could not load origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Could not load origin configuration.");
-		}
-
-		originConfig = parser.getDocument();
+		
+		originConfig = Parser.loadDom(configFileLocation, true);
+		if (originConfig==null)
+		    throw new ShibbolethConfigurationException("Problem in "+XML.ORIGIN_SHEMA_ID+" see log");
 
 		return originConfig;
 	}
