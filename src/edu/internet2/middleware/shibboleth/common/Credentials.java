@@ -43,6 +43,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -59,8 +60,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.ArrayList;
@@ -71,7 +74,9 @@ import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -697,9 +702,12 @@ class FileCredentialResolver implements CredentialResolver {
 				byte[] encryptedBytes = decoder.decodeBuffer(base64Key.toString());
 				
 				//TODO This needs to come from the file
-				Cipher cipher = Cipher.getInstance("DESede");
-				//cipher.in
-
+				Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+				BigInteger parsedIv = new BigInteger(algParams, 16);
+				AlgorithmParameterSpec paramSpec = new IvParameterSpec(parsedIv.toByteArray());
+				//KeySpec keySpec = new PBEKeySpec("test123".toCharArray());
+				SecretKey key = new SecretKeySpec ("test1234".getBytes(), "DESede");
+				cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
 				return null;
 
 			} catch (IOException ioe) {
