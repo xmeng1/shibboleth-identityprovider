@@ -43,11 +43,7 @@ public class HandleServlet extends HttpServlet {
 					    is );
 	    
 	    log.info("HS: Initializing Handle Repository with "+rep+" repository type.");
-	    System.err.println("HS: Initializing Handle Repository with "+rep+" repository type.");
-	    hrf = HandleRepositoryFactory.getInstance
-		( Constants.POLICY_CLUBSHIB, 
-		  rep,
-		  this );
+	    hrf = getHandleRepository();
 	}
 	catch (SAMLException ex) {
 	    log.fatal("Error initializing SAML libraries: "+ ex);
@@ -224,6 +220,29 @@ public class HandleServlet extends HttpServlet {
 	    throw new HandleException("Unable to obtain client address.");
 	}    
     }
+
+
+    private synchronized HandleRepositoryFactory getHandleRepository()
+	throws HandleException{
+
+	ServletConfig sc = getServletConfig();
+	ServletContext sctx = sc.getServletContext(); 
+	HandleRepositoryFactory hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
+
+	log.debug("Context attribute for HandleRepository: "+hrf);
+	    
+	if(hrf == null){
+	    // make one
+	    String repositoryType = this.getServletContext().getInitParameter("repository");
+	    hrf = HandleRepositoryFactory.getInstance(						      Constants.POLICY_CLUBSHIB, 
+												      repositoryType,
+												      this );
+	}
+	return hrf;
+    }
+
+
 }
+
     
 

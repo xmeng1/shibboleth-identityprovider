@@ -2,6 +2,7 @@ package edu.internet2.middleware.shibboleth.hs;
 
 import java.util.*;
 import java.sql.*;
+import javax.servlet.*;
 import javax.servlet.http.*;
 
 public class ClubShibSQLHandleRepository extends HandleRepositoryFactory{
@@ -17,10 +18,12 @@ public class ClubShibSQLHandleRepository extends HandleRepositoryFactory{
     public ClubShibSQLHandleRepository(HttpServlet HS) 
 	throws HandleException 
     {
-	DBdriver = HS.getInitParameter("DBdriver");
-	DBuser = HS.getInitParameter("DBuser");
-	DBpass = HS.getInitParameter("DBpass");
-	DBdomain = HS.getInitParameter("DBdomain");
+	ServletConfig sc = HS.getServletConfig();
+	ServletContext sctx = sc.getServletContext();
+	DBdriver = sctx.getInitParameter("DBdriver");
+	DBuser = sctx.getInitParameter("DBuser");
+	DBpass = sctx.getInitParameter("DBpass");
+	DBdomain = sctx.getInitParameter("DBdomain");
 	DBurl = "jdbc:mysql://"+DBdomain+"/shib"+
 	    "?user="+DBuser+"&password="+DBpass+"&autoReconnect=true";
 	    
