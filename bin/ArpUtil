@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #The Shibboleth webapp root
-if [ -z SHIB_ROOT ]
+if [ -n SHIB_ROOT ]
 	then
 		SHIB_ROOT=/usr/local/tomcat/webapps/shibboleth
 fi
