@@ -1,0 +1,47 @@
+<Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <OriginSite Name="demo.edu">
+        <Alias>Demo State University</Alias>
+        <HandleService Location="https://shib2.internet2.edu/shibboleth-origin/servlet/HS" Name="shib2.internet2.edu"></HandleService>
+    </OriginSite>
+<ds:Signature>
+<ds:SignedInfo>
+<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
+<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+<ds:Reference URI="">
+<ds:Transforms>
+<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
+</ds:Transforms>
+<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+<ds:DigestValue>FlTtww9Zm1RZVJ8XhMi+8EMGU98=</ds:DigestValue>
+</ds:Reference>
+</ds:SignedInfo>
+<ds:SignatureValue>
+S9AJt7aeJV7Zt+jPUjvR++efo6UREveeueIBCjXIY40NACs1EmPv/84zQoAa51/NguPynyFF4VqM
+G+kreYYPkRdUifNKZ4HAkJA0/NyYWErohlCyIZDvWEvWvND8RBKTtg0eR9TdI8Ql2XUE+9LLpBEC
+6ApU4WqxqegaKznyn0QjhWTMolECxfalo3Zelhh4IghaLhbBo9RxirMYI/ksfgGNYXgivsctZFOe
+MQ1bBhh5/tfd3ODfge2/huj0o06w+0KcsIT7l01NZcS4TCDHvILPIqB1kNjWUPwf7G5LTsNHSvTL
+KmfS5rt1EgLt2FFqqfszPQJO992LrXH6Adhv3Q==
+</ds:SignatureValue>
+<ds:KeyInfo>
+<ds:X509Data>
+<ds:X509Certificate>
+MIIDczCCAlsCBD0Xj7gwDQYJKoZIhvcNAQEEBQAwfjELMAkGA1UEBhMCVVMxETAPBgNVBAgTCE1p
+Y2hpZ2FuMRIwEAYDVQQHEwlBbm4gQXJib3IxDjAMBgNVBAoTBVVDQUlEMQ0wCwYDVQQLEwRNQUNF
+MSkwJwYDVQQDEyBJbnRlcm5ldDIgU2hpYmJvbGV0aCBTaXRlIFNpZ25lcjAeFw0wMjA2MjQyMTMx
+MzZaFw0wMjA5MjIyMTMxMzZaMH4xCzAJBgNVBAYTAlVTMREwDwYDVQQIEwhNaWNoaWdhbjESMBAG
+A1UEBxMJQW5uIEFyYm9yMQ4wDAYDVQQKEwVVQ0FJRDENMAsGA1UECxMETUFDRTEpMCcGA1UEAxMg
+SW50ZXJuZXQyIFNoaWJib2xldGggU2l0ZSBTaWduZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
+ggEKAoIBAQDc2T68rjx89gaWW6BVp0uj1lem8RkMjG2hbCl3pl9DxK3OFeUVVD0+nOV6i8VLKjIs
+ilOtXqfw/uimj/v3DQLX7AcHiKxTiJAohI+CNvdKZw10LnwB9+uAUh23NQr+rFWhd510X6Ebq/xG
+oPYkeUg4pjMdTtGhKADXC0QuW+cDnJ9AmITeIjY65xtZFf9SR/vckxKsN3nvmhbjFAVYjc6HuZyr
+D9Wu/D5SgCGedND/6sBcIJ6OCdAwdLTgG17Nmd0+vqBpgydWronLbCXtqHw/PMTtep3uTMq8oGRR
+ES/f3YD8E+52r6E2pMakGLOkJogmkha5RJZ2YIIZo7zsGUxpAgMBAAEwDQYJKoZIhvcNAQEEBQAD
+ggEBAH0AIuFUrTlaBZ3b0EJZy3ieJyIBc9hipXmYjOAu6e+kXR59a1vGCh2Cy5o44PVhsLFQT1IB
+GOkWjsCvDoUymBekQm5kV1Um6PDoklzukOctj8FYtYVJll0t2yCbKy7s0G/BrNcbSwP5ZaffbtGK
+5nC/fWsGzd3Vo+ZyEDjJ+VxWKrW/chX4jN6f5tWpSX6EIH4tvt9PFCzDi9+WBmSe9lgntmUvBL6s
+prrcDNQpIkjoSiXvFfzu8pHXO+MIyEpBVNAKmNMFGaj0joMwniXbcJkoIdPkheguKqyfesX5YYPI
+hIhRa9TDXnHP33SNSpqgjBagMkRn+7s9GlxE7sVpw+8=
+</ds:X509Certificate>
+</ds:X509Data>
+</ds:KeyInfo>
+</ds:Signature></Sites>
