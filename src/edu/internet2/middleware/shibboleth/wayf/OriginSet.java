@@ -49,6 +49,7 @@
 
 package edu.internet2.middleware.shibboleth.wayf;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
@@ -77,7 +78,10 @@ public class OriginSet {
 	}
 
 	public Origin[] getOrigins() {
-		return (Origin[]) origins.toArray(new Origin[0]);
+
+		Origin[] result = (Origin[]) origins.toArray(new Origin[0]);
+		Arrays.sort(result);
+		return result;
 	}
 
 	public void addOrigin(Origin origin) {

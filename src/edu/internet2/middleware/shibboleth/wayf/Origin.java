@@ -64,7 +64,7 @@ import org.apache.log4j.Logger;
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
-public class Origin {
+public class Origin implements Comparable {
 
 	private static Logger log = Logger.getLogger(Origin.class.getName());
     private String name = "";
@@ -160,5 +160,12 @@ public class Origin {
         }
         return false;
     }
+
+	/**
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	public int compareTo(Object o) {
+			return name.compareTo(((Origin)o).getDisplayName().toLowerCase());
+	}
 
 }
