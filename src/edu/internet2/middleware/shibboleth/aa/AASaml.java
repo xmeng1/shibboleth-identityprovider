@@ -137,6 +137,7 @@ public class AASaml {
         					 /* recipient URL*/ null,
         					 /* no attrs -> no assersion*/ null,
         					 exception);
+        	
             } else {
                 
                 // Determine max lifetime, and filter via query if necessary.
@@ -186,7 +187,20 @@ public class AASaml {
             ourSE = se;
         } catch (CloneNotSupportedException ex) {
             ourSE = new SAMLException(SAMLException.RESPONDER, ex);
+        
         } finally{
+        
+        	if (log.isDebugEnabled()) {
+				try {
+					log.debug(
+						"Dumping generated SAML Response:"
+						+ System.getProperty("line.separator")
+						+ new String(new BASE64Decoder().decodeBuffer(new String(sResp.toBase64(), "ASCII")), "UTF8"));
+				} catch (IOException e) {
+					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+				}
+			}
+			
             binding.respond(resp,sResp,ourSE);	    
         }
     }
