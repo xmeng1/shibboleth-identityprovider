@@ -107,7 +107,7 @@ public class HandleServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:incommon:pilot:2003");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:incommon:pilot");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.HandleServlet.authMethod",
 			SAMLAuthenticationStatement.AuthenticationMethod_Unspecified);
