@@ -34,7 +34,9 @@ public class HandleServlet extends HttpServlet {
 					    is );
 	    
 	    hrf = HandleRepositoryFactory.getInstance
-		( Constants.POLICY_CLUBSHIB, this );
+		( Constants.POLICY_CLUBSHIB, 
+		  getInitParameter("repository"),
+		  this );
 	}
 	catch (SAMLException ex) {
 	    throw new ServletException( "Error initializing SAML libraries: " + ex );
@@ -61,6 +63,7 @@ public class HandleServlet extends HttpServlet {
 	    ticket = "1400000";
 	}
 	ticketExp = Long.parseLong(ticket);
+
 	if ( getInitParameter("domain") == null || 
 	     getInitParameter("domain").equals("")) {
 	    throw new ServletException("Cannot find host domain in init parameters");
@@ -93,9 +96,12 @@ public class HandleServlet extends HttpServlet {
 	     getInitParameter("certalias").equals("")) {
 	    throw new ServletException("Cannot find certificate alias in init parameters");
 	}
-
-
+	if ( getInitParameter("repository") == null ||
+	     getInitParameter("repository").equals("")) {
+	    throw new ServletException("Cannot find repository specification in init parameters.");
+	}
     }
+
 
     public void doGet(HttpServletRequest req, 
 		      HttpServletResponse res)

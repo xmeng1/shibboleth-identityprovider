@@ -11,17 +11,26 @@ public abstract class HandleRepositoryFactory
 {
     /**  Array of policy URI(s) (HS and SHIRE) */
     protected String[] policies;
+    protected String SQL = "SQL";
+    protected String MEMORY = "MEMORY";
 
     public HandleRepositoryFactory()
     {
     }
 
     public static HandleRepositoryFactory getInstance(String policy, 
+						      String repository,
 						      HttpServlet HS)
         throws HandleException {
 
-	if(policy.equalsIgnoreCase( Constants.POLICY_CLUBSHIB )){
-	    return new ClubShibSQLHandleRepository(HS);
+	if (policy.equalsIgnoreCase( Constants.POLICY_CLUBSHIB )) {
+	    if (repository.equalsIgnoreCase( "SQL" )) {
+		return new ClubShibSQLHandleRepository(HS);
+	    } else if (repository.equalsIgnoreCase( "MEMORY" )) {
+		return new ClubShibInMemoryHandleRepository(HS);
+	    } else {
+		throw new HandleException("Unspecified repository type.");
+	    }
 	}else{
 	    throw new HandleException("Unsupported policy found.");
 	}
@@ -33,6 +42,7 @@ public abstract class HandleRepositoryFactory
     public abstract  void insertHandleEntry(HandleEntry he)
 	throws HandleException;
     
+    /* for debugging purposes only */
     public abstract String toHTMLString()
         throws HandleException;
 
