@@ -115,12 +115,11 @@ public class HandleServlet extends HttpServlet {
 	    throw new ServletException( "Error in initialization: " +ex );
 	}
 
-	sctx.setAttribute("HandleRepository", hrf);
-	
 	if (hsSAML == null) {
 	    log.fatal("Error initializing SAML libraries: No Profile created." );
 	    throw new ServletException( "Error initializing SAML libraries: No Profile created." );
 	}  
+
     }
 
 
@@ -286,6 +285,8 @@ public class HandleServlet extends HttpServlet {
 	    hrf = HandleRepositoryFactory.getInstance(						      Constants.POLICY_CLUBSHIB, 
 												      repositoryType,
 												      this );
+	    sctx.setAttribute("HandleRepository", hrf);
+	    log.info("A new HandleRepository created by HS: "+hrf);
 	}
 	return hrf;
     }
