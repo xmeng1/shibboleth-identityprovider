@@ -65,6 +65,8 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
@@ -121,13 +123,22 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					log.info("Treating remote provider as unauthenticated.");
 					return null;
 				}
+				RoleDescriptor role = provider.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+				if (role == null) {
+					log.info("SPSSO role not found in metadata for provider: (" + relyingParty.getProviderId() + ").");
+					log.info("Treating remote provider as unauthenticated.");
+					return null;
+				}
 
 				// Make sure that the suppplied credential is valid for the
 				// selected relying party
-				if (isValidCredential(provider, credential)) {
+				if (support.getTrust().validate(role,
+						(X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate"),
+						KeyDescriptor.ENCRYPTION)) {
 					log.info("Supplied credential validated for this provider.");
 					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
 					return relyingParty.getProviderId();
+
 				} else {
 					log.error("Supplied credential ("
 							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)

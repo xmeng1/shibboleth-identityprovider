@@ -54,6 +54,8 @@ import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
+import edu.internet2.middleware.shibboleth.common.ShibbolethTrust;
+import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -76,6 +78,7 @@ public class IdPProtocolSupport implements Metadata {
 	private AttributeResolver resolver;
 	private ArtifactMapper artifactMapper;
 	private Semaphore throttle;
+	private Trust trust = new ShibbolethTrust();
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
 			ArpEngine arpEngine, AttributeResolver resolver, ArtifactMapper artifactMapper)
@@ -266,6 +269,11 @@ public class IdPProtocolSupport implements Metadata {
 	public ArtifactMapper getArtifactMapper() {
 
 		return artifactMapper;
+	}
+
+	public Trust getTrust() {
+
+		return trust;
 	}
 
 	private class Semaphore {

@@ -49,6 +49,8 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
  * @author Walter Hoehn
@@ -125,9 +127,18 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 					log.info("No metadata found for provider: (" + mapping.getServiceProviderId() + ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider.");
 				}
+				RoleDescriptor role = provider.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+				if (role == null) {
+					log
+							.info("SPSSO role not found in metadata for provider: (" + mapping.getServiceProviderId()
+									+ ").");
+					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider role.");
+				}
 
 				// Make sure that the suppplied credential is valid for the provider to which the artifact was issued
-				if (!isValidCredential(provider, credential)) {
+				if (!support.getTrust().validate(role,
+						(X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate"),
+						KeyDescriptor.ENCRYPTION)) {
 					log.error("Supplied credential ("
 							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
 							+ ") is NOT valid for provider (" + mapping.getServiceProviderId()
