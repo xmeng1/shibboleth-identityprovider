@@ -81,6 +81,7 @@ public class MetadataTool
         CmdLineParser parser = new CmdLineParser();
         CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
         CmdLineParser.Option signOption = parser.addBooleanOption('s', "sign");
+        CmdLineParser.Option noverifyOption = parser.addBooleanOption('N', "noverify");
         CmdLineParser.Option inOption = parser.addStringOption('i', "in");
         CmdLineParser.Option outOption = parser.addStringOption('o', "out");
         CmdLineParser.Option keystoreOption = parser.addStringOption('k', "keystore");
@@ -111,6 +112,7 @@ public class MetadataTool
         }
         
         Boolean sign = (Boolean)parser.getOptionValue(signOption);
+        Boolean noverify = (Boolean)parser.getOptionValue(noverifyOption);
         String keystore = (String)parser.getOptionValue(keystoreOption);
         String pw = (String)parser.getOptionValue(pwOption);
         String alias = (String)parser.getOptionValue(aliasOption);
@@ -160,6 +162,10 @@ public class MetadataTool
                 System.exit(1);
             }
         }
+        else if (noverify == null || !noverify.booleanValue()) {
+            printUsage(System.out);
+            System.exit(1);
+        }
         
         org.opensaml.XML.parserPool.registerSchema(XML.SHIB_NS, XML.SHIB_SCHEMA_ID, new XML.SchemaResolver());
         org.opensaml.XML.parserPool.registerSchema(XML.TRUST_NS, XML.TRUST_SCHEMA_ID, new XML.SchemaResolver());
@@ -195,16 +201,30 @@ public class MetadataTool
             e.appendChild(sig.getElement());
             sig.sign(privateKey);
         }
-        else if (cert != null) {
+        else {
             Element sigElement = org.opensaml.XML.getLastChildElement(e, org.opensaml.XML.XMLSIG_NS, "Signature");
-            if (sigElement == null) {
-                System.err.println("error: file was not signed");
-                System.exit(1);
+            boolean v = (noverify == null || !noverify.booleanValue());
+            if (v) {
+                if (sigElement == null) {
+                    System.err.println("error: file is not signed");
+                    System.exit(1);
+                }
+                XMLSignature sig = new XMLSignature(sigElement, null);
+                if (!sig.checkSignatureValue(cert)) {
+                    System.err.println("error: signature on file did not verify");
+                    System.exit(1);
+                }
             }
-            XMLSignature sig = new XMLSignature(sigElement, null);
-            if (!sig.checkSignatureValue(cert)) {
-                System.err.println("error: signature on file did not verify");
-                System.exit(1);
+            else if (sigElement != null) {
+                XMLSignature sig = new XMLSignature(sigElement, null);
+                System.err.println("verification of signer disabled, make sure you trust the source of this file!");
+                if (!sig.checkSignatureValue(sig.getKeyInfo().getPublicKey())) {
+                    System.err.println("error: signature on file did not verify");
+                    System.exit(1);
+                }
+            }
+            else {
+                System.err.println("verification disabled, and file is unsigned!");
             }
         }
         
@@ -226,13 +246,14 @@ public class MetadataTool
         out.println("usage: java edu.internet2.middleware.shibboleth.utils.MetadataTool");
         out.println();
         out.println("when signing:   -i <uri> -s -k <keystore> -a <alias> -p <pass> [-o <outfile>]");
-        out.println("when updating:  -i <uri> [-k <keystore> -a <alias> -o <outfile>]");
+        out.println("when updating:  -i <uri> [-k <keystore> -a <alias> OR -N ] [-o <outfile>]");
         out.println("  -i,--in              input file or url");
         out.println("  -k,--keystore        pathname of Java keystore file");
         out.println("  -a,--alias           alias of signing or verification key");
         out.println("  -p,--password        keystore/key password");
         out.println("  -o,--outfile         write signed copy to this file instead of stdout");
         out.println("  -s,--sign            sign the input file and write out a signed version");
+        out.println("  -N,--noverify        allows update of file without signature check");
         out.println("  -h,--help            print this message");
         out.println("  -x,--ns              XML namespace of root element");
         out.println("  -n,--name            name of root element");
