@@ -67,5 +67,7 @@ do
     fi
 done
 
+SHIB_UTIL_CLASSPATH=$SHIB_UTIL_CLASSPATH:"$SHIB_HOME"
+
 ##Here we go
 $JAVACMD -Djava.endorsed.dirs="$ENDORSED" -Dlog4j.configuration="$LOG_CONFIG" -cp $SHIB_UTIL_CLASSPATH  edu.internet2.middleware.shibboleth.utils.ResolverTest "$@"
