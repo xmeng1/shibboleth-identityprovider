@@ -1,5 +1,4 @@
-<SiteGroup Name="https://localhost/shibboleth" xmlns="urn:mace:shibboleth:1.0"
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:1.0 shibboleth.xsd">
+<SiteGroup Name="https://localhost/shibboleth" xmlns="urn:mace:shibboleth:1.0">
 	<OriginSite Name="https://localhost/shibboleth/origin">
 		<Alias>Localhost Test Deployment</Alias>
 		<Contact Type="technical" Name="Your Name Here" Email="root@localhost"/>

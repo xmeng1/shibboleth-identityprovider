@@ -1,5 +1,4 @@
-<SiteGroup Name="urn:mace:inqueue" xmlns="urn:mace:shibboleth:1.0"
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:1.0 shibboleth.xsd">
+<SiteGroup Name="urn:mace:inqueue" xmlns="urn:mace:shibboleth:1.0">
 	<OriginSite Name="urn:mace:inqueue:example.edu" ErrorURL="http://wayf.internet2.edu/InQueue/error.html">
 		<Alias>Example State University</Alias>
 		<Contact Type="technical" Name="InQueue Support" Email="inqueue-support@internet2.edu"/>
