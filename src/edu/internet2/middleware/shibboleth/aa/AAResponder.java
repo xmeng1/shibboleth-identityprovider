@@ -99,58 +99,90 @@ public class AAResponder{
     }
 
 
-    public SAMLAttribute[] getReleaseAttributes(String userName, String searchFilter, String handle, String sharName, String url)
-	throws AAException{
+	public SAMLAttribute[] getReleaseAttributes(
+		String userName,
+		String searchFilter,
+		String handle,
+		String sharName,
+		String url)
+		throws AAException {
 
-	DirContext userCtx = null;
+		DirContext userCtx = null;
 
-	try{
-	    if(searchFilter == null)
-		searchFilter = "";
-	    int indx = searchFilter.indexOf("%s");
-	    if(indx  <0){
-		userCtx = (DirContext)ctx.lookup(searchFilter+userName);
-	    }else{
-		/* This is a search filter. Search after replacing %s with uid*/
-		StringBuffer tmp = new StringBuffer(searchFilter);
-		tmp.delete(indx, indx+2);
-		tmp.insert(indx, userName);
-		searchFilter = tmp.toString();
-		NamingEnumeration en = ctx.search("", searchFilter, null);
-		if(!en.hasMore())
-		    throw new AAException("No context found for "+userName+" as a result of searching "+searchFilter);
-		userCtx = (DirContext)en.next();
-		if(en.hasMore())
-		    throw new AAException("More than 1 context found for "+userName+" as a result of searching "+searchFilter);
-
-	    }		
-	}catch(NamingException e){
-	    throw new AAException("Cannot lookup context for "+userName+" :"+e);
-	}
-
-
-
-	Set s = getCombinedReleaseSet(adminArp, sharName, url, userName);
-	// go throu the set and find values for each attribute
-	try{
-	    Vector sAttrs = new Vector();
-	    Iterator it = s.iterator();
-	    while(it.hasNext()){
-		ArpAttribute aAttr = (ArpAttribute)it.next();
-		Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
-		if(dAttr != null){
-		    SAMLAttribute sAttr = jndi2saml(dAttr);
-		    if (sAttr != null) {
-		    	sAttrs.add(sAttr);
-		    }
+		try {
+			if (searchFilter == null)
+				searchFilter = "";
+			int indx = searchFilter.indexOf("%s");
+			if (indx < 0) {
+				try {
+					userCtx = (DirContext) ctx.lookup(searchFilter + userName);
+				} catch (NameNotFoundException nnfe) {
+					log.error(
+						"Could not locate a user ("
+							+ userName
+							+ ") as a result of searching with ("
+							+ searchFilter
+							+ ").");
+					throw new AAException("No data available for this principal.");
+				}
+			} else {
+				/* This is a search filter. Search after replacing %s with uid*/
+				StringBuffer tmp = new StringBuffer(searchFilter);
+				tmp.delete(indx, indx + 2);
+				tmp.insert(indx, userName);
+				searchFilter = tmp.toString();
+				SearchControls ctls = new SearchControls();
+				ctls.setReturningObjFlag(true);
+				NamingEnumeration en = ctx.search("", searchFilter, ctls);
+				if (!en.hasMore()) {
+					log.error(
+						"Could not locate a user ("
+							+ userName
+							+ ") as a result of searching with ("
+							+ searchFilter
+							+ ").");
+					throw new AAException("No data available for this principal.");
+				}
+				userCtx = (DirContext) ((SearchResult) en.next()).getObject();
+				if (en.hasMore()) {
+					log.error(
+						"Located multiple ("
+							+ userName
+							+ ") users as a result of searching with ("
+							+ searchFilter
+							+ ").");
+					throw new AAException("Cannot disambiguate data for this principal.");
+				}
+			}
+		} catch (NamingException e) {
+			log.error(
+				"An error occurred while retieving data for principal (" + userName + ") :" + e.getMessage());
+			throw new AAException("Error retrieving data for principal (" + userName + ")");
 		}
-	    }
-	    SAMLAttribute[] sa = new SAMLAttribute[sAttrs.size()];
-	    return (SAMLAttribute[])sAttrs.toArray(sa);
-	}catch(NamingException e){
-	    throw new AAException("Bad Contexted for getting Attribute Values: "+e);
+
+		Set s = getCombinedReleaseSet(adminArp, sharName, url, userName);
+		// go throu the set and find values for each attribute
+		try {
+			Vector sAttrs = new Vector();
+			Iterator it = s.iterator();
+			while (it.hasNext()) {
+				ArpAttribute aAttr = (ArpAttribute) it.next();
+				Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
+				if (dAttr != null) {
+					SAMLAttribute sAttr = jndi2saml(dAttr);
+					if (sAttr != null) {
+						sAttrs.add(sAttr);
+					}
+				}
+			}
+			SAMLAttribute[] sa = new SAMLAttribute[sAttrs.size()];
+			return (SAMLAttribute[]) sAttrs.toArray(sa);
+		} catch (NamingException e) {
+			log.error(
+				"An error occurred while retieving data for principal (" + userName + ") :" + e.getMessage());
+			throw new AAException("Error retrieving data for principal (" + userName + ")");
+		}
 	}
-    }
 
 
 	private Set getCombinedReleaseSet(Arp admin, String sharName, String url, String userName)
