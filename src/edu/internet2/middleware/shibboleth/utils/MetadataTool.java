@@ -270,6 +270,7 @@ public class MetadataTool
         out.println("  -h,--help            print this message");
         out.println("  -x,--ns              XML namespace of root element");
         out.println("  -n,--name            name of root element");
+        out.println("  -d, --debug          run in debug mode");
         out.println();
         System.exit(1);
     }
