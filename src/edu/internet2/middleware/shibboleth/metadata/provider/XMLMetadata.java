@@ -284,7 +284,7 @@ public class XMLMetadata implements Metadata {
 				return ENCRYPTION;
 			}
 
-			public String getEncryptionMethod() {
+			public String[] getEncryptionMethod() {
 				return null;
 			}
 
