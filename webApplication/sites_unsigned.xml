@@ -1,117 +1,14 @@
-<Sites xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-    <OriginSite Name="example.edu">
+<SiteGroup Name="urn:mace:incommon:pilot" xmlns="urn:mace:shibboleth:1.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <OriginSite Name="urn:mace:incommon:pilot:example.edu">
         <Alias>Example State University</Alias>
-        <HandleService Location="https://wayf.internet2.edu/shibboleth/HS" Name="wayf.internet2.edu"/>
+        <Contact Type="technical" Name="Alfred E. Neuman" Email="(no email)"/>
+        <HandleService Location="https://wayf.internet2.edu/InCommon/HS" Name="wayf.internet2.edu"/>
         <Domain>example.edu</Domain>
     </OriginSite>
-    <OriginSite Name="shibdev.edu">
+    <OriginSite Name="urn:mace:incommon:pilot:shibdev.edu">
         <Alias>Shibboleth Development Origin</Alias>
+        <Contact Type="technical" Name="Scott Cantor" Email="cantor.2@osu.edu"/>
         <HandleService Location="https://shib2.internet2.edu/shibboleth/HS" Name="shib2.internet2.edu"/>
         <Domain>shibdev.edu</Domain>
     </OriginSite>
-    <OriginSite Name="brown.edu">
-        <Alias>Brown University</Alias>
-        <HandleService Location="http://portsmouth.services.brown.edu:1080/shibboleth/HS" Name="dilbert2.cis.brown.edu"/>
-        <Domain>brown.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="washington.edu">
-        <Alias>University of Washington</Alias>
-        <HandleService Location="https://abajo.cac.washington.edu/shibboleth/HS" Name="abajo.cac.washington.edu"/>
-        <Domain>washington.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="wisc.edu">
-        <Alias>UW - Madison</Alias>
-        <Alias>University of Wisconsin</Alias>
-        <Alias>Wisc</Alias>
-        <HandleService Location="https://ecto1.doit.wisc.edu/shibboleth/HS" Name="ecto1.doit.wisc.edu"/>
-        <Domain>wisc.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="psu.edu">
-        <Alias>Penn State University</Alias>
-        <HandleService Location="https://bsod.aset.psu.edu/shibboleth/HS" Name="bsod.aset.psu.edu"/>
-        <Domain>psu.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="osu.edu">
-        <Alias>Ohio State University</Alias>
-        <Alias>Buckeyes</Alias> 
-        <HandleService Location="https://trotsky.uts.ohio-state.edu:444/shibboleth/HS" Name="trotsky.uts.ohio-state.edu"/>
-        <Domain>osu.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="virginia.edu">
-        <Alias>UVa</Alias>  
-        <HandleService Location="https://shib.itc.virginia.edu/shibboleth/HS" Name="shib.itc.virginia.edu"/>
-        <Domain>virginia.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="ucop.edu">
-        <Alias>University of California Shibboleth Pilot</Alias>
-        <HandleService Location="https://dwalker.ucop.edu/shibboleth/HS" Name="dwalker.ucop.edu"/>
-        <Domain>ucop.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="uninett.no">
-        <Alias>uninett</Alias>
-        <HandleService Location="https://shib1.uninett.no/shibboleth/HS" Name="shib1.uninett.no"/>
-        <Domain>uninett.no</Domain>
-    </OriginSite>
-    <OriginSite Name="georgetown.edu">
-        <Alias>Georgetown University</Alias>
-        <HandleService Location="https://shibtest.georgetown.edu/shibboleth/HS" Name="shibtest.georgetown.edu"/>
-        <Domain>georgetown.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="utk.edu">
-        <Alias>University of Tennessee</Alias>
-        <Alias>Vols</Alias>
-        <HandleService Location="http://spike.ait.utk.edu/Shibboleth/HS" Name="spike.ait.utk.edu"/>
-        <Domain>utk.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="umich.edu">
-        <Alias>University of Michigan</Alias>
-        <Alias>U of M</Alias>
-        <Alias>UMich</Alias>
-        <HandleService Location="https://python.ifs.umich.edu/shibboleth/HS" Name="python.ifs.umich.edu"/>
-        <Domain>umich.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="columbia.edu">
-        <Alias>Columbia University</Alias>
-        <Alias>Columbia University in the City of New York</Alias>
-        <Alias>Lions</Alias>
-        <HandleService Location="https://shibboleth.cc.columbia.edu/accounts/login" Name="shibboleth.cc.columbia.edu"/>
-        <Domain>columbia.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="cmu.edu">
-        <Alias>Carnegie Mellon University</Alias>
-        <Alias>CMU</Alias>
-        <HandleService Location="https://shib-test1.andrew.cmu.edu/shibboleth/HS" Name="shib-test1.andrew.cmu.edu"/>
-        <Domain>cmu.edu</Domain>
-        <Domain>ANDREW.CMU.EDU</Domain>
-        <Domain>CS.CMU.EDU</Domain>
-        <Domain>ECE.CMU.EDU</Domain>
-    </OriginSite>
-    <OriginSite Name="muohio.edu">
-        <Alias>Miami University</Alias>
-        <Alias>MU</Alias>
-        <HandleService Location="https://naslnx07.mcs.muohio.edu:11443/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"/>
-        <Domain>muohio.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="ucsd.edu">
-        <Alias>University of California, San Diego</Alias>
-        <Alias>UCSD</Alias>
-        <HandleService Location="https://gilead.ucsd.edu/shibboleth/HS" Name="gilead.ucsd.edu"/>
-        <Domain>ucsd.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="lse.ac.uk">
-        <Alias>London School of Economics</Alias>
-        <Alias>LSE</Alias>
-        <HandleService Location="http://gabriel.lse.ac.uk/shibboleth/HS" Name="gabriel.lse.ac.uk"/>
-        <Domain>lse.ac.uk</Domain>
-    </OriginSite>
-    <OriginSite Name="uth.tmc.edu">
-        <Alias>UT-Houston</Alias>
-        <HandleService Location="https://oac37.hsc.uth.tmc.edu/shibboleth/HS" Name="oac37.hsc.uth.tmc.edu"/>
-        <Domain>uth.tmc.edu</Domain>
-    </OriginSite>
-    <OriginSite Name="gsu.edu">
-        <Alias>Georgia State University</Alias>
-        <HandleService Location="http://art12.gsu.edu/shibboleth/HS" Name="art12.gsu.edu"/>
-        <Domain>gsu.edu</Domain>
-    </OriginSite>
-</Sites>
+</SiteGroup>
