@@ -111,7 +111,7 @@
     </OriginSite>
     <OriginSite Name="gsu.edu">
         <Alias>Georgia State University</Alias>
-        <HandleService Location="http://art12.gsu.edu:8080/shibboleth/HS" Name="art12.gsu.edu"/>
+        <HandleService Location="http://art12.gsu.edu/shibboleth/HS" Name="art12.gsu.edu"/>
         <Domain>gsu.edu</Domain>
     </OriginSite>
 </Sites>

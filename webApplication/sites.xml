@@ -111,7 +111,7 @@
     </OriginSite>
     <OriginSite Name="gsu.edu">
         <Alias>Georgia State University</Alias>
-        <HandleService Location="http://art12.gsu.edu:8080/shibboleth/HS" Name="art12.gsu.edu"></HandleService>
+        <HandleService Location="http://art12.gsu.edu/shibboleth/HS" Name="art12.gsu.edu"></HandleService>
         <Domain>gsu.edu</Domain>
     </OriginSite>
 <ds:Signature>
@@ -123,15 +123,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>QSzycPJei0h2KN3omHM7f04cc/o=</ds:DigestValue>
+<ds:DigestValue>84PMuh1C6xjrfYQODRQvbYRFoQg=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-S7Hq1sj3r3k/o5ZZz6ukfcr9vcNE5a8XsQMyRBEdyXlmiivKQhExjfqf/+5hC+zD+LyiQbae5gI/
-I9iFjOJZjm1h6Ahwsvv1KWV9sykAV1tLOFxgPSWa4ESRGb8cFrBlC5TYR3WcNFn1XXpH5zlkQ3tw
-DXa7jNxQWPpdpxtCSxQbBS+EUQIVB9rWiujezKRaH/f7LOtn+CzP3YMcLq+OqMk3QYEzjeY/beXJ
-3djAf+ExdIoItbV+y+A5mpDa/m/dp+9sNXdquvP83jhNbZkZFIl1BexsmF8O31WJJ124gYERHyf3
-cRiQd706nogC5y0DRimxlb2PlGy5afeGy7l11A==
+g77YzAErKhLBLVKUqy5goaCKZt0YyCgqnjyuwqfpAcjiIypyoO5epY9ELUXez0Y4Ete8kgAI6hQv
+1ndHCaRTCT5UbjtFe+bwtJ60VjfG5XOQOAdC+xZVhSJYF9vQ58PrEAJBWAGo1w4xZOH9q0SqVtRX
+UIKdFKlF0RmrUalCVaCRKPNnHIeO+YLxJNQU+ftnpG91ZsZUyqRqf2A740kupIKuWKFVVN6jA1G4
+Je49zHXM+G6n144eaNNtCPtCLLxj71bi4YP4pUtXczLjWnvsf/B/5Jbf4byX7Pwz9b/RCvmZ5lon
+0hRsLAFI3pY05GOVw1QclApSNsRHcCKcWa+u7w==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
