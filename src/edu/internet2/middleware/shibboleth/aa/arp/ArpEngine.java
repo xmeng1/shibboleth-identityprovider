@@ -231,6 +231,11 @@ public class ArpEngine {
 		String requester,
 		URL resource)
 		throws ArpProcessingException {
+			
+			if (attributes.length == 0) {
+				log.debug("ARP Engine was asked to apply filter to empty attribute set.");
+				return new ArpAttribute[0];
+			}
 
 		Set releaseSet = new HashSet();
 
