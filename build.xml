@@ -1,6 +1,6 @@
 <!-- Main build configutaion for Shibboleth java components - Walter Hoehn 06/04/2002 -->
 
-<project default="dist-all" basedir=".">
+<project name="Shibboleth" default="dist-all" basedir=".">
 
 	<!-- Set global properties for this build -->
 	<property name="distname" value="shibboleth" />
@@ -38,7 +38,11 @@
 		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
 			<classpath refid="build.path" />
 		</javac>
+		<copy todir="${build}/schemas">
+                        <fileset dir="${src}/schemas"/>
+                </copy>
 	</target>
+
 
 
 	<!-- Create various product distributions and move them to ${dist} -->
