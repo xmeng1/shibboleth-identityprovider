@@ -250,6 +250,19 @@ public class AAServlet extends TargetFederationComponent {
 				relyingParty = targetMapper.getRelyingParty(null);
 			}
 
+			//Fail if we can't honor SAML Subject Confirmation
+			if (!fromLegacyProvider(req)) {
+				Iterator iterator = attributeQuery.getSubject().getConfirmationMethods();
+				boolean hasConfirmationMethod = false;
+				while (iterator.hasNext()) {
+					log.info("Request contains SAML Subject Confirmation method: (" + (String) iterator.next() + ").");
+				}
+				if (hasConfirmationMethod) {
+					throw new SAMLException(SAMLException.REQUESTER,
+							"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method.");
+				}
+			}
+
 			//Map Subject to local principal
 			if (relyingParty.getIdentityProvider().getProviderId() != null
 					&& !relyingParty.getIdentityProvider().getProviderId().equals(
