@@ -66,7 +66,7 @@ public class XMLMetadata implements Metadata {
 		try {
 			new ShibGroup(root, new Stack(), providers);
 		} catch (XMLMetadataException e) {
-			log.error("Encountered a problem loadign federation metadata: " + e);
+			log.error("Encountered a problem loading federation metadata: " + e);
 			throw new MetadataException("Unable to load federation metadata.");
 		}
 	}
