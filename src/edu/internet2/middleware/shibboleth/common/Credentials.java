@@ -223,22 +223,44 @@ class FileCredentialResolver implements CredentialResolver {
 		log.debug("Key Format: (" + keyFormat + ").");
 		log.debug("Key Path: (" + keyPath + ").");
 
-		PrivateKey key = null;
+		PrivateKey key = null; 
 
 		if (keyFormat.equals("DER")) {
+			InputStream keyStream = null;
 			try {
-				key = getDERKey(new ShibResource(keyPath, this.getClass()).getInputStream(), password);
+				keyStream = new ShibResource(keyPath, this.getClass()).getInputStream();
+				key = getDERKey(keyStream, password);
 			} catch (IOException ioe) {
 				log.error("Could not load resource from specified location (" + keyPath + "): " + e);
 				throw new CredentialFactoryException("Unable to load private key.");
+			} finally {
+				if (keyStream != null) {
+					try {
+						keyStream.close();
+					} catch (IOException e1) {
+						// ignore
+					}
+				}
 			}
+			
 		} else if (keyFormat.equals("PEM")) {
+			InputStream keyStream = null;
 			try {
-				key = getPEMKey(new ShibResource(keyPath, this.getClass()).getInputStream(), password);
+				keyStream = new ShibResource(keyPath, this.getClass()).getInputStream();
+				key = getPEMKey(keyStream, password);
 			} catch (IOException ioe) {
 				log.error("Could not load resource from specified location (" + keyPath + "): " + e);
 				throw new CredentialFactoryException("Unable to load private key.");
+			} finally {
+				if (keyStream != null) {
+					try {
+						keyStream.close();
+					} catch (IOException e1) {
+						// ignore
+					}
+				}
 			}
+			
 		} else {
 			log.error("File credential resolver only supports (DER) and (PEM) formats.");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
