@@ -156,8 +156,7 @@ public class SiteSigner
             out = System.out;
 
         Canonicalizer c = Canonicalizer.getInstance(Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS);
-        c.setNamespaceAware(true);
-        out.write(c.canonicalize(doc));
+        out.write(c.canonicalizeSubtree(doc));
 
         if (outfile != null && outfile.length() > 0)
             out.close();
