@@ -1,0 +1,29 @@
+<AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonPrincipalName" smartScope="shibdev.edu">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonEntitlement">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonAffiliation">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:eduPerson:1.0:eduPersonScopedAffiliation" smartScope="shibdev.edu">
+		<AttributeDependency requires="urn:mace:eduPerson:1.0:eduPersonAffiliation"/>
+	</SimpleAttributeDefinition>
+
+	<JNDIDirectoryDataConnector id="directory">
+		<Search filter="cn=%PRINCIPAL%">
+			<Controls searchScope="SUBTREE_SCOPE" returningObjects="false" />
+		</Search>
+		<Property name="java.naming.factory.initial" value="com.sun.jndi.ldap.LdapCtxFactory" />
+		<Property name="java.naming.provider.url" value="ldap://ldap.example.edu/dc=example,dc=edu" />
+		<Property name="java.naming.security.principal" value="cn=admin,dc=example,dc=edu" />
+		<Property name="java.naming.security.credentials" value="examplepw" />
+	</JNDIDirectoryDataConnector>
+
+</AttributeResolver>
