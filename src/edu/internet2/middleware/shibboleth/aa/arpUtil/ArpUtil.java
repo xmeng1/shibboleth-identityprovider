@@ -71,8 +71,8 @@ class ArpUtil{
     private static Logger log = Logger.getLogger(ArpUtil.class.getName());
     static Principal user;
     static ArpFactory arpFactory;
-    static String listUsage = "\tArpUtil list <arp name> [-acls] [-dir <ldap url> <user id>] [-sql <sql url> <user id>]";
-    static String addUsage = "\tArpUtil add <arp name> [-admin] <shar name> [-default] <url> <attribute name> [-exclude] [-filter [!]<val1> [!]<val2> ...]";    
+    static String listUsage = "\tArpUtil list <arp name> [-acls] [-dir <ldap url> <user id>]";
+    static String addUsage = "\tArpUtil add <arp name> [-admin] <shar name> [-default] <url> [-title comment] <attribute name> [-exclude] [-filter [!]<val1> [!]<val2> ...]";    
     static String removeUsage = "\tArpUtil remove <arp name> [<shar name> [<url> [<attribute name>]]]";
     static String setAclUsage = "\tArpUtil setAcl <user> <acl> <arp name> [<shar name> [<url>]]";
     static String attrUsage = "\tArpUtil listAttributes <jar file name>";
@@ -122,14 +122,18 @@ class ArpUtil{
 	    if(len > 2){
 		if(args[2].equalsIgnoreCase("-acls"))
 		    acls = true;
-		if(args[2].equalsIgnoreCase("-dir") || args[2].equalsIgnoreCase("-sql"))
+		if(args[2].equalsIgnoreCase("-dir")){
 		    if(len < 4){
-			System.out.println("Usage:\n"+listUsage);					return;
+			System.out.println("Usage:\n"+listUsage);
+			return;
 		    }else{
 			ctx = getUserContext(args);
 		    }
-		if(ctx == null)
-		    return;
+		    if(ctx == null){
+			System.out.println("Failed to get Directory Context.");
+			return;
+		    }
+		}
 	    }
 
 	    Arp arp = arpFactory.getInstance(arpName, false);
@@ -148,6 +152,8 @@ class ArpUtil{
 		ArpResource[] resources = shars[i].getResources();
 		for(int j=0; j < resources.length; j++){
 		    System.out.println("\t\tURL: "+resources[j]);
+		    if(resources[j].getComment() != null)
+			System.out.println("\t\tTITLE: "+resources[j].getComment());
 		    if(acls)
 			System.out.println("\t\tACL: "+resources[j].getAcl());
 		    ArpAttribute[] attributes = resources[j].getAttributes();
@@ -188,9 +194,11 @@ class ArpUtil{
 	boolean isDefault = false;
 	boolean doExclude = false;
 	boolean hasFilter = false;
+	boolean showTitle = false;
 	String resourceName = null;
 	String sharName = null;
 	String attrName = null;
+	String title = null;
 
 	String arpName = args[i++];
 	if(args[i].equalsIgnoreCase("-admin")){
@@ -204,6 +212,14 @@ class ArpUtil{
 	}
 	if(i < args.length)
 	    resourceName = args[i++];
+
+	if(i < args.length && args[i].equalsIgnoreCase("-title")){
+	    showTitle = true;
+	    i++;
+	    if(i <args.length)
+		title = args[i++];
+	}
+	
 	if(i < args.length)
 	    attrName = args[i++];
 	if(i < args.length && args[i].equalsIgnoreCase("-exclude")){
@@ -241,7 +257,7 @@ class ArpUtil{
 		s = new ArpShar(sharName, isDefault);
 	    ArpResource r = s.getResource(resourceName);
 	    if(r == null)
-		r = new ArpResource(resourceName);
+		r = new ArpResource(resourceName, title);
 	    ArpAttribute a = r.getAttribute(attrName);
 	    if(a == null)
 		a = new ArpAttribute(attrName, doExclude);
@@ -446,46 +462,22 @@ class ArpUtil{
     public static DirContext getUserContext(String[] args)
     throws Exception{
 
+	if(args.length <5){
+	    System.out.println("Usage:\n"+listUsage);
+	    return null;
+	}
+
 	String dirUrl = args[3];
 	String uid = args[4];
 	
         Hashtable env = new Hashtable(11);
 
-	if(args[2].equalsIgnoreCase("-dir")){
-	    env.put(Context.INITIAL_CONTEXT_FACTORY,
-		    "com.sun.jndi.ldap.LdapCtxFactory");
-	    env.put(Context.PROVIDER_URL, dirUrl);
-
-	    DirContext ctx = new InitialDirContext(env);
-	    
-	    NamingEnumeration ne = ctx.search("", "cmuAndrewId="+uid, null, null);
-	    if(ne.hasMoreElements()){
-		SearchResult rs = (SearchResult)ne.nextElement();
-		String guid = (String)rs.getAttributes().get("GUID").get();
-		return (DirContext)ctx.lookup("guid="+guid);
-	    }else{
-		System.out.println("Search for "+uid+" failed!");
-		return null;
-	    }
-
-	}else if(args[2].equalsIgnoreCase("-sql")){
-	    env.put(Context.INITIAL_CONTEXT_FACTORY,
-		    "SQLCtxFactory");
-
-	    // a Sample of possible args to pass to context
-	    env.put(Context.PROVIDER_URL, dirUrl);
-	    env.put("SQL_DRIVER", "oracle.jdbc.OracleDriver");
-	    env.put("SECURITY_PRINCIPAL", "dousti");
-	    env.put("SECURITY_CREDENTIALS", "foobar");
-	    env.put("USER_IDENTIFIER", args[4]);
-	    DirContext ctx = new InitialDirContext(env);
-	    return ctx;
-
-	}else{
-	    System.out.println("Usage:\n"+listUsage);
-	    return null;
-	}
-	
+	env.put(Context.INITIAL_CONTEXT_FACTORY,
+		"com.sun.jndi.ldap.LdapCtxFactory");
+	env.put(Context.PROVIDER_URL, dirUrl);
+	DirContext ctx = new InitialDirContext(env);
+	return (DirContext)ctx.lookup("uid="+uid);
+		
     }
 	
 }

@@ -219,9 +219,6 @@ public class Arp extends ArpCore implements Serializable{
     //this.acl = acl;
     //}
 
-    //    public String urlToShar(String url) {
-    //    }
-
     public String toString(){
 	return name+(isAdmin?"(admin)":"");
     }

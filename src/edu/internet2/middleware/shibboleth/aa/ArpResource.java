@@ -66,19 +66,26 @@ public class ArpResource extends ArpCore implements Serializable{
 
     // Attributes
     protected String name;
+    protected String comment;
 
     // Associations
     protected TName tName;
     protected Vector attributes;
     protected AA_Acl acl;
 
-    // constructor
+    // constructors
     public ArpResource(String name) throws NotOwnerException{
 	this.name = name;
 	tName = new TName(name);
 	attributes = new Vector();
 	makeAcl("resourceAcl");
     }
+
+    public ArpResource(String name, String comment) throws NotOwnerException{
+	this(name);
+	this.comment = comment;
+    }
+
 
     // Operations
     public String toString() {
@@ -169,6 +176,14 @@ public class ArpResource extends ArpCore implements Serializable{
 
     public String getName(){
 	return name;
+    }
+
+    public String getComment(){
+	return comment;
+    }
+
+    public void setComment(String s){
+	this.comment = s;
     }
 
     public boolean equals(Object rsrc){
