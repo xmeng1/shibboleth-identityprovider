@@ -123,9 +123,9 @@
 										</xs:complexType>
 									</xs:element>
 								</xs:sequence>
-								<xs:attribute name="validationQuery" type="xs:string" use="required"/>
 								<xs:attribute name="dbURL" type="xs:string" use="required"/>
 								<xs:attribute name="dbDriver" type="xs:string" use="optional"/>
+								<xs:attribute name="validationQuery" type="xs:string" use="optional" default="select 1"/>
 								<xs:attribute name="maxActive" type="xs:integer" use="optional"/>
 								<xs:attribute name="maxIdle" type="xs:integer" use="optional"/>
 								<xs:attribute name="maxWait" type="xs:integer" use="optional"/>
