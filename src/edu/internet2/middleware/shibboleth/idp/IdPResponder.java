@@ -75,9 +75,7 @@ import org.w3c.dom.NodeList;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.aa.AAException;
-import edu.internet2.middleware.shibboleth.aa.AARelyingParty;
 import edu.internet2.middleware.shibboleth.aa.AAResponder;
-import edu.internet2.middleware.shibboleth.aa.AAServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
@@ -94,12 +92,11 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
-import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
-import edu.internet2.middleware.shibboleth.hs.HSServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
 import edu.internet2.middleware.shibboleth.metadata.Endpoint;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
@@ -118,6 +115,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 	// TODO Maybe should rethink the inheritance here, since there is only one
 	// servlet
+	// TODO signing is broken... it doesn't distinguish between authn and attr signing
 
 	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
 	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
@@ -129,10 +127,7 @@ public class IdPResponder extends TargetFederationComponent {
 	private SSOProfileHandler[] profileHandlers;
 	private IdPConfig configuration;
 	private NameMapper nameMapper;
-
-	// TODO unify
-	private AAServiceProviderMapper targetMapper;
-	private HSServiceProviderMapper hsTargetMapper;
+	private ServiceProviderMapper spMapper;
 
 	// TODO Need to rename, rework, and init
 	private AAResponder responder;
@@ -211,9 +206,8 @@ public class IdPResponder extends TargetFederationComponent {
 
 		// Load relying party config
 		try {
-			// TODO unify the service provider mapper
-			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
-					this);
+			spMapper = new ServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
+					nameMapper, this);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load Identity Provider configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load Identity Provider configuration.");
@@ -349,7 +343,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 		// TODO validate that the endpoint is valid for the request type
 
-		AARelyingParty relyingParty = null;
+		RelyingParty relyingParty = null;
 
 		SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
@@ -366,7 +360,7 @@ public class IdPResponder extends TargetFederationComponent {
 		} else {
 
 			// Identify a Relying Party
-			relyingParty = targetMapper.getRelyingParty(attributeQuery.getResource());
+			relyingParty = spMapper.getRelyingParty(attributeQuery.getResource());
 
 			try {
 				effectiveName = getEffectiveName(request, relyingParty);
@@ -379,7 +373,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 		if (effectiveName == null) {
 			log.debug("Using default Relying Party for unauthenticated provider.");
-			relyingParty = targetMapper.getRelyingParty(null);
+			relyingParty = spMapper.getRelyingParty(null);
 		}
 
 		// Fail if we can't honor SAML Subject Confirmation
@@ -563,17 +557,17 @@ public class IdPResponder extends TargetFederationComponent {
 					.getRemoteUser() : request.getHeader(configuration.getAuthHeaderName());
 
 			// Select the appropriate Relying Party configuration for the request
-			HSRelyingParty relyingParty = null;
+			RelyingParty relyingParty = null;
 			String remoteProviderId = activeHandler.getRemoteProviderId(request);
 			// If the target did not send a Provider Id, then assume it is a Shib
 			// 1.1 or older target
 			if (remoteProviderId == null) {
-				relyingParty = hsTargetMapper.getLegacyRelyingParty();
+				relyingParty = spMapper.getLegacyRelyingParty();
 			} else if (remoteProviderId.equals("")) {
 				throw new InvalidClientDataException("Invalid service provider id.");
 			} else {
 				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
-				relyingParty = hsTargetMapper.getRelyingParty(remoteProviderId);
+				relyingParty = spMapper.getRelyingParty(remoteProviderId);
 			}
 
 			// Grab the metadata for the provider
@@ -588,7 +582,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-					relyingParty = hsTargetMapper.getRelyingParty(null);
+					relyingParty = spMapper.getRelyingParty(null);
 
 				} else {
 
@@ -820,7 +814,7 @@ public class IdPResponder extends TargetFederationComponent {
 		return true;
 	}
 
-	private String getEffectiveName(HttpServletRequest req, AARelyingParty relyingParty)
+	private String getEffectiveName(HttpServletRequest req, RelyingParty relyingParty)
 			throws InvalidProviderCredentialException {
 
 		// X500Principal credentialName = getCredentialName(req);
@@ -951,15 +945,16 @@ public class IdPResponder extends TargetFederationComponent {
 	private static void addSignatures(SAMLResponse reponse, RelyingParty relyingParty) throws SAMLException {
 
 		// TODO make sure this signing optionally happens according to origin.xml params
+		// TODO this has to be made to work for both AuthN and Attr assertion types
 
 		// Sign the assertions, if appropriate
-		if (relyingParty.getIdentityProvider().getAssertionSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getAssertionSigningCredential().getPrivateKey() != null) {
+		if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential().getPrivateKey() != null) {
 
 			String assertionAlgorithm;
-			if (relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType() == Credential.RSA) {
+			if (relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential().getCredentialType() == Credential.RSA) {
 				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType() == Credential.DSA) {
+			} else if (relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential().getCredentialType() == Credential.DSA) {
 				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(SAMLException.RESPONDER,
@@ -967,27 +962,28 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 
 			((SAMLAssertion) reponse.getAssertions().next()).sign(assertionAlgorithm, relyingParty
-					.getIdentityProvider().getAssertionSigningCredential().getPrivateKey(), Arrays.asList(relyingParty
-					.getIdentityProvider().getAssertionSigningCredential().getX509CertificateChain()));
+					.getIdentityProvider().getAttributeAssertionSigningCredential().getPrivateKey(), Arrays
+					.asList(relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential()
+							.getX509CertificateChain()));
 		}
 
 		// Sign the response, if appropriate
-		if (relyingParty.getIdentityProvider().getResponseSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getResponseSigningCredential().getPrivateKey() != null) {
+		if (relyingParty.getIdentityProvider().getAttributeResponseSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getAttributeResponseSigningCredential().getPrivateKey() != null) {
 
 			String responseAlgorithm;
-			if (relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.RSA) {
+			if (relyingParty.getIdentityProvider().getAttributeResponseSigningCredential().getCredentialType() == Credential.RSA) {
 				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.DSA) {
+			} else if (relyingParty.getIdentityProvider().getAttributeResponseSigningCredential().getCredentialType() == Credential.DSA) {
 				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(SAMLException.RESPONDER,
 						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
 			}
 
-			reponse.sign(responseAlgorithm, relyingParty.getIdentityProvider().getResponseSigningCredential()
-					.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider().getResponseSigningCredential()
-					.getX509CertificateChain()));
+			reponse.sign(responseAlgorithm, relyingParty.getIdentityProvider().getAttributeResponseSigningCredential()
+					.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider()
+					.getAttributeResponseSigningCredential().getX509CertificateChain()));
 		}
 	}
 
@@ -1115,14 +1111,13 @@ public class IdPResponder extends TargetFederationComponent {
 
 		abstract boolean preProcessHook(HttpServletRequest request, HttpServletResponse response) throws IOException;
 
-		abstract SAMLAssertion[] processHook(HttpServletRequest request, HSRelyingParty relyingParty,
-				Provider provider, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime)
-				throws SAMLException, IOException;
+		abstract SAMLAssertion[] processHook(HttpServletRequest request, RelyingParty relyingParty, Provider provider,
+				SAMLNameIdentifier nameId, String authenticationMethod, Date authTime) throws SAMLException,
+				IOException;
 
-		abstract String getSAMLTargetParameter(HttpServletRequest request, HSRelyingParty relyingParty,
-				Provider provider);
+		abstract String getSAMLTargetParameter(HttpServletRequest request, RelyingParty relyingParty, Provider provider);
 
-		abstract String getAcceptanceURL(HttpServletRequest request, HSRelyingParty relyingParty, Provider provider)
+		abstract String getAcceptanceURL(HttpServletRequest request, RelyingParty relyingParty, Provider provider)
 				throws InvalidClientDataException;
 	}
 

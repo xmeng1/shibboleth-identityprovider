@@ -473,12 +473,23 @@ class BasicIdentityProvider implements IdentityProvider {
 		return id;
 	}
 
-	public Credential getResponseSigningCredential() {
+
+	public Credential getAuthNResponseSigningCredential() {
 
 		return null;
 	}
 
-	public Credential getAssertionSigningCredential() {
+	public Credential getAuthNAssertionSigningCredential() {
+
+		return null;
+	}
+
+	public Credential getAttributeResponseSigningCredential() {
+
+		return null;
+	}
+
+	public Credential getAttributeAssertionSigningCredential() {
 
 		return null;
 	}

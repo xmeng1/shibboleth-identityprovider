@@ -53,10 +53,23 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 import org.apache.log4j.NDC;
 import org.apache.xml.security.signature.XMLSignature;
-import org.opensaml.*;
+import org.opensaml.InvalidCryptoException;
+import org.opensaml.NoSuchProviderException;
+import org.opensaml.ReplayCache;
+import org.opensaml.SAMLAssertion;
+import org.opensaml.SAMLAudienceRestrictionCondition;
+import org.opensaml.SAMLAuthenticationStatement;
+import org.opensaml.SAMLBrowserProfile;
+import org.opensaml.SAMLBrowserProfileFactory;
+import org.opensaml.SAMLConfig;
+import org.opensaml.SAMLException;
+import org.opensaml.SAMLNameIdentifier;
+import org.opensaml.SAMLResponse;
+import org.opensaml.SAMLSignedObject;
+import org.opensaml.SAMLSubject;
+import org.opensaml.TrustException;
 import org.w3c.dom.Document;
 
-import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.IDPProviderRole;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -135,7 +148,7 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
 	 * @exception SAMLException
 	 *                Base class of exceptions that may be thrown during processing
 	 */
-	public SAMLResponse prepare(String recipient, HSRelyingParty relyingParty, SAMLNameIdentifier nameId,
+	public SAMLResponse prepare(String recipient, RelyingParty relyingParty, SAMLNameIdentifier nameId,
 			String subjectIP, String authMethod, Date authInstant, Collection bindings) throws SAMLException {
 
 		Document doc = org.opensaml.XML.parserPool.newDocument();
@@ -152,11 +165,11 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
 		if (relyingParty.isLegacyProvider()) {
 			
 			log.debug("Service Provider is running Shibboleth <= 1.1.  Using old style issuer.");
-			if (relyingParty.getIdentityProvider().getResponseSigningCredential() == null
-					|| relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate() == null) {
+			if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential() == null
+					|| relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getX509Certificate() == null) {
 				throw new SAMLException("Cannot serve legacy style assertions without an X509 certificate");
 			}
-			issuer = getHostNameFromDN(relyingParty.getIdentityProvider().getResponseSigningCredential()
+			issuer = getHostNameFromDN(relyingParty.getIdentityProvider().getAuthNResponseSigningCredential()
 					.getX509Certificate().getSubjectX500Principal());
 			if (issuer == null || issuer.equals("")) {
 				throw new SAMLException("Error parsing certificate DN while determining legacy issuer name.");
@@ -202,13 +215,13 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
 		r.toDOM(doc);
 
 		//Sign the assertions, if appropriate
-		if (relyingParty.getIdentityProvider().getAssertionSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getAssertionSigningCredential().getPrivateKey() != null) {
+		if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential().getPrivateKey() != null) {
 
 			String assertionAlgorithm;
-			if (relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType() == Credential.RSA) {
+			if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential().getCredentialType() == Credential.RSA) {
 				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType() == Credential.DSA) {
+			} else if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential().getCredentialType() == Credential.DSA) {
 				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(SAMLException.RESPONDER,
@@ -216,18 +229,18 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
 			}
 
 			((SAMLAssertion) r.getAssertions().next()).sign(assertionAlgorithm, relyingParty.getIdentityProvider()
-					.getAssertionSigningCredential().getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider()
-					.getAssertionSigningCredential().getX509CertificateChain()));
+					.getAuthNAssertionSigningCredential().getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider()
+					.getAuthNAssertionSigningCredential().getX509CertificateChain()));
 		}
 
 		//Sign the response, if appropriate
-		if (relyingParty.getIdentityProvider().getResponseSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getResponseSigningCredential().getPrivateKey() != null) {
+		if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getPrivateKey() != null) {
 
 			String responseAlgorithm;
-			if (relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.RSA) {
+			if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getCredentialType() == Credential.RSA) {
 				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.DSA) {
+			} else if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getCredentialType() == Credential.DSA) {
 				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(SAMLException.RESPONDER,
@@ -235,8 +248,8 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
 			}
 
 			r.sign(responseAlgorithm,
-					relyingParty.getIdentityProvider().getResponseSigningCredential().getPrivateKey(), Arrays
-							.asList(relyingParty.getIdentityProvider().getResponseSigningCredential()
+					relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getPrivateKey(), Arrays
+							.asList(relyingParty.getIdentityProvider().getAuthNResponseSigningCredential()
 									.getX509CertificateChain()));
 		}
 

@@ -37,8 +37,8 @@ import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
+import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
 
 /**
  * Functionality common to most <code>ArtifactMapper</code> implementations, including creation and basic
@@ -97,7 +97,7 @@ public abstract class BaseArtifactMapper implements ArtifactMapper {
 		}
 	}
 
-	public String generateArtifact(SAMLAssertion assertion, HSRelyingParty relyingParty) {
+	public String generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty) {
 
 		byte[] allArtifactComponents = new byte[42];
 
