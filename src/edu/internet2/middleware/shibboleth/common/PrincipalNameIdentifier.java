@@ -51,6 +51,9 @@ import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
 /**
+ * <code>NameMapping</code> implementation that creates a principal from a
+ * shared principal name.
+ * 
  * @author Walter Hoehn
  */
 public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {

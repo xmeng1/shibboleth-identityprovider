@@ -61,12 +61,26 @@ import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
+ * <code>NameMapper</code> that additionally maps local <code>AuthNPrincipal</code>
+ * to SAML Name Identifiers. Mappings can be associated with a <code>String</code>
+ * id and recovered based on the same.
+ * 
  * @author Walter Hoehn
+ * @see NameMapper
+ * @see HSNameIdentifierMapping
  */
 public class HSNameMapper extends NameMapper {
 
 	private Map byId = new HashMap();
 
+	/**
+	 * Adds a <code>NameIdentifierMapping</code> to this <code>HSNameMapper</code>,
+	 * registering it according to its format and, if applicable, according to
+	 * its id.
+	 * 
+	 * @param mapping
+	 *            the mapping to add
+	 */
 	public void addNameMapping(NameIdentifierMapping mapping) {
 		super.addNameMapping(mapping);
 		if (mapping instanceof HSNameIdentifierMapping) {
@@ -77,6 +91,15 @@ public class HSNameMapper extends NameMapper {
 		}
 	}
 
+	/**
+	 * Returns the <code>HSNameIdentifierMapping</code> registered for a
+	 * given id
+	 * 
+	 * @param id
+	 *            the registered id
+	 * @return the mapping or <tt>null</tt> if no mapping is registered for
+	 *         the given id
+	 */
 	public HSNameIdentifierMapping getNameIdentifierMappingById(String id) {
 
 		if (id == null || id.equals("")) {
@@ -96,6 +119,23 @@ public class HSNameMapper extends NameMapper {
 		return (HSNameIdentifierMapping) byId.get(id);
 	}
 
+	/**
+	 * 
+	 * Maps a local principal to a SAML Name Identifier using the mapping registered under a given id.
+	 * 
+	 * @param id
+	 *            the id under which the effective <code>HSNameIdentifierMapping</code>
+	 *            is registered
+	 * @param principal
+	 *            the principal to map
+	 * @param sProv
+	 *            the provider initiating the request
+	 * @param idProv
+	 *            the provider handling the request
+	 * @return @throws
+	 *         NameIdentifierMappingException If the <code>NameMapper</code>
+	 *         encounters an internal error
+	 */
 	public SAMLNameIdentifier getNameIdentifierName(
 		String id,
 		AuthNPrincipal principal,

@@ -67,6 +67,9 @@ import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 
 /**
+ * <code>HSNameIdentifierMapping</code> implementation that uses an in-memory
+ * cache to store mappings between principal names and Shibboleth Attribute Query Handles.
+ * 
  * @author Walter Hoehn
  */
 public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements HSNameIdentifierMapping {
@@ -109,7 +112,7 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 		synchronized (cache.handleEntries) {
 			if (!cache.handleEntries.containsKey(nameId.getName())) {
 				log.debug("The Name Mapping Cache does not contain an entry for this Attribute Query Handle.");
-				throw new InvalidNameIdentifierException("The Name Mapping Cache does not contain an entry for this Attribute Query Handle.");
+				throw new NameIdentifierMappingException("The Name Mapping Cache does not contain an entry for this Attribute Query Handle.");
 			}
 		}
 

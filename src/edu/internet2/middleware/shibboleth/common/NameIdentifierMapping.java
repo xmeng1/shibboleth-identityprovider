@@ -52,14 +52,40 @@ import java.net.URI;
 import org.opensaml.SAMLNameIdentifier;
 
 /**
+ * Defines a mechanism for converting SAML Name Identifiers to local <code>AuthNPrincipal</code>
+ * objects.
+ * 
  * @author Walter Hoehn
  */
 public interface NameIdentifierMapping {
-	
+
 	public static final String mappingNamespace = "urn:mace:shibboleth:origin.config:1.0";
 
+	/**
+	 * Returns the Name Identifier format for this mapping.
+	 * 
+	 * @return the format
+	 */
 	public URI getNameIdentifierFormat();
 
+	/**
+	 * Maps a SAML Name Identifier to a local principal using the appropriate
+	 * registered mapping.
+	 * 
+	 * @param nameId
+	 *            the SAML Name Identifier that should be converted
+	 * @param sProv
+	 *            the provider initiating the request
+	 * @param idProv
+	 *            the provider handling the request
+	 * @return the local principal
+	 * @throws NameIdentifierMappingException
+	 *             If the <code>NameMapper</code> encounters an internal
+	 *             error
+	 * @throws InvalidNameIdentifierException
+	 *             If the <code>SAMLNameIdentifier</code> contains invalid
+	 *             data
+	 */
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 		throws NameIdentifierMappingException, InvalidNameIdentifierException;
 

@@ -64,16 +64,23 @@ import org.xml.sax.InputSource;
 import edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle;
 
 /**
+ * Facility for managing mappings from SAML Name Identifiers to local <code>AuthNPrincipal</code>
+ * objects. Mappings are registered by Name Identifier format.
+ * 
  * @author Walter Hoehn
+ * @see NameIdentifierMapping
  */
 public class NameMapper {
 
 	private static Logger log = Logger.getLogger(NameMapper.class.getName());
 	protected Map byFormat = new HashMap();
 	private static Map registeredMappingTypes = Collections.synchronizedMap(new HashMap());
+	/** Indicated of whether mappings have been added */
 	protected boolean initialized = false;
+	/** Mapping to use if no other mappings have been added */
 	protected SharedMemoryShibHandle defaultMapping;
 
+	//Preload aliases for bundled mappings
 	static {
 		try {
 			registeredMappingTypes.put(
@@ -95,6 +102,7 @@ public class NameMapper {
 
 	public NameMapper() {
 		try {
+			//Load the default mapping
 			String rawConfig =
 				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 					+ "<NameMapping format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
@@ -114,6 +122,19 @@ public class NameMapper {
 		defaultMapping = null;
 	}
 
+	/**
+	 * 
+	 * Constructs a <code>NameIdentifierMapping</code> based on XML
+	 * configuration data and adds it to this <code>NameMapper</code>,
+	 * registering it according to its format.
+	 * 
+	 * @param e
+	 *            An XML representation of a <code>NameIdentifierMapping</code>
+	 * 
+	 * @throws NameIdentifierMappingException
+	 *             If the mapping could not be constructed according to the
+	 *             supplied configuration
+	 */
 	public void addNameMapping(Element e) throws NameIdentifierMappingException {
 
 		if (!e.getTagName().equals("NameMapping")) {
@@ -160,6 +181,13 @@ public class NameMapper {
 
 	}
 
+	/**
+	 * Adds a <code>NameIdentifierMapping</code> to this <code>NameMapper</code>,
+	 * registering it according to its format.
+	 * 
+	 * @param mapping
+	 *            the mapping to add
+	 */
 	public void addNameMapping(NameIdentifierMapping mapping) {
 
 		initialize();
@@ -172,6 +200,15 @@ public class NameMapper {
 
 	}
 
+	/**
+	 * Returns the <code>NameIdentifierMapping</code> registered for a given
+	 * format
+	 * 
+	 * @param format
+	 *            the registered format
+	 * @return the mapping or <tt>null</tt> if no mapping is registered for
+	 *         the given format
+	 */
 	public NameIdentifierMapping getNameIdentifierMapping(URI format) {
 		if (!initialized) {
 			return defaultMapping;
@@ -204,6 +241,24 @@ public class NameMapper {
 
 	}
 
+	/**
+	 * Maps a SAML Name Identifier to a local principal using the appropriate
+	 * registered mapping.
+	 * 
+	 * @param nameId
+	 *            the SAML Name Identifier that should be converted
+	 * @param sProv
+	 *            the provider initiating the request
+	 * @param idProv
+	 *            the provider handling the request
+	 * @return the local principal
+	 * @throws NameIdentifierMappingException
+	 *             If the <code>NameMapper</code> encounters an internal
+	 *             error
+	 * @throws InvalidNameIdentifierException
+	 *             If the <code>SAMLNameIdentifier</code> contains invalid
+	 *             data
+	 */
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 		throws NameIdentifierMappingException, InvalidNameIdentifierException {
 

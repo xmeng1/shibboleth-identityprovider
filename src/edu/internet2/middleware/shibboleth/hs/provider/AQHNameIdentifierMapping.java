@@ -56,6 +56,9 @@ import edu.internet2.middleware.shibboleth.common.BaseNameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 
 /**
+ * Base class for <code>NameIdentifierMapping</code> implementations that
+ * support Shibboleth Attribute Query Handles.
+ * 
  * @author Walter Hoehn
  */
 public abstract class AQHNameIdentifierMapping extends BaseNameIdentifierMapping {
