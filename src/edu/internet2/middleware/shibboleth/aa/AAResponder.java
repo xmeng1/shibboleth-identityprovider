@@ -58,19 +58,24 @@ package edu.internet2.middleware.shibboleth.aa;
  */
 
 
-import java.io.*;
-import java.util.*;
-import java.lang.reflect.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import javax.naming.*;
-import javax.naming.directory.*;
-import edu.internet2.middleware.shibboleth.*;
-import edu.internet2.middleware.shibboleth.hs.*;
-import edu.internet2.middleware.eduPerson.*;
-import org.w3c.dom.*;
-import org.opensaml.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Vector;
+
+import javax.naming.CommunicationException;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLAttribute;
+import org.opensaml.SAMLException;
 
 public class AAResponder{
 
@@ -110,49 +115,15 @@ public class AAResponder{
 		DirContext userCtx = null;
 
 		try {
-			if (searchFilter == null)
-				searchFilter = "";
-			int indx = searchFilter.indexOf("%s");
-			if (indx < 0) {
-				try {
-					userCtx = (DirContext) ctx.lookup(searchFilter + userName);
-				} catch (NameNotFoundException nnfe) {
-					log.error(
-						"Could not locate a user ("
-							+ userName
-							+ ") as a result of searching with ("
-							+ searchFilter
-							+ ").");
-					throw new AAException("No data available for this principal.");
+			try {
+				userCtx = queryDataSource(userName, searchFilter);
+			} catch (CommunicationException ce) {
+				synchronized (ctx) {
+					log.debug(ce);
+					log.warn("Encountered a connection problem while querying for attributes.  Re-initializing JNDI context and retrying...");
+					ctx = new InitialDirContext(ctx.getEnvironment());
 				}
-			} else {
-				/* This is a search filter. Search after replacing %s with uid*/
-				StringBuffer tmp = new StringBuffer(searchFilter);
-				tmp.delete(indx, indx + 2);
-				tmp.insert(indx, userName);
-				searchFilter = tmp.toString();
-				SearchControls ctls = new SearchControls();
-				ctls.setReturningObjFlag(true);
-				NamingEnumeration en = ctx.search("", searchFilter, ctls);
-				if (!en.hasMore()) {
-					log.error(
-						"Could not locate a user ("
-							+ userName
-							+ ") as a result of searching with ("
-							+ searchFilter
-							+ ").");
-					throw new AAException("No data available for this principal.");
-				}
-				userCtx = (DirContext) ((SearchResult) en.next()).getObject();
-				if (en.hasMore()) {
-					log.error(
-						"Located multiple ("
-							+ userName
-							+ ") users as a result of searching with ("
-							+ searchFilter
-							+ ").");
-					throw new AAException("Cannot disambiguate data for this principal.");
-				}
+				userCtx = queryDataSource(userName, searchFilter);
 			}
 		} catch (NamingException e) {
 			log.error(
@@ -182,6 +153,59 @@ public class AAResponder{
 				"An error occurred while retieving data for principal (" + userName + ") :" + e.getMessage());
 			throw new AAException("Error retrieving data for principal (" + userName + ")");
 		}
+	}
+
+
+	private DirContext queryDataSource(String userName, String searchFilter)
+		throws CommunicationException, NamingException, AAException {
+			
+		DirContext userCtx = null;
+		if (searchFilter == null) {
+			searchFilter = "";
+		}
+		int indx = searchFilter.indexOf("%s");
+		if (indx < 0) {
+			try {
+				userCtx = (DirContext) ctx.lookup(searchFilter + userName);
+			} catch (NameNotFoundException nnfe) {
+				log.error(
+					"Could not locate a user ("
+						+ userName
+						+ ") as a result of searching with ("
+						+ searchFilter
+						+ ").");
+				throw new AAException("No data available for this principal.");
+			}
+		} else {
+			/* This is a search filter. Search after replacing %s with uid*/
+			StringBuffer tmp = new StringBuffer(searchFilter);
+			tmp.delete(indx, indx + 2);
+			tmp.insert(indx, userName);
+			searchFilter = tmp.toString();
+			SearchControls ctls = new SearchControls();
+			ctls.setReturningObjFlag(true);
+			NamingEnumeration en = ctx.search("", searchFilter, ctls);
+			if (!en.hasMore()) {
+				log.error(
+					"Could not locate a user ("
+						+ userName
+						+ ") as a result of searching with ("
+						+ searchFilter
+						+ ").");
+				throw new AAException("No data available for this principal.");
+			}
+			userCtx = (DirContext) ((SearchResult) en.next()).getObject();
+			if (en.hasMore()) {
+				log.error(
+					"Located multiple ("
+						+ userName
+						+ ") users as a result of searching with ("
+						+ searchFilter
+						+ ").");
+				throw new AAException("Cannot disambiguate data for this principal.");
+			}
+		}
+		return userCtx;
 	}
 
 
