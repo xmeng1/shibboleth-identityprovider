@@ -89,4 +89,16 @@
         <HandleService Location="https://naslnx07.mcs.muohio.edu:11443/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"/>
         <Domain>muohio.edu</Domain>
     </OriginSite>
+    <OriginSite Name="ucsd.edu">
+        <Alias>University of California, San Diego</Alias>
+        <Alias>UCSD</Alias>
+        <HandleService Location="https://gilead.ucsd.edu/shibboleth/HS" Name="gilead.ucsd.edu"/>
+        <Domain>ucsd.edu</Domain>
+    </OriginSite>
+    <OriginSite Name="lse.ac.uk">
+        <Alias>London School of Economics</Alias>
+        <Alias>LSE</Alias>
+        <HandleService Location="http://gabriel.lse.ac.uk/shibboleth/HS" Name="gabriel.lse.ac.uk"/>
+        <Domain>lse.ac.uk</Domain>
+    </OriginSite>
 </Sites>
