@@ -68,19 +68,28 @@ public class AASaml {
 	
 	try{
 
-	    SAMLSubject rSubject = new SAMLSubject(sub.getName(),
-					       sub.getNameQualifier(),
-					       sub.getFormat(),
-					       sub.getConfirmationMethods(),
-					       sub.getConfirmationData());
-            
-	    SAMLStatement[] statements = new SAMLStatement[1];
-	    statements[0] = new SAMLAttributeStatement(rSubject, attrs);
-	    
+	    if(attrs == null || attrs.length == 0){
+		sResp = new SAMLResponse(reqID,
+					 /* recipient URL*/ null,
+					 /* sig */ null,
+					 /* no attrs -> no assersion*/ null,
+					 exception);		
+	    }else{
+		Date now = new Date();
+		Date  then = null;
 
-	    Date now = new Date();
-	    Date  then = null;
-	    if(attrs != null && attrs.length > 0){
+		SAMLSubject rSubject = new SAMLSubject(sub.getName(),
+						       sub.getNameQualifier(),
+						       sub.getFormat(),
+						       sub.getConfirmationMethods(),
+						       sub.getConfirmationData());
+            
+		SAMLCondition[] conditions = new SAMLCondition[1];
+		conditions[0] = new SAMLAudienceRestrictionCondition(policies);
+
+		SAMLStatement[] statements = new SAMLStatement[1];
+		statements[0] = new SAMLAttributeStatement(rSubject, attrs);
+	    
 		long min = attrs[0].getLifetime();
 		for(int i = 1; i < attrs.length; i++){
 		    long t = attrs[i].getLifetime();
@@ -89,27 +98,22 @@ public class AASaml {
 		}
 		if(min > 0)
 		    then = new Date(now.getTime() + min);
-	    }
-	    SAMLCondition[] conditions = new SAMLCondition[1];
-	    conditions[0] = new SAMLAudienceRestrictionCondition(policies);
 
-	    SAMLAssertion[] assertions= null;
-	    if(attrs != null && attrs.length > 0){
 		SAMLAssertion sAssertion = new SAMLAssertion(myName,
 					     now,
 					     then,
 					     conditions,
 					     statements,
 					     /* sig */ null);
-		assertions= new SAMLAssertion[1];
+		SAMLAssertion[] assertions= new SAMLAssertion[1];
 		assertions[0] = sAssertion;
-	    }
 
-	    sResp = new SAMLResponse(reqID,
-				     /* recipient URL*/ null,
-				     /* sig */ null,
-				     assertions,
-				     exception);
+		sResp = new SAMLResponse(reqID,
+					 /* recipient URL*/ null,
+					 /* sig */ null,
+					 assertions,
+					 exception);
+	    }
  	}catch (SAMLException se) {
 	    ourSE = se;
 	}finally{
