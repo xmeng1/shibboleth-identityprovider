@@ -137,11 +137,11 @@ public class NameMapper {
 	 */
 	public void addNameMapping(Element e) throws NameIdentifierMappingException {
 		
-		if (!e.getTagName().equals("NameMapping")
-			&& (!(e.getNamespaceURI().equals(NameIdentifierMapping.mappingNamespace))
-				|| !e.getTagName().endsWith(":NameMapping"))) {
+		if (!e.getLocalName().equals("NameMapping")) {
 			throw new IllegalArgumentException();
 		}
+		
+		log.info("Found Name Mapping. Loading...");
 
 		String type = ((Element) e).getAttribute("type");
 		String implementation = ((Element) e).getAttribute("class");

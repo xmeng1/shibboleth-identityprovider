@@ -97,8 +97,7 @@ public class Credentials {
 
 	public Credentials(Element e) {
 
-		if (!e.getTagName().equals("Credentials")
-			&& (!(e.getNamespaceURI().equals(Credentials.credentialsNamespace)) || !e.getTagName().endsWith(":Credentials"))) {
+		if (!e.getLocalName().equals("Credentials")) {
 			throw new IllegalArgumentException();
 		}
 
@@ -146,19 +145,19 @@ public class Credentials {
 		private static Logger log = Logger.getLogger(CredentialFactory.class.getName());
 
 		public static Credential loadCredential(Element e) throws CredentialFactoryException {
-			if (e.getTagName().equals("KeyInfo")) {
+			if (e.getLocalName().equals("KeyInfo")) {
 				return new KeyInfoCredentialResolver().loadCredential(e);
 			}
 
-			if (e.getTagName().equals("FileResolver")) {
+			if (e.getLocalName().equals("FileResolver")) {
 				return new FileCredentialResolver().loadCredential(e);
 			}
 
-			if (e.getTagName().equals("KeyStoreResolver")) {
+			if (e.getLocalName().equals("KeyStoreResolver")) {
 				return new KeystoreCredentialResolver().loadCredential(e);
 			}
 
-			if (e.getTagName().equals("CustomResolver")) {
+			if (e.getLocalName().equals("CustomResolver")) {
 				return new CustomCredentialResolver().loadCredential(e);
 			}
 
@@ -191,7 +190,7 @@ class FileCredentialResolver implements CredentialResolver {
 
 	public Credential loadCredential(Element e) throws CredentialFactoryException {
 
-		if (!e.getTagName().equals("FileResolver")) {
+		if (!e.getLocalName().equals("FileResolver")) {
 			log.error("Invalid Credential Resolver configuration: expected <FileResolver> .");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
@@ -1328,7 +1327,7 @@ class KeystoreCredentialResolver implements CredentialResolver {
 
 	public Credential loadCredential(Element e) throws CredentialFactoryException {
 
-		if (!e.getTagName().equals("KeyStoreResolver")) {
+		if (!e.getLocalName().equals("KeyStoreResolver")) {
 			log.error("Invalid Credential Resolver configuration: expected <KeyStoreResolver> .");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
@@ -1519,7 +1518,7 @@ class CustomCredentialResolver implements CredentialResolver {
 
 	public Credential loadCredential(Element e) throws CredentialFactoryException {
 
-		if (!e.getTagName().equals("CustomCredResolver")) {
+		if (!e.getLocalName().equals("CustomCredResolver")) {
 			log.error("Invalid Credential Resolver configuration: expected <CustomCredResolver> .");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}

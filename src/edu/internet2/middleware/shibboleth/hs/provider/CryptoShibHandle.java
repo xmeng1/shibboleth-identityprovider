@@ -86,6 +86,7 @@ import sun.misc.BASE64Encoder;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
@@ -287,11 +288,8 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements HSName
 
 	private String getElementConfigData(Element e, String itemName) throws NameIdentifierMappingException {
 
-		//TODO move to namespace aware method
-		//NodeList itemElements =
-		// e.getElementsByTagNameNS(NameIdentifierMapping.mappingNamespace,
-		// itemName);
-		NodeList itemElements = e.getElementsByTagName(itemName);
+		NodeList itemElements =e.getElementsByTagNameNS(NameIdentifierMapping.mappingNamespace, itemName);
+		
 		if (itemElements.getLength() < 1) {
 			log.error(itemName + " not specified.");
 			throw new NameIdentifierMappingException(

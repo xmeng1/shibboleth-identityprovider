@@ -65,7 +65,7 @@ public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping
 
 	public BaseNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
 
-		if (!config.getTagName().equals("NameMapping")) {
+		if (!config.getLocalName().equals("NameMapping")) {
 			throw new IllegalArgumentException();
 		}
 
