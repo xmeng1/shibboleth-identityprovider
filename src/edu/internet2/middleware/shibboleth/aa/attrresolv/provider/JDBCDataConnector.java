@@ -39,6 +39,7 @@ import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Properties;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -90,13 +91,18 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 	protected DataSource dataSource;
 	protected JDBCAttributeExtractor extractor;
 	protected JDBCStatementCreator statementCreator;
+    protected String failover = null;
 
-	public JDBCDataConnector(Element element) throws ResolutionPlugInException {
+	public JDBCDataConnector(Element e) throws ResolutionPlugInException {
 
-		super(element);
+		super(e);
 
+        NodeList failoverNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "FailoverDependency");
+        if (failoverNodes.getLength() > 0) {
+            failover = ((Element)failoverNodes.item(0)).getAttribute("requires");
+        }
 		//Get the query string
-		NodeList queryNodes = element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Query");
+		NodeList queryNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Query");
 		Node tnode = queryNodes.item(0).getFirstChild();
 		if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
 			searchVal = tnode.getNodeValue();
@@ -107,42 +113,63 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		}
 
 		//Load the supplied JDBC driver
-		String dbDriverName = element.getAttribute("dbDriver");
+		String dbDriverName = e.getAttribute("dbDriver");
 		if (dbDriverName != null && (!dbDriverName.equals(""))) {
 			loadDriver(dbDriverName);
 		}
 
 		//Load site-specific implementation classes	
 		setupAttributeExtractor(
-			(Element) element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "AttributeExtractor").item(
+			(Element) e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "AttributeExtractor").item(
 				0));
 		setupStatementCreator(
-			(Element) element.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "StatementCreator").item(0));
+			(Element) e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "StatementCreator").item(0));
+        
+        //Load driver properties
+        Properties props = new Properties();
+        NodeList propertiesNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
+        for (int i = 0; propertiesNode.getLength() > i; i++) {
+            Element property = (Element) propertiesNode.item(i);
+            String propertiesName = property.getAttribute("name");
+            String propertiesValue = property.getAttribute("value");
 
+            if (propertiesName != null
+                && !propertiesName.equals("")
+                && propertiesValue != null
+                && !propertiesValue.equals("")) {
+                props.setProperty(propertiesName, propertiesValue);
+                log.debug("Property: (" + propertiesName + ")");
+                log.debug("   Value: (" + propertiesValue + ")");
+            } else {
+                log.error("Property is malformed.");
+                throw new ResolutionPlugInException("Property is malformed.");
+            }
+        }
+        
 		//Initialize a pooling Data Source
 		int maxActive = 0;
 		int maxIdle = 0;
 		try {
-			if (element.getAttribute("maxActive") != null) {
-				maxActive = Integer.parseInt(element.getAttribute("maxActive"));
+			if (e.getAttributeNode("maxActive") != null) {
+				maxActive = Integer.parseInt(e.getAttribute("maxActive"));
 			}
-			if (element.getAttribute("maxIdle") != null) {
-				maxIdle = Integer.parseInt(element.getAttribute("maxIdle"));
+			if (e.getAttributeNode("maxIdle") != null) {
+				maxIdle = Integer.parseInt(e.getAttribute("maxIdle"));
 			}
-		} catch (NumberFormatException e) {
+		} catch (NumberFormatException ex) {
 			log.error("Malformed pooling limits: using defaults.");
 		}
-		if (element.getAttribute("dbURL") == null || element.getAttribute("dbURL").equals("")) {
+		if (e.getAttribute("dbURL") == null || e.getAttribute("dbURL").equals("")) {
 			log.error("JDBC connection requires a dbURL property");
 			throw new ResolutionPlugInException("JDBCDataConnection requires a \"dbURL\" property");
 		}
-		setupDataSource(element.getAttribute("dbURL"), maxActive, maxIdle);
+		setupDataSource(e.getAttribute("dbURL"), props, maxActive, maxIdle);
 	}
 
 	/**
 	 * Initialize a Pooling Data Source
 	 */
-	private void setupDataSource(String dbURL, int maxActive, int maxIdle) throws ResolutionPlugInException {
+	private void setupDataSource(String dbURL, Properties props, int maxActive, int maxIdle) throws ResolutionPlugInException {
 
 		GenericObjectPool objectPool = new GenericObjectPool(null);
 
@@ -159,23 +186,22 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		PoolableConnectionFactory poolConnFactory = null;
 
 		try {
-			connFactory = new DriverManagerConnectionFactory(dbURL, null);
+			connFactory = new DriverManagerConnectionFactory(dbURL, props);
 			log.debug("Connection factory initialized.");
 		} catch (Exception ex) {
 			log.error(
 				"Connection factory couldn't be initialized, ensure database URL, username and password are correct.");
-			throw new ResolutionPlugInException("Connection facotry couldn't be initialized: " + ex.getMessage());
+			throw new ResolutionPlugInException("Connection factory couldn't be initialized: " + ex.getMessage());
 		}
 
 		try {
-			new StackKeyedObjectPoolFactory();
 			poolConnFactory =
-				new PoolableConnectionFactory(
-					connFactory,
-					objectPool,
-					new StackKeyedObjectPoolFactory(),
-					null,
-					false,
+    			new PoolableConnectionFactory(
+    				connFactory,
+    				objectPool,
+    				new StackKeyedObjectPoolFactory(),
+    				null,
+    				false,
 					true);
 		} catch (Exception ex) {
 			log.debug("Poolable connection factory error");
@@ -278,7 +304,7 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		}
 		if (conn == null) {
 			log.error("Pool didn't return a propertly initialized connection.");
-			throw new ResolutionPlugInException("Pool didn't return a propertly initialized connection.");
+			throw new ResolutionPlugInException("Pool didn't return a properly initialized connection.");
 		}
 
 		//Setup and execute a (pooled) prepared statement
@@ -315,7 +341,7 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 				}
 			} catch (SQLException e) {
 				log.error("An error occured while closing the prepared statement: " + e);
-				throw new ResolutionPlugInException("An error occured while closing the prepared statemen: " + e);
+				throw new ResolutionPlugInException("An error occured while closing the prepared statement: " + e);
 			}
 			try {
 				rs.close();
@@ -349,6 +375,13 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		}
 		log.debug("Driver loaded.");
 	}
+
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
+     */
+    public String getFailoverDependencyId() {
+        return failover;
+    }
 
 	private class Log4jPrintWriter extends PrintWriter {
 
