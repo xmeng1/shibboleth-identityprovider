@@ -210,14 +210,14 @@ public class AAServlet extends HttpServlet {
 				   "InvalidHandle");
 		saml.fail(resp, new SAMLException(codes, "AA got a HandleException: "+he));
 	    }catch(Exception ee){
-		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+he);
+		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Original problem: "+he);
 	    }
 	}catch (Exception e) {
-	    log.error("AA failed for "+userName+" because of: "+e);
+	    log.error("Attribute Authority Error for principal ("+userName+") : " + e.getMessage());
 	    try{
-		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "AA got an Exception: "+e));
+		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "Attribute Authority Error: " + e.getMessage()));
 	    }catch(Exception ee){
-		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+e);
+		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Original problem: "+e);
 	    }
 
 	}
