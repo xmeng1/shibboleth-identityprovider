@@ -255,7 +255,8 @@ public class AAServlet extends HttpServlet {
 
 			URL resource = null;
 			try {
-				resource = new URL(saml.getResource());
+				if (saml.getResource() != null)
+					resource = new URL(saml.getResource());
 			} catch (MalformedURLException mue) {
 				log.error(
 					"Request contained an improperly formatted resource identifier.  Attempting to "
