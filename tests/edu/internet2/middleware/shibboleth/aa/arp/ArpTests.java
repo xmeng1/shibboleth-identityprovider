@@ -67,6 +67,8 @@ import java.util.Properties;
 import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
 import org.apache.xml.serialize.OutputFormat;
 import org.apache.xml.serialize.XMLSerializer;
@@ -76,15 +78,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import edu.internet2.middleware.shibboleth.aa.arp.Arp;
-import edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute;
-import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
-import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
-import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
-import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
-import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryFactory;
-import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
-import edu.internet2.middleware.shibboleth.common.*;
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 
 /**
  * Validation suite for <code>Arp</code> processing.
@@ -113,11 +107,13 @@ public class ArpTests extends TestCase {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	public static void main(String[] args) {
 		junit.textui.TestRunner.run(ArpTests.class);
 		BasicConfigurator.configure();
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	/**
