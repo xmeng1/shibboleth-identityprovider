@@ -128,6 +128,10 @@ public class ArpEngine {
 		}
 	}
 
+	public ArpEngine(ArpRepository preLoadedRepository) throws ArpException {
+		repository = preLoadedRepository;
+	}
+
 	/**
 	 * Loads Arp Engine based on XML configurationf
 	 * 

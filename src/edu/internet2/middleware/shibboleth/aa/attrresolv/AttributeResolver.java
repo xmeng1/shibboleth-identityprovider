@@ -93,6 +93,10 @@ public class AttributeResolver {
 		
 		loadConfig(configuration.getResolverConfigLocation());
 	}
+	
+	public AttributeResolver(String configFileLocation) throws AttributeResolverException {
+		loadConfig(configFileLocation);
+	}
 
 	private void loadConfig(String configFile) throws AttributeResolverException {
 		try {
