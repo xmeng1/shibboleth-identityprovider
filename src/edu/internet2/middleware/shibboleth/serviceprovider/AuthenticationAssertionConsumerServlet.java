@@ -41,6 +41,7 @@
  */
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.ServletContext;
@@ -80,7 +81,6 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  */
 public class AuthenticationAssertionConsumerServlet extends HttpServlet {
 
-	private static final String ECHOTARGET = "SendAttributesBackToMe";
 	private static Logger log = null;
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
@@ -101,6 +101,8 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
 		// Initialize logging specially
 		Logger targetLogger = Logger.getLogger("edu.internet2.middleware");
 		Logger samlLogger = Logger.getLogger("org.opensaml");
+		File diagdir = new File(servletContext.getRealPath("/diagnose"));
+		diagdir.mkdirs();
 		String logname = servletContext.getRealPath("/diagnose/initialize.log");
 		Layout initLayout = new PatternLayout("%d{HH:mm} %-5p %m%n");
 		
@@ -188,7 +190,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             response.addCookie(cookie);
             
             try {
-				if (target.equals(ECHOTARGET)) {
+				if (target.equals("SendAttributesBackToMe")) {
 					ServletOutputStream outputStream = response.getOutputStream();
 					response.setContentType("text/xml");
 					Session session = context.getSessionManager().findSession(sessionId,applicationId);
