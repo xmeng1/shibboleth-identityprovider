@@ -14,12 +14,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 	<link rel="stylesheet" type="text/css" href="main.css" />
-	<title>Access Request</title>
+	<title>Shibboleth Handle Request Processed</title>
 </head>
 
 <body onLoad="document.forms[0].submit()">
 
-<h1>Inter-institutional Access Request</h1>
+<h1>Shibboleth Handle Request Processed</h1>
 
 <p><bean:write name="hs_helpText" /></p>
 <p>

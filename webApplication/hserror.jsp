@@ -13,13 +13,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 	<link rel="stylesheet" type="text/css" href="main.css" />
-	<title>Access System Failure</title>
+	<title>Shibboleth Handle Service Failure</title>
 </head>
 
 <body>
 <div class="head">
 <img src="<bean:write name="hs_logoLocation" />" alt="Logo" />
-<h1>Inter-institutional Access System Failure</h1>
+<h1>Shibboleth Handle Service Failure</h1>
 </div>
 
 <p>The inter-institutional access system experienced a technical failure.</p>
