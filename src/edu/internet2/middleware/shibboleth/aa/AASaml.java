@@ -75,41 +75,31 @@ public class AASaml {
     String[] policies = { Constants.POLICY_CLUBSHIB };
     String myName;
     StringBuffer sharName;
-    String resource;
-    String reqID;
-    SAMLSubject sub;
+    SAMLRequest sreq;
+    SAMLAttributeQuery aquery;
     SAMLBinding binding;
     private static Logger log = Logger.getLogger(AASaml.class.getName());        
 
     public AASaml(String myName) throws SAMLException {
-	
-	Init.init();
-
-	binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
-	this.myName = myName;
+        binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
+        this.myName = myName;
     }
 
-    public void receive(HttpServletRequest req)
-	throws SAMLException{
-
-	sharName=new StringBuffer();
-	SAMLRequest sReq = binding.receive(req, sharName);
-	SAMLAttributeQuery q = (SAMLAttributeQuery)sReq.getQuery();
-	resource = q.getResource();
-	reqID = sReq.getRequestId();
-	sub = q.getSubject();
+    public void receive(HttpServletRequest req) throws SAMLException {
+        sharName=new StringBuffer();
+        sreq = binding.receive(req, sharName);
+        SAMLQuery q = sreq.getQuery();
+        if (q == null || !(q instanceof SAMLAttributeQuery))
+            throw new SAMLException(SAMLException.REQUESTER,"AASaml.receive() can only respond to a SAML Attribute Query");
+        SAMLAttributeQuery aquery = (SAMLAttributeQuery)q;
     }
 
     public String getHandle(){
-	return sub.getName();
+	return aquery.getSubject().getName();
     }
 
     public String getResource(){
-	return resource;
-    }
-
-    public String getIssuer(){
-	return sub.getConfirmationData();
+	return aquery.getResource();
     }
 
     public String getShar(){
@@ -117,62 +107,75 @@ public class AASaml {
     }
 
  
-    public void respond(HttpServletResponse resp, SAMLAttribute[] attrs, SAMLException exception)
-	throws IOException{
-    
-	SAMLException ourSE = null;
-	SAMLResponse sResp = null;
-	
-	try{
-
-	    if(attrs == null || attrs.length == 0){
-		sResp = new SAMLResponse(reqID,
-					 /* recipient URL*/ null,
-					 /* no attrs -> no assersion*/ null,
-					 exception);
-	    }else{
-		Date now = new Date();
-		Date  then = null;
-
-		SAMLSubject rSubject = (SAMLSubject)sub.clone();
-		SAMLCondition condition = new SAMLAudienceRestrictionCondition(Arrays.asList(policies));
-		SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
-	    
-		long min = attrs[0].getLifetime();
-		for(int i = 1; i < attrs.length; i++){
-		    long t = attrs[i].getLifetime();
-		    if(t > 0 && t < min)
-			min = t;
-		}
-		if(min > 0)
-		    then = new Date(now.getTime() + min);
-
-		SAMLAssertion sAssertion = new SAMLAssertion(
-                        myName,
-					     now,
-					     then,
-					     Collections.singleton(condition),
-					     Collections.singleton(statement)
-                         );
-
-		sResp = new SAMLResponse(reqID,
-					 /* recipient URL*/ null,
-					 Collections.singleton(sAssertion),
-					 exception);
-	    }
- 	}catch (SAMLException se) {
-	    ourSE = se;
-    }catch (CloneNotSupportedException ex) {
-        ourSE = new SAMLException(SAMLException.RESPONDER,ex);
-	}finally{
-	    binding.respond(resp,sResp,ourSE);	    
-	}
+    public void respond(HttpServletResponse resp, Collection attrs, SAMLException exception)
+    	throws IOException {        
+        SAMLException ourSE = null;
+        SAMLResponse sResp = null;
+        
+        try {
+            if(attrs == null || attrs.size() == 0) {
+        		sResp = new SAMLResponse(sreq.getRequestId(),
+        					 /* recipient URL*/ null,
+        					 /* no attrs -> no assersion*/ null,
+        					 exception);
+            } else {
+                
+                // Determine max lifetime, and filter via query if necessary.
+        		Date now = new Date();
+        		Date then = null;
+                long min = 0;
+                Iterator i = attrs.iterator();
+                outer_loop:
+                while (i.hasNext())
+                {
+                    SAMLAttribute attr = (SAMLAttribute)i.next();
+                    if (min == 0 || (attr.getLifetime() > 0 && attr.getLifetime() < min))
+                        min = attr.getLifetime();
+                    Iterator filter = aquery.getDesignators();
+                    if (!filter.hasNext())
+                        continue;
+                    while (filter.hasNext())
+                    {
+                        SAMLAttribute desig = (SAMLAttribute)filter.next();
+                        if (attr.getNamespace().equals(desig.getNamespace()) && attr.getName().equals(desig.getName()))
+                            continue outer_loop;
+                    }
+                    i.remove();
+                }
+        
+        		SAMLSubject rSubject = (SAMLSubject)aquery.getSubject().clone();
+        		SAMLCondition condition = new SAMLAudienceRestrictionCondition(Arrays.asList(policies));
+        		SAMLStatement statement = new SAMLAttributeStatement(rSubject, attrs);
+        	    
+        		if(min > 0)
+        		    then = new Date(now.getTime() + min);
+        
+        		SAMLAssertion sAssertion = new SAMLAssertion(
+                                myName,
+        					     now,
+        					     then,
+        					     Collections.singleton(condition),
+        					     Collections.singleton(statement)
+                                 );
+        
+        		sResp = new SAMLResponse(sreq.getRequestId(),
+        					 /* recipient URL*/ null,
+        					 Collections.singleton(sAssertion),
+        					 exception);
+            }
+        } catch (SAMLException se) {
+            ourSE = se;
+        } catch (CloneNotSupportedException ex) {
+            ourSE = new SAMLException(SAMLException.RESPONDER, ex);
+        } finally{
+            binding.respond(resp,sResp,ourSE);	    
+        }
     }
 
     public void fail(HttpServletResponse resp, SAMLException exception)
 	throws IOException{
 	try{
-	    SAMLResponse sResp = new SAMLResponse(reqID,
+	    SAMLResponse sResp = new SAMLResponse((sreq!=null) ? sreq.getRequestId() : null,
 						  /* recipient URL*/ null,
 						  /* an assersion*/ null,
 						  exception);	

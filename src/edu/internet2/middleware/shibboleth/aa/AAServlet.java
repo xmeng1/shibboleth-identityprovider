@@ -63,7 +63,6 @@ import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import org.doomdark.uuid.UUIDGenerator;
 
 /**
  *  Attribute Authority & Release Policy
@@ -153,11 +152,11 @@ public class AAServlet extends HttpServlet {
         throws ServletException, IOException {
         	
 	log.debug("Recieved a request.");
-	MDC.put("serviceId", UUIDGenerator.getInstance().generateRandomBasedUUID());
+	MDC.put("serviceId", new SAMLIdentifier().toString());
 	MDC.put("remoteAddr", req.getRemoteAddr());
 	log.info("Handling request.");
 
-	SAMLAttribute[] attrs = null;
+	ArrayList attrs = null;
 	SAMLException ourSE = null;
 	AASaml saml = null;
 	String userName = null;
@@ -168,9 +167,7 @@ public class AAServlet extends HttpServlet {
 	    String resource = saml.getResource();
 	    String handle = saml.getHandle();
 	    String shar = saml.getShar();
-	    String issuedBy = saml.getIssuer();
 	    log.info("AA: handle:"+handle);
-	    log.info("AA: issuer:"+issuedBy);
 	    log.info("AA: shar:"+shar);
 
 
@@ -188,17 +185,17 @@ public class AAServlet extends HttpServlet {
 		}
 	    }
 
-	    attrs = responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource);
-	    log.info("Got "+attrs.length+" attributes for "+userName);
+	    attrs = (ArrayList)Arrays.asList(responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource));
+	    log.info("Got " + attrs.size() + " attributes for " + userName);
 	    saml.respond(resp, attrs, null);
 	    log.info("Successfully responded about "+userName);
 
  	}catch (org.opensaml.SAMLException se) {
 	    log.error("AA failed for "+userName+" because of: "+se);
 	    try{
-		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "AA got a SAML Exception: "+se));
+    		saml.fail(resp, se);
 	    }catch(Exception ee){
-		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+se);
+            throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+se);
 	    }
 	}catch (HandleException he) {
 	    log.error("AA failed for "+userName+" because of: "+he);
