@@ -42,6 +42,13 @@ public class AAServlet extends HttpServlet {
 		ctxFactory = "com.sun.jndi.ldap.LdapCtxFactory";
 	    arpFactoryMethod = getInitParameter("arpFactoryMethod");
 	    arpFactoryData = getInitParameter("arpFactoryData");
+	    if(arpFactoryMethod.equalsIgnoreCase("file") &&
+	       arpFactoryData == null){
+		String realPath = getServletContext().getRealPath("/");
+		realPath += "arps";
+		log.debug("shib dir = "+ realPath);
+		arpFactoryData = realPath;
+	    }
 
 
       
