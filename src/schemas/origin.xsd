@@ -27,6 +27,7 @@
 			<xs:attribute name="AAUrl" type="xs:anyURI" use="required"/>
 			<xs:attribute name="passThruErrors" type="xs:boolean" use="optional" default="false"/>
 			<xs:attribute name="providerId" type="xs:anyURI" use="required"/>
+			<xs:attribute name="defaultRelyingParty" type="xs:anyURI" use="required"/>
 		</xs:complexType>
 	</xs:element>
 	<xs:complexType name="RelyingPartyType">
