@@ -34,19 +34,28 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 
 /*
  * Built at the Canada Institute for Scientific and Technical Information (CISTI 
@@ -66,212 +75,290 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
 
 public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
 
-	private static Logger log = Logger.getLogger(JDBCDataConnector.class.getName());
-	private Properties props = new Properties();
-	private String searchVal = null;
-	private String aeClassName = null;
+    private static Logger log = Logger.getLogger(JDBCDataConnector.class.getName());
+    private Properties props = new Properties();
+    private String searchVal = null;
+    private String aeClassName = null;
 
-	final private static String QueryAtt = "query";
-	final private static String AttributeExtractorAtt = "attributeExtractor";
-	final private static String DBDriverAtt = "dbDriver";
-	final private static String AEInstanceMethodAtt = "instance";
-	final private static String URLAtt = "dbURL";
+    final private static String QueryAtt = "query";
+    final private static String AttributeExtractorAtt = "attributeExtractor";
+    final private static String DBDriverAtt = "dbDriver";
+    final private static String AEInstanceMethodAtt = "instance";
+    final private static String URLAtt = "dbURL";
 
-	public JDBCDataConnector(Element e) throws ResolutionPlugInException {
+    public JDBCDataConnector(Element e) throws ResolutionPlugInException {
 
-		super(e);
+        super(e);
 
-		NodeList propertiesNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
-		NodeList searchNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
+        NodeList propertiesNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
+        NodeList searchNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
 
-		/**
-		 * Gets and sets the search parameter and the attribute extractor
-		 */
-		searchVal = ((Element) searchNode.item(0)).getAttribute(QueryAtt);
-		aeClassName = ((Element) searchNode.item(0)).getAttribute(AttributeExtractorAtt);
+        /**
+         * Gets and sets the search parameter and the attribute extractor
+         */
+        searchVal = ((Element) searchNode.item(0)).getAttribute(QueryAtt);
+        aeClassName = ((Element) searchNode.item(0)).getAttribute(AttributeExtractorAtt);
 
-		if (searchVal == null || searchVal.equals("")) {
-			log.error("Search requires a specified query field");
-			throw new ResolutionPlugInException("mySQLDataConnection requires a \"Search\" specification");
-		} else {
-			log.debug("Search Query: (" + searchVal + ")");
-		}
+        if (searchVal == null || searchVal.equals("")) {
+            Node tnode = searchNode.item(0).getFirstChild();
+            if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+                searchVal = tnode.getNodeValue();
+            }
+            if (searchVal == null || searchVal.equals("")) {
+                log.error("Search requires a specified query field");
+                throw new ResolutionPlugInException("mySQLDataConnection requires a \"Search\" specification");
+            }
+        }
+        else {
+            log.debug("Search Query: (" + searchVal + ")");
+        }
 
-		/**
-		 * Assigns the property attribute name/value pairs to a hashtable
-		 */
-		for (int i = 0; propertiesNode.getLength() > i; i++) {
-			Element property = (Element) propertiesNode.item(i);
-			String propertiesName = property.getAttribute("name");
-			String propertiesValue = property.getAttribute("value");
+        /**
+         * Assigns the property attribute name/value pairs to a hashtable
+         */
+        for (int i = 0; propertiesNode.getLength() > i; i++) {
+            Element property = (Element) propertiesNode.item(i);
+            String propertiesName = property.getAttribute("name");
+            String propertiesValue = property.getAttribute("value");
 
-			if (propertiesName != null
-				&& !propertiesName.equals("")
-				&& propertiesValue != null
-				&& !propertiesValue.equals("")) {
-				props.setProperty(propertiesName, propertiesValue);
-				log.debug("Property: (" + propertiesName + ")");
-				log.debug("   Value: (" + propertiesValue + ")");
-			} else {
-				log.error("Property is malformed.");
-				throw new ResolutionPlugInException("Property is malformed.");
-			}
-		}
+            if (propertiesName != null
+                && !propertiesName.equals("")
+                && propertiesValue != null
+                && !propertiesValue.equals("")) {
+                props.setProperty(propertiesName, propertiesValue);
+                log.debug("Property: (" + propertiesName + ")");
+                log.debug("   Value: (" + propertiesValue + ")");
+            } else {
+                log.error("Property is malformed.");
+                throw new ResolutionPlugInException("Property is malformed.");
+            }
+        }
         
         if (props.getProperty(URLAtt) == null) {
             log.error("JDBC connection requires a dbURL property");
             throw new ResolutionPlugInException("JDBCDataConnection requires a \"dbURL\" property");
         }
-	}
+    }
 
-	public Attributes resolve(Principal principal) throws ResolutionPlugInException {
-		Connection conn = null;
-		ResultSet rs = null;
-		JDBCAttributeExtractor aeClassObj = null;
+    protected String substitute(String source, String pattern, boolean quote, Dependencies depends) {
+        Matcher m=Pattern.compile(pattern).matcher(source);
+        while (m.find()) {
+            String field = source.substring(m.start()+1, m.end()-1);
+            if (field != null && field.length() > 0) {
+                StringBuffer buf = new StringBuffer();
+                
+                //Look for an attribute dependency.
+                ResolverAttribute dep = depends.getAttributeResolution(field);
+                if (dep != null) {
+                    Iterator iter=dep.getValues();
+                    while (iter.hasNext()) {
+                        if (buf.length() > 0)
+                            buf = buf.append(',');
+                        if (quote)
+                            buf = buf.append("'");
+                        buf = buf.append(iter.next());
+                        if (quote)
+                            buf = buf.append("'");
+                    }
+                }
+                
+                //If no values found, cycle over the connectors.
+                Iterator connDeps = connectorDependencyIds.iterator();
+                while (buf.length() == 0 && connDeps.hasNext()) {
+                    Attributes attrs = depends.getConnectorResolution((String)connDeps.next());
+                    if (attrs != null) {
+                        Attribute attr = attrs.get(field);
+                        if (attr != null) {
+                            try {
+                                NamingEnumeration vals = attr.getAll();
+                                while (vals.hasMore()) {
+                                    if (buf.length() > 0)
+                                        buf = buf.append(',');
+                                    if (quote)
+                                        buf = buf.append("'");
+                                    buf = buf.append(vals.next());
+                                    if (quote)
+                                        buf = buf.append("'");
+                                }
+                            }
+                            catch (NamingException e) {
+                                // Auto-generated catch block
+                            }
+                        }
+                    }
+                }
+                
+                if (buf.length() == 0) {
+                    log.warn("Unable to find any values to substitute in query for " + field + ", so using the empty string");
+                }
+                source = source.replaceAll(m.group(), buf.toString());
+                m.reset(source);
+            }
+        }
+        return source;
+    }
 
-		log.debug("Resolving connector: (" + getId() + ")");
-		log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");
+    public Attributes resolve(Principal principal, String requester, Dependencies depends) throws ResolutionPlugInException {
+        Connection conn = null;
+        ResultSet rs = null;
+        JDBCAttributeExtractor aeClassObj = null;
 
-		//Replaces %PRINCIPAL% in the query string with its value
-		log.debug("The query string before coverting %PRINCIPAL%: " + searchVal);
-		String convertedSearchVal = searchVal.replaceAll("%PRINCIPAL%", principal.getName());
-		log.debug("The query string after converting %PRINCIPAL%: " + convertedSearchVal);
+        log.debug("Resolving connector: (" + getId() + ")");
+        log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");
+        log.debug("The query string before inserting substitutions: " + searchVal);
 
-		try {
-			//Loads the database driver
-			loadDriver((String) props.get(DBDriverAtt));
-		} catch (ClassNotFoundException e) {
-			log.error("An ClassNotFoundException occured while loading database driver");
-			throw new ResolutionPlugInException(
-				"An ClassNotFoundException occured while loading database driver: " + e.getMessage());
-		} catch (IllegalAccessException e) {
-			log.error("An IllegalAccessException occured while loading database driver");
-			throw new ResolutionPlugInException(
-				"An IllegalAccessException occured while loading database driver: " + e.getMessage());
-		} catch (InstantiationException e) {
-			log.error("An InstantionException occured while loading database driver");
-			throw new ResolutionPlugInException(
-				"An InstantiationException occured while loading database driver: " + e.getMessage());
-		}
+        //Replaces %PRINCIPAL% in the query string with its value
+        String convertedSearchVal = searchVal.replaceAll("%PRINCIPAL%", principal.getName());
+        convertedSearchVal = convertedSearchVal.replaceAll("@PRINCIPAL@", "'" + principal.getName() + "'");
+        
+        //Find all delimited substitutions and replace with the named attribute value(s).
+        convertedSearchVal = substitute(convertedSearchVal,"%.+%",false,depends);
+        convertedSearchVal = substitute(convertedSearchVal,"@.+@",true,depends);
+        
+        //Replace any escaped substitution delimiters.
+        convertedSearchVal = convertedSearchVal.replaceAll("\\%","%");
+        convertedSearchVal = convertedSearchVal.replaceAll("\\@","@");
 
-		try {
-			//Makes the connection to the database
-			conn = connect();
-		} catch (SQLException e) {
-			log.error("An ERROR occured while connecting to database");
-			throw new ResolutionPlugInException("An ERROR occured while connecting to the database: " + e.getMessage());
-		}
+        log.debug("The query string after inserting substitutions: " + convertedSearchVal);
 
-		try {
-			//Gets the results set for the query
-			rs = executeQuery(conn, convertedSearchVal);
-		} catch (SQLException e) {
-			log.error("An ERROR occured while executing the query");
-			throw new ResolutionPlugInException("An ERROR occured while executing the query: " + e.getMessage());
-		}
+        try {
+            //Loads the database driver
+            loadDriver((String) props.get(DBDriverAtt));
+        } catch (ClassNotFoundException e) {
+            log.error("An ClassNotFoundException occured while loading database driver");
+            throw new ResolutionPlugInException(
+                "An ClassNotFoundException occured while loading database driver: " + e.getMessage());
+        } catch (IllegalAccessException e) {
+            log.error("An IllegalAccessException occured while loading database driver");
+            throw new ResolutionPlugInException(
+                "An IllegalAccessException occured while loading database driver: " + e.getMessage());
+        } catch (InstantiationException e) {
+            log.error("An InstantionException occured while loading database driver");
+            throw new ResolutionPlugInException(
+                "An InstantiationException occured while loading database driver: " + e.getMessage());
+        }
 
-		/**
-		 * If the user has supplied their own class for extracting the attributes from the 
-		 * result set, then their class will be run.  A BasicAttributes object is expected as
-		 * the result of the extraction.
-		 *
-		 * If the user has no supplied their own class for extracting the attributes then 
-		 * the default extraction is run, which is specified in DefaultAEAtt.
-		 */
-		if (aeClassName == null || aeClassName.equals("")) {
-			aeClassName = DefaultAE.class.getName();
-		}
+        try {
+            //Makes the connection to the database
+            conn = connect();
+        } catch (SQLException e) {
+            log.error("An ERROR occured while connecting to database");
+            throw new ResolutionPlugInException("An ERROR occured while connecting to the database: " + e.getMessage());
+        }
 
-		try {
-			Class aeClass = Class.forName(aeClassName);
-			Method aeMethod = aeClass.getMethod(AEInstanceMethodAtt, null);
+        try {
+            //Gets the results set for the query
+            rs = executeQuery(conn, convertedSearchVal);
+            if (!rs.next())
+                return new BasicAttributes();
 
-			//runs the "instance" method returning and instance of the object
-			aeClassObj = (JDBCAttributeExtractor) (aeMethod.invoke(null, null));
-			log.debug("Supplied attributeExtractor class loaded.");
+        } catch (SQLException e) {
+            log.error("An ERROR occured while executing the query");
+            throw new ResolutionPlugInException("An ERROR occured while executing the query: " + e.getMessage());
+        }
 
-		} catch (ClassNotFoundException e) {
-			log.error("The supplied attribute extractor class could not be found");
-			throw new ResolutionPlugInException(
-				"The supplied attribute extractor class could not be found: " + e.getMessage());
-		} catch (NoSuchMethodException e) {
-			log.error("The requested method does not exist");
-			throw new ResolutionPlugInException("The requested method does not exist: " + e.getMessage());
-		} catch (IllegalAccessException e) {
-			log.error("Access is not permitted for invoking requested method");
-			throw new ResolutionPlugInException(
-				"Access is not permitted for invoking requested method: " + e.getMessage());
-		} catch (InvocationTargetException e) {
-			log.error("An ERROR occured invoking requested method");
-			throw new ResolutionPlugInException("An ERROR occured involking requested method: " + e.getMessage());
-		}
+        /**
+         * If the user has supplied their own class for extracting the attributes from the 
+         * result set, then their class will be run.  A BasicAttributes object is expected as
+         * the result of the extraction.
+         *
+         * If the user has no supplied their own class for extracting the attributes then 
+         * the default extraction is run, which is specified in DefaultAEAtt.
+         */
+        if (aeClassName == null || aeClassName.equals("")) {
+            aeClassName = DefaultAE.class.getName();
+        }
 
-		try {
-			return aeClassObj.extractAttributes(rs);
+        try {
+            Class aeClass = Class.forName(aeClassName);
+            Method aeMethod = aeClass.getMethod(AEInstanceMethodAtt, null);
 
-		} catch (JDBCAttributeExtractorException e) {
-			log.error("An ERROR occured while extracting attributes from result set");
-			throw new ResolutionPlugInException(
-				"An ERROR occured while extracting attributes from result set: " + e.getMessage());
-		} finally {
-			try {
-				//release result set
-				rs.close();
-				log.debug("Result set released");
-			} catch (SQLException e) {
-				log.error("An error occured while closing the result set: " + e);
-				throw new ResolutionPlugInException("An error occured while closing the result set: " + e);
-			}
+            //runs the "instance" method returning and instance of the object
+            aeClassObj = (JDBCAttributeExtractor) (aeMethod.invoke(null, null));
+            log.debug("Supplied attributeExtractor class loaded.");
 
-			try {
-				//close the connection
-				conn.close();
-				log.debug("Connection to database closed");
-			} catch (SQLException e) {
-				log.error("An error occured while closing the database connection: " + e);
-				throw new ResolutionPlugInException("An error occured while closing the database connection: " + e);
-			}
-		}
-	}
+        } catch (ClassNotFoundException e) {
+            log.error("The supplied attribute extractor class could not be found");
+            throw new ResolutionPlugInException(
+                "The supplied attribute extractor class could not be found: " + e.getMessage());
+        } catch (NoSuchMethodException e) {
+            log.error("The requested method does not exist");
+            throw new ResolutionPlugInException("The requested method does not exist: " + e.getMessage());
+        } catch (IllegalAccessException e) {
+            log.error("Access is not permitted for invoking requested method");
+            throw new ResolutionPlugInException(
+                "Access is not permitted for invoking requested method: " + e.getMessage());
+        } catch (InvocationTargetException e) {
+            log.error("An ERROR occured invoking requested method");
+            throw new ResolutionPlugInException("An ERROR occured involking requested method: " + e.getMessage());
+        }
 
-	/** 
-	 * Loads the driver used to access the database
-	 * @param driver The driver used to access the database
-	 * @throws ResolutionPlugInException If there is a failure to load the driver
-	 */
-	public void loadDriver(String driver)
-		throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-		Class.forName(driver).newInstance();
-		log.debug("Loading driver: " + driver);
-	}
+        try {
+            return aeClassObj.extractAttributes(rs);
 
-	/** 
-	 * Makes a connection to the database using the property set.
-	 * @return Connection object
-	 * @throws SQLException If there is a failure to make a database connection
-	 */
-	public Connection connect()
-		throws SQLException {
+        } catch (JDBCAttributeExtractorException e) {
+            log.error("An ERROR occured while extracting attributes from result set");
+            throw new ResolutionPlugInException(
+                "An ERROR occured while extracting attributes from result set: " + e.getMessage());
+        } finally {
+            try {
+                //release result set
+                rs.close();
+                log.debug("Result set released");
+            } catch (SQLException e) {
+                log.error("An error occured while closing the result set: " + e);
+                throw new ResolutionPlugInException("An error occured while closing the result set: " + e);
+            }
+
+            try {
+                //close the connection
+                conn.close();
+                log.debug("Connection to database closed");
+            } catch (SQLException e) {
+                log.error("An error occured while closing the database connection: " + e);
+                throw new ResolutionPlugInException("An error occured while closing the database connection: " + e);
+            }
+        }
+    }
+
+    /** 
+     * Loads the driver used to access the database
+     * @param driver The driver used to access the database
+     * @throws ResolutionPlugInException If there is a failure to load the driver
+     */
+    public void loadDriver(String driver)
+        throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        Class.forName(driver).newInstance();
+        log.debug("Loading driver: " + driver);
+    }
+
+    /** 
+     * Makes a connection to the database using the property set.
+     * @return Connection object
+     * @throws SQLException If there is a failure to make a database connection
+     */
+    public Connection connect()
+        throws SQLException {
         String url = props.getProperty(URLAtt);
-		log.debug(url);
-		Connection conn = DriverManager.getConnection(url,props);
-		log.debug("Connection with database established");
+        log.debug(url);
+        Connection conn = DriverManager.getConnection(url,props);
+        log.debug("Connection with database established");
 
-		return conn;
-	}
+        return conn;
+    }
 
-	/**
-	 * Execute the users query
-	 * @param query The query the user wishes to execute
-	 * @return The result of the users <code>query</code>
-	 * @return null if an error occurs during execution
-	 * @throws SQLException If an error occurs while executing the query
-	*/
-	public ResultSet executeQuery(Connection conn, String query) throws SQLException {
-		log.debug("Users Query: " + query);
-		Statement stmt = conn.createStatement();
-		return stmt.executeQuery(query);
-	}
+    /**
+     * Execute the users query
+     * @param query The query the user wishes to execute
+     * @return The result of the users <code>query</code>
+     * @return null if an error occurs during execution
+     * @throws SQLException If an error occurs while executing the query
+    */
+    public ResultSet executeQuery(Connection conn, String query) throws SQLException {
+        log.debug("Users Query: " + query);
+        Statement stmt = conn.createStatement();
+        return stmt.executeQuery(query);
+    }
 }
 
 /**
@@ -279,63 +366,52 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
  */
 
 class DefaultAE implements JDBCAttributeExtractor {
-	private static DefaultAE _instance = null;
-	private static Logger log = Logger.getLogger(DefaultAE.class.getName());
+    private static DefaultAE _instance = null;
+    private static Logger log = Logger.getLogger(DefaultAE.class.getName());
 
-	// Constructor
-	protected DefaultAE() {
-	}
+    // Constructor
+    protected DefaultAE() {
+    }
 
-	// Ensures that only one istance of the class at a time
-	public static DefaultAE instance() {
-		if (_instance == null)
-			return new DefaultAE();
-		else
-			return _instance;
-	}
+    // Ensures that only one istance of the class at a time
+    public static DefaultAE instance() {
+        if (_instance == null)
+            return new DefaultAE();
+        else
+            return _instance;
+    }
 
-	/**
-	 * Method of extracting the attributes from the supplied result set.
-	 *
-	 * @param ResultSet The result set from the query which contains the attributes
-	 * @return BasicAttributes as objects containing all the attributes
-	 * @throws JDBCAttributeExtractorException If there is a complication in retrieving the attributes
-	 */
-	public BasicAttributes extractAttributes(ResultSet rs) throws JDBCAttributeExtractorException {
-		BasicAttributes attributes = new BasicAttributes();
+    /**
+     * Method of extracting the attributes from the supplied result set.
+     *
+     * @param ResultSet The result set from the query which contains the attributes
+     * @return BasicAttributes as objects containing all the attributes
+     * @throws JDBCAttributeExtractorException If there is a complication in retrieving the attributes
+     */
+    public BasicAttributes extractAttributes(ResultSet rs) throws JDBCAttributeExtractorException {
+        BasicAttributes attributes = new BasicAttributes();
 
-		log.debug("Using default Attribute Extractor");
+        log.debug("Using default Attribute Extractor");
 
-		try {
-                // No rows returned...
-                if (!rs.next())
-                return attributes;
-		}
-        catch (SQLException e) {
-			log.error("An error occured while accessing result set");
-			throw new JDBCAttributeExtractorException(
-				"An error occured while accessing result set: " + e.getMessage());
-		}
-
-		try {
+        try {
             ResultSetMetaData rsmd = rs.getMetaData();
-			int numColumns = rsmd.getColumnCount();
-			log.debug("Number of returned columns: " + numColumns);
+            int numColumns = rsmd.getColumnCount();
+            log.debug("Number of returned columns: " + numColumns);
 
-			for (int i = 1; i <= numColumns; i++) {
-				String columnName = rsmd.getColumnName(i);
-				String columnType = rsmd.getColumnTypeName(i);
-				Object columnValue = rs.getObject(columnName);
-				log.debug(
-					"(" + i + ". ColumnType = " + columnType + ") " + columnName + " -> " + (columnValue!=null ? columnValue.toString() : "(null)"));
-				attributes.put(new BasicAttribute(columnName, columnValue));
-			}
-		}
+            for (int i = 1; i <= numColumns; i++) {
+                String columnName = rsmd.getColumnName(i);
+                String columnType = rsmd.getColumnTypeName(i);
+                Object columnValue = rs.getObject(columnName);
+                log.debug(
+                    "(" + i + ". ColumnType = " + columnType + ") " + columnName + " -> " + (columnValue!=null ? columnValue.toString() : "(null)"));
+                attributes.put(new BasicAttribute(columnName, columnValue));
+            }
+        }
         catch (SQLException e) {
-			log.error("An ERROR occured while retrieving result set meta data");
-			throw new JDBCAttributeExtractorException(
-				"An ERROR occured while retrieving result set meta data: " + e.getMessage());
-		}
+            log.error("An ERROR occured while retrieving result set meta data");
+            throw new JDBCAttributeExtractorException(
+                "An ERROR occured while retrieving result set meta data: " + e.getMessage());
+        }
 
         // Check for multiple rows.
         try {
@@ -345,6 +421,6 @@ class DefaultAE implements JDBCAttributeExtractor {
         catch (SQLException e) {
         }
 
-		return attributes;
-	}
+        return attributes;
+    }
 }
