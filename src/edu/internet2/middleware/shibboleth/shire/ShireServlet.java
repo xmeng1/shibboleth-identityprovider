@@ -359,7 +359,7 @@ public class ShireServlet extends HttpServlet {
 			// All we really need is here...
 			log.debug("Shibboleth Origin Site: " + s.getSubject().getNameQualifier());
 			log.debug("Shibboleth Handle: " + s.getSubject().getName());
-			log.debug("Shibboleth AA URL:</B>" + s.getBindings()[0].getLocation());
+			log.debug("Shibboleth AA URL: " + s.getBindings()[0].getLocation());
 			return s;
 
 		} catch (SAMLException e) {
