@@ -15,7 +15,7 @@ import org.opensaml.*;
 /**
  *  Implements a SAML POST profile consumer
  *
- * @author     Scott Cantor, Sridhar Muppidi
+ * @author     Scott Cantor
  * @created    June 10, 2002
  */
 public class ShireServlet extends HttpServlet
@@ -265,6 +265,8 @@ public class ShireServlet extends HttpServlet
             fout.println("Domain=" + domain);
             fout.println("PBinding0=" + bindings[0].getBinding());
             fout.println("LBinding0=" + bindings[0].getLocation());
+            fout.println("Time=" + System.currentTimeMillis()/1000);
+	    fout.println("ClientAddress=" + request.getRemoteAddr());
             fout.println("EOF");
             fout.close();
 
