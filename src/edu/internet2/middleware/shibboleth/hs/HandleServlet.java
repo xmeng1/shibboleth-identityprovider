@@ -98,6 +98,7 @@ public class HandleServlet extends HttpServlet {
 
 		//Set defaults
 		Properties defaultProps = new Properties();
+        defaultProps.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username","REMOTE_USER");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.HandleRepository.implementation",
 			"edu.internet2.middleware.shibboleth.hs.provider.MemoryHandleRepository");
@@ -255,9 +256,12 @@ public class HandleServlet extends HttpServlet {
 
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
+            
+            String header=configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.username");
+            String username=header.equalsIgnoreCase("REMOTE_USER") ? req.getRemoteUser() : req.getHeader(header);
 
-			String handle = handleRepository.getHandle(new AuthNPrincipal(req.getRemoteUser()));
-			log.info("Issued Handle (" + handle + ") to (" + req.getRemoteUser() + ")");
+			String handle = handleRepository.getHandle(new AuthNPrincipal(username));
+			log.info("Issued Handle (" + handle + ") to (" + username + ")");
 
 			byte[] buf = generateAssertion(handle, req.getParameter("shire"), req.getRemoteAddr(), req.getAuthType());
 
