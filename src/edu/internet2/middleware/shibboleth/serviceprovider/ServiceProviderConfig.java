@@ -133,7 +133,6 @@
 
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -143,7 +142,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.opensaml.SAMLAssertion;
@@ -153,10 +151,6 @@ import org.opensaml.SAMLObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import x0.maceShibboleth1.AttributeAcceptancePolicyDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument;
@@ -172,7 +166,6 @@ import x0.maceShibbolethTargetConfig1.ShibbolethTargetConfigDocument.ShibbolethT
 import edu.internet2.middleware.shibboleth.common.AAP;
 import edu.internet2.middleware.shibboleth.common.AttributeRule;
 import edu.internet2.middleware.shibboleth.common.Credentials;
-import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.XML;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
@@ -180,6 +173,7 @@ import edu.internet2.middleware.shibboleth.metadata.EntityLocator;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.Provider;
 import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Load the configuration files into objects, index them, and return them on request.
@@ -296,7 +290,6 @@ public class ServiceProviderConfig {
 	
 	
 	
-	private DOMParser parser = new DOMParser();
 	
 	/**
 	 * The constructor prepares for, but does not parse the configuration.
@@ -304,32 +297,7 @@ public class ServiceProviderConfig {
 	 * @throws ShibbolethConfigurationException
 	 * 	  if XML Parser cannot be initialized (Classpath problem)
 	 */
-	public ServiceProviderConfig() 
-		throws ShibbolethConfigurationException {
-		try {
-        	parser.setFeature("http://xml.org/sax/features/validation", true);
-        	parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-        
-        
-        	parser.setErrorHandler(new ErrorHandler() {
-        
-        		public void error(SAXParseException arg0) throws SAXException {
-        			throw new SAXException("Error parsing xml file: " + arg0);
-        		}
-        
-        		public void fatalError(SAXParseException arg0) throws SAXException {
-        			throw new SAXException("Error parsing xml file: " + arg0);
-        		}
-        
-        		public void warning(SAXParseException arg0) throws SAXException {
-        			throw new SAXException("Error parsing xml file: " + arg0);
-        		}
-        	});
-        
-        } catch (SAXException e) {
-        	log.error("Unable to setup a workable XML parser: " + e);
-        	throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
-        }
+	public ServiceProviderConfig() {
 	}
 
 	/**
@@ -352,9 +320,8 @@ public class ServiceProviderConfig {
 		}
 
 		Document configDoc;
-        try {
-            configDoc = loadDom(configFilePath, MAINSCHEMA);
-        } catch (InternalConfigurationException e) {
+        configDoc = Parser.loadDom(configFilePath, true);
+        if (configDoc==null) {
             throw new ShibbolethConfigurationException("XML error in "+configFilePath);
         }
         loadConfigBean(configDoc);
@@ -667,7 +634,9 @@ public class ServiceProviderConfig {
                 schemaname=tempname;
             
     		try {
-    			Document extdoc = loadDom(uri,schemaname);
+    			Document extdoc = Parser.loadDom(uri,true);
+    			if (extdoc==null)
+    			    return null;
     			impl.initialize(extdoc);
     		} catch (Exception e) {
     			log.error("XML error " + e);
@@ -713,7 +682,9 @@ public class ServiceProviderConfig {
 	            uri.startsWith(INLINEURN))
 	        return false;
 		try {
-			Document sitedoc = loadDom(uri,METADATASCHEMA);
+			Document sitedoc = Parser.loadDom(uri,true);
+			if (sitedoc==null)
+			    return false;
 			XMLMetadataImpl impl = new XMLMetadataImpl();
 			impl.initialize(sitedoc);
 			addOrReplaceMetadataImplementor(uri,impl);
@@ -759,7 +730,9 @@ public class ServiceProviderConfig {
 	            uri.startsWith(INLINEURN))
 	        return false;
 		try {
-			Document aapdoc = loadDom(uri,AAPSCHEMA);
+			Document aapdoc = Parser.loadDom(uri,true);
+			if (aapdoc==null)
+			    return false;
 			AttributeAcceptancePolicyDocument aap = AttributeAcceptancePolicyDocument.Factory.parse(aapdoc);
 			XMLAAPImpl impl = new XMLAAPImpl();
 			impl.initialize(aapdoc);
@@ -814,7 +787,9 @@ public class ServiceProviderConfig {
 	            uri.startsWith(INLINEURN))
 	        return false;
 		try {
-			Document trustdoc = loadDom(uri,TRUSTSCHEMA);
+			Document trustdoc = Parser.loadDom(uri,true);
+			if (trustdoc==null)
+			    return false;
 			XMLTrustImpl impl = new XMLTrustImpl();
 			impl.initialize(trustdoc);
 			addOrReplaceTrustImplementor(uri,impl);
@@ -859,7 +834,9 @@ public class ServiceProviderConfig {
 	        
 	    } else { // external file
 	        try {
-	            mapdoc = loadDom(uri,METADATASCHEMA);
+	            mapdoc = Parser.loadDom(uri,true);
+	            if (mapdoc==null)
+	                return true;
 	            requestMapDoc = RequestMapDocument.Factory.parse(mapdoc);
 	        } catch (Exception e) {
 	            log.error("Error while parsing RequestMap file "+uri);
@@ -874,80 +851,6 @@ public class ServiceProviderConfig {
 
 	
 	
-	/**
-	 * Given a file URI, parse it (validated against a schema) to a DOM.
-	 * 
-	 * <p>Note: The exact format of the URI (absolute file path, resource
-	 * path, URL) is interpreted here. Changes to URI conventions can be
-	 * implemented here and apply throughout the configuration system.</p>
-	 *
-	 * @param configFilePath Path to the particular configuration file
-	 * @param schemaFilePath Path to the schema for this type of file 
-	 * @return DOM Document object created from the file
-	 * @throws ShibbolethConfigurationException if file not found or invalid
-	 */
-	private Document loadDom(String configFilePath, String schemaFilePath) 
-		throws InternalConfigurationException {
-		
-		log.debug("Loading Configuration from (" + configFilePath + ").");
-
-			InputSource insrc;
-			String schemaCannonicalFilePath;
-			ShibResource configResource;
-			ShibResource schemaResource;
-			try {
-				configResource = new ShibResource(configFilePath,this.getClass());
-				insrc = new InputSource(configResource.getInputStream());
-			} catch (Exception e1) {
-				log.error("Configuration file "+configFilePath+" could not be located.");
-				throw new InternalConfigurationException();
-			}
-			
-			try {
-				schemaResource = new ShibResource(schemaFilePath,this.getClass());
-                schemaCannonicalFilePath = schemaResource.getFile().getCanonicalPath();
-			} catch (Exception e) {
-				log.error("Schema file "+schemaFilePath+" could not be located.");
-				throw new InternalConfigurationException();
-			}
-			
-			
-		return loadDom(insrc,schemaCannonicalFilePath);
-		
-	}
-
-	
-	/**
-	 * Parse an InputSource (maybe file, maybe buffer) into a DOM
-	 * @param insrc XML InputSource object
-	 * @param schemaFilePath
-	 * @return DOM Document
-	 * @throws ShibbolethConfigurationException
-	 */
-	private Document loadDom(InputSource insrc, String schemaFilePath) 
-		throws InternalConfigurationException {
-	
-		try {	
-			parser.setProperty("http://java.sun.com/xml/jaxp/properties/schemaSource",
-					schemaFilePath);
-			
-			parser.parse(insrc);
-			
-		} catch (SAXException e) {
-			log.error("Error while parsing shibboleth configuration: " + e);
-			throw new InternalConfigurationException();
-		} catch (IOException e) {
-			log.error("Could not load shibboleth configuration file: " + e);
-			throw new InternalConfigurationException();
-		}
-	
-		return parser.getDocument();
-		
-	}
-
-	
-	
-
 	private int inlinenum = 1;
 	private String genDummyUri() {
 		return INLINEURN+Integer.toString(inlinenum++);
