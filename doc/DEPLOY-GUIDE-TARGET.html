@@ -128,22 +128,37 @@ April 4, 2004<br />
 <h3>This version of the deploy guide is for Shibboleth v1.2. For documentation 
 related to prior versions of Shibboleth, please consult the appropriate branch 
 in the Shibboleth CVS.</h3>
-<h3>The default configuration of Shibboleth is <b>not</b> secure and should not be used for protection of production content.  The example private key bundled with the distribution is publically available, widely circulated, and well-known; also, the default federation
-and trust metadata is for testing purposes only.  For information about securing a Shibboleth deployment, please refer to the production guide.  Shibboleth should only be used to protect sensitive content when deployed carefully in conjunction with proper trust settings and policies.</h3>
+<h3>The default configuration of Shibboleth is <b>not</b> secure and should not be
+used for protection of production content. The example private key bundled with the
+distribution is publically available, widely circulated, and well-known; also, the
+default federation and trust metadata is for testing purposes only. For information
+about securing a Shibboleth deployment, please refer to the production guide.
+Shibboleth should only be used to protect sensitive content when deployed carefully
+in conjunction with proper trust settings and policies.</h3>
 
-<p>Insert features here.</p>
+<p>The Shibboleth target implementation has been substantially redesigned for this release. Most of the
+configuration process has changed to accomodate more complex deployments but many of the defaults work
+fine for testing and simpler applications. Among the new features:</p>
+<ul>
+    <li>New XML-based configuration system supporting runtime adjustment of many settings and better
+        integration with supplemental configuration files</li>
+    <li>Ability to partition deployment into "Applications" at the vhost, path, or document level</li>
+    <li>"Lazy" sessions allow applications to redirect browser to initiate a session, allows
+        content to decide it needs authentication or attributes at runtime</li>
+    <li>Flexible support for multilateral and bilateral trust arrangements</li>
+    <li>Support for more types of key and certificate formats</li>
+    <li>Improved pluggability for many aspects of system, including access control modules</li>
+</ul>
 
 <p>Before starting, please sign up for all applicable
 <a href="http://shibboleth.internet2.edu/shib-misc.html#mailinglist">mailing 
 lists</a>. Announcements pertinent to Shibboleth deployments and developments 
 and resources for deployment assistance can be found here.</p>
 <p>Please send any questions, concerns, or eventual confusion to
-<a href="mailto:mace-shib-users@internet2.edu">mace-shib-users@internet2.edu</a>. 
+<a href="mailto:shibboleth-users@internet2.edu">shibboleth-users@internet2.edu</a>. 
 This should include, but not be limited to, questions about the documentation, 
 undocumented problems, installation or operational issues, and anything else 
-that arises. Please ensure that you have the
-<a href="http://shibboleth.internet2.edu/release/shib-download.html">appropriate 
-tarball</a> for your operating system.</p>
+that arises.</p>
 <p><br>
 </p>
 <hr>
@@ -336,10 +351,10 @@ and requirements for a successful implementation of a Shibboleth target.</p>
 <blockquote>
     <p>Shibboleth currently supports Windows NT/2000/XP/2003, Linux, and 
     Solaris. At present, Shibboleth consists of Apache (or IIS) plugins and a 
-    separate SHAR process. The plugins use the ONC RPC mechanism to communicate 
+    separate SHAR process. The plugins use the Sun/ONC RPC mechanism to communicate 
     with the SHAR over Unix domain or TCP sockets. The target&#39;s web servers must 
     be running <a href="http://http://www.apache.org/dist/httpd/">Apache</a> 
-    1.3.26+, or Microsoft IIS 4.0+, but not Apache 2. More precise technical 
+    1.3+, 2.0+, or Microsoft IIS 4.0+ More precise technical 
     details are discussed in <a href="#3.a.">3.a</a>.</p>
 </blockquote>
 <h4><a name="2.b."></a>2.b. Join a Federation</h4>
@@ -349,13 +364,11 @@ and requirements for a successful implementation of a Shibboleth target.</p>
     relationships. Each federation will have a different application process.</p>
     <p>For more information on federations, refer to <a href="#1.d.">1.d</a> or 
     the Shibboleth v1.0 architectural document.</p>
-    <p>To use Shibboleth without a federation, manual configuration of target 
-    and origin trust and site information will be needed to insure that sites 
-    interoperate. Most identifiers, such as site names, should be URI-based, and 
-    should be chosen in accordance with DNS domains under the control of the 
-    parties involved, much as Java package naming is coordinated. In other 
-    words, don&#39;t use a URI containing a DNS domain or hostname that you do not 
-    control.</p>
+    <p>For testing in a private environment, Shibboleth comes with a default
+    configuration that demonstrates how to implement a local peered agreement
+    and supports testing both origin and target on the same box using localhost
+    URLs. The sample key and certificate is for ease of testing only, and should
+    always be replaced for real world use.</p>
 </blockquote>
 <h4><a name="2.c."></a>2.c. Security Considerations</h4>
 <blockquote>
@@ -380,7 +393,7 @@ and requirements for a successful implementation of a Shibboleth target.</p>
         against this is safeguarding the WAYF service and ensuring that rogue 
         targets and origins are not used, generally by development of the trust 
         model underneath Shibboleth. Shibboleth also leverages DNS for security, 
-        which is not uncommon, but attacks concerning bad domain information 
+        which is not uncommon, but attacks concerning domain name lookups
         should be considered.</li>
         <li>Information regarding origin users is generally provided by the 
         authoritative enterprise directory, and the acceptance of requests from 
@@ -408,9 +421,9 @@ and requirements for a successful implementation of a Shibboleth target.</p>
     Policies (ARP&#39;s) that define which attributes are released to which targets. 
     When a browser user tries to access a resource, the SHAR asks the origin 
     site AA to release all the attributes it is allowed to know, possibly 
-    restricted to specifically desired subset. The SHAR provides its own name 
-    and an optional URL on behalf of which the attribute request is made which 
-    can further refine the information the SHAR is allowed to know. The AA 
+    restricted to a specifically desired subset. The SHAR provides a client
+    certificate with its request (assuming SSL is used) so the AA can further
+    refine the information the SHAR is allowed to know. The AA 
     processes this request using all applicable ARP&#39;s, determines which 
     attributes and values it will release, and then obtains the values actually 
     associated with the browser user. The AA sends these attributes and values 
@@ -445,7 +458,7 @@ and requirements for a successful implementation of a Shibboleth target.</p>
 <h4><a name="2.h."></a>2.h. Clocks</h4>
 <blockquote>
     <p><a href="http://www.eecis.udel.edu/~ntp/">NTP</a> should be run on all 
-    web servers. Shibboleth employs a short handle issuance time to protect 
+    web servers. Shibboleth employs a short assertion acceptance window to protect 
     against replay attacks. Because of this, any significant degree of clock 
     skew can hinder the ability of users to access sites successfully.</p>
 </blockquote>
@@ -466,47 +479,95 @@ and requirements for a successful implementation of a Shibboleth target.</p>
 <hr>
 <h3><a name="3."></a>3. Installation</h3>
 <h4><a name="3.a."></a>3.a. Software Requirements</h4>
-<p>The Shibboleth project makes binary packages available for Solaris and Linux 
+<p>The Shibboleth project makes binary packages available only for Windows,
 that are precompiled against recent releases of various required libraries such 
-as OpenSSL. It is highly advisable to build from source when using Shibboleth in 
+as OpenSSL. Binaries for other platforms may be available on a limited or ad hoc
+basis. It is highly advisable to build from source when using Shibboleth in 
 a production environment in order to permit patching or updating of packages as 
 security holes and bugs are fixed. Building from source is necessary to give you 
 complete control over your deployment platform. The binary packages represent a 
 snapshot in time only. To build from source, see the <span class="fixed">
 INSTALL.txt</span> files in the doc folder of the OpenSAML and Shibboleth source 
 distributions.</p>
-<p>The software requirements listed correspond to the binary distributions. In 
+<p>The software requirements listed correspond to the binary distribution. In 
 general, source builds should work against all recent versions of the operating 
 systems and software dependencies listed below. For specific questions, inquire 
 to the support mailing list, or give it a try. Note that OpenSSL releases 
 frequent security updates; the version listed may not be the most current, but 
 most minor &quot;letter&quot; updates should be usable.</p>
 <blockquote>
-    <p><b>Operating System:</b> </p>
+    <p><b>General Requirements and Notes:</b></p>
     <ul type="circle">
-        <li>Windows NT/2000/XP/2003<ul type="disc">
-            <li><a href="http://www.apache.org/dist/httpd/">Apache 1.3.27</a> or 
-            IIS 4.0+<blockquote>
-                <p>Apache must be compiled with mod_so for DSO module support, 
-                and must include SSL support (preferably using
-                <span class="fixed">mod_ssl</span>), and EAPI support (which
-                <span class="fixed">mod_ssl</span> requires and provides). 
-                Shibboleth can coexist with <span class="fixed">mod_auth</span>, 
-                which may be compiled or loaded into the server for use 
-                elsewhere, but Shibboleth does not need or use it.</p>
+        <li><a href="http://www.apache.org/dist/httpd/">Apache 1.3.x</a>
+        <blockquote>
+            <p>Apache 1.3.x must be compiled with mod_so for DSO module support, and
+            should include SSL support (preferably using <span class="fixed">mod_ssl</span>),
+            and EAPI support (which <span class="fixed">mod_ssl</span> requires and provides).</p>
+            <p><b>Portions of the <span class="fixed">libphp4</span> Apache 
+            module are written in C++, as is Shibboleth. There is a known 
+            conflict between the PHP extensions <span class="fixed">libpspell.so</span> 
+            and <span class="fixed">libsablot.so</span> which will manifest 
+            itself as segmentation faults when starting Apache. If a site wants 
+            to use <span class="fixed">libphp4.so</span> and Shibboleth at the same time, 
+            then one of the following may be done:</b>
+            <ol>
+                <li>Remove the options <span class="fixed">--with-pspell</span> 
+                and <span class="fixed">--with-xslt-sablot</span> from PHP&#39;s 
+                configuration.</li>
+                <li>Rebuild these two modules using the same version of GCC that 
+                was used to compile Shibboleth.</li>
+            </ol>
+            </p>
+        </li>
+        <li><a href="http://www.apache.org/dist/httpd/">Apache 2.0.x</a>
+        <blockquote>
+            <p>Apache 2.0.x must be compiled with mod_so for DSO module support, and
+            should include SSL support which is available but not included by default.
+            See also the note about PHP above.</p>
+            <p>At the time of writing, an incompatibility exists between Shibboleth
+            and <span class="fixed">mod_cgi</span> that causes forked CGI child processes
+            to fail. The newer <span class="fixed">mod_cgid</span> provided for use with
+            the multi-threaded worker MPM works fine and is suggested as a work-around
+            even if running in prefork mode.</p>
+        </blockquote>
+        </li>
+        <li>IIS 4.0+
+            <blockquote>
+            <p>When installing under Windows 2003, if the server is not in a
+            domain before installing IIS 6, there may be issues surrounding
+            permissions on directories because of new restrictions on IIS
+            extensions accessing files.</p>
+            </blockquote>
+        </li>
+        <li><a href="http://www.openssl.org">OpenSSL</a>
+        <blockquote>
+            <p>Verions 0.9.6 and 0.9.7 are both supported, but 0.9.7 should be used
+            if possible, as support for 0.9.6 may be dropped in a future release.
+            Support for threads and shared libraries <b>must</b> be included during
+            configuration using the <i>threads</i> and <i>shared</i> options.</p>
+        </blockquote>
+        </li>
+        <p>Most other required libraries are either easy to update or not found
+        on typical systems. See the <span class="fixed">INSTALL.txt</span> files
+        in the OpenSAML and Shibboleth source distributions for specific requirements
+        of a given release. The important requirements are for pthreads support and
+        shared libraries on Unix platforms. Without both, building will be hard and
+        stability unlikely.</p>
+    </ul>
+    <p><b>Operating System Specific Notes:</b></p>
+    <ul type="circle">
+        <li>Windows NT/2000/XP/2003
+            <ul type="disc">
+                <li>
                 <p>Any Apache modules used, and Apache itself, must be compiled 
                 with the Microsoft DLL-based runtime, selected by compiling with 
                 the /MD switch.</p>
-            </blockquote>
-            </li>
-            <li>
-            <a href="http://shibboleth.internet2.edu/release/shib-download.html">
-            Shibboleth v1.1 Target for Windows</a><blockquote>
-                <p>Available in both self-installer and ZIP format, the 
-                installer will prompt for an install path, change default 
+                </li>
+                <li>
+                <p>The installer will prompt for an install path, change default 
                 configuration files as appropriate for Windows, and set various 
                 environment variables for you. A default SHAR service can also 
-                be installed for you, or you can install it manually using the 
+                be installed, or you can install it manually using the 
                 instructions in this guide.</p>
                 <p>Note that debug/symbol versions of the libraries and software 
                 are included, and may be used by appending &quot;debug&quot; to the 
@@ -515,201 +576,95 @@ most minor &quot;letter&quot; updates should be usable.</p>
                 must also be compiled with Microsoft&#39;s debug runtime (via the /MDd 
                 compiler option). In most cases, you can safely ignore or even 
                 delete the debug versions.</p>
-                <p>When installing under Windows 2003, if the server is not in a
-                domain before installing IIS 6, there may be issues surrounding
-                permissions on directories.</p>
-            </blockquote>
-            </li>
-        </ul>
+                </li>
+            </ul>
         </li>
-        <p>&nbsp;</li>
-        <li>RedHat 7.2-7.3:<ul type="disc">
-            <li><a href="http://www.apache.org/dist/httpd/">Apache 1.3.27</a><blockquote>
-                <p>Apache must be compiled with mod_so for DSO module support, 
-                and must include SSL support (preferably using
-                <span class="fixed">mod_ssl</span>), and EAPI support (which
-                <span class="fixed">mod_ssl</span> requires and provides). 
-                Shibboleth can coexist with <span class="fixed">mod_auth</span>, 
-                which may be compiled or loaded into the server for use 
-                elsewhere, but Shibboleth does not need or use it. The most 
-                recent Red Hat RPM (1.3.27-2 as of this writing) is sufficient.</p>
-            </blockquote>
-            <blockquote>
-                <p>On Linux, Shibboleth requires that Apache and Apache-SSL be 
-                built with <span class="fixed">libpthread</span>, or loading the
-                <span class="fixed">mod_shibrm</span> or <span class="fixed">
-                mod_shire</span> modules will cause Apache to stop. While 
-                RedHat&#39;s Apache is compatible, Debian&#39;s Apache must be rebuilt 
-                with <span class="fixed">libpthread</span>:</p>
+        <li>RedHat Linux 7.2,7.3:
+            <ul type="disc">
+            <li>
+                <p>The most recent Red Hat RPM (1.3.27-2 as of this writing) is sufficient for
+                use with Shibboleth. You can use the older version of OpenSSL included, for this
+                release, but be advised this may change in the future.</p>
+            </li>
+            <li>
+                <p>The version of GCC that comes with this system is too old to build Shibboleth.
+                Special update RPMs are available for GCC 3.04 that will work provided you
+                configure packages with CC and CXX set to gcc3 and g++3 respectively. Newer
+                GCC versions also work but may require a glibc upgrade and necessitate a lot
+                of unrelated package updates.</p>
+            </li>
+            </ul>
+        </li>
+        <li>RedHat Linux 9 / Fedora
+            <ul type="disc">
+            <li>
+                <p>Apache 2.0 is included as the default version in this release. If using
+                the prefork MPM (<span class="fixed">/sbin/httpd</span>), then the Apache configuration
+                file needs to be modified to use <span class="fixed">mod_cgid</span> in place of
+                <span class="fixed">mod_cgi</span>. If using the worker MPM
+                (<span class="fixed">/sbin/httpd.worker</span>), then <span class="fixed">mod_cgid</span>
+                is used already, which Apache strongly recommends.</p>
+            </li>
+            </ul>
+        </li>
+        <li>RedHat Enterprise Linux
+            <ul type="disc">
+            <li>
+                <p>Apache 2.0 is included as the default version in this release. Unlike
+                the RH 9 and Fedora distributions, <span class="fixed">mod_cgid</span> is not
+                included, which not only causes problems for Shibboleth but is also suboptimal
+                if the worker MPM is used. No workaround is known yet, save building
+                <span class="fixed">mod_cgid</span> from the Apache source.</p>
+            </li>
+            </ul>
+        </li>
+        <li>Debian Linux
+            <ul type="disc">
+            <li>
+                <p>Shibboleth requires that Apache and Apache-SSL be built with
+                <span class="fixed">libpthread</span>, or loading the
+                <span class="fixed">mod_shib_13</span> or <span class="fixed">mod_shib_20</span>
+                modules will cause Apache to fail. While RedHat&#39;s Apache is compatible,
+                Debian&#39;s Apache must be rebuilt with <span class="fixed">libpthread</span>:</p>
                 <blockquote>
                     <p><span class="fixed">$ export LDFLAGS=-lpthread<br>
                     $ apt-build --rebuild --reinstall install \<br>
 &nbsp;&nbsp;&nbsp; apache-common apache apache-ssl</span></p>
                 </blockquote>
-            </blockquote>
             </li>
+            </ul>
+        </li>
+        <li>Solaris 2.6+:
+            <ul type="disc">
             <li>
-            <a href="http://shibboleth.internet2.edu/release/shib-download.html">
-            Shibboleth v1.1 Target for RedHat</a></li>
-            <li><a href="http://www.openssl.org/source/">openssl-0.9.6, revision
-            <span class="fixed">i</span> or newer</a></li>
-            <li>libstdc++3-3.0.4-1.i386.rpm and libgcc-3.0.4-1.i386.rpm<blockquote>
-                <p>Shibboleth binaries are currently built with
-                <a href="http://www.gnu.org/software/gcc/gcc.html">GCC 3.04</a>, 
-                and require these specific library versions. They are available 
-                as RPMs and are available in the RedHat 7.2 updates directory on 
-                any
-                <a href="ftp://rufus.w3.org/linux/redhat/updates/7.2/en/os/i386/">
-                RedHat mirror</a>. They can be installed alongside earlier and 
-                later GCC libraries.</p>
-            </blockquote>
-            </li>
-            <li><b>Portions of the <span class="fixed">libphp4</span> Apache 
-            plugin are written in C++, as is Shibboleth. There is a known 
-            conflict between the PHP extensions <span class="fixed">libpspell.so</span> 
-            and <span class="fixed">libsablot.so</span> which will manifest 
-            itself as segmentation faults when starting Apache. If a site wants 
-            to use <span class="fixed">libphp4.so</span> and Shibboleth at once, 
-            then one of the following may be done:</b><ol>
-                <li>Remove the options <span class="fixed">--with-pspell</span> 
-                and <span class="fixed">--with-xslt-sablot</span> from PHP&#39;s 
-                configuration.</li>
-                <li>Rebuild these two modules using the same version of GCC that 
-                was used to compile Shibboleth.</li>
-            </ol>
-            </li>
-        </ul>
-        </li>
-        <p><br>
-        </li>
-        <li>Solaris 2.8:<ul type="disc">
-            <li><a HREF="ftp://ftp.openssl.org/source/openssl-0.9.7b.tar.gz">
-            openssl-0.9.7</a>
-            <blockquote>
                 <p>The shared library version of OpenSSL is required by 
                 Shibboleth. The static libraries may be installed as well if 
                 necessary for other applications, but cannot be used within 
-                mod_ssl or any other Apache modules. openssl-0.9.7b, the latest 
-                security fix release, has been tested, but any 0.9.7 version 
-                should work.</p>
-            </blockquote>
-            </li>
-            <li><a href="http://www.apache.org/dist/httpd/">Apache 1.3.27</a><blockquote>
-                <p>Apache must be compiled with mod_so for DSO module support, 
-                and must include SSL support (preferably using
-                <span class="fixed">mod_ssl</span>) and EAPI support (which
-                <span class="fixed">mod_ssl</span> requires and provides). 
-                Shibboleth can coexist with <span class="fixed">mod_auth</span>, 
-                which may be compiled or loaded into the server for use 
-                elsewhere, but Shibboleth does not need or use it.</p>
-                <p><span class="fixed">mod_ssl</span>&#39;s loadable module,
-                <span class="fixed">libssl.so</span>, must be compiled against
-                <span class="fixed">OpenSSL 0.9.7b</span>&#39;s shared libraries. 
-                Other versions or a statically linked build of
-                <span class="fixed">libssl.so</span> will cause failures such as 
-                bus errors when used with Shibboleth.</p>
-                <p>To check how OpenSSL was built, run the <span class="fixed">
+                mod_ssl or any other Apache modules. If mod_ssl's libssl.so
+                module is linked against the static version, bus errors will
+                result.</p>
+                <p>To check how mod_ssl was built, run the <span class="fixed">
                 ldd</span> command against <span class="fixed">libssl.so</span> 
-                in the Apache <span class="fixed">/libexec/</span> folder and 
+                in the Apache <span class="fixed">libexec/</span> folder and 
                 check the output for references to <span class="fixed">
-                libssl.so.0.9.7b</span>. If you see an earlier version 
-                mentioned, or no mention of it at all, then <span class="fixed">
-                OpenSSL 0.9.7b</span> must be built with shared libraries from 
-                source, and the Apache module rebuilt with it.</p>
-            </blockquote>
+                libssl.so.0.9.7</span>. If you see an earlier version 
+                mentioned, or no mention of it at all, then OpenSSL 0.9.7 must be
+                built with shared libraries from source, and the Apache module rebuilt with it.</p>
+                <p>openssl-0.9.7d, the latest security fix release, has been tested,
+                but any 0.9.7 version should work.</p>
             </li>
             <li>
-            <a href="ftp://ftp.sunfreeware.com/pub/freeware/sparc/8/libgcc-3.2.2-sol8-sparc-local.gz">
-            libgcc v3.2.2+ and libstdc++ v3.2.2+</a><blockquote>
-                <p>Shibboleth binaries are currently built with
-                <a HREF="http://www.gnu.org/software/gcc/gcc.html">GCC 3.2.2</a>, 
-                and require these specific library versions or newer. They are 
-                available as Sun freeware packages and can be installed 
-                alongside earlier and later GCC libraries.</p>
-            </blockquote>
+                <p>Solaris does not come with GCC 3, but various versions can be obtained
+                from <a href="http://www.sunfreeware.com">http://www.sunfreeware.com</a>.
+                If building your own, GCC must be configured to use Sun's linker. Note that
+                you should use a consistent version of GCC across any other C++ libraries
+                in use within Apache, but other C++ code can freely use a different version
+                as long as the necessary <span class="fixed">libstdc++.so</span> for a given
+                version is available</p>
             </li>
             <li>
-            <a href="http://shibboleth.internet2.edu/release/shib-download.html">
-            Shibboleth v1.1 Target for Solaris</a></li>
-            <li><b>Portions of the <span class="fixed">libphp4</span> Apache 
-            plugin are written in C++, as is Shibboleth. There is a known 
-            conflict with the PHP extensions <span class="fixed">libpspell.so</span> 
-            and <span class="fixed">libsablot.so</span> which will manifest 
-            itself as segmentation faults when starting Apache. If a site wants 
-            to use <span class="fixed">libphp4.so</span> and Shibboleth at once, 
-            then one of the following may be done:</b><ol>
-                <li>Remove the options <span class="fixed">--with-pspell</span> 
-                and <span class="fixed">--with-xslt-sablot</span> from PHP&#39;s 
-                configuration.</li>
-                <li>Rebuild these two modules using the same version of GCC that 
-                was used to compile Shibboleth.</li>
-            </ol>
-            </li>
-        </ul>
-        </li>
-        <p><br>
-        </li>
-        <li>RedHat 8 and 9:<blockquote>
-            <p>RedHat 8 and 9 ship with Apache 2, which is not yet supported by 
-            Shibboleth. To run Shibboleth under this OS,
-            <a href="http://www.apache.org/dist/httpd/">Apache 1.3.27</a> must 
-            be installed.</p>
-        </blockquote>
-        <blockquote>
-            <p>Apache must be compiled with mod_so for DSO module support, and 
-            must include SSL support (preferably using <span class="fixed">
-            mod_ssl</span>), and EAPI support (which <span class="fixed">mod_ssl</span> 
-            requires and provides). Shibboleth can coexist with
-            <span class="fixed">mod_auth</span>, which may be compiled or loaded 
-            into the server for use elsewhere, but Shibboleth does not need or 
-            use it. The most recent Red Hat RPM (1.3.23-14 as of this writing) 
-            is sufficient.</p>
-        </blockquote>
-        <blockquote>
-            <p>On Linux, Shibboleth requires that Apache and Apache-SSL be built 
-            with <span class="fixed">libpthread</span>, or loading the
-            <span class="fixed">mod_shibrm</span> or <span class="fixed">
-            mod_shire</span> modules will cause Apache to stop. While RedHat&#39;s 
-            Apache is compatible, Debian&#39;s Apache must be rebuilt with
-            <span class="fixed">libpthread</span>:</p>
-            <blockquote>
-                <p><span class="fixed">$ export LDFLAGS=-lpthread<br>
-                $ apt-build --rebuild --reinstall install apache-common \<br>
-&nbsp;&nbsp;&nbsp; apache apache-ssl</span></p>
-            </blockquote>
-        </blockquote>
-        <ul type="disc">
-            <li>
-            <a href="http://shibboleth.internet2.edu/release/shib-download.html">
-            Shibboleth 1.1 Target for RedHat</a></li>
-            <li><a href="http://www.openssl.org/source/">openssl-0.9.6, revision
-            <span class="fixed">i</span> or newer</a></li>
-            <li>libstdc++3-3.0.4-1.i386.rpm and libgcc-3.0.4-1.i386.rpm
-            <blockquote>
-                <p>Shibboleth binaries are currently built with
-                <a href="http://www.gnu.org/software/gcc/gcc.html">GCC 3.04</a>, 
-                and require these specific library versions. They are available 
-                as RPMs and are available in the RedHat 7.2 updates directory on 
-                any
-                <a href="ftp://rufus.w3.org/linux/redhat/updates/7.2/en/os/i386/">
-                RedHat mirror</a>. They can be installed alongside earlier and 
-                later GCC libraries.</p>
-            </blockquote>
-            </li>
-            <li><b>Portions of the <span class="fixed">libphp4</span> Apache 
-            plugin are written in C++, as is Shibboleth. There is a known 
-            conflict with the PHP extensions <span class="fixed">libpspell.so</span> 
-            and <span class="fixed">libsablot.so</span> which will manifest 
-            itself as segmentation faults when starting Apache. If a site wants 
-            to use <span class="fixed">libphp4.so</span> and Shibboleth at once, 
-            then one of the following may be done:</b>
-            <ol>
-                <li>Remove the options <span class="fixed">--with-pspell</span> 
-                and <span class="fixed">--with-xslt-sablot</span> from PHP&#39;s 
-                configuration. </li>
-                <li>Rebuild these two modules using the same version of GCC that 
-                was used to compile Shibboleth. </li>
-            </ol>
+                <p>Use of GCC is recommended, but new releases of Sun's Forte compiler have
+                been used successfully with some tinkering with configuration scripts.</p>
             </li>
         </ul>
         </li>
@@ -720,104 +675,58 @@ most minor &quot;letter&quot; updates should be usable.</p>
     <p>For the sake of clarity, this deployment guide assumes that standard 
     directories are used for all installations. These directories may be changed 
     for local implementations, but must be done so consistently.</p>
-    <ol type="1">
-        <li>Ensure that you have obtained the proper
-        <a href="http://shibboleth.internet2.edu/release/shib-download.html">
-        tarball</a> or installer for your operating system.</li>
-        <li>On Unix, the tarballs expand into <span class="fixed">
-        /opt/shibboleth</span>, and should be expanded as <span class="fixed">
-        root</span> from <span class="fixed">/</span>. If you use a different 
-        layout or location, you will need to adjust your configuration files. 
-        You should see the following directory structure (date and size details 
-        notwithstanding):<blockquote>
-            <p><span class="fixed">$ ls -l<br>
-            drwxr-xr-x 2 root root 4096 Oct 24 03:54 bin<br>
-            drwxr-xr-x 2 root root 4096 Oct 24 03:54 data<br>
-            drwxr-xr-x 2 root root 4096 Oct 24 03:54 doc<br>
-            drwxr-xr-x 4 root root 4096 Oct 24 03:54 etc<br>
-            drwxr-xr-x 9 root root 4096 Oct 24 03:54 include<br>
-            drwxr-xr-x 4 root root 4096 Oct 24 03:55 lib<br>
-            drwxr-xr-x 2 root root 4096 Oct 24 03:55 libexec<br>
-            drwxr-xr-x 4 root root 4096 Oct 24 02:02 share</span></p>
-        </blockquote>
-        <p>On Windows, if the installer is not used, the zip file should be 
-        unpacked beneath the root of the system drive, where it will create an
-        <span class="fixed">\opt\shibboleth</span> tree that resembles the Unix 
-        layout above. This will allow the standard configuration options to 
-        work. <b>The <span class="fixed">C:\opt\shibboleth\lib</span> directory 
-        MUST be added to the system path to enable proper operation.</b> If you 
-        use a different location, changes to various configuration files must be 
-        made by hand. The installer can do this for you, and is recommended in 
-        such cases.</li>
-    </ol>
+    <p>On Unix, the build documentation suggests building into
+    <span class="fixed">/opt/shibboleth</span>. If you use a different layout or
+    location, most of the essential configuration files will be tweaked for you,
+    but watch for any exceptions.</p>
+    <p>On Windows, use of the installer is recommended. Visual Studio 6.0
+    project files are included with the OpenSAML and Shibboleth source
+    distributions for source builds if maximum flexibility to deal with
+    security issues is desired.</p>
 </blockquote>
-<h4><a name="3.c."></a>3.c. Configure Apache 1.3.x</h4>
+<h4><a name="3.c."></a>3.c. Configure Apache</h4>
 <blockquote>
     <ol type="1">
-        <li>Shibboleth includes configuration directives in the file
+        <li>Shibboleth includes configuration directives in the files
         <span class="fixed">/opt/shibboleth/etc/shibboleth/apache.config</span> 
-        which must be added to the httpd.conf file used locally. It is 
-        recommended that these directives simply be added to the end of the 
+        and <span class="fixed">/opt/shibboleth/etc/shibboleth/apache2.config</span>
+        which must be added to the <span class="fixed">httpd.conf</span> file used
+        locally. It is recommended that these directives simply be added to the end of the 
         existing <span class="fixed">httpd.conf</span> file rather than trying 
         to merge it in-line; <a href="#3.c.2.">step 2</a> describes the 
         necessary modifications to the Apache startup script. The default 
         configuration will often work, but if customization is necessary, these 
         options may be modified:<dl>
-            <dd class="attribute"><span class="fixed">LoadModule &lt;module&gt; 
-            &lt;pathname&gt;</span> </dd>
-            <dd class="value">Specifies the title and location of the
-            <span class="fixed">shibrm_module</span> resource manager and
-            <span class="fixed">shire_module</span> SHIRE modules. These are 
-            installed by default at <span class="fixed">/opt/shibboleth/libexec/mod_shibrm.so</span> 
-            and <span class="fixed">/opt/shibboleth/libexec/mod_shire.so</span></dd>
-            <dd class="attribute"><span class="fixed">SHIREConfig &lt;pathname&gt;</span>
-            </dd>
+            <dd class="attribute"><span class="fixed">LoadModule &lt;module&gt; &lt;pathname&gt;</span></dd>
+            <dd class="value">Specifies the name and location of the module,
+            installed by default at <span class="fixed">/opt/shibboleth/libexec/mod_shib_13.so</span>
+            or <span class="fixed">/opt/shibboleth/libexec/mod_shib_20.so</span></dd>
+            
+            <dd class="attribute"><span class="fixed">ShibConfig &lt;pathname&gt;</span></dd>
             <dd class="value">Specifies the <span class="fixed">pathname</span> 
-            of the SHIRE&#39;s configuration file. Defaults to <span class="fixed">
+            of the Shibboleth configuration file. Defaults to <span class="fixed">
             /opt/shibboleth/etc/shibboleth/shibboleth.xml</span>.</dd>
-            <dd class="attribute"><span class="fixed">SHIREURL &lt;url&gt;<br>
-            &lt;Location &lt;url&gt;&gt;<br>
+            
+            <dd class="attribute"><span class="fixed">ShibSchemaDir &lt;path&gt;</span></dd>
+            <dd class="value">Specifies the <span class="fixed">path</span> 
+            of the Shibboleth schema folder. Defaults to <span class="fixed">
+            /opt/shibboleth/etc/shibboleth</span>.</dd>
+            
+            <dd class="attribute"><span class="fixed">&lt;Location <i>url</i>&gt;<br>
             &nbsp;&nbsp;SetHandler &lt;method&gt;<br>
             &lt;/Location&gt;</span></dd>
-            <dd class="value">Specifies the <span class="fixed">URL</span> and 
-            the <span class="fixed">method</span> the target uses to handle 
-            requests for Shibboleth-protected resources. Currently,
-            <span class="fixed">shib-shire-post</span> is the only available 
-            handler <span class="fixed">method</span>. <span class="fixed">
-            SHIREURL</span> is used by Shibboleth when re-directing the user to 
-            the WAYF and <span class="fixed">&lt;Location&gt;</span> by Apache; for 
-            this reason, both <span class="fixed">URL</span> specifications must 
-            match. Note that the configuration file itself contains &lt;&gt;&#39;s, and
-            <span class="fixed">Location</span> should not be replaced.<p>The 
-            referenced <span class="fixed">URL</span> can be either a partial 
-            path or an absolute URL. The partial path allows each virtual server 
-            to use its own hostname and port in the SHIRE for session cookie 
-            purposes, while the absolute URL forces HTTP virtual servers to use 
-            HTTPS for the SHIRE. Use of a full <span class="fixed">https://</span> 
-            URL is advised.</dd>
-            <dd class="attribute"><span class="fixed">ShibMapAttribute 
-            &lt;attribute-uri&gt; &lt;HTTP-header&gt; [alias]</span> </dd>
-            <dd class="value"><b>This command has been deprecated in favor of 
-            the configuration support available in the Attribute Acceptance 
-            Policy file. See <a href="#4.e.">section 4.e.</a> It may be removed 
-            in a future release.</b></dd>
+            <dd class="value"><p>(Apache 1.3 only) Specifies the relative <span class="fixed">path</span>
+            and the <span class="fixed">handler</span> the target uses to process 
+            incoming sessions and lazy session startup for Shibboleth-protected
+            resources. This works in concert with the <span class="fixed">shireURL</span>
+            settings in the XML configuration file. Any virtual locations that are to be
+            used for this purpose should be defined to Apache here.</p></dd>
         </dl>
         </li>
-        <li><a name="3.c.2."></a>These modifications must be made to the Apache 
-        startup script on Unix:<p>Add the following environment variable:</p>
-        <blockquote>
-            <p><span class="fixed">SHIBCONFIG=/opt/shibboleth/etc/shibboleth/shibboleth.xml<br>
-            export SHIBCONFIG</span></p>
-        </blockquote>
-        <p>If the SHIBCONFIG environment variable is not specified, Shibboleth 
-        will use <span class="fixed">/opt/shibboleth/etc/shibboleth/shibboleth.xml</span> 
-        by default.</p>
-        <p>On Windows, the installer will set the path and SHIBCONFIG variable 
-        for you in the system path, enabling Apache or IIS to be used.</li>
         <li>If the OpenSSL libraries are not in the system&#39;s search path, they 
-        should be added to <span class="fixed">LD_LIBRARY_PATH</span>. Generally 
-        libtool&#39;s linker options will insure that the modules can locate the 
-        Shibboleth libraries, but if not, you may need to add
+        should be added to the <span class="fixed">LD_LIBRARY_PATH</span> used by
+        Apache. Generally libtool&#39;s linker options will insure that the modules
+        can locate the Shibboleth libraries, but if not, you may need to add
         <span class="fixed">/opt/shibboleth/lib</span> to <span class="fixed">
         LD_LIBRARY_PATH</span> as well.</li>
         <li>The SHAR must be started along with Apache. Among other methods on 
@@ -827,20 +736,21 @@ most minor &quot;letter&quot; updates should be usable.</p>
         suggested that Apache&#39;s script be modified by adding:<blockquote>
             <p><span class="fixed">/opt/shibboleth/bin/shar -f &amp;</span> </p>
         </blockquote>
-        <p>Sample <span class="fixed">init.d</span> scripts may be included with 
-        future releases. Ensure that the environment variable referenced in
-        <a href="#3.c.2">3.c.2</a> are in place.</p>
+        <p>In most cases, the build process insures that the SHAR can locate
+        the configuration file and schemas, but the SHIB_CONFIG and SHIB_SCHEMAS
+        environment variables may be used as well. Command line options can also
+        be used to specify them.</p>
         <p>On Windows, the SHAR is a service and is managed separately.</li>
         <li>By default, the Shibboleth modules are configured to log information 
         on behalf of Apache to the file <span class="fixed">
-        /opt/shibboleth/etc/shibboleth/shire.log</span>, though this can be 
+        /opt/shibboleth/var/log/shibboleth/shire.log</span>, though this can be 
         changed. For this log to be created, Apache must have permission to 
         write to this file, which may require that the file be manually created 
         and permissions assigned to whatever user Apache is configured to run 
         under. If the file does not appear when Apache runs with the modules 
-        loaded, check for permission problems. </li>
+        loaded, check for permission problems.</li>
         <li>The options in <span class="fixed">shibboleth.xml</span> must be 
-        configured as documented in <a href="#4.a.">4.a</a>. Apache content will 
+        configured as documented in <a href="#4.a.">4.a</a>. Apache content may 
         then need to be modified for Shibboleth authentication. This is 
         discussed in <a href="#4.d.">4.d</a>. It is recommended that the target 
         then be tested as detailed in section <a href="#5.a.">5.a</a>.</li>
@@ -849,13 +759,14 @@ most minor &quot;letter&quot; updates should be usable.</p>
 <h4><a name="3.d."></a>3.d. Configure Microsoft IIS</h4>
 <blockquote>
     <ol type="1">
-        <li>The package includes an ISAPI filter and bundled extension for SHIRE 
-        POST processing in a single library, <span class="fixed">libexec\isapi_shib.dll</span>. 
+        <li>The package includes an ISAPI filter and bundled extension for 
+        session processing in a single library, <span class="fixed">libexec\isapi_shib.dll</span>. 
         This filter is configured using commands in <span class="fixed">
-        C:\opt\shibboleth\etc\shibboleth\shibboleth.xml</span>. Make sure you&#39;ve 
-        added the library directory to the path as directed in <a href="#3.b.">
-        section 3.b.</a><p>Installing the extension into IIS is a two step 
-        process:<ol type="1">
+        C:\opt\shibboleth\etc\shibboleth\shibboleth.xml</span> (or wherever you've
+        installed the software). Make sure you or the installer has added the lib
+        directory to the path as directed in <a href="#3.b.">section 3.b.</a>
+        <p>Installing the extension into IIS is a two step process:
+        <ol type="1">
             <li type="a">First, add the filter using the Internet Services 
             Manager MMC console. Right click on the machine icon on the left, 
             and edit the WWW Service master properties. On the &quot;ISAPI Filters&quot; 
@@ -863,9 +774,7 @@ most minor &quot;letter&quot; updates should be usable.</p>
             above. The priority should be High, and once the filter is loaded, 
             make sure it appears in the list <b>below</b> the &quot;sspifilt&quot; entry. 
             Restart IIS and make sure the filter shows up with a green arrow. 
-            Check the Windows event log if it fails to load. The default 
-            configuration options are sparse, but they should allow the filter 
-            to at least initialize.</li>
+            Check the Windows event log if it fails to load.</li>
             <li type="a">Secondly, map a special file extension, such as
             <span class="fixed">.shire</span>, to the ISAPI library so that 
             virtual URLs can be specified to invoke the SHIRE handler for each 
@@ -875,54 +784,39 @@ most minor &quot;letter&quot; updates should be usable.</p>
             box should point to <span class="fixed">isapi_shib.dll</span>, and the 
             &quot;Extension&quot; can be set to anything unlikely to conflict, but
             <span class="fixed">.shire</span> is assumed (and the dot must be 
-            included). You should select the option to limit verbs to POST, and 
-            you must uncheck the &quot;Check that file exists&quot; box.</li>
+            included). You should NOT select the option to limit verbs, and 
+            you MUST uncheck the &quot;Check that file exists&quot; box.</li>
             <li type="a"><font color=#444499>(IIS 6 Only)</font>  A new Web
             Service Extension must be defined for Shibboleth; without this, the
             mapping from <span class="fixed">*.shire</span> to <span
             class="fixed">isapi_shib.dll</span> won't occur and a file error
-            will show.  Add this extension with an arbitrary name and associate
+            will appear  Add this extension with an arbitrary name and associate
             it with <span class="fixed">isapi_shib.dll</span>.</li>
         </ol>
         </li>
         <li>All other aspects of configuration are handled via the
-        <span class="fixed">shibboleth.xml</span> file and associated XML-based 
-        policy files described in subsequent sections. Particular use is made of 
-        the per-hostname section feature that allows global settings to be 
-        overridden per-site, and this permits different IIS instances to be 
-        separately configured.</li>
-        <li>A special section must be added/uncommented in the
-        <span class="fixed">shibboleth.xml</span> file to support IIS usage. The
-        <span class="fixed">[isapi]</span> section must be used to map IIS 
-        Instance ID numbers to fully-qualified hostnames that correspond to 
-        named sections later in the file. Instance IDs are used in the IIS 
-        metabase to identify web sites. They are applied starting with the 
-        number 1 and number the web sites in order in the Internet Services 
-        Manager from top to bottom. In the <span class="fixed">[isapi]</span> 
-        section, add lines in the following form:
-        <blockquote class="fixed">
-            <p>1=hostname.domain.com<br>
-            2=hostname2.domain.com<br>
-            (etc...)</p>
-        </blockquote>
-        <p>At least an empty configuration section named <span class="fixed">
-        hostname.domain.com</span> should then be added to the end of the file. 
-        Any options specific to that web site can be added as documented in 
-        later sections.</li>
+        <span class="fixed">shibboleth.xml</span> file and associated XML
+        files described in subsequent sections. Particular use is made of 
+        the <span class="fixed">/SHIRE/Implementation/ISAPI</span> element that allows the
+        IIS sites to be mapped to fully-qualified hostnames for proper request mapping.</li>
+        <li>Instance IDs are used in the IIS metabase to identify web sites. In older versions,
+        they are applied starting with 1(one) and number the web sites in order in the
+        Internet Services Manager from top to bottom. Newer versions appear to assign
+        some IID values with strange ASCII formulas applied to the site name. A simple
+        ASP or CGI script can be run within a site to dump the INSTANCE_ID header.</li>
         <li>See the following section for information on running the SHAR 
         service on Windows.</li>
         <li>The options in <span class="fixed">shibboleth.xml</span> must be 
         configured as documented in <a href="#4.a.">4.a</a>. It is recommended 
-        that the target then be tested as detailed in section <a href="#5.a.">
-        5.a</a>.</li>
+        that the target then be tested as detailed in section <a href="#5.a.">5.a</a>.</li>
     </ol>
 </blockquote>
 <h4><a name="3.e."></a>3.e. Running the SHAR on Windows</h4>
 <blockquote>
     <p>The SHAR is a console application that is primarily designed to be 
     installed as a Windows service. To run the process in console mode for 
-    testing, the <span class="fixed">-console</span> parameter is used. 
-    Otherwise, parameters are used to install (or remove) the SHAR from the 
+    testing or to diagnose major problems, the <span class="fixed">-console</span>
+    parameter is used. Otherwise, parameters are used to install (or remove) the SHAR from the 
     service database and subsequent control is via the Service Control Manager 
     applet. The following command line parameters can be used:</p>
     <dl>
@@ -930,11 +824,19 @@ most minor &quot;letter&quot; updates should be usable.</p>
         <dd class="value">Allows the process to be started from a command 
         prompt. Since the console will exit if the desktop user logs out, this 
         is not suitable for production use, but may be useful for testing.</dd>
+        <dd class="attribute"><span class="fixed">-check</span></dd>
+        <dd class="value">Validates the general correctness of the configuration.
+        Not all problems can be detected this way, but the chance of successful startup
+        is high if the checking process does not log any errors.</dd>
         <dd class="attribute"><span class="fixed">-config &lt;pathname&gt;</span> </dd>
         <dd class="value">Specifies the pathname of the SHAR&#39;s configuration 
         file. Defaults to <span class="fixed">\opt\shibboleth\etc\shibboleth\shibboleth.xml</span> 
-        or the value of the <span class="fixed">SHIBCONFIG</span> environment 
+        or the value of the <span class="fixed">SHIB_CONFIG</span> environment 
         variable, if it is set.</dd>
+        <dd class="attribute"><span class="fixed">-schemadir &lt;path&gt;</span> </dd>
+        <dd class="value">Specifies the path to the XML schema files. Defaults to
+        <span class="fixed">\opt\shibboleth\etc\shibboleth</span> or the value of the
+        <span class="fixed">SHIB_SCHEMAS</span> environment variable, if it is set.</dd>
         <dd class="attribute"><span class="fixed">-install &lt;servicename&gt;</span></dd>
         <dd class="value">Installs the SHAR as a named service in the Windows 
         service database. A name should be provided if multiple instances of the 
