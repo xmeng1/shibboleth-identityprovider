@@ -25,5 +25,8 @@
 	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
 	<classpathentry sourcepath="lib/commons-pool-1.2-src.jar" kind="lib" path="lib/commons-pool-1.2.jar"/>
 	<classpathentry sourcepath="lib/commons-dbcp-1.2.1-src.jar" kind="lib" path="lib/commons-dbcp-1.2.1.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmltypes.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean_xpath.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
