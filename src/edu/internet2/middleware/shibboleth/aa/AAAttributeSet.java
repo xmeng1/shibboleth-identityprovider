@@ -47,80 +47,83 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.eduPerson;
+package edu.internet2.middleware.shibboleth.aa;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import java.util.HashMap;
+import java.util.Iterator;
+
+import org.opensaml.SAMLAttribute;
+
+import edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpAttributeSet;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet;
 
 /**
- *  Utility class for XML constants and schema handling
- *
- * @author     Scott Cantor
- * @created    May 18, 2002
+ * A set of attributes for which the Shibboleth Attribute Authority has been asked
+ * to provide assertions.
+ * 
+ * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class XML
-{
-    /**  eduPerson XML namespace */
-    public final static String EDUPERSON_NS = "urn:mace:eduPerson:1.0";
+public class AAAttributeSet implements ResolverAttributeSet, ArpAttributeSet {
 
-    /**  eduPerson XML schema identifier */
-    public final static String EDUPERSON_SCHEMA_ID = "eduPerson.xsd";
+	private HashMap attributes = new HashMap();
 
-    private static byte[] eduPerson_schema;
+	public void add(AAAttribute attribute) {
+		attributes.put(attribute.getName(), attribute);
+	}
 
-    /**
-     *  Custom schema resolver class
-     *
-     * @author     Scott Cantor
-     * @created    May 18, 2002
-     */
-    protected static class SchemaResolver implements EntityResolver
-    {
-        /**
-         *  A customized entity resolver for the Shibboleth extension schema
-         *
-         * @param  publicId                 The public identifier of the entity
-         * @param  systemId                 The system identifier of the entity
-         * @return                          A source of bytes for the entity or
-         *      null
-         * @exception  SAXException         Raised if an XML parsing problem
-         *      occurs
-         * @exception  java.io.IOException  Raised if an I/O problem is detected
-         */
-        public InputSource resolveEntity(String publicId, String systemId)
-            throws SAXException, java.io.IOException
-        {
-            InputSource src = null;
-            if (systemId.endsWith(EDUPERSON_SCHEMA_ID) && eduPerson_schema != null)
-                src = new InputSource(new ByteArrayInputStream(eduPerson_schema));
-            return src;
-        }
-    }
+	public ResolverAttribute getByName(String name) {
+		return (ResolverAttribute) attributes.get(name);
+	}
 
-    static
-    {
-        try
-        {
-            StringBuffer buf = new StringBuffer(1024);
-            InputStream xmlin = XML.class.getResourceAsStream("/schemas/" + EDUPERSON_SCHEMA_ID);
-            if (xmlin == null)
-                throw new RuntimeException("XML static initializer unable to locate eduPerson schema");
-            else
-            {
-                int b;
-                while ((b = xmlin.read()) != -1)
-                    buf.append((char)b);
-                eduPerson_schema = buf.toString().getBytes();
-                xmlin.close();
-            }
-        }
-        catch (java.io.IOException e)
-        {
-            throw new RuntimeException("XML static initializer caught an I/O error");
-        }
-    }
+	public ShibAttributeIterator shibAttributeIterator() {
+		return new ShibAttributeIterator(attributes.values().iterator());
+	}
+
+	public ResolverAttributeIterator resolverAttributeIterator() {
+		return shibAttributeIterator();
+	}
+
+	public ArpAttributeIterator arpAttributeIterator() {
+		return shibAttributeIterator();
+	}
+
+	public int size() {
+		return attributes.size();
+	}
+
+	public SAMLAttribute[] getAttributes() {
+		return (SAMLAttribute[]) attributes.entrySet().toArray(new SAMLAttribute[0]);
+	}
+
+	public class ShibAttributeIterator implements ResolverAttributeIterator, ArpAttributeIterator {
+
+		private Iterator genericIterator;
+
+		private ShibAttributeIterator(Iterator iterator) {
+			genericIterator = iterator;
+		}
+
+		public boolean hasNext() {
+			return genericIterator.hasNext();
+		}
+
+		public ResolverAttribute nextResolverAttribute() {
+			return nextShibAttribute();
+		}
+
+		public AAAttribute nextShibAttribute() {
+			return (AAAttribute) genericIterator.next();
+		}
+
+		public void remove() {
+			genericIterator.remove();
+		}
+
+		public ArpAttribute nextArpAttribute() {
+			return (ArpAttribute) genericIterator.next();
+		}
+
+	}
 }
-

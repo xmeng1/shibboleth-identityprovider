@@ -46,66 +46,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
-package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
-import java.util.HashMap;
-import java.util.Iterator;
-
-import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
-import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet;
-
+package edu.internet2.middleware.shibboleth.aa.arp;
 /**
- * A set of attributes for which the Shibboleth Attribute Authority has been asked
- * to provide assertions.
+ * Defines a set of attributes whose values can be filtered by the <code>ArpEngine</code>.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class ShibAttributeSet implements ResolverAttributeSet {
+public interface ArpAttributeSet {
 
-	private HashMap attributes = new HashMap();
-
-	public void add(ShibAttribute attribute) {
-		attributes.put(attribute.getName(), attribute);
+	public ArpAttributeIterator arpAttributeIterator();
+	
+	public interface ArpAttributeIterator {
+		public boolean hasNext();
+		public ArpAttribute nextArpAttribute();
+		public void remove();
 	}
-
-	public ResolverAttribute getByName(String name) {
-		return (ResolverAttribute) attributes.get(name);
-	}
-
-	public ShibAttributeIterator shibAttributeIterator() {
-		return new ShibAttributeIterator(attributes.values().iterator());
-	}
-
-	public ResolverAttributeIterator resolverAttributeIterator() {
-		return shibAttributeIterator();
-	}
-
-	public class ShibAttributeIterator implements ResolverAttributeIterator {
-
-		private Iterator genericIterator;
-
-		private ShibAttributeIterator(Iterator iterator) {
-			genericIterator = iterator;
-		}
-
-		public boolean hasNext() {
-			return genericIterator.hasNext();
-		}
-
-		public ResolverAttribute nextResolverAttribute() {
-			return nextShibAttribute();
-		}
-
-		public ShibAttribute nextShibAttribute() {
-			return (ShibAttribute) genericIterator.next();
-		}
-
-		public void remove() {
-			genericIterator.remove();
-		}
-
-	}
-
 }
-

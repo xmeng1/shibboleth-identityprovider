@@ -47,7 +47,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
  
-package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
+package edu.internet2.middleware.shibboleth.aa;
 
 
 import java.util.Arrays;
@@ -63,7 +63,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandlerException;
 import edu.internet2.middleware.shibboleth.common.Constants;
 
 /**
@@ -72,14 +75,14 @@ import edu.internet2.middleware.shibboleth.common.Constants;
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class ShibAttribute extends SAMLAttribute implements ResolverAttribute {
+public class AAAttribute extends SAMLAttribute implements ResolverAttribute, ArpAttribute {
 
-	private static Logger log = Logger.getLogger(ShibAttribute.class.getName());
+	private static Logger log = Logger.getLogger(AAAttribute.class.getName());
 	private boolean resolved = false;
 	private static long defaultLifetime = 1800000;
 	private ValueHandler valueHandler = new StringValueHandler();
 
-	public ShibAttribute(String name) throws SAMLException {
+	public AAAttribute(String name) throws SAMLException {
 		super(
 			name,
 			Constants.SHIB_ATTRIBUTE_NAMESPACE_URI,
@@ -99,7 +102,7 @@ public class ShibAttribute extends SAMLAttribute implements ResolverAttribute {
 		return valueHandler.getValues(values);
 	}
 
-	private void setValues(Object[] values) {
+	public void setValues(Object[] values) {
 		if (!this.values.isEmpty()) {
 			this.values.clear();
 		}
@@ -121,21 +124,21 @@ public class ShibAttribute extends SAMLAttribute implements ResolverAttribute {
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute#resolved()
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute#resolved()
 	 */
 	public boolean resolved() {
 		return resolved;
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute#setResolved()
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute#setResolved()
 	 */
 	public void setResolved() {
 		resolved = true;
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute#resolveFromCached(edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute)
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute#resolveFromCached(edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute)
 	 */
 	public void resolveFromCached(ResolverAttribute attribute) {
 		resolved = true;
@@ -188,17 +191,26 @@ public class ShibAttribute extends SAMLAttribute implements ResolverAttribute {
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute#registerValueHandler(edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler)
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute#registerValueHandler(edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler)
 	 */
 	public void registerValueHandler(ValueHandler handler) {
 		valueHandler = handler;
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute#getRegisteredValueHandler()
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute#getRegisteredValueHandler()
 	 */
 	public ValueHandler getRegisteredValueHandler() {
 		return valueHandler;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	public boolean equals(Object obj) {
+		// TODO Figure out what to do here
+		System.err.println("Hit AAAttribute equals().");
+		return super.equals(obj);
 	}
 
 }

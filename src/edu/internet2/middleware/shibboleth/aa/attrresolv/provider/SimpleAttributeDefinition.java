@@ -149,7 +149,7 @@ public class SimpleAttributeDefinition extends BaseAttributeDefinition implement
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute, java.security.Principal, java.lang.String, edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute, java.security.Principal, java.lang.String, edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
 	 */
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
 		throws ResolutionPlugInException {

@@ -60,109 +60,34 @@ package edu.internet2.middleware.shibboleth.aa;
 import java.net.URI;
 import java.net.URL;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.naming.CommunicationException;
-import javax.naming.NameNotFoundException;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLException;
 
-import edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
-import edu.internet2.middleware.shibboleth.aa.arp.provider.ShibArpAttribute;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 
 public class AAResponder {
 
-	protected ArpEngine arpEngine;
-	protected DirContext ctx;
-	protected String domain;
+	private ArpEngine arpEngine;
+	private AttributeResolver resolver;
 	private static Logger log = Logger.getLogger(AAResponder.class.getName());
 
-	public AAResponder(ArpEngine arpEngine, DirContext ctx, String domain) throws AAException {
+	public AAResponder(ArpEngine arpEngine, AttributeResolver resolver) throws AAException {
 
 		this.arpEngine = arpEngine;
-		this.ctx = ctx;
-		this.domain = domain;
+		this.resolver = resolver;
 	}
 
-	public SAMLAttribute[] getReleaseAttributes(
-		Principal principal,
-		String searchFilter,
-		String requester,
-		URL resource)
+	public SAMLAttribute[] getReleaseAttributes(Principal principal, String requester, URL resource)
 		throws AAException {
 
-		DirContext userCtx = queryDataSource(principal, searchFilter);
-
 		try {
-			//optimization... find out which attributes to resolve
 			URI[] potentialAttributes = arpEngine.listPossibleReleaseAttributes(principal, requester, resource);
+			return getReleaseAttributes(principal, requester, resource, potentialAttributes);
 
-			//resolve for each attribute
-			Set arpAttributes = new HashSet();
-
-			for (int i = 0; i < potentialAttributes.length; i++) {
-				ShibArpAttribute arpAttribute = new ShibArpAttribute(potentialAttributes[i].toString());
-
-				Attribute dAttr;
-				if (potentialAttributes[i].toString().equals("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")) {
-					Attributes attrs = userCtx.getAttributes("", new String[] { "eduPersonAffiliation" });
-					dAttr = attrs.get("eduPersonAffiliation");
-				} else {
-					Attributes attrs =
-						userCtx.getAttributes(
-							"",
-							new String[] {
-								 arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1)});
-					dAttr = attrs.get(arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1));
-				}
-				if (dAttr == null) {
-					continue;
-				}
-				NamingEnumeration directoryValuesEnum = dAttr.getAll();
-				List directoryValues = new ArrayList();
-				while (directoryValuesEnum.hasMoreElements()) {
-					directoryValues.add(directoryValuesEnum.next());
-				}
-				arpAttribute.setValues(directoryValues.toArray());
-				arpAttributes.add(arpAttribute);
-			}
-
-			//filter and convert to SAML
-			ArpAttribute[] filteredAttributes =
-				arpEngine.filterAttributes(
-					(ArpAttribute[]) arpAttributes.toArray(new ArpAttribute[0]),
-					principal,
-					requester,
-					resource);
-
-			Set samlAttributes = new HashSet();
-			for (int i = 0; i < filteredAttributes.length; i++) {
-				samlAttributes.add(toSaml(filteredAttributes[i], requester));
-			}
-			return (SAMLAttribute[]) samlAttributes.toArray(new SAMLAttribute[0]);
-
-		} catch (NamingException e) {
-			log.error(
-				"An error occurred while retieving data for principal ("
-					+ principal.getName()
-					+ ") :"
-					+ e.getMessage());
-			throw new AAException("Error retrieving data for principal.");
 		} catch (ArpProcessingException e) {
 			log.error(
 				"An error occurred while processing the ARPs for principal ("
@@ -171,26 +96,35 @@ public class AAResponder {
 					+ e.getMessage());
 			throw new AAException("Error retrieving data for principal.");
 		}
-
 	}
-
-	private DirContext queryDataSource(Principal principal, String searchFilter)
+	
+	public SAMLAttribute[] getReleaseAttributes(
+		Principal principal,
+		String requester,
+		URL resource,
+		URI[] attributeNames)
 		throws AAException {
+
 		try {
-			try {
-				return getUserContext(principal.getName(), searchFilter);
-			} catch (CommunicationException ce) {
-				synchronized (ctx) {
-					log.debug(ce);
-					log.warn(
-						"Encountered a connection problem while querying for attributes.  Re-initializing JNDI context and retrying...");
-					ctx = new InitialDirContext(ctx.getEnvironment());
-				}
-				return getUserContext(principal.getName(), searchFilter);
+			AAAttributeSet attributeSet = new AAAttributeSet();
+			for (int i = 0; i < attributeNames.length; i++) {
+				AAAttribute attribute = new AAAttribute(attributeNames[i].toString());
+				attributeSet.add(attribute);
 			}
-		} catch (NamingException e) {
+
+			return resolveAttributes(principal, requester, resource, attributeSet);
+
+		} catch (SAMLException e) {
 			log.error(
-				"An error occurred while retieving data for principal ("
+				"An error occurred while creating attributes for principal ("
+					+ principal.getName()
+					+ ") :"
+					+ e.getMessage());
+			throw new AAException("Error retrieving data for principal.");
+
+		} catch (ArpProcessingException e) {
+			log.error(
+				"An error occurred while processing the ARPs for principal ("
 					+ principal.getName()
 					+ ") :"
 					+ e.getMessage());
@@ -198,88 +132,15 @@ public class AAResponder {
 		}
 	}
 
-	private DirContext getUserContext(String userName, String searchFilter)
-		throws CommunicationException, NamingException, AAException {
+	private SAMLAttribute[] resolveAttributes(
+		Principal principal,
+		String requester,
+		URL resource,
+		AAAttributeSet attributeSet)
+		throws ArpProcessingException {
 
-		DirContext userCtx = null;
-		if (searchFilter == null) {
-			searchFilter = "";
-		}
-		int indx = searchFilter.indexOf("%s");
-		if (indx < 0) {
-			try {
-				userCtx = (DirContext) ctx.lookup(searchFilter + userName);
-			} catch (NameNotFoundException nnfe) {
-				log.error(
-					"Could not locate a user ("
-						+ userName
-						+ ") as a result of searching with ("
-						+ searchFilter
-						+ ").");
-				throw new AAException("No data available for this principal.");
-			}
-		} else {
-			/* This is a search filter. Search after replacing %s with uid*/
-			StringBuffer tmp = new StringBuffer(searchFilter);
-			tmp.delete(indx, indx + 2);
-			tmp.insert(indx, userName);
-			searchFilter = tmp.toString();
-			SearchControls ctls = new SearchControls();
-			ctls.setReturningObjFlag(true);
-			NamingEnumeration en = ctx.search("", searchFilter, ctls);
-			if (!en.hasMore()) {
-				log.error(
-					"Could not locate a user ("
-						+ userName
-						+ ") as a result of searching with ("
-						+ searchFilter
-						+ ").");
-				throw new AAException("No data available for this principal.");
-			}
-			userCtx = (DirContext) ((SearchResult) en.next()).getObject();
-			if (en.hasMore()) {
-				log.error(
-					"Located multiple ("
-						+ userName
-						+ ") users as a result of searching with ("
-						+ searchFilter
-						+ ").");
-				throw new AAException("Cannot disambiguate data for this principal.");
-			}
-		}
-		return userCtx;
-	}
-
-	private SAMLAttribute toSaml(ArpAttribute attribute, String recipient)
-		throws NamingException, AAException {
-
-		if (attribute == null) {
-			return null;
-		}
-
-		log.debug("Converting Attribute (" + attribute.getName() + ") to SAML.");
-
-		try {
-			Class attrClass =
-				Class.forName(
-					"edu.internet2.middleware.shibboleth.aaLocal.attributes."
-						+ attribute.getName().substring(
-							attribute.getName().lastIndexOf(":") + 1));
-			log.debug("Loaded the class for " + attrClass);
-			ShibAttribute sa = (ShibAttribute) attrClass.newInstance();
-			return sa.toSamlAttribute(this.domain, attribute.getValues(), recipient);
-
-		} catch (SAMLException e) {
-			log.error(
-				"Error converting attribute to SAML ("
-					+ attribute.getName()
-					+ ") :"
-					+ e.getMessage());
-			return null;
-		} catch (Exception e) {
-			log.error("Failed to load the class for attribute (" + attribute.getName() + ") :" + e);
-			return null;
-		}
-
+		resolver.resolveAttributes(principal, requester, attributeSet);
+		arpEngine.filterAttributes(attributeSet, principal, requester, resource);
+		return attributeSet.getAttributes();
 	}
 }

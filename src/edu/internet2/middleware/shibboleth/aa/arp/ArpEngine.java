@@ -66,6 +66,8 @@ import org.apache.log4j.Logger;
 import org.apache.xml.serialize.OutputFormat;
 import org.apache.xml.serialize.XMLSerializer;
 
+import edu.internet2.middleware.shibboleth.aa.arp.ArpAttributeSet.ArpAttributeIterator;
+
 /**
  *  Defines a processing engine for Attribute Release Policies.
  *
@@ -225,32 +227,27 @@ public class ArpEngine {
 	 * Applies all applicable ARPs to a set of attributes.
 	 * @return the attributes to be released
 	 */
-	public ArpAttribute[] filterAttributes(
-		ArpAttribute[] attributes,
-		Principal principal,
-		String requester,
-		URL resource)
+	public void filterAttributes(ArpAttributeSet attributes, Principal principal, String requester, URL resource)
 		throws ArpProcessingException {
-			
-			if (attributes.length == 0) {
-				log.debug("ARP Engine was asked to apply filter to empty attribute set.");
-				return new ArpAttribute[0];
-			}
 
-		Set releaseSet = new HashSet();
+		ArpAttributeIterator iterator = attributes.arpAttributeIterator();
+		if (!iterator.hasNext()) {
+			log.debug("ARP Engine was asked to apply filter to empty attribute set.");
+			return;
+		}
 
 		log.info("Applying Attribute Release Policies.");
 		if (log.isDebugEnabled()) {
 			log.debug("Processing the following attributes:");
-			for (int i = 0; attributes.length > i; i++) {
-				log.debug("Attribute: (" + attributes[i].getName() + ")");
+			for (ArpAttributeIterator attrIterator = attributes.arpAttributeIterator(); attrIterator.hasNext();) {
+				log.debug("Attribute: (" + attrIterator.nextArpAttribute().getName() + ")");
 			}
 		}
 
 		//Gather all applicable ARP attribute specifiers
 		Set attributeNames = new HashSet();
-		for (int i = 0; attributes.length > i; i++) {
-			attributeNames.add(attributes[i].getName());
+		for (ArpAttributeIterator nameIterator = attributes.arpAttributeIterator(); nameIterator.hasNext();) {
+			attributeNames.add(nameIterator.nextArpAttribute().getName());
 		}
 		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
 		Set applicableRuleAttributes = new HashSet();
@@ -265,41 +262,41 @@ public class ArpEngine {
 
 		//Canonicalize specifiers
 		Map arpAttributeSpecs =
-			createCanonicalAttributeSpec(
-				(Rule.Attribute[]) applicableRuleAttributes.toArray(new Rule.Attribute[0]));
+			createCanonicalAttributeSpec((Rule.Attribute[]) applicableRuleAttributes.toArray(new Rule.Attribute[0]));
 
 		//Filter
-		for (int i = 0; attributes.length > i; i++) {
-			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(attributes[i].getName());
+		for (ArpAttributeIterator returnIterator = attributes.arpAttributeIterator(); returnIterator.hasNext();) {
+			
+			ArpAttribute arpAttribute = returnIterator.nextArpAttribute();
+			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(arpAttribute.getName());
 
 			//Handle no specifier
 			if (attribute == null) {
+				returnIterator.remove();
 				continue;
 			}
 
 			//Handle Deny All
 			if (attribute.denyAnyValue()) {
+				returnIterator.remove();
 				continue;
 			}
 
 			//Handle Permit All
 			if (attribute.releaseAnyValue() && attribute.getValues().length == 0) {
-				releaseSet.add(attributes[i]);
 				continue;
 			}
 
 			//Handle "Permit All-Except" and "Permit Specific"
-			Object[] resolvedValues = attributes[i].getValues();
 			Set releaseValues = new HashSet();
-			for (int j = 0; resolvedValues.length > j; j++) {
-				if (attribute.isValuePermitted(resolvedValues[j])) {
-					releaseValues.add(resolvedValues[j]);
+			for (Iterator valueIterator = arpAttribute.getValues();valueIterator.hasNext();) {
+				Object value = valueIterator.next();
+				if (attribute.isValuePermitted(value)) {
+					releaseValues.add(value);
 				}
 			}
-			attributes[i].setValues((Object[]) releaseValues.toArray(new Object[0]));
-			releaseSet.add(attributes[i]);
+			arpAttribute.setValues((Object[]) releaseValues.toArray(new Object[0]));
 		}
-		return (ArpAttribute[]) releaseSet.toArray(new ArpAttribute[0]);
 	}
 
 	private Map createCanonicalAttributeSpec(Rule.Attribute[] attributes) {

@@ -85,11 +85,11 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import sun.security.acl.PrincipalImpl;
+import edu.internet2.middleware.shibboleth.aa.AAAttribute;
+import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
+import edu.internet2.middleware.shibboleth.aa.AAAttributeSet.ShibAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet.ResolverAttributeIterator;
-import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ShibAttribute;
-import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ShibAttributeSet;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
-import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ShibAttributeSet.ShibAttributeIterator;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 
@@ -131,8 +131,7 @@ public class AttributeResolver {
 						InputStream stream;
 						try {
 							return new InputSource(
-								new ShibResource(
-									new File("shibboleth-resolver-1.0.xsd").toURL().toString(),
+								new ShibResource("/schemas/shibboleth-resolver-1.0.xsd",
 									this.getClass())
 									.getInputStream());
 						} catch (IOException e) {
@@ -263,7 +262,7 @@ public class AttributeResolver {
 
 		try {
 			Properties props = new Properties();
-			File file = new File("testconfig.xml");
+			File file = new File("src/conf/resolver.xml");
 
 			props.setProperty(
 				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
@@ -271,21 +270,21 @@ public class AttributeResolver {
 			AttributeResolver ar = new AttributeResolver(props);
 			for (int j = 0; j < 2; j++) {
 				System.out.println("Resolving pass: " + (j + 1));
-				ShibAttributeSet attributes = new ShibAttributeSet();
+				AAAttributeSet attributes = new AAAttributeSet();
 				if (j == 1) {
-					attributes.add(new ShibAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName"));
+					attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName"));
 				}
-				attributes.add(new ShibAttribute("urn:mace:eduPerson:1.0:eduPersonNickName"));
-				attributes.add(new ShibAttribute("urn:mace:eduPerson:1.0:eduPersonPrimaryAffiliation"));
-				attributes.add(new ShibAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation"));
-				attributes.add(new ShibAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation"));
-				attributes.add(new ShibAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement"));
-				attributes.add(new ShibAttribute("urn:mace:rfc2079:labeledURI"));
+				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonNickName"));
+				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonPrimaryAffiliation"));
+				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation"));
+				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation"));
+				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement"));
+				attributes.add(new AAAttribute("urn:mace:rfc2079:labeledURI"));
 
 				ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", attributes);
 				ShibAttributeIterator iterator = attributes.shibAttributeIterator();
 				while (iterator.hasNext()) {
-					ShibAttribute attribute = iterator.nextShibAttribute();
+					AAAttribute attribute = iterator.nextShibAttribute();
 					System.out.println(attribute.getName());
 					System.out.println("LifeTime: " + attribute.getLifetime());
 					System.out.println("\t" + " values:");

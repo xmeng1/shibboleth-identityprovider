@@ -59,9 +59,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
@@ -70,13 +67,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.opensaml.Init;
 import org.opensaml.QName;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLIdentifier;
 
-import edu.internet2.middleware.eduPerson.Init;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
@@ -110,41 +109,27 @@ public class AAServlet extends HttpServlet {
 			configuration = loadConfiguration();
 
 			ArpEngine arpEngine = new ArpEngine(configuration);
-			
+			AttributeResolver resolver = new AttributeResolver(configuration);
+
 			handleRepository = HandleRepositoryFactory.getInstance(configuration);
 
-			log.info(
-				"Using JNDI context ("
-					+ configuration.getProperty("java.naming.factory.initial")
-					+ ") for attribute retrieval.");
-
-			DirContext ctx = new InitialDirContext(configuration);
 			Init.init();
-			responder =
-				new AAResponder(
-					arpEngine,
-					ctx,
-					configuration.getProperty(
-						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
+			responder = new AAResponder(arpEngine, resolver);
 
 			log.info("Attribute Authority initialization complete.");
 
-		} catch (NamingException ne) {
-			log.fatal(
-				"The AA could not be initialized due to a problem with the JNDI context configuration: "
-					+ ne);
-			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (ArpException ae) {
-			log.fatal(
-				"The AA could not be initialized due to a problem with the ARP Engine configuration: " + ae);
+			log.fatal("The AA could not be initialized due to a problem with the ARP Engine configuration: " + ae);
+			throw new UnavailableException("Attribute Authority failed to initialize.");
+		} catch (AttributeResolverException ne) {
+			log.fatal("The AA could not be initialized due to a problem with the Attribute Resolver configuration: " + ne);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (AAException ae) {
 			log.fatal("The AA could not be initialized: " + ae);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (HandleRepositoryException he) {
 			log.fatal(
-				"The AA could not be initialized due to a problem with the Handle Repository configuration: "
-					+ he);
+				"The AA could not be initialized due to a problem with the Handle Repository configuration: " + he);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
 		}
 	}
@@ -270,8 +255,6 @@ public class AAServlet extends HttpServlet {
 				Arrays.asList(
 					responder.getReleaseAttributes(
 						principal,
-						configuration.getProperty(
-							"edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
 						saml.getShar(),
 						resource));
 			log.info("Got " + attrs.size() + " attributes for " + principal.getName());

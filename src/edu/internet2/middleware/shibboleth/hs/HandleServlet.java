@@ -74,13 +74,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.doomdark.uuid.UUIDGenerator;
+import org.opensaml.Init;
 import org.opensaml.QName;
 import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
-import sun.misc.BASE64Decoder;
 
+import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
@@ -173,7 +174,7 @@ public class HandleServlet extends HttpServlet {
 			log.info("Initializing Handle Service.");
 			configuration = loadConfiguration();
 
-			edu.internet2.middleware.eduPerson.Init.init();
+			Init.init();
 
 			initPKI();
 
