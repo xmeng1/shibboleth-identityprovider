@@ -52,7 +52,7 @@
 	</init-param>
 	<init-param>
 		<param-name>registry-uri</param-name>
-		<param-value>http://newman.uts.ohio-state.edu/shibsites.xml</param-value>
+		<param-value>http://shib1.internet2.edu:88/shibboleth-target/sites.xml</param-value>
 	</init-param>
 	</servlet>
      <servlet-mapping>

@@ -18,6 +18,10 @@
 		<servlet-name>WAYF</servlet-name>
 		<display-name>Shibboleth WAYF Service</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfService</servlet-class>
+                <init-param>
+                    <param-name>SiteConfigFileLocation</param-name>
+                    <param-value>/sites.xml</param-value>
+                </init-param>
 	</servlet>
 	<servlet>
 		<servlet-name>WAYFTester</servlet-name>
@@ -62,7 +66,7 @@
 	</init-param>
 	<init-param>
 		<param-name>registry-uri</param-name>
-		<param-value>http://newman.uts.ohio-state.edu/shibsites.xml</param-value>
+		<param-value>http://shib1.internet2.edu:88/shibboleth-target/sites.xml</param-value>
 	</init-param>
 	</servlet>
 	
