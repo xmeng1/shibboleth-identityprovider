@@ -49,6 +49,8 @@ public class ShireServlet extends HttpServlet
      *  <DL>
      *    <DT> keystore-path <I>(required)</I> </DT>
      *    <DD> A pathname to the trusted CA roots to accept</DD>
+     *    <DT> keystore-password <I>(required)</I> </DT>
+     *    <DD> The root keystore password</DD>
      *    <DT> registry-alias <I>(optional)</I> </DT>
      *    <DD> An alias in the provided keystore for the cert that can verify
      *    the origin site registry signature</DD>
@@ -99,7 +101,8 @@ public class ShireServlet extends HttpServlet
         {
             Key k = null;
             KeyStore ks = KeyStore.getInstance("JKS");
-            ks.load(new FileInputStream(conf.getInitParameter("keystore-path")), null);
+            ks.load(conf.getServletContext().getResourceAsStream(conf.getInitParameter("keystore-path")),
+                    conf.getInitParameter("keystore-password").toCharArray());
             if (conf.getInitParameter("keystore-alias") != null)
             {
                 Certificate cert = ks.getCertificate(conf.getInitParameter("keystore-alias"));
