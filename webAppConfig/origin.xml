@@ -43,7 +43,7 @@
 		</init-param>
 		<init-param>
 			<param-name>KSpath</param-name>
-			<param-value>/WEB-INF/conf/keystore.dks</param-value>
+			<param-value>/WEB-INF/conf/keystore.jks</param-value>
 		</init-param>
 		<init-param>
 			<param-name>KSpass</param-name>
