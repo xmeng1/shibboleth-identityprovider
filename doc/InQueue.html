@@ -285,8 +285,8 @@
 				appropriate set of trusted roots for the issuance of SSL
 				certificates that Shibboleth trusts.  For InQueue, this list may
 				be obtained from <span
-				class="fixed">http://wayf.internet2.edu/InQueue/ca-bundle.
-				crt</span>.  This list should then be copied for <span
+				class="fixed">http://wayf.internet2.edu/InQueue/ca-bundle.crt</span>.
+				This list should then be copied for <span
 				class="fixed">mod_ssl</span>, which will typically need to
 				be to <span
 				class="fixed">/conf/ssl.crt/ca-bundle.crt</span>.  This
@@ -314,7 +314,7 @@
 				</blockquote>
 
 				<blockquote><h5>4.c. Refreshing Federation Metadata:</h5>
-					<p>Shibboleth 1.2 includes metadata both for origin sites
+					<p>Shibboleth 1.2 includes new metadata both for origin sites
 					and for target sites.  The origin has the <a
 					href="http://SHIBBOLETHORIGINGUIDEURL#4.e."><span
 					class="fixed">metadatatool</span></a> and the target uses
@@ -333,11 +333,11 @@
 					</span> and has a fingerprint of:</p>
 					<p><span class="fixed">b4 42 6c 1e 8b 7d 8e b3 68 03 00 e4 c4 57 dd 74 89 f8 9a 80</span>.</p>
 
-					<p>The following commands can be used to obtain the federation's metadata for a Shibboleth <b>target</b>:</p>
+					<p>The following commands can be used to obtain the federation's metadata for a Shibboleth 1.2 <b>target</b>:</p>
 					<blockquote><span class="fixed">
 					$ cd /opt/shibboleth/etc/shibboleth<br>
-                    $ ../../bin/siterefresh --url http://wayf.internet2.edu/InQueue/sites-1.2.xml --out sites.xml --cert inqueue.pem<br>
-					$ ../../bin/siterefresh --url http://wayf.internet2.edu/InQueue/trust-1.2.xml --out trust.xml --cert inqueue.pem</span>
+                    $ ../../bin/siterefresh --url http://wayf.internet2.edu/InQueue/IQ-sites.xml --out IQ-sites.xml --cert inqueue.pem<br>
+					$ ../../bin/siterefresh --url http://wayf.internet2.edu/InQueue/IQ-trust.xml --out IQ-trust.xml --cert inqueue.pem</span>
 					</blockquote>
 
 					<p>The origin metadatatool's operation is greatly simplified
@@ -347,9 +347,7 @@
 					class="fixed">metadatatool</span>.  After this has been
 					done, the following commands can be used to obtain the
 					federation's metadata for a Shibboleth <b>origin</b>:</p>
-					<blockquote><span class="fixed">metadatatool -i http://wayf.internet2.edu/InQueue/sites-1.2.xml \ -k inqueue.jks -a inqueue<br>
-					metadatatool -i http://wayf.internet2.edu/InQueue/trust-1.2.xml \
-	-k inqueue.jks -a inqueue
+					<blockquote><span class="fixed">metadatatool -i http://wayf.internet2.edu/InQueue/IQ-sites.xml -o IQ-sites.xml -k inqueue.jks -a inqueue
 					</span></blockquote>
 				</blockquote>
 
