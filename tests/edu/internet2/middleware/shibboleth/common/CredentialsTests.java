@@ -85,15 +85,15 @@ public class CredentialsTests extends TestCase {
 		super.setUp();
 		try {
 			//TODO turn this back on when you get the schema worked out
-			parser.setFeature("http://xml.org/sax/features/validation", false);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", false);
+			parser.setFeature("http://xml.org/sax/features/validation", true);
+			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
 			parser.setEntityResolver(new EntityResolver() {
 				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
 
-					if (systemId.endsWith("shibboleth-credentials.xsd")) {
+					if (systemId.endsWith("credentials.xsd")) {
 						InputStream stream;
 						try {
-							stream = new FileInputStream("src/schemas/shibboleth-credentials.xsd");
+							stream = new FileInputStream("src/schemas/credentials.xsd");
 							if (stream != null) {
 								return new InputSource(stream);
 							}
@@ -101,7 +101,18 @@ public class CredentialsTests extends TestCase {
 						} catch (FileNotFoundException e) {
 							throw new SAXException("Could not load entity: " + e);
 						}
-					} else {
+					} else if (systemId.endsWith("xmldsig-core-schema.xsd")) {
+					InputStream stream;
+					try {
+						stream = new FileInputStream("src/schemas/xmldsig-core-schema.xsd");
+						if (stream != null) {
+							return new InputSource(stream);
+						}
+						throw new SAXException("Could not load entity: Null input stream");
+					} catch (FileNotFoundException e) {
+						throw new SAXException("Could not load entity: " + e);
+					}
+				}else {
 						return null;
 					}
 				}
@@ -128,6 +139,37 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials1.xml");
+			parser.parse(new InputSource(inStream));
+			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+
+			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
+			Credential credential = credentials.getCredential("test");
+
+			assertTrue(
+				"Credential was loaded with an incorrect type.",
+				credential.getCredentialType() == Credential.X509);
+			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals(
+				"Unexpected X509 certificate found.",
+				credential.getX509Certificate().getSubjectDN().getName(),
+				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals(
+				"Unexpected certificate chain length.",
+				new Integer(credential.getX509CertificateChain().length),
+				new Integer(3));
+			assertEquals(
+				"Unexpected X509 certificate found.",
+				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+		} catch (Exception e) {
+			fail("Failed to load credentials: " + e);
+		}
+	}
+	
+	public void testKeyStoreX509AliasDefaulting() {
+
+		try {
+			InputStream inStream = new FileInputStream("data/credentials3.xml");
 			parser.parse(new InputSource(inStream));
 			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
 

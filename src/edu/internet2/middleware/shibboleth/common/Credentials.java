@@ -66,7 +66,7 @@ import org.w3c.dom.NodeList;
  */
 public class Credentials {
 
-	public static final String credentialsNamespace = "urn:mace:shibboleth:credentials";
+	public static final String credentialsNamespace = "urn:mace:shibboleth:credentials:1.0";
 
 	private static Logger log = Logger.getLogger(Credentials.class.getName());
 	private Hashtable data = new Hashtable();
@@ -89,9 +89,9 @@ public class Credentials {
 			if (resolverNodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
 				try {
 
-					String credentialId = ((Element) resolverNodes.item(i)).getAttribute("id");
+					String credentialId = ((Element) resolverNodes.item(i)).getAttribute("Id");
 					if (credentialId == null || credentialId.equals("")) {
-						log.error("Found credential that was not labeled with a unique \"id\" attribute. Skipping.");
+						log.error("Found credential that was not labeled with a unique \"Id\" attribute. Skipping.");
 					}
 
 					if (data.containsKey(credentialId)) {
@@ -127,7 +127,7 @@ public class Credentials {
 				return new KeyInfoCredentialResolver().loadCredential(e);
 			}
 
-			if (e.getTagName().equals("FileCredResolver")) {
+			if (e.getTagName().equals("FileResolver")) {
 				return new FileCredentialResolver().loadCredential(e);
 			}
 
@@ -135,7 +135,7 @@ public class Credentials {
 				return new KeystoreCredentialResolver().loadCredential(e);
 			}
 
-			if (e.getTagName().equals("CustomCredResolver")) {
+			if (e.getTagName().equals("CustomResolver")) {
 				return new CustomCredentialResolver().loadCredential(e);
 			}
 
@@ -164,14 +164,14 @@ class FileCredentialResolver implements CredentialResolver {
 
 	public Credential loadCredential(Element e) throws CredentialFactoryException {
 
-		if (!e.getTagName().equals("FileCredResolver")) {
-			log.error("Invalid Credential Resolver configuration: expected <FileCredResolver> .");
+		if (!e.getTagName().equals("FileResolver")) {
+			log.error("Invalid Credential Resolver configuration: expected <FileResolver> .");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
-		String id = e.getAttribute("id");
+		String id = e.getAttribute("Id");
 		if (id == null || id.equals("")) {
-			log.error("Credential Resolvers require specification of the attribute \"id\".");
+			log.error("Credential Resolvers require specification of the attribute \"Id\".");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
@@ -241,7 +241,7 @@ class FileCredentialResolver implements CredentialResolver {
 			log.error("Multiple Certificate path specifications, using first.");
 		}
 		
-		String format = ((Element)certificateElements.item(0)).getAttribute("id");
+		String format = ((Element)certificateElements.item(0)).getAttribute("format");
 		if (format == null || format.equals("")) {
 			log.debug("No format specified for certificate, using default (PEM) format.");
 			format = "PEM";
@@ -358,13 +358,13 @@ class KeystoreCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
-		String id = e.getAttribute("id");
+		String id = e.getAttribute("Id");
 		if (id == null || id.equals("")) {
-			log.error("Credential Resolvers require specification of the attribute \"id\".");
+			log.error("Credential Resolvers require specification of the attribute \"Id\".");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
-		String keyStoreType = e.getAttribute("keyStoreType");
+		String keyStoreType = e.getAttribute("storeType");
 		if (keyStoreType == null || keyStoreType.equals("")) {
 			log.debug("Using default store type for credential.");
 			keyStoreType = "JKS";
@@ -372,6 +372,7 @@ class KeystoreCredentialResolver implements CredentialResolver {
 
 		String path = loadPath(e);
 		String alias = loadAlias(e);
+		String certAlias = loadCertAlias(e, alias);
 		String keyPassword = loadKeyPassword(e);
 		String keyStorePassword = loadKeyStorePassword(e);
 
@@ -386,11 +387,11 @@ class KeystoreCredentialResolver implements CredentialResolver {
 				throw new CredentialFactoryException("No key entry was found with an alias of (" + alias + ").");
 			}
 
-			Certificate[] certificates = keyStore.getCertificateChain(alias);
+			Certificate[] certificates = keyStore.getCertificateChain(certAlias);
 			if (certificates == null) {
 				throw new CredentialFactoryException(
 					"An error occurred while reading the java keystore: No certificate found with the specified alias ("
-						+ alias
+						+ certAlias
 						+ ").");
 			}
 
@@ -448,13 +449,13 @@ class KeystoreCredentialResolver implements CredentialResolver {
 
 	private String loadAlias(Element e) throws CredentialFactoryException {
 
-		NodeList aliasElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Alias");
+		NodeList aliasElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "KeyAlias");
 		if (aliasElements.getLength() < 1) {
 			log.error("KeyStore key alias not specified.");
-			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <Alias> specification.");
+			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <KeyAlias> specification.");
 		}
 		if (aliasElements.getLength() > 1) {
-			log.error("Multiple KeyStore alias specifications, using first.");
+			log.error("Multiple key alias specifications, using first.");
 		}
 		Node tnode = aliasElements.item(0).getFirstChild();
 		String alias = null;
@@ -463,17 +464,41 @@ class KeystoreCredentialResolver implements CredentialResolver {
 		}
 		if (alias == null || alias.equals("")) {
 			log.error("KeyStore key alias not specified.");
-			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <Alias> specification.");
+			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <KeyAlias> specification.");
+		}
+		return alias;
+	}
+
+	private String loadCertAlias(Element e, String defaultAlias) throws CredentialFactoryException {
+
+		NodeList aliasElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "CertAlias");
+		if (aliasElements.getLength() < 1) {
+			log.debug("KeyStore cert alias not specified, defaulting to key alias.");
+			return defaultAlias;
+		}
+
+		if (aliasElements.getLength() > 1) {
+			log.error("Multiple cert alias specifications, using first.");
+		}
+
+		Node tnode = aliasElements.item(0).getFirstChild();
+		String alias = null;
+		if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+			alias = tnode.getNodeValue();
+		}
+		if (alias == null || alias.equals("")) {
+			log.debug("KeyStore cert alias not specified, defaulting to key alias.");
+			return defaultAlias;
 		}
 		return alias;
 	}
 
 	private String loadKeyStorePassword(Element e) throws CredentialFactoryException {
 
-		NodeList passwordElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "KeyStorePassword");
+		NodeList passwordElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "StorePassword");
 		if (passwordElements.getLength() < 1) {
 			log.error("KeyStore password not specified.");
-			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <KeyStorePassword> specification.");
+			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <StorePassword> specification.");
 		}
 		if (passwordElements.getLength() > 1) {
 			log.error("Multiple KeyStore password specifications, using first.");
@@ -485,7 +510,7 @@ class KeystoreCredentialResolver implements CredentialResolver {
 		}
 		if (password == null || password.equals("")) {
 			log.error("KeyStore password not specified.");
-			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <KeyStorePassword> specification.");
+			throw new CredentialFactoryException("KeyStore Credential Resolver requires an <StorePassword> specification.");
 		}
 		return password;
 	}
