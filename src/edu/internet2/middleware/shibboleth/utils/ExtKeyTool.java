@@ -1,50 +1,26 @@
-/* 
- * The Shibboleth License, Version 1. 
- * Copyright (c) 2002 
- * University Corporation for Advanced Internet Development, Inc. 
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this 
- * list of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation 
- * and/or other materials provided with the distribution, if any, must include 
- * the following acknowledgment: "This product includes software developed by 
- * the University Corporation for Advanced Internet Development 
- * <http://www.ucaid.edu>Internet2 Project. Alternately, this acknowledegement 
- * may appear in the software itself, if and wherever such third-party 
- * acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor 
- * Internet2, nor the University Corporation for Advanced Internet Development, 
- * Inc., nor UCAID may be used to endorse or promote products derived from this 
- * software without specific prior written permission. For written permission, 
- * please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, 
- * UCAID, or the University Corporation for Advanced Internet Development, nor 
- * may Shibboleth appear in their name, without prior written permission of the 
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK 
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY 
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution, if any, must include the following acknowledgment: "This product includes software
+ * developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu>Internet2 Project.
+ * Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor
+ * the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please contact
+ * shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the
+ * University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name, without prior
+ * written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS PROVIDED BY THE
+ * COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE
+ * DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO
+ * EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC.
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.utils;
@@ -74,6 +50,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -89,8 +66,7 @@ import org.apache.log4j.PatternLayout;
 import sun.misc.BASE64Encoder;
 
 /**
- * Extension utility for use alongside Sun's keytool program.  Performs useful functions not found
- * in original.
+ * Extension utility for use alongside Sun's keytool program. Performs useful functions not found in original.
  * 
  * @author Walter Hoehn
  */
@@ -99,23 +75,23 @@ public class ExtKeyTool {
 
 	protected static Logger log = Logger.getLogger(ExtKeyTool.class.getName());
 
-	/** 
+	/**
 	 * Creates and initializes a java <code>KeyStore</code>
 	 * 
-	 * @param provider			name of the jce provider to use in loading the keystore
-	 * @param keyStoreStream	stream used to retrieve the keystore
-	 * @param storeType		the type of the keystore
-	 * @param keyStorePassword	password used to verify the integrity of the keystore
-	 * 
-	 * @throws ExtKeyToolException if a problem is encountered loading the keystore
+	 * @param provider
+	 *            name of the jce provider to use in loading the keystore
+	 * @param keyStoreStream
+	 *            stream used to retrieve the keystore
+	 * @param storeType
+	 *            the type of the keystore
+	 * @param keyStorePassword
+	 *            password used to verify the integrity of the keystore
+	 * @throws ExtKeyToolException
+	 *             if a problem is encountered loading the keystore
 	 */
 
-	protected KeyStore loadKeyStore(
-		String provider,
-		InputStream keyStoreStream,
-		String storeType,
-		char[] keyStorePassword)
-		throws ExtKeyToolException {
+	protected KeyStore loadKeyStore(String provider, InputStream keyStoreStream, String storeType,
+			char[] keyStorePassword) throws ExtKeyToolException {
 
 		try {
 			if (storeType == null) {
@@ -163,31 +139,31 @@ public class ExtKeyTool {
 		}
 	}
 
-	/** 
+	/**
 	 * Retrieves a private key from a java keystore and writes it to an <code>PrintStream</code>
 	 * 
-	 * @param provider			name of the jce provider to use in retrieving the key
-	 * @param outStream		stream that should be used to output the retrieved key
-	 * @param keyStoreStream	stream used to retrieve the keystore
-	 * @param storeType		the type of the keystore
-	 * @param keyStorePassword	password used to verify the integrity of the keystore
-	 * @param keyAlias			the alias under which the key is stored
-	 * @param keyPassword		the password for recovering the key
-	 * @param rfc boolean		indicator of whether the key should be Base64 encoded 
-	 * 							before being written to the stream
-	 * @throws ExtKeyToolException if there a problem retrieving or writing the key
+	 * @param provider
+	 *            name of the jce provider to use in retrieving the key
+	 * @param outStream
+	 *            stream that should be used to output the retrieved key
+	 * @param keyStoreStream
+	 *            stream used to retrieve the keystore
+	 * @param storeType
+	 *            the type of the keystore
+	 * @param keyStorePassword
+	 *            password used to verify the integrity of the keystore
+	 * @param keyAlias
+	 *            the alias under which the key is stored
+	 * @param keyPassword
+	 *            the password for recovering the key
+	 * @param rfc
+	 *            boolean indicator of whether the key should be Base64 encoded before being written to the stream
+	 * @throws ExtKeyToolException
+	 *             if there a problem retrieving or writing the key
 	 */
 
-	public void exportKey(
-		String provider,
-		PrintStream outStream,
-		InputStream keyStoreStream,
-		String storeType,
-		char[] keyStorePassword,
-		String keyAlias,
-		char[] keyPassword,
-		boolean rfc)
-		throws ExtKeyToolException {
+	public void exportKey(String provider, PrintStream outStream, InputStream keyStoreStream, String storeType,
+			char[] keyStorePassword, String keyAlias, char[] keyPassword, boolean rfc) throws ExtKeyToolException {
 
 		try {
 
@@ -228,16 +204,17 @@ public class ExtKeyTool {
 			throw new ExtKeyToolException("Could not recover key with the installed JCE providers: " + nse);
 		} catch (UnrecoverableKeyException uke) {
 			log.error("The key specified key cannot be recovered with the given password: " + uke);
-			throw new ExtKeyToolException(
-				"The key specified key cannot be recovered with the given password: " + uke);
+			throw new ExtKeyToolException("The key specified key cannot be recovered with the given password: " + uke);
 		}
 	}
 
 	/**
 	 * Boolean indication of whether a given private key and public key form a valid keypair.
 	 * 
-	 * @param pubKey the public key
-	 * @param privKey the private key
+	 * @param pubKey
+	 *            the public key
+	 * @param privKey
+	 *            the private key
 	 */
 
 	protected boolean isMatchingKey(String algorithm, PublicKey pubKey, PrivateKey privKey) {
@@ -245,6 +222,21 @@ public class ExtKeyTool {
 		try {
 			String controlString = "asdf";
 			log.debug("Checking for matching private key/public key pair");
+
+			/*
+			 * If both keys are RSA, compare the modulus. They can't be a pair if that doesn't match. Doing this early
+			 * check means we don't have to do a trial encryption for every public key (faster) and avoids warning
+			 * messages from the depths of the crypto provider if the key lengths differ.
+			 */
+			if (privKey instanceof RSAKey && pubKey instanceof RSAKey) {
+				RSAKey pubRSA = (RSAKey) pubKey;
+				RSAKey privRSA = (RSAKey) privKey;
+				if (!privRSA.getModulus().equals(pubRSA.getModulus())) {
+					log.debug("RSA modulus mismatch");
+					return false;
+				}
+			}
+
 			Cipher cipher = Cipher.getInstance(algorithm);
 			cipher.init(Cipher.ENCRYPT_MODE, pubKey);
 			byte[] encryptedData = cipher.doFinal(controlString.getBytes("UTF-8"));
@@ -262,16 +254,20 @@ public class ExtKeyTool {
 		return false;
 	}
 
-	/** 
+	/**
 	 * Attempts to unmarshall a private key from a given stream.
 	 * 
-	 * @param keyStream the <code>InputStream</code> suppying the key
-	 * @param algorithm the key algorithm
-	 * @throws ExtKeyToolException if there a problem unmarshalling the key
+	 * @param keyStream
+	 *            the <code>InputStream</code> suppying the key
+	 * @param algorithm
+	 *            the key algorithm
+	 * @throws ExtKeyToolException
+	 *             if there a problem unmarshalling the key
 	 */
 
 	protected PrivateKey readPrivateKey(String provider, InputStream keyStream, String algorithm)
-		throws ExtKeyToolException {
+			throws ExtKeyToolException {
+
 		try {
 			KeyFactory keyFactory = KeyFactory.getInstance(algorithm, provider);
 
@@ -290,26 +286,25 @@ public class ExtKeyTool {
 
 		} catch (Exception e) {
 			log.error("Problem reading private key: " + e.getMessage());
-			throw new ExtKeyToolException("Problem reading private key.  Keys should be DER encoded pkcs8 or DER encoded native format.");
+			throw new ExtKeyToolException(
+					"Problem reading private key.  Keys should be DER encoded pkcs8 or DER encoded native format.");
 		}
 	}
 
 	/**
-	 * Converts an array of certificates into an ordered chain.  A
-	 * certificate that matches the specified private key will be returned
-	 * first and the root certificate will be returned last.
+	 * Converts an array of certificates into an ordered chain. A certificate that matches the specified private key
+	 * will be returned first and the root certificate will be returned last.
 	 * 
-	 * @param	untestedCerts array of certificates
-	 * @param	privKey the private key used to determine the first cert in the chain
-	 * @throws InvalidCertificateChainException thrown if a chain cannot be constructed 
-	 * 			from the specified elements
+	 * @param untestedCerts
+	 *            array of certificates
+	 * @param privKey
+	 *            the private key used to determine the first cert in the chain
+	 * @throws InvalidCertificateChainException
+	 *             thrown if a chain cannot be constructed from the specified elements
 	 */
 
-	protected X509Certificate[] linkChain(
-		String keyAlgorithm,
-		X509Certificate[] untestedCerts,
-		PrivateKey privKey)
-		throws InvalidCertificateChainException {
+	protected X509Certificate[] linkChain(String keyAlgorithm, X509Certificate[] untestedCerts, PrivateKey privKey)
+			throws InvalidCertificateChainException {
 
 		log.debug("Located " + untestedCerts.length + " cert(s) in input file");
 
@@ -327,7 +322,8 @@ public class ExtKeyTool {
 		}
 		if (replyCerts.size() > 1) {
 			log.error("More than one certificate in chain that matches specified private key");
-			throw new InvalidCertificateChainException("More than one certificate in chain that matches specified private key");
+			throw new InvalidCertificateChainException(
+					"More than one certificate in chain that matches specified private key");
 		}
 
 		log.info("Populating chain with remaining certs.");
@@ -340,8 +336,7 @@ public class ExtKeyTool {
 				((X509Certificate) replyCerts.get(i)).verify(pubKey);
 			} catch (Exception e) {
 				log.error("Certificate chain cannot be verified: " + e.getMessage());
-				throw new InvalidCertificateChainException(
-					"Certificate chain cannot be verified: " + e.getMessage());
+				throw new InvalidCertificateChainException("Certificate chain cannot be verified: " + e.getMessage());
 			}
 		}
 		log.info("All signatures verified. Certificate chain successfully created.");
@@ -350,17 +345,19 @@ public class ExtKeyTool {
 	}
 
 	/**
-	 * Given an ArrayList containing a base certificate and an array of unordered certificates, 
-	 * populates the ArrayList with an ordered certificate chain, based on subject and issuer.
+	 * Given an ArrayList containing a base certificate and an array of unordered certificates, populates the ArrayList
+	 * with an ordered certificate chain, based on subject and issuer.
 	 * 
-	 * @param	chainSource array of certificates to pull from
-	 * @param	chainDest ArrayList containing base certificate
-	 * @throws InvalidCertificateChainException thrown if a chain cannot be constructed from 
-	 * 			the specified elements
+	 * @param chainSource
+	 *            array of certificates to pull from
+	 * @param chainDest
+	 *            ArrayList containing base certificate
+	 * @throws InvalidCertificateChainException
+	 *             thrown if a chain cannot be constructed from the specified elements
 	 */
 
 	protected void walkChain(X509Certificate[] chainSource, ArrayList chainDest)
-		throws InvalidCertificateChainException {
+			throws InvalidCertificateChainException {
 
 		X509Certificate currentCert = (X509Certificate) chainDest.get(chainDest.size() - 1);
 		if (currentCert.getSubjectDN().equals(currentCert.getIssuerDN())) {
@@ -379,39 +376,36 @@ public class ExtKeyTool {
 		}
 	}
 
-	/** 
-	 * Given a java keystore, private key, and matching certificate chain; creates a new 
-	 * keystore containing the union of these objects
+	/**
+	 * Given a java keystore, private key, and matching certificate chain; creates a new keystore containing the union
+	 * of these objects
 	 * 
-	 * @param provider			the name of the jce provider to use
-	 * @param keyAlgorithm		the algorithm of the key to be added, defaults to RSA if null
-	 * @param keyStream		strema used to retrieve the private key, can contain a PEM encoded 
-	 * 							or pkcs8 encoded key
-	 * @param chainStream		stream used to retrieve certificates, can contain a series of 
-	 * 							PEM encoded certs or a pkcs7 chain
-	 * @param keyStoreInStream	stream used to retrieve the initial keystore
-	 * @param storeType		the type of the keystore
-	 * @param keyAlias			the alias under which the key/chain should be saved
-	 * @param keyStorePassword	password used to verify the integrity of the old keystore and 
-	 * 							save the new keystore
-	 * @param keyPassword		the password for saving the key
-	 * 
+	 * @param provider
+	 *            the name of the jce provider to use
+	 * @param keyAlgorithm
+	 *            the algorithm of the key to be added, defaults to RSA if null
+	 * @param keyStream
+	 *            strema used to retrieve the private key, can contain a PEM encoded or pkcs8 encoded key
+	 * @param chainStream
+	 *            stream used to retrieve certificates, can contain a series of PEM encoded certs or a pkcs7 chain
+	 * @param keyStoreInStream
+	 *            stream used to retrieve the initial keystore
+	 * @param storeType
+	 *            the type of the keystore
+	 * @param keyAlias
+	 *            the alias under which the key/chain should be saved
+	 * @param keyStorePassword
+	 *            password used to verify the integrity of the old keystore and save the new keystore
+	 * @param keyPassword
+	 *            the password for saving the key
 	 * @return an OutputStream containing the new keystore
-	 * 
-	 * @throws ExtKeyToolException if there a problem importing the key
+	 * @throws ExtKeyToolException
+	 *             if there a problem importing the key
 	 */
 
-	public ByteArrayOutputStream importKey(
-		String provider,
-		String keyAlgorithm,
-		InputStream keyStream,
-		InputStream chainStream,
-		InputStream keyStoreInStream,
-		String storeType,
-		String keyAlias,
-		char[] keyStorePassword,
-		char[] keyPassword)
-		throws ExtKeyToolException {
+	public ByteArrayOutputStream importKey(String provider, String keyAlgorithm, InputStream keyStream,
+			InputStream chainStream, InputStream keyStoreInStream, String storeType, String keyAlias,
+			char[] keyStorePassword, char[] keyPassword) throws ExtKeyToolException {
 
 		log.info("Importing key pair.");
 		try {
@@ -431,8 +425,7 @@ public class ExtKeyTool {
 			}
 			if (keyStore.containsAlias(keyAlias) == true && keyStore.isKeyEntry(keyAlias)) {
 				log.error("Could not import key: " + "key alias (" + keyAlias + ") already exists");
-				throw new ExtKeyToolException(
-					"Could not import key: " + "key alias (" + keyAlias + ") already exists");
+				throw new ExtKeyToolException("Could not import key: " + "key alias (" + keyAlias + ") already exists");
 			}
 			keyStore.deleteEntry(keyAlias);
 
@@ -452,8 +445,8 @@ public class ExtKeyTool {
 				throw new ExtKeyToolException("Input did not contain any valid certificates.");
 			}
 
-			X509Certificate[] verifiedChain =
-				linkChain(keyAlgorithm, (X509Certificate[]) chain.toArray(new X509Certificate[0]), key);
+			X509Certificate[] verifiedChain = linkChain(keyAlgorithm, (X509Certificate[]) chain
+					.toArray(new X509Certificate[0]), key);
 
 			keyStore.setKeyEntry(keyAlias, key, keyPassword, verifiedChain);
 			ByteArrayOutputStream keyStoreOutStream = new ByteArrayOutputStream();
@@ -482,17 +475,16 @@ public class ExtKeyTool {
 	/**
 	 * Tries to decipher command line arguments.
 	 * 
-	 * @throws IllegalArgumentException if arguments are not properly formatted
+	 * @throws IllegalArgumentException
+	 *             if arguments are not properly formatted
 	 */
 
 	private static Properties parseArguments(String[] args) throws IllegalArgumentException {
 
-		if (args.length < 1) {
-			throw new IllegalArgumentException("No arguments found.");
-		}
+		if (args.length < 1) { throw new IllegalArgumentException("No arguments found."); }
 		Properties parsedArguments = new Properties();
 
-		for (int i = 0;(i < args.length) && args[i].startsWith("-"); i++) {
+		for (int i = 0; (i < args.length) && args[i].startsWith("-"); i++) {
 
 			String flags = args[i];
 
@@ -505,54 +497,42 @@ public class ExtKeyTool {
 
 			//parse specifiers
 			else if (flags.equalsIgnoreCase("-alias")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -alias requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException("The argument -alias requires a parameter"); }
 				parsedArguments.setProperty("alias", args[i]);
 			} else if (flags.equalsIgnoreCase("-keyfile")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -keyfile requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -keyfile requires a parameter"); }
 				parsedArguments.setProperty("keyFile", args[i]);
 			} else if (flags.equalsIgnoreCase("-certfile")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -certfile requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -certfile requires a parameter"); }
 				parsedArguments.setProperty("certFile", args[i]);
 			} else if (flags.equalsIgnoreCase("-keystore")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -keystore requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -keystore requires a parameter"); }
 				parsedArguments.setProperty("keyStore", args[i]);
 			} else if (flags.equalsIgnoreCase("-storepass")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -storepass requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -storepass requires a parameter"); }
 				parsedArguments.setProperty("storePass", args[i]);
 			} else if (flags.equalsIgnoreCase("-storetype")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -storetype requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -storetype requires a parameter"); }
 				parsedArguments.setProperty("storeType", args[i]);
 			} else if (flags.equalsIgnoreCase("-keypass")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -keypass requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -keypass requires a parameter"); }
 				parsedArguments.setProperty("keyPass", args[i]);
 			} else if (flags.equalsIgnoreCase("-provider")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -provider requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -provider requires a parameter"); }
 				parsedArguments.setProperty("provider", args[i]);
 			} else if (flags.equalsIgnoreCase("-file")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -file requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException("The argument -file requires a parameter"); }
 				parsedArguments.setProperty("file", args[i]);
 			} else if (flags.equalsIgnoreCase("-algorithm")) {
-				if (++i == args.length) {
-					throw new IllegalArgumentException("The argument -algorithm requires a parameter");
-				}
+				if (++i == args.length) { throw new IllegalArgumentException(
+						"The argument -algorithm requires a parameter"); }
 				parsedArguments.setProperty("keyAlgorithm", args[i]);
 			}
 
@@ -565,15 +545,13 @@ public class ExtKeyTool {
 				throw new IllegalArgumentException("Unrecognized argument: " + flags);
 			}
 		}
-		if (parsedArguments.getProperty("command", null) == null) {
-			throw new IllegalArgumentException("No action specified");
-		}
+		if (parsedArguments.getProperty("command", null) == null) { throw new IllegalArgumentException(
+				"No action specified"); }
 		return parsedArguments;
 	}
 
 	/**
-	 * Ensures that providers specified on the command line are in fact loaded
-	 * into the current environment.
+	 * Ensures that providers specified on the command line are in fact loaded into the current environment.
 	 * 
 	 * @return the name of the provider add, null if no provider was added
 	 */
@@ -600,9 +578,9 @@ public class ExtKeyTool {
 	 */
 
 	protected void startLogger(Properties arguments) {
+
 		Logger root = Logger.getRootLogger();
-		if (arguments.getProperty("verbose", null) == null
-			|| arguments.getProperty("verbose", null).equals("false")) {
+		if (arguments.getProperty("verbose", null) == null || arguments.getProperty("verbose", null).equals("false")) {
 			root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
 			root.setLevel(Level.WARN);
 		} else {
@@ -619,8 +597,8 @@ public class ExtKeyTool {
 			try {
 				arguments = parseArguments(args);
 			} catch (IllegalArgumentException iae) {
-				System.err.println(
-					"Illegal argument specified: " + iae.getMessage() + System.getProperty("line.separator"));
+				System.err.println("Illegal argument specified: " + iae.getMessage()
+						+ System.getProperty("line.separator"));
 				printUsage(System.err);
 				System.exit(1);
 			}
@@ -641,7 +619,8 @@ public class ExtKeyTool {
 	/**
 	 * Based on on a set of properties, executes <code>ExtKeyTool</code> actions.
 	 * 
-	 * @param arguments runtime parameters specified on the command line
+	 * @param arguments
+	 *            runtime parameters specified on the command line
 	 */
 
 	private void run(Properties arguments) throws ExtKeyToolException {
@@ -679,15 +658,10 @@ public class ExtKeyTool {
 			}
 
 			try {
-				exportKey(
-					providerName,
-					outStream,
-					new FileInputStream(resolveKeyStore(arguments.getProperty("keyStore", null))),
-					arguments.getProperty("storeType", null),
-					storePassword,
-					arguments.getProperty("alias", null),
-					resolveKeyPass(arguments.getProperty("keyPass", null), storePassword),
-					rfc);
+				exportKey(providerName, outStream, new FileInputStream(resolveKeyStore(arguments.getProperty(
+						"keyStore", null))), arguments.getProperty("storeType", null), storePassword, arguments
+						.getProperty("alias", null), resolveKeyPass(arguments.getProperty("keyPass", null),
+						storePassword), rfc);
 			} catch (FileNotFoundException e) {
 				throw new ExtKeyToolException("KeyStore not found.");
 			}
@@ -719,26 +693,18 @@ public class ExtKeyTool {
 			}
 
 			try {
-				
-				ByteArrayOutputStream keyStoreOutStream =
-					importKey(
-						providerName,
-						arguments.getProperty("keyAlgorithm", null),
-						keyInStream,
-						certInStream,
-						new FileInputStream(resolveKeyStore(arguments.getProperty("keyStore", null))),
-						arguments.getProperty("storeType", null),
-						arguments.getProperty("alias", null),
-						storePassword,
-						resolveKeyPass(arguments.getProperty("keyPass", null), storePassword));
+
+				ByteArrayOutputStream keyStoreOutStream = importKey(providerName, arguments.getProperty("keyAlgorithm",
+						null), keyInStream, certInStream, new FileInputStream(resolveKeyStore(arguments.getProperty(
+						"keyStore", null))), arguments.getProperty("storeType", null), arguments.getProperty("alias",
+						null), storePassword, resolveKeyPass(arguments.getProperty("keyPass", null), storePassword));
 
 				keyInStream.close();
 				// A quick sanity check before we overwrite the old keystore
-				if (keyStoreOutStream == null || keyStoreOutStream.size() < 1) {
-					throw new ExtKeyToolException("Failed to create keystore: results are null");
-				}
-				keyStoreOutStream.writeTo(
-					new FileOutputStream(resolveKeyStore(arguments.getProperty("keyStore", null))));
+				if (keyStoreOutStream == null || keyStoreOutStream.size() < 1) { throw new ExtKeyToolException(
+						"Failed to create keystore: results are null"); }
+				keyStoreOutStream
+						.writeTo(new FileOutputStream(resolveKeyStore(arguments.getProperty("keyStore", null))));
 				System.out.println("Key import successful.");
 
 			} catch (FileNotFoundException e) {
@@ -748,8 +714,8 @@ public class ExtKeyTool {
 			}
 
 		} else {
-			throw new IllegalArgumentException(
-				"This keytool cannot perform the operation: (" + arguments.getProperty("command") + ")");
+			throw new IllegalArgumentException("This keytool cannot perform the operation: ("
+					+ arguments.getProperty("command") + ")");
 		}
 
 	}
@@ -760,8 +726,7 @@ public class ExtKeyTool {
 	 * @return the <code>File</code> representation of the selected keystore
 	 */
 
-	protected File resolveKeyStore(String keyStoreLocation)
-		throws ExtKeyToolException, FileNotFoundException {
+	protected File resolveKeyStore(String keyStoreLocation) throws ExtKeyToolException, FileNotFoundException {
 
 		if (keyStoreLocation == null) {
 			keyStoreLocation = System.getProperty("user.home") + File.separator + ".keystore";
@@ -776,8 +741,9 @@ public class ExtKeyTool {
 	}
 
 	/**
-	 * Decides what password to use for storing/retrieving keys from the keystore.  NOTE: Possible
-	 * terminal interaction with the user.
+	 * Decides what password to use for storing/retrieving keys from the keystore. NOTE: Possible terminal interaction
+	 * with the user.
+	 * 
 	 * @return a char array containing the password
 	 */
 
@@ -793,9 +759,7 @@ public class ExtKeyTool {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 				String passwordInput = reader.readLine();
 				passwordInput.trim();
-				if (passwordInput != null && !passwordInput.equals("")) {
-					return passwordInput.toCharArray();
-				}
+				if (passwordInput != null && !passwordInput.equals("")) { return passwordInput.toCharArray(); }
 			} catch (IOException e) {
 				log.warn(e.getMessage());
 			}
@@ -835,7 +799,6 @@ public class ExtKeyTool {
 	 */
 
 	// Sure makes you wish bytes were first class objects.
-
 	private class ByteContainer {
 
 		private byte[] buffer;
@@ -843,11 +806,13 @@ public class ExtKeyTool {
 		private int currentSize = 0;
 
 		private ByteContainer(int cushion) {
+
 			buffer = new byte[cushion];
 			this.cushion = cushion;
 		}
 
 		private void grow() {
+
 			log.debug("Growing ByteContainer.");
 			int newSize = currentSize + cushion;
 			byte[] b = new byte[newSize];
@@ -859,11 +824,13 @@ public class ExtKeyTool {
 			buffer = b;
 		}
 
-		/** 
-		 * Returns an array of the bytes in the container. <p>
+		/**
+		 * Returns an array of the bytes in the container.
+		 * <p>
 		 */
 
 		private byte[] toByteArray() {
+
 			byte[] b = new byte[currentSize];
 			for (int i = 0; i < currentSize; i++) {
 				b[i] = buffer[i];
@@ -871,11 +838,12 @@ public class ExtKeyTool {
 			return b;
 		}
 
-		/** 
+		/**
 		 * Add one byte to the end of the container.
 		 */
 
 		private void append(byte b) {
+
 			if (currentSize == buffer.length) {
 				grow();
 			}
@@ -892,18 +860,19 @@ public class ExtKeyTool {
 	protected class ExtKeyToolException extends Exception {
 
 		protected ExtKeyToolException(String message) {
+
 			super(message);
 		}
 	}
 
 	/**
-	 * Signals that an error occurred while trying to constuct a
-	 * certificate chain.
+	 * Signals that an error occurred while trying to constuct a certificate chain.
 	 */
 
 	protected class InvalidCertificateChainException extends ExtKeyToolException {
 
 		protected InvalidCertificateChainException(String message) {
+
 			super(message);
 		}
 	}
