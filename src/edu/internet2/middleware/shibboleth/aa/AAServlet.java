@@ -71,6 +71,8 @@ import edu.internet2.middleware.shibboleth.common.*;
 import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
+import org.doomdark.uuid.UUIDGenerator;
 
 
 
@@ -87,11 +89,13 @@ public class AAServlet extends HttpServlet {
     ArpFactory arpFactory;
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
-    public void init(ServletConfig conf)
+    public void init()
 	throws ServletException{
+		
+	MDC.put("serviceId", "[AA Core]");
 	
 	try{
-	    super.init(conf);
+
 	    edu.internet2.middleware.eduPerson.Init.init();
 	    myName = getInitParameter("domain");
 	    dirUrl = getInitParameter("dirUrl");
@@ -143,6 +147,9 @@ public class AAServlet extends HttpServlet {
         throws ServletException, IOException {
         	
 	log.info("Recieved a request.");
+	MDC.put("serviceId", UUIDGenerator.getInstance().generateRandomBasedUUID());
+	MDC.put("remoteAddr", req.getRemoteAddr());
+	log.info("Handling request.");
 
 	SAMLAttribute[] attrs = null;
 	SAMLException ourSE = null;

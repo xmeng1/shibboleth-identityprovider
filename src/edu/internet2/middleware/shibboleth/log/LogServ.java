@@ -53,6 +53,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xml.security.Init;
 
@@ -81,6 +82,7 @@ public class LogServ extends HttpServlet {
 			log4jConfigFileLocation = "/WEB-INF/conf/log4j.properties";
 		}
 		PropertyConfigurator.configure(getServletContext().getRealPath("/") + log4jConfigFileLocation);
+			MDC.put("serviceId", "[Logging Core]");
 		log.info("Logger initialized.");
 	}
 
