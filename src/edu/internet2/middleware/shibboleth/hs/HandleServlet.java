@@ -81,10 +81,10 @@ import org.xml.sax.SAXParseException;
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credentials;
-import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
@@ -97,7 +97,7 @@ public class HandleServlet extends HttpServlet {
 	private Credentials credentials;
 	private HSNameMapper nameMapper;
 	private ShibPOSTProfile postProfile = new ShibPOSTProfile();
-	private ServiceProviderMapper targetMapper = new ServiceProviderMapper();
+	private ServiceProviderMapper targetMapper;
 
 	protected void loadConfiguration() throws HSConfigurationException {
 
@@ -151,6 +151,27 @@ public class HandleServlet extends HttpServlet {
 			} catch (NameIdentifierMappingException e) {
 				log.error("Name Identifier mapping could not be loaded: " + e);
 			}
+		}
+
+		//Load relying party config
+		targetMapper = new ServiceProviderMapper(configuration, credentials);
+		
+		itemElements =
+			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+				ShibbolethOriginConfig.originConfigNamespace,
+				"RelyingParty");
+
+		for (int i = 0; i < itemElements.getLength(); i++) {
+			targetMapper.addRelyingParty((Element) itemElements.item(i));
+		}
+
+		itemElements =
+			parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+				ShibbolethOriginConfig.originConfigNamespace,
+				"RelyingPartyGroup");
+
+		for (int i = 0; i < itemElements.getLength(); i++) {
+			targetMapper.addRelyingParty((Element) itemElements.item(i));
 		}
 	}
 
@@ -397,16 +418,5 @@ public class HandleServlet extends HttpServlet {
 			notify();
 		}
 	}
-	//TODO This is just a stub... and should be moved out when meat is added
-	class ServiceProviderMapper {
 
-		/**
-		 * @param providerIdFromTarget
-		 * @return
-		 */
-		public RelyingParty getRelyingParty(String providerIdFromTarget) {
-
-			return new RelyingParty(null, configuration, credentials);
-		}
-	}
 }

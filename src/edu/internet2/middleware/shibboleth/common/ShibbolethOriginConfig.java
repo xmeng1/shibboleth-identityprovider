@@ -59,9 +59,11 @@ import edu.internet2.middleware.shibboleth.hs.HSConfigurationException;
 
 /**
  * @author Walter Hoehn
- *
+ *  
  */
 public class ShibbolethOriginConfig {
+
+	public static final String originConfigNamespace = "urn:mace:shibboleth:origin:1.0";
 
 	private static Logger log = Logger.getLogger(ShibbolethOriginConfig.class.getName());
 	protected Properties properties = new Properties();
@@ -92,6 +94,13 @@ public class ShibbolethOriginConfig {
 			throw new HSConfigurationException("Required configuration not specified.");
 		}
 		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId", attribute);
+		
+		attribute = ((Element) config).getAttribute("defaultRelyingParty");
+		if (attribute == null || attribute.equals("")) {
+			log.error("Global providerId not set.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
+			throw new HSConfigurationException("Required configuration not specified.");
+		}
+		properties.setProperty("edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty", attribute);
 
 		attribute = ((Element) config).getAttribute("AAUrl");
 		if (attribute == null || attribute.equals("")) {

@@ -47,85 +47,18 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import java.util.Properties;
-
-import org.w3c.dom.Element;
-
 /**
  * @author Walter Hoehn
  */
-public class RelyingParty implements ServiceProvider {
+public interface RelyingParty extends ServiceProvider {
 
-	private ShibbolethOriginConfig originConfig;
-	private Properties partyOverrides = new Properties();
-	//TODO stub
-	private String id = "test:id";
-	private RelyingPartyIdentityProvider identityProvider;
+	public String getName();
 
-	public RelyingParty(Element partyConfig, ShibbolethOriginConfig globalConfig, Credentials credentials) {
-		this.originConfig = globalConfig;
-		//TODO setup things
+	public String getConfigProperty(String key);
 
-		//TODO this is just a stub... has to come from configuration
-		partyOverrides.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.HandleServlet.responseSigningCredential",
-			"foo");
+	public boolean isLegacyProvider();
 
-		identityProvider =
-			new RelyingPartyIdentityProvider(
-				getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId"),
-				credentials.getCredential(
-					getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.responseSigningCredential")));
-	}
+	public String getHSNameFormatId();
 
-	public String getProviderId() {
-		return id;
-	}
-
-	public String getName() {
-		return id;
-	}
-
-	public String getConfigProperty(String key) {
-		if (partyOverrides.containsKey(key)) {
-			return partyOverrides.getProperty(key);
-		}
-		return originConfig.getConfigProperty(key);
-	}
-
-	public boolean isLegacyProvider() {
-		//TODO implement
-		return true;
-	}
-
-	public String getHSNameFormatId() {
-		return null;
-	}
-
-	public RelyingPartyIdentityProvider getIdentityProvider() {
-		return identityProvider;
-	}
-}
-
-class RelyingPartyIdentityProvider implements IdentityProvider {
-
-	private String providerId;
-	private Credential responseSigningCredential;
-
-	RelyingPartyIdentityProvider(String providerId, Credential responseSigningCred) {
-		this.providerId = providerId;
-		this.responseSigningCredential = responseSigningCred;
-	}
-	public String getProviderId() {
-		return providerId;
-	}
-
-	public Credential getResponseSigningCredential() {
-		return responseSigningCredential;
-	}
-
-	public Credential getAssertionSigningCredential() {
-		return null;
-	}
-
+	public IdentityProvider getIdentityProvider();
 }
