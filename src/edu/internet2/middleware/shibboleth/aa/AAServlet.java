@@ -79,85 +79,89 @@ import org.apache.log4j.MDC;
 
 public class AAServlet extends HttpServlet {
 
-    String myName;
-    String dirUrl;
     String uidSyntax;
-    String arpFactoryMethod;
-    String ctxFactory;
     AAResponder responder;
     HandleRepositoryFactory hrf;
+    protected Properties configuration;
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
-    public void init()
-	throws ServletException{
-		
-	MDC.put("serviceId", "[AA Core]");
-	
-	try{
+	public void init() throws ServletException {
 
-	    edu.internet2.middleware.eduPerson.Init.init();
-	    myName = getInitParameter("domain");
-	    dirUrl = getInitParameter("dirUrl");
-	    uidSyntax = getInitParameter("ldapUserDnPhrase");
-	    ctxFactory = getInitParameter("ctxFactoryClass");
-	    if(ctxFactory == null)
-		ctxFactory = "com.sun.jndi.ldap.LdapCtxFactory";
-            // build a properties object to be handed to ArpFactories
-            // include all parameters :-(
-            Enumeration en = getInitParameterNames();
-            
-            
-            
-            Properties defaultProps = new Properties();
-            defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path"
-            	, getServletContext().getRealPath("/WEB-INF/conf/arps"));
-            defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation"
-            	, "edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-            
-            
-            Properties props = new Properties(defaultProps);
-            while(en.hasMoreElements()){
-                String key = (String)en.nextElement();
-                String val = getInitParameter(key);
-                props.setProperty(key, val);
-            }
+		MDC.put("serviceId", "[AA Core]");
+		log.info("Initializing Attribute Authority.");
 
-			ArpEngine arpEngine = new ArpEngine(props);
-	
+		try {
 
-	    log.info("Using "+ctxFactory+" as directory for attributes.");
+			configuration = loadConfiguration();
 
-	    Hashtable env = new Hashtable(11);
-	    env.put(Context.INITIAL_CONTEXT_FACTORY, ctxFactory);
-	    env.put(Context.PROVIDER_URL, dirUrl);
-	    
-	    if (getInitParameter("ctxPrincipal") != null && getInitParameter("ctxCredentials")  != null) {
-	    	env.put(Context.SECURITY_PRINCIPAL, getInitParameter("ctxPrincipal"));
-	    	env.put(Context.SECURITY_CREDENTIALS, getInitParameter("ctxCredentials"));
-	    }
-	    
-	    DirContext ctx = new InitialDirContext(env);
-	    
-	    responder = new AAResponder(arpEngine, ctx, myName);
+			ArpEngine arpEngine = new ArpEngine(configuration);
+			edu.internet2.middleware.eduPerson.Init.init();
 
-	    hrf = getHandleRepository();
+			uidSyntax = getInitParameter("ldapUserDnPhrase");
 
-	    log.info("AA all initialized at "+new Date());
+			log.info(
+				"Using JNDI context ("
+					+ configuration.getProperty("java.naming.factory.initial")
+					+ ") for attribute retrieval.");
 
-	}catch(NamingException ne){
-	    log.fatal("AA init failed: "+ne);
-	    throw new ServletException("Init failed: "+ne);
-	}catch(ArpException ae){
-	    log.fatal("AA init failed: "+ae);
-	    throw new ServletException("Init failed: "+ae);
-	}catch(AAException ae){
-	    log.fatal("AA init failed: "+ae);
-	    throw new ServletException("Init failed: "+ae);
-	}catch(HandleException he){
-	    log.fatal("AA init failed: "+he);
-	    throw new ServletException("Init failed: "+he);
+			DirContext ctx = new InitialDirContext(configuration);
+
+			responder =
+				new AAResponder(
+					arpEngine,
+					ctx,
+					configuration.getProperty(
+						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
+
+			hrf = getHandleRepository();
+
+			log.info("Attribute Authority initialization complete.");
+
+		} catch (NamingException ne) {
+			log.fatal("AA init failed: " + ne);
+			throw new ServletException("Init failed: " + ne);
+		} catch (ArpException ae) {
+			log.fatal("AA init failed: " + ae);
+			throw new ServletException("Init failed: " + ae);
+		} catch (AAException ae) {
+			log.fatal("AA init failed: " + ae);
+			throw new ServletException("Init failed: " + ae);
+		} catch (HandleException he) {
+			log.fatal("AA init failed: " + he);
+			throw new ServletException("Init failed: " + he);
+		}
 	}
-    }
+	protected Properties loadConfiguration() throws AAException {
+
+		//Set defaults
+		Properties defaultProps = new Properties();
+		defaultProps.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
+			getServletContext().getRealPath("/WEB-INF/conf/arps"));
+		defaultProps.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
+		defaultProps.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName", 
+			"shib2.internet2.edu");
+		defaultProps.setProperty(
+			"java.naming.factory.initial", 
+			"edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory");
+
+		//Load from file
+		Properties properties = new Properties(defaultProps);
+		String propertiesFileLocation = getInitParameter("OriginPropertiesFile");
+		if (propertiesFileLocation == null) {
+			propertiesFileLocation = "/WEB-INF/conf/origin.properties";
+		}
+		try {
+			properties.load(getServletContext().getResourceAsStream(propertiesFileLocation));
+		} catch (IOException e) {
+			log.error("Could not load AA servlet configuration: " + e);
+			throw new AAException("Could not load AA servlet configuration.");
+		}
+		return properties;
+	}
 
     public void doPost(HttpServletRequest req, HttpServletResponse resp)
         throws ServletException, IOException {
@@ -173,7 +177,8 @@ public class AAServlet extends HttpServlet {
 	String userName = null;
 	    
 	try{
-	    saml = new AASaml(myName);
+	    saml = new AASaml(configuration.getProperty(
+						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
 	    saml.receive(req);
 	    
 	    URL resource = null; 
