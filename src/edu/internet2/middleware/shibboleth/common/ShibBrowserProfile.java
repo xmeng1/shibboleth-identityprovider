@@ -58,9 +58,7 @@ import org.opensaml.SAMLSignedObject;
 import org.opensaml.TrustException;
 
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.IDPSSODescriptor;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
-import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContext;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
