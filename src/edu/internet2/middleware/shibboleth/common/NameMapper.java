@@ -66,13 +66,13 @@ public class NameMapper {
 	static {
 		try {
 			registeredMappingTypes.put("CryptoHandleGenerator", Class
-					.forName("edu.internet2.middleware.shibboleth.hs.provider.CryptoShibHandle"));
+					.forName("edu.internet2.middleware.shibboleth.common.provider.CryptoShibHandle"));
 
 			registeredMappingTypes.put("SharedMemoryShibHandle", Class
-					.forName("edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle"));
+					.forName("edu.internet2.middleware.shibboleth.common.provider.SharedMemoryShibHandle"));
 
 			registeredMappingTypes.put("Principal", Class
-					.forName("edu.internet2.middleware.shibboleth.hs.provider.PrincipalNameIdentifier"));
+					.forName("edu.internet2.middleware.shibboleth.common.provider.PrincipalNameIdentifier"));
 
 		} catch (ClassNotFoundException e) {
 			log.error("Unable to pre-register Name mapping implementation types.");
