@@ -48,7 +48,6 @@ public class XMLOriginSiteMapper implements OriginSiteMapper
         throws SAXException, java.io.IOException, XMLSecurityException
     {
         this.ks = ks;
-        boolean verified = false;
 
         DocumentBuilder builder = null;
         try
@@ -60,59 +59,17 @@ public class XMLOriginSiteMapper implements OriginSiteMapper
                 throw new SAXException("XMLOriginSiteMapper() requires shib:Sites as root element");
 
             // Loop over the OriginSite elements.
-            Node os = e.getFirstChild();
-            while (os != null)
+            NodeList nlist = e.getElementsByTagNameNS(XML.SHIB_NS,"OriginSite");
+            for (int i=0; nlist!=null && i<nlist.getLength(); i++)
             {
-                if (os.getNodeType() != Node.ELEMENT_NODE)
-                {
-                    os = os.getNextSibling();
-                    continue;
-                }
-
-                if (org.opensaml.XML.XMLSIG_NS.equals(os.getNamespaceURI()) && "Signature".equals(os.getLocalName()))
-                {
-                    XMLSignature sig = new XMLSignature((Element)os, null);
-
-                    // First, we verify that what is signed is what we expect.
-                    SignedInfo sinfo = sig.getSignedInfo();
-                    if (sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS) ||
-                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS))
-//                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS) ||
-//                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS))
-                    {
-                        Reference ref = sinfo.item(0);
-                        if (ref.getURI() == null || ref.getURI().equals(""))
-                        {
-                            Transforms trans = ref.getTransforms();
-                            if (trans.getLength() == 1 && trans.item(0).getURI().equals(Transforms.TRANSFORM_ENVELOPED_SIGNATURE))
-                            {
-                                // Lastly, we check the signature value.
-                                if (sig.checkSignatureValue(verifyKey))
-                                    verified = true;
-                            }
-                        }
-                    }
-                    break;
-                }
-
-                if (!XML.SHIB_NS.equals(os.getNamespaceURI()) || !"OriginSite".equals(os.getLocalName()))
-                {
-                    os = os.getNextSibling();
-                    continue;
-                }
-
-                // os is an OriginSite.
-                String os_name = ((Element)os).getAttributeNS(null, "Name").trim();
+                String os_name = ((Element)nlist.item(i)).getAttributeNS(null, "Name").trim();
                 if (os_name.length() == 0)
-                {
-                    os = os.getNextSibling();
                     continue;
-                }
 
                 OriginSite os_obj = new OriginSite(os_name);
                 originSites.put(os_name, os_obj);
 
-                Node os_child = os.getFirstChild();
+                Node os_child = nlist.item(i).getFirstChild();
                 while (os_child != null)
                 {
                     if (os_child.getNodeType() != Node.ELEMENT_NODE)
@@ -157,7 +114,36 @@ public class XMLOriginSiteMapper implements OriginSiteMapper
                     }
                     os_child = os_child.getNextSibling();
                 }
-                os = os.getNextSibling();
+            }
+
+            Node n=e.getLastChild();
+            while (n!=null && n.getNodeType()!=Node.ELEMENT_NODE)
+                n=n.getPreviousSibling();
+
+            boolean verified = false;
+            if (n!=null && org.opensaml.XML.XMLSIG_NS.equals(n.getNamespaceURI()) && "Signature".equals(n.getLocalName()))
+            {
+                XMLSignature sig = new XMLSignature((Element)n, null);
+
+                // First, we verify that what is signed is what we expect.
+                SignedInfo sinfo = sig.getSignedInfo();
+                if (sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_WITH_COMMENTS) ||
+                    sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_OMIT_COMMENTS))
+//                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS) ||
+//                        sinfo.getCanonicalizationMethodURI().equals(Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS))
+                {
+                    Reference ref = sinfo.item(0);
+                    if (ref.getURI() == null || ref.getURI().equals(""))
+                    {
+                        Transforms trans = ref.getTransforms();
+                        if (trans.getLength() == 1 && trans.item(0).getURI().equals(Transforms.TRANSFORM_ENVELOPED_SIGNATURE))
+                        {
+                            // Lastly, we check the signature value.
+                            if (sig.checkSignatureValue(verifyKey))
+                                verified = true;
+                        }
+                    }
+                }
             }
 
             if (verifyKey != null && !verified)
