@@ -78,6 +78,7 @@ import edu.internet2.middleware.eduPerson.Init;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 import edu.internet2.middleware.shibboleth.hs.HandleRepositoryFactory;
@@ -165,7 +166,7 @@ public class AAServlet extends HttpServlet {
 			"edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
-			getServletContext().getRealPath("/WEB-INF/conf/handle.jks"));
+			getServletContext().getRealPath("/conf/handle.jks"));
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);
@@ -175,7 +176,7 @@ public class AAServlet extends HttpServlet {
 		}
 		try {
 			log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
-			properties.load(getServletContext().getResourceAsStream(propertiesFileLocation));
+			properties.load(new ShibResource(propertiesFileLocation, this.getClass()).getInputStream());
 		} catch (IOException e) {
 			log.error("Could not load AA servlet configuration: " + e);
 			throw new AAException("Could not load AA servlet configuration.");
@@ -186,9 +187,7 @@ public class AAServlet extends HttpServlet {
 			PrintStream debugPrinter = new PrintStream(debugStream);
 			properties.list(debugPrinter);
 			log.debug(
-				"Runtime configuration parameters: "
-					+ System.getProperty("line.separator")
-					+ debugStream.toString());
+				"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
 		}
 
 		return properties;

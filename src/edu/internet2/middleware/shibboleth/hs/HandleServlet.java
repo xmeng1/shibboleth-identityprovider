@@ -85,6 +85,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
+import edu.internet2.middleware.shibboleth.common.ShibResource;
 
 public class HandleServlet extends HttpServlet {
 
@@ -111,11 +112,11 @@ public class HandleServlet extends HttpServlet {
 		Properties properties = new Properties(defaultProps);
 		String propertiesFileLocation = getInitParameter("OriginPropertiesFile");
 		if (propertiesFileLocation == null) {
-			propertiesFileLocation = "/WEB-INF/conf/origin.properties";
+			propertiesFileLocation = "/conf/origin.properties";
 		}
 		try {
 			log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
-			properties.load(getServletContext().getResourceAsStream(propertiesFileLocation));
+			properties.load(new ShibResource(propertiesFileLocation, this.getClass()).getInputStream());
 		} catch (IOException e) {
 			log.error("Could not load HS servlet configuration: " + e);
 			throw new HSConfigurationException("Could not load HS servlet configuration.");
