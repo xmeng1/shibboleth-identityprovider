@@ -133,7 +133,7 @@ public class Arp {
 	 * @param the xml <code>Element</code> containing the ARP structure.
 	 */
 
-	void marshall(Element xmlElement) throws ArpMarshallingException {
+	public void marshall(Element xmlElement) throws ArpMarshallingException {
 
 		//Make sure we are deling with an ARP
 		if (!xmlElement.getTagName().equals("AttributeReleasePolicy")) {
@@ -197,7 +197,7 @@ public class Arp {
 	 * @return the xml <code>Element</code>
 	 */
 
-	Element unmarshall() throws ArpMarshallingException {
+	public Element unmarshall() throws ArpMarshallingException {
 
 		try {
 			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();

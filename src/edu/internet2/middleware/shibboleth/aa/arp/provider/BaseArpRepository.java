@@ -49,9 +49,20 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
+import java.io.IOException;
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpMarshallingException;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 
@@ -64,4 +75,214 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 
 public abstract class BaseArpRepository implements ArpRepository {
 
+	private static Logger log = Logger.getLogger(BaseArpRepository.class.getName());
+	private ArpCache arpCache;
+
+	BaseArpRepository(Properties properties) {
+		if (properties
+			.getProperty(
+				"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
+				null)
+			!= null) {
+			arpCache = ArpCache.instance();
+			arpCache.setCacheLength(
+				Long.parseLong(
+					properties.getProperty(
+						"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
+						null)));
+		}
+	}
+
+	/**
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getAllPolicies(Principal)
+	 */
+
+	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
+		log.debug(
+			"Received a query for all policies applicable to principal: ("
+				+ principal.getName()
+				+ ").");
+		Set allPolicies = new HashSet();
+		if (getSitePolicy() != null) {
+			log.debug("Returning site policy.");
+			allPolicies.add(getSitePolicy());
+		}
+		if (getUserPolicy(principal) != null) {
+			allPolicies.add(getUserPolicy(principal));
+			log.debug("Returning user policy.");
+		}
+		if (allPolicies.isEmpty()) {
+			log.debug("No policies found.");
+		}
+		return (Arp[]) allPolicies.toArray(new Arp[0]);
+	}
+
+	/**
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getSitePolicy()
+	 */
+	public Arp getSitePolicy() throws ArpRepositoryException {
+
+		try {
+			if (arpCache != null) {
+				Arp cachedArp = arpCache.retrieveSiteArpFromCache();
+				if (cachedArp != null) {
+					log.debug("Using cached site ARP.");
+					return cachedArp;
+				}
+			}
+
+			Element xml = retrieveSiteArpXml();
+			if (xml == null) {
+				return null;
+			}
+
+			Arp siteArp = new Arp();
+			siteArp.marshall(xml);
+			if (arpCache != null) {
+				arpCache.cache(siteArp);
+			}
+			return siteArp;
+		} catch (ArpMarshallingException ame) {
+			log.error("An error occurred while marshalling an ARP: " + ame);
+			throw new ArpRepositoryException("An error occurred while marshalling an ARP.");
+		} catch (IOException ioe) {
+			log.error("An error occurred while loading an ARP: " + ioe);
+			throw new ArpRepositoryException("An error occurred while loading an ARP.");
+		} catch (SAXException se) {
+			log.error("An error occurred while parsing an ARP: " + se);
+			throw new ArpRepositoryException("An error occurred while parsing an ARP.");
+		}
+	}
+
+	/**
+	 * Inheritors must return the site Arp as an xml element.
+	 * @return Element
+	 */
+	protected abstract Element retrieveSiteArpXml() throws IOException, SAXException;
+
+	/**
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getUserPolicy(Principal)
+	 */
+	public Arp getUserPolicy(Principal principal) throws ArpRepositoryException {
+
+		if (arpCache != null) {
+			Arp cachedArp = arpCache.retrieveUserArpFromCache(principal);
+			if (cachedArp != null) {
+				log.debug("Using cached user ARP.");
+				return cachedArp;
+			}
+		}
+
+		try {
+			Element xml = retrieveUserArpXml(principal);
+			if (xml == null) {
+				return null;
+			}
+
+			Arp userArp = new Arp();
+			userArp.setPrincipal(principal);
+
+			userArp.marshall(xml);
+			if (arpCache != null) {
+				arpCache.cache(userArp);
+			}
+			return userArp;
+		} catch (ArpMarshallingException ame) {
+			log.error("An error occurred while marshalling an ARP: " + ame);
+			throw new ArpRepositoryException("An error occurred while marshalling an ARP.");
+		} catch (IOException ioe) {
+			log.error("An error occurred while loading an ARP: " + ioe);
+			throw new ArpRepositoryException("An error occurred while loading an ARP.");
+		} catch (SAXException se) {
+			log.error("An error occurred while parsing an ARP: " + se);
+			throw new ArpRepositoryException("An error occurred while parsing an ARP.");
+		}
+	}
+
+	/**
+	 * Inheritors must return the user Arp as an xml element.
+	 * @return Element
+	 */
+	protected abstract Element retrieveUserArpXml(Principal principal)
+		throws IOException, SAXException;
+
+}
+
+class ArpCache {
+
+	private static ArpCache instance = null;
+	private long cacheLength;
+	private Map cache = new HashMap();
+
+	protected ArpCache() {
+	}
+
+	static ArpCache instance() {
+		if (instance == null) {
+			return new ArpCache();
+		}
+		return instance;
+	}
+
+	void setCacheLength(long cacheLength) {
+		this.cacheLength = cacheLength;
+	}
+
+	void cache(Arp arp) {
+		if (arp.isSitePolicy() == false) {
+			cache.put(arp.getPrincipal(), new CachedArp(arp, System.currentTimeMillis()));
+		} else {
+			cache.put(new SiteCachePrincipal(), new CachedArp(arp, System.currentTimeMillis()));
+		}
+	}
+
+	Arp retrieveUserArpFromCache(Principal principal) {
+		return retrieveArpFromCache(principal);
+	}
+
+	Arp retrieveSiteArpFromCache() {
+		return retrieveArpFromCache(new SiteCachePrincipal());
+	}
+
+	private Arp retrieveArpFromCache(Principal principal) {
+		CachedArp cachedArp = (CachedArp) cache.get(principal);
+		if (cachedArp == null) {
+			return null;
+		}
+
+		if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) < cacheLength) {
+			return cachedArp.arp;
+		}
+		cache.remove(principal);
+		return null;
+	}
+
+	class CachedArp {
+		Arp arp;
+		long creationTimeMillis;
+
+		CachedArp(Arp arp, long creationTimeMillis) {
+			this.arp = arp;
+			this.creationTimeMillis = creationTimeMillis;
+		}
+	}
+
+	class SiteCachePrincipal implements Principal {
+
+		public String getName() {
+			return "ARP admin";
+		}
+
+		public boolean equals(Object object) {
+			if (object instanceof SiteCachePrincipal) {
+				return true;
+			}
+			return false;
+		}
+
+		public long hashcode() {
+			return "edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository.SiteCachePrincipal"
+				.hashCode();
+		}
+	}
 }

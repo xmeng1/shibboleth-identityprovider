@@ -456,6 +456,38 @@ public class ArpTests extends TestCase {
 			fail("Error adding User ARP to Memory Repository.");
 		}
 
+		/*
+		 * Exercise the Memory Arp Repository
+		 */
+
+		//create a repository
+		props.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
+		props.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
+			"data");
+		props.setProperty(
+			"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
+			"65535");
+		repository = null;
+		try {
+			repository = ArpRepositoryFactory.getInstance(props);
+		} catch (ArpRepositoryException e) {
+			fail("Failed to create file-based Arp Repository" + e);
+		}
+		assertNotNull(
+			"Failed to create file-based Arp Repository: Factory returned null.",
+			repository);
+
+		try {
+			repository.getSitePolicy();
+			repository.getUserPolicy(new AAPrincipal("test"));
+			repository.getAllPolicies(new AAPrincipal("test"));
+		} catch (ArpRepositoryException e) {
+			fail("Error retrieving ARP from Repository.");
+		}
+
 	}
 
 	public void testPossibleReleaseSetComputation() {

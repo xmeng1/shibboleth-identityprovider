@@ -69,7 +69,8 @@ public class ArpRepositoryFactory {
 
 	public static ArpRepository getInstance(Properties props) throws ArpRepositoryException {
 
-		if (props.getProperty("edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation")
+		if (props
+			.getProperty("edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation")
 			== null) {
 			throw new ArpRepositoryException("No ARP Repository implementaiton specified.");
 		}
@@ -94,7 +95,8 @@ public class ArpRepositoryFactory {
 			throw new ArpRepositoryException("Failed to instantiate an Arp Repository.");
 		} catch (Exception e) {
 			log.error("Failed to instantiate an Arp Repository: " + e);
-			throw new ArpRepositoryException("Failed to instantiate an Arp Repository: " + e.getMessage());
+			throw new ArpRepositoryException(
+				"Failed to instantiate an Arp Repository: " + e.getMessage());
 
 		}
 	}

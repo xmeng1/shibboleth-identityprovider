@@ -49,7 +49,19 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.Principal;
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
+import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
@@ -61,39 +73,97 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public class FileSystemArpRepository implements ArpRepository {
+public class FileSystemArpRepository extends BaseArpRepository implements ArpRepository {
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getAllPolicies(Principal)
-	 */
-	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
-		return null;
-	}
+	private static Logger log = Logger.getLogger(FileSystemArpRepository.class.getName());
+	private final String siteArpFileName = "arp.site.xml";
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getSitePolicy()
-	 */
-	public Arp getSitePolicy() throws ArpRepositoryException {
-		return null;
-	}
+	private String dataStorePath;
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getUserPolicy(Principal)
-	 */
-	public Arp getUserPolicy(Principal principal) throws ArpRepositoryException {
-		return null;
+	public FileSystemArpRepository(Properties props) throws ArpRepositoryException {
+		super(props);
+		if (props
+			.getProperty(
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
+				null)
+			== null) {
+			log.error(
+				"Cannot initialize FileSystemArpRepository: attribute (edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path) not specified");
+			throw new ArpRepositoryException("Cannot initialize FileSystemArpRepository");
+		}
+
+		File givenPath =
+			new File(
+				props.getProperty(
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path"));
+		if (!givenPath.isDirectory()) {
+			log.error(
+				"Cannot initialize FileSystemArpRepository: specified path is not a directory.");
+			throw new ArpRepositoryException("Cannot initialize FileSystemArpRepository");
+		}
+
+		log.info(
+			"Initializing File System Arp Repository with a root of ("
+				+ givenPath.getAbsolutePath()
+				+ ").");
+		dataStorePath =
+			props.getProperty(
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path");
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#remove(Arp)
 	 */
 	public void remove(Arp arp) throws ArpRepositoryException {
+		throw new ArpRepositoryException("Remove not implemented for FileSystemArpRepository.");
 	}
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#update(Arp)
 	 */
 	public void update(Arp arp) throws ArpRepositoryException {
+		throw new ArpRepositoryException("Update not implemented for FileSystemArpRepository.");
+	}
+
+	/**
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository#retrieveSiteArpXml()
+	 */
+	protected Element retrieveSiteArpXml() throws IOException, SAXException {
+
+		String fileName = dataStorePath + System.getProperty("file.separator") + siteArpFileName;
+		log.debug("Attempting to load site ARP from: (" + fileName + ").");
+		return retrieveArpXml(fileName);
+
+	}
+
+	private Element retrieveArpXml(String fileName)
+		throws FileNotFoundException, SAXException, IOException {
+
+		File arpFile = new File(fileName);
+		if (!arpFile.exists()) {
+			log.debug("No ARP found.");
+			return null;
+		}
+
+		InputStream inStream = new FileInputStream(fileName);
+		DOMParser parser = new DOMParser();
+		parser.parse(new InputSource(inStream));
+		return parser.getDocument().getDocumentElement();
+	}
+
+	/**
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository#retrieveUserArpXml(Principal)
+	 */
+	protected Element retrieveUserArpXml(Principal principal) throws IOException, SAXException {
+		String fileName =
+			dataStorePath
+				+ System.getProperty("file.separator")
+				+ "arp.user."
+				+ principal.getName()
+				+ ".xml";
+		log.debug(
+			"Attempting to load user (" + principal.getName() + ")ARP from: (" + fileName + ").");
+		return retrieveArpXml(fileName);
 	}
 
 }

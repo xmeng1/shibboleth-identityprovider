@@ -80,33 +80,35 @@ public class MemoryArpRepository implements ArpRepository {
 	}
 
 	/**
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getSitePolicy()
+	 */
+
+	public synchronized Arp getSitePolicy() throws ArpRepositoryException {
+		return sitePolicy;
+	}
+	
+	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getAllPolicies(Principal)
 	 */
 
 	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
 		log.debug(
-			"Received a query for all policies applicable to principal: (" + principal.getName() + ").");
+			"Received a query for all policies applicable to principal: ("
+				+ principal.getName()
+				+ ").");
 		Set allPolicies = new HashSet();
-		if (sitePolicy != null) {
+		if (getSitePolicy() != null) {
 			log.debug("Returning site policy.");
-			allPolicies.add(sitePolicy);
+			allPolicies.add(getSitePolicy());
 		}
-		if (userPolicies.containsKey(principal)) {
-			allPolicies.add(userPolicies.get(principal));
+		if (getUserPolicy(principal) != null) {
+			allPolicies.add(getUserPolicy(principal));
 			log.debug("Returning user policy.");
 		}
 		if (allPolicies.isEmpty()) {
 			log.debug("No policies found.");
 		}
 		return (Arp[]) allPolicies.toArray(new Arp[0]);
-	}
-
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpRepository#getSitePolicy()
-	 */
-
-	public synchronized Arp getSitePolicy() throws ArpRepositoryException {
-		return sitePolicy;
 	}
 
 	/**
