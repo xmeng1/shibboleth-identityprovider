@@ -140,7 +140,9 @@ public class AAResponder{
 		Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
 		if(dAttr != null){
 		    SAMLAttribute sAttr = jndi2saml(dAttr);
-		    sAttrs.add(sAttr);
+		    if (sAttr != null) {
+		    	sAttrs.add(sAttr);
+		    }
 		}
 	    }
 	    SAMLAttribute[] sa = new SAMLAttribute[sAttrs.size()];
@@ -314,7 +316,7 @@ public class AAResponder{
 			return sa.toSamlAttribute(this.domain, vals.toArray());
 		} catch (Exception e) {
 			log.error("Failed to load the class for attribute (" + jAttr.getID() + ") :" + e);
-			throw new AAException("Failed to load the class for attribute (" + jAttr.getID() + ") :" + e);
+			return null;
 		}
 
 	}
