@@ -1,3 +1,9 @@
+<%
+response.setHeader("Expires","19-Mar-1971 08:23:00 GMT");
+response.setHeader("Cache-control","no-cache");
+response.setHeader("Pragma","no-cache");
+%>
+
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html 
 	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
