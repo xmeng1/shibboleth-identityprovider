@@ -63,9 +63,6 @@ public class HSConfig extends ShibbolethOriginConfig {
 	public HSConfig(Element config) throws ShibbolethConfigurationException {
 		super(config);
 
-		//TODO need to make authHeaderName configurable
-		//TODO need to make max threads configurable
-
 		String attribute = ((Element) config).getAttribute("AAUrl");
 		if (attribute == null || attribute.equals("")) {
 			log.error("Global Attribute Authority URL not set.  Add an (AAUrl) attribute to <ShibbolethOriginConfig>.");
@@ -93,6 +90,26 @@ public class HSConfig extends ShibbolethOriginConfig {
 			log.error("(defaultAuthMethod) attribute to is not a valid URI.");
 			throw new ShibbolethConfigurationException("Required configuration is invalid.");
 		}
+
+		attribute = ((Element) config).getAttribute("maxHSThreads");
+		if (attribute != null && !attribute.equals("")) {
+			try {
+				maxThreads = Integer.parseInt(attribute);
+			} catch (NumberFormatException e) {
+				log.error("(maxHSThreads) attribute to is not a valid integer.");
+				throw new ShibbolethConfigurationException("Configuration is invalid.");
+			}
+		}
+
+		attribute = ((Element) config).getAttribute("authHeaderName");
+		if (attribute != null && !attribute.equals("")) {
+			authHeaderName = attribute;
+		}
+
+		log.debug("Global config: (AAUrl) = (" + getAAUrl() + ").");
+		log.debug("Global config: (defaultAuthMethod) = (" + getDefaultAuthMethod() + ").");
+		log.debug("Global config: (maxHSThreads) = (" + getMaxThreads() + ").");
+		log.debug("Global config: (authHeaderName) = (" + getAuthHeaderName() + ").");
 	}
 
 	public int getMaxThreads() {
@@ -102,11 +119,11 @@ public class HSConfig extends ShibbolethOriginConfig {
 	public String getAuthHeaderName() {
 		return authHeaderName;
 	}
-	
+
 	public URI getDefaultAuthMethod() {
 		return defaultAuthMethod;
 	}
-	
+
 	public URL getAAUrl() {
 		return AAUrl;
 	}
