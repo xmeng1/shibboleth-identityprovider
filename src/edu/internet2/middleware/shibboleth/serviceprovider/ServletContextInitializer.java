@@ -78,7 +78,7 @@ public class ServletContextInitializer {
 			
 			// could config.addOrReplaceXXXImplementor()
 
-			String configFileName = getTargetConfigFile(scontext);
+			String configFileName = getServiceProviderConfigFile(scontext);
 			config.loadConfigObjects(configFileName);
 			
 			// could config.addOrReplaceXXXImplementor()
@@ -97,16 +97,16 @@ public class ServletContextInitializer {
 	
 	/**
 	 * Return name of target's XML configuration file from
-	 *  TargetConfigFile parameter of WEB-INF/web.xml, or
+	 *  ServiceProviderConfigFile parameter of WEB-INF/web.xml, or
 	 *  default string
 	 * 
 	 * @param ServletContext or null 
 	 * @return String filename
 	 */
-	private static String getTargetConfigFile(ServletContext scontext) {
+	private static String getServiceProviderConfigFile(ServletContext scontext) {
 	    
 		if (scontext!=null) {
-			String servletparm = scontext.getInitParameter("TargetConfigFile");
+			String servletparm = scontext.getInitParameter("ServiceProviderConfigFile");
 			if (servletparm != null) {
 				return servletparm;
 			}
