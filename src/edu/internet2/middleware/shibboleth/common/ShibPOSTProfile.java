@@ -284,7 +284,7 @@ public class ShibPOSTProfile
             policies,
             name,
             nameQualifier,
-            null,
+            Constants.SHIB_NAMEID_FORMAT_URI,
             subjectIP,
             authMethod,
             authInstant,
