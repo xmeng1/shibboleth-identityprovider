@@ -69,7 +69,8 @@ public class ExactSharMatchFunction implements MatchFunction {
 		throws MatchingException
 	{
 		if (arpComponent == null || requestComponent == null) {
-			return false;
+            log.error("Invalid use of ARP matching function (ExacthSharMatchFunction). One of the operands was null.");
+            throw new MatchingException("Invalid use of ARP matching function (ExacthSharMatchFunction).");
 		}
 		else if (!(arpComponent instanceof String) || !(requestComponent instanceof String)) {
 			log.error("Invalid use of ARP matching function (ExacthSharMatchFunction). arpComponent: (" + arpComponent + "). requestComponent: (" + requestComponent + ").");
