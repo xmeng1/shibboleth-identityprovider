@@ -32,6 +32,7 @@ public class AAServlet extends HttpServlet {
 	
 	try{
 	    super.init(conf);
+	    edu.internet2.middleware.eduPerson.Init.init();
 	    myName = getInitParameter("domain");
 	    dirUrl = getInitParameter("dirUrl");
 	    uidSyntax = getInitParameter("ldapUserDnPhrase");
