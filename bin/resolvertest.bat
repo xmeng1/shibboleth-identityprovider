@@ -46,6 +46,14 @@ for %%i in (%DIRLIBS) do (
   )
 )
 
+set DIRLIBS=%SHIB_HOME\webApplication\WEB-INF\lib\*.jar
+for %%i in (%DIRLIBS) do (
+  if defined SHIB_UTIL_CLASSPATH (
+    set SHIB_UTIL_CLASSPATH="%i";%SHIB_UTIL_CLASSPATH
+  ) else (
+    set SHIB_UTIL_CLASSPATH=%i
+  )
+)
 
 REM Here we go
 %JAVACMD -Djava.endorsed.dirs="%ENDORSED" -classpath "%SHIB_UTIL_CLASSPATH" edu.internet2.middleware.shibboleth.utils.ResolverTest %*
