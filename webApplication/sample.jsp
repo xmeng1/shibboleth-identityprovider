@@ -26,7 +26,7 @@ block in its httpd.conf file:
 <blockquote>
 <pre>&lt;Location /shibboleth-target/sample.jsp&gt;
 AuthType shibboleth
-ShibExportAssertion On
+ShibRequireSession On
 require valid-user
 &lt;/Location&gt;</pre>
 </blockquote>
