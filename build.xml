@@ -34,19 +34,19 @@
 
 	<!-- Prepare directory structure for project build-->
 	<target name="init">
-        <mkdir dir="${bld}" />
-	    <mkdir dir="${build}" />
-        <mkdir dir="${dist}" />
+		<mkdir dir="${bld}" />
+		<mkdir dir="${build}" />
+		<mkdir dir="${dist}" />
 	</target>
 
 
 	<!-- Compile classes and move them to ${build} -->
-	<target name="compile-all" depends="compile-common">
+	<target name="compile-all" depends="package-common">
 		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
-            <exclude name="edu/internet2/middleware/shibboleth/aaLocal/**" />
-            <exclude name="edu/internet2/middleware/shibboleth/common/**" />
-            <exclude name="edu/internet2/middleware/shibboleth/eduPerson/**" />
-           <classpath refid="build.path" />
+			<exclude name="edu/internet2/middleware/shibboleth/aaLocal/**" />
+			<exclude name="edu/internet2/middleware/shibboleth/common/**" />
+			<exclude name="edu/internet2/middleware/eduPerson/**" />
+			<classpath refid="build.path" />
 		</javac>
 	</target>
 
@@ -74,7 +74,7 @@
 		<war warfile="${dist}/${distname}.war" webxml="${approot}/WEB-INF/web.xml" basedir="${approot}" update="no" />
 	</target>
 
-	<target name="package-common">
+	<target name="package-common" depends="compile-common">
 		<jar jarfile="${dist}/${distname}.jar" basedir="${bld}">
 			<include name="schemas/**" />
 			<include name="edu/internet2/middleware/shibboleth/common/**" />
