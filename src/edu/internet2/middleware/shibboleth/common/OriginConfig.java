@@ -91,24 +91,25 @@ public class OriginConfig {
 	/**
 	 * Loads the Origin Configuration file into a DOM tree.
 	 * 
+	 * @param configFileLocation URL of the configuration file
 	 * @return the DOM Document
 	 * @throws ShibbolethConfigurationException
 	 *             if there was an error loading the file
 	 */
-	public static synchronized Document getOriginConfig(ServletContext context) throws ShibbolethConfigurationException 
+	public static synchronized Document getOriginConfig(String configFileLocation) throws ShibbolethConfigurationException
 	{
-		if (getOriginConfigFile(context).equals(originConfigFile))
+		if (configFileLocation.equals(originConfigFile))
 		{
 			return originConfig;
 		}
 		else if (originConfigFile == null)
 		{
-			originConfigFile = getOriginConfigFile(context);
+			originConfigFile = configFileLocation;
 		}
 		else 
 		{
-			log.error("Previously read origin configuration from (" + originConfigFile + "), re-reading from (" + getOriginConfigFile(context) + "). This probably indicates a bug in shibboleth.");
-			originConfigFile = getOriginConfigFile(context);
+			log.error("Previously read origin configuration from (" + originConfigFile + "), re-reading from (" + configFileLocation + "). This probably indicates a bug in shibboleth.");
+			originConfigFile = configFileLocation;
 		}
 
 		DOMParser parser = new DOMParser();
@@ -175,5 +176,20 @@ public class OriginConfig {
 		originConfig = parser.getDocument();
 
 		return originConfig;
+	}
+
+	/**
+	 * Loads the Origin Configuration file into a DOM tree.
+	 * 
+	 * @param context {@link ServletContext} from which to figure out the
+	 *                location of origin.xml
+	 * @return the DOM Document
+	 * @throws ShibbolethConfigurationException
+	 *             if there was an error loading the file
+	 */
+	public static Document getOriginConfig(ServletContext context) throws ShibbolethConfigurationException 
+	{
+		return getOriginConfig(getOriginConfigFile(context));
+
         }
 }

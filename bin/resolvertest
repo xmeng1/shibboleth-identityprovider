@@ -50,6 +50,8 @@ do
     fi
 done
 
+SHIB_UTIL_CLASSPATH="${SHIB_HOME}/webApplication/WEB-INF/classes:$SHIB_UTIL_CLASSPATH"
+
 
 ##Here we go
 $JAVACMD -Djava.endorsed.dirs="$ENDORSED" -classpath $SHIB_UTIL_CLASSPATH  edu.internet2.middleware.shibboleth.utils.ResolverTest "$@"
