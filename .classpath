@@ -2,17 +2,16 @@
 <classpath>
     <classpathentry kind="src" path="src"/>
     <classpathentry kind="src" path="tests"/>
-    <classpathentry kind="var" path="JRE_LIB" sourcepath="JRE_SRC"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
+    <classpathentry kind="lib" path="lib/dom3-xercesImpl-2.4.0.jar"/>
+    <classpathentry kind="lib" path="lib/dom3-xml-apis-2.4.0.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
     <classpathentry kind="lib"
         path="webApplication/WEB-INF/lib/commons-digester.jar" sourcepath="/Shibboleth/lib/commons-digester-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/ldap.jar"/>
     <classpathentry kind="lib" path="lib/junit-3.8.1.jar" sourcepath="/Shibboleth/lib/junit-3.8.1-src.jar"/>
-    <classpathentry kind="var" path="JAVA_HOME/jre/lib/jce.jar"/>
-    <classpathentry kind="var" path="JAVA_HOME/jre/lib/jsse.jar"/>
     <classpathentry kind="lib" path="lib/log4j-1.2.5.jar" sourcepath="/Shibboleth/lib/log4j-1.2.5-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug-1.0.1.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xalan-2.4.1.jar"/>
@@ -20,7 +19,8 @@
     <classpathentry kind="lib" path="lib/ant-1.5.1.jar"/>
     <classpathentry kind="lib" path="lib/ant-optional-1.5.1.jar"/>
     <classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
-    <classpathentry kind="lib" path="lib/dom3-xercesImpl-2.4.0.jar"/>
-    <classpathentry kind="lib" path="lib/dom3-xml-apis-2.4.0.jar"/>
+    <classpathentry kind="var" path="JAVA_HOME/jre/lib/jce.jar"/>
+    <classpathentry kind="var" path="JAVA_HOME/jre/lib/jsse.jar"/>
+    <classpathentry kind="var" path="JRE_LIB" sourcepath="JRE_SRC"/>
     <classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
