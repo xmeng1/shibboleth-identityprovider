@@ -24,6 +24,7 @@ public class HandleServlet extends HttpServlet {
 	ServletContext sctx = sc.getServletContext();
 
 	try {
+	    edu.internet2.middleware.eduPerson.Init.init();
 	    InputStream is = sctx.getResourceAsStream
 		(getInitParameter("KSpath"));
 	    hsSAML = new HandleServiceSAML( getInitParameter("domain"), 
@@ -46,12 +47,14 @@ public class HandleServlet extends HttpServlet {
 	catch (java.security.KeyStoreException ex) {
 	    throw new ServletException( "Error initializing private KeyStore: " + ex );
 	}
-	
+	catch (RuntimeException ex) {
+	    throw new ServletException( "Error initializing eduPerson.Init: "+ ex); 
+	}
 	catch (HandleException ex) {
 	    throw new ServletException( "Error initializing Handle Service: " +ex );
 	}
 	catch (Exception ex) {
-	    throw new ServletException( "Error initializing private KeyStore: " +ex );
+	    throw new ServletException( "Error in initialization: " +ex );
 	}
 
 	sctx.setAttribute("HandleRepository", hrf);
