@@ -250,7 +250,7 @@ public class ShireServlet extends HttpServlet
             }
 
             // Generate a random session file.
-            String filename = UUIDGenerator.getInstance().generateRandomBasedUUID().toString().replace('-', '_');
+            String filename = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
             String pathname = null;
             if (sessionDir.endsWith(File.separator))
                 pathname = sessionDir + filename;
