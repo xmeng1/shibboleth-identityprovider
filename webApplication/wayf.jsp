@@ -4,7 +4,6 @@
 <html>
 <%@ taglib uri="/WEB-INF/tlds/struts-logic.tld" prefix="logic" %>
 	<%@ taglib uri="/WEB-INF/tlds/struts-bean.tld" prefix="bean" %>
-	<jsp:useBean id="originsets" scope="application" class="edu.internet2.middleware.shibboleth.wayf.OriginSet[]"/>
 	<jsp:useBean id="requestURL" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="helpText" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="supportContact" scope="application" class="java.lang.String"/>
@@ -15,7 +14,7 @@
 	<jsp:useBean id="searchResultEmptyText" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="logoLocation" scope="application" class="java.lang.String"/>
 	<logic:present name="searchresults" scope="request">
-		<jsp:useBean id="searchresults" scope="request" class="edu.internet2.middleware.shibboleth.wayf.Origin[]"/>
+		<jsp:useBean id="searchresults" scope="request" type="edu.internet2.middleware.shibboleth.wayf.Origin[]"/>
 	</logic:present>
 <head>
 		<link rel="stylesheet" title="normal" type="text/css" href="wayf.css" /><title>InCommon: Identity Provider Selection</title></head>
