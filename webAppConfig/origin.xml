@@ -5,17 +5,12 @@
     "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
 
 <web-app>
-	<context-param>
-	        <param-name>repository</param-name>
-		<param-value>MEMORY</param-value>
-	</context-param>
-
 	<servlet>
 		<servlet-name>Logging Service</servlet-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
 		<init-param>
 			<param-name>log4jConfigFileLocation</param-name>
-			<param-value>/WEB-INF/conf/log4j.properties</param-value>
+			<param-value>/conf/log4j.properties</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
@@ -23,73 +18,13 @@
 		<servlet-name>HS</servlet-name>
 		<display-name>Shibboleth Handle Service</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.hs.HandleServlet</servlet-class>
-		<init-param>
-			<param-name>domain</param-name>
-			<param-value>shibdev.edu</param-value>
-		</init-param>
-		<init-param>
-		        <param-name>HSname</param-name>
-			<param-value>shib2.internet2.edu</param-value>
-		</init-param>
-		<init-param>
-		        <param-name>ticket</param-name>
-			<param-value>1400000</param-value>
-		</init-param>
-		<init-param>
-		          <param-name>AAurl</param-name>
-		          <param-value>https://shib2.internet2.edu/shibboleth-origin/servlet/AA</param-value>
-		</init-param>
-		<init-param>
-			<param-name>KSpath</param-name>
-			<param-value>/WEB-INF/conf/keystore.jks</param-value>
-		</init-param>
-		<init-param>
-			<param-name>KSpass</param-name>
-			<param-value>shibhs</param-value>
-		</init-param>
-		<init-param>
-			<param-name>KSkeyalias</param-name>
-			<param-value>shibhs</param-value>
-		</init-param>
-		<init-param>
-			<param-name>KSkeypass</param-name>
-			<param-value>shibhs</param-value>
-		</init-param>
-		<init-param>
-			<param-name>certalias</param-name>
-			<param-value>shibhs</param-value>
-		</init-param>
-                <init-param>
-                        <param-name>username</param-name>
-                        <param-value>REMOTE_USER</param-value>
-                </init-param>
 	</servlet>
 	<servlet>
 		<servlet-name>AA</servlet-name>
 		<display-name>Shibboleth Attribute Authority</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
-		
-		<init-param>
-		    <param-name>domain</param-name>
-		    <param-value>shib2.internet2.edu</param-value>
-		</init-param>
-
-		<init-param>
-		    <param-name>dirUrl</param-name>
-		    <param-value>ldap://shib2.internet2.edu/ou=People,dc=internet2,dc=edu</param-value>
-		</init-param>
-
-		<init-param>
-		    <param-name>ldapUserDnPhrase</param-name>
-		    <param-value>uid=</param-value>
-		</init-param>
-
-		<init-param>
-		    <param-name>ctxFactoryClass</param-name>
-		    <param-value>edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory</param-value>
-		</init-param>
 	</servlet>
-      
+	
      <servlet-mapping>
 		<servlet-name>HS</servlet-name>
 		<url-pattern>/HS</url-pattern>
