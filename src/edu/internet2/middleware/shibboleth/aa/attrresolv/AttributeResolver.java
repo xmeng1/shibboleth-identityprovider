@@ -52,22 +52,19 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
 
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import edu.internet2.middleware.shibboleth.aa.AAConfig;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet.ResolverAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * An engine for obtaining attribute values for specified principals. Attributes values are resolved using a directed
@@ -101,44 +98,7 @@ public class AttributeResolver {
 	private void loadConfig(String configFile) throws AttributeResolverException {
 		try {
 			ShibResource config = new ShibResource(configFile, this.getClass());
-			DOMParser parser = new DOMParser();
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-					if (systemId.endsWith("shibboleth-resolver-1.0.xsd")) {
-						try {
-							return new InputSource(
-								new ShibResource("/schemas/shibboleth-resolver-1.0.xsd", this.getClass())
-									.getInputStream());
-						} catch (IOException e) {
-							throw new SAXException("Could not load entity: " + e);
-						}
-					} else if (systemId.endsWith("credentials.xsd")) {
-						try {
-							return new InputSource(
-								new ShibResource("/schemas/credentials.xsd", this.getClass())
-									.getInputStream());
-						} catch (IOException e) {
-							throw new SAXException("Could not load entity: " + e);
-						}
-					} else {
-						return null;
-					}
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
+			Parser.DOMParser parser = new Parser.DOMParser(true);
 			parser.parse(new InputSource(config.getInputStream()));
 			loadConfig(parser.getDocument());
 
