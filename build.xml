@@ -77,7 +77,7 @@
 
     <target name="dist-origin" depends="compile-all, test-origin, package-origin, clean-build" />
     <target name="package-origin">
-        <war warfile="${dist}/${distname}-origin.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
+        <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
     </target>
 
     <!-- Build utilities -->
