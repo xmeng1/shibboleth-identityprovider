@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="US-ASCII"?>
 <schema
     targetNamespace="urn:oasis:names:tc:SAML:2.0:assertion"
     xmlns="http://www.w3.org/2001/XMLSchema"
@@ -10,9 +10,9 @@
     blockDefault="substitution"
     version="2.0">
     <import namespace="http://www.w3.org/2000/09/xmldsig#"
-        schemaLocation="xmldsig-core-schema.xsd"/>
+        schemaLocation="http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd"/>
     <import namespace="http://www.w3.org/2001/04/xmlenc#"
-        schemaLocation="xenc-schema.xsd"/>
+        schemaLocation="http://www.w3.org/TR/2002/REC-xmlenc-core-20021210/xenc-schema.xsd"/>
     <annotation>
         <documentation>
             Document identifier: sstc-saml-schema-assertion-2.0
@@ -22,45 +22,35 @@
               Initial Standard Schema.
             V1.1 (September, 2003):
               Updates within the same V1.0 namespace.
-            V2.0 (August, 2004):
-              New assertion schema based in a SAML V2.0 namespace.
+            V2.0 CD-04 (January, 2005):
+              New assertion schema for SAML V2.0 namespace.
         </documentation>
     </annotation>
-    <group name="EncryptedType">
+    <attributeGroup name="IDNameQualifiers">
+        <attribute name="NameQualifier" type="string" use="optional"/>
+        <attribute name="SPNameQualifier" type="string" use="optional"/>
+    </attributeGroup>
+    <element name="BaseID" type="saml:BaseIDAbstractType"/>
+    <complexType name="BaseIDAbstractType" abstract="true">
+        <attributeGroup ref="saml:IDNameQualifiers"/>
+    </complexType>
+    <element name="NameID" type="saml:NameIDType"/>
+    <complexType name="NameIDType">
+        <simpleContent>
+            <extension base="string">
+                <attributeGroup ref="saml:IDNameQualifiers"/>
+                <attribute name="Format" type="anyURI" use="optional"/>
+                <attribute name="SPProvidedID" type="string" use="optional"/>
+            </extension>
+        </simpleContent>
+    </complexType>
+    <complexType name="EncryptedElementType">
         <sequence>
             <element ref="xenc:EncryptedData"/>
             <element ref="xenc:EncryptedKey" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
-    </group>
-    <element name="BaseID" type="saml:BaseIDAbstractType"/>
-    <complexType name="BaseIDAbstractType" abstract="true" mixed="true">
-        <complexContent>
-            <extension base="anyType">
-                <attribute name="NameQualifier" type="string" use="optional"/>
-                <attribute name="SPNameQualifier" type="string" use="optional"/>
-            </extension>
-        </complexContent>
     </complexType>
-    <element name="NameID" type="saml:NameIDType"/>
-    <complexType name="NameIDType" mixed="false">
-        <simpleContent>
-            <restriction base="saml:BaseIDAbstractType">
-                <simpleType>
-                    <restriction base="string"/>
-                </simpleType>
-                <attribute name="Format" type="anyURI" use="optional"/>
-                <attribute name="SPProvidedID" type="string" use="optional"/>
-            </restriction>
-        </simpleContent>
-    </complexType>
-    <element name="EncryptedID" type="saml:EncryptedIDType"/>
-    <complexType name="EncryptedIDType" mixed="false">
-        <complexContent>
-            <restriction base="saml:BaseIDAbstractType">
-                <group ref="saml:EncryptedType"/>
-            </restriction>
-        </complexContent>
-    </complexType>
+    <element name="EncryptedID" type="saml:EncryptedElementType"/>
     <element name="Issuer" type="saml:NameIDType"/>
     <element name="AssertionIDRef" type="NCName"/>
     <element name="AssertionURIRef" type="anyURI"/>
@@ -100,6 +90,11 @@
     <element name="SubjectConfirmation" type="saml:SubjectConfirmationType"/>
     <complexType name="SubjectConfirmationType">
         <sequence>
+            <choice minOccurs="0">
+                <element ref="saml:BaseID"/>
+                <element ref="saml:NameID"/>
+                <element ref="saml:EncryptedID"/>
+            </choice>
             <element ref="saml:SubjectConfirmationData" minOccurs="0"/>
         </sequence>
         <attribute name="Method" type="anyURI" use="required"/>
@@ -107,13 +102,17 @@
     <element name="SubjectConfirmationData" type="saml:SubjectConfirmationDataType"/>
     <complexType name="SubjectConfirmationDataType" mixed="true">
         <complexContent>
-            <extension base="anyType">
+            <restriction base="anyType">
+                <sequence>
+                    <any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+                </sequence>
                 <attribute name="NotBefore" type="dateTime" use="optional"/>
                 <attribute name="NotOnOrAfter" type="dateTime" use="optional"/>
                 <attribute name="Recipient" type="anyURI" use="optional"/>
                 <attribute name="InResponseTo" type="NCName" use="optional"/>
                 <attribute name="Address" type="string" use="optional"/>
-            </extension>
+                <anyAttribute namespace="##other" processContents="lax"/>
+            </restriction>
         </complexContent>
     </complexType>
     <complexType name="KeyInfoConfirmationDataType" mixed="false">
@@ -176,10 +175,7 @@
             <any namespace="##other" processContents="lax"/>
         </choice>
     </complexType>
-    <element name="EncryptedAssertion" type="saml:EncryptedAssertionType"/>
-    <complexType name="EncryptedAssertionType">
-        <group ref="saml:EncryptedType"/>
-    </complexType>
+    <element name="EncryptedAssertion" type="saml:EncryptedElementType"/>
     <element name="Statement" type="saml:StatementAbstractType"/>
     <complexType name="StatementAbstractType" abstract="true"/>
     <element name="AuthnStatement" type="saml:AuthnStatementType"/>
@@ -282,9 +278,6 @@
         <attribute name="FriendlyName" type="string" use="optional"/>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
-    <element name="AttributeValue" type="anyType"/>
-    <element name="EncryptedAttribute" type="saml:EncryptedAttributeType"/>
-    <complexType name="EncryptedAttributeType">
-        <group ref="saml:EncryptedType"/>
-    </complexType>
+    <element name="AttributeValue" type="anyType" nillable="true"/>
+    <element name="EncryptedAttribute" type="saml:EncryptedElementType"/>
 </schema>

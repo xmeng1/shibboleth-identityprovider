@@ -11,20 +11,20 @@
     blockDefault="substitution"
     version="2.0">
     <import namespace="http://www.w3.org/2000/09/xmldsig#"
-        schemaLocation="xmldsig-core-schema.xsd"/>
+        schemaLocation="http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd"/>
     <import namespace="http://www.w3.org/2001/04/xmlenc#"
-        schemaLocation="xenc-schema.xsd"/>
+        schemaLocation="http://www.w3.org/TR/2002/REC-xmlenc-core-20021210/xenc-schema.xsd"/>
     <import namespace="urn:oasis:names:tc:SAML:2.0:assertion"
         schemaLocation="sstc-saml-schema-assertion-2.0.xsd"/>
     <import namespace="http://www.w3.org/XML/1998/namespace"
-        schemaLocation="xml.xsd"/>
+        schemaLocation="http://www.w3.org/2001/xml.xsd"/>
     <annotation>
         <documentation>
             Document identifier: sstc-saml-schema-metadata-2.0
             Location: http://www.oasis-open.org/committees/documents.php?wg_abbrev=security
             Revision history:
-            V2.0 (August, 2004):
-              Schema for SAML metadata, first published in SAML 2.0.
+              V2.0 CD-04 (January, 2005):
+                Schema for SAML metadata, first published in SAML 2.0.
         </documentation>
     </annotation>
 
@@ -102,9 +102,7 @@
                     <element ref="md:SPSSODescriptor"/>
                     <element ref="md:AuthnAuthorityDescriptor"/>
                     <element ref="md:AttributeAuthorityDescriptor"/>
-                    <element ref="md:AttributeConsumerDescriptor"/>
                     <element ref="md:PDPDescriptor"/>
-                    <any namespace="##other" processContents="lax"/>
                 </choice>
                 <element ref="md:AffiliationDescriptor"/>
             </choice>
@@ -181,10 +179,14 @@
         <attribute name="ID" type="ID" use="optional"/>
         <attribute name="validUntil" type="dateTime" use="optional"/>
         <attribute name="cacheDuration" type="duration" use="optional"/>
-        <attribute name="protocolSupportEnumeration" type="NMTOKENS" use="required"/>
+        <attribute name="protocolSupportEnumeration" type="md:anyURIListType" use="required"/>
         <attribute name="errorURL" type="anyURI" use="optional"/>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
+    <simpleType name="anyURIListType">
+        <list itemType="anyURI"/>
+    </simpleType>
+
     <element name="KeyDescriptor" type="md:KeyDescriptorType"/>
     <complexType name="KeyDescriptorType">
         <sequence>
@@ -225,6 +227,9 @@
                 <sequence>
                     <element ref="md:SingleSignOnService" maxOccurs="unbounded"/>
                     <element ref="md:NameIDMappingService" minOccurs="0" maxOccurs="unbounded"/>
+                    <element ref="md:AssertionIDRequestService" minOccurs="0" maxOccurs="unbounded"/>
+                    <element ref="md:AttributeProfile" minOccurs="0" maxOccurs="unbounded"/>
+                    <element ref="saml:Attribute" minOccurs="0" maxOccurs="unbounded"/>
                 </sequence>
                 <attribute name="WantAuthnRequestsSigned" type="boolean" use="optional"/>
             </extension>
@@ -232,6 +237,8 @@
     </complexType>
     <element name="SingleSignOnService" type="md:EndpointType"/>
     <element name="NameIDMappingService" type="md:EndpointType"/>
+    <element name="AssertionIDRequestService" type="md:EndpointType"/>
+    <element name="AttributeProfile" type="anyURI"/>
     
     <element name="SPSSODescriptor" type="md:SPSSODescriptorType"/>
     <complexType name="SPSSODescriptorType">
@@ -239,6 +246,7 @@
             <extension base="md:SSODescriptorType">
                 <sequence>
                     <element ref="md:AssertionConsumerService" maxOccurs="unbounded"/>
+                    <element ref="md:AttributeConsumingService" minOccurs="0" maxOccurs="unbounded"/>
                 </sequence>
                 <attribute name="AuthnRequestsSigned" type="boolean" use="optional"/>
                 <attribute name="WantAssertionsSigned" type="boolean" use="optional"/>
@@ -246,6 +254,26 @@
         </complexContent>
     </complexType>
     <element name="AssertionConsumerService" type="md:IndexedEndpointType"/>
+    <element name="AttributeConsumingService" type="md:AttributeConsumingServiceType"/>
+    <complexType name="AttributeConsumingServiceType">
+        <sequence>
+            <element ref="md:ServiceName" maxOccurs="unbounded"/>
+            <element ref="md:ServiceDescription" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="md:RequestedAttribute" maxOccurs="unbounded"/>
+        </sequence>
+        <attribute name="index" type="unsignedShort" use="required"/>
+        <attribute name="isDefault" type="boolean" use="optional"/>
+    </complexType>
+    <element name="ServiceName" type="md:localizedNameType"/>
+    <element name="ServiceDescription" type="md:localizedNameType"/>
+    <element name="RequestedAttribute" type="md:RequestedAttributeType"/>
+    <complexType name="RequestedAttributeType">
+        <complexContent>
+            <extension base="saml:AttributeType">
+                <attribute name="isRequired" type="boolean" use="optional"/>
+            </extension>
+        </complexContent>
+    </complexType>
   
     <element name="AuthnAuthorityDescriptor" type="md:AuthnAuthorityDescriptorType"/>
     <complexType name="AuthnAuthorityDescriptorType">
@@ -260,7 +288,6 @@
         </complexContent>
     </complexType>
     <element name="AuthnQueryService" type="md:EndpointType"/>
-    <element name="AssertionIDRequestService" type="md:EndpointType"/>
 
     <element name="PDPDescriptor" type="md:PDPDescriptorType"/>
     <complexType name="PDPDescriptorType">
@@ -283,48 +310,15 @@
                 <sequence>
                     <element ref="md:AttributeService" maxOccurs="unbounded"/>
                     <element ref="md:AssertionIDRequestService" minOccurs="0" maxOccurs="unbounded"/>
-                    <element ref="saml:Attribute" minOccurs="0" maxOccurs="unbounded"/>
                     <element ref="md:NameIDFormat" minOccurs="0" maxOccurs="unbounded"/>
                     <element ref="md:AttributeProfile" minOccurs="0" maxOccurs="unbounded"/>
+                    <element ref="saml:Attribute" minOccurs="0" maxOccurs="unbounded"/>
                 </sequence>
             </extension>
         </complexContent>
     </complexType>
     <element name="AttributeService" type="md:EndpointType"/>
-    <element name="AttributeProfile" type="anyURI"/>
-
-    <element name="AttributeConsumerDescriptor" type="md:AttributeConsumerDescriptorType"/>
-    <complexType name="AttributeConsumerDescriptorType">
-        <complexContent>
-            <extension base="md:RoleDescriptorType">
-                <sequence>
-                    <element ref="md:AttributeConsumingService" maxOccurs="unbounded"/>
-                </sequence>
-            </extension>
-        </complexContent>
-    </complexType>
-    <element name="AttributeConsumingService" type="md:AttributeConsumingServiceType"/>
-    <complexType name="AttributeConsumingServiceType">
-        <sequence>
-            <element ref="md:ServiceName" maxOccurs="unbounded"/>
-            <element ref="md:ServiceDescription" minOccurs="0" maxOccurs="unbounded"/>
-            <element ref="md:RequestedAttribute" maxOccurs="unbounded"/>
-        </sequence>
-        <attribute name="index" type="unsignedShort" use="required"/>
-        <attribute name="isDefault" type="boolean" use="optional"/>
-        <attribute name="WantAssertionsSigned" type="boolean" use="optional"/>
-    </complexType>
-    <element name="ServiceName" type="md:localizedNameType"/>
-    <element name="ServiceDescription" type="md:localizedNameType"/>
-    <element name="RequestedAttribute" type="md:RequestedAttributeType"/>
-    <complexType name="RequestedAttributeType">
-        <complexContent>
-            <extension base="saml:AttributeType">
-                <attribute name="isRequired" type="boolean" use="optional"/>
-            </extension>
-        </complexContent>
-    </complexType>
-    
+   
     <element name="AffiliationDescriptor" type="md:AffiliationDescriptorType"/>
     <complexType name="AffiliationDescriptorType">
         <sequence>
