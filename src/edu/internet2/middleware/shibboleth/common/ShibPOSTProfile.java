@@ -61,6 +61,8 @@ import java.util.Iterator;
 import javax.crypto.SecretKey;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.log4j.Logger;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
@@ -77,6 +79,8 @@ import org.w3c.dom.*;
  */
 public class ShibPOSTProfile
 {
+	private static Logger log = Logger.getLogger(ShibPOSTProfile.class.getName());
+	
     /**  XML Signature algorithm to apply */
     protected String algorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
 
@@ -408,12 +412,12 @@ public class ShibPOSTProfile
         }
         catch (XMLSecurityException e)
         {
-            e.printStackTrace();
+            log.warn("Problem verifying signature: " + e.getMessage());
             return false;
         }
         catch (GeneralSecurityException e)
         {
-            e.printStackTrace();
+            log.warn("Problem verifying signature: " + e.getMessage());
             return false;
         }
     }
