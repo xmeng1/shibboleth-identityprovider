@@ -110,9 +110,6 @@ public class AttributeRequestor {
 			return false;
 		}
 		Application applicationConfig = appinfo.getApplicationConfig();
-		boolean signRequest = applicationConfig.getSignRequest();
-		boolean signedAssertions = applicationConfig.getSignedAssertions();
-		boolean signedResponse = applicationConfig.getSignedResponse();
 		
 		SAMLRequest request = null;
 		
@@ -144,10 +141,6 @@ public class AttributeRequestor {
             return false;
         }
 		
-		if (signRequest) {
-			// TODO Attribute requests are not typically signed, but add
-			// code to do so optionally later.
-		}
 		
 		// ShibBinding will extract URLs from the Metadata and build
 		// parameters so SAML can create the session. It also interfaces
@@ -162,22 +155,17 @@ public class AttributeRequestor {
 			return false;
 		}
 		
-		if (signedResponse && 
-			!response.isSigned()) {
-			log.error("AttributeRequestor rejected unsigned attribute response from "+session.getEntityId());
-			return false;
-		}
 		
 		// Check each assertion in the response.
         int acount = 0;
 		Iterator assertions = response.getAssertions();
 		while (assertions.hasNext()) {
 			SAMLAssertion assertion = (SAMLAssertion) assertions.next();
-			if (signedAssertions && !assertion.isSigned()) {
-			        log.warn("AttributeRequestor has removed unsigned assertion from response from "+session.getEntityId());
-				response.removeAssertion(acount);
-				continue;
-			}
+//			if (signedAssertions && !assertion.isSigned()) {
+//			        log.warn("AttributeRequestor has removed unsigned assertion from response from "+session.getEntityId());
+//				response.removeAssertion(acount);
+//				continue;
+//			}
 			
             try {
                 appinfo.applyAAP(assertion,aa); // apply each AAP to this assertion

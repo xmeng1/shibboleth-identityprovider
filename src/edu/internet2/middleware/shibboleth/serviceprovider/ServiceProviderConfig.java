@@ -156,15 +156,15 @@ import org.w3c.dom.Node;
 
 import x0.maceShibboleth1.AttributeAcceptancePolicyDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument;
+import x0.maceShibbolethTargetConfig1.LocalConfigurationType;
 import x0.maceShibbolethTargetConfig1.PluggableType;
 import x0.maceShibbolethTargetConfig1.RequestMapDocument;
+import x0.maceShibbolethTargetConfig1.SPConfigType;
 import x0.maceShibbolethTargetConfig1.ShibbolethTargetConfigDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
 import x0.maceShibbolethTargetConfig1.ApplicationsDocument.Applications;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host;
 import x0.maceShibbolethTargetConfig1.PathDocument.Path;
-import x0.maceShibbolethTargetConfig1.SHIREDocument.SHIRE;
-import x0.maceShibbolethTargetConfig1.ShibbolethTargetConfigDocument.ShibbolethTargetConfig;
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.common.Credentials;
@@ -191,7 +191,7 @@ public class ServiceProviderConfig {
 	private static final String INLINEURN = "urn:inlineBS:ID";
     private static Logger log = Logger.getLogger(ServiceProviderConfig.class);
 
-	private ShibbolethTargetConfig  // The XMLBean from the main config file
+	private SPConfigType  // The XMLBean from the main config file
 		config = null;              // (i.e. shibboleth.xml)
 	
 	
@@ -419,7 +419,7 @@ public class ServiceProviderConfig {
 		}
 		
 		// Extract the "root Element" object from the "Document" object
-		ShibbolethTargetConfig config = configBeanDoc.getShibbolethTargetConfig();
+		SPConfigType config = configBeanDoc.getShibbolethTargetConfig();
 		
 		Applications apps = config.getApplications(); // <Applications>
 		
@@ -445,9 +445,6 @@ public class ServiceProviderConfig {
 		defaultApp.setProviderId(apps.getProviderId());
 		defaultApp.setRevocationProviderArray(apps.getRevocationProviderArray());
 		defaultApp.setSessions(apps.getSessions());
-		defaultApp.setSignedAssertions(apps.getSignedAssertions());
-		defaultApp.setSignedResponse(apps.getSignedResponse());
-		defaultApp.setSignRequest(apps.getSignRequest());
 		defaultApp.setTrustProviderArray(apps.getTrustProviderArray());
 		
 		/*
@@ -804,7 +801,7 @@ public class ServiceProviderConfig {
 	
 	
 	private boolean processPluggableRequestMapProvider(){
-	    SHIRE shire = config.getSHIRE();
+	    LocalConfigurationType shire = config.getSHIRE();
 	    PluggableType mapProvider = shire.getRequestMapProvider();
 	    
 	    String pluggabletype = mapProvider.getType();
