@@ -8,7 +8,7 @@ ARP_DIR=../webApplication/arps
 
 if [ -n JAVA_HOME ]
 	then
-		$JAVA_HOME/bin/java -Dlog.config=$LOG_CONFIG -Darp.dir=$ARP_DIR -cp ../dist/shib-util.jar:../lib/log4j-1.2.3.jar edu.internet2.middleware.shibboleth.aa.arpUtil.ArpUtil $@
+		$JAVA_HOME/bin/java -Dlog.config=$LOG_CONFIG -Darp.dir=$ARP_DIR -cp ../dist/shib-util.jar:../lib/log4j-1.2.5.jar edu.internet2.middleware.shibboleth.aa.arpUtil.ArpUtil $@
 	else
 		echo "JAVA_HOME not set."
 fi
