@@ -517,6 +517,15 @@ class FileCredentialResolver implements CredentialResolver {
 						inputBytes.toByteArray(),
 						"-----BEGIN DSA PRIVATE KEY-----",
 						"-----END DSA PRIVATE KEY-----"));
+						
+			} else if (str.matches("^.*-----BEGIN ENCRYPTED PRIVATE KEY-----.*$")) {
+				in.close();
+				log.debug("Key appears to be DSA in raw format.");
+				return getEncryptedPkcs8Key(
+					singleDerFromPEM(
+						inputBytes.toByteArray(),
+						"-----BEGIN ENCRYPTED PRIVATE KEY-----",
+						"-----END ENCRYPTED PRIVATE KEY-----"), password.toCharArray());
 			}
 		}
 		in.close();
