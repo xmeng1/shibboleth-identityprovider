@@ -284,13 +284,13 @@ public class ServiceProviderConfig {
 	private static final String XMLTRUSTPROVIDERTYPE = 
 		"edu.internet2.middleware.shibboleth.common.provider.XMLTrust";
 	private static final String XMLAAPPROVIDERTYPE = 
-		"edu.internet2.middleware.shibboleth.target.provider.XMLAAP";
+		"edu.internet2.middleware.shibboleth.serviceprovider.XMLAAP";
 	private static final String XMLFEDERATIONPROVIDERTYPE = 
 		"edu.internet2.middleware.shibboleth.common.provider.XMLMetadata";
 	private static final String XMLREVOCATIONPROVIDERTYPE =
 	    "edu.internet2.middleware.shibboleth.common.provider.XMLRevocation";
 	private static final String XMLREQUESTMAPPROVIDERTYPE = 
-	    "edu.internet2.middleware.shibboleth.target.provider.XMLRequestMap";
+	    "edu.internet2.middleware.shibboleth.serviceprovider.XMLRequestMap";
 	private static final String XMLCREDENTIALSPROVIDERTYPE = 
 	    "edu.internet2.middleware.shibboleth.common.Credentials";
 	

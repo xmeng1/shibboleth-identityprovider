@@ -9,7 +9,7 @@
      </SHAR>
 
     <SHIRE>
-        <RequestMapProvider type="edu.internet2.middleware.shibboleth.target.provider.XMLRequestMap">
+        <RequestMapProvider type="edu.internet2.middleware.shibboleth.serviceprovider.XMLRequestMap">
             <RequestMap applicationId="default">
                <Host name="shibdev.sample.edu" scheme="https">
                     <Path name="secure" requireSession="true" exportAssertion="true" />
@@ -42,12 +42,12 @@
         You should customize these pages! You can add attributes with values that can be plugged
         into your templates.
         -->
-        <Errors shire="shireError.html"
-            rm="rmError.html"
-            access="accessError.html"
+        <Errors shire="shibboleth/shireError.html"
+            rm="shibboleth/rmError.html"
+            access="shibboleth/accessError.html"
             supportContact="root@localhost"
-            logoLocation="/shibtarget/logo.jpg"
-            styleSheet="/shibtarget/main.css"/>
+            logoLocation="/shibboleth/logo.jpg"
+            styleSheet="/shibboleth/main.css"/>
 
         <!-- Indicates what credentials to use when communicating -->
         <CredentialUse TLS="defcreds" Signing="defcreds">
@@ -63,14 +63,14 @@
             AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri"/>
 
         <!-- AAP can be inline or in a separate file -->
-        <AAPProvider type="edu.internet2.middleware.shibboleth.target.provider.XMLAAP"
+        <AAPProvider type="edu.internet2.middleware.shibboleth.serviceprovider.XMLAAP"
         uri="/conf/AAP.xml"/>
 
         <!-- Metadata consists of site/operational metadata, trust, revocation providers. Can be external or inline. -->
         <FederationProvider type="edu.internet2.middleware.shibboleth.common.provider.XMLMetadata"
             uri="/conf/testsites.xml"/>
 			
-		<FederationProvider type="edu.internet2.middleware.shibboleth.target.SAML2MetadataImpl"
+		<FederationProvider type="edu.internet2.middleware.shibboleth.serviceprovider.SAML2MetadataImpl"
 			uri="/conf/SAML2Metadata.xml" />	
 			
 		<!-- Creater an inline just to test the inline parse logic -->	
