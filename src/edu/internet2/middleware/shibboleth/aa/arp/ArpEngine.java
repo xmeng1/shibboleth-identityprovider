@@ -255,7 +255,7 @@ public class ArpEngine {
 					continue;
 				}
 				if (attributes[i].denyAnyValue()) {
-					((Rule.Attribute) canonicalSpec.get(attributes[i].getName())).setAnyValueDeny(true);
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValueDeny(true);
 					continue;
 				}
 				if (attributes[i].releaseAnyValue()) {

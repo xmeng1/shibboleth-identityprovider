@@ -57,6 +57,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -477,13 +478,11 @@ public class ArpTests extends TestCase {
 					principal1,
 					"shar.example.edu",
 					url1);
-			for (int i = 0; releaseAttributes.length > i; i++) {
-				Object[] values = releaseAttributes[i].getValues();
-				for (int j = 0; values.length > j; j++) {
-					System.err.println(values[j]);
-				}
-			}
-			System.err.println("---");
+			assertEquals(
+				"ARP not applied as expected.",
+				new HashSet(Arrays.asList(releaseAttributes)),
+				new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1 })));
+
 			//Test with site and user ARPs
 			inStream = new FileInputStream("test/arp7.xml");
 			parser.parse(new InputSource(inStream));
@@ -497,26 +496,24 @@ public class ArpTests extends TestCase {
 					principal1,
 					"shar.example.edu",
 					url1);
-			for (int i = 0; releaseAttributes.length > i; i++) {
-				Object[] values = releaseAttributes[i].getValues();
-				for (int j = 0; values.length > j; j++) {
-					System.err.println(values[j]);
-				}
-			}
-			System.err.println("---");
+			assertEquals(
+				"ARP not applied as expected.",
+				new HashSet(Arrays.asList(releaseAttributes)),
+				new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1, testAttribute2 })));
+
+			//Test with site and user ARPs
 			releaseAttributes =
 				engine.filterAttributes(
 					new ArpAttribute[] { testAttribute1, testAttribute2 },
 					principal1,
 					"shar1.example.edu",
 					url1);
-			for (int i = 0; releaseAttributes.length > i; i++) {
-				Object[] values = releaseAttributes[i].getValues();
-				for (int j = 0; values.length > j; j++) {
-					System.err.println(values[j]);
-				}
-			}
-			System.err.println("---");
+			assertEquals(
+				"ARP not applied as expected.",
+				new HashSet(Arrays.asList(releaseAttributes)),
+				new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1 })));
+
+			//Test with site and user ARPs
 			inStream = new FileInputStream("test/arp6.xml");
 			parser.parse(new InputSource(inStream));
 			Arp arp6 = new Arp();
@@ -529,12 +526,10 @@ public class ArpTests extends TestCase {
 					principal1,
 					"shar.example.edu",
 					url1);
-			for (int i = 0; releaseAttributes.length > i; i++) {
-				Object[] values = releaseAttributes[i].getValues();
-				for (int j = 0; values.length > j; j++) {
-					System.err.println(values[j]);
-				}
-			}
+			assertEquals(
+				"ARP not applied as expected.",
+				new HashSet(Arrays.asList(releaseAttributes)),
+				new HashSet());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -571,13 +566,14 @@ public class ArpTests extends TestCase {
 		public void setValues(Object[] values) {
 			this.values = values;
 		}
-		
+
 		public boolean equals(Object object) {
 			if (!(object instanceof TestAttribute)) {
 				return false;
 			}
 			//finish this
-			return super.equals(object);
+			return (new HashSet(Arrays.asList(values))).equals(
+				Arrays.asList(((TestAttribute) object).getValues()));
 		}
 
 	}
