@@ -1,38 +1,27 @@
 /*
  * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
- * following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
- * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
- * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
- * software itself, if and wherever such third-party acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
- * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
- * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
- * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
- * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
+ * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
+ * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2
+ * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
+ * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please
+ * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
+ * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
+ * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
+ * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
+ * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.aa;
@@ -55,6 +44,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.apache.xml.security.signature.XMLSignature;
+import org.opensaml.InvalidCryptoException;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeQuery;
@@ -78,6 +69,8 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.Credential;
+import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
@@ -95,14 +88,14 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 public class AAServlet extends HttpServlet {
 
-	private AAConfig configuration;
-	protected AAResponder responder;
-	private NameMapper nameMapper;
-	private SAMLBinding binding;
-	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
-	private AAServiceProviderMapper targetMapper;
+	private AAConfig				configuration;
+	protected AAResponder			responder;
+	private NameMapper				nameMapper;
+	private SAMLBinding				binding;
+	private static Logger			transactionLog	= Logger.getLogger("Shibboleth-TRANSACTION");
+	private AAServiceProviderMapper	targetMapper;
 
-	private static Logger log = Logger.getLogger(AAServlet.class.getName());
+	private static Logger			log				= Logger.getLogger(AAServlet.class.getName());
 
 	public void init() throws ServletException {
 		super.init();
@@ -135,10 +128,8 @@ public class AAServlet extends HttpServlet {
 		configuration = new AAConfig(originConfig.getDocumentElement());
 
 		//Load name mappings
-		NodeList itemElements =
-			originConfig.getDocumentElement().getElementsByTagNameNS(
-				NameIdentifierMapping.mappingNamespace,
-				"NameMapping");
+		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
+				NameIdentifierMapping.mappingNamespace, "NameMapping");
 
 		for (int i = 0; i < itemElements.getLength(); i++) {
 			try {
@@ -148,9 +139,20 @@ public class AAServlet extends HttpServlet {
 			}
 		}
 
+		//Load signing credentials
+		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(Credentials.credentialsNamespace,
+				"Credentials");
+		if (itemElements.getLength() < 1) {
+			log.error("No credentials specified.");
+		}
+		if (itemElements.getLength() > 1) {
+			log.error("Multiple Credentials specifications found, using first.");
+		}
+		Credentials credentials = new Credentials((Element) itemElements.item(0));
+
 		//Load relying party config
 		try {
-			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration);
+			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
@@ -162,10 +164,8 @@ public class AAServlet extends HttpServlet {
 
 			//Startup ARP Engine
 			ArpEngine arpEngine = null;
-			itemElements =
-				originConfig.getDocumentElement().getElementsByTagNameNS(
-					ShibbolethOriginConfig.originConfigNamespace,
-					"ReleasePolicyEngine");
+			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
+					ShibbolethOriginConfig.originConfigNamespace, "ReleasePolicyEngine");
 
 			if (itemElements.getLength() > 1) {
 				log.warn("Encountered multiple <ReleasePolicyEngine> configuration elements.  Using first...");
@@ -183,12 +183,13 @@ public class AAServlet extends HttpServlet {
 			log.fatal("The AA could not be initialized due to a problem with the ARP Engine configuration: " + ae);
 			throw new ShibbolethConfigurationException("Could not load ARP Engine.");
 		} catch (AttributeResolverException ne) {
-			log.fatal(
-				"The AA could not be initialized due to a problem with the Attribute Resolver configuration: " + ne);
+			log.fatal("The AA could not be initialized due to a problem with the Attribute Resolver configuration: "
+					+ ne);
 			throw new ShibbolethConfigurationException("Could not load Attribute Resolver.");
 		}
 
 	}
+
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		MDC.put("serviceId", "[AA] " + new SAMLIdentifier().toString());
@@ -209,11 +210,8 @@ public class AAServlet extends HttpServlet {
 		}
 
 		try {
-			if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
-				throw new SAMLException(
-					SAMLException.REQUESTER,
-					"This SAML authority only responds to attribute queries.");
-			}
+			if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) { throw new SAMLException(
+					SAMLException.REQUESTER, "This SAML authority only responds to attribute queries."); }
 			SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
 			//Identify a Relying Party
@@ -225,13 +223,11 @@ public class AAServlet extends HttpServlet {
 
 			//Map Subject to local principal
 			if (relyingParty.getProviderId() != null
-				&& !relyingParty.getProviderId().equals(attributeQuery.getSubject().getName().getNameQualifier())) {
-				log.error(
-					"The name qualifier for the referenced subject ("
+					&& !relyingParty.getProviderId().equals(attributeQuery.getSubject().getName().getNameQualifier())) {
+				log.error("The name qualifier for the referenced subject ("
 						+ attributeQuery.getSubject().getName().getNameQualifier()
 						+ ") is not valid for this identiy provider.");
-				throw new NameIdentifierMappingException(
-					"The name qualifier for the referenced subject ("
+				throw new NameIdentifierMappingException("The name qualifier for the referenced subject ("
 						+ attributeQuery.getSubject().getName().getNameQualifier()
 						+ ") is not valid for this identiy provider.");
 			}
@@ -242,10 +238,7 @@ public class AAServlet extends HttpServlet {
 					// for testing
 					principal = new AuthNPrincipal("test-handle");
 				} else {
-					principal =
-						nameMapper.getPrincipal(
-							attributeQuery.getSubject().getName(),
-							relyingParty,
+					principal = nameMapper.getPrincipal(attributeQuery.getSubject().getName(), relyingParty,
 							relyingParty.getIdentityProvider());
 				}
 				log.info("Request is for principal (" + principal.getName() + ").");
@@ -254,16 +247,13 @@ public class AAServlet extends HttpServlet {
 				log.info("Could not associate the request subject with a principal: " + invalidNameE);
 				try {
 					if (relyingParty.passThruErrors()) {
-						sendFailure(
-							resp,
-							samlRequest,
-							new SAMLException(Arrays.asList(invalidNameE.getSAMLErrorCodes()), "The supplied Subject was unrecognized.", invalidNameE));
+						sendFailure(resp, samlRequest, new SAMLException(Arrays
+								.asList(invalidNameE.getSAMLErrorCodes()), "The supplied Subject was unrecognized.",
+								invalidNameE));
 
 					} else {
-						sendFailure(
-							resp,
-							samlRequest,
-							new SAMLException(Arrays.asList(invalidNameE.getSAMLErrorCodes()), "The supplied Subject was unrecognized."));
+						sendFailure(resp, samlRequest, new SAMLException(Arrays
+								.asList(invalidNameE.getSAMLErrorCodes()), "The supplied Subject was unrecognized."));
 					}
 					return;
 				} catch (Exception ee) {
@@ -289,17 +279,12 @@ public class AAServlet extends HttpServlet {
 						log.debug("Designated attribute: (" + attribute.getName() + ")");
 						requestedAttrs.add(new URI(attribute.getName()));
 					} catch (URISyntaxException use) {
-						log.error(
-							"Request designated an attribute name that does not conform to the required URI syntax ("
-								+ attribute.getName()
-								+ ").  Ignoring this attribute");
+						log
+								.error("Request designated an attribute name that does not conform to the required URI syntax ("
+										+ attribute.getName() + ").  Ignoring this attribute");
 					}
 				}
-				attrs =
-					responder.getReleaseAttributes(
-						principal,
-						credentialName.toString(),
-						null,
+				attrs = responder.getReleaseAttributes(principal, credentialName.toString(), null,
 						(URI[]) requestedAttrs.toArray(new URI[0]));
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
@@ -316,20 +301,14 @@ public class AAServlet extends HttpServlet {
 			log.error("Error while processing request: " + e);
 			try {
 				if (relyingParty != null && relyingParty.passThruErrors()) {
-					sendFailure(
-						resp,
-						samlRequest,
-						new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
+					sendFailure(resp, samlRequest, new SAMLException(SAMLException.RESPONDER,
+							"General error processing request.", e));
 				} else if (configuration.passThruErrors()) {
-					sendFailure(
-						resp,
-						samlRequest,
-						new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
+					sendFailure(resp, samlRequest, new SAMLException(SAMLException.RESPONDER,
+							"General error processing request.", e));
 				} else {
-					sendFailure(
-						resp,
-						samlRequest,
-						new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+					sendFailure(resp, samlRequest, new SAMLException(SAMLException.RESPONDER,
+							"General error processing request."));
 				}
 				return;
 			} catch (Exception ee) {
@@ -339,19 +318,15 @@ public class AAServlet extends HttpServlet {
 
 		}
 	}
-	
+
 	public void destroy() {
 		log.info("Cleaning up resources.");
 		responder.destroy();
 		nameMapper.destroy();
 	}
-	public void sendResponse(
-		HttpServletResponse resp,
-		SAMLAttribute[] attrs,
-		SAMLRequest samlRequest,
-		RelyingParty relyingParty,
-		SAMLException exception)
-		throws IOException {
+
+	public void sendResponse(HttpServletResponse resp, SAMLAttribute[] attrs, SAMLRequest samlRequest,
+			RelyingParty relyingParty, SAMLException exception) throws IOException {
 
 		SAMLException ourSE = null;
 		SAMLResponse samlResponse = null;
@@ -362,11 +337,8 @@ public class AAServlet extends HttpServlet {
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, exception);
 			} else {
 
-				if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
-					throw new SAMLException(
-						SAMLException.REQUESTER,
-						"This SAML authority only responds to attribute queries");
-				}
+				if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) { throw new SAMLException(
+						SAMLException.REQUESTER, "This SAML authority only responds to attribute queries"); }
 				SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
 				//Reference requested subject
@@ -395,17 +367,11 @@ public class AAServlet extends HttpServlet {
 				Date now = new Date();
 				Date then = new Date(now.getTime() + max);
 
-				SAMLAssertion sAssertion =
-					new SAMLAssertion(
-						relyingParty.getIdentityProvider().getProviderId(),
-						now,
-						then,
-						Collections.singleton(condition),
-						null,
-						Collections.singleton(statement));
+				SAMLAssertion sAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(), now,
+						then, Collections.singleton(condition), null, Collections.singleton(statement));
 
-				samlResponse =
-					new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), exception);
+				samlResponse = new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), exception);
+				addSignatures(samlResponse, relyingParty);
 			}
 		} catch (SAMLException se) {
 			ourSE = se;
@@ -416,12 +382,11 @@ public class AAServlet extends HttpServlet {
 
 			if (log.isDebugEnabled()) {
 				try {
-					log.debug(
-						"Dumping generated SAML Response:"
+					log.debug("Dumping generated SAML Response:"
 							+ System.getProperty("line.separator")
 							+ new String(
-								new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
-								"UTF8"));
+									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
+									"UTF8"));
 				} catch (SAMLException e) {
 					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
 				} catch (IOException e) {
@@ -433,19 +398,59 @@ public class AAServlet extends HttpServlet {
 		}
 	}
 
+	private void addSignatures(SAMLResponse reponse, RelyingParty relyingParty) throws SAMLException {
+
+		//Sign the assertions, if appropriate
+		if (relyingParty.getIdentityProvider().getAssertionSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getAssertionSigningCredential().getPrivateKey() != null) {
+
+			String assertionAlgorithm;
+			if (relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType() == Credential.RSA) {
+				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
+			} else if (relyingParty.getIdentityProvider().getAssertionSigningCredential().getCredentialType() == Credential.DSA) {
+				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
+			} else {
+				throw new InvalidCryptoException(SAMLException.RESPONDER,
+						"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
+			}
+
+			((SAMLAssertion) reponse.getAssertions().next()).sign(assertionAlgorithm, relyingParty
+					.getIdentityProvider().getAssertionSigningCredential().getPrivateKey(), Arrays.asList(relyingParty
+					.getIdentityProvider().getAssertionSigningCredential().getX509CertificateChain()));
+		}
+
+		//Sign the response, if appropriate
+		if (relyingParty.getIdentityProvider().getResponseSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getResponseSigningCredential().getPrivateKey() != null) {
+
+			String responseAlgorithm;
+			if (relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.RSA) {
+				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
+			} else if (relyingParty.getIdentityProvider().getResponseSigningCredential().getCredentialType() == Credential.DSA) {
+				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
+			} else {
+				throw new InvalidCryptoException(SAMLException.RESPONDER,
+						"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
+			}
+
+			reponse.sign(responseAlgorithm, relyingParty.getIdentityProvider().getResponseSigningCredential()
+					.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider().getResponseSigningCredential()
+					.getX509CertificateChain()));
+		}
+	}
+
 	public void sendFailure(HttpServletResponse httpResponse, SAMLRequest samlRequest, SAMLException exception)
-		throws IOException {
+			throws IOException {
 		try {
-			SAMLResponse samlResponse =
-				new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null, null, exception);
+			SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
+					null, exception);
 			if (log.isDebugEnabled()) {
 				try {
-					log.debug(
-						"Dumping generated SAML Error Response:"
+					log.debug("Dumping generated SAML Error Response:"
 							+ System.getProperty("line.separator")
 							+ new String(
-								new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
-								"UTF8"));
+									new BASE64Decoder().decodeBuffer(new String(samlResponse.toBase64(), "ASCII")),
+									"UTF8"));
 				} catch (IOException e) {
 					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
 				}

@@ -30,6 +30,8 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import edu.internet2.middleware.shibboleth.common.Credential;
+import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
@@ -45,6 +47,7 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 
 	private static Logger	log	= Logger.getLogger(AAServiceProviderMapper.class.getName());
 	private AAConfig		configuration;
+	private Credentials		credentials;
 
 	/**
 	 * Constructs a new service provider mapper for the attribute authority.
@@ -56,9 +59,11 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 	 * @throws ServiceProviderMapperException
 	 *             if the configuration is invalid
 	 */
-	public AAServiceProviderMapper(Element rawConfig, AAConfig configuration) throws ServiceProviderMapperException {
+	public AAServiceProviderMapper(Element rawConfig, AAConfig configuration, Credentials credentials)
+			throws ServiceProviderMapperException {
 
 		this.configuration = configuration;
+		this.credentials = credentials;
 
 		NodeList itemElements = rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace,
 				"RelyingParty");
@@ -75,7 +80,7 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 		log.debug("Found a Relying Party.");
 		try {
 			if (e.getLocalName().equals("RelyingParty")) {
-				RelyingParty party = new AARelyingPartyImpl(e, configuration);
+				RelyingParty party = new AARelyingPartyImpl(e, configuration, credentials);
 				log.debug("Relying Party (" + party.getName() + ") loaded.");
 				relyingParties.put(party.getName(), party);
 			}
@@ -106,7 +111,8 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 		private boolean		overridenPassThruErrors	= false;
 		private boolean		passThruIsOverriden		= false;
 
-		public AARelyingPartyImpl(Element partyConfig, AAConfig globalConfig) throws ServiceProviderMapperException {
+		public AARelyingPartyImpl(Element partyConfig, AAConfig globalConfig, Credentials credentials)
+				throws ServiceProviderMapperException {
 			super(partyConfig);
 
 			aaConfig = globalConfig;
@@ -118,9 +124,42 @@ public class AAServiceProviderMapper extends ServiceProviderMapper {
 				passThruIsOverriden = true;
 			}
 
+			//Load a credential for signing if we need it
+			boolean signAttrResponses = new Boolean(((Element) partyConfig).getAttribute("signAttrResponses"))
+					.booleanValue();
+			boolean signAttrAssertions = new Boolean(((Element) partyConfig).getAttribute("signAttrAssertions"))
+					.booleanValue();
+
+			Credential credential = null;
+			if (signAttrAssertions || signAttrResponses) {
+
+				String credentialName = ((Element) partyConfig).getAttribute("AASigningCredential");
+				if (credentialName == null || credentialName.equals("")) {
+					credentialName = ((Element) partyConfig).getAttribute("signingCredential");
+				} else {
+					log.debug("Using (AASigningCredential) for AA signing.");
+				}
+
+				credential = credentials.getCredential(credentialName);
+				if ((credential == null) && (signAttrResponses || signAttrAssertions)) {
+					if (credentialName == null || credentialName.equals("")) {
+						log
+								.error("Relying Party credential not set.  Add a (AASigningCredential) or (signingCredential) attribute to <RelyingParty>.");
+						throw new ServiceProviderMapperException("Required configuration not specified.");
+					} else {
+						log
+								.error("Relying Party credential invalid.  Fix the (signingCredential) attribute on <RelyingParty>.");
+						throw new ServiceProviderMapperException("Required configuration is invalid.");
+					}
+				}
+
+			}
+
 			identityProvider = new RelyingPartyIdentityProvider(overridenOriginProviderId != null
 					? overridenOriginProviderId
-					: configuration.getProviderId(), null);
+					: configuration.getProviderId(), signAttrResponses ? credential : null, signAttrAssertions
+					? credential
+					: null);
 		}
 
 		public boolean passThruErrors() {
