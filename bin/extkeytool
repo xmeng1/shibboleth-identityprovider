@@ -1,21 +1,20 @@
-@echo off
-setlocal
+#!/bin/sh
 
-REM We need a JVM
-if not defined JAVA_HOME  (
-  echo Error: JAVA_HOME is not defined.
-  exit /b
-)
+##We need a JVM
+if [ ! -n "$JAVA_HOME" ] ; then
+  echo "Error: JAVA_HOME is not defined."
+  exit
+fi
 
-if not defined JAVACMD (
-  set JAVACMD=%JAVA_HOME\bin\java.exe
-)
+if [ ! -n "$JAVACMD" ] ; then
+  JAVACMD=$JAVA_HOME/bin/java
+fi
 
-if not exist %JAVACMD (
-  echo Error: JAVA_HOME is not defined correctly.
-  echo Cannot execute %JAVACMD
-  exit /b
-)
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly."
+  echo "Cannot execute $JAVACMD"
+  exit
+fi
 
 
 ##Find the shibboleth components
