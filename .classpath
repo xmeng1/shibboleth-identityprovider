@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml-1.1.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
 	<classpathentry sourcepath="lib/junit-3.8.1-src.jar" kind="lib" path="lib/junit-3.8.1.jar"/>
 	<classpathentry sourcepath="lib/log4j-1.2.5-src.jar" kind="lib" path="lib/log4j-1.2.5.jar"/>
@@ -16,7 +16,6 @@
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-logging-1.03.jar"/>
-	<classpathentry kind="lib" path="lib/xmlsec-1.1.jar"/>
 	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/servlet-api.jar"/>
 	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jasper-runtime.jar"/>
 	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
@@ -25,10 +24,11 @@
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmltypes.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean_xpath.jar"/>
-	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
-	<classpathentry kind="lib" path="endorsed/xalan.jar"/>
 	<classpathentry kind="lib" path="endorsed/sax.jar"/>
 	<classpathentry kind="lib" path="endorsed/jaxp-api.jar"/>
 	<classpathentry kind="lib" path="endorsed/dom.jar"/>
+	<classpathentry kind="lib" path="lib/xmlsec-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/xalan-2.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
