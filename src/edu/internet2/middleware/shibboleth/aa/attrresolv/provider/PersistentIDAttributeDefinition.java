@@ -202,6 +202,15 @@ public class PersistentIDAttributeDefinition extends BaseAttributeDefinition imp
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
 		throws ResolutionPlugInException {
 		log.debug("Resolving attribute: (" + getId() + ")");
+		
+		if (requester == null || requester.equals("")) {
+			log.debug("Could not create ID for unauthenticated requester.");
+			attribute.setResolved();
+			return;
+		}
+		
+		System.out.println(principal.getName() + requester);
+		
 		String localId = null;
 
 		//Resolve the correct local persistent identifier.
@@ -257,6 +266,12 @@ public class PersistentIDAttributeDefinition extends BaseAttributeDefinition imp
 			}
 		} else {
 			localId = principal.getName();
+		}
+
+		if (localId == null || localId.equals("")) {
+			log.error("Specified source data not supplied from dependencies.  Unable to create ID.");
+			attribute.setResolved();
+			return;
 		}
 
 		if (lifeTime != -1) {
