@@ -55,6 +55,11 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.*;
+
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.xml.security.c14n.*;
 import org.apache.xml.security.signature.*;
 import org.apache.xml.security.transforms.*;
@@ -89,7 +94,15 @@ public class MetadataTool
         CmdLineParser.Option pwOption = parser.addStringOption('p', "password");
         CmdLineParser.Option nsOption = parser.addStringOption('x', "ns");
         CmdLineParser.Option nameOption = parser.addStringOption('n', "name");
-
+        CmdLineParser.Option debugOption = parser.addBooleanOption('d', "debug");
+		
+		Boolean debugEnabled = ((Boolean) parser.getOptionValue(debugOption));
+		boolean debug = false;
+		if (debugEnabled != null) {
+			debug = debugEnabled.booleanValue();
+		}
+        configureLogging(debug);
+        
         try {
             parser.parse(args);
         }
@@ -260,5 +273,23 @@ public class MetadataTool
         out.println();
         System.exit(1);
     }
+    
+	private static void configureLogging(boolean debugEnabled) 
+	{
+		ConsoleAppender rootAppender = new ConsoleAppender();
+		rootAppender.setWriter(new PrintWriter(System.out));
+		rootAppender.setName("stdout");
+		Logger.getRootLogger().addAppender(rootAppender);
+
+		if (debugEnabled) {
+			Logger.getRootLogger().setLevel(Level.DEBUG);
+			rootAppender.setLayout(new PatternLayout("%-5p %-41X{serviceId} %d{ISO8601} (%c:%L) - %m%n")); 
+		} else {
+			Logger.getRootLogger().setLevel(Level.INFO);
+			Logger.getLogger("edu.internet2.middleware.shibboleth.aa.attrresolv").setLevel(Level.WARN);
+			rootAppender.setLayout(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)); 
+		}
+		Logger.getLogger("org.apache.xml.security").setLevel(Level.OFF);
+	}
 }
 
