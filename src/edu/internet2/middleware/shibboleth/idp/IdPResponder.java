@@ -53,6 +53,9 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
+import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
+import edu.internet2.middleware.shibboleth.artifact.ArtifactMapperFactory;
+import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
@@ -143,7 +146,7 @@ public class IdPResponder extends HttpServlet {
 						"ReleasePolicyEngine");
 
 				if (itemElements.getLength() > 1) {
-					log.warn("Encountered multiple <ReleasePolicyEngine> configuration elements.  Using first...");
+					log.warn("Encountered multiple <ReleasePolicyEngine/> configuration elements.  Using first...");
 				}
 				if (itemElements.getLength() < 1) {
 					arpEngine = new ArpEngine();
@@ -161,9 +164,23 @@ public class IdPResponder extends HttpServlet {
 				throw new ShibbolethConfigurationException("Could not load Attribute Resolver.");
 			}
 
+			// Load artifact mapping implementation
+			ArtifactMapper artifactMapper = null;
+			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+					"ArtifactMapper");
+			if (itemElements.getLength() > 1) {
+				log.warn("Encountered multiple <ArtifactMapper/> configuration elements.  Using first...");
+			}
+			if (itemElements.getLength() > 0) {
+				artifactMapper = ArtifactMapperFactory.getInstance((Element) itemElements.item(0));
+			} else {
+				log.debug("No Artifact Mapper configuration found.  Defaulting to Memory-based implementation.");
+				artifactMapper = new MemoryArtifactMapper();
+			}
+
 			// Load protocol handlers and support library
 			protocolSupport = new IdPProtocolSupport(configuration, transactionLog, nameMapper, spMapper, arpEngine,
-					resolver);
+					resolver, artifactMapper);
 			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"ProtocolHandler");
 

@@ -49,7 +49,6 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
-import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
@@ -79,7 +78,8 @@ public class IdPProtocolSupport implements Metadata {
 	private Semaphore throttle;
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
-			ArpEngine arpEngine, AttributeResolver resolver) throws ShibbolethConfigurationException {
+			ArpEngine arpEngine, AttributeResolver resolver, ArtifactMapper artifactMapper)
+			throws ShibbolethConfigurationException {
 
 		this.transactionLog = transactionLog;
 		this.config = config;
@@ -88,8 +88,7 @@ public class IdPProtocolSupport implements Metadata {
 		spMapper.setMetadata(this);
 		this.arpEngine = arpEngine;
 		this.resolver = resolver;
-		// TODO make this pluggable... and clean up memory impl
-		artifactMapper = new MemoryArtifactMapper();
+		this.artifactMapper = artifactMapper;
 
 		// Load a semaphore that throttles how many requests the IdP will handle at once
 		throttle = new Semaphore(config.getMaxThreads());
