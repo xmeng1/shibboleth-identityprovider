@@ -23,7 +23,7 @@
         <Alias>UW - Madison</Alias>
         <Alias>University of Wisconsin</Alias>
         <Alias>Wisc</Alias>
-        <HandleService Location="https://gari.doit.wisc.edu/shibboleth/HS" Name="gari.doit.wisc.edu"/>
+        <HandleService Location="https://ecto1.doit.wisc.edu/shibboleth/HS" Name="ecto1.doit.wisc.edu"/>
         <Domain>wisc.edu</Domain>
     </OriginSite>
     <OriginSite Name="psu.edu">

@@ -23,7 +23,7 @@
         <Alias>UW - Madison</Alias>
         <Alias>University of Wisconsin</Alias>
         <Alias>Wisc</Alias>
-        <HandleService Location="https://gari.doit.wisc.edu/shibboleth/HS" Name="gari.doit.wisc.edu"></HandleService>
+        <HandleService Location="https://ecto1.doit.wisc.edu/shibboleth/HS" Name="ecto1.doit.wisc.edu"></HandleService>
         <Domain>wisc.edu</Domain>
     </OriginSite>
     <OriginSite Name="psu.edu">
@@ -66,15 +66,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>vz/qVJ+6Ia9d6kD/iuOHmwWYEBE=</ds:DigestValue>
+<ds:DigestValue>Sw8O2v3ziEjPpLCnMZSkSnGxH18=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-eunYfceolv071Q7+9ACFg3e48AVbBDz2HFCQ18Fptz7LsVwZgtwjqXMX14H5hUYdZVgRmzoWHPMQ
-53OuhX3uJz4CUPPncE4ewyNqPRb3Az/YJzOKibTXX1YYNCJdzNQ/828CuWCDP4Eotr9VEdd93uEz
-1bTEvUJrvWv5ubUF2zL/6Q3T1g46latXxVEbzf9e771Ep5aUHnsQuu+AE3A3EfvIXD36LAs9buGB
-Rtr7u/GM7YOpIdV3SAstMO3GaEa5jwYV0btIZLV3XUb7dZhyaPXllrRQk87qCpFqcshlBGXgUY5W
-ahUQaXQ0mxap+zAEf2zIHiTYQ0CNIPwEQTzUeg==
+gy1kHK2yHmVO/1yMfIl79YuJd+BFtYM5i3LnR3gtIb7p08sHkgzzSANcJg5iREuxlxl9H+S3xwd8
+oDWLc+2Uem0px8wbiyS8Yjl60Ay4HHGBFwOhy0a1+ajuM7G4gaRYbp71i+UxVv9tGQSOngYhODoH
+ko5eWRWnZu86cI0IYupZG87dJwsYwrt6ajLDkpvY6TE9a/7hcZLZ3a+y74gYZ5bVaXYODSplUNVE
+109UA59DfjaDUwSynwy6J4Hl7r6kjHiWzzAGcJHyZUmPZmQQ+Ln2gEpgc/YRdANszILd5dKckaRt
+rx6mJE6BBJbTtCYrV2hOjeWFpllENbtpJf8CmA==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
