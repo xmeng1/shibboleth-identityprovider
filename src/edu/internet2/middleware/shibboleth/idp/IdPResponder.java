@@ -26,8 +26,6 @@
 package edu.internet2.middleware.shibboleth.idp;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -144,8 +142,8 @@ public class IdPResponder extends HttpServlet {
 			try {
 				resolver = new AttributeResolver(configuration);
 
-				itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
-						IdPConfig.originConfigNamespace, "ReleasePolicyEngine");
+				itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+						"ReleasePolicyEngine");
 
 				if (itemElements.getLength() > 1) {
 					log.warn("Encountered multiple <ReleasePolicyEngine> configuration elements.  Using first...");
@@ -169,12 +167,20 @@ public class IdPResponder extends HttpServlet {
 			// Load protocol handlers and support library
 			protocolSupport = new IdPProtocolSupport(configuration, transactionLog, nameMapper, spMapper, arpEngine,
 					resolver);
-			log.debug("Starting with Shibboleth v1 protocol handling enabled.");
+			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+					"ProtocolHandler");
 
+			//TODO Default if no handlers are specified
+
+			for (int i = 0; i < itemElements.getLength(); i++) {
+				IdPProtocolHandler handler = ProtocolHandlerFactory.getInstance((Element) itemElements.item(i));
+			}
+			//TODO finish fleshing this out
+			log.debug("Starting with Shibboleth v1 protocol handling enabled.");
 			protocolHandlers.put("https://wraith.memphis.edu/shibboleth/SSO", new ShibbolethV1SSOHandler());
 
 			// Load metadata
-			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.originConfigNamespace,
+			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"FederationProvider");
 			for (int i = 0; i < itemElements.getLength(); i++) {
 				protocolSupport.addFederationProvider((Element) itemElements.item(i));
@@ -242,7 +248,7 @@ public class IdPResponder extends HttpServlet {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via POST for endpoint (" + request.getRequestURI() + ").");
+		log.debug("Recieved a request via POST for endpoint (" + request.getRequestURL() + ").");
 
 		// Parse SOAP request and marshall SAML request object
 		SAMLRequest samlRequest = null;
@@ -270,9 +276,10 @@ public class IdPResponder extends HttpServlet {
 			}
 
 			// Determine which protocol handler is active for this endpoint
-			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURI());
+			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURL()
+					.toString());
 			if (activeHandler == null) {
-				log.error("No protocol handler registered for endpoint (" + request.getRequestURI() + ").");
+				log.error("No protocol handler registered for endpoint (" + request.getRequestURL() + ").");
 				throw new SAMLException("Request submitted to an invalid endpoint.");
 			}
 
