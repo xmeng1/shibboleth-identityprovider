@@ -57,7 +57,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.opensaml.QName;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLException;
 import org.opensaml.XML;
