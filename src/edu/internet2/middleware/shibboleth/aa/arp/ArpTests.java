@@ -50,6 +50,7 @@
 package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.MalformedURLException;
@@ -65,7 +66,13 @@ import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.xerces.parsers.DOMParser;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
 
 /**
  * Validation suite for <code>Arp</code> processing.
@@ -462,6 +469,38 @@ public class ArpTests extends TestCase {
 
 		DOMParser parser = new DOMParser();
 		try {
+			parser.setFeature("http://xml.org/sax/features/validation", true);
+			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
+			parser.setEntityResolver(new EntityResolver() {
+				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
+					InputStream stream;
+					try {
+						stream = new FileInputStream("src/schemas/ARP.xsd");
+						if (stream != null) {
+							return new InputSource(stream);
+						}
+						throw new SAXException("Could not load entity: Null input stream");
+					} catch (FileNotFoundException e) {
+						throw new SAXException("Could not load entity: " + e);
+					}
+				}
+			});
+
+			parser.setErrorHandler(new ErrorHandler() {
+				public void error(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void fatalError(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void warning(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+			});
+		} catch (Exception e) {
+			fail("Failed to setup xml parser: " + e);
+		}
+		try {
 
 			arpApplicationTest1(repository, props, parser);
 			arpApplicationTest2(repository, props, parser);
@@ -484,7 +523,7 @@ public class ArpTests extends TestCase {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail("Failed to apply ARPs: " + e);
+			fail("Failed to apply filter to ARPs: " + e);
 		}
 	}
 	/**
@@ -1402,15 +1441,16 @@ public class ArpTests extends TestCase {
 		assertEquals(
 			"ARP application test 17: ARP not applied as expected.",
 			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute2, filteredAttribute1 } )));
+			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute2, filteredAttribute1 })));
 	}
-	
+
 	/**
 	 * ARPs: A site ARP only
 	 * Target: Any
 	 * Attribute: Any value release of two attributes in one rule
 	 */
-	void arpApplicationTest18(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+	void arpApplicationTest18(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1460,10 +1500,6 @@ public class ArpTests extends TestCase {
 			new HashSet(Arrays.asList(releaseAttributes)),
 			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1, testAttribute2 })));
 	}
-
-
-	
-
 
 	public class TestAttribute implements ArpAttribute {
 		private String name;
