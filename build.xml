@@ -1,6 +1,6 @@
 <!-- Main build configutaion for Shibboleth java components - Walter Hoehn 06/04/2002 -->
 
-<project name="Shibboleth" default="dist-all" basedir=".">
+<project name="Shibboleth" default="dist-origin" basedir=".">
 
     <!-- Set global properties for this build -->
     <property name="distname" value="shibboleth" />
@@ -59,7 +59,7 @@
         </copy>
     </target>
     
-        <target name="compile-tests" depends="compile">
+    <target name="compile-tests" depends="compile">
         <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on">
             <classpath refid="build.path" />
         </javac>
@@ -80,15 +80,20 @@
 	</target>
 
     <!-- Create various product distributions and move them to ${dist} -->
-    <target name="dist" depends="dist-all" />
-    <target name="dist-all" depends="compile, test-all, package-all, clean-build" />
+
+    <target name="dist-all" depends="compile, genSecret, test-all, package-all, clean-build" />
     <target name="package-all">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/all.xml" basedir="${approot}" update="no" />
     </target>
 
-    <target name="dist-origin" depends="compile, test-origin, package-origin, clean-build" />
+    <target name="dist-origin" depends="compile, genSecret, test-origin, package-origin, clean-build" />
     <target name="package-origin">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
+    </target>
+    
+    <target name="dist-wayf" depends="compile, package-wayf, clean-build" />
+    <target name="package-wayf">
+        <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
     </target>
 
     <!-- Build utilities -->
@@ -96,12 +101,7 @@
         <jar jarfile="${distlibs}/shib-util.jar" basedir="${build}" />
     </target>
 
-    <target name="dist-wayf" depends="compile, test-wayf, package-wayf, clean-build" />
-    <target name="package-wayf">
-        <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
-    </target>
-
-
+    
     <!-- Cleanup after the build, test, and distribution processes -->
     <target name="clean" depends="clean-all" />
     <target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util" />
@@ -130,16 +130,14 @@
     </target>
 
     <!-- Run automated tests on compiled code -->
-    <target name="test-all" depends="test-origin, test-wayf" />
-    <target name="test-origin" depends="test-common">
+    <target name="test-all" depends="test-origin" />
+    <target name="test-origin" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
             <classpath refid="build.path" />
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
         </junit>
     </target>
-    <target name="test-wayf" depends="test-common" />
-    <target name="test-common" depends="compile-tests"/>
     
 	<target name="genSecret" depends="compile">
     	<taskdef name="genSecret" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
