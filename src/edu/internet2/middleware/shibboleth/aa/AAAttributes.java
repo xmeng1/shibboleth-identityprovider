@@ -14,7 +14,7 @@ public class AAAttributes{
     Class[] attrClasses = new Class[1];
 
     /**
-     * Sole constructor. Takes a directory name in the local file system
+     * Sole constructor. Takes a jarfile name in the local file system
      * where attribute classes reside
      */
 

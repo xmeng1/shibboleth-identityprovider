@@ -1,3 +1,5 @@
+package edu.internet2.middleware.shibboleth.aaLocal;
+
 import java.util.*;
 import java.sql.*;
 import javax.naming.*;

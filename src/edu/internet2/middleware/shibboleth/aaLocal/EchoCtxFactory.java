@@ -1,3 +1,5 @@
+package edu.internet2.middleware.shibboleth.aaLocal;
+
 import java.util.Hashtable;
 import javax.naming.*;
 import javax.naming.spi.*;

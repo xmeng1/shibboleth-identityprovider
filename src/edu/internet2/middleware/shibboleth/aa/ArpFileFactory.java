@@ -23,7 +23,9 @@ public class ArpFileFactory implements ArpFactory{
     public Arp getInstance(String arpName, boolean isAdmin)
     throws AAException{
 	try{
+
 	    String fileName = dataStore+System.getProperty("file.separator")+arpName;
+	    System.out.println("Looking for ARP "+fileName);
 
 	    FileInputStream f = new FileInputStream(fileName);
 	    ObjectInput s = new ObjectInputStream(f);
@@ -32,10 +34,12 @@ public class ArpFileFactory implements ArpFactory{
 	       throw new AAException("Wrong ARP name.  ARP maybe renamed in datastore. ");
 	    arp.setNew(false);
 	    arp.setLastRead(new Date());
+	    System.out.println("Found and using ARP "+arpName);
 	    return arp;
 	    
 	}catch(FileNotFoundException e){
 	    // check the IO error to make sure "file not found"
+	    System.out.println("Got File Not Found for "+arpName+" in "+dataStore);
 	    try{
 		Arp arp = new Arp(arpName, isAdmin);
 		arp.setNew(true);
@@ -93,6 +97,10 @@ public class ArpFileFactory implements ArpFactory{
 	}catch(Exception e){
 	    throw new AAException("IO Problem:"+e);
 	}
+    }
+
+    public String toString(){
+	return "ArpFileFactory:dir="+dataStore;
     }
 }
 

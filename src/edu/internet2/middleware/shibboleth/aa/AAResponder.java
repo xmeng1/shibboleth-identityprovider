@@ -28,7 +28,7 @@ public class AAResponder{
 	this.arpFactory = arpFactory;
 	adminArp = arpFactory.getInstance("admin", true);
 	if(adminArp.isNew())
-	    throw new AAException("Admin Arp not found! ");
+	    throw new AAException("Admin Arp not found in "+arpFactory);
 	this.ctx = ctx;
 	this.domain = domain;
     }

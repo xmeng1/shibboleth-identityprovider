@@ -1,5 +1,5 @@
 import edu.internet2.middleware.eduPerson.*;
-import edu.internet2.middleware.shibboleth.Constants; 
+import edu.internet2.middleware.shibboleth.common.Constants; 
 import org.opensaml.*;
 
 public class eduPersonAffiliation extends ScopedAttribute{
@@ -8,7 +8,7 @@ public class eduPersonAffiliation extends ScopedAttribute{
     public eduPersonAffiliation(String[] scopes, Object[] values)
 	throws SAMLException{
 
-	this.super("urn:mace:eduPerson:1.0:eduPersonAffiliation",
+	super("urn:mace:eduPerson:1.0:eduPersonAffiliation",
 		   Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
 		   new QName("urn:mace:eduPerson:1.0",
 			     "eduPersonAffiliationType"),
@@ -17,8 +17,8 @@ public class eduPersonAffiliation extends ScopedAttribute{
 		   scopes[0],
 		   scopes);
 
-     for(int i=0; i<super.values.length; i++){
-	String val = (String)super.values[i];
+     for(int i=0; i<values.length; i++){
+	String val = (String)values[i];
 	if(val.equalsIgnoreCase("faculty") ||
 	   val.equalsIgnoreCase("student") ||
 	   val.equalsIgnoreCase("staff") ||
@@ -26,9 +26,9 @@ public class eduPersonAffiliation extends ScopedAttribute{
 	   val.equalsIgnoreCase("member") ||
 	   val.equalsIgnoreCase("affiliate") ||
 	   val.equalsIgnoreCase("employee") )
-	    super.values[i] = val.toLowerCase();
+	    values[i] = val.toLowerCase();
 	else
-	    super.values[i] = "member";
+	    values[i] = "member";
      }
 
     }
