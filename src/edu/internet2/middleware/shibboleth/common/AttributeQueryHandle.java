@@ -52,7 +52,7 @@ public class AttributeQueryHandle {
 	/**
 	 * Creates a new <code>AttributeQueryHandle</code>
 	 * @param principal <code>String</code> representation of user that the handle should reference
-	 * @param ticketLength Time in milliseconds for which the handle should be valid
+	 * @param validityPeriod Time in milliseconds for which the handle should be valid
 	 * @param hsLocation URL of the Handle Service used to generate the AQH
 	 * @param key Symmetric key used to encrypt the AQH upon serialization
 	 * 
@@ -61,13 +61,13 @@ public class AttributeQueryHandle {
 	public AttributeQueryHandle(
 		String principal,
 		SecretKey key,
-		long ticketLength,
+		long validityPeriod,
 		String hsLocation)
 		throws HandleException {
 
 		this.principal = principal;
 		this.creationTime = System.currentTimeMillis();
-		this.expirationTime = creationTime + ticketLength;
+		this.expirationTime = creationTime + validityPeriod;
 
 		try {
 			UUIDGenerator uuidGen = UUIDGenerator.getInstance();
