@@ -51,16 +51,16 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.net.URL;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
-import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -77,10 +77,11 @@ public class Arp {
 
 	public static final String arpNamespace = "urn:mace:shibboleth:arp:1.0";
 	private Principal principal;
-	private Set rules = new HashSet();
+	private List rules = new ArrayList();
 	private String description;
 	private boolean sitePolicy = false;
 	private static Logger log = Logger.getLogger(Arp.class.getName());
+	private Set attributes = new HashSet();
 
 	/**
 	 * Creates an Arp for the specified <code>Principal</code>.
@@ -155,9 +156,25 @@ public class Arp {
 				try {
 					rule.marshall((Element) ruleNodes.item(i));
 				} catch (ArpMarshallingException me) {
-					throw new ArpMarshallingException("Encountered a problem marshalling ARP Rules: " + me);
+					throw new ArpMarshallingException(
+						"Encountered a problem marshalling ARP Rules: " + me);
 				}
 				rules.add(rule);
+			}
+
+			//Retain attributes declared outside the scop of a rule
+			//Not enforced!
+			NodeList attributeNodes =
+				xmlElement.getElementsByTagNameNS(Arp.arpNamespace, "Attribute");
+			if (attributeNodes.getLength() > 0) {
+				for (int i = 0; i < attributeNodes.getLength(); i++) {
+					if (attributeNodes.item(i).getParentNode() == xmlElement) {
+						log.warn(
+							"Encountered an Attribute definition outside the scope of a Rule definition while marshalling an ARP.  "
+								+ "References are currently unsupported by the ARP Engine.  Ignoring...");
+						attributes.add(attributeNodes.item(i));
+					}
+				}
 			}
 		}
 	}
@@ -173,11 +190,18 @@ public class Arp {
 			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 			docFactory.setNamespaceAware(true);
 			Document placeHolder = docFactory.newDocumentBuilder().newDocument();
-			
-			Element policyNode = placeHolder.createElementNS(arpNamespace, "AttributeReleasePolicy");
+
+			Element policyNode =
+				placeHolder.createElementNS(arpNamespace, "AttributeReleasePolicy");
 			policyNode.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", arpNamespace);
-			policyNode.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-			policyNode.setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "xsi:schemaLocation", "urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd");
+			policyNode.setAttributeNS(
+				"http://www.w3.org/2000/xmlns/",
+				"xmlns:xsi",
+				"http://www.w3.org/2001/XMLSchema-instance");
+			policyNode.setAttributeNS(
+				"http://www.w3.org/2001/XMLSchema-instance",
+				"xsi:schemaLocation",
+				"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd");
 			if (description != null) {
 				Element descriptionNode = placeHolder.createElementNS(arpNamespace, "Description");
 				descriptionNode.appendChild(placeHolder.createTextNode(description));
@@ -187,6 +211,11 @@ public class Arp {
 			Rule[] rules = getAllRules();
 			for (int i = 0; rules.length > i; i++) {
 				policyNode.appendChild(placeHolder.importNode(rules[i].unmarshall(), true));
+			}
+
+			Iterator attrIterator = attributes.iterator();
+			while (attrIterator.hasNext()) {
+				policyNode.appendChild(placeHolder.importNode((Node) attrIterator.next(), true));
 			}
 
 			return policyNode;

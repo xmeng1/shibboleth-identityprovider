@@ -80,6 +80,7 @@ public class Rule {
 	private Target target;
 	private static Logger log = Logger.getLogger(Rule.class.getName());
 	private ArrayList attributes = new ArrayList();
+	private NodeList attributeReferences;
 
 	/**
 	 * Returns the description for this <code>Rule</code>.
@@ -130,6 +131,13 @@ public class Rule {
 				ruleNode.appendChild(
 					placeHolder.importNode(((Attribute) attrIterator.next()).unmarshall(), true));
 			}
+			
+			if (attributeReferences != null) {
+				for (int i = 0;i < attributeReferences.getLength();i++) {
+					ruleNode.appendChild(
+					placeHolder.importNode(attributeReferences.item(i), true));
+				}	
+			}
 			return ruleNode;
 		} catch (ParserConfigurationException e) {
 			log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
@@ -151,7 +159,7 @@ public class Rule {
 		}
 
 		//Grab the description
-		NodeList descriptionNodes = element.getElementsByTagName("Description");
+		NodeList descriptionNodes = element.getElementsByTagNameNS(Arp.arpNamespace, "Description");
 		if (descriptionNodes.getLength() > 0) {
 			Element descriptionNode = (Element) descriptionNodes.item(0);
 			if (descriptionNode.hasChildNodes()
@@ -161,7 +169,7 @@ public class Rule {
 		}
 
 		//Create the Target
-		NodeList targetNodes = element.getElementsByTagName("Target");
+		NodeList targetNodes = element.getElementsByTagNameNS(Arp.arpNamespace, "Target");
 		if (targetNodes.getLength() != 1) {
 			log.error(
 				"Element data does not represent an ARP Rule.  An ARP Rule must contain 1 and "
@@ -174,11 +182,22 @@ public class Rule {
 		target.marshall((Element) targetNodes.item(0));
 
 		//Create the Attributes
-		NodeList attributeNodes = element.getElementsByTagName("Attribute");
+		NodeList attributeNodes = element.getElementsByTagNameNS(Arp.arpNamespace, "Attribute");
 		for (int i = 0; attributeNodes.getLength() > i; i++) {
 			Attribute attribute = new Attribute();
 			attribute.marshall((Element) attributeNodes.item(i));
 			attributes.add(attribute);
+		}
+
+		//Retain Attribute references
+		//Not enforced!
+		NodeList attributeReferenceNodes =
+			element.getElementsByTagNameNS(Arp.arpNamespace, "AttributeReference");
+		if (attributeReferenceNodes.getLength() > 0) {
+			log.warn(
+				"Encountered an Attribute Reference while marshalling an ARP.  "
+					+ "References are currently unsupported by the ARP Engine.  Ignoring...");
+			attributeReferences = attributeReferenceNodes;
 		}
 	}
 
@@ -262,14 +281,14 @@ public class Rule {
 			}
 
 			//Handle <AnyTarget/> definitions
-			NodeList anyTargetNodeList = element.getElementsByTagName("AnyTarget");
+			NodeList anyTargetNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "AnyTarget");
 			if (anyTargetNodeList.getLength() == 1) {
 				matchesAny = true;
 				return;
 			}
 
 			//Create Requester
-			NodeList requesterNodeList = element.getElementsByTagName("Requester");
+			NodeList requesterNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "Requester");
 			if (requesterNodeList.getLength() == 1) {
 				requester = new Requester();
 				requester.marshall((Element) requesterNodeList.item(0));
@@ -279,14 +298,14 @@ public class Rule {
 			}
 
 			//Handle <AnyResource/>
-			NodeList anyResourceNodeList = element.getElementsByTagName("AnyResource");
+			NodeList anyResourceNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "AnyResource");
 			if (anyResourceNodeList.getLength() == 1) {
 				resource = new Resource();
 				return;
 			}
 
 			//Create Resource
-			NodeList resourceNodeList = element.getElementsByTagName("Resource");
+			NodeList resourceNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "Resource");
 			if (resourceNodeList.getLength() == 1) {
 				resource = new Resource();
 				resource.marshall((Element) resourceNodeList.item(0));
@@ -624,7 +643,7 @@ public class Rule {
 			}
 
 			//Handle <AnyValue/> definitions
-			NodeList anyValueNodeList = element.getElementsByTagName("AnyValue");
+			NodeList anyValueNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "AnyValue");
 			if (anyValueNodeList.getLength() == 1) {
 				anyValue = true;
 				if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
@@ -634,7 +653,7 @@ public class Rule {
 
 			//Handle Value definitions
 			if (!denyAnyValue()) {
-				NodeList valueNodeList = element.getElementsByTagName("Value");
+				NodeList valueNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "Value");
 				for (int i = 0; valueNodeList.getLength() > i; i++) {
 					String release = null;
 					String value = null;

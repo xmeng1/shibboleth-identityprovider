@@ -591,7 +591,7 @@ public class ArpTests extends TestCase {
 				assertTrue(
 					"Round trip marshall/unmarshall failed for file (" + arpExamples[i] + ")",
 					directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
-						processedXML.toString().replaceAll("\n|\r|\t", "")));
+						processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
 			}
 
 		} catch (Exception e) {
