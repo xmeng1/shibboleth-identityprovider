@@ -273,6 +273,7 @@ public class AttributeResolver {
                 return;
             }
 		}
+        verifyChain.remove(plugIn.getId());
 
 		//Recursively go through all AttributeDefinition dependencies and make sure all are registered and consistent.
 		depends.clear();
@@ -318,6 +319,51 @@ public class AttributeResolver {
 				return;
 			}
 		}
+        verifyChain.remove(plugIn.getId());
+        
+        //Check the failover dependency, if there is one.
+        if (plugIn instanceof DataConnectorPlugIn) {
+            String key = ((DataConnectorPlugIn)plugIn).getFailoverDependencyId();
+            if (key != null) {
+                if (!plugIns.containsKey(key)) {
+                    log.error(
+                        "The PlugIn ("
+                            + plugIn.getId()
+                            + ") is inconsistent.  It depends on a PlugIn ("
+                            + key
+                            + ") that is not registered.");
+                    inconsistent.add(plugIn.getId());
+                    return;
+                }
+
+                ResolutionPlugIn dependent = lookupPlugIn(key);
+                if (!(dependent instanceof DataConnectorPlugIn)) {
+                    log.error(
+                        "The PlugIn ("
+                            + plugIn.getId()
+                            + ") is inconsistent.  It depends on a fail-over PlugIn ("
+                            + key
+                            + ") that is not a DataConnectorPlugIn.");
+                    inconsistent.add(plugIn.getId());
+                    return;
+                }
+            
+                verifyChain.add(plugIn.getId());
+                verifyPlugIn(dependent, verifyChain, inconsistent);
+
+                if (inconsistent.contains(key)) {
+                    log.error(
+                        "The PlugIn ("
+                            + plugIn.getId()
+                            + ") is inconsistent.  It depends on a PlugIn ("
+                            + key
+                            + ") that is inconsistent.");
+                    inconsistent.add(plugIn.getId());
+                    return;
+                }
+            }
+        }
+        verifyChain.remove(plugIn.getId());
 	}
 
 	private void registerPlugIn(ResolutionPlugIn connector, String id) throws DuplicatePlugInException {
@@ -473,21 +519,32 @@ public class AttributeResolver {
         }
 
         //Resolve the connector
-        Attributes resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
+        try {
+            Attributes resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
 
-        //Cache for this request
-        requestCache.put(currentDefinition.getId(), resolvedAttributes);
-
-        //Add attribute resolution to cache
-        if (currentDefinition.getTTL() > 0) {
-            resolverCache.cacheConnectorResolution(
-                principal,
-                currentDefinition.getId(),
-                currentDefinition.getTTL(),
-                resolvedAttributes);
+            //Cache for this request
+            requestCache.put(currentDefinition.getId(), resolvedAttributes);
+    
+            //Add attribute resolution to cache
+            if (currentDefinition.getTTL() > 0) {
+                resolverCache.cacheConnectorResolution(
+                    principal,
+                    currentDefinition.getId(),
+                    currentDefinition.getTTL(),
+                    resolvedAttributes);
+            }
+            
+            return resolvedAttributes;
         }
-        
-        return resolvedAttributes;
+        catch (ResolutionPlugInException e) {
+            // Something went wrong, so check for a fail-over...
+            if (currentDefinition.getFailoverDependencyId() != null) {
+                return resolveConnector(
+                    currentDefinition.getFailoverDependencyId(), principal, requester, requestCache, requestedAttributes
+                    );
+            }
+            throw e;
+        }
     }
 
 	private void resolveAttribute(

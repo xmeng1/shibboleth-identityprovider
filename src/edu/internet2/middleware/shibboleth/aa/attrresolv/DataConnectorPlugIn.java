@@ -63,6 +63,13 @@ import javax.naming.directory.Attributes;
 public interface DataConnectorPlugIn extends ResolutionPlugIn {
 	
     /**
+     * Returns the name of a data connector to resolve if this one fails.
+     * 
+     * @return String an Id
+     */
+    public String getFailoverDependencyId();
+
+    /**
      * Resolves the values of a data connector.
      * 
      * @param principal The principal for which the connector should be resolved

@@ -129,4 +129,11 @@ public class CustomDataConnector implements DataConnectorPlugIn {
     public String[] getDataConnectorDependencyIds() {
         return custom.getDataConnectorDependencyIds();
     }
+    
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
+     */
+    public String getFailoverDependencyId() {
+        return custom.getFailoverDependencyId();
+    }
 }

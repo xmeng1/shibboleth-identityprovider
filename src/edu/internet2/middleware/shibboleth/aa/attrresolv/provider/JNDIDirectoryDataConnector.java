@@ -82,18 +82,25 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 	protected String searchFilter;
 	protected Properties properties;
 	protected SearchControls controls;
+    protected String failover = null;
 
-	/**
-	 * Constructs a DataConnector based on DOM configuration.
-	 * 
-	 * @param e a &lt;JNDIDirectoryDataConnector /&gt; DOM Element as specified by 
-	 * urn:mace:shibboleth:resolver:1.0
-	 * 
-	 * @throws ResolutionPlugInException if the PlugIn cannot be initialized
-	 */
+    /**
+     * Constructs a DataConnector based on DOM configuration.
+     * 
+     * @param e a &lt;JNDIDirectoryDataConnector /&gt; DOM Element as specified by 
+     * urn:mace:shibboleth:resolver:1.0
+     * 
+     * @throws ResolutionPlugInException if the PlugIn cannot be initialized
+     */
 	public JNDIDirectoryDataConnector(Element e) throws ResolutionPlugInException {
 
 		super(e);
+        
+        NodeList failoverNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "FailoverDependency");
+        if (failoverNodes.getLength() > 0) {
+            failover = ((Element)failoverNodes.item(0)).getAttribute("requires");
+        }
+        
 		NodeList searchNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
 		if (searchNodes.getLength() != 1) {
 			log.error("JNDI Directory Data Connector requires a \"Search\" specification.");
@@ -127,13 +134,13 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 				throw new ResolutionPlugInException("Property is malformed.");
 			}
 		}
-		
-		//Fail-fast connection test
+
+        //Fail-fast connection test
 		InitialDirContext context = null;
 		try {
 			context = new InitialDirContext(properties);
 			log.debug("JNDI Directory context activated.");
-
+			
 		} catch (NamingException e1) {
 			log.error("Failed to startup directory context: " + e1);
 			throw new ResolutionPlugInException("Failed to startup directory context.");
@@ -149,11 +156,11 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 		}
 	}
 
-	/**
-	 * Create JNDI search controls based on DOM configuration
-	 * @param searchNode a &lt;Controls /&gt; DOM Element as specified by 
-	 * urn:mace:shibboleth:resolver:1.0
-	 */
+    /**
+     * Create JNDI search controls based on DOM configuration
+     * @param searchNode a &lt;Controls /&gt; DOM Element as specified by 
+     * urn:mace:shibboleth:resolver:1.0
+     */
 	protected void defineSearchControls(Element searchNode) {
 
 		controls = new SearchControls();
@@ -233,6 +240,7 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 		try {
 			context = new InitialDirContext(properties);
 			NamingEnumeration enum = null;
+
 			try {
 				enum = context.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
 			} catch (CommunicationException e) {
@@ -276,4 +284,10 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 		}
 	}
 
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
+     */
+    public String getFailoverDependencyId() {
+        return failover;
+    }
 }
