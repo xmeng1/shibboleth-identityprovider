@@ -48,8 +48,18 @@
 package edu.internet2.middleware.shibboleth.common;
 
 /**
+ * Defines a consumer of SAML assertions. In Shibboleth parlance,
+ * represents a target.
+ *
+ * @see IdentityProvider
  * @author Walter Hoehn
  */
 public interface ServiceProvider {
-	public String getProviderId();
+
+    /**
+     * Returns the unique identifier for the service provider.
+     *
+     * @return the provider ID
+     */
+    public String getProviderId();
 }

@@ -48,11 +48,28 @@
 package edu.internet2.middleware.shibboleth.common;
 
 /**
+ * Defines a relationship between service providers and an identity
+ * provider. In Shibboleth parlance, a relying party represents a target or
+ * federation.
+ *
  * @author Walter Hoehn
  */
 public interface RelyingParty extends ServiceProvider {
 
-	public String getName();
-	public String getProviderId();
-	public IdentityProvider getIdentityProvider();
+    /**
+     * Returns the name of the relying party. If the relying party is a
+     * Shibboleth target (not a federation), this function returns the same
+     * thing as {@link #getProviderId}.
+     *
+     * @return name of the relying party
+     */
+    public String getName();
+
+    /**
+     * Returns the appropriate identity provider to create assertions for
+     * this relying party. 
+     *
+     * @return the identity provider
+     */
+    public IdentityProvider getIdentityProvider();
 }

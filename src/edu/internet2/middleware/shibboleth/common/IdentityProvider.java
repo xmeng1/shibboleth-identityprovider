@@ -48,11 +48,35 @@
 package edu.internet2.middleware.shibboleth.common;
 
 /**
+ * Defines a producer of SAML authentication and attribute assertions. A
+ * single instantiation of a Shibboleth origin may represent more than one
+ * logical identity provider.
+ *
+ * @see ServiceProvider
  * @author Walter Hoehn
  */
 public interface IdentityProvider {
-	public String getProviderId();
-	public Credential getResponseSigningCredential();
-	public Credential getAssertionSigningCredential();
 
+    /**
+     * Returns the unique identifier for the indentity provider.
+     *
+     * @return the provider ID
+     */
+    public String getProviderId();
+
+    /**
+     * Returns the credential that this provider uses to sign SAML
+     * responses to requests, or <code>null</code> if responses should not be signed.
+     *
+     * @return the credential or <code>null</code>
+     */
+    public Credential getResponseSigningCredential();
+
+    /**
+     * Returns the credential that this provider uses to sign SAML
+     * assertions, or <code>null</code> if assertions should not be signed.
+     *
+     * @return the credential or <code>null</code>
+     */
+    public Credential getAssertionSigningCredential();
 }
