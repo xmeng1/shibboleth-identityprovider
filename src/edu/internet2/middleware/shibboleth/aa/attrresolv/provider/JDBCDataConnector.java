@@ -649,8 +649,8 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 			}
 
 		} catch (Exception e) {
-			log.error("Encountered an error while creating prepared statement: " + e);
-			throw new JDBCStatementCreatorException(
+			log.error("Encountered an error while creating prepared statement (principal=" + principal.getName() + "): " + e);
+                        throw new JDBCStatementCreatorException(
 				"Encountered an error while creating prepared statement: " + e.getMessage());
 		}
 	}
