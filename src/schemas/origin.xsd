@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Open question: how to handle auth method -->
-<xs:schema targetNamespace="urn:mace:shibboleth:origin:1.0" xmlns:origin="urn:mace:shibboleth:origin:1.0" xmlns:namemapper="urn:mace:shibboleth:namemapper:1.0" xmlns:credentials="urn:mace:shibboleth:credentials:1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:schema targetNamespace="urn:mace:shibboleth:origin:1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:credentials="urn:mace:shibboleth:credentials:1.0" xmlns:namemapper="urn:mace:shibboleth:namemapper:1.0" xmlns:origin="urn:mace:shibboleth:origin:1.0" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<xs:import namespace="urn:mace:shibboleth:credentials:1.0" schemaLocation="credentials.xsd"/>
 	<xs:import namespace="urn:mace:shibboleth:namemapper:1.0" schemaLocation="namemapper.xsd"/>
 	<xs:element name="ShibbolethOriginConfig">
@@ -20,7 +19,7 @@
 								</xs:element>
 							</xs:sequence>
 							<xs:attribute name="AAUrl" type="xs:anyURI" use="optional"/>
-							<xs:attribute name="passThruErrors" type="xs:boolean" use="optional" default="false"/>
+							<xs:attribute name="passThruErrors" type="xs:boolean" use="optional"/>
 							<xs:attribute name="providerId" type="xs:anyURI" use="optional"/>
 							<xs:attribute name="signingCredential" type="xs:string" use="optional"/>
 							<xs:attribute name="name" type="xs:string" use="required"/>
@@ -30,6 +29,17 @@
 				</xs:sequence>
 				<xs:element name="ReleasePolicyEngine" minOccurs="0">
 					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="ArpRepository">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+									</xs:sequence>
+									<xs:attribute name="implementation" type="xs:string" use="required"/>
+									<xs:anyAttribute namespace="##any"/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
 						<xs:attribute name="arpTTL" type="xs:integer" use="optional"/>
 					</xs:complexType>
 				</xs:element>
@@ -39,11 +49,11 @@
 				<xs:element ref="credentials:Credentials"/>
 			</xs:sequence>
 			<xs:attribute name="resolverConfig" type="xs:string" use="optional" default="/conf/resolver.xml"/>
-			<xs:attribute name="AAUrl" type="xs:anyURI" use="required"/>
-			<xs:attribute name="passThruErrors" type="xs:boolean" use="optional" default="false"/>
+			<xs:attribute name="AAUrl" type="xs:anyURI" use="optional"/>
 			<xs:attribute name="providerId" type="xs:anyURI" use="required"/>
 			<xs:attribute name="defaultRelyingParty" type="xs:anyURI" use="required"/>
 			<xs:attribute name="defaultAuthMethod" type="xs:string" use="optional" default="urn:oasis:names:tc:SAML:1.0:am:unspecified"/>
+			<xs:attribute name="passThruErrors" type="xs:boolean" use="optional" default="false"/>
 		</xs:complexType>
 	</xs:element>
 </xs:schema>
