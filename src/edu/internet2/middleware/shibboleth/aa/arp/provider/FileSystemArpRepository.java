@@ -50,9 +50,7 @@
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.Principal;
 import java.util.Properties;
 
@@ -150,21 +148,24 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 
 	}
 
-	private Element retrieveArpXml(String fileName) throws FileNotFoundException, SAXException, IOException {
+	private Element retrieveArpXml(String fileName) throws SAXException, IOException {
 
-		File arpFile = new ShibResource(fileName, this.getClass()).getFile();
-		if (!arpFile.exists()) {
+		try {
+			ShibResource resource = new ShibResource(fileName, this.getClass());
+			if (!resource.getFile().exists()) {
+				log.debug("No ARP found.");
+				return null;
+			}
+
+			DOMParser parser = new DOMParser();
+			parser.parse(new InputSource(resource.getInputStream()));
+			return parser.getDocument().getDocumentElement();
+
+		} catch (ShibResource.ResourceNotAvailableException e) {
 			log.debug("No ARP found.");
 			return null;
 		}
-
-		InputStream inStream = new ShibResource(fileName).getInputStream();
-		DOMParser parser = new DOMParser();
-		parser.parse(new InputSource(inStream));
-		inStream.close();
-		return parser.getDocument().getDocumentElement();
 	}
-
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository#retrieveUserArpXml(Principal)
 	 */

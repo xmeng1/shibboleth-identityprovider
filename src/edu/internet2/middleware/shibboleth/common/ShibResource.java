@@ -56,7 +56,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Properties;
 
 /**
  * Manages access to shibboleth file-based resources in a consistent fashion.  
@@ -94,7 +93,7 @@ public class ShibResource {
 	 */
 	public File getFile() throws IOException {
 		try {
-			File file = new File(new URI(resource.toString()));
+			File file = new File(new URI(resource.toString().replaceAll("\\s", "%20")));
 			return file;
 		} catch (URISyntaxException e) {
 			throw new ResourceNotAvailableException("File could not be loaded from specified resource: " + e);
@@ -110,7 +109,7 @@ public class ShibResource {
 		return resource;
 	}
 
-	class ResourceNotAvailableException extends IOException {
+	public class ResourceNotAvailableException extends IOException {
 
 		public ResourceNotAvailableException(String message) {
 			super(message);
