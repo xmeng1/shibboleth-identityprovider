@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ShibbolethOriginConfig xmlns="urn:mace:shibboleth:origin:1.0" xmlns:cred="urn:mace:shibboleth:credentials:1.0" xmlns:name="urn:mace:shibboleth:namemapper:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:origin:1.0 origin.xsd" 
-	AAUrl="http://66-108-210-165.nyc.rr.com/shibboleth/AA" 	defaultRelyingParty="urn:x-columbia-intranet" 
+	AAUrl="http://snc.cc.columbia.edu/shibboleth/AA" 	defaultRelyingParty="urn:x-columbia-intranet" 
 	providerId="urn:mace:inqueue:shibdev.edu">
-	<RelyingPartyGroup name="urn:mace:inqueue" signingCredentials="foo">
+	<RelyingParty name="urn:mace:inqueue" signingCredential="foo">
 		<HSNameFormat nameMapping="crypto"/>
-	</RelyingPartyGroup>
-	<RelyingPartyGroup name="urn:x-fed1" signingCredentials="bar" passThruErrors="true">
+	</RelyingParty>
+	<RelyingParty name="urn:x-fed1" signingCredential="foo" passThruErrors="true">
 		<HSNameFormat nameMapping="crypto"/>
-	</RelyingPartyGroup>
-<!-- might want to change attribute to explicitly say "response" credentials -->
-	<RelyingParty name="urn:x-columbia-intranet" signingCredentials="foo" providerId="urn:x-columbia-intranet.columbia">
+	</RelyingParty>
+	<RelyingParty name="urn:x-columbia-intranet" signingCredential="foo" providerId="urn:x-columbia-intranet.columbia">
 		<HSNameFormat nameMapping="uni"/>
 	</RelyingParty>
 	<ReleasePolicyEngine/>

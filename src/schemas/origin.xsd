@@ -9,9 +9,23 @@
 		</xs:annotation>
 		<xs:complexType>
 			<xs:sequence>
-				<xs:sequence maxOccurs="unbounded">
-					<xs:element name="RelyingParty" type="origin:RelyingPartyType" minOccurs="0" maxOccurs="unbounded"/>
-					<xs:element name="RelyingPartyGroup" type="origin:RelyingPartyType" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:sequence>
+					<xs:element name="RelyingParty" maxOccurs="unbounded">
+						<xs:complexType>
+							<xs:sequence minOccurs="0">
+								<xs:element name="HSNameFormat">
+									<xs:complexType>
+										<xs:attribute name="nameMapping" type="xs:string" use="required"/>
+									</xs:complexType>
+								</xs:element>
+							</xs:sequence>
+							<xs:attribute name="AAUrl" type="xs:anyURI" use="optional"/>
+							<xs:attribute name="passThruErrors" type="xs:boolean" use="optional" default="false"/>
+							<xs:attribute name="providerId" type="xs:anyURI" use="optional"/>
+							<xs:attribute name="signingCredential" type="xs:string" use="optional"/>
+							<xs:attribute name="name" type="xs:string" use="required"/>
+						</xs:complexType>
+					</xs:element>
 				</xs:sequence>
 				<xs:element name="ReleasePolicyEngine" minOccurs="0">
 					<xs:complexType>
@@ -30,18 +44,4 @@
 			<xs:attribute name="defaultRelyingParty" type="xs:anyURI" use="required"/>
 		</xs:complexType>
 	</xs:element>
-	<xs:complexType name="RelyingPartyType">
-		<xs:sequence minOccurs="0">
-			<xs:element name="HSNameFormat">
-				<xs:complexType>
-					<xs:attribute name="nameMapping" type="xs:string" use="required"/>
-				</xs:complexType>
-			</xs:element>
-		</xs:sequence>
-		<xs:attribute name="AAUrl" type="xs:anyURI" use="optional"/>
-		<xs:attribute name="passThruErrors" type="xs:boolean" use="optional" default="false"/>
-		<xs:attribute name="providerId" type="xs:anyURI" use="optional"/>
-		<xs:attribute name="signingCredential" type="xs:string" use="optional"/>
-		<xs:attribute name="name" type="xs:string" use="required"/>
-	</xs:complexType>
 </xs:schema>
