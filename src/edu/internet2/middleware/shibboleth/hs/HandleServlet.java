@@ -106,6 +106,7 @@ public class HandleServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:InCommon:pilot:2003");
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);
@@ -127,7 +128,8 @@ public class HandleServlet extends HttpServlet {
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePath",
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStorePassword",
 					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyAlias",
-					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword" };
+					"edu.internet2.middleware.shibboleth.hs.HandleServlet.keyStoreKeyPassword",
+					"edu.internet2.middleware.shibboleth.audiences" };
 
 			for (int i = 0; i < requiredProperties.length; i++) {
 				if (properties.getProperty(requiredProperties[i]) == null) {
@@ -172,7 +174,7 @@ public class HandleServlet extends HttpServlet {
 
 			postProfile =
 				ShibPOSTProfileFactory.getInstance(
-					Arrays.asList(new String[] { Constants.POLICY_INCOMMON }),
+					Arrays.asList(configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll("\\s", "") .split(",")),
 					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"));
 
 			handleRepository = HandleRepositoryFactory.getInstance(configuration);

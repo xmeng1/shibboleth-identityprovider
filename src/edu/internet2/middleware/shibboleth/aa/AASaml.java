@@ -90,7 +90,7 @@ import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 
 public class AASaml {
 
-    String[] policies = { Constants.POLICY_INCOMMON };
+    String[] policies;
     String myName;
     StringBuffer sharName;
     SAMLRequest sreq;
@@ -98,7 +98,7 @@ public class AASaml {
     SAMLBinding binding;
     private static Logger log = Logger.getLogger(AASaml.class.getName());        
 
-    public AASaml(String myName) throws SAMLException {
+    public AASaml(String myName, String[] policies) throws SAMLException {
         binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
         this.myName = myName;
     }

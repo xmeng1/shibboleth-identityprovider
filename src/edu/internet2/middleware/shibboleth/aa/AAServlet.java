@@ -167,6 +167,7 @@ public class AAServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:InCommon:pilot:2003");
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);
@@ -204,7 +205,12 @@ public class AAServlet extends HttpServlet {
 
 		try {
 			saml =
-				new AASaml(configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
+				new AASaml(
+					configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"),
+					configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll(
+						"\\s",
+						"").split(
+						","));
 			saml.receive(req);
 
 			log.info("Attribute Query Handle for this request: (" + saml.getHandle() + ").");
@@ -259,7 +265,7 @@ public class AAServlet extends HttpServlet {
 
 		} catch (SAMLException se) {
 			//log.error("AA failed for " + principal.getName() + " because of: " + se);
-			try { 
+			try {
 				saml.fail(resp, se);
 				return;
 			} catch (Exception ee) {
