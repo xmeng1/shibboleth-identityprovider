@@ -532,12 +532,14 @@ public class Rule {
 				anyValue = true;
 				anyValueRelease = "permit";
 				Iterator iterator = values.iterator();
+				HashSet permittedValues = new HashSet();
 				while (iterator.hasNext()) {
 					AttributeValue value = (AttributeValue) iterator.next();
 					if (value.getRelease().equals("permit")) {
-						values.remove(value);
+						permittedValues.add(value);
 					}
 				}
+				values.removeAll(permittedValues);
 			} else {
 				if (anyValueRelease.equals("permit") && anyValue) {
 					anyValue = false;
