@@ -58,9 +58,8 @@ public class ServiceProviderMapper {
 	private NameMapper nameMapper;
 
 	public ServiceProviderMapper(Element rawConfig, IdPConfig configuration, Credentials credentials,
-			NameMapper nameMapper, Metadata metaData) throws ServiceProviderMapperException {
+			NameMapper nameMapper) throws ServiceProviderMapperException {
 
-		this.metaData = metaData;
 		this.configuration = configuration;
 		this.credentials = credentials;
 		this.nameMapper = nameMapper;
@@ -73,6 +72,10 @@ public class ServiceProviderMapper {
 
 		verifyDefaultParty(configuration);
 
+	}
+	
+	public void setMetadata(Metadata metadata) {
+		this.metaData = metadata;
 	}
 
 	private IdPConfig getOriginConfig() {
@@ -131,19 +134,20 @@ public class ServiceProviderMapper {
 
 	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
 
+		if (metaData == null) { return null; }
+		
 		EntityDescriptor provider = metaData.lookup(providerIdFromTarget);
 		if (provider != null) {
 			EntitiesDescriptor parent = provider.getEntitiesDescriptor();
 			while (parent != null) {
 				if (relyingParties.containsKey(parent.getName())) {
 					log.info("Found matching Relying Party for group (" + parent.getName() + ").");
-					return (RelyingParty)relyingParties.get(parent.getName());
+					return (RelyingParty) relyingParties.get(parent.getName());
 				} else {
-					log.debug("Provider is a member of group (" +
-                            parent.getName() +
-                            "), but no matching Relying Party was found.");
+					log.debug("Provider is a member of group (" + parent.getName()
+							+ "), but no matching Relying Party was found.");
 				}
-                parent = parent.getEntitiesDescriptor();
+				parent = parent.getEntitiesDescriptor();
 			}
 		}
 		return null;
