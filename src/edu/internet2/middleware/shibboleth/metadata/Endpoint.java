@@ -27,18 +27,22 @@
 package edu.internet2.middleware.shibboleth.metadata;
 
 /**
- * Ported from Scott Cantor's C++ interfaces
+ * <p>Corresponds loosely to SAML Metadata Schema "EndpointType".
+ * </p><p>
+ * "The complex type EndpointType describes a SAML protocol binding endpoint
+ * at which a SAML entity can be sent protocol messages." That is, it is 
+ * to SAML what a URL is to HTTP, the address of one end of a conversation.
+ * The exact meaning depends on the SAML binding (is this a Browser POST,
+ * a Web Service request, or what).
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 public interface Endpoint {
 
-	public String getBinding();
+	public String getBinding(); // URI identifying a SAML binding
 
-	public String getVersion();
+	public String getLocation(); // URI(URL) of the message destination
 
-	public String getLocation();
-
-	public String getResponseLocation();
+	public String getResponseLocation(); // optional second URI(URL) destination
 
 }

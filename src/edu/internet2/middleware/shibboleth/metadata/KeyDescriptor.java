@@ -29,7 +29,11 @@ package edu.internet2.middleware.shibboleth.metadata;
 import org.apache.xml.security.keys.KeyInfo;
 
 /**
- * Ported from Scott Cantor's C++ interfaces
+ * <p>Corresponds loosely to SAML Metadata Schema "KeyDescriptorType".
+ * </p><p>
+ * Provides information about the cryptographic keys that an EntityDescriptor/Provider
+ * uses to sign data. However, this is nested inside a RoleDescriptor 
+ * instead of appearing at the EntityDescriptor level.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
@@ -40,9 +44,7 @@ public interface KeyDescriptor {
 
 	public int getUse();
 
-	public String getEncryptionMethod();
-
-	public int getKeySize();
+	public String[] getEncryptionMethod();
 
 	public KeyInfo[] getKeyInfo();
 }

@@ -27,18 +27,25 @@
 package edu.internet2.middleware.shibboleth.metadata;
 
 /**
- * Ported from Scott Cantor's C++ interfaces
+ * <p>Corresponds loosely to SAML Metadata Schema "EntityDescriptorType".
+ * </p><p>
+ * Entities are campuses or departments with either an origin or target
+ * infrastructure (or both). Each implemented component (HS, AA, SHAR) 
+ * has a Role definition with URLs and PKI to locate and authenticate
+ * the provider of that role. Although the Metadata may define all 
+ * roles, target code tends to build objects describing origins, and 
+ * origins are only interested in targets.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 public interface Provider {
 
-	public String getId();
+	public String getId();  // Unique ID used as global key of Provider
 
-	public String[] getGroups();
+	public String[] getGroups(); // Groups in which this Provider is nested
 
-	public ContactPerson[] getContacts();
+	public ContactPerson[] getContacts(); // People
 
-	public ProviderRole[] getRoles();
+	public ProviderRole[] getRoles(); // HS, AA, SHAR, ... definitions
 
 }
