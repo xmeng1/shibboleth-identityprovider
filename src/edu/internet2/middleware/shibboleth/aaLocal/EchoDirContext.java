@@ -44,6 +44,10 @@ public class EchoDirContext extends InitialDirContext{
 		// return member as value;
 		attrs.put(new BasicAttribute("eduPersonScopedAffiliation", "member"));
 	    }
+		if(ids[i].equalsIgnoreCase("eduPersonAffiliation")){
+		// return member as value;
+		attrs.put(new BasicAttribute("eduPersonAffiliation", "member"));
+		}
 	    if(ids[i].equalsIgnoreCase("eduPersonPrincipalName")){
 		// return uid
 		attrs.put(new BasicAttribute("eduPersonPrincipalName", uid));
