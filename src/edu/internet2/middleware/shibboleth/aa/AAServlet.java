@@ -222,7 +222,8 @@ public class AAServlet extends HttpServlet {
 		return properties;
 	}
 
-	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	public void doPost(HttpServletRequest req, HttpServletResponse resp)
+		throws ServletException, IOException {
 
 		log.debug("Recieved a request.");
 		MDC.put("serviceId", "[AA] " + new SAMLIdentifier().toString());
@@ -234,7 +235,8 @@ public class AAServlet extends HttpServlet {
 		try {
 			saml =
 				new AASaml(
-					configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"),
+					configuration.getProperty(
+						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"),
 					configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll(
 						"\\s",
 						"").split(
@@ -269,7 +271,8 @@ public class AAServlet extends HttpServlet {
 				Arrays.asList(
 					responder.getReleaseAttributes(
 						principal,
-						configuration.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
+						configuration.getProperty(
+							"edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
 						saml.getShar(),
 						resource));
 			log.info("Got " + attrs.size() + " attributes for " + principal.getName());
@@ -290,9 +293,15 @@ public class AAServlet extends HttpServlet {
 						resp,
 						new SAMLException(
 							Arrays.asList(codes),
-							"The supplied Attribute Query Handle was unrecognized or expired."));
+							"The supplied Attribute Query Handle was unrecognized or expired.",
+							e));
+
 				} else {
-					saml.fail(resp, new SAMLException(Arrays.asList(codes), e));
+					saml.fail(
+						resp,
+						new SAMLException(
+							Arrays.asList(codes),
+							"The supplied Attribute Query Handle was unrecognized or expired."));
 				}
 				return;
 			} catch (Exception ee) {
@@ -306,9 +315,13 @@ public class AAServlet extends HttpServlet {
 				if (configuration
 					.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false")
 					.equals("true")) {
-					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, e));
+					saml.fail(
+						resp,
+						new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
 				} else {
-					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+					saml.fail(
+						resp,
+						new SAMLException(SAMLException.RESPONDER, "General error processing request."));
 				}
 				return;
 			} catch (Exception ee) {
