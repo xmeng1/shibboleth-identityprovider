@@ -118,6 +118,10 @@ public class WayfService extends HttpServlet {
 			throw new UnavailableException("Error reading WAYF configuration file.");
 		}
 
+		loadSiteConfig();
+	}
+	
+	private void loadSiteConfig() throws UnavailableException {
 		try {
 			InputStream siteIs = getServletContext().getResourceAsStream(siteConfigFileLocation);
 			OriginSitesDigester siteDigester = new OriginSitesDigester();
@@ -132,12 +136,12 @@ public class WayfService extends HttpServlet {
 			throw new UnavailableException("Error reading site file.");
 		}
 	}
-	
+
 	/**
 	 * Setup application-wide beans for view
 	 */
 	private void initViewConfig() {
-		getServletContext().setAttribute("originsets", originConfig.getOriginSets());
+		getServletContext().setAttribute("originsets", getOrigins().getOriginSets());
 		getServletContext().setAttribute("supportContact", config.getSupportContact());
 		getServletContext().setAttribute("helpText", config.getHelpText());
 		getServletContext().setAttribute("searchResultEmptyText", config.getSearchResultEmptyText());
@@ -232,7 +236,7 @@ public class WayfService extends HttpServlet {
 	private void handleSearch(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		if (req.getParameter("string") != null) {
-			Origin[] origins = originConfig.seachForMatchingOrigins(req.getParameter("string"), config);
+			Origin[] origins = getOrigins().seachForMatchingOrigins(req.getParameter("string"), config);
 			if (origins.length != 0) {
 				req.setAttribute("searchresults", origins);
 			} else {
@@ -248,7 +252,7 @@ public class WayfService extends HttpServlet {
 	private void handleSelection(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		log.debug("Processing handle selection: " + req.getParameter("origin"));
-		String handleService = originConfig.lookupHSbyName(req.getParameter("origin"));
+		String handleService = getOrigins().lookupHSbyName(req.getParameter("origin"));
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
@@ -335,5 +339,28 @@ public class WayfService extends HttpServlet {
 		}
 		return target;
 	}
+	
+	private WayfOrigins getOrigins() {
+		synchronized (originConfig) {
+			return originConfig;
+		}
+	}
+	
+	private void reloadOriginMetadata() {
+
+		WayfOrigins safetyCache = getOrigins();
+		try {
+			synchronized (originConfig) {
+				loadSiteConfig();
+			}
+			getServletContext().setAttribute("originsets", getOrigins().getOriginSets());
+		} catch (UnavailableException e) {
+			log.error("Failed to load updated origin site metadata: " + e);
+			synchronized (originConfig) {
+				originConfig = safetyCache;
+			}
+		}
+	}
 
 }
+
