@@ -240,7 +240,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 		if (lifetime != ((AAAttribute) object).lifetime) {
 			return false;
 		}
-		if (name != ((AAAttribute) object).name) {
+		if (!name.equals(((AAAttribute) object).name)) {
 			return false;
 		}
 		if (!valueHandler.equals(((AAAttribute) object).valueHandler)) {
