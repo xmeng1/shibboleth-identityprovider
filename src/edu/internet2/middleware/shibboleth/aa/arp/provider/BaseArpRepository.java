@@ -228,6 +228,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 class ArpCache {
 
 	private static ArpCache instance = null;
+	/** Time in seconds for which ARPs should be cached. */
 	private long cacheLength;
 	private Map cache = new HashMap();
 	private static Logger log = Logger.getLogger(ArpCache.class.getName());
@@ -244,6 +245,7 @@ class ArpCache {
 		return instance;
 	}
 
+	/** Set time in seconds for which ARPs should be cached. */
 	void setCacheLength(long cacheLength) {
 		this.cacheLength = cacheLength;
 	}
@@ -279,7 +281,7 @@ class ArpCache {
 			return null;
 		}
 
-		if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) < cacheLength) {
+		if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) < (cacheLength * 1000)) {
 			return cachedArp.arp;
 		}
 
@@ -357,13 +359,13 @@ class ArpCache {
 						log.debug("Stopping ArpCache Cleanup Thread.");
 						return;
 					}
+					log.debug("ArpCache cleanup thread searching for stale entries.");
 					Set needsDeleting = new HashSet();
 					synchronized (cache) {
 						Iterator iterator = cache.values().iterator();
 						while (iterator.hasNext()) {
 							CachedArp cachedArp = (CachedArp) iterator.next();
-							if ((cachedArp.creationTimeMillis - System.currentTimeMillis())
-								> cacheLength) {
+							if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) > (cacheLength * 1000)) {
 								needsDeleting.add(cachedArp);
 							}
 						}
