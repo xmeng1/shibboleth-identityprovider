@@ -98,19 +98,20 @@ public class AAServlet extends HttpServlet {
 	    System.out.println("Debug: Context aTTR: "+sctx.getAttribute("HandleRepository"));
 
 	    String userName = null;
-
-	    if(hrf == null){
-		if(handle.equalsIgnoreCase("foo"))
-		    userName = "dousti"; 
-		if(userName == null)
-		    throw new AAException("No HandleRepository found!");
+	    if(handle.equalsIgnoreCase("foo")){
+		// for testing only
+		userName = "dousti"; 
 	    }else{
-		HandleEntry he = hrf.getHandleEntry(handle);
-		userName = he.getUsername();
-		if(userName == null)
-		    throw new AAException("HandleServer returns null for user name!");
+		if(hrf == null){
+		    if(userName == null)
+			throw new AAException("No HandleRepository found!");
+		}else{
+		    HandleEntry he = hrf.getHandleEntry(handle);
+		    userName = he.getUsername();
+		    if(userName == null)
+			throw new AAException("HandleServer returns null for user name!");
+		}
 	    }
-	    
 
 	    attrs = responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource);
 	    System.err.println("AA debug: got attributes");
@@ -118,19 +119,24 @@ public class AAServlet extends HttpServlet {
 
  	}catch (org.opensaml.SAMLException se) {
 	    try{
-		saml.fail(resp, new SAMLException(null, "AA got a SAML Exception: "+se));
+		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "AA got a SAML Exception: "+se));
 	    }catch(Exception ee){
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+se);
 	    }
 	}catch (HandleException he) {
 	    try{
-		saml.fail(resp, new SAMLException(null, "AA got a HandleException: "+he));
+		QName[] codes=new QName[2];
+		codes[0]=SAMLException.REQUESTER[0];
+		codes[1]=new QName(
+				   edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,
+				   he.toString());//"InvalidHandle");
+		saml.fail(resp, new SAMLException(codes, "AA got a HandleException: "+he));
 	    }catch(Exception ee){
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+he);
 	    }
 	}catch (Exception e) {
 	    try{
-		saml.fail(resp, new SAMLException(null, "AA got an Exception: "+e));
+		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "AA got an Exception: "+e));
 	    }catch(Exception ee){
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+e);
 	    }

@@ -127,11 +127,13 @@ public class AASaml {
 	    SAMLResponse sResp = new SAMLResponse(reqID,
 						  /* recipient URL*/ null,
 						  /* sig */ null,
-						  /* ano assersion*/ null,
+						  /* an assersion*/ null,
 						  exception);	
 	    binding.respond(resp, sResp, null);
+	    System.out.println("AA Successfully made and Error message :-))");
 	}catch(SAMLException se){
 	    binding.respond(resp, null, exception);
+	    System.out.println("AA failed to make and Error message: "+se);
 	}
     }
 }
