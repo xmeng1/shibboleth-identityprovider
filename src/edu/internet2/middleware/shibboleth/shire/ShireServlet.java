@@ -279,7 +279,7 @@ public class ShireServlet extends HttpServlet {
 				s.getBindings()[0].getBinding(),
 				s.getBindings()[0].getLocation());
 
-			log.info("Redirecting to the requested resource.");
+			log.info("Redirecting to the requested resource: (" + request.getParameter("TARGET") + ").");
 			response.sendRedirect(request.getParameter("TARGET"));
 
 		} catch (ShireException se) {
