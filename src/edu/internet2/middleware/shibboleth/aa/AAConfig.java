@@ -44,75 +44,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package edu.internet2.middleware.shibboleth.common;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Properties;
+package edu.internet2.middleware.shibboleth.aa;
 
-import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
+import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
  * @author Walter Hoehn
- *  
  */
-public abstract class ShibbolethOriginConfig {
+public class AAConfig extends ShibbolethOriginConfig {
 
-	public static final String originConfigNamespace = "urn:mace:shibboleth:origin:1.0";
+	public AAConfig(Element config) throws ShibbolethConfigurationException {
 
-	private static Logger log = Logger.getLogger(ShibbolethOriginConfig.class.getName());
-	protected Properties properties = new Properties();
+		super(config);
 
-	public ShibbolethOriginConfig(Element config) throws ShibbolethConfigurationException {
+		dumpPropertiesToLog();
 
-		//TODO more generic
-
-		if (!config.getTagName().equals("ShibbolethOriginConfig")) {
-			throw new ShibbolethConfigurationException("Unexpected configuration data.  <ShibbolethOriginConfig> is needed.");
-		}
-
-		log.debug("Loading global configuration properties.");
-
-		String attribute = ((Element) config).getAttribute("providerId");
-		if (attribute == null || attribute.equals("")) {
-			log.error("Global providerId not set.  Add a (providerId) attribute to <ShibbolethOriginConfig>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
-		} //TODO should not be under hs namespace
-		properties.setProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId", attribute);
-
-		attribute = ((Element) config).getAttribute("defaultRelyingParty");
-		if (attribute == null || attribute.equals("")) {
-			log.error("Global providerId not set.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
-		}
-		properties.setProperty(
-			"edu.internet2.middleware.shibboleth.common.RelyingParty.defaultRelyingParty",
-			attribute);
-
-	}
-
-	protected void dumpPropertiesToLog() {
-		if (log.isDebugEnabled()) {
-			ByteArrayOutputStream debugStream = new ByteArrayOutputStream();
-			PrintStream debugPrinter = new PrintStream(debugStream);
-			properties.list(debugPrinter);
-			log.debug(
-				"Global Runtime configuration parameters: "
-					+ System.getProperty("line.separator")
-					+ debugStream.toString());
-			try {
-				debugStream.close();
-			} catch (IOException e) {
-				log.error("Encountered a problem cleaning up resources: could not close debug stream.");
-			}
-		}
-	}
-
-	public String getConfigProperty(String key) {
-		return properties.getProperty(key);
 	}
 
 }

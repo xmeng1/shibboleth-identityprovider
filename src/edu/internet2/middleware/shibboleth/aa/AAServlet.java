@@ -1,50 +1,48 @@
-/* 
- * The Shibboleth License, Version 1. 
- * Copyright (c) 2002 
- * University Corporation for Advanced Internet Development, Inc. 
- * All rights reserved
+/*
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation
+ * for Advanced Internet Development, Inc. All rights reserved
  * 
  * 
- * Redistribution and use in source and binary forms, with or without 
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 
- * Redistributions of source code must retain the above copyright notice, this 
+ * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
  * 
- * Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation 
- * and/or other materials provided with the distribution, if any, must include 
- * the following acknowledgment: "This product includes software developed by 
- * the University Corporation for Advanced Internet Development 
- * <http://www.ucaid.edu>Internet2 Project. Alternately, this acknowledegement 
- * may appear in the software itself, if and wherever such third-party 
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution, if any, must include
+ * the following acknowledgment: "This product includes software developed by
+ * the University Corporation for Advanced Internet Development
+ * <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement
+ * may appear in the software itself, if and wherever such third-party
  * acknowledgments normally appear.
  * 
- * Neither the name of Shibboleth nor the names of its contributors, nor 
- * Internet2, nor the University Corporation for Advanced Internet Development, 
- * Inc., nor UCAID may be used to endorse or promote products derived from this 
- * software without specific prior written permission. For written permission, 
+ * Neither the name of Shibboleth nor the names of its contributors, nor
+ * Internet2, nor the University Corporation for Advanced Internet Development,
+ * Inc., nor UCAID may be used to endorse or promote products derived from this
+ * software without specific prior written permission. For written permission,
  * please contact shibboleth@shibboleth.org
  * 
- * Products derived from this software may not be called Shibboleth, Internet2, 
- * UCAID, or the University Corporation for Advanced Internet Development, nor 
- * may Shibboleth appear in their name, without prior written permission of the 
+ * Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor
+ * may Shibboleth appear in their name, without prior written permission of the
  * University Corporation for Advanced Internet Development.
  * 
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK 
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY 
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK
+ * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
+ * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.aa;
@@ -113,6 +111,7 @@ import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
@@ -121,7 +120,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 public class AAServlet extends HttpServlet {
 
-	private ShibbolethOriginConfig configuration;
+	private AAConfig configuration;
 	protected AAResponder responder;
 	private NameMapper nameMapper;
 	private SAMLBinding binding;
@@ -137,7 +136,7 @@ public class AAServlet extends HttpServlet {
 		log.info("Initializing Attribute Authority.");
 
 		try {
-			
+
 			nameMapper = new NameMapper();
 			loadConfiguration();
 
@@ -158,7 +157,7 @@ public class AAServlet extends HttpServlet {
 			log.fatal(
 				"The AA could not be initialized due to a problem with the Attribute Resolver configuration: " + ne);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
-		} catch (AAException ae) {
+		} catch (ShibbolethConfigurationException ae) {
 			log.fatal("The AA could not be initialized: " + ae);
 			throw new UnavailableException("Attribute Authority failed to initialize.");
 		} catch (SAMLException se) {
@@ -167,7 +166,7 @@ public class AAServlet extends HttpServlet {
 		}
 
 	}
-	protected void loadConfiguration() throws AAException {
+	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
 		//TODO could maybe factor some of the common stuff up a level.
 
@@ -185,14 +184,14 @@ public class AAServlet extends HttpServlet {
 
 		} catch (SAXException e) {
 			log.error("Error while parsing origin configuration: " + e);
-			throw new AAException("Error while parsing origin configuration.");
+			throw new ShibbolethConfigurationException("Error while parsing origin configuration.");
 		} catch (IOException e) {
 			log.error("Could not load origin configuration: " + e);
-			throw new AAException("Could not load origin configuration.");
+			throw new ShibbolethConfigurationException("Could not load origin configuration.");
 		}
 
 		//Load global configuration properties
-		configuration = new ShibbolethOriginConfig(parser.getDocument().getDocumentElement());
+		configuration = new AAConfig(parser.getDocument().getDocumentElement());
 
 		//Load name mappings
 		NodeList itemElements =
@@ -213,94 +212,44 @@ public class AAServlet extends HttpServlet {
 			targetMapper =
 				new ServiceProviderMapper(
 					parser.getDocument().getDocumentElement(),
-					configuration,
-					credentials,
-					nameMapper);
+					configuration);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
-			throw new AAException("Could not load origin configuration.");
+			throw new ShibbolethConfigurationException("Could not load origin configuration.");
 		}
 
 		/*
-				//Set defaults
-				Properties defaultProps = new Properties();
-				defaultProps.setProperty(
-					"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
-					"/conf/arps/");
-				defaultProps.setProperty(
-					"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-					"/conf/resolver.xml");
-				defaultProps.setProperty(
-					"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-					"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-				defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:inqueue");
-				defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
-		
-				//Load from file
-				Properties properties = new Properties(defaultProps);
-				String propertiesFileLocation = getInitParameter("OriginPropertiesFile");
-				if (propertiesFileLocation == null) {
-					propertiesFileLocation = "/conf/origin.properties";
-				}
-				try {
-					log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
-					properties.load(new ShibResource(propertiesFileLocation, this.getClass()).getInputStream());
-		
-					//Make sure we have all required parameters
-					StringBuffer missingProperties = new StringBuffer();
-					String[] requiredProperties =
-						{
-							"edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName",
-							"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
-							"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
-							"edu.internet2.middleware.shibboleth.audiences" };
-		
-					for (int i = 0; i < requiredProperties.length; i++) {
-						if (properties.getProperty(requiredProperties[i]) == null) {
-							missingProperties.append("\"");
-							missingProperties.append(requiredProperties[i]);
-							missingProperties.append("\" ");
-						}
-					}
-					if (missingProperties.length() > 0) {
-						log.error(
-							"Missing configuration data.  The following configuration properites have not been set: "
-								+ missingProperties.toString());
-						throw new AAException("Missing configuration data.");
-					}
-		
-				} catch (IOException e) {
-					log.error("Could not load AA servlet configuration: " + e);
-					throw new AAException("Could not load AA servlet configuration.");
-				}
-		
-				if (log.isDebugEnabled()) {
-					ByteArrayOutputStream debugStream = new ByteArrayOutputStream();
-					PrintStream debugPrinter = new PrintStream(debugStream);
-					properties.list(debugPrinter);
-					log.debug(
-						"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
-					try {
-						debugStream.close();
-					} catch (IOException e) {
-						log.error("Encountered a problem cleaning up resources: could not close debug stream.");
-					}
-				}
-		
-				//Be nice and trim "extra" whitespace from config properties
-				Enumeration propNames = properties.propertyNames();
-				while (propNames.hasMoreElements()) {
-					String propName = (String) propNames.nextElement();
-					if (properties.getProperty(propName, "").matches(".+\\s$")) {
-						log.debug("The configuration property (" + propName + ") contains trailing whitespace.  Trimming... ");
-						properties.setProperty(propName, properties.getProperty(propName).trim());
-					}
-				}
-		
-				return properties;
-				*/
+		 * //Set defaults Properties defaultProps = new Properties();
+		 * defaultProps.setProperty(
+		 * "edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
+		 * "/conf/arps/"); defaultProps.setProperty(
+		 * "edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+		 * "/conf/resolver.xml"); defaultProps.setProperty(
+		 * "edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
+		 * "edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
+		 * defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences",
+		 * "urn:mace:inqueue");
+		 * defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors",
+		 * "false");
+		 * 
+		 * //Load from file Properties properties = new
+		 * Properties(defaultProps); String propertiesFileLocation =
+		 * getInitParameter("OriginPropertiesFile"); if (propertiesFileLocation ==
+		 * null) { propertiesFileLocation = "/conf/origin.properties"; } try {
+		 * log.debug("Loading Configuration from (" + propertiesFileLocation +
+		 * ")."); properties.load(new ShibResource(propertiesFileLocation,
+		 * this.getClass()).getInputStream());
+		 * 
+		 * //Make sure we have all required parameters StringBuffer
+		 * missingProperties = new StringBuffer(); String[] requiredProperties = {
+		 * "edu.internet2.middleware.shibboleth.hs.HandleServlet.siteName",
+		 * "edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
+		 * "edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
+		 * "edu.internet2.middleware.shibboleth.audiences" };
+		 * 
+		 */
 	}
-	private DOMParser loadParser(boolean schemaChecking) throws AAException {
+	private DOMParser loadParser(boolean schemaChecking) throws ShibbolethConfigurationException {
 
 		DOMParser parser = new DOMParser();
 
@@ -352,7 +301,7 @@ public class AAServlet extends HttpServlet {
 
 		} catch (SAXException e) {
 			log.error("Unable to setup a workable XML parser: " + e);
-			throw new AAException("Unable to setup a workable XML parser.");
+			throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
 		}
 		return parser;
 	}
@@ -363,20 +312,35 @@ public class AAServlet extends HttpServlet {
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
 
+		RelyingParty relyingParty = null;
+
+		//Parse SOAP request
+		SAMLRequest samlRequest = null;
 		StringBuffer credentialName = new StringBuffer();
-		SAMLRequest samlRequest = binding.receive(req, credentialName);
-		if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
-			//TODO better exception
-			throw new SAMLException(
-				SAMLException.REQUESTER,
-				"AASaml.receive() can only respond to a SAML Attribute Query");
+		try {
+			samlRequest = binding.receive(req, credentialName);
+
+		} catch (SAMLException e) {
+			log.fatal("Unable to parse request: " + e);
+			throw new ServletException("Request failed.");
 		}
-		SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
 		try {
+			if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+				throw new SAMLException(
+					SAMLException.REQUESTER,
+					"This SAML authority only responds to attribute queries.");
+			}
+			SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
-			RelyingParty relyingParty = targetMapper.getRelyingParty(attributeQuery.getResource());
+			//Identify a Relying Party
+			if (attributeQuery.getResource() == null || attributeQuery.getResource().equals("")) {
+				log.error("Request from an unidentified service provider.");
+			}
+			log.info("Request from service provider: (" + attributeQuery.getResource() + ").");
+			relyingParty = targetMapper.getRelyingParty(attributeQuery.getResource());
 
+			//Map Subject to local principal
 			if (relyingParty.getProviderId() != null
 				&& !relyingParty.getProviderId().equals(attributeQuery.getSubject().getName().getNameQualifier())) {
 				log.error(
@@ -389,32 +353,55 @@ public class AAServlet extends HttpServlet {
 						+ ") is not valid for this identiy provider.");
 			}
 
-//TODO fix logging
-			//log.info("Attribute Query Handle for this request: (" + saml.getHandle() + ").");
-			
 			Principal principal = null;
-			if (attributeQuery.getSubject().getName().getName().equalsIgnoreCase("foo")) {
-				// for testing
-				principal = new AuthNPrincipal("test-handle");
-			} else {
-				principal = handleRepository.getPrincipal(attributeQuery.getSubject().getName().getName()), attributeQuery.getSubject().getName().getFormat());
-			}
-
-			URL resource = null;
 			try {
-				if (attributeQuery.getResource() != null)
-					resource = new URL(attributeQuery.getResource());
-			} catch (MalformedURLException mue) {
-				log.error(
-					"Request contained an improperly formatted resource identifier.  Attempting to "
-						+ "handle request without one.");
+				if (attributeQuery.getSubject().getName().getName().equalsIgnoreCase("foo")) {
+					// for testing
+					principal = new AuthNPrincipal("test-handle");
+				} else {
+					principal =
+						nameMapper.getPrincipal(
+							attributeQuery.getSubject().getName(),
+							relyingParty,
+							relyingParty.getIdentityProvider());
+				}
+				log.info("Request is for principal (" + principal + ").");
+
+				//TODO Do something about these silly passthru errors
+
+			} catch (NameIdentifierMappingException e) {
+				log.info("Could not associate the request subject with a principal: " + e);
+				try {
+					//TODO this doesn't always make sense anymore
+					QName[] codes =
+						{
+							SAMLException.REQUESTER,
+							new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
+					if (relyingParty
+						.getConfigProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors")
+						.equals("true")) {
+						sendFailure(
+							resp,
+							samlRequest,
+							new SAMLException(Arrays.asList(codes), "The supplied Subject was unrecognized.", e));
+
+					} else {
+						sendFailure(
+							resp,
+							samlRequest,
+							new SAMLException(Arrays.asList(codes), "The supplied Subject was unrecognized."));
+					}
+					return;
+				} catch (Exception ee) {
+					log.fatal("Could not construct a SAML error response: " + ee);
+					throw new ServletException("Attribute Authority response failure.");
+				}
 			}
 
 			if (credentialName == null || credentialName.toString().equals("")) {
-				//TODO update messages
-				log.info("Request is from an unauthenticated SHAR.");
+				log.info("Request is from an unauthenticated service provider.");
 			} else {
-				log.info("Request is from SHAR: (" + credentialName + ").");
+				log.info("Request is from service provider: (" + credentialName + ").");
 			}
 
 			SAMLAttribute[] attrs;
@@ -438,59 +425,43 @@ public class AAServlet extends HttpServlet {
 					responder.getReleaseAttributes(
 						principal,
 						credentialName.toString(),
-						resource,
+						null,
 						(URI[]) requestedAttrs.toArray(new URI[0]));
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
-				attrs = responder.getReleaseAttributes(principal, credentialName.toString(), resource);
+				attrs = responder.getReleaseAttributes(principal, credentialName.toString(), null);
 			}
 
 			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
-			sendResponse(resp, attrs, samlRequest, null);
+			sendResponse(resp, attrs, samlRequest, relyingParty, null);
 			log.info("Successfully responded about " + principal.getName());
 
 			//TODO place transaction log statement here
 
-			//TODO probably need to change a bunch of these messages to not be handle-centric
-		} catch (NameIdentifierMappingException e) {
-			log.info("Could not associate the Attribute Query Handle with a principal: " + e);
-			try {
-				QName[] codes =
-					{
-						SAMLException.REQUESTER,
-						new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
-				if (configuration
-					.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false")
-					.equals("true")) {
-					saml.fail(
-						resp,
-						new SAMLException(
-							Arrays.asList(codes),
-							"The supplied Attribute Query Handle was unrecognized or expired.",
-							e));
-
-				} else {
-					saml.fail(
-						resp,
-						new SAMLException(
-							Arrays.asList(codes),
-							"The supplied Attribute Query Handle was unrecognized or expired."));
-				}
-				return;
-			} catch (Exception ee) {
-				log.fatal("Could not construct a SAML error response: " + ee);
-				throw new ServletException("Attribute Authority response failure.");
-			}
-
 		} catch (Exception e) {
 			log.error("Error while processing request: " + e);
 			try {
-				if (configuration
-					.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false")
-					.equals("true")) {
-					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
+				if (relyingParty != null
+					&& relyingParty.getConfigProperty(
+						"edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors").equals(
+						"true")) {
+					sendFailure(
+						resp,
+						samlRequest,
+						new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
+				} else if (
+					configuration.getConfigProperty(
+						"edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors").equals(
+						"true")) {
+					sendFailure(
+						resp,
+						samlRequest,
+						new SAMLException(SAMLException.RESPONDER, "General error processing request.", e));
 				} else {
-					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+					sendFailure(
+						resp,
+						samlRequest,
+						new SAMLException(SAMLException.RESPONDER, "General error processing request."));
 				}
 				return;
 			} catch (Exception ee) {
@@ -513,19 +484,14 @@ public class AAServlet extends HttpServlet {
 
 		try {
 			if (attrs == null || attrs.length == 0) {
+				//No attribute found
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, exception);
-
 			} else {
-				// Determine max lifetime, and filter via query if necessary.
-				Date now = new Date();
-				Date then = null;
-				long min = 0;
 
 				if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
-					//TODO better exception
 					throw new SAMLException(
 						SAMLException.REQUESTER,
-						"AASaml.receive() can only respond to a SAML Attribute Query");
+						"This SAML authority only responds to attribute queries");
 				}
 				SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
@@ -545,10 +511,15 @@ public class AAServlet extends HttpServlet {
 				//Put all attributes into an assertion
 				SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
 
-				//TODO double check this stuff
-				if (min > 0) {
-					then = new Date(now.getTime() + (min * 1000));
+				//Set assertion expiration to longest attribute expiration
+				long max = 0;
+				for (int i = 0; i < attrs.length; i++) {
+					if (max < attrs[i].getLifetime()) {
+						max = attrs[i].getLifetime();
+					}
 				}
+				Date now = new Date();
+				Date then = new Date(now.getTime() + max);
 
 				SAMLAssertion sAssertion =
 					new SAMLAssertion(

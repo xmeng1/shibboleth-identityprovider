@@ -68,6 +68,7 @@ import org.opensaml.SAMLException;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
 public class AAResponder {
 
@@ -75,7 +76,7 @@ public class AAResponder {
 	private AttributeResolver resolver;
 	private static Logger log = Logger.getLogger(AAResponder.class.getName());
 
-	public AAResponder(ArpEngine arpEngine, AttributeResolver resolver) throws AAException {
+	public AAResponder(ArpEngine arpEngine, AttributeResolver resolver) throws ShibbolethConfigurationException {
 
 		this.arpEngine = arpEngine;
 		this.resolver = resolver;

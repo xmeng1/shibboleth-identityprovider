@@ -47,16 +47,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.hs;
+package edu.internet2.middleware.shibboleth.common;
 
 /**
- * Signals that the Handle Service has been given insufficient or improper runtime
+ * Signals that the a Shibboleth component has been given insufficient or improper runtime
  * configuration paramerts.
  *
  * @author Walter Hoehn (wassa&#064;columbia.edu)
  */
-public class HSConfigurationException extends Exception {
-	public HSConfigurationException(String message) {
+public class ShibbolethConfigurationException extends Exception {
+	public ShibbolethConfigurationException(String message) {
 		super(message);
 	}
 }

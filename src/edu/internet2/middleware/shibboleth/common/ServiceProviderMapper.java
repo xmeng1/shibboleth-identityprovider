@@ -83,9 +83,28 @@ public class ServiceProviderMapper {
 			rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "RelyingParty");
 
 		for (int i = 0; i < itemElements.getLength(); i++) {
-			addRelyingParty((Element) itemElements.item(i));
+			addHSRelyingParty((Element) itemElements.item(i));
 		}
 
+		verifyDefaultParty(configuration);
+	}
+
+	public ServiceProviderMapper(Element rawConfig, ShibbolethOriginConfig configuration)
+		throws ServiceProviderMapperException {
+
+		this.configuration = configuration;
+
+		NodeList itemElements =
+			rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "RelyingParty");
+
+		for (int i = 0; i < itemElements.getLength(); i++) {
+			addAARelyingParty((Element) itemElements.item(i));
+		}
+
+		verifyDefaultParty(configuration);
+	}
+
+	private void verifyDefaultParty(ShibbolethOriginConfig configuration) throws ServiceProviderMapperException {
 		//Verify we have a proper default party
 		String defaultParty =
 			configuration.getConfigProperty(
@@ -106,12 +125,26 @@ public class ServiceProviderMapper {
 		}
 	}
 
-	private void addRelyingParty(Element e) throws ServiceProviderMapperException {
+	private void addHSRelyingParty(Element e) throws ServiceProviderMapperException {
 
 		log.debug("Found a Relying Party.");
 		try {
 			if (e.getLocalName().equals("RelyingParty")) {
 				RelyingParty party = new RelyingPartyImpl(e, configuration, credentials, nameMapper);
+				log.debug("Relying Party (" + party.getName() + ") loaded.");
+				relyingParties.put(party.getName(), party);
+			}
+		} catch (ServiceProviderMapperException exc) {
+			log.error("Encountered an error while attempting to load Relying Party configuration.  Skipping...");
+		}
+	}
+
+	private void addAARelyingParty(Element e) throws ServiceProviderMapperException {
+
+		log.debug("Found a Relying Party.");
+		try {
+			if (e.getLocalName().equals("RelyingParty")) {
+				RelyingParty party = new RelyingPartyImpl(e, configuration);
 				log.debug("Relying Party (" + party.getName() + ") loaded.");
 				relyingParties.put(party.getName(), party);
 			}
@@ -191,16 +224,7 @@ public class ServiceProviderMapper {
 			HSNameMapper nameMapper)
 			throws ServiceProviderMapperException {
 
-			//Use global config for defaults
-			this.originConfig = globalConfig;
-
-			//Get party name
-			name = ((Element) partyConfig).getAttribute("name");
-			if (name == null || name.equals("")) {
-				log.error("Relying Party name not set.  Add a (name) attribute to <RelyingParty>.");
-				throw new ServiceProviderMapperException("Required configuration not specified.");
-			}
-			log.debug("Loading Relying Party: (" + name + ").");
+			this(partyConfig, globalConfig);
 
 			//Load a credential for signing
 			String credentialName = ((Element) partyConfig).getAttribute("signingCredential");
@@ -252,6 +276,25 @@ public class ServiceProviderMapper {
 					throw new ServiceProviderMapperException("Required configuration not specified.");
 				}
 			}
+			identityProvider =
+				new RelyingPartyIdentityProvider(
+					getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId"),
+					credential);
+		}
+
+		public RelyingPartyImpl(Element partyConfig, ShibbolethOriginConfig globalConfig)
+			throws ServiceProviderMapperException {
+
+			//Use global config for defaults
+			this.originConfig = globalConfig;
+
+			//Get party name
+			name = ((Element) partyConfig).getAttribute("name");
+			if (name == null || name.equals("")) {
+				log.error("Relying Party name not set.  Add a (name) attribute to <RelyingParty>.");
+				throw new ServiceProviderMapperException("Required configuration not specified.");
+			}
+			log.debug("Loading Relying Party: (" + name + ").");
 
 			//Process overrides for global data
 			String attribute = ((Element) partyConfig).getAttribute("providerId");
@@ -279,7 +322,8 @@ public class ServiceProviderMapper {
 			identityProvider =
 				new RelyingPartyIdentityProvider(
 					getConfigProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.providerId"),
-					credential);
+					null);
+
 		}
 
 		public String getProviderId() {

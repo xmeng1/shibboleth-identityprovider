@@ -80,6 +80,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import sun.misc.BASE64Decoder;
+import edu.internet2.middleware.shibboleth.common.*;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
@@ -97,13 +98,13 @@ public class HandleServlet extends HttpServlet {
 	private static Logger transactionLog = Logger.getLogger("edu.internet2.middleware.shibboleth.TRANSACTION");
 
 	private Semaphore throttle;
-	private ShibbolethOriginConfig configuration;
+	private HSConfig configuration;
 	private Credentials credentials;
 	private HSNameMapper nameMapper;
 	private ShibPOSTProfile postProfile = new ShibPOSTProfile();
 	private ServiceProviderMapper targetMapper;
 
-	protected void loadConfiguration() throws HSConfigurationException {
+	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
 		DOMParser parser = loadParser(true);
 
@@ -118,14 +119,14 @@ public class HandleServlet extends HttpServlet {
 
 		} catch (SAXException e) {
 			log.error("Error while parsing origin configuration: " + e);
-			throw new HSConfigurationException("Error while parsing origin configuration.");
+			throw new ShibbolethConfigurationException("Error while parsing origin configuration.");
 		} catch (IOException e) {
 			log.error("Could not load origin configuration: " + e);
-			throw new HSConfigurationException("Could not load origin configuration.");
+			throw new ShibbolethConfigurationException("Could not load origin configuration.");
 		}
 
 		//Load global configuration properties
-		configuration = new ShibbolethOriginConfig(parser.getDocument().getDocumentElement());
+		configuration = new HSConfig(parser.getDocument().getDocumentElement());
 
 		//Load signing credentials
 		NodeList itemElements =
@@ -134,7 +135,7 @@ public class HandleServlet extends HttpServlet {
 				"Credentials");
 		if (itemElements.getLength() < 1) {
 			log.error("Credentials not specified.");
-			throw new HSConfigurationException("The Handle Service requires that signing credentials be supplied in the <Credentials> configuration element.");
+			throw new ShibbolethConfigurationException("The Handle Service requires that signing credentials be supplied in the <Credentials> configuration element.");
 		}
 
 		if (itemElements.getLength() > 1) {
@@ -167,12 +168,12 @@ public class HandleServlet extends HttpServlet {
 					nameMapper);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
-			throw new HSConfigurationException("Could not load origin configuration.");
+			throw new ShibbolethConfigurationException("Could not load origin configuration.");
 		}
 
 	}
 
-	private DOMParser loadParser(boolean schemaChecking) throws HSConfigurationException {
+	private DOMParser loadParser(boolean schemaChecking) throws ShibbolethConfigurationException {
 
 		DOMParser parser = new DOMParser();
 
@@ -224,7 +225,7 @@ public class HandleServlet extends HttpServlet {
 
 		} catch (SAXException e) {
 			log.error("Unable to setup a workable XML parser: " + e);
-			throw new HSConfigurationException("Unable to setup a workable XML parser.");
+			throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
 		}
 		return parser;
 	}
@@ -247,7 +248,7 @@ public class HandleServlet extends HttpServlet {
 
 			log.info("Handle Service initialization complete.");
 
-		} catch (HSConfigurationException ex) {
+		} catch (ShibbolethConfigurationException ex) {
 			log.fatal("Handle Service runtime configuration error.  Please fix and re-initialize. Cause: " + ex);
 			throw new UnavailableException("Handle Service failed to initialize.");
 		}
