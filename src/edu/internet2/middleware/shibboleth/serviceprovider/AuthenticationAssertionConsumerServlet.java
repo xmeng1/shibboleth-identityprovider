@@ -45,6 +45,7 @@ import java.io.IOException;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -52,6 +53,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLBrowserProfile;
+import org.opensaml.SAMLResponse;
+import org.opensaml.XML;
 import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
 import org.w3c.dom.Element;
 import org.apache.log4j.FileAppender;
@@ -77,6 +80,7 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  */
 public class AuthenticationAssertionConsumerServlet extends HttpServlet {
 
+	private static final String ECHOTARGET = "SendAttributesBackToMe";
 	private static Logger log = null;
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
@@ -184,7 +188,15 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             response.addCookie(cookie);
             
             try {
-                response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+				if (target.equals(ECHOTARGET)) {
+					ServletOutputStream outputStream = response.getOutputStream();
+					response.setContentType("text/xml");
+					Session session = context.getSessionManager().findSession(sessionId,applicationId);
+					SAMLResponse attributeResponse = session.getAttributeResponse();
+					outputStream.print(attributeResponse.toString());
+				} else {
+					response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+				}
             }
             catch (IOException e) {
             }
