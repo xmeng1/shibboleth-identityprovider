@@ -444,7 +444,8 @@ public class ShireServlet extends HttpServlet {
 			response.addCookie(cookie);
 
 		} catch (IOException e) {
-			throw new ShireException("Unable to write session to file (" + filename + ") : " + e);
+			log.error("Unable to write session to file (" + filename + ") : " + e);
+			throw new ShireException("Unable to share session with SHAR.");
 		}
 	}
 
