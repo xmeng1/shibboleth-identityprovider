@@ -52,6 +52,9 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
@@ -72,6 +75,7 @@ public class Rule {
 	private String description;
 	private Target target;
 	private static Logger log = Logger.getLogger(Rule.class.getName());
+	private ArrayList attributes = new ArrayList();
 
 	/**
 	 * Returns the description for this <code>Rule</code>.
@@ -146,6 +150,14 @@ public class Rule {
 		}
 		target = new Target();
 		target.marshall((Element) targetNodes.item(0));
+
+		//Create the Attributes
+		NodeList attributeNodes = element.getElementsByTagName("Attribute");
+		for (int i = 0; attributeNodes.getLength() > i; i++) {
+			Attribute attribute = new Attribute();
+			attribute.marshall((Element) attributeNodes.item(i));
+			attributes.add(attribute);
+		}
 	}
 
 	/**
@@ -186,17 +198,17 @@ public class Rule {
 
 		void marshall(Element element) throws ArpMarshallingException {
 
-			//Make sure we are deling with a Target
+			//Make sure we are dealing with a Target
 			if (!element.getTagName().equals("Target")) {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
-			
+
 			//Handle <AnyTarget/> definitions
 			NodeList anyTargetNodeList = element.getElementsByTagName("AnyTarget");
 			if (anyTargetNodeList.getLength() == 1) {
-					matchesAny = true;
-					return;
+				matchesAny = true;
+				return;
 			}
 
 			//Create Requester
@@ -208,14 +220,14 @@ public class Rule {
 				log.error("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
 				throw new ArpMarshallingException("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
 			}
-			
+
 			//Handle <AnyResource/>
 			NodeList anyResourceNodeList = element.getElementsByTagName("AnyResource");
 			if (anyResourceNodeList.getLength() == 1) {
-					resource = new Resource();
-					return;
+				resource = new Resource();
+				return;
 			}
-			
+
 			//Create Resource
 			NodeList resourceNodeList = element.getElementsByTagName("Resource");
 			if (resourceNodeList.getLength() == 1) {
@@ -243,7 +255,7 @@ public class Rule {
 		private URI matchFunctionIdentifier;
 		private boolean matchesAny;
 		Resource() {
-			matchesAny = true;	
+			matchesAny = true;
 		}
 		boolean matchesAny() {
 			return matchesAny;
@@ -260,7 +272,7 @@ public class Rule {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
-			
+
 			//Grab the value
 			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
 				value = ((CharacterData) element.getFirstChild()).getData();
@@ -268,7 +280,7 @@ public class Rule {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
-			
+
 			//Grab the match function
 			try {
 				if (element.hasAttribute("matchFunction")) {
@@ -298,7 +310,7 @@ public class Rule {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
-			
+
 			//Grab the value
 			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
 				value = ((CharacterData) element.getFirstChild()).getData();
@@ -306,7 +318,7 @@ public class Rule {
 				log.error("Element data does not represent an ARP Rule Target.");
 				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
 			}
-			
+
 			//Grab the match function
 			try {
 				if (element.hasAttribute("matchFunction")) {
@@ -318,6 +330,77 @@ public class Rule {
 				log.error("ARP match function not identified by a proper URI.");
 				throw new ArpMarshallingException("ARP match function not identified by a proper URI.");
 			}
+		}
+	}
+
+	class Attribute {
+		private URI name;
+		private boolean anyValue = false;
+		private String anyValueRelease = "permit";
+		private Set values = new HashSet();
+
+		void marshall(Element element) throws ArpMarshallingException {
+			//Make sure we are dealing with an Attribute
+			if (!element.getTagName().equals("Attribute")) {
+				log.error("Element data does not represent an ARP Rule Target.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
+			}
+			//Handle <AnyValue/> definitions
+			NodeList anyValueNodeList = element.getElementsByTagName("AnyValue");
+			if (anyValueNodeList.getLength() == 1) {
+				anyValue = true;
+				if (((Element) anyValueNodeList.item(0)).hasAttribute("release")) {
+					anyValueRelease = ((Element) anyValueNodeList.item(0)).getAttribute("release");
+				}
+			}
+
+			//Handle Value definitions
+			NodeList valueNodeList = element.getElementsByTagName("Value");
+			for (int i = 0; valueNodeList.getLength() > i; i++) {
+				String release = null;
+				String value = null;
+				if (((Element) valueNodeList.item(i)).hasAttribute("release")) {
+					release = ((Element) valueNodeList.item(i)).getAttribute("release");
+				}
+				if (((Element) valueNodeList.item(i)).hasChildNodes()
+					&& ((Element) valueNodeList.item(i)).getFirstChild().getNodeType() == Node.TEXT_NODE) {
+					value =
+						((CharacterData) ((Element) valueNodeList.item(i)).getFirstChild()).getData();
+				}
+				AttributeValue aValue = new AttributeValue(release, value);
+				values.add(aValue);
+			}
+
+		}
+	}
+	class AttributeValue {
+		private String release = "permit";
+		private String value;
+
+		AttributeValue(String release, String value) {
+			setRelease(release);
+			this.value = value;
+		}
+
+		String getRelease() {
+			return release;
+		}
+
+		String getValue() {
+			return value;
+		}
+
+		void setRelease(String release) {
+			if (release == null) {
+				return;
+			}
+			if (release.equals("permit") || release.equals("deny")) {
+				this.release = release;
+			}
+		}
+
+		void setValue(String value) {
+			this.value = value;
 		}
 	}
 
