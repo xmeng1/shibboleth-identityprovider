@@ -54,4 +54,4 @@ Thanks to:
     Dave Dearman (NRCC), for contributing a SQL Data Connector for the AA 
       resolver
 
-	Noah Levitt, (Columbia), for simplifying the logging configuration.
+    Noah Levitt (Columbia), for simplifying the logging configuration.
