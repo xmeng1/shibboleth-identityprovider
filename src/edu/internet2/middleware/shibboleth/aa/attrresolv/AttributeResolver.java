@@ -268,7 +268,7 @@ public class AttributeResolver {
                         + plugIn.getId()
                         + ") is inconsistent.  It depends on a PlugIn ("
                         + key
-                        + ") that is not inconsistent.");
+                        + ") that is inconsistent.");
                 inconsistent.add(plugIn.getId());
                 return;
             }
@@ -313,7 +313,7 @@ public class AttributeResolver {
 						+ plugIn.getId()
 						+ ") is inconsistent.  It depends on a PlugIn ("
 						+ key
-						+ ") that is not inconsistent.");
+						+ ") that is inconsistent.");
 				inconsistent.add(plugIn.getId());
 				return;
 			}
@@ -475,7 +475,7 @@ public class AttributeResolver {
         //Resolve the connector
         Attributes resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
 
-        //If necessary, cache for this request
+        //Cache for this request
         requestCache.put(currentDefinition.getId(), resolvedAttributes);
 
         //Add attribute resolution to cache
