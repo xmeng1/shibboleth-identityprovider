@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.log4j.Logger;
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.InvalidCryptoException;
@@ -97,14 +95,6 @@ public class IdPProtocolSupport implements Metadata {
 		throttle = new Semaphore(config.getMaxThreads());
 	}
 
-	public static void validateEngineData(HttpServletRequest req) throws InvalidClientDataException {
-
-		// TODO this should be pulled out into handlers
-
-		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) { throw new InvalidClientDataException(
-				"Unable to obtain client address."); }
-	}
-
 	public Logger getTransactionLog() {
 
 		return transactionLog;
@@ -129,9 +119,8 @@ public class IdPProtocolSupport implements Metadata {
 			SAMLException {
 
 		if (relyingParty.getIdentityProvider().getSigningCredential() == null
-				|| relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() == null) {
-			// TODO error out
-		}
+				|| relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() == null) { throw new InvalidCryptoException(
+				SAMLException.RESPONDER, "Invalid signing credential."); }
 
 		for (int i = 0; i < assertions.length; i++) {
 			String assertionAlgorithm;
@@ -159,10 +148,8 @@ public class IdPProtocolSupport implements Metadata {
 
 		// Make sure we have an appropriate credential
 		if (relyingParty.getIdentityProvider().getSigningCredential() == null
-				|| relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() == null) {
-
-			// TODO error
-		}
+				|| relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() == null) { throw new InvalidCryptoException(
+				SAMLException.RESPONDER, "Invalid signing credential."); }
 
 		// Sign the response
 		String responseAlgorithm;

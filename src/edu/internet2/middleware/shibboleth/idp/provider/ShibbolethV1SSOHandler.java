@@ -82,7 +82,7 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
  * 
  * @author Walter Hoehn
  */
-public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHandler {
+public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(ShibbolethV1SSOHandler.class.getName());
 
@@ -112,7 +112,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 		try {
 			// Ensure that we have the required data from the servlet container
-			IdPProtocolSupport.validateEngineData(request);
+			validateEngineData(request);
 			validateShibSpecificData(request);
 
 			// Get the authN info

@@ -61,7 +61,7 @@ import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
 /**
  * @author Walter Hoehn
  */
-public class E_AuthSSOHandler extends BaseHandler implements IdPProtocolHandler {
+public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(E_AuthSSOHandler.class.getName());
 	private final String name = "EAuth";
@@ -128,7 +128,7 @@ public class E_AuthSSOHandler extends BaseHandler implements IdPProtocolHandler 
 		}
 
 		try {
-			IdPProtocolSupport.validateEngineData(request);
+			validateEngineData(request);
 		} catch (InvalidClientDataException e1) {
 			// TODO Auto-generated catch block
 		}
