@@ -88,7 +88,7 @@ public abstract class ServiceProviderMapper {
 		//OK, just send the default
 		log.info("Could not locate Relying Party configuration for (" + providerIdFromTarget
 				+ ").  Using default Relying Party.");
-		return new UnknownProviderWrapper(getDefaultRelyingPatry());
+		return new UnknownProviderWrapper(getDefaultRelyingPatry(), providerIdFromTarget);
 	}
 
 	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
@@ -264,9 +264,11 @@ public abstract class ServiceProviderMapper {
 	protected class UnknownProviderWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
 
 		protected RelyingParty	wrapped;
+		protected String providerId;
 
-		protected UnknownProviderWrapper(RelyingParty wrapped) {
+		protected UnknownProviderWrapper(RelyingParty wrapped, String providerId) {
 			this.wrapped = wrapped;
+			this.providerId = providerId;
 		}
 
 		public String getName() {
@@ -278,7 +280,7 @@ public abstract class ServiceProviderMapper {
 		}
 
 		public String getProviderId() {
-			return null;
+			return providerId;
 		}
 
 		public String getHSNameFormatId() {

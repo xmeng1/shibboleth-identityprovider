@@ -253,7 +253,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 	class LegacyWrapper extends UnknownProviderWrapper implements HSRelyingParty {
 
 		LegacyWrapper(HSRelyingParty wrapped) {
-			super(wrapped);
+			super(wrapped, null);
 		}
 
 		public boolean isLegacyProvider() {
