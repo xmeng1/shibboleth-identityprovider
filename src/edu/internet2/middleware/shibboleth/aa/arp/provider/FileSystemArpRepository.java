@@ -51,14 +51,18 @@ package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.Principal;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Element;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
@@ -158,6 +162,36 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 			}
 
 			DOMParser parser = new DOMParser();
+			parser.setFeature("http://xml.org/sax/features/validation", true);
+			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
+			parser.setEntityResolver(new EntityResolver() {
+				public InputSource resolveEntity(String publicId, String systemId)
+					throws SAXException {
+
+					if (systemId.endsWith("shibboleth-arp-1.0.xsd")) {
+						InputStream stream;
+						try {
+							return new InputSource(new ShibResource("/schemas/shibboleth-arp-1.0.xsd", this.getClass()).getInputStream());
+						} catch (IOException e) {
+							throw new SAXException("Could not load entity: " + e);
+						}
+					} else {
+						return null;
+					}
+				}
+			});
+
+			parser.setErrorHandler(new ErrorHandler() {
+				public void error(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void fatalError(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+				public void warning(SAXParseException arg0) throws SAXException {
+					throw new SAXException("Error parsing xml file: " + arg0);
+				}
+			});
 			parser.parse(new InputSource(resource.getInputStream()));
 			return parser.getDocument().getDocumentElement();
 
