@@ -70,7 +70,7 @@
 <input type="hidden" name="action" value="selection" />
 <select name="origin">
 	<logic:iterate id="origin" name="originset" property="origins">
-		<option value="<jsp:getProperty name="origin" property="displayName" />">
+		<option value="<jsp:getProperty name="origin" property="name" />">
 		<jsp:getProperty name="origin" property="displayName" />
 		</option>
 	</logic:iterate>

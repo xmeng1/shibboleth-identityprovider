@@ -246,6 +246,7 @@ public class WayfService extends HttpServlet {
 	 */
 	private void handleSelection(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
+		log.debug("Processing handle selection: " + req.getParameter("origin"));
 		String handleService = originConfig.lookupHSbyName(req.getParameter("origin"));
 		if (handleService == null) {
 			handleLookup(req, res);
