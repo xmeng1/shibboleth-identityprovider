@@ -42,35 +42,11 @@ public interface IdentityProvider {
 	public String getProviderId();
 
 	/**
-	 * Returns the credential that this provider uses to sign SAML authentication responses to requests, or
-	 * <code>null</code> if responses should not be signed.
+	 * Returns the credential that this provider uses to sign SAML responses and assertions, or <code>null</code> if
+	 * responses should not be signed.
 	 * 
 	 * @return the credential or <code>null</code>
 	 */
-	public Credential getAuthNResponseSigningCredential();
-
-	/**
-	 * Returns the credential that this provider uses to sign SAML authentication assertions, or <code>null</code> if
-	 * assertions should not be signed.
-	 * 
-	 * @return the credential or <code>null</code>
-	 */
-	public Credential getAuthNAssertionSigningCredential();
-
-	/**
-	 * Returns the credential that this provider uses to sign SAML attribute responses to requests, or <code>null</code>
-	 * if responses should not be signed.
-	 * 
-	 * @return the credential or <code>null</code>
-	 */
-	public Credential getAttributeResponseSigningCredential();
-
-	/**
-	 * Returns the credential that this provider uses to sign SAML attribute assertions, or <code>null</code> if
-	 * assertions should not be signed.
-	 * 
-	 * @return the credential or <code>null</code>
-	 */
-	public Credential getAttributeAssertionSigningCredential();
+	public Credential getSigningCredential();
 
 }

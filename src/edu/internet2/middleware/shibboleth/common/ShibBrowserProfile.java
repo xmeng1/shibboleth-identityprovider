@@ -38,10 +38,6 @@ import java.security.cert.PKIXCertPathBuilderResult;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -53,22 +49,13 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 import org.apache.log4j.NDC;
 import org.apache.xml.security.signature.XMLSignature;
-import org.opensaml.InvalidCryptoException;
 import org.opensaml.NoSuchProviderException;
 import org.opensaml.ReplayCache;
-import org.opensaml.SAMLAssertion;
-import org.opensaml.SAMLAudienceRestrictionCondition;
-import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLBrowserProfile;
 import org.opensaml.SAMLBrowserProfileFactory;
-import org.opensaml.SAMLConfig;
 import org.opensaml.SAMLException;
-import org.opensaml.SAMLNameIdentifier;
-import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLSignedObject;
-import org.opensaml.SAMLSubject;
 import org.opensaml.TrustException;
-import org.w3c.dom.Document;
 
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.IDPProviderRole;
@@ -127,136 +114,6 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
     }
 
 	/**
-	 * Used by HS to generate a signed SAML response conforming to the POST profile
-	 * <P>
-	 * 
-	 * @param recipient
-	 *            URL of the assertion consumer
-	 * @param relyingParty
-	 *            the intended recipient of the response
-	 * @param nameId
-	 *            Name Identifier for the response
-	 * @param subjectIP
-	 *            Client address of subject (optional)
-	 * @param authMethod
-	 *            URI of authentication method being asserted
-	 * @param authInstant
-	 *            Date and time of authentication being asserted
-	 * @param bindings
-	 *            Set of SAML authorities the relying party may contact (optional)
-	 * @return SAML response to send to accepting site
-	 * @exception SAMLException
-	 *                Base class of exceptions that may be thrown during processing
-	 */
-	public SAMLResponse prepare(String recipient, RelyingParty relyingParty, SAMLNameIdentifier nameId,
-			String subjectIP, String authMethod, Date authInstant, Collection bindings) throws SAMLException {
-
-		Document doc = org.opensaml.XML.parserPool.newDocument();
-
-		ArrayList audiences = new ArrayList();
-		if (relyingParty.getProviderId() != null) {
-			audiences.add(relyingParty.getProviderId());
-		}
-		if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
-			audiences.add(relyingParty.getName());
-		}
-
-		String issuer = null;
-		if (relyingParty.isLegacyProvider()) {
-			
-			log.debug("Service Provider is running Shibboleth <= 1.1.  Using old style issuer.");
-			if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential() == null
-					|| relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getX509Certificate() == null) {
-				throw new SAMLException("Cannot serve legacy style assertions without an X509 certificate");
-			}
-			issuer = getHostNameFromDN(relyingParty.getIdentityProvider().getAuthNResponseSigningCredential()
-					.getX509Certificate().getSubjectX500Principal());
-			if (issuer == null || issuer.equals("")) {
-				throw new SAMLException("Error parsing certificate DN while determining legacy issuer name.");
-			}
-
-		} else {
-			issuer = relyingParty.getIdentityProvider().getProviderId();
-		}
-
-        // XXX: Inlined the old prepare method, this whole method should probably be pulled out into the IdP package.
-        // At a minimum, artifact should be integrated in.
-        SAMLResponse r = new SAMLResponse(
-                null,
-                recipient,
-                Collections.singleton(
-                        new SAMLAssertion(
-                                issuer,
-                                new Date(),
-                                new Date(System.currentTimeMillis() + 1000 * SAMLConfig.instance().getIntProperty("org.opensaml.clock-skew")),
-                                Collections.singleton(
-                                        new SAMLAudienceRestrictionCondition(audiences)
-                                        ),
-                                null,
-                                Collections.singleton(
-                                        new SAMLAuthenticationStatement(
-                                                new SAMLSubject(
-                                                        nameId,
-                                                        Collections.singleton(SAMLSubject.CONF_BEARER),
-                                                        null,
-                                                        null
-                                                        ),
-                                                authMethod,
-                                                authInstant,
-                                                subjectIP,
-                                                null,
-                                                bindings
-                                                )
-                                        )
-                                )
-                        ),
-                null
-                );
-		r.toDOM(doc);
-
-		//Sign the assertions, if appropriate
-		if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential().getPrivateKey() != null) {
-
-			String assertionAlgorithm;
-			if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential().getCredentialType() == Credential.RSA) {
-				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential().getCredentialType() == Credential.DSA) {
-				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
-			} else {
-				throw new InvalidCryptoException(SAMLException.RESPONDER,
-						"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
-			}
-
-			((SAMLAssertion) r.getAssertions().next()).sign(assertionAlgorithm, relyingParty.getIdentityProvider()
-					.getAuthNAssertionSigningCredential().getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider()
-					.getAuthNAssertionSigningCredential().getX509CertificateChain()));
-		}
-
-		//Sign the response, if appropriate
-		if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getPrivateKey() != null) {
-
-			String responseAlgorithm;
-			if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getCredentialType() == Credential.RSA) {
-				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getCredentialType() == Credential.DSA) {
-				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
-			} else {
-				throw new InvalidCryptoException(SAMLException.RESPONDER,
-						"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
-			}
-
-			r.sign(responseAlgorithm,
-					relyingParty.getIdentityProvider().getAuthNResponseSigningCredential().getPrivateKey(), Arrays
-							.asList(relyingParty.getIdentityProvider().getAuthNResponseSigningCredential()
-									.getX509CertificateChain()));
-		}
-
-		return r;
-	}
-
-    /**
      * Given a key from Trust associated with a HS Role from a Metadata Entity Descriptor,
      * verify the SAML Signature.
      * 

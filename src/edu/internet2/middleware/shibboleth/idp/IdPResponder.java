@@ -115,7 +115,6 @@ public class IdPResponder extends TargetFederationComponent {
 
 	// TODO Maybe should rethink the inheritance here, since there is only one
 	// servlet
-	// TODO signing is broken... it doesn't distinguish between authn and attr signing
 
 	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
 	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
@@ -263,7 +262,8 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 
 			// If we have DEBUGing turned on, dump out the request to the log
-			if (log.isDebugEnabled()) { // This takes some processing, so only do it if we need to
+			// This takes some processing, so only do it if we need to
+			if (log.isDebugEnabled()) {
 				try {
 					log.debug("Dumping generated SAML Request:"
 							+ System.getProperty("line.separator")
@@ -613,6 +613,8 @@ public class IdPResponder extends TargetFederationComponent {
 			SAMLAssertion[] assertions = activeHandler.processHook(request, relyingParty, provider, nameId,
 					authenticationMethod, new Date(System.currentTimeMillis()));
 
+			//TODO do assertion signing here
+
 			// SAML Artifact profile
 			if (useArtifactProfile(provider, acceptanceURL)) {
 				log.debug("Responding with Artifact profile.");
@@ -651,7 +653,7 @@ public class IdPResponder extends TargetFederationComponent {
 				request.setAttribute("target", activeHandler.getSAMLTargetParameter(request, relyingParty, provider));
 
 				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, Arrays.asList(assertions), null);
-				addSignatures(samlResponse, relyingParty);
+				addSignatures(samlResponse, relyingParty, provider, true);
 				createPOSTForm(request, response, samlResponse.toBase64());
 
 				// Make transaction log entry
@@ -910,7 +912,7 @@ public class IdPResponder extends TargetFederationComponent {
 						then, Collections.singleton(condition), null, Collections.singleton(statement));
 
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, Collections.singleton(sAssertion), exception);
-				addSignatures(samlResponse, relyingParty);
+				addSignatures(samlResponse, relyingParty, lookup(relyingParty.getProviderId()), false);
 			}
 		} catch (SAMLException se) {
 			ourSE = se;
@@ -942,48 +944,64 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 	}
 
-	private static void addSignatures(SAMLResponse reponse, RelyingParty relyingParty) throws SAMLException {
+	private static void addSignatures(SAMLResponse response, RelyingParty relyingParty, Provider provider,
+			boolean signResponse) throws SAMLException {
 
-		// TODO make sure this signing optionally happens according to origin.xml params
-		// TODO this has to be made to work for both AuthN and Attr assertion types
+		if (provider != null) {
+			boolean signAssertions = false;
 
-		// Sign the assertions, if appropriate
-		if (relyingParty.getIdentityProvider().getAuthNAssertionSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential().getPrivateKey() != null) {
-
-			String assertionAlgorithm;
-			if (relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential().getCredentialType() == Credential.RSA) {
-				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential().getCredentialType() == Credential.DSA) {
-				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
-			} else {
-				throw new InvalidCryptoException(SAMLException.RESPONDER,
-						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
+			ProviderRole[] roles = provider.getRoles();
+			if (roles.length == 0) {
+				log.info("Inappropriate metadata for provider: " + provider.getId() + ".  Expected SPSSODescriptor.");
+			}
+			for (int i = 0; roles.length > i; i++) {
+				if (roles[i] instanceof SPProviderRole) {
+					if (((SPProviderRole) roles[i]).wantAssertionsSigned()) {
+						signAssertions = true;
+					}
+				}
 			}
 
-			((SAMLAssertion) reponse.getAssertions().next()).sign(assertionAlgorithm, relyingParty
-					.getIdentityProvider().getAttributeAssertionSigningCredential().getPrivateKey(), Arrays
-					.asList(relyingParty.getIdentityProvider().getAttributeAssertionSigningCredential()
+			if (signAssertions && relyingParty.getIdentityProvider().getSigningCredential() != null
+					&& relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() != null) {
+
+				Iterator assertions = response.getAssertions();
+
+				while (assertions.hasNext()) {
+					SAMLAssertion assertion = (SAMLAssertion) assertions.next();
+					String assertionAlgorithm;
+					if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.RSA) {
+						assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
+					} else if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.DSA) {
+						assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
+					} else {
+						throw new InvalidCryptoException(SAMLException.RESPONDER,
+								"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
+					}
+
+					assertion.sign(assertionAlgorithm, relyingParty.getIdentityProvider().getSigningCredential()
+							.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential()
 							.getX509CertificateChain()));
+				}
+			}
 		}
 
 		// Sign the response, if appropriate
-		if (relyingParty.getIdentityProvider().getAttributeResponseSigningCredential() != null
-				&& relyingParty.getIdentityProvider().getAttributeResponseSigningCredential().getPrivateKey() != null) {
+		if (signResponse && relyingParty.getIdentityProvider().getSigningCredential() != null
+				&& relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey() != null) {
 
 			String responseAlgorithm;
-			if (relyingParty.getIdentityProvider().getAttributeResponseSigningCredential().getCredentialType() == Credential.RSA) {
+			if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.RSA) {
 				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
-			} else if (relyingParty.getIdentityProvider().getAttributeResponseSigningCredential().getCredentialType() == Credential.DSA) {
+			} else if (relyingParty.getIdentityProvider().getSigningCredential().getCredentialType() == Credential.DSA) {
 				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(SAMLException.RESPONDER,
 						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
 			}
 
-			reponse.sign(responseAlgorithm, relyingParty.getIdentityProvider().getAttributeResponseSigningCredential()
-					.getPrivateKey(), Arrays.asList(relyingParty.getIdentityProvider()
-					.getAttributeResponseSigningCredential().getX509CertificateChain()));
+			response.sign(responseAlgorithm, relyingParty.getIdentityProvider().getSigningCredential().getPrivateKey(),
+					Arrays.asList(relyingParty.getIdentityProvider().getSigningCredential().getX509CertificateChain()));
 		}
 	}
 

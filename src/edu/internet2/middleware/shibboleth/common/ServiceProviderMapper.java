@@ -299,57 +299,12 @@ public class ServiceProviderMapper {
 				}
 			}
 
-			// Load credentials for signing
-			Credential authNCredential = null;
-			Credential attrCredential = null;
-
-			boolean signAuthResponses = new Boolean(((Element) partyConfig).getAttribute("signAuthResponses"))
-					.booleanValue();
-			boolean signAuthAssertions = new Boolean(((Element) partyConfig).getAttribute("signAuthAssertions"))
-					.booleanValue();
-			boolean signAttrResponses = new Boolean(((Element) partyConfig).getAttribute("signAttrResponses"))
-					.booleanValue();
-			boolean signAttrAssertions = new Boolean(((Element) partyConfig).getAttribute("signAttrAssertions"))
-					.booleanValue();
-
+			// Load the credential for signing
 			String credentialName = ((Element) partyConfig).getAttribute("signingCredential");
-
-			// Load the credential for AuthN signing
-			if (signAuthResponses || signAuthAssertions) {
-
-				authNCredential = credentials.getCredential(credentialName);
-				if (authNCredential == null) {
-					if (credentialName == null || credentialName.equals("")) {
-						log.error("Relying Party credential not set.  Add a (signingCredential) "
-								+ "attribute to <RelyingParty>.");
-						throw new ServiceProviderMapperException("Required configuration not specified.");
-					} else {
-						log.error("Relying Party credential invalid.  Fix the (signingCredential) attribute "
-								+ "on <RelyingParty>.");
-						throw new ServiceProviderMapperException("Required configuration is invalid.");
-					}
-				}
-			}
-
-			// Load the credential for Attribute signing
-			if (signAttrAssertions || signAttrResponses) {
-				String aaCredentialName = ((Element) partyConfig).getAttribute("AASigningCredential");
-				attrCredential = credentials.getCredential(aaCredentialName);
-				if (aaCredentialName == null || aaCredentialName.equals("")) {
-					if (authNCredential != null) {
-						attrCredential = authNCredential;
-					} else {
-						aaCredentialName = ((Element) partyConfig).getAttribute("signingCredential");
-						attrCredential = credentials.getCredential(aaCredentialName);
-					}
-				} else {
-					log.debug("Using (AASigningCredential) for AA signing.");
-				}
-			}
-
-			if ((attrCredential == null) && (signAttrResponses || signAttrAssertions)) {
+			Credential signingCredential = credentials.getCredential(credentialName);
+			if (signingCredential == null) {
 				if (credentialName == null || credentialName.equals("")) {
-					log.error("Relying Party credential not set.  Add a (AASigningCredential) or (signingCredential) "
+					log.error("Relying Party credential not set.  Add a (signingCredential) "
 							+ "attribute to <RelyingParty>.");
 					throw new ServiceProviderMapperException("Required configuration not specified.");
 				} else {
@@ -357,14 +312,13 @@ public class ServiceProviderMapper {
 							+ "on <RelyingParty>.");
 					throw new ServiceProviderMapperException("Required configuration is invalid.");
 				}
+
 			}
 
 			// Initialize and Identity Provider object for this use by this relying party
 			identityProvider = new RelyingPartyIdentityProvider(overridenOriginProviderId != null
 					? overridenOriginProviderId
-					: configuration.getProviderId(), signAuthResponses ? authNCredential : null, signAuthAssertions
-					? authNCredential
-					: null, signAttrResponses ? attrCredential : null, signAttrAssertions ? attrCredential : null);
+					: configuration.getProviderId(), signingCredential);
 
 		}
 
@@ -428,47 +382,29 @@ public class ServiceProviderMapper {
 		protected class RelyingPartyIdentityProvider implements IdentityProvider {
 
 			private String providerId;
-			private Credential authNResponseSigningCredential;
-			private Credential authNAssertionSigningCredential;
-			private Credential attributeResponseSigningCredential;
-			private Credential attributeAssertionSigningCredential;
+			private Credential credential;
 
-			public RelyingPartyIdentityProvider(String providerId, Credential authNResponseSigningCredential,
-					Credential authNAssertionSigningCredential, Credential attributeResponseSigningCredential,
-					Credential attributeAssertionSigningCredential) {
+			public RelyingPartyIdentityProvider(String providerId, Credential credential) {
 
 				this.providerId = providerId;
-				this.authNResponseSigningCredential = authNResponseSigningCredential;
-				this.authNAssertionSigningCredential = authNAssertionSigningCredential;
-				this.attributeResponseSigningCredential = attributeResponseSigningCredential;
-				this.attributeAssertionSigningCredential = attributeAssertionSigningCredential;
+				this.credential = credential;
 			}
 
+			/*
+			 * @see edu.internet2.middleware.shibboleth.common.IdentityProvider#getProviderId()
+			 */
 			public String getProviderId() {
 
 				return providerId;
 			}
 
-			public Credential getAuthNResponseSigningCredential() {
+			/*
+			 * @see edu.internet2.middleware.shibboleth.common.IdentityProvider#getSigningCredential()
+			 */
+			public Credential getSigningCredential() {
 
-				return authNResponseSigningCredential;
+				return credential;
 			}
-
-			public Credential getAuthNAssertionSigningCredential() {
-
-				return authNAssertionSigningCredential;
-			}
-
-			public Credential getAttributeResponseSigningCredential() {
-
-				return attributeResponseSigningCredential;
-			}
-
-			public Credential getAttributeAssertionSigningCredential() {
-
-				return attributeAssertionSigningCredential;
-			}
-
 		}
 	}
 

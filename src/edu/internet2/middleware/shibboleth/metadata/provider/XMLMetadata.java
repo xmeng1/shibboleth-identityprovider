@@ -245,6 +245,10 @@ public class XMLMetadata implements Metadata {
 		public KeyDescriptor[] getKeyDescriptors() {
 			return (KeyDescriptor[]) keyDescriptors.toArray(new KeyDescriptor[0]);
 		}
+		
+		public boolean wantAssertionsSigned() {
+			return false;
+		}
 
 		class ShibEndpoint implements Endpoint {
 
@@ -296,7 +300,6 @@ public class XMLMetadata implements Metadata {
 				return new KeyInfo[]{keyInfo};
 			}
 		}
-
 	}
 
 	class XMLContactPerson implements ContactPerson {
