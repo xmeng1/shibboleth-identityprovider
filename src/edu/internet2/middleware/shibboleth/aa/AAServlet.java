@@ -156,7 +156,7 @@ public class AAServlet extends HttpServlet {
 	MDC.put("remoteAddr", req.getRemoteAddr());
 	log.info("Handling request.");
 
-	ArrayList attrs = null;
+	List attrs = null;
 	SAMLException ourSE = null;
 	AASaml saml = null;
 	String userName = null;
@@ -185,7 +185,7 @@ public class AAServlet extends HttpServlet {
 		}
 	    }
 
-	    attrs = (ArrayList)Arrays.asList(responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource));
+	    attrs = Arrays.asList(responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource));
 	    log.info("Got " + attrs.size() + " attributes for " + userName);
 	    saml.respond(resp, attrs, null);
 	    log.info("Successfully responded about "+userName);
