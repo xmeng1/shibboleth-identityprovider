@@ -63,6 +63,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -72,9 +73,9 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import org.apache.log4j.Logger;
+
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
-
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.hs.HandleRepository;
@@ -119,6 +120,12 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			//Before we finish initilization, make sure that things are working
 			testEncryption();
 
+			if (usingDefaultSecret()) {
+				log.warn(
+					"You are running the Crypto Handle Repository with the default secret key.  This is UNSAFE!  Please change "
+						+ "this configuration and restart the origin.");
+			}
+
 		} catch (KeyStoreException e) {
 			log.error(
 				"An error occurred while loading the java keystore.  Unable to initialize Crypto Handle Repository: "
@@ -146,9 +153,37 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 		}
 	}
 
-	/**
-	 * 
-	 */
+	private boolean usingDefaultSecret() {
+		byte[] defaultKey =
+			new byte[] {
+				(byte) 0xC7,
+				(byte) 0x49,
+				(byte) 0x80,
+				(byte) 0xD3,
+				(byte) 0x02,
+				(byte) 0x4A,
+				(byte) 0x61,
+				(byte) 0xEF,
+				(byte) 0x25,
+				(byte) 0x5D,
+				(byte) 0xE3,
+				(byte) 0x2F,
+				(byte) 0x57,
+				(byte) 0x51,
+				(byte) 0x20,
+				(byte) 0x15,
+				(byte) 0xC7,
+				(byte) 0x49,
+				(byte) 0x80,
+				(byte) 0xD3,
+				(byte) 0x02,
+				(byte) 0x4A,
+				(byte) 0x61,
+				(byte) 0xEF };
+		byte[] encodedKey = secret.getEncoded();
+		return Arrays.equals(defaultKey, encodedKey);
+	}
+
 	private void checkRequiredParams(Properties params) throws HandleRepositoryException {
 		StringBuffer missingProperties = new StringBuffer();
 		String[] requiredProperties =
