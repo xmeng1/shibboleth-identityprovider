@@ -1254,16 +1254,16 @@ when updating:&nbsp;&nbsp;-i &lt;uri&gt; [-k &lt;keystore&gt; -a &lt;alias&gt; O
         Must be contained by a <a href="#confLogging"><span
         class="fixed">Logging</span></a> element.</dd>
 
-        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;FederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot; uri=&quot;<i>pathname</i>&quot;</span>/&gt;</span></a></dd>
-        <dd class="value">Individual sets of targets in the form of a <span
-        class="fixed">sites.xml</span> file that this origin will trust to make
+        <dd class="attribute"><a name="confFederationProvider"><span class="fixed">&lt;FederationProvider <span class="mandatory">type=&quot;edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper&quot;</span> uri=&quot;<i>pathname</i>&quot;/&gt;</span></a></dd>
+        <dd class="value">Individual sets of targets in the form of an
+        XML file that this origin will trust to make
         requests may be specified by adding <span
         class="fixed">FederationProvider</span> elements to the main <a
         href="#confShibbolethOriginConfig"><span
         class="fixed">ShibbolethOriginConfig</span></a> element for each.  The
-        <span class="fixed">URI</span> points to a <span
-        class="fixed">sites.xml</span> file, which is generally distributed by
-        federations.  This file should be regularly refreshed using
+        <span class="fixed">uri</span> attribute points to an
+        XML file, generally signed and distributed by federations.
+        This file should be regularly refreshed using
         <a href="#4.e."><span class="fixedwidth">metadatatool</span></a>.</dd>
 
         <dd class="attribute"><a name="confFileResolver"><span class="fixed">&lt;FileResolver Id=&quot;<i>string</i>&quot;&gt;</span></a></dd>
@@ -1555,11 +1555,9 @@ signingCredential=&quot;<i>string</i>&quot;&gt;</span></a></dd>
         </dd>
 
         <dd class="attribute"><a name="confShibbolethOriginConfig"><span class="fixed">&lt;ShibbolethOriginConfig<br>
-<span class="mandatory">xmlns=&quot;urn:mace:shibboleth:origin:1.0&quot;<br>
+xmlns=&quot;urn:mace:shibboleth:origin:1.0&quot;<br>
 xmlns:cred=&quot;urn:mace:shibboleth:credentials:1.0&quot;<br>
 xmlns:name=&quot;urn:mace:shibboleth:namemapper:1.0&quot;<br>
-xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;<br>
-xsi:schemaLocation=&quot;urn:mace:shibboleth:origin:1.0 origin.xml&quot;</span><br>
 <span class="mandatory">defaultRelyingParty=&quot;<i>URI</i>&quot;<br>
 providerID=&quot;<i>URI</i>&quot;</span><br>
 AAUrl=&quot;<i>URL</i>&quot;<br>
@@ -2221,7 +2219,7 @@ handling for Shibboleth origins. This information is not intended to be
 comprehensive, but instead rudimentary guidelines for basic configuration tests 
 and problems. For more detailed information or answers to specific problems not 
 addressed in this section, please mail
-<a href="mailto:mace-shib-users@internet2.edu">mace-shib-users@internet2.edu</a> 
+<a href="mailto:shibboleth-users@internet2.edu">shibboleth-users@internet2.edu</a> 
 with a thorough description of errors and configurations used.</p>
 <h4><a name="6.a."></a>6.a. Basic Testing</h4>
 <blockquote>
@@ -2253,10 +2251,10 @@ with a thorough description of errors and configurations used.</p>
 <h4><a name="6.c."></a>6.c. Common Problems</h4>
 <blockquote>
     <p>A knowledge base is being developed in the
-    <a href="http://www.columbia.edu/~wassa/shib.faq/shibboleth-faq.html">
+    <a href="https://umdrive.memphis.edu/wassa/public/shib.faq/shibboleth-faq.html">
     Shibboleth Deployer&#39;s FAQ</a>. Please mail
-    <a href="mailto:mace-shib-users@internet2.edu">mace-shib-users@ 
-    internet2.edu</a> with any additional questions or problems encountered that 
+    <a href="mailto:shibboleth-users@internet2.edu">shibboleth-users@nternet2.edu</a>
+    with any additional questions or problems encountered that 
     are not answered by this basic guide.</p>
 </blockquote>
 
