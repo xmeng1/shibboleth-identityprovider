@@ -3,11 +3,8 @@
     <import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="http://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd"/>
     <import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="http://www.w3.org/2001/xml.xsd"/>
     
-    <element name="RealTimeReleaseURL" type="anyURI">
-    	<annotation> 
-          <documentation xml:lang="en">Used by AA in samlp:StatusDetail to signal user wants real-time attribute release.</documentation>
-        </annotation>
-    </element>
+    
+    <!-- Status-Related Information -->
     
     <!--
     The following SAML sub-status codes are defined in this namespace:
@@ -19,10 +16,89 @@
             Used with samlp:Requester, signals AA did not recognize handle as valid
     -->
     
+    <element name="RealTimeReleaseURL" type="anyURI">
+        <annotation>Used by AA in samlp:StatusDetail to signal user wants real-time attribute release.</annotation>
+    </element>
+    
+
+    <!-- Relaxes SAML AttributeValue type definition -->
+
+	<complexType name="AttributeValueType" mixed="true">
+		<annotation>By convention, all Shibboleth attribute values carry this unconstrained xsi:type.</annotation>
+		<sequence>
+			<any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<anyAttribute namespace="##any" processContents="lax"/>
+	</complexType>
+
+
+    <!-- Attribute Acceptance Policies -->
+	
+    <simpleType name="AttributeRuleValueType">
+        <restriction base="string">
+            <enumeration value="literal"/>
+            <enumeration value="regexp"/>
+            <enumeration value="xpath"/>
+        </restriction>
+    </simpleType>
+    
+    <complexType name="SiteRuleType">
+        <sequence>
+            <element name="Value" maxOccurs="unbounded">
+                <complexType>
+                    <simpleContent>
+                        <extension base="string">
+                            <attribute name="Type" type="shib:AttributeRuleValueType" use="optional" default="literal"/>
+                        </extension>
+                    </simpleContent>
+                </complexType>
+            </element>
+        </sequence>
+    </complexType>
+
+    <element name="AnySite" type="shib:SiteRuleType"/>
+    <element name="SiteRule">
+        <complexType>
+            <complexContent>
+                <extension base="shib:SiteRuleType">
+                    <attribute name="Name" type="string" use="required"/>
+                </extension>
+            </complexContent>
+        </complexType>
+    </element>
+
+    <complexType name="AttributeRuleType">
+        <sequence>
+            <element ref="shib:AnySite" minOccurs="0"/>
+            <element ref="shib:SiteRule" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <attribute name="Name" type="anyURI"/>
+    </complexType>
+
+    <element name="AttributeRule" type="shib:AttributeRuleType">
+        <key name="SiteRuleKey">
+            <selector xpath="./shib:SiteRule"/>
+            <field xpath="@Name"/>
+        </key>
+    </element>
+
+    <element name="AttributeAcceptancePolicy">
+        <complexType>
+            <sequence>
+                <element ref="shib:AttributeRule" minOccurs="0" maxOccurs="unbounded"/>
+            </sequence>
+        </complexType>
+        <key name="AttributeNameKey">
+            <selector xpath="./shib:AttributeRule"/>
+            <field xpath="@Name"/>
+        </key>
+    </element>
+
+
+    <!-- Shibboleth Metadata -->
+    
     <complexType name="SiteType">
-        <annotation> 
-          <documentation xml:lang="en">All sites have a Name attribute, plus optional i18n-ized aliases.</documentation>
-        </annotation>
+        <annotation>All sites have a Name attribute, plus optional i18n-ized aliases.</annotation>
         <sequence>
             <element name="Alias" minOccurs="0" maxOccurs="unbounded">
                 <complexType>
@@ -35,12 +111,13 @@
             </element>
         </sequence>
         <attribute name="Name" type="string" use="required"/>
+        <attribute name="ContactName" type="string" use="optional"/>
+        <attribute name="ContactEmail" type="string" use="optional"/>
+        <attribute name="ErrorURL" type="anyURI" use="optional"/>
     </complexType>
 
     <complexType name="regexp_string">
-        <annotation> 
-          <documentation xml:lang="en">A string element with an optional attribute signaling regexp content.</documentation>
-        </annotation>
+        <annotation> A string element with an optional attribute signaling regexp content. </annotation>
         <simpleContent>
             <extension base="string">
                 <attribute name="regexp" type="boolean" use="optional" default="false"/>
@@ -49,9 +126,7 @@
     </complexType>    
 
     <complexType name="OriginSiteType">
-        <annotation> 
-          <documentation xml:lang="en">Origin sites add at least one handle service (with a name and optional KeyInfo), plus optional domains trusted for attribute scoping.</documentation>
-        </annotation>
+        <annotation>Origin sites add at least one handle service (with a name and optional KeyInfo), plus optional domains trusted for attribute scoping.</annotation>
         <complexContent>
             <extension base="shib:SiteType">
                 <sequence>
@@ -71,9 +146,7 @@
     </complexType>
 
     <complexType name="SiteGroupType">
-            <annotation> 
-          <documentation xml:lang="en">Used to logically group sites together.</documentation>
-        </annotation>
+        <annotation>Used to logically group sites together.</annotation>
         <sequence>
             <choice maxOccurs="unbounded">
                 <element ref="shib:OriginSite"/>
@@ -89,9 +162,7 @@
     <element name="SiteGroup" type="shib:SiteGroupType"/>
 
     <element name="Sites">
-        <annotation> 
-          <documentation xml:lang="en">The registry of sites plus an optional enveloped signature.</documentation>
-        </annotation>
+        <annotation>The registry of sites plus an optional enveloped signature.</annotation>
         <complexType>
             <sequence>
                 <choice maxOccurs="unbounded">
