@@ -1,17 +1,17 @@
 package edu.internet2.middleware.shibboleth.common;
 
-import java.util.Date;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
-import org.apache.xml.security.signature.SignedInfo;
-import org.apache.xml.security.signature.XMLSignature;
-import org.opensaml.*;
-import org.w3c.dom.*;
+import java.util.Date;
 
-import edu.internet2.middleware.shibboleth.common.*;
-import edu.internet2.middleware.shibboleth.shire.*;
+import org.apache.xml.security.signature.XMLSignature;
+import org.opensaml.InvalidCryptoException;
+import org.opensaml.SAMLAuthorityBinding;
+import org.opensaml.SAMLException;
+import org.opensaml.SAMLResponse;
+import org.opensaml.SAMLSignedObject;
 
 /**
  *  ClubShib-specific POST browser profile implementation
