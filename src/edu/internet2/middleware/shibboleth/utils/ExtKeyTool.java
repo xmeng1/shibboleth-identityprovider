@@ -128,6 +128,8 @@ public class ExtKeyTool {
 			KeyStore keyStore;
 			if (storeType.equals("JKS")) {
 				keyStore = KeyStore.getInstance(storeType, "SUN");
+			} else if (storeType.equals("JCEKS")) {
+				keyStore = KeyStore.getInstance(storeType, "SunJCE");
 			} else {
 				keyStore = KeyStore.getInstance(storeType, provider);
 			}
@@ -717,6 +719,7 @@ public class ExtKeyTool {
 			}
 
 			try {
+				
 				ByteArrayOutputStream keyStoreOutStream =
 					importKey(
 						providerName,
