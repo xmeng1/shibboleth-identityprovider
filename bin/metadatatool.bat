@@ -24,7 +24,7 @@ if not exist %SHIB_HOME (
 set ENDORSED=%SHIB_HOME\endorsed
 
 REM Where log4j config file is
-set LOG_CONFIG=%SHIB_HOME\webApplication\WEB-INF\classes\conf\log4j.properties
+set LOG_CONFIG=%SHIB_HOME\conf\log4j.properties
 
 REM Grab all the dependencies
 if defined CLASSPATH (
@@ -51,5 +51,5 @@ for %%i in (%DIRLIBS) do (
 )
 
 REM Here we go
-%JAVACMD -Djava.endorsed.dirs="%ENDORSED" -Dlog.config="%LOG_CONFIG" -cp "%SHIB_UTIL_CLASSPATH" edu.internet2.middleware.shibboleth.utils.MetadataTool %*
+%JAVACMD -Djava.endorsed.dirs="%ENDORSED" -Dlog4j.configuration="%LOG_CONFIG" -cp "%SHIB_UTIL_CLASSPATH" edu.internet2.middleware.shibboleth.utils.MetadataTool %*
 

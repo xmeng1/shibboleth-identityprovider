@@ -23,6 +23,9 @@ if [ ! -n "$SHIB_HOME" ] ; then
 fi
 ENDORSED=$SHIB_HOME/endorsed
 
+## Where log4j config file is
+LOG_CONFIG=$SHIB_HOME/conf/log4j.properties
+
 ##Grab all the dependencies
 if [ -n "$CLASSPATH" ] ; then
   SHIB_UTIL_CLASSPATH=$CLASSPATH
@@ -45,4 +48,4 @@ done
 
 
 ##Here we go
-$JAVACMD -Djava.endorsed.dirs="$ENDORSED" -Dlog.config="$LOG_CONFIG" -cp $SHIB_UTIL_CLASSPATH  edu.internet2.middleware.shibboleth.utils.MetadataTool "$@"
+$JAVACMD -Djava.endorsed.dirs="$ENDORSED" -Dlog4j.configuration="$LOG_CONFIG" -cp $SHIB_UTIL_CLASSPATH  edu.internet2.middleware.shibboleth.utils.MetadataTool "$@"
