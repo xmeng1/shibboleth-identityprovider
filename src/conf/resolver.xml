@@ -15,7 +15,7 @@
 		<AttributeDependency requires="urn:mace:dir:attribute-def:eduPersonAffiliation"/>
 	</SimpleAttributeDefinition>
 
-    <SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="shibdev.edu">
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="shibdev.edu">
     	<DataConnectorDependency requires="echo"/>
 	</SimpleAttributeDefinition>
 	-->
