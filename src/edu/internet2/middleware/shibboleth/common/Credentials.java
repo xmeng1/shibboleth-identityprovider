@@ -208,8 +208,6 @@ class FileCredentialResolver implements CredentialResolver {
 		log.debug("Key Format: (" + keyFormat + ").");
 		log.debug("Key Path: (" + keyPath + ").");
 
-		//TODO maybe more info statements
-
 		PrivateKey key = null;
 
 		if (keyFormat.equals("DER")) {
@@ -235,9 +233,17 @@ class FileCredentialResolver implements CredentialResolver {
 			log.error("Failed to load private key.");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
+		log.info("Successfully loaded private key.");
+
+		
+		ArrayList certChain = new ArrayList();
+		String certPath = getCertPath(e);
+		
+		if (certPath == null || certPath.equals("")) {
+			log.info("No certificates specified.");
+		} else {
 
 		String certFormat = getCertFormat(e);
-		String certPath = getCertPath(e);
 		//A placeholder in case we want to make this configurable
 		String certType = "X.509";
 
@@ -252,7 +258,7 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
-		ArrayList certChain = new ArrayList();
+
 		ArrayList allCerts = new ArrayList();
 
 		try {
@@ -317,7 +323,7 @@ class FileCredentialResolver implements CredentialResolver {
 			log.debug("Attempting to construct a certificate chain.");
 			walkChain((X509Certificate[]) allCerts.toArray(new X509Certificate[0]), certChain);
 
-			log.info("Verifying that each link in the cert chain is signed appropriately");
+			log.debug("Verifying that each link in the cert chain is signed appropriately");
 			for (int i = 0; i < certChain.size() - 1; i++) {
 				PublicKey pubKey = ((X509Certificate) certChain.get(i + 1)).getPublicKey();
 				try {
@@ -328,12 +334,14 @@ class FileCredentialResolver implements CredentialResolver {
 				}
 			}
 			log.debug("All signatures verified. Certificate chain creation successful.");
+			log.info("Successfully loaded certificates.");
+		
 
 		} catch (IOException p) {
 			log.error("Could not load resource from specified location (" + certPath + "): " + p);
 			throw new CredentialFactoryException("Unable to load certificates.");
 		}
-
+		}
 		return new Credential(((X509Certificate[]) certChain.toArray(new X509Certificate[0])), key);
 	}
 
@@ -1031,8 +1039,8 @@ class FileCredentialResolver implements CredentialResolver {
 
 		NodeList certificateElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Certificate");
 		if (certificateElements.getLength() < 1) {
-			log.error("Certificate not specified.");
-			throw new CredentialFactoryException("File Credential Resolver requires a <Certificate> specification.");
+			log.debug("No <Certificate> element found.");
+			return null;
 		}
 		if (certificateElements.getLength() > 1) {
 			log.error("Multiple Certificate path specifications, using first.");

@@ -68,14 +68,14 @@ public class CredentialsTests extends TestCase {
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
 		//TODO turn this off later
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.INFO);
 	}
 
 	public static void main(String[] args) {
 		junit.textui.TestRunner.run(CredentialsTests.class);
 		BasicConfigurator.configure();
 		//TODO turn this off later
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.INFO);
 	}
 
 	/**
@@ -169,7 +169,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509EndOnly() {
+	public void testFileX509EndOnly() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials16.xml");
@@ -196,7 +196,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509IncompleteChain() {
+	public void testFileX509IncompleteChain() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials17.xml");
@@ -222,6 +222,33 @@ public class CredentialsTests extends TestCase {
 				"Unexpected X509 certificate found.",
 				credential.getX509CertificateChain()[1].getSubjectDN().getName(),
 				"CN=HEPKI Server CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+		} catch (Exception e) {
+			fail("Failed to load credentials: " + e);
+		}
+	}
+	
+	public void testFileX509RSANoCert() {
+
+		try {
+			InputStream inStream = new FileInputStream("data/credentials18.xml");
+			parser.parse(new InputSource(inStream));
+			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+
+			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
+			Credential credential = credentials.getCredential("test");
+
+			assertTrue(
+				"Credential was loaded with an incorrect type.",
+				credential.getCredentialType() == Credential.X509);
+			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals(
+				"Unexpected X509 certificate found.",
+				credential.hasX509Certificate(),
+				false);
+			assertEquals(
+				"Unexpected certificate chain length.",
+				new Integer(credential.getX509CertificateChain().length),
+				new Integer(0));
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -320,7 +347,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_PKCS8Key() {
+	public void testFileX509_PEM_PKCS8Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials5.xml");
@@ -351,7 +378,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_DER_RSA_Key() {
+	public void testFileX509_DER_RSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials6.xml");
@@ -382,7 +409,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_RSA_Key() {
+	public void testFileX509_PEM_RSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials7.xml");
@@ -413,7 +440,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_DER_DSA_Key() {
+	public void testFileX509_DER_DSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials8.xml");
@@ -440,7 +467,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_DSA_Key() {
+	public void testFileX509_PEM_DSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials9.xml");
@@ -467,7 +494,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_PKCS8_DSA_Key() {
+	public void testFileX509_PEM_PKCS8_DSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials10.xml");
@@ -494,7 +521,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_DER_PKCS8_Encrypted_RSA_Key() {
+	public void testFileX509_DER_PKCS8_Encrypted_RSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials11.xml");
@@ -525,7 +552,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_PKCS8_Encrypted_RSA_Key() {
+	public void testFileX509_PEM_PKCS8_Encrypted_RSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials12.xml");
@@ -556,7 +583,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_Encrypted_DES_RSA_Key() {
+	public void testFileX509_PEM_Encrypted_DES_RSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials14.xml");
@@ -587,7 +614,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_Encrypted_TripeDES_RSA_Key() {
+	public void testFileX509_PEM_Encrypted_TripeDES_RSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials13.xml");
@@ -618,7 +645,7 @@ public class CredentialsTests extends TestCase {
 		}
 	}
 
-	public void testKeyStoreX509_PEM_Encrypted_TripeDES_DSA_Key() {
+	public void testFileX509_PEM_Encrypted_TripeDES_DSA_Key() {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials15.xml");

@@ -73,6 +73,13 @@ public class Credential {
 		}
 		return null;
 	}
+	
+	public boolean hasX509Certificate() {
+		if (certs == null || certs.length == 0) {
+			return false;
+		}
+		return true;
+	}
 
 	public X509Certificate getX509Certificate() {
 		return certs[0];
