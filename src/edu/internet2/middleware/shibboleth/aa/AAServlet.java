@@ -48,7 +48,6 @@
 package edu.internet2.middleware.shibboleth.aa;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -57,11 +56,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -84,11 +81,8 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
@@ -99,6 +93,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
+import edu.internet2.middleware.shibboleth.common.OriginComponent;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
@@ -111,7 +106,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
  * @author Walter Hoehn
  */
 
-public class AAServlet extends HttpServlet {
+public class AAServlet extends OriginComponent {
 
 	private AAConfig configuration;
 	protected AAResponder responder;
@@ -145,8 +140,6 @@ public class AAServlet extends HttpServlet {
 		}
 	}
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
-
-		//TODO could maybe factor some of the common stuff up a level.
 
 		DOMParser parser = loadParser(true);
 
@@ -221,63 +214,6 @@ public class AAServlet extends HttpServlet {
 		}
 
 	}
-	private DOMParser loadParser(boolean schemaChecking) throws ShibbolethConfigurationException {
-
-		DOMParser parser = new DOMParser();
-
-		if (!schemaChecking) {
-			return parser;
-		}
-
-		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-
-			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-					log.debug("Resolving entity for System ID: " + systemId);
-					if (systemId != null) {
-						StringTokenizer tokenString = new StringTokenizer(systemId, "/");
-						String xsdFile = "";
-						while (tokenString.hasMoreTokens()) {
-							xsdFile = tokenString.nextToken();
-						}
-						if (xsdFile.endsWith(".xsd")) {
-							InputStream stream;
-							try {
-								stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
-							} catch (IOException ioe) {
-								log.error("Error loading schema: " + xsdFile + ": " + ioe);
-								return null;
-							}
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-						}
-					}
-					return null;
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-
-		} catch (SAXException e) {
-			log.error("Unable to setup a workable XML parser: " + e);
-			throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
-		}
-		return parser;
-	}
-
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
 		MDC.put("serviceId", "[AA] " + new SAMLIdentifier().toString());

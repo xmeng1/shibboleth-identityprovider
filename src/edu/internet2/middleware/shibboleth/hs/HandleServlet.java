@@ -48,21 +48,18 @@
 package edu.internet2.middleware.shibboleth.hs;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.Date;
-import java.util.StringTokenizer;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import org.apache.log4j.Level;
 import org.apache.xerces.parsers.DOMParser;
 import org.doomdark.uuid.UUIDGenerator;
 import org.opensaml.QName;
@@ -73,26 +70,23 @@ import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLResponse;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import sun.misc.BASE64Decoder;
-import edu.internet2.middleware.shibboleth.common.*;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
+import edu.internet2.middleware.shibboleth.common.OriginComponent;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
-import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
-public class HandleServlet extends HttpServlet {
+public class HandleServlet extends OriginComponent {
 
 	private static Logger log = Logger.getLogger(HandleServlet.class.getName());
 	private static Logger transactionLog = Logger.getLogger("edu.internet2.middleware.shibboleth.TRANSACTION");
@@ -171,63 +165,6 @@ public class HandleServlet extends HttpServlet {
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
 		}
 
-	}
-
-	private DOMParser loadParser(boolean schemaChecking) throws ShibbolethConfigurationException {
-
-		DOMParser parser = new DOMParser();
-
-		if (!schemaChecking) {
-			return parser;
-		}
-
-		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-
-			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-					log.debug("Resolving entity for System ID: " + systemId);
-					if (systemId != null) {
-						StringTokenizer tokenString = new StringTokenizer(systemId, "/");
-						String xsdFile = "";
-						while (tokenString.hasMoreTokens()) {
-							xsdFile = tokenString.nextToken();
-						}
-						if (xsdFile.endsWith(".xsd")) {
-							InputStream stream;
-							try {
-								stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
-							} catch (IOException ioe) {
-								log.error("Error loading schema: " + xsdFile + ": " + ioe);
-								return null;
-							}
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-						}
-					}
-					return null;
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-
-		} catch (SAXException e) {
-			log.error("Unable to setup a workable XML parser: " + e);
-			throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
-		}
-		return parser;
 	}
 
 	public void init() throws ServletException {
