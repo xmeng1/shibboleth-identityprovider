@@ -1,4 +1,7 @@
-<Sites xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://shibboleth.internet2.edu/wayf/alpha-2/wayfconfig.xsd">
+<Sites xmlns="urn:mace:shibboleth:1.0" 
+	xmlns:ds="http://www.w3.org/2000/09/xmldsig#" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="urn:mace:shibboleth:1.0 http://shibboleth.internet2.edu/wayf/alpha-2/shibboleth.xsd">
 <SiteGroup Name="Test">
 	<OriginSite Name="demo.edu">
 		<Alias>Demo State University</Alias>

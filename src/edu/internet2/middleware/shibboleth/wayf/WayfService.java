@@ -39,20 +39,26 @@ public class WayfService extends HttpServlet {
 		log.info("Initializing WAYF.");
 		loadInitParams();
 		log.info("Loading configuration from file.");
+		configure();
+		initViewConfig();
+		log.info("WAYF initialization completed.");
+	}
+
+	/**
+	 * Populates WayfConfig and WayfOrigins objects from file contents.
+	 */
+	private void configure() throws UnavailableException {
+
 		InputStream is = getServletContext().getResourceAsStream(wayfConfigFileLocation);
 		WayfConfigDigester digester = new WayfConfigDigester(getServletContext());
-		
 		InputStream siteIs = getServletContext().getResourceAsStream(siteConfigFileLocation);
 		OriginSitesDigester siteDigester = new OriginSitesDigester(getServletContext());
-		
+
 		try {
-			//digester.setValidating(true);
+			digester.setValidating(true);
+			digester.setErrorHandler(new PassThruErrorHandler());
 			config = (WayfConfig) digester.parse(is);
-			
-			//siteDigester.setValidating(true);
-			originConfig = (WayfOrigins) siteDigester.parse(siteIs);
-			
-			
+
 		} catch (SAXException se) {
 			log.fatal("Error parsing WAYF configuration file.", se);
 			throw new UnavailableException("Error parsing WAYF configuration file.");
@@ -61,15 +67,33 @@ public class WayfService extends HttpServlet {
 			throw new UnavailableException("Error reading WAYF configuration file.");
 		}
 
-		//Setup appliation-wide beans from config
+		try {
+			siteDigester.setValidating(true);
+			siteDigester.setErrorHandler(new PassThruErrorHandler());
+			originConfig = (WayfOrigins) siteDigester.parse(siteIs);
+
+		} catch (SAXException se) {
+			log.fatal("Error parsing site file.", se);
+			throw new UnavailableException("Error parsing site file.");
+		} catch (IOException ioe) {
+			log.fatal("Error reading site file.", ioe);
+			throw new UnavailableException("Error reading site file.");
+		}
+	}
+	/**
+	 * Setup application-wide beans for view
+	 */
+	private void initViewConfig() {
 		getServletContext().setAttribute("originsets", originConfig.getOriginSets());
 		getServletContext().setAttribute("supportContact", config.getSupportContact());
 		getServletContext().setAttribute("helpText", config.getHelpText());
 		getServletContext().setAttribute("searchResultEmptyText", config.getSearchResultEmptyText());
 		getServletContext().setAttribute("logoLocation", config.getLogoLocation());
-		log.info("WAYF initialization completed.");
 	}
 
+	/**
+	 * Reads parameters from web.xml <init-param /> construct.
+	 */
 	private void loadInitParams() {
 
 		wayfConfigFileLocation = getServletConfig().getInitParameter("WAYFConfigFileLocation");
@@ -95,7 +119,7 @@ public class WayfService extends HttpServlet {
 		res.setHeader("Cache-Control", "no-cache");
 		res.setHeader("Pragma", "no-cache");
 		res.setDateHeader("Expires", 0);
-		
+
 		//Decide how to route the request based on query string
 		String requestType = req.getParameter("action");
 		if (requestType == null) {
@@ -107,7 +131,10 @@ public class WayfService extends HttpServlet {
 				WayfCacheFactory.getInstance(config.getCacheType()).deleteHsFromCache(req, res);
 				handleLookup(req, res);
 			} else if (WayfCacheFactory.getInstance(config.getCacheType()).hasCachedHS(req)) {
-				handleRedirect(req, res, WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
+				handleRedirect(
+					req,
+					res,
+					WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
 			} else if (requestType.equals("search")) {
 				handleSearch(req, res);
 			} else if (requestType.equals("selection")) {
@@ -129,7 +156,7 @@ public class WayfService extends HttpServlet {
 		req.setAttribute("target", getTarget(req));
 		req.setAttribute("encodedShire", URLEncoder.encode(getSHIRE(req)));
 		req.setAttribute("encodedTarget", URLEncoder.encode(getTarget(req)));
-		
+
 		log.debug("Displaying WAYF selection page.");
 		RequestDispatcher rd = req.getRequestDispatcher("/wayf.jsp");
 		try {
@@ -169,7 +196,7 @@ public class WayfService extends HttpServlet {
 
 	private void handleRedirect(HttpServletRequest req, HttpServletResponse res, String handleService)
 		throws WayfException {
-		
+
 		String shire = getSHIRE(req);
 		String target = getTarget(req);
 		log.info("Redirecting to selected Handle Service");
