@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
+import org.opensaml.MalformedException;
 import org.opensaml.SAMLException;
 import org.opensaml.XML;
 import org.w3c.dom.Document;
@@ -43,7 +44,6 @@ import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
-import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -54,11 +54,11 @@ public class XMLAAP extends ResourceWatchdog implements AAP {
 	private static Logger	log	= Logger.getLogger(XMLAAP.class.getName());
 	private AAP		currentAAP;
 
-	public XMLAAP(Element configuration) throws MetadataException, ResourceNotAvailableException {
+	public XMLAAP(Element configuration) throws MalformedException, ResourceNotAvailableException {
 		this(configuration.getAttribute("uri"));
 	}
 
-	public XMLAAP(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
+	public XMLAAP(String sitesFileLocation) throws MalformedException, ResourceNotAvailableException {
 		super(new ShibResource(sitesFileLocation, XMLAAP.class));
 		try {
             InputSource src = new InputSource(resource.getInputStream());
@@ -67,15 +67,15 @@ public class XMLAAP extends ResourceWatchdog implements AAP {
 			currentAAP = new XMLAAP(doc.getDocumentElement());
 		} catch (IOException e) {
 			log.error("Encountered a problem reading AAP source: " + e);
-			throw new MetadataException("Unable to read AAP: " + e);
+			throw new MalformedException("Unable to read AAP: " + e);
 		}
         catch (SAXException e) {
             log.error("Encountered a problem parsing AAP source: " + e);
-            throw new MetadataException("Unable to read AAP: + e");
+            throw new MalformedException("Unable to read AAP: " + e);
         }
         catch (SAMLException e) {
             log.error("Encountered a problem processing AAP source: " + e);
-            throw new MetadataException("Unable to read AAP: + e");
+            throw new MalformedException("Unable to read AAP: " + e);
         }
 
 		//Start checking for AAP updates
