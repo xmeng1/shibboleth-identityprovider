@@ -22,14 +22,17 @@ public class HandleServlet extends HttpServlet {
 	getInitParams();
 
 	try {
+	    InputStream is = getServletContext().getResourceAsStream
+		(getInitParameter("KSpath"));
 	    hsSAML = new HandleServiceSAML( getInitParameter("domain"), 
 					    getInitParameter("AAurl"),
 					    getInitParameter("HSname"),
-					    getInitParameter("KSpath"),
 					    getInitParameter("KSpass"),
 					    getInitParameter("KSkeyalias"),
 					    getInitParameter("KSkeypass"),
-					    getInitParameter("certalias") );
+					    getInitParameter("certalias"),
+					    is );
+	    
 	    hrf = HandleRepositoryFactory.getInstance
 		( Constants.POLICY_CLUBSHIB, this );
 	}
@@ -133,7 +136,7 @@ public class HandleServlet extends HttpServlet {
 	throws HandleException {
 	try {
 
-	    res.setContentType("text/html");
+	    /*   res.setContentType("text/html");
 	    PrintWriter out = res.getWriter();
 	    out.println("<HTML><HEAD><TITLE>Handle Service</TITLE></HEAD>");
 	    out.println("<BODY onLoad=\"document.forms[0].submit()\">");
@@ -145,26 +148,26 @@ public class HandleServlet extends HttpServlet {
 			"value=\"" + buf + "\">");
 	    out.println("<input type=\"submit\" value=\"Transmit\">");
 	    out.println("</form>");
-	    
+	    */
 	    /**
 	     * uncomment the following to implement 
 	     * forwarding to hs.jsp for submission
-             * 
+             */
 	    //Hardcoded to ASCII to ensure Base64 encoding compatibility
 	    req.setAttribute("assertion", new String(buf, "ASCII"));
 	    RequestDispatcher rd = req.getRequestDispatcher("/hs.jsp");
 	    rd.forward(req, res);
-	    */
+	    
 	} catch (IOException ex) {
 	    throw new HandleException
 		("IO interruption while displaying Handle Service UI." + ex);
 	} 
-	/*
+	
 	  catch (ServletException ex) {
 	    throw new HandleException
 		("Problem displaying Handle Service UI." + ex);
 	}
-	*/
+
     }
 
     private void handleError( HttpServletRequest req, 

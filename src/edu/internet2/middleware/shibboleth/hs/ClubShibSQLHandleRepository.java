@@ -98,7 +98,7 @@ public class ClubShibSQLHandleRepository extends HandleRepositoryFactory{
 	    st.close();
         }
         catch (SQLException e) {
-	    throw new HandleException(HandleException.SQL, e.getMessage());
+	    throw new HandleException(e.getMessage());
         }
     }
 

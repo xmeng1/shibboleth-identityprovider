@@ -18,16 +18,16 @@ public class HandleServiceSAML {
     X509Certificate cert;
 
     public HandleServiceSAML( String domain, String AAurl, String HSname,
-			      String KSpath, String KSpass, String KSkeyalias,
-			      String KSkeypass, String certalias ) 
-	throws SAMLException, KeyStoreException, IOException, FileNotFoundException, Exception
+			      String KSpass, String KSkeyalias,
+			      String KSkeypass, String certalias, 
+			      InputStream is ) 
+	throws SAMLException, KeyStoreException, IOException, Exception
     {
 	this.domain = domain;
 	this.AAurl = AAurl;
 	
 	KeyStore ks = KeyStore.getInstance("JKS");
-	FileInputStream fis = new FileInputStream(KSpath);
-	ks.load( fis, KSpass.toCharArray());
+	ks.load( is, KSpass.toCharArray());
 	privateKey = (PrivateKey)ks.getKey(KSkeyalias, KSkeypass.toCharArray());
 	cert =(X509Certificate)ks.getCertificate(certalias);
 	

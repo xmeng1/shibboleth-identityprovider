@@ -30,10 +30,6 @@
 			<param-value>org.gjt.mm.mysql.Driver</param-value>
 		</init-param>
 		<init-param>
-			<param-name>DBdriver</param-name>
-			<param-value>org.gjt.mm.mysql.Driver</param-value>
-		</init-param>
-		<init-param>
 			<param-name>DBuser</param-name>
 			<param-value>shib</param-value>
 		</init-param>
@@ -47,7 +43,7 @@
 		</init-param>
 		<init-param>
 			<param-name>KSpath</param-name>
-			<param-value>/home/blk/.keystore</param-value>
+			<param-value>/WEB-INF/conf/keystore.dks</param-value>
 		</init-param>
 		<init-param>
 			<param-name>KSpass</param-name>
