@@ -65,7 +65,7 @@ import org.apache.log4j.Logger;
 
 public class ArpRepositoryFactory {
 
-	private static Logger log = Logger.getLogger(AAServlet.class.getName());
+	private static Logger log = Logger.getLogger(ArpRepositoryFactory.class.getName());
 
 	public static ArpRepository getInstance(String repositoryClassName, Properties props)
 		throws AAException {
