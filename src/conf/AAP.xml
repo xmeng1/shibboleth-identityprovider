@@ -1,5 +1,7 @@
-<AttributeAcceptancePolicy xmlns="urn:mace:shibboleth:1.0">
-	
+<AttributeAcceptancePolicy xmlns="urn:mace:shibboleth:1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:mace:shibboleth:1.0 ../schemas/shibboleth.xsd">
+
 	<!--
 	An AAP is a set of AttributeRule elements, each one
 	referencing a specific attribute by URI. All attributes that
@@ -16,16 +18,16 @@
 	
 	<!-- First some useful eduPerson attributes that many sites might use. -->
 	
-	<AttributeRule Name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" Header="Shib-EP-Affiliation" Alias="affiliation">
+	<AttributeRule Name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" Scoped="true" CaseSensitive="false" Header="Shib-EP-Affiliation" Alias="affiliation">
 		<!-- Filtering rule to limit values to eduPerson-defined enumeration. -->
         <AnySite>
-            <Value Type="regexp">^[M|m][E|e][M|m][B|b][E|e][R|r]$</Value>
-            <Value Type="regexp">^[F|f][A|a][C|c][U|u][L|l][T|t][Y|y]$</Value>
-            <Value Type="regexp">^[S|s][T|t][U|u][D|d][E|e][N|n][T|t]$</Value>
-            <Value Type="regexp">^[S|s][T|t][A|a][F|f][F|f]$</Value>
-            <Value Type="regexp">^[A|a][L|l][U|u][M|m]$</Value>
-            <Value Type="regexp">^[A|a][F|f][F|f][I|i][L|l][I|i][A|a][T|t][E|e]$</Value>
-            <Value Type="regexp">^[E|e][M|m][P|p][L|l][O|o][Y|y][E|e][E|e]$</Value>
+            <Value>MEMBER</Value>
+            <Value>FACULTY</Value>
+            <Value>STUDENT</Value>
+            <Value>STAFF</Value>
+            <Value>ALUM</Value>
+            <Value>AFFILIATE</Value>
+            <Value>EMPLOYEE</Value>
         </AnySite>
         
         <!-- Example of Scope rule to override site metadata. -->
@@ -35,22 +37,27 @@
         </SiteRule>
 	</AttributeRule>
 
-	<AttributeRule Name="urn:mace:dir:attribute-def:eduPersonAffiliation" Header="Shib-EP-UnscopedAffiliation" Alias="unscoped-affiliation">
+	<!--
+	This attribute is provided mostly to ease testing because an IdP out of the box only
+	sends the unscoped version. It has little use because it lacks the context needed to
+	work in a multi-domain scenario and is a subset of the scoped version anyway.
+	 -->
+	<AttributeRule Name="urn:mace:dir:attribute-def:eduPersonAffiliation" CaseSensitive="false" Header="Shib-EP-UnscopedAffiliation" Alias="unscoped-affiliation">
         <AnySite>
-            <Value Type="regexp">^[M|m][E|e][M|m][B|b][E|e][R|r]$</Value>
-            <Value Type="regexp">^[F|f][A|a][C|c][U|u][L|l][T|t][Y|y]$</Value>
-            <Value Type="regexp">^[S|s][T|t][U|u][D|d][E|e][N|n][T|t]$</Value>
-            <Value Type="regexp">^[S|s][T|t][A|a][F|f][F|f]$</Value>
-            <Value Type="regexp">^[A|a][L|l][U|u][M|m]$</Value>
-            <Value Type="regexp">^[A|a][F|f][F|f][I|i][L|l][I|i][A|a][T|t][E|e]$</Value>
-            <Value Type="regexp">^[E|e][M|m][P|p][L|l][O|o][Y|y][E|e][E|e]$</Value>
+            <Value>MEMBER</Value>
+            <Value>FACULTY</Value>
+            <Value>STUDENT</Value>
+            <Value>STAFF</Value>
+            <Value>ALUM</Value>
+            <Value>AFFILIATE</Value>
+            <Value>EMPLOYEE</Value>
         </AnySite>
 	</AttributeRule>
 	
-    <AttributeRule Name="urn:mace:dir:attribute-def:eduPersonPrincipalName" Header="REMOTE_USER" Alias="user">
+    <AttributeRule Name="urn:mace:dir:attribute-def:eduPersonPrincipalName" Scoped="true" Header="REMOTE_USER" Alias="user">
 		<!-- Basic rule to pass through any value. -->
         <AnySite>
-            <AnyValue/>
+            <Value Type="regexp">^[^@]+$</Value>
         </AnySite>
     </AttributeRule>
 
@@ -89,15 +96,15 @@
         </AnySite>
 	</AttributeRule>
 
-	<AttributeRule Name="urn:mace:dir:attribute-def:eduPersonPrimaryAffiliation" Header="Shib-EP-PrimaryAffiliation">
+	<AttributeRule Name="urn:mace:dir:attribute-def:eduPersonPrimaryAffiliation" CaseSensitive="false" Header="Shib-EP-PrimaryAffiliation">
         <AnySite>
-            <Value Type="regexp">^[M|m][E|e][M|m][B|b][E|e][R|r]$</Value>
-            <Value Type="regexp">^[F|f][A|a][C|c][U|u][L|l][T|t][Y|y]$</Value>
-            <Value Type="regexp">^[S|s][T|t][U|u][D|d][E|e][N|n][T|t]$</Value>
-            <Value Type="regexp">^[S|s][T|t][A|a][F|f][F|f]$</Value>
-            <Value Type="regexp">^[A|a][L|l][U|u][M|m]$</Value>
-            <Value Type="regexp">^[A|a][F|f][F|f][I|i][L|l][I|i][A|a][T|t][E|e]$</Value>
-            <Value Type="regexp">^[E|e][M|m][P|p][L|l][O|o][Y|y][E|e][E|e]$</Value>
+            <Value>MEMBER</Value>
+            <Value>FACULTY</Value>
+            <Value>STUDENT</Value>
+            <Value>STAFF</Value>
+            <Value>ALUM</Value>
+            <Value>AFFILIATE</Value>
+            <Value>EMPLOYEE</Value>
         </AnySite>
 	</AttributeRule>
 	
