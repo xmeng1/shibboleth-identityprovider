@@ -49,15 +49,26 @@
 
 package edu.internet2.middleware.shibboleth.aa.arpUtil;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  A utility for managing ARPs
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
 import edu.internet2.middleware.shibboleth.aa.*;
 import java.io.*;
 import java.util.*;
 import java.security.*;
 import javax.naming.*;
 import javax.naming.directory.*;
-//import javax.security.auth.kerberos.*;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 class ArpUtil{
+
+    private static Logger log = Logger.getLogger(ArpUtil.class.getName());
     static Principal user;
     static ArpFactory arpFactory;
     static String listUsage = "\tArpUtil list <arp name> [-acls] [-dir <ldap url> <user id>] [-sql <sql url> <user id>]";
@@ -68,8 +79,10 @@ class ArpUtil{
 
     public static void main(String [] args)throws AAException{
 
-	arpFactory = ArpRepository.getInstance("file", "/tmp/shib2/");
+	arpFactory = ArpRepository.getInstance("file", 	System.getProperty("arp.dir"));
 
+	PropertyConfigurator.configure(System.getProperty("log.config"));
+	
 	//user = new KerberosPrincipal(System.getProperty("user.name"));
 	user = new AA_Identity(System.getProperty("user.name"));
 
