@@ -84,9 +84,9 @@ public class ResourceTreeMatchFunction implements MatchFunction {
 			arpURL = new URL((String) arpComponent);
 		} catch (MalformedURLException e) {
 			log.error(
-				"Invalid use of ARP matching function (ExacthSharMatchFunction): ARP Component is not a URL.");
+				"Invalid use of ARP matching function (ResourceTreeMatchFunction): ARP Component is not a URL.");
 			throw new MatchingException(
-				"Invalid use of ARP matching function (ExacthSharMatchFunction).");
+				"Invalid use of ARP matching function (ResourceTreeMatchFunction).");
 		}
 
 		if (!matchProtocol(arpURL, (URL) requestComponent)) {

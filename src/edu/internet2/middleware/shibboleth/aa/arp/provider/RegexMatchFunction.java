@@ -49,16 +49,22 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
+import java.net.URL;
+
 import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
 import edu.internet2.middleware.shibboleth.aa.arp.MatchingException;
 
+import org.apache.log4j.Logger;
+
 /**
- * Match function implementaiton that does regular expression matching on both
- * requesters and resources.
+ * Match function implementaiton that does regular expression matching on both requesters
+ * and resources.
  *
  * @author Walter Hoehn (wassa&#064;columbia.edu)
  */
 public class RegexMatchFunction implements MatchFunction {
+	private static Logger log = Logger.getLogger(RegexMatchFunction.class.getName());
+
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.MatchFunction#match(Object,
 	 * 		Object)
@@ -66,6 +72,14 @@ public class RegexMatchFunction implements MatchFunction {
 	public boolean match(Object arpComponent, Object requestComponent)
 		throws MatchingException
 	{
-		return false;
+		if (!(arpComponent instanceof String) && !(requestComponent instanceof String || requestComponent instanceof URL)) {
+			log.error("Invalid use of ARP matching function (RegexMatchFunction).");
+			throw new MatchingException(
+				"Invalid use of ARP matching function (RegexMatchFunction).");
+		}
+		if (requestComponent instanceof URL) {
+			return ((URL) requestComponent).toString().matches((String) arpComponent);
+		}
+		return ((String) requestComponent).matches((String) arpComponent);
 	}
 }

@@ -145,9 +145,12 @@ public class ArpTests extends TestCase {
 			assertNotNull(
 				"ArpEngine did not properly load the Resource Tree SHAR function.",
 				resourceTreeFunction);
+			MatchFunction regexFunction =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"));
+			assertNotNull("ArpEngine did not properly load the Regex function.", regexFunction);
 
 			/* 
-			 * Test the Exact SHAR function
+			 * Test the Exact SHAR function (requester)
 			 */
 
 			assertTrue(
@@ -169,7 +172,7 @@ public class ArpTests extends TestCase {
 			}
 
 			/*
-			 * Test the Resource Tree function
+			 * Test the Resource Tree function (resource)
 			 */
 
 			URL requestURL1 = new URL("http://www.example.edu/test/");
@@ -228,6 +231,60 @@ public class ArpTests extends TestCase {
 			try {
 				resourceTreeFunction.match("Test", "Test");
 				fail("Resource Tree function seems to take improper input without throwing an exception.");
+			} catch (ArpException ie) {
+				//This is supposed to fail
+			}
+
+			/*
+			 * Test the Regex function (requester & resource)
+			 */
+
+			//Try requester regexes
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match("^shar\\.example\\.edu$", "shar.example.edu"));
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match("^.*\\.example\\.edu$", "shar.example.edu"));
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match("^shar[1-9]?\\.example\\.edu$", "shar1.example.edu"));
+			assertTrue("Regex function: false negative", regexFunction.match(".*\\.edu", "shar.example.edu"));
+			assertTrue(
+				"Regex function: false positive",
+				!regexFunction.match("^shar[1-9]\\.example\\.edu$", "shar.example.edu"));
+			assertTrue(
+				"Regex function: false positive",
+				!regexFunction.match("^shar\\.example\\.edu$", "www.example.edu"));
+			assertTrue(
+				"Regex function: false positive",
+				!regexFunction.match("^shar\\.example\\.edu$", "www.example.com"));
+
+			//Try resource regexes
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match("^http://www\\.example\\.edu/.*$", requestURL1));
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match("^http://www\\.example\\.edu/.*$", requestURL2));
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match("^http://.*\\.example\\.edu/.*$", requestURL2));
+			assertTrue(
+				"Regex function: false negative",
+				regexFunction.match("^https?://.*\\.example\\.edu/.*$", requestURL2));
+			assertTrue("Regex function: false negative", regexFunction.match(".*", requestURL2));
+			assertTrue(
+				"Regex function: false positive",
+				!regexFunction.match("^https?://.*\\.example\\.edu/$", requestURL2));
+			assertTrue(
+				"Regex function: false positive",
+				!regexFunction.match("^https?://www\\.example\\.edu/test/$", requestURL3));
+
+			//Make sure we properly handle bad input
+			try {
+				regexFunction.match(null, null);
+				fail("Regex function seems to take improper input without throwing an exception.");
 			} catch (ArpException ie) {
 				//This is supposed to fail
 			}
