@@ -32,6 +32,7 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.Element;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -55,8 +56,12 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 	private Metadata		currentMeta;
 	private DOMParser		parser;
 
+	public XMLMetadataLoadWrapper(Element configuration) throws MetadataException, ResourceNotAvailableException {
+		this(configuration.getAttribute("uri"));
+	}
+
 	public XMLMetadataLoadWrapper(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
-		super(new ShibResource(sitesFileLocation));
+		super(new ShibResource(sitesFileLocation, XMLMetadataLoadWrapper.class));
 
 		parser = new DOMParser();
 		try {
