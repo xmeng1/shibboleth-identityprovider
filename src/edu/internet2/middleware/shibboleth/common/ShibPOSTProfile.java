@@ -332,8 +332,10 @@ public class ShibPOSTProfile {
 		Document doc = org.opensaml.XML.parserPool.newDocument();
 
 		ArrayList audiences = new ArrayList();
-		audiences.add(relyingParty.getProviderId());
-		if (!relyingParty.getProviderId().equals(relyingParty.getName())) {
+		if (relyingParty.getProviderId() != null) {
+			audiences.add(relyingParty.getProviderId());
+		}
+		if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
 			audiences.add(relyingParty.getName());
 		}
 
