@@ -288,10 +288,10 @@ public class AAServlet extends TargetFederationComponent {
 					&& !relyingParty.getIdentityProvider().getProviderId().equals(
 							attributeQuery.getSubject().getName().getNameQualifier())) {
 				log.error("The name qualifier (" + attributeQuery.getSubject().getName().getNameQualifier()
-						+ ") for the referenced subject is not valid for this identiy provider.");
+						+ ") for the referenced subject is not valid for this identity provider.");
 				throw new NameIdentifierMappingException("The name qualifier ("
 						+ attributeQuery.getSubject().getName().getNameQualifier()
-						+ ") for the referenced subject is not valid for this identiy provider.");
+						+ ") for the referenced subject is not valid for this identity provider.");
 			}
 
 			Principal principal = null;
