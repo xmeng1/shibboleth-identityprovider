@@ -86,7 +86,7 @@
     <OriginSite Name="muohio.edu">
         <Alias>Miami University</Alias>
         <Alias>MU</Alias>
-        <HandleService Location="http://naslnx07.mcs.muohio.edu:11180/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"/>
+        <HandleService Location="https://naslnx07.mcs.muohio.edu:11443/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"/>
         <Domain>muohio.edu</Domain>
     </OriginSite>
 </Sites>
