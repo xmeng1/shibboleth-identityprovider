@@ -165,9 +165,8 @@ public class AAServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.audiences",
-			"urn:mace:InCommon:pilot:2003");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:InCommon:pilot:2003");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
 
 		//Load from file
 		Properties properties = new Properties(defaultProps);
@@ -212,9 +211,7 @@ public class AAServlet extends HttpServlet {
 			PrintStream debugPrinter = new PrintStream(debugStream);
 			properties.list(debugPrinter);
 			log.debug(
-				"Runtime configuration parameters: "
-					+ System.getProperty("line.separator")
-					+ debugStream.toString());
+				"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
 			try {
 				debugStream.close();
 			} catch (IOException e) {
@@ -286,31 +283,33 @@ public class AAServlet extends HttpServlet {
 					{
 						SAMLException.REQUESTER,
 						new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
-				saml.fail(
-					resp,
-					new SAMLException(
-						Arrays.asList(codes),
-						"The supplied Attribute Query Handle was unrecognized or expired."));
+				if (configuration
+					.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false")
+					.equals("true")) {
+					saml.fail(
+						resp,
+						new SAMLException(
+							Arrays.asList(codes),
+							"The supplied Attribute Query Handle was unrecognized or expired."));
+				} else {
+					saml.fail(resp, new SAMLException(Arrays.asList(codes), e));
+				}
 				return;
 			} catch (Exception ee) {
 				log.fatal("Could not construct a SAML error response: " + ee);
 				throw new ServletException("Attribute Authority response failure.");
 			}
-			
-		} catch (SAMLException se) {
-			log.error("Error while prcessing request: " + se);
-			try {
-				saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
-				return;
-			} catch (Exception ee) {
-				log.fatal("Could not construct a SAML error response: " + ee);
-				throw new ServletException("Attribute Authority response failure.");
-			}
-			
+
 		} catch (Exception e) {
 			log.error("Error while processing request: " + e);
 			try {
-				saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+				if (configuration
+					.getProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false")
+					.equals("true")) {
+					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, e));
+				} else {
+					saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "General error processing request."));
+				}
 				return;
 			} catch (Exception ee) {
 				log.fatal("Could not construct a SAML error response: " + ee);
