@@ -16,12 +16,15 @@ public class eduPersonPrincipalName implements ShibAttribute{
 	int x = eppn.indexOf("@") ;
 	System.out.println("EPPN: "+eppn+"    @ at "+x);
 	if(x > 0){
-	    vals[0] = eppn.substring(0,x-1);
+	    vals[0] = eppn.substring(0,x);
 	    scopes[0] = eppn.substring(x+1);
 	}else{
 	    vals[0] = eppn;
 	    scopes[0] = defaultScope;
 	}
+
+	System.out.println("AA debug: sending value="+vals[0]+"  scope="+scopes[0]);
+		
 	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName",
 				 Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
 				 new QName("urn:mace:eduPerson:1.0",
