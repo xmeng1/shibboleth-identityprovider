@@ -1,7 +1,5 @@
 package edu.internet2.middleware.shibboleth.hs;
 
-
-
 /**
  * Class used by the  WAYF service to determine runtime options.  
  * Most of the fields of this class should have reasonable defaults.
@@ -13,7 +11,7 @@ public class HandleServiceConfig {
 
 	private static String logoLocation = "images/internet2.gif";
 	private static String supportContact = "mailto:shib-support@internet2.org";
-	private static String location;
+	private static String location = "http://shib2.internet2.edu/shibboleth/HS";
 	private static String helpText =
 		"In order to fulfill the request for the web"
 			+ " resource you have just chosen, information must be sent from your home institution to the "
@@ -83,8 +81,6 @@ public class HandleServiceConfig {
 		HandleServiceConfig.helpText = hs_helpText;
 	}
 
-	
-	
 	/**
 	 * Gets the handleRepositoryImplementation.
 	 * @return Returns a String

@@ -1,6 +1,5 @@
 package edu.internet2.middleware.shibboleth.common;
 
-import java.net.URL;
 import java.util.StringTokenizer;
 
 import javax.crypto.Cipher;
@@ -63,7 +62,7 @@ public class AttributeQueryHandle {
 		String principal,
 		SecretKey key,
 		long ticketLength,
-		URL hsLocation)
+		String hsLocation)
 		throws HandleException {
 
 		this.principal = principal;
@@ -74,7 +73,7 @@ public class AttributeQueryHandle {
 			UUIDGenerator uuidGen = UUIDGenerator.getInstance();
 			UUID nameSpaceUUID = new UUID(UUID.NAMESPACE_URL);
 			handleID =
-			uuidGen.generateNameBasedUUID(nameSpaceUUID, hsLocation.toString())+ ":" + uuidGen.generateTimeBasedUUID();
+			uuidGen.generateNameBasedUUID(nameSpaceUUID, hsLocation)+ ":" + uuidGen.generateTimeBasedUUID();
 			
 			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, key);

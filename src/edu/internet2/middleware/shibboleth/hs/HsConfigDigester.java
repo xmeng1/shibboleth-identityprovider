@@ -15,67 +15,63 @@ import org.xml.sax.XMLReader;
 
 public class HsConfigDigester extends Digester {
 
-    protected String hsConfigClass = "edu.internet2.middleware.shibboleth.hs.HandleServiceConfig";
-    private boolean configured = false;
+	protected String hsConfigClass = "edu.internet2.middleware.shibboleth.hs.HandleServiceConfig";
+	private boolean configured = false;
 
-    /**
-     * Constructor for ShibbolethConfigDigester.
-     */
-    public HsConfigDigester() {
-        super();
-        configure();
-    }
+	/**
+	 * Constructor for ShibbolethConfigDigester.
+	 */
+	public HsConfigDigester() {
+		super();
+		configure();
+	}
 
-    /**
-     * Constructor for ShibbolethConfigDigester.
-     * @param parser
-     */
-    public HsConfigDigester(SAXParser parser) {
-        super(parser);
-        configure();
-    }
+	/**
+	 * Constructor for ShibbolethConfigDigester.
+	 * @param parser
+	 */
+	public HsConfigDigester(SAXParser parser) {
+		super(parser);
+		configure();
+	}
 
-    /**
-     * Constructor for ShibbolethConfigDigester.
-     * @param reader
-     */
-    public HsConfigDigester(XMLReader reader) {
-        super(reader);
-        configure();
-    }
+	/**
+	 * Constructor for ShibbolethConfigDigester.
+	 * @param reader
+	 */
+	public HsConfigDigester(XMLReader reader) {
+		super(reader);
+		configure();
+	}
 
-    
-    
-    protected void configure() {
+	protected void configure() {
 
-        if (configured == true) {
-            return;
-        }
-        addObjectCreate("ShibbolethConfig", hsConfigClass);
-        addSetProperties("ShibbolethConfig/HsConfig");
-        addCallMethod("ShibbolethConfig/HsConfig/HelpText", "setHelpText", 0);
-        addCallMethod("ShibbolethConfig/HsConfig/SecretKey", "setSecretKey", 0);
+		if (configured == true) {
+			return;
+		}
+		addObjectCreate("ShibbolethConfig", hsConfigClass);
+		addSetProperties("ShibbolethConfig/HsConfig");
+		addCallMethod("ShibbolethConfig/HsConfig/HelpText", "setHelpText", 0);
+		addCallMethod("ShibbolethConfig/HsConfig/SecretKey", "setSecretKey", 0);
 
-        configured = true;
+		configured = true;
 
-    }
+	}
 
-    
-    
-    /**
-     * Gets the wayfDataClass.
-     * @return Returns a String
-     */
-    public String getHsConfigClass() {
-        return hsConfigClass;
-    }
+	/**
+	 * Gets the wayfDataClass.
+	 * @return Returns a String
+	 */
+	public String getHsConfigClass() {
+		return hsConfigClass;
+	}
 
-    /**
-     * Sets the wayfDataClass.
-     * @param wayfDataClass The wayfDataClass to set
-     */
-    public void setHsConfigClass(String wayfDataClass) {
-        this.hsConfigClass = wayfDataClass;
-    }
+	/**
+	 * Sets the wayfDataClass.
+	 * @param wayfDataClass The wayfDataClass to set
+	 */
+	public void setHsConfigClass(String wayfDataClass) {
+		this.hsConfigClass = wayfDataClass;
+	}
 
 }

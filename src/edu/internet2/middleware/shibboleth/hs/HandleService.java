@@ -2,8 +2,6 @@ package edu.internet2.middleware.shibboleth.hs;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.Security;
 import java.util.Date;
 
@@ -46,7 +44,6 @@ public class HandleService extends HttpServlet {
 	private String hsConfigFileLocation;
 	private String log4jConfigFileLocation;
 	private SecretKey key;
-	private URL hsURL;
 
 	/**
 	 * @see GenericServlet#init()
@@ -71,7 +68,8 @@ public class HandleService extends HttpServlet {
 
 		try {
 
-			//Change this to work with any JCE
+			//Currently hardcoded to use Bouncy Castle
+			//Decided to change this or not based on overall shibboleth policy
 			Security.addProvider(new BouncyCastleProvider());
 			SecretKeyFactory keyFactory =
 				SecretKeyFactory.getInstance("DESede");
@@ -126,15 +124,6 @@ public class HandleService extends HttpServlet {
 			throw new ServletException(
 				"Error reading HS configuration file.",
 				ioe);
-		}
-		
-		try {
-			hsURL = new URL(HandleServiceConfig.getLocation());
-		} catch (MalformedURLException e) {
-			log.fatal("Error parsing HS location from configuration file.", e);
-			throw new ServletException(
-				"Error reading HS configuration file.",
-				e);
 		}
 
 	}
@@ -214,13 +203,14 @@ public class HandleService extends HttpServlet {
 			req.setAttribute("shire", req.getParameter("shire"));
 			req.setAttribute("target", req.getParameter("target"));
 			log.info("Generating assertion...");
+			long startTime = System.currentTimeMillis();
 			byte[] assertion =
 				generateAssertion(
 					req.getParameter("shire"),
 					req.getRemoteAddr(),
 					req.getRemoteUser(),
 					req.getAuthType());
-			log.info("Assertion Generated!");
+			log.info("Assertion Generated: " + "elapsed time " + (System.currentTimeMillis() - startTime) + " milliseconds.");
 			log.debug("Assertion: " + new String(Base64.decode(assertion)));
 			handleForm(req, resp, assertion);
 		} catch (HandleServiceException e) {
@@ -249,8 +239,8 @@ public class HandleService extends HttpServlet {
 		try {
 			rd.forward(req, res);
 		} catch (IOException ioe) {
-			log.error(
-				"Problem trying to display Handle Service error page: " + ioe);
+			log.info(
+				"IO operation interrupted when displaying Handle Service error page: " + ioe);
 		} catch (ServletException se) {
 			log.error(
 				"Problem trying to display Handle Service error page: " + se);
@@ -277,7 +267,7 @@ public class HandleService extends HttpServlet {
 			rd.forward(req, res);
 		} catch (IOException ioe) {
 			throw new HandleServiceException(
-				"Problem displaying Handle Service UI." + ioe);
+				"IO interruption while displaying Handle Service UI." + ioe);
 		} catch (ServletException se) {
 			throw new HandleServiceException(
 				"Problem displaying Handle Service UI." + se);
@@ -302,7 +292,7 @@ public class HandleService extends HttpServlet {
 					remoteUser,
 					key,
 					Long.parseLong(HandleServiceConfig.getValidityPeriod()),
-					hsURL);
+					HandleServiceConfig.getLocation());
 
 			log.info("Acquired Handle: " + aqh.getHandleID());
 
