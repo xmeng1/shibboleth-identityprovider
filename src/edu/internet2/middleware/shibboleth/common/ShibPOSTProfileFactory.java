@@ -81,13 +81,6 @@ public class ShibPOSTProfileFactory
     public static ShibPOSTProfile getInstance(Collection policies, String receiver, int ttlSeconds)
         throws SAMLException
     {
-        // Current version only knows about Club Shib...
-        if (policies == null || !policies.contains(Constants.POLICY_CLUBSHIB))
-            return null;
-
-        if (receiver == null || ttlSeconds <= 0)
-            return null;
-
         return new ClubShibPOSTProfile(policies, receiver, ttlSeconds);
     }
 
@@ -106,13 +99,6 @@ public class ShibPOSTProfileFactory
     public static ShibPOSTProfile getInstance(Collection policies, String issuer)
         throws SAMLException
     {
-        // Current version only knows about Club Shib...
-        if (policies == null || !policies.contains(Constants.POLICY_CLUBSHIB))
-            return null;
-
-        if (issuer == null || issuer.length() == 0)
-            return null;
-
         return new ClubShibPOSTProfile(policies, issuer);
     }
 }
