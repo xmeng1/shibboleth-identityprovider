@@ -73,7 +73,6 @@ import org.apache.log4j.Logger;
 public class AASaml {
 
     String[] policies = { Constants.POLICY_CLUBSHIB };
-    String protocol = SAMLBinding.SAML_SOAP_HTTPS;
     String myName;
     StringBuffer sharName;
     String resource;
@@ -82,11 +81,11 @@ public class AASaml {
     SAMLBinding binding;
     private static Logger log = Logger.getLogger(AASaml.class.getName());        
 
-    public AASaml(String myName){
+    public AASaml(String myName) throws SAMLException {
 	
 	Init.init();
 
-	binding = SAMLBindingFactory.getInstance(protocol, policies);
+	binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
 	this.myName = myName;
     }
 
@@ -129,24 +128,15 @@ public class AASaml {
 	    if(attrs == null || attrs.length == 0){
 		sResp = new SAMLResponse(reqID,
 					 /* recipient URL*/ null,
-					 /* sig */ null,
 					 /* no attrs -> no assersion*/ null,
-					 exception);		
+					 exception);
 	    }else{
 		Date now = new Date();
 		Date  then = null;
 
-		SAMLSubject rSubject = new SAMLSubject(sub.getName(),
-						       sub.getNameQualifier(),
-						       sub.getFormat(),
-						       sub.getConfirmationMethods(),
-						       sub.getConfirmationData());
-            
-		SAMLCondition[] conditions = new SAMLCondition[1];
-		conditions[0] = new SAMLAudienceRestrictionCondition(policies);
-
-		SAMLStatement[] statements = new SAMLStatement[1];
-		statements[0] = new SAMLAttributeStatement(rSubject, attrs);
+		SAMLSubject rSubject = (SAMLSubject)sub.clone();
+		SAMLCondition condition = new SAMLAudienceRestrictionCondition(Arrays.asList(policies));
+		SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
 	    
 		long min = attrs[0].getLifetime();
 		for(int i = 1; i < attrs.length; i++){
@@ -157,23 +147,23 @@ public class AASaml {
 		if(min > 0)
 		    then = new Date(now.getTime() + min);
 
-		SAMLAssertion sAssertion = new SAMLAssertion(myName,
+		SAMLAssertion sAssertion = new SAMLAssertion(
+                        myName,
 					     now,
 					     then,
-					     conditions,
-					     statements,
-					     /* sig */ null);
-		SAMLAssertion[] assertions= new SAMLAssertion[1];
-		assertions[0] = sAssertion;
+					     Collections.singleton(condition),
+					     Collections.singleton(statement)
+                         );
 
 		sResp = new SAMLResponse(reqID,
 					 /* recipient URL*/ null,
-					 /* sig */ null,
-					 assertions,
+					 Collections.singleton(sAssertion),
 					 exception);
 	    }
  	}catch (SAMLException se) {
 	    ourSE = se;
+    }catch (CloneNotSupportedException ex) {
+        ourSE = new SAMLException(SAMLException.RESPONDER,ex);
 	}finally{
 	    binding.respond(resp,sResp,ourSE);	    
 	}
@@ -184,7 +174,6 @@ public class AASaml {
 	try{
 	    SAMLResponse sResp = new SAMLResponse(reqID,
 						  /* recipient URL*/ null,
-						  /* sig */ null,
 						  /* an assersion*/ null,
 						  exception);	
 	    binding.respond(resp, sResp, null);

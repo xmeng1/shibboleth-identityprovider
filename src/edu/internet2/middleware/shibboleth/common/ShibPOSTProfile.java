@@ -48,23 +48,26 @@
  */
 
 package edu.internet2.middleware.shibboleth.common;
+
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-
+import java.security.cert.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Vector;
+
 import javax.crypto.SecretKey;
-import org.apache.xml.security.exceptions.XMLSecurityException;
-import org.apache.xml.security.keys.KeyInfo;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.NDC;
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.*;
-import org.w3c.dom.*;
-import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
 
 /**
  *  Basic Shibboleth POST browser profile implementation with basic support for
@@ -79,13 +82,10 @@ public class ShibPOSTProfile
     protected String algorithm = XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
 
     /**  Policy URIs to attach or check against */
-    protected String[] policies = null;
+    protected ArrayList policies = new ArrayList();
 
     /**  Official name of issuing site */
     protected String issuer = null;
-
-    /**  Abstract interface into trust base */
-    protected OriginSiteMapper mapper = null;
 
     /**  The URL of the receiving SHIRE */
     protected String receiver = null;
@@ -98,46 +98,41 @@ public class ShibPOSTProfile
     /**
      *  SHIRE-side constructor for a ShibPOSTProfile object
      *
-     * @param  policies           Array of policy URIs that the implementation
+     * @param  policies           Set of policy URIs that the implementation
      *      must support
-     * @param  mapper             Interface between profile and trust base
      * @param  receiver           URL of SHIRE
      * @param  ttlSeconds         Length of time in seconds allowed to elapse
      *      from issuance of SAML response
      * @exception  SAMLException  Raised if a profile implementation cannot be
      *      constructed from the supplied information
      */
-    public ShibPOSTProfile(String[] policies, OriginSiteMapper mapper, String receiver, int ttlSeconds)
+    public ShibPOSTProfile(Collection policies, String receiver, int ttlSeconds)
         throws SAMLException
     {
-        if (policies == null || policies.length == 0 || mapper == null ||
-            receiver == null || receiver.length() == 0 || ttlSeconds <= 0)
+        if (policies == null || policies.size() == 0 || receiver == null || receiver.length() == 0 || ttlSeconds <= 0)
             throw new SAMLException(SAMLException.REQUESTER, "ShibPOSTProfile() found a null or invalid argument");
 
-        this.mapper = mapper;
         this.receiver = receiver;
         this.ttlSeconds = ttlSeconds;
-        this.policies = new String[policies.length];
-        System.arraycopy(policies, 0, this.policies, 0, policies.length);
+        this.policies.addAll(policies);
     }
 
     /**
      *  HS-side constructor for a ShibPOSTProfile object
      *
-     * @param  policies           Array of policy URIs that the implementation
+     * @param  policies           Set of policy URIs that the implementation
      *      must support
      * @param  issuer             "Official" name of issuing origin site
      * @exception  SAMLException  Raised if a profile implementation cannot be
      *      constructed from the supplied information
      */
-    public ShibPOSTProfile(String[] policies, String issuer)
+    public ShibPOSTProfile(Collection policies, String issuer)
         throws SAMLException
     {
-        if (policies == null || policies.length == 0 || issuer == null || issuer.length() == 0)
+        if (policies == null || policies.size() == 0 || issuer == null || issuer.length() == 0)
             throw new SAMLException(SAMLException.REQUESTER, "ShibPOSTProfile() found a null or invalid argument");
         this.issuer = issuer;
-        this.policies = new String[policies.length];
-        System.arraycopy(policies, 0, this.policies, 0, policies.length);
+        this.policies.addAll(policies);
     }
 
     /**
@@ -147,8 +142,11 @@ public class ShibPOSTProfile
      *
      * @param  r          The response to the accepting site
      * @return            An SSO assertion
+     * 
+     * @throws SAMLException    Thrown if an SSO assertion can't be found
      */
     public SAMLAssertion getSSOAssertion(SAMLResponse r)
+        throws SAMLException
     {
         return SAMLPOSTProfile.getSSOAssertion(r,policies);
     }
@@ -159,10 +157,13 @@ public class ShibPOSTProfile
      *
      * @param  a  The SSO assertion sent to the accepting site
      * @return    A "bearer" authentication statement
+     *
+     * @throws SAMLException    Thrown if an SSO statement can't be found
      */
     public SAMLAuthenticationStatement getSSOStatement(SAMLAssertion a)
+        throws SAMLException
     {
-        return (a==null) ? null : SAMLPOSTProfile.getSSOStatement(a);
+        return SAMLPOSTProfile.getSSOStatement(a);
     }
 
     /**
@@ -173,8 +174,6 @@ public class ShibPOSTProfile
      *  Also does trust evaluation based on the information available from the
      *  origin site mapper, in accordance with general Shibboleth processing
      *  semantics. Club-specific processing must be performed in a subclass.<P>
-     *
-     *
      *
      * @param  buf                A Base-64 encoded buffer containing a SAML
      *      response
@@ -194,40 +193,46 @@ public class ShibPOSTProfile
         // with its associated data. If we can't even find a SSO statement in the response
         // we just return the response to the caller, who will presumably notice this.
         SAMLAssertion assertion = getSSOAssertion(r);
-        if (assertion == null)
-            return r;
-
         SAMLAuthenticationStatement sso = getSSOStatement(assertion);
-        if (sso == null)
-            return r;
 
         // Examine the subject information.
         SAMLSubject subject = sso.getSubject();
         if (subject.getNameQualifier() == null)
-            throw new SAMLException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() requires subject name qualifier");
+            throw new InvalidAssertionException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() requires subject name qualifier");
 
         String originSite = subject.getNameQualifier();
         String handleService = assertion.getIssuer();
 
         // Is this a trusted HS?
+        OriginSiteMapper mapper=Init.getMapper();
         Iterator hsNames = mapper.getHandleServiceNames(originSite);
         boolean bFound = false;
-        while (!bFound && hsNames != null && hsNames.hasNext())
+        while (!bFound && hsNames.hasNext())
             if (hsNames.next().equals(handleService))
                 bFound = true;
         if (!bFound)
-            throw new SAMLException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() detected an untrusted HS for the origin site");
+            throw new TrustException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() detected an untrusted HS for the origin site");
 
         Key hsKey = mapper.getHandleServiceKey(handleService);
         KeyStore ks = mapper.getTrustedRoots();
 
         // Signature verification now takes place. We check the assertion and the response.
         // Assertion signing is optional, response signing is mandatory.
-        if (assertion.getSignature() != null && !verifySignature(assertion, handleService, ks, hsKey))
-            throw new SAMLException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() detected an invalid assertion signature");
-        if (!verifySignature(r, handleService, ks, hsKey))
-            throw new SAMLException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() detected an invalid response signature");
-
+        try
+        {
+            NDC.push("accept");
+            if (assertion.isSigned())
+            {
+                log.info("verifying assertion signature");
+                verifySignature(assertion, handleService, ks, hsKey, false);
+            }
+            log.info("verifying response signature");
+            verifySignature(r, handleService, ks, hsKey, true);
+        }
+        finally
+        {
+            NDC.pop();
+        }
         return r;
     }
 
@@ -235,23 +240,21 @@ public class ShibPOSTProfile
      *  Used by HS to generate a signed SAML response conforming to the POST
      *  profile<P>
      *
-     *
-     *
      * @param  recipient          URL of intended consumer
      * @param  name               Name of subject
      * @param  nameQualifier      Federates or qualifies subject name (optional)
      * @param  subjectIP          Client address of subject (optional)
      * @param  authMethod         URI of authentication method being asserted
      * @param  authInstant        Date and time of authentication being asserted
-     * @param  bindings           Array of SAML authorities the relying party
+     * @param  bindings           Set of SAML authorities the relying party
      *      may contact (optional)
      * @param  responseKey        A secret or private key to use in response
      *      signature or MAC
-     * @param  responseCert       A public key certificate to enclose with the
+     * @param  responseCert       One or more X.509 certificates to enclose with the
      *      response (optional)
      * @param  assertionKey       A secret or private key to use in assertion
      *      signature or MAC (optional)
-     * @param  assertionCert      A public key certificate to enclose with the
+     * @param  assertionCert      One or more X.509 certificates to enclose with the
      *      assertion (optional)
      * @return                    SAML response to send to accepting site
      * @exception  SAMLException  Base class of exceptions that may be thrown
@@ -263,9 +266,9 @@ public class ShibPOSTProfile
                                 String subjectIP,
                                 String authMethod,
                                 Date authInstant,
-                                SAMLAuthorityBinding[] bindings,
-                                Key responseKey, X509Certificate responseCert,
-                                Key assertionKey, X509Certificate assertionCert
+                                Collection bindings,
+                                Key responseKey, Collection responseCerts,
+                                Key assertionKey, Collection assertionCerts
                                 )
         throws SAMLException
     {
@@ -274,50 +277,26 @@ public class ShibPOSTProfile
         if (assertionKey != null && !(assertionKey instanceof PrivateKey) && !(assertionKey instanceof SecretKey))
             throw new InvalidCryptoException(SAMLException.RESPONDER, "ShibPOSTProfile.prepare() detected an invalid type of assertion key");
 
-        try
-        {
-            Document doc = org.opensaml.XML.parserPool.newDocument();
+        Document doc = org.opensaml.XML.parserPool.newDocument();
 
-            XMLSignature rsig = new XMLSignature(doc, null, algorithm);
-            XMLSignature asig = null;
-            if (assertionKey != null)
-                asig = new XMLSignature(doc, null, algorithm);
+        SAMLResponse r = SAMLPOSTProfile.prepare(
+            recipient,
+            issuer,
+            policies,
+            name,
+            nameQualifier,
+            null,
+            subjectIP,
+            authMethod,
+            authInstant,
+            bindings);
+        r.toDOM(doc);
 
-            SAMLResponse r = SAMLPOSTProfile.prepare(
-                recipient,
-                issuer,
-                policies,
-                name,
-                nameQualifier,
-                null,
-                subjectIP,
-                authMethod,
-                authInstant,
-                bindings,
-                rsig,
-                asig);
-            r.toDOM(doc);
-            if (asig != null)
-            {
-                if (assertionCert != null)
-                    asig.addKeyInfo(assertionCert);
-                if (assertionKey instanceof PrivateKey)
-                    asig.sign((PrivateKey)assertionKey);
-                else
-                    asig.sign((SecretKey)assertionKey);
-            }
-            if (responseCert != null)
-                rsig.addKeyInfo(responseCert);
-            if (responseKey instanceof PrivateKey)
-                rsig.sign((PrivateKey)responseKey);
-            else
-                rsig.sign((SecretKey)responseKey);
-            return r;
-        }
-        catch (XMLSecurityException e)
-        {
-            throw new InvalidCryptoException(SAMLException.RESPONDER, "ShibPOSTProfile.prepare() detected an XML security problem during signature creation", e);
-        }
+        if (assertionKey != null)
+            ((SAMLAssertion)r.getAssertions().next()).sign(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,assertionKey,assertionCerts,false);
+        r.sign(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,responseKey,responseCerts,true);
+        
+        return r;
     }
 
     /**
@@ -338,7 +317,7 @@ public class ShibPOSTProfile
 
     /**
      *  Default signature verification algorithm uses an embedded X509
-     *  certificate or an explicit key to verify the signature. The certificate
+     *  certificate(s) or an explicit key to verify the signature. The certificate
      *  is examined to insure the subject CN matches the signer, and that it is
      *  signed by a trusted CA
      *
@@ -347,70 +326,86 @@ public class ShibPOSTProfile
      * @param  ks          A keystore containing trusted root certificates
      * @param  knownKey    An explicit key to use if a certificate cannot be
      *      found
-     * @return             The result of signature verification
+     * @param  simple      Verify according to simple SAML signature profile?
+     * 
+     * @throws SAMLException    Thrown if the signature cannot be verified
      */
-    protected boolean verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey)
+    protected void verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey, boolean simple)
+        throws SAMLException
     {
         try
         {
-            XMLSignature sig = (obj != null) ? obj.getSignature() : null;
-            if (sig == null) {
-                log.warn("verifySignature() unable to find a signature");
-                return false;
-            }
-            KeyInfo ki = sig.getKeyInfo();
-            if (ks != null && ki != null)
+            NDC.push("verifySignature");
+            
+            if (!obj.isSigned())
             {
-                X509Certificate cert = ki.getX509Certificate();
-                if (cert != null)
-                {
-                    cert.checkValidity();
-                    if (!sig.checkSignatureValue(cert)) {
-                        log.warn("verifySignature() failed to verify signature using embedded certificate");
-                        return false;
-                    }
-                    if (signerName != null)
-                    {
-                        String dname = cert.getSubjectDN().getName();
-                        log.debug("verifySignature() found cert with DN: " + dname);
-                        String cname = "CN=" + signerName;
-                        if (!dname.equalsIgnoreCase(cname) && !dname.regionMatches(true, 0, cname + ',', 0, cname.length() + 1)) {
-                            log.warn("verifySignature() found a mismatch between the certificate DN and the expected signer: " + signerName);
-                            return false;
-                        }
-                    }
-
-                    String iname = cert.getIssuerDN().getName();
-                    for (Enumeration aliases = ks.aliases(); aliases.hasMoreElements(); )
-                    {
-                        String alias = (String)aliases.nextElement();
-                        if (!ks.isCertificateEntry(alias))
-                            continue;
-                        Certificate cacert = ks.getCertificate(alias);
-                        if (!(cacert instanceof X509Certificate))
-                            continue;
-                        if (iname.equals(((X509Certificate)cacert).getSubjectDN().getName()))
-                        {
-                            cert.verify(cacert.getPublicKey());
-                            ((X509Certificate)cacert).checkValidity();
-                            return true;
-                        }
-                    }
-                    log.warn("verifySignature() unable to locate the cert issuer (" + iname + ") in the CA store");
-                    return false;
-                }
+                log.error("unable to find a signature");
+                throw new TrustException(SAMLException.RESPONDER, "ShibPOSTProfile.verifySignature() given an unsigned object");
             }
-            return (knownKey != null) ? sig.checkSignatureValue(knownKey) : false;
+            
+            if (knownKey != null)
+            {
+                log.info("verifying signature with known key value, ignoring signature KeyInfo");
+                obj.verify(knownKey,simple);
+                return;
+            }
+            
+            log.info("verifying signature with embedded KeyInfo");
+            obj.verify(simple);
+            
+            // This is pretty painful, and this is leveraging the supposedly automatic support in JDK 1.4.
+            // First we have to extract the certificates from the object.
+            Iterator certs_from_obj = obj.getX509Certificates();
+            if (!certs_from_obj.hasNext())
+            {
+                log.error("need certificates inside object to establish trust");
+                throw new TrustException(SAMLException.RESPONDER, "ShibPOSTProfile.verifySignature() can't find any certificates");
+            }
+            
+            // We assume the first one in the set is the end entity cert.
+            X509Certificate entity_cert = (X509Certificate)certs_from_obj.next();
+
+            // Match the CN of the entity cert with the expected signer.
+            String dname = entity_cert.getSubjectDN().getName();
+            log.debug("found entity cert with DN: " + dname);
+            String cname = "CN=" + signerName;
+            if (!dname.equalsIgnoreCase(cname) && !dname.regionMatches(true, 0, cname + ',', 0, cname.length() + 1))
+            {
+                log.error("verifySignature() found a mismatch between the entity certificate's DN and the expected signer: " + signerName);
+                throw new TrustException(SAMLException.RESPONDER, "ShibPOSTProfile.verifySignature() found mismatch between entity certificate and expected signer");
+            }
+            
+            // Prep a chain between the entity cert and the trusted roots.
+            X509CertSelector targetConstraints = new X509CertSelector();
+            targetConstraints.setCertificate(entity_cert);
+            PKIXBuilderParameters params = new PKIXBuilderParameters(ks, targetConstraints);
+            params.setMaxPathLength(-1);
+            
+            Vector certbag = new Vector();
+            certbag.add(entity_cert);
+            while (certs_from_obj.hasNext())
+                certbag.add(certs_from_obj.next());
+            CollectionCertStoreParameters ccsp = new CollectionCertStoreParameters(certbag);
+            CertStore store = CertStore.getInstance("Collection", ccsp);
+            params.addCertStore(store);
+            
+            // Attempt to build a path.
+            CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
+            PKIXCertPathBuilderResult result = (PKIXCertPathBuilderResult)cpb.build(params);
         }
-        catch (XMLSecurityException e)
+        catch (CertPathBuilderException e)
         {
-            e.printStackTrace();
-            return false;
+            log.error("caught a cert path builder exception: " + e.getMessage());
+            throw new TrustException(SAMLException.RESPONDER, "ShibPOSTProfile.verifySignature() unable to build a PKIX certificate path", e);
         }
         catch (GeneralSecurityException e)
         {
-            e.printStackTrace();
-            return false;
+            log.error("caught a general security exception: " + e.getMessage());
+            throw new TrustException(SAMLException.RESPONDER, "ShibPOSTProfile.verifySignature() unable to build a PKIX certificate path", e);
+        }
+        finally
+        {
+            NDC.pop();
         }
     }
 }

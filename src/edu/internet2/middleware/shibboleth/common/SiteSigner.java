@@ -149,6 +149,9 @@ public class SiteSigner
         if (keystore == null || keystore.length() == 0 ||
             key_alias == null || key_alias.length() == 0)
             printUsage();
+            
+        if (key_pass == null)
+            key_pass = ks_pass;
 
         KeyStore ks = KeyStore.getInstance("JKS");
         FileInputStream fis = new FileInputStream(keystore);

@@ -60,6 +60,8 @@ import edu.internet2.middleware.shibboleth.common.XML.SchemaResolver;
 public class Init
 {
     private static boolean initialized = false;
+    
+    private static OriginSiteMapper mapper = null;
 
     /**  Initializes library */
     public static synchronized void init()
@@ -77,5 +79,25 @@ public class Init
     {
         Init.init();
     }
+    /**
+     *  Returns the mapper
+     * 
+     * @return OriginSiteMapper
+     */
+    public static synchronized OriginSiteMapper getMapper()
+    {
+        return mapper;
+    }
+
+    /**
+     *  Sets the mapper
+     * 
+     * @param mapper The mapper to set
+     */
+    public static synchronized void setMapper(OriginSiteMapper mapper)
+    {
+        Init.mapper = mapper;
+    }
+
 }
 

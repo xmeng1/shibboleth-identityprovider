@@ -51,16 +51,12 @@ package edu.internet2.middleware.shibboleth.common;
 
 import java.security.Key;
 import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.Collection;
 import java.util.Date;
 
 import org.apache.xml.security.signature.XMLSignature;
-import org.opensaml.InvalidCryptoException;
-import org.opensaml.SAMLAuthorityBinding;
-import org.opensaml.SAMLException;
-import org.opensaml.SAMLResponse;
-import org.opensaml.SAMLSignedObject;
+import org.opensaml.*;
 
 /**
  *  ClubShib-specific POST browser profile implementation
@@ -73,45 +69,36 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
     /**
      *  SHIRE-side constructor for a ClubShibPOSTProfile object
      *
-     * @param  policies           Array of policy URIs that the implementation
+     * @param  policies           Set of policy URIs that the implementation
      *      must support
-     * @param  mapper             Interface between profile and trust base
      * @param  receiver           URL of SHIRE
      * @param  ttlSeconds         Length of time in seconds allowed to elapse
      *      from issuance of SAML response
      * @exception  SAMLException  Raised if a profile implementation cannot be
      *      constructed from the supplied information
      */
-    public ClubShibPOSTProfile(String[] policies, OriginSiteMapper mapper, String receiver, int ttlSeconds)
+    public ClubShibPOSTProfile(Collection policies, String receiver, int ttlSeconds)
         throws SAMLException
     {
-        super(policies, mapper, receiver, ttlSeconds);
-        int i;
-        for (i = 0; i < policies.length; i++)
-            if (policies[i].equals(Constants.POLICY_CLUBSHIB))
-                break;
-        if (i == policies.length)
+        super(policies, receiver, ttlSeconds);
+        if (!policies.contains(Constants.POLICY_CLUBSHIB))
             throw new SAMLException(SAMLException.REQUESTER, "ClubShibPOSTProfile() policy array must include Club Shib");
     }
 
     /**
      *  HS-side constructor for a ClubShibPOSTProfile object
      *
-     * @param  policies           Array of policy URIs that the implementation
+     * @param  policies           Set of policy URIs that the implementation
      *      must support
      * @param  issuer             "Official" name of issuing origin site
      * @exception  SAMLException  Raised if a profile implementation cannot be
      *      constructed from the supplied information
      */
-    public ClubShibPOSTProfile(String[] policies, String issuer)
+    public ClubShibPOSTProfile(Collection policies, String issuer)
         throws SAMLException
     {
         super(policies, issuer);
-        int i;
-        for (i = 0; i < policies.length; i++)
-            if (policies[i].equals(Constants.POLICY_CLUBSHIB))
-                break;
-        if (i == policies.length)
+        if (!policies.contains(Constants.POLICY_CLUBSHIB))
             throw new SAMLException(SAMLException.RESPONDER, "ClubShibPOSTProfile() policy array must include Club Shib");
     }
 
@@ -128,15 +115,15 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
      * @param  subjectIP          Client address of subject (optional)
      * @param  authMethod         URI of authentication method being asserted
      * @param  authInstant        Date and time of authentication being asserted
-     * @param  bindings           Array of SAML authorities the relying party
+     * @param  bindings           Set of SAML authorities the relying party
      *      may contact (optional)
      * @param  responseKey        A secret or private key to use in response
      *      signature or MAC
-     * @param  responseCert       A public key certificate to enclose with the
+     * @param  responseCert       One or more X.509 certificates to enclose with the
      *      response (optional)
      * @param  assertionKey       A secret or private key to use in assertion
      *      signature or MAC (optional)
-     * @param  assertionCert      A public key certificate to enclose with the
+     * @param  assertionCert      One or more X.509 certificates to enclose with the
      *      assertion (optional)
      * @return                    SAML response to send to accepting site
      * @exception  SAMLException  Base class of exceptions that may be thrown
@@ -148,9 +135,9 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
                                 String subjectIP,
                                 String authMethod,
                                 Date authInstant,
-                                SAMLAuthorityBinding[] bindings,
-                                Key responseKey, X509Certificate responseCert,
-                                Key assertionKey, X509Certificate assertionCert
+                                Collection bindings,
+                                Key responseKey, Collection responseCerts,
+                                Key assertionKey, Collection assertionCerts
                                 )
         throws SAMLException
     {
@@ -168,9 +155,9 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
             authInstant,
             bindings,
             responseKey,
-            responseCert,
+            responseCerts,
             assertionKey,
-            assertionCert);
+            assertionCerts);
     }
 
     /**
@@ -182,15 +169,16 @@ public class ClubShibPOSTProfile extends ShibPOSTProfile
      * @param  ks          A keystore containing trusted root certificates
      * @param  knownKey    An explicit key to use if a certificate cannot be
      *      found
-     * @return             The result of signature verification
+     * @param  simple      Verify according to simple SAML signature profile?
+     *
+     * @throws SAMLException    Thrown if the signature cannot be verified
      */
-    protected boolean verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey)
+    protected void verifySignature(SAMLSignedObject obj, String signerName, KeyStore ks, Key knownKey, boolean simple)
+        throws SAMLException
     {
-        if (!super.verifySignature(obj, signerName, ks, knownKey))
-            return false;
-        return XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1.equals(
-            obj.getSignature().getSignedInfo().getSignatureMethodURI()
-            );
+        super.verifySignature(obj, signerName, ks, knownKey, simple);
+        if (!obj.getSignatureAlgorithm().equals(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1))
+            throw new TrustException(SAMLException.RESPONDER, "ClubShibPOSTProfile.verifySignature() requires the RSA-SHA1 signature algorithm");
     }
 }
 

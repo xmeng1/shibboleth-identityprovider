@@ -204,11 +204,11 @@ public class AAServlet extends HttpServlet {
 	    log.error("AA failed for "+userName+" because of: "+he);
 	    try{
 		QName[] codes=new QName[2];
-		codes[0]=SAMLException.REQUESTER[0];
+		codes[0]=SAMLException.REQUESTER;
 		codes[1]=new QName(
 				   edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,
 				   "InvalidHandle");
-		saml.fail(resp, new SAMLException(codes, "AA got a HandleException: "+he));
+		saml.fail(resp, new SAMLException(Arrays.asList(codes), "AA got a HandleException: "+ he));
 	    }catch(Exception ee){
 		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Original problem: "+he);
 	    }

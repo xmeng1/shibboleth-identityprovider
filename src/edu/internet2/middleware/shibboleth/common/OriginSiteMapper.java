@@ -100,8 +100,6 @@ public interface OriginSiteMapper
      *  Gets a key store containing certificate entries that are trusted to sign
      *  Handle Service certificates that are encountered during processing<P>
      *
-     *
-     *
      * @return    A key store containing trusted certificate issuers
      */
     public abstract KeyStore getTrustedRoots();

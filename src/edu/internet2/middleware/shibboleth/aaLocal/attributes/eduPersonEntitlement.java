@@ -9,6 +9,8 @@ package edu.internet2.middleware.shibboleth.aaLocal.attributes;
  * @created    June, 2002
  */
 
+import java.util.Arrays;
+
 import edu.internet2.middleware.shibboleth.common.Constants; 
 import edu.internet2.middleware.shibboleth.aa.ShibAttribute;
 import org.opensaml.*;
@@ -23,7 +25,7 @@ public class eduPersonEntitlement implements ShibAttribute{
 				 Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
 				 new QName(org.opensaml.XML.XSD_NS,"anyURI"),
 				 10*60,
-				 values);
+				 Arrays.asList(values));
 
     }
 }

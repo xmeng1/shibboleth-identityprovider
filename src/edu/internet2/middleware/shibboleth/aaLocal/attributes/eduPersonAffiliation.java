@@ -9,6 +9,8 @@ package edu.internet2.middleware.shibboleth.aaLocal.attributes;
  * @created    June, 2002
  */
 
+import java.util.Arrays;
+
 import edu.internet2.middleware.eduPerson.*;
 import edu.internet2.middleware.shibboleth.common.Constants; 
 import edu.internet2.middleware.shibboleth.aa.ShibAttribute;
@@ -19,8 +21,6 @@ public class eduPersonAffiliation implements ShibAttribute{
 
     public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values, String recipient)
 	throws SAMLException{
-
-	String[] scopes = new String[values.length];
 
 	for(int i=0; i<values.length; i++){
 	    String val = (String)values[i];
@@ -38,12 +38,11 @@ public class eduPersonAffiliation implements ShibAttribute{
 
 	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation",
 		   Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
-		   new QName("urn:mace:eduPerson:1.0",
-			     "eduPersonAffiliationType"),
+           defaultScope,
+           null,
 		   10*60,
-		   values,
-		   defaultScope,
-		   scopes);
+           null,
+		   Arrays.asList(values));
     }
 }
 

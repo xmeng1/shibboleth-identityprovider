@@ -64,7 +64,7 @@ public class HandleServiceSAML {
     public String[] policies = { Constants.POLICY_CLUBSHIB };
     private ShibPOSTProfile spp;
     PrivateKey privateKey;
-    X509Certificate cert;
+    java.security.cert.Certificate[] certs;
 
     public HandleServiceSAML( String domain, String AAurl, String HSname,
 			      String KSpass, String KSkeyalias,
@@ -78,9 +78,9 @@ public class HandleServiceSAML {
 	KeyStore ks = KeyStore.getInstance("JKS");
 	ks.load( is, KSpass.toCharArray());
 	privateKey = (PrivateKey)ks.getKey(KSkeyalias, KSkeypass.toCharArray());
-	cert =(X509Certificate)ks.getCertificate(certalias);
+	certs = ks.getCertificateChain(certalias);
 	
-	spp = ShibPOSTProfileFactory.getInstance( policies, HSname );
+	spp = ShibPOSTProfileFactory.getInstance( Arrays.asList(policies), HSname );
     }
     
     public byte[] prepare ( String handle, String shireURL, 
@@ -88,13 +88,13 @@ public class HandleServiceSAML {
 	throws HandleException {
 
 	try { 
-	    SAMLAuthorityBinding[] bindings = new SAMLAuthorityBinding[1];
-	    bindings[0] = new SAMLAuthorityBinding
-		( SAMLBinding.SAML_SOAP_HTTPS, AAurl, 
-		  new QName(org.opensaml.XML.SAMLP_NS,"AttributeQuery") );
+	    SAMLAuthorityBinding binding =
+            new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, AAurl, 
+		                              new QName(org.opensaml.XML.SAMLP_NS,"AttributeQuery")
+                                      );
 	    SAMLResponse r = spp.prepare 
 	    ( shireURL, handle, domain, clientAddress, authMethod, 
-	      authInstant, bindings, privateKey, cert, null, null
+	      authInstant, Collections.singleton(binding), privateKey, Arrays.asList(certs), null, null
 	      );
 	    byte[] buf = r.toBase64();
 	    

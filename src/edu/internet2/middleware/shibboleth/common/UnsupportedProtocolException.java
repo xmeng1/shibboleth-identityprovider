@@ -63,105 +63,105 @@ import org.opensaml.SAMLException;
  * @author     Scott Cantor
  * @created    November 17, 2001
  */
-public class OriginSiteMapperException extends SAMLException implements Cloneable
+public class UnsupportedProtocolException extends SAMLException implements Cloneable
 {
     /**
-     *  Creates a new OriginSiteMapperException
+     *  Creates a new UnsupportedProtocolException
      *
      * @param  msg    The detail message
      */
-    public OriginSiteMapperException(String msg)
+    public UnsupportedProtocolException(String msg)
     {
         super(msg);
     }
 
     /**
-     *  Creates a new OriginSiteMapperException
+     *  Creates a new UnsupportedProtocolException
      *
      * @param  msg    The detail message
-     * @param  e      The exception to be wrapped in a OriginSiteMapperException
+     * @param  e      The exception to be wrapped in a UnsupportedProtocolException
      */
-    public OriginSiteMapperException(String msg, Exception e)
+    public UnsupportedProtocolException(String msg, Exception e)
     {
         super(msg,e);
     }
 
     /**
-     *  Creates a new OriginSiteMapperException
+     *  Creates a new UnsupportedProtocolException
      *
      * @param  codes  A collection of QNames
      * @param  msg    The detail message
      */
-    public OriginSiteMapperException(Collection codes, String msg)
+    public UnsupportedProtocolException(Collection codes, String msg)
     {
         super(codes,msg);
     }
 
     /**
-     *  Creates a new OriginSiteMapperException wrapping an existing exception <p>
+     *  Creates a new UnsupportedProtocolException wrapping an existing exception <p>
      *
      *  The existing exception will be embedded in the new one, and its message
-     *  will become the default message for the OriginSiteMapperException.</p>
+     *  will become the default message for the UnsupportedProtocolException.</p>
      *
      * @param  codes  A collection of QNames
-     * @param  e      The exception to be wrapped in a OriginSiteMapperException
+     * @param  e      The exception to be wrapped in a UnsupportedProtocolException
      */
-    public OriginSiteMapperException(Collection codes, Exception e)
+    public UnsupportedProtocolException(Collection codes, Exception e)
     {
         super(codes,e);
     }
 
     /**
-     *  Creates a new OriginSiteMapperException from an existing exception. <p>
+     *  Creates a new UnsupportedProtocolException from an existing exception. <p>
      *
      *  The existing exception will be embedded in the new one, but the new
      *  exception will have its own message.</p>
      *
      * @param  codes  A collection of QNames
      * @param  msg    The detail message
-     * @param  e      The exception to be wrapped in a OriginSiteMapperException
+     * @param  e      The exception to be wrapped in a UnsupportedProtocolException
      */
-    public OriginSiteMapperException(Collection codes, String msg, Exception e)
+    public UnsupportedProtocolException(Collection codes, String msg, Exception e)
     {
         super(codes,msg,e);
     }
 
     /**
-     *  Creates a new OriginSiteMapperException
+     *  Creates a new UnsupportedProtocolException
      *
      * @param  code   A status code
      * @param  msg    The detail message
      */
-    public OriginSiteMapperException(QName code, String msg)
+    public UnsupportedProtocolException(QName code, String msg)
     {
         super(code,msg);
     }
 
     /**
-     *  Creates a new OriginSiteMapperException wrapping an existing exception <p>
+     *  Creates a new UnsupportedProtocolException wrapping an existing exception <p>
      *
      *  The existing exception will be embedded in the new one, and its message
-     *  will become the default message for the OriginSiteMapperException.</p>
+     *  will become the default message for the UnsupportedProtocolException.</p>
      *
      * @param  code   A status code
-     * @param  e      The exception to be wrapped in a OriginSiteMapperException
+     * @param  e      The exception to be wrapped in a UnsupportedProtocolException
      */
-    public OriginSiteMapperException(QName code, Exception e)
+    public UnsupportedProtocolException(QName code, Exception e)
     {
         super(code,e);
     }
 
     /**
-     *  Creates a new OriginSiteMapperException from an existing exception. <p>
+     *  Creates a new UnsupportedProtocolException from an existing exception. <p>
      *
      *  The existing exception will be embedded in the new one, but the new
      *  exception will have its own message.</p>
      *
      * @param  code   A status code
      * @param  msg    The detail message
-     * @param  e      The exception to be wrapped in a OriginSiteMapperException
+     * @param  e      The exception to be wrapped in a UnsupportedProtocolException
      */
-    public OriginSiteMapperException(QName code, String msg, Exception e)
+    public UnsupportedProtocolException(QName code, String msg, Exception e)
     {
         super(code,msg,e);
     }

@@ -9,6 +9,8 @@ package edu.internet2.middleware.shibboleth.aaLocal.attributes;
  * @created    June, 2002
  */
 
+import java.util.Collections;
+
 import edu.internet2.middleware.eduPerson.*;
 import edu.internet2.middleware.shibboleth.common.Constants; 
 import edu.internet2.middleware.shibboleth.aa.ShibAttribute;
@@ -24,30 +26,29 @@ public class eduPersonPrincipalName implements ShibAttribute{
     public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values, String recipient)
 	throws SAMLException{
 
-	String scopes[] = new String[1];
-	String vals[] = new String[1];
+	String scope = null;
+	String val = null;
 	String eppn = (String)values[0];
 
 	int x = eppn.indexOf("@") ;
 	log.debug("EPPN: "+eppn+"    @ at "+x);
 	if(x > 0){
-	    vals[0] = eppn.substring(0,x);
-	    scopes[0] = eppn.substring(x+1);
+	    val = eppn.substring(0,x);
+	    scope = eppn.substring(x+1);
 	}else{
-	    vals[0] = eppn;
-	    scopes[0] = defaultScope;
+	    val = eppn;
+	    scope = defaultScope;
 	}
 
-	log.debug("Sending value="+vals[0]+"  scope="+scopes[0]);
+	log.debug("Sending value=" + val + ", scope=" + scope);
 		
 	return new ScopedAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName",
 				 Constants.SHIB_ATTRIBUTE_NAMESPACE_URI, 
-				 new QName("urn:mace:eduPerson:1.0",
-					   "eduPersonPrincipalNameType"),
+                 defaultScope,
+				 null,
 				 10*60,
-				 vals,
-				 defaultScope,
-				 scopes);
+                 Collections.singleton(scope),
+				 Collections.singleton(val));
 
     }
 

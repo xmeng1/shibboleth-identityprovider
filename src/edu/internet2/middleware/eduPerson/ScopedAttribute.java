@@ -49,8 +49,11 @@
 
 package edu.internet2.middleware.eduPerson;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Vector;
+
 import org.opensaml.*;
 import org.w3c.dom.*;
 
@@ -60,37 +63,37 @@ import org.w3c.dom.*;
  * @author     Scott Cantor
  * @created    May 9, 2002
  */
-public class ScopedAttribute extends SAMLAttribute
+public class ScopedAttribute extends SAMLAttribute implements Cloneable
 {
     /**  Default attribute scope */
     protected String defaultScope = null;
 
     /**  Scopes of the attribute values */
-    protected Vector scopes = new Vector();
+    protected ArrayList scopes = new ArrayList();
 
     /**
      *  Constructor for the ScopedAttribute object
      *
      * @param  name               Name of attribute
      * @param  namespace          Namespace/qualifier of attribute
+     * @param  defaultScope       The default scope to apply for values
      * @param  type               The schema type of attribute value(s)
      * @param  lifetime           Effective lifetime of attribute's value(s) in
      *      seconds (0 means infinite)
-     * @param  values             An array of attribute values
-     * @param  defaultScope       The default scope to apply for values
      * @param  scopes             Scopes of the attribute values
+     * @param  values             A set of attribute values
      * @exception  SAMLException  Thrown if attribute cannot be built from the
      *      supplied information
      */
-    public ScopedAttribute(String name, String namespace, QName type, long lifetime, Object[] values,
-                           String defaultScope, String[] scopes)
+    public ScopedAttribute(String name, String namespace, String defaultScope, QName type, long lifetime,
+                           Collection scopes, Collection values)
         throws SAMLException
     {
         super(name, namespace, type, lifetime, values);
         this.defaultScope = defaultScope;
 
-        for (int i = 0; scopes != null && i < scopes.length; i++)
-            this.scopes.add(scopes[i]);
+        if (scopes != null)
+            this.scopes.addAll(scopes);
     }
 
     /**
@@ -109,47 +112,9 @@ public class ScopedAttribute extends SAMLAttribute
 
         // Default scope comes from subject.
         NodeList nlist = ((Element)e.getParentNode()).getElementsByTagNameNS(org.opensaml.XML.SAML_NS, "NameIdentifier");
-        if (nlist.getLength() != 1)
-            throw new InvalidAssertionException(SAMLException.RESPONDER, "ScopedAttribute() can't find saml:NameIdentifier in enclosing statement");
+        if (nlist ==null || nlist.getLength() != 1)
+            throw new MalformedException(SAMLException.RESPONDER, "ScopedAttribute() can't find saml:NameIdentifier in enclosing statement");
         defaultScope = ((Element)nlist.item(0)).getAttributeNS(null, "NameQualifier");
-    }
-
-    /**
-     *  Gets the values of the SAML Attribute, serialized as strings with the
-     *  effective scope appended
-     *
-     * @return    The array of values
-     */
-    public Object[] getValues()
-    {
-        if (values == null)
-            return null;
-
-        Object[] bufs = new Object[values.size()];
-        for (int i = 0; i < values.size(); i++)
-        {
-            if (values.get(i) != null)
-            {
-                if (scopes != null && i < scopes.size() && scopes.get(i) != null)
-                    bufs[i] = values.get(i).toString() + "@" + scopes.get(i);
-                else
-                    bufs[i] = values.get(i).toString() + "@" + defaultScope;
-            }
-        }
-        return bufs;
-    }
-
-    /**
-     *  Attribute acceptance hook used while consuming attributes from an
-     *  assertion. Base class simply accepts anything. Override for desired
-     *  behavior.
-     *
-     * @param  e  An AttributeValue element to check
-     * @return    true iff the value is deemed acceptable
-     */
-    public boolean accept(Element e)
-    {
-        return true;
     }
 
     /**
@@ -172,6 +137,44 @@ public class ScopedAttribute extends SAMLAttribute
     }
 
     /**
+     *  Attribute acceptance hook used while consuming attributes from an
+     *  assertion. Base class simply accepts anything. Override for desired
+     *  behavior.
+     *
+     * @param  e  An AttributeValue element to check
+     * @return    true iff the value is deemed acceptable
+     */
+    public boolean accept(Element e)
+    {
+        return true;
+    }
+
+    /**
+     *  Gets the values of the SAML Attribute, serialized as strings with the
+     *  effective scope appended
+     *
+     * @return    The attribute's values
+     */
+    public Iterator getValues()
+    {
+        if (values == null)
+            return null;
+
+        ArrayList bufs = new ArrayList(values.size());
+        for (int i = 0; i < values.size(); i++)
+        {
+            if (values.get(i) != null)
+            {
+                if (i < scopes.size() && scopes.get(i) != null)
+                    bufs.set(i, values.get(i).toString() + "@" + scopes.get(i));
+                else
+                    bufs.set(i, values.get(i).toString() + "@" + defaultScope);
+            }
+        }
+        return bufs.iterator();
+    }
+
+    /**
      *  Overridden method to return a DOM tree representing the attribute<P>
      *
      *  Because attributes are generalized, this base method only handles simple
@@ -188,19 +191,38 @@ public class ScopedAttribute extends SAMLAttribute
     public Node toDOM(Document doc)
     {
         super.toDOM(doc);
-
-        NodeList nlist = ((Element)root).getElementsByTagNameNS(org.opensaml.XML.SAML_NS, "AttributeValue");
-        for (int i = 0; i < nlist.getLength(); i++)
+        
+        int i=0;
+        Node n=root.getFirstChild();
+        while (n!=null)
         {
-            ((Element)nlist.item(i)).removeAttributeNS(null, "Scope");
-            String scope=null;
-            if (i<scopes.size() && scopes.get(i)!=null)
-                scope=scopes.get(i).toString();
-            if (scope != null && scope.length()>0 && !scope.equals(defaultScope))
-                ((Element)nlist.item(i)).setAttributeNS(null, "Scope", scope);
+            if (n.getNodeType()==Node.ELEMENT_NODE)
+            {
+                ((Element)n).removeAttributeNS(null,"Scope");
+                if (scopes.get(i)!=null && !scopes.get(i).equals(defaultScope))
+                    ((Element)n).setAttributeNS(null,"Scope",(String)scopes.get(i));
+            }
+            n=n.getNextSibling();
         }
 
         return root;
+    }
+
+    /**
+     *  Copies a SAML object such that no dependencies exist between the original
+     *  and the copy
+     * 
+     * @return      The new object
+     * @see java.lang.Object#clone()
+     */
+    public Object clone()
+        throws CloneNotSupportedException
+    {
+        ScopedAttribute dup=(ScopedAttribute)super.clone();
+
+        dup.scopes = (ArrayList)scopes.clone();
+
+        return dup;
     }
 }
 
