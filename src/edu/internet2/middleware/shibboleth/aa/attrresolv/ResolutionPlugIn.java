@@ -58,8 +58,27 @@ package edu.internet2.middleware.shibboleth.aa.attrresolv;
  */
 public interface ResolutionPlugIn {
 	
-	public String getId();
-	public long getTTL();
+    /**
+     * Returns the name of the plugin.
+     * 
+     * @return String a plugin name
+     */
+    public String getId();
+	
+    /**
+     * Returns the time in seconds to cache the results of the plugin's resolution.
+     * 
+     * @return long time in seconds 
+     */
+    public long getTTL();
+    
+    /**
+     * Returns whether to trap and log resolution errors and return nothing,
+     * or propagate errors up as exceptions. 
+     * 
+     * @return boolean whether to propagate errors 
+     */
+    public boolean getPropagateErrors();
 
     /**
      * Returns an array containing the names of the attribute

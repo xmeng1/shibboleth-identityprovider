@@ -76,7 +76,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
  * @author Walter Hoehn (wassa@columbia.edu)
  *
  */
-public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
+public class JNDIDirectoryDataConnector extends BaseDataConnector implements DataConnectorPlugIn {
 
 	private static Logger log = Logger.getLogger(JNDIDirectoryDataConnector.class.getName());
 	protected String searchFilter;
@@ -95,11 +95,6 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 	public JNDIDirectoryDataConnector(Element e) throws ResolutionPlugInException {
 
 		super(e);
-        
-        NodeList failoverNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "FailoverDependency");
-        if (failoverNodes.getLength() > 0) {
-            failover = ((Element)failoverNodes.item(0)).getAttribute("requires");
-        }
         
 		NodeList searchNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
 		if (searchNodes.getLength() != 1) {
@@ -283,11 +278,4 @@ public class JNDIDirectoryDataConnector extends BaseResolutionPlugIn implements 
 			}
 		}
 	}
-
-    /**
-     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
-     */
-    public String getFailoverDependencyId() {
-        return failover;
-    }
 }

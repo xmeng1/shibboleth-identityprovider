@@ -84,23 +84,18 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
  * @author Scott Cantor
  */
 
-public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
+public class JDBCDataConnector extends BaseDataConnector implements DataConnectorPlugIn {
 
 	private static Logger log = Logger.getLogger(JDBCDataConnector.class.getName());
 	protected String searchVal;
 	protected DataSource dataSource;
 	protected JDBCAttributeExtractor extractor;
 	protected JDBCStatementCreator statementCreator;
-    protected String failover = null;
 
 	public JDBCDataConnector(Element e) throws ResolutionPlugInException {
 
 		super(e);
 
-        NodeList failoverNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "FailoverDependency");
-        if (failoverNodes.getLength() > 0) {
-            failover = ((Element)failoverNodes.item(0)).getAttribute("requires");
-        }
 		//Get the query string
 		NodeList queryNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Query");
 		Node tnode = queryNodes.item(0).getFirstChild();
@@ -374,13 +369,6 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		}
 		log.debug("Driver loaded.");
 	}
-
-    /**
-     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
-     */
-    public String getFailoverDependencyId() {
-        return failover;
-    }
 
 	private class Log4jPrintWriter extends PrintWriter {
 

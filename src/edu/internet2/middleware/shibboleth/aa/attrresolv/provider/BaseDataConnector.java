@@ -46,45 +46,43 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
+package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
-package edu.internet2.middleware.shibboleth.aa.attrresolv;
-
-import java.security.Principal;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.BasicAttributes;
-
-import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
-import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.BaseDataConnector;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 
 /**
- * <code>DataConnectorPlugIn</code> implementation for use in unit testing.
+ * Base class for Data Connector PlugIns.  Provides basic functionality such as 
+ * failover tracking.  Subclasses must provide resolution logic.
  * 
- * @author Walter Hoehn
- *
+ * @author Scott Cantor (cantor.2@osu.edu)
  */
-public class ScopeTestConnector extends BaseDataConnector implements DataConnectorPlugIn {
 
-	private static Logger log = Logger.getLogger(ScopeTestConnector.class.getName());
+public abstract class BaseDataConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
+	
+	/** A backup connector to use if this one fails. */
+    protected String failover = null;
+	
+	protected BaseDataConnector(Element e) throws ResolutionPlugInException {
 
-	public ScopeTestConnector(Element e) throws ResolutionPlugInException {
 		super(e);
+
+        NodeList failoverNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "FailoverDependency");
+        if (failoverNodes.getLength() > 0) {
+            failover = ((Element)failoverNodes.item(0)).getAttribute("requires");
+        }
 	}
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(Principal)
-	 */
-	public Attributes resolve(Principal principal, String requester, Dependencies depends) {
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#getFailoverDependencyId()
+     */
+    public String getFailoverDependencyId() {
+        return failover;
+    }
 
-		log.debug("Resolving connector: (" + getId() + ")");
-		log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");
-
-		BasicAttributes attributes = new BasicAttributes();
-		attributes.put(new BasicAttribute("eduPersonPrincipalName", principal.getName()));
-		attributes.put(new BasicAttribute("foo", "bar@example.com"));
-		return attributes;
-	}
 }

@@ -57,6 +57,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugIn;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 
 /**
@@ -65,7 +66,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public abstract class BaseResolutionPlugIn {
+public abstract class BaseResolutionPlugIn implements ResolutionPlugIn {
 
 	private static Logger log = Logger.getLogger(BaseResolutionPlugIn.class.getName());
 	
@@ -74,6 +75,9 @@ public abstract class BaseResolutionPlugIn {
 
 	/** Time, in seconds, for which the Attribute Resolver should cache resolutions of this PlugIn. */
 	protected long ttl = 0;
+    
+    /** Whether to propagate errors out of the PlugIn as exceptions. */
+    protected boolean propagateErrors = true;
 
     /** Dependencies. */
     protected Set connectorDependencyIds = new HashSet();
@@ -96,6 +100,11 @@ public abstract class BaseResolutionPlugIn {
 				throw new ResolutionPlugInException("Failed to initialize Resolution PlugIn.");
 			}
 		}
+        
+        String propagateFlag = e.getAttribute("propagateErrors");
+        if (propagateFlag != null && (propagateFlag.equals("false") || propagateFlag.equals("0"))) {
+            propagateErrors = false;
+        }
 
         NodeList connectorNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "DataConnectorDependency");
 
@@ -132,6 +141,14 @@ public abstract class BaseResolutionPlugIn {
 	public long getTTL() {
 		return ttl;
 	}
+
+    /**
+     * @see edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugIn#getPropagateErrors()
+     */
+    public boolean getPropagateErrors() {
+        return propagateErrors;
+    }
+
 
     protected void addDataConnectorDependencyId(String id) {
         connectorDependencyIds.add(id);

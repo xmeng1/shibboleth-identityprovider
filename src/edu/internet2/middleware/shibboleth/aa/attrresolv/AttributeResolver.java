@@ -62,6 +62,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
@@ -519,12 +520,10 @@ public class AttributeResolver {
         }
 
         //Resolve the connector
+        Attributes resolvedAttributes = null;
         try {
-            Attributes resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
+            resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
 
-            //Cache for this request
-            requestCache.put(currentDefinition.getId(), resolvedAttributes);
-    
             //Add attribute resolution to cache
             if (currentDefinition.getTTL() > 0) {
                 resolverCache.cacheConnectorResolution(
@@ -533,8 +532,6 @@ public class AttributeResolver {
                     currentDefinition.getTTL(),
                     resolvedAttributes);
             }
-            
-            return resolvedAttributes;
         }
         catch (ResolutionPlugInException e) {
             // Something went wrong, so check for a fail-over...
@@ -543,8 +540,19 @@ public class AttributeResolver {
                     currentDefinition.getFailoverDependencyId(), principal, requester, requestCache, requestedAttributes
                     );
             }
-            throw e;
+            
+            if (currentDefinition.getPropagateErrors()) {
+                throw e;
+            } else {
+                log.warn(
+                    "Connector (" + currentDefinition.getId() + ") returning empty attribute set instead of propagating error: " + e);
+                resolvedAttributes = new BasicAttributes();
+            }
         }
+
+        //Cache for this request
+        requestCache.put(currentDefinition.getId(), resolvedAttributes);
+        return resolvedAttributes;
     }
 
 	private void resolveAttribute(
@@ -619,21 +627,31 @@ public class AttributeResolver {
 				resolveConnector(connectorDependencies[i], principal, requester, requestCache, requestedAttributes));
 		}
 
-		//Resolve the attribute
-		currentDefinition.resolve(attribute, principal, requester, depends);
+        //Resolve the attribute
+        try {
+            currentDefinition.resolve(attribute, principal, requester, depends);
+
+            //Add attribute resolution to cache
+            if (currentDefinition.getTTL() > 0) {
+                resolverCache.cacheAttributeResolution(
+                    principal,
+                    attribute.getName(),
+                    currentDefinition.getTTL(),
+                    attribute);
+            }
+        }
+        catch (ResolutionPlugInException e) {
+            if (currentDefinition.getPropagateErrors()) {
+                throw e;
+            } else {
+                log.warn(
+                    "Attribute (" + currentDefinition.getId() + ") returning no values instead of propagating error: " + e);
+            }
+        }
 
 		//If necessary, cache for this request
 		if (dependancyOnly || !attribute.hasValues()) {
 			requestCache.put(currentDefinition.getId(), attribute);
-		}
-
-		//Add attribute resolution to cache
-		if (currentDefinition.getTTL() > 0) {
-			resolverCache.cacheAttributeResolution(
-				principal,
-				attribute.getName(),
-				currentDefinition.getTTL(),
-				attribute);
 		}
 	}
 
