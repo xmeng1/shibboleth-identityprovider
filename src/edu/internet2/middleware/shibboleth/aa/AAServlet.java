@@ -30,20 +30,24 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.apache.xml.security.exceptions.XMLSecurityException;
+import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.InvalidCryptoException;
 import org.opensaml.SAMLAssertion;
@@ -82,6 +86,10 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
+import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
+import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.Provider;
+import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
 
 /**
  * @author Walter Hoehn
@@ -97,6 +105,7 @@ public class AAServlet extends TargetFederationComponent {
 	private AAServiceProviderMapper	targetMapper;
 
 	private static Logger			log				= Logger.getLogger(AAServlet.class.getName());
+	protected Pattern				regex			= Pattern.compile(".*CN=([^,/]+).*");
 
 	public void init() throws ServletException {
 		super.init();
@@ -150,7 +159,7 @@ public class AAServlet extends TargetFederationComponent {
 			log.error("Multiple Credentials specifications found, using first.");
 		}
 		Credentials credentials = new Credentials((Element) itemElements.item(0));
-		
+
 		//Load metadata
 		itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
 				ShibbolethOriginConfig.originConfigNamespace, "FederationProvider");
@@ -164,7 +173,8 @@ public class AAServlet extends TargetFederationComponent {
 
 		//Load relying party config
 		try {
-			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials, this);
+			targetMapper = new AAServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
+					this);
 		} catch (ServiceProviderMapperException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
@@ -212,30 +222,33 @@ public class AAServlet extends TargetFederationComponent {
 
 		//Parse SOAP request
 		SAMLRequest samlRequest = null;
-		StringBuffer credentialName = new StringBuffer();
-		try {
-			samlRequest = binding.receive(req, credentialName);
-
-		} catch (SAMLException e) {
-			log.fatal("Unable to parse request: " + e);
-			throw new ServletException("Request failed.");
-		}
 
 		try {
-			if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) { throw new SAMLException(
-					SAMLException.REQUESTER, "This SAML authority only responds to attribute queries."); }
+
+			try {
+				samlRequest = binding.receive(req);
+
+			} catch (SAMLException e) {
+				log.fatal("Unable to parse request: " + e);
+				throw new AAException("Invalid request data.");
+			}
+
+			if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+				throw new SAMLException(SAMLException.REQUESTER,
+						"This SAML authority only responds to attribute queries.");
+			}
 			SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
 			//Identify a Relying Party
-			if (attributeQuery.getResource() == null || attributeQuery.getResource().equals("")) {
-				log.error("Request from an unidentified service provider.");
-			}
-			log.info("Request from service provider: (" + attributeQuery.getResource() + ").");
 			relyingParty = targetMapper.getRelyingParty(attributeQuery.getResource());
 
+			//This is the requester name that will be passed to subsystems
+			String effectiveName = getEffectiveName(req, relyingParty);
+
 			//Map Subject to local principal
-			if (relyingParty.getProviderId() != null
-					&& !relyingParty.getProviderId().equals(attributeQuery.getSubject().getName().getNameQualifier())) {
+			if (relyingParty.getIdentityProvider().getProviderId() != null
+					&& !relyingParty.getIdentityProvider().getProviderId().equals(
+							attributeQuery.getSubject().getName().getNameQualifier())) {
 				log.error("The name qualifier for the referenced subject ("
 						+ attributeQuery.getSubject().getName().getNameQualifier()
 						+ ") is not valid for this identiy provider.");
@@ -246,8 +259,8 @@ public class AAServlet extends TargetFederationComponent {
 
 			Principal principal = null;
 			try {
-				if (attributeQuery.getSubject().getName().getName().equalsIgnoreCase("foo")) {
-					// for testing
+				// for testing
+				if (attributeQuery.getSubject().getName().getFormat().equals("urn:mace:shibboleth:test:nameIdentifier")) {
 					principal = new AuthNPrincipal("test-handle");
 				} else {
 					principal = nameMapper.getPrincipal(attributeQuery.getSubject().getName(), relyingParty,
@@ -274,12 +287,6 @@ public class AAServlet extends TargetFederationComponent {
 				}
 			}
 
-			if (credentialName == null || credentialName.toString().equals("")) {
-				log.info("Request is from an unauthenticated service provider.");
-			} else {
-				log.info("Request is from service provider: (" + credentialName + ").");
-			}
-
 			SAMLAttribute[] attrs;
 			Iterator requestedAttrsIterator = attributeQuery.getDesignators();
 			if (requestedAttrsIterator.hasNext()) {
@@ -296,11 +303,12 @@ public class AAServlet extends TargetFederationComponent {
 										+ attribute.getName() + ").  Ignoring this attribute");
 					}
 				}
-				attrs = responder.getReleaseAttributes(principal, credentialName.toString(), null,
+
+				attrs = responder.getReleaseAttributes(principal, effectiveName.toString(), null,
 						(URI[]) requestedAttrs.toArray(new URI[0]));
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
-				attrs = responder.getReleaseAttributes(principal, credentialName.toString(), null);
+				attrs = responder.getReleaseAttributes(principal, effectiveName.toString(), null);
 			}
 
 			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
@@ -331,6 +339,45 @@ public class AAServlet extends TargetFederationComponent {
 		}
 	}
 
+	protected String getEffectiveName(HttpServletRequest req, AARelyingParty relyingParty) throws AAException {
+
+		String credentialName = getCredentialName(req);
+		if (credentialName == null || credentialName.toString().equals("")) {
+			log.info("Request is from an unauthenticated service provider.");
+			return null;
+
+		} else {
+			log.info("Request contains credential: (" + credentialName + ").");
+			//Mockup old requester name for requests from < 1.2 targets
+			if (fromLegacyProvider(req)) {
+				String legacyName = getLegacyRequesterName(credentialName);
+				log.info("Request from legacy service provider: (" + legacyName + ").");
+				return legacyName;
+
+			} else {
+				//Make sure that the suppplied credential is valid for the selected relying party
+				if (isValidCredential(relyingParty, credentialName.toString())) {
+					log.info("Supplied credential validated for this provider.");
+					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
+					return relyingParty.getProviderId();
+				} else {
+					log.error("Supplied credential (" + credentialName.toString() + ") is NOT valid for provider ("
+							+ relyingParty.getProviderId() + ").");
+					throw new AAException("Invalid credential.");
+				}
+			}
+		}
+	}
+
+	private String getLegacyRequesterName(String credentialName) {
+		Matcher matches = regex.matcher(credentialName);
+		if (!matches.find() || matches.groupCount() > 1) {
+			log.error("Unable to extract legacy requester name from certificate subject.");
+			return null;
+		}
+		return matches.group(1);
+	}
+
 	public void destroy() {
 		log.info("Cleaning up resources.");
 		responder.destroy();
@@ -349,8 +396,10 @@ public class AAServlet extends TargetFederationComponent {
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, exception);
 			} else {
 
-				if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) { throw new SAMLException(
-						SAMLException.REQUESTER, "This SAML authority only responds to attribute queries"); }
+				if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+					throw new SAMLException(SAMLException.REQUESTER,
+							"This SAML authority only responds to attribute queries");
+				}
 				SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
 
 				//Reference requested subject
@@ -473,6 +522,61 @@ public class AAServlet extends TargetFederationComponent {
 			binding.respond(httpResponse, null, exception);
 			log.error("AA failed to make an error message: " + se);
 		}
+	}
+
+	protected boolean isValidCredential(RelyingParty relyingParty, String credentialName) throws AAException {
+
+		Provider provider = lookup(relyingParty.getProviderId());
+		if (provider == null) {
+			log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+			throw new AAException("Request is from an unkown Service Provider.");
+		}
+
+		ProviderRole[] roles = provider.getRoles();
+		if (roles.length == 0) {
+			log.info("Inappropriate metadata for provider.");
+			return false;
+		}
+
+		for (int i = 0; roles.length > i; i++) {
+			if (roles[i] instanceof AttributeConsumerRole) {
+				KeyDescriptor[] descriptors = roles[i].getKeyDescriptors();
+				for (int j = 0; descriptors.length > j; j++) {
+					KeyInfo[] keyInfo = descriptors[j].getKeyInfo();
+					for (int k = 0; keyInfo.length > k; k++) {
+						for (int l = 0; keyInfo[k].lengthKeyName() > l; l++) {
+							try {
+								if (credentialName.equals(keyInfo[k].itemKeyName(l).getKeyName())) {
+									return true;
+								}
+							} catch (XMLSecurityException e) {
+								log.error("Encountered an error reading federation metadata: " + e);
+							}
+						}
+					}
+				}
+			}
+		}
+		log.info("Supplied credential not found in metadata.");
+		return false;
+	}
+
+	protected boolean fromLegacyProvider(HttpServletRequest request) {
+		String version = request.getHeader("Shibboleth");
+		if (version != null) {
+			log.debug("Request from Shibboleth version: " + version);
+			return false;
+		}
+		log.debug("No version header found.");
+		return true;
+	}
+
+	protected String getCredentialName(HttpServletRequest req) {
+		X509Certificate[] certArray = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
+		if (certArray != null && certArray.length > 0) {
+			return certArray[0].getSubjectDN().getName();
+		}
+		return null;
 	}
 
 }
