@@ -52,6 +52,16 @@
 	<target name="clean-dist">
 		<delete dir="${dist}"/>
 	</target>
+	
+	<target name="test" depends="test-common" />
+	<target name="test-common" depends="compile">
+		<junit printsummary="yes" fork="no" haltonfailure="yes" haltonerror="no">
+			<classpath refid="build.path"/>
+			<formatter type="plain" />
+			<test name="edu.internet2.middleware.shibboleth.common.AQHTest" />
+		</junit>
+	</target>
+	
 
 </project>
 
