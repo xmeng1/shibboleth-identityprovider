@@ -23,4 +23,9 @@
         <Alias>Penn State University</Alias>
         <HandleService Location="https://aistest02.aset.psu.edu/shibboleth/HS" Name="aistest02.aset.psu.edu"/>
     </OriginSite>
+    <OriginSite Name="osu.edu">
+        <Alias>Ohio State University</Alias>
+        <Alias>Buckeyes</Alias> 
+        <HandleService Location="https://trotsky.uts.ohio-state.edu/shibboleth/HS" Name="trotsky.uts.ohio-state.edu"/>
+    </OriginSite>
 </Sites>

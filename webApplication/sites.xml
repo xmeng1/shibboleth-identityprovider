@@ -22,6 +22,11 @@
         <Alias>Penn State University</Alias>
         <HandleService Location="https://aistest02.aset.psu.edu/shibboleth/HS" Name="aistest02.aset.psu.edu"></HandleService>
     </OriginSite>
+    <OriginSite Name="osu.edu">
+        <Alias>Ohio State University</Alias>
+        <Alias>Buckeyes</Alias> 
+        <HandleService Location="https://trotsky.uts.ohio-state.edu/shibboleth/HS" Name="trotsky.uts.ohio-state.edu"></HandleService>
+    </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
@@ -31,15 +36,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>ZEh0QhIrku42FwRPPe/b5Ffqzs0=</ds:DigestValue>
+<ds:DigestValue>yvBKKQ+nfO87OlyHaILqtYj5vcI=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-R/ebFhywEo8KVsWePMtdDFHP2/Kmo0AulfiyPa6W7VRz0FgOA/797QQA5f+Ry2bud+N8JZ9LJc33
-EdybPgszT47kcVNVaFxajZ55LdJtLFipozGBj2ci/Jlgej8WiBzoNLPzKjxgrgIVMDmMZTeanQdX
-CBoIbGPvbXvLLKNztefQZvXP34/BFOjjLznsXIo5nHGRluwObAGfO10yn8Vz5ZMIpFanDyDY6Z5i
-5TmTbRJGuttabGemAuj0EBATrHuJFmDwlmK0Bmehk87YRfAjrkwYx1IlpE9TEH+RrJIRuv84PrSB
-hYQ0xk5XcOKqrYMls+u6FoGbRUWSnmyD5bM/mA==
+DkjN7aZOJ3h9oKUpeLY00OhNm5F6lbJdGufI30xDorZQioMkuiFTXgpQLgPk4B20/rcQMHJnQfRe
+AjFxiWCF17vFn0qmPQnlOzcrywDT8uIgjyFPjp1pZIyGiFtaXGNgIfmcC/QFpHA5orBukPKcudSx
+sQjlTCguek0Bn82a0sDet6RyE6bmiaSyCYVSjL2/R/gPA/QenIGgk923d6p+/3rg5gpPPdpe6H54
+OFYSpSMfq/AKHOGZDQ8kW1BIzqyqu+8RwyEqrlIBxk4Wsj9o4AlD4T2SjCEKvlaVH+yA8hgyWOvS
+qkmuumTJvr/3zvc0AE9oPNz1GLP+G32FHdp+oQ==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
