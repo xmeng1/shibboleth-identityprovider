@@ -227,6 +227,7 @@ public class ServiceProviderMapper {
 		private boolean forceAttributeNoPush = false;
 		private boolean defaultToPOST = true;
 		private boolean wantsAssertionsSigned = false;
+		private int preferredArtifactType = 1;
 
 		public RelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials,
 				NameMapper nameMapper) throws ServiceProviderMapperException {
@@ -312,6 +313,18 @@ public class ServiceProviderMapper {
 				forceAttributeNoPush = Boolean.valueOf(forceNoPush).booleanValue();
 				log.debug("Attribute push forcing is set to (" + forceAttributePush + ").");
 				log.debug("No attribute push forcing is set to (" + forceAttributeNoPush + ").");
+			}
+
+			attribute = ((Element) partyConfig).getAttribute("preferredArtifactType");
+			if (attribute != null && !attribute.equals("")) {
+				log.debug("Overriding AAUrl for Relying Pary (" + name + ") with (" + attribute + ").");
+				try {
+					preferredArtifactType = Integer.parseInt(attribute);
+				} catch (NumberFormatException e) {
+					log.error("(preferredArtifactType) attribute to is not a valid integer.");
+					throw new ServiceProviderMapperException("Configuration is invalid.");
+				}
+				log.debug("Preferred artifact type: (" + preferredArtifactType + ").");
 			}
 
 			// Load and verify the name format that the HS should use in
@@ -442,8 +455,7 @@ public class ServiceProviderMapper {
 
 		public int getPreferredArtifactType() {
 
-			// TODO make configurable
-			return 1;
+			return preferredArtifactType;
 		}
 
 		/**

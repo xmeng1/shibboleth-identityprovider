@@ -51,7 +51,7 @@ public class MemoryArtifactMapper extends BaseArtifactMapper implements Artifact
 	
 	public MemoryArtifactMapper(Element config) throws ShibbolethConfigurationException {
 
-		super();
+		super(config);
 	}
 
 	// TODO need to cleanup stale artifacts
