@@ -47,6 +47,9 @@
 			</Certificate>
 		</FileResolver>
 	</Credentials>
+	
+	<FederationProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
+                uri="/conf/sites.xml"/>
 
 </ShibbolethOriginConfig>
 

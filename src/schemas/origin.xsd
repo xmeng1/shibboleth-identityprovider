@@ -107,6 +107,15 @@
 
 				<xs:element ref="credentials:Credentials"/>
 
+				<xs:element name="FederationProvider" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+						</xs:sequence>
+						<xs:attribute name="type" type="xs:string" use="required" />
+						<xs:anyAttribute namespace="##any" processContents="lax"/>
+					</xs:complexType>
+				</xs:element>
 			</xs:sequence>
 
 			<xs:attribute name="resolverConfig" type="xs:string" use="optional" default="/conf/resolver.xml"/>
