@@ -524,26 +524,27 @@ public class AttributeResolver {
         try {
             resolvedAttributes = currentDefinition.resolve(principal, requester, depends);
 
-            //Add attribute resolution to cache
-            if (currentDefinition.getTTL() > 0) {
-                resolverCache.cacheConnectorResolution(
-                    principal,
-                    currentDefinition.getId(),
-                    currentDefinition.getTTL(),
-                    resolvedAttributes);
-            }
+			//Add attribute resolution to cache
+			if (currentDefinition.getTTL() > 0) {
+				resolverCache.cacheConnectorResolution(
+					principal,
+					currentDefinition.getId(),
+					currentDefinition.getTTL(),
+					resolvedAttributes);
+			}
         }
         catch (ResolutionPlugInException e) {
             // Something went wrong, so check for a fail-over...
             if (currentDefinition.getFailoverDependencyId() != null) {
-                return resolveConnector(
+            	log.info("Connector (" + currentDefinition.getId() + ") failed, invoking failover dependency");
+                resolvedAttributes = resolveConnector(
                     currentDefinition.getFailoverDependencyId(), principal, requester, requestCache, requestedAttributes
                     );
             }
-            
-            if (currentDefinition.getPropagateErrors()) {
+            else if (currentDefinition.getPropagateErrors()) {
                 throw e;
-            } else {
+            }
+            else {
                 log.warn(
                     "Connector (" + currentDefinition.getId() + ") returning empty attribute set instead of propagating error: " + e);
                 resolvedAttributes = new BasicAttributes();
