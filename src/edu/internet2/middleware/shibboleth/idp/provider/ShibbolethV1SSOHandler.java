@@ -26,6 +26,7 @@
 package edu.internet2.middleware.shibboleth.idp.provider;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,7 +62,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import sun.misc.BASE64Decoder;
-
 import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
@@ -71,7 +71,6 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
-
 import edu.internet2.middleware.shibboleth.metadata.Endpoint;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
@@ -98,8 +97,6 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, ServletException, IOException {
 
-		// TODO attribute push?
-
 		if (request == null) {
 			log.error("Protocol Handler received a SAML Request, but is unable to handle it.");
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
@@ -119,6 +116,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 					.getRemoteUser() : request.getHeader(support.getIdPConfig().getAuthHeaderName());
 			if ((username == null) || (username.equals(""))) { throw new InvalidClientDataException(
 					"Unable to authenticate remote user"); }
+			AuthNPrincipal principal = new AuthNPrincipal(username);
 
 			// Select the appropriate Relying Party configuration for the request
 			RelyingParty relyingParty = null;
@@ -137,11 +135,9 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			// Grab the metadata for the provider
 			EntityDescriptor provider = support.lookup(relyingParty.getProviderId());
 
-			// Determine the acceptance URL
-			String acceptanceURL = request.getParameter("shire");
-
 			// Make sure that the selected relying party configuration is appropriate for this
 			// acceptance URL
+			String acceptanceURL = request.getParameter("shire");
 			if (!relyingParty.isLegacyProvider()) {
 
 				if (provider == null) {
@@ -149,7 +145,6 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 					relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
 
 				} else {
-
 					if (isValidAssertionConsumerURL(provider, acceptanceURL)) {
 						log.info("Supplied consumer URL validated for this provider.");
 					} else {
@@ -160,11 +155,11 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 				}
 			}
 
-			// Create SAML Name Identifier
+			// Create SAML Name Identifier & Subject
 			SAMLNameIdentifier nameId;
 			try {
-				nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(),
-						new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
+				nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(), principal,
+						relyingParty, relyingParty.getIdentityProvider());
 			} catch (NameIdentifierMappingException e) {
 				log.error("Error converting principal to SAML Name Identifier: " + e);
 				throw new SAMLException("Error converting principal to SAML Name Identifier.", e);
@@ -185,146 +180,181 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 			ArrayList assertions = new ArrayList();
 
-			// TODO push support cleanup???
+			// Is this artifact or POST?
+			boolean artifactProfile = useArtifactProfile(provider, acceptanceURL);
 
-			if (true) {
-				// TODO error out if legacy and push
-				SAMLAttribute[] attrs;
-				try {
-					attrs = support.getReleaseAttributes(new AuthNPrincipal(username), relyingParty.getProviderId(),
-							null);
-				
-				if (attrs != null && attrs.length > 0) {
-					// Reference requested subject
-					SAMLSubject attrSubject;
-				
-						attrSubject = (SAMLSubject) authNSubject.clone();
-					
+			// TODO make sure we support adding signatures to attribute assertion
 
-					ArrayList audiences = new ArrayList();
-					if (relyingParty.getProviderId() != null) {
-						audiences.add(relyingParty.getProviderId());
-					}
-					if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
-						audiences.add(relyingParty.getName());
-					}
-					SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
-
-					// Put all attributes into an assertion
-					SAMLStatement statement = new SAMLAttributeStatement(attrSubject, Arrays.asList(attrs));
-
-					// Set assertion expiration to longest attribute expiration
-					long max = 0;
-					for (int i = 0; i < attrs.length; i++) {
-						if (max < attrs[i].getLifetime()) {
-							max = attrs[i].getLifetime();
-						}
-					}
-					Date now = new Date();
-					Date then = new Date(now.getTime() + (max * 1000)); // max is in seconds
-
-					SAMLAssertion attrAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(),
-							now, then, Collections.singleton(condition), null, Collections.singleton(statement));
-					if (log.isDebugEnabled()) {
-						log.debug("Dumping generated Attribute Assertion:" + System.getProperty("line.separator")
-								+ new String(new BASE64Decoder().decodeBuffer(new String(attrAssertion.toBase64(), "ASCII")), "UTF8"));
-					}
+			// Package attributes for push, if necessary - don't attempt this for legacy providers (they don't support
+			// it)
+			if (!relyingParty.isLegacyProvider() && pushAttributes(artifactProfile)) {
+				log.info("Resolving attributes for push.");
+				SAMLAssertion attrAssertion = generateAttributeAssertion(support, principal, relyingParty, authNSubject);
+				if (attrAssertion != null) {
 					assertions.add(attrAssertion);
-					// TODO make sure signature adds covers this stuff
 				} else {
-					//TODO remove this message
-					log.debug("No Attrs!");
-				}
-				} catch (AAException e2) {
-					// TODO Auto-generated catch block
-					e2.printStackTrace();
-				} catch (CloneNotSupportedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					log.info("No attributes resolved.");
 				}
 			}
 
 			// TODO do assertion signing for artifact stuff
 
-			// SAML Artifact profile
-			if (useArtifactProfile(provider, acceptanceURL)) {
-				log.debug("Responding with Artifact profile.");
-
-				// TODO woa! error if legacy
-
-				authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
-
-				assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod,
-						new Date(System.currentTimeMillis()), authNSubject));
-
-				// Create artifacts for each assertion
-				ArrayList artifacts = new ArrayList();
-				for (int i = 0; i < assertions.size(); i++) {
-					artifacts.add(support.getArtifactMapper().generateArtifact((SAMLAssertion) assertions.get(i),
-							relyingParty));
-				}
-
-				// Assemble the query string
-				StringBuffer destination = new StringBuffer(acceptanceURL);
-				destination.append("?TARGET=");
-
-				destination.append(URLEncoder.encode(request.getParameter("target"), "UTF-8"));
-
-				Iterator iterator = artifacts.iterator();
-				StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
-
-				// Construct the artifact query parameter
-				while (iterator.hasNext()) {
-					Artifact artifact = (Artifact) iterator.next();
-					artifactBuffer.append("(" + artifact + ")");
-					destination.append("&SAMLart=");
-					destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
-				}
-
-				log.debug("Redirecting to (" + destination.toString() + ").");
-				response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
-
-				support.getTransactionLog().info(
-						"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
-								+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
-								+ username + "). Name Identifier: (" + nameId.getName()
-								+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+			// SAML Artifact profile - don't even attempt this for legacy providers (they don't support it)
+			if (!relyingParty.isLegacyProvider() && artifactProfile) {
+				respondWithArtifact(request, response, support, principal, relyingParty, provider, acceptanceURL,
+						nameId, authenticationMethod, authNSubject, assertions);
 
 				// SAML POST profile
 			} else {
-				log.debug("Responding with POST profile.");
-
-				authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
-
-				assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod,
-						new Date(System.currentTimeMillis()), authNSubject));
-
-				request.setAttribute("acceptanceURL", acceptanceURL);
-				request.setAttribute("target", request.getParameter("target"));
-
-				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, assertions, null);
-				IdPProtocolSupport.addSignatures(samlResponse, relyingParty, provider, true);
-				createPOSTForm(request, response, samlResponse.toBase64());
-
-				// Make transaction log entry
-				if (relyingParty.isLegacyProvider()) {
-					support.getTransactionLog().info(
-							"Authentication assertion issued to legacy provider (SHIRE: "
-									+ request.getParameter("shire") + ") on behalf of principal (" + username
-									+ ") for resource (" + request.getParameter("target") + "). Name Identifier: ("
-									+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
-				} else {
-					support.getTransactionLog().info(
-							"Authentication assertion issued to provider ("
-									+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
-									+ username + "). Name Identifier: (" + nameId.getName()
-									+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
-				}
+				respondWithPOST(request, response, support, principal, relyingParty, provider, acceptanceURL, nameId,
+						authenticationMethod, authNSubject, assertions);
 			}
 		} catch (InvalidClientDataException e) {
 			throw new SAMLException(SAMLException.RESPONDER, e.getMessage());
 		}
 		return null;
+	}
+
+	private void respondWithArtifact(HttpServletRequest request, HttpServletResponse response,
+			IdPProtocolSupport support, AuthNPrincipal principal, RelyingParty relyingParty, EntityDescriptor provider,
+			String acceptanceURL, SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject,
+			ArrayList assertions) throws SAMLException, IOException, UnsupportedEncodingException {
+
+		log.debug("Responding with Artifact profile.");
+
+		authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
+		assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod, new Date(
+				System.currentTimeMillis()), authNSubject));
+
+		// Create artifacts for each assertion
+		ArrayList artifacts = new ArrayList();
+		for (int i = 0; i < assertions.size(); i++) {
+			artifacts
+					.add(support.getArtifactMapper().generateArtifact((SAMLAssertion) assertions.get(i), relyingParty));
+		}
+
+		// Assemble the query string
+		StringBuffer destination = new StringBuffer(acceptanceURL);
+		destination.append("?TARGET=");
+		destination.append(URLEncoder.encode(request.getParameter("target"), "UTF-8"));
+		Iterator iterator = artifacts.iterator();
+		StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
+
+		// Construct the artifact query parameter
+		while (iterator.hasNext()) {
+			Artifact artifact = (Artifact) iterator.next();
+			artifactBuffer.append("(" + artifact + ")");
+			destination.append("&SAMLart=");
+			destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
+		}
+
+		log.debug("Redirecting to (" + destination.toString() + ").");
+		response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
+		support.getTransactionLog().info(
+				"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
+						+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+						+ principal.getName() + "). Name Identifier: (" + nameId.getName()
+						+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+	}
+
+	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
+			AuthNPrincipal principal, RelyingParty relyingParty, EntityDescriptor provider, String acceptanceURL,
+			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject, ArrayList assertions)
+			throws SAMLException, IOException, ServletException {
+
+		log.debug("Responding with POST profile.");
+
+		authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
+		assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod, new Date(
+				System.currentTimeMillis()), authNSubject));
+
+		// Set attributes needed by form
+		request.setAttribute("acceptanceURL", acceptanceURL);
+		request.setAttribute("target", request.getParameter("target"));
+
+		SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, assertions, null);
+
+		IdPProtocolSupport.addSignatures(samlResponse, relyingParty, provider, true);
+
+		createPOSTForm(request, response, samlResponse.toBase64());
+
+		// Make transaction log entry
+		if (relyingParty.isLegacyProvider()) {
+			support.getTransactionLog().info(
+					"Authentication assertion issued to legacy provider (SHIRE: " + request.getParameter("shire")
+							+ ") on behalf of principal (" + principal.getName() + ") for resource ("
+							+ request.getParameter("target") + "). Name Identifier: (" + nameId.getName()
+							+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+
+		} else {
+			support.getTransactionLog().info(
+					"Authentication assertion issued to provider ("
+							+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+							+ principal.getName() + "). Name Identifier: (" + nameId.getName()
+							+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+		}
+	}
+
+	private SAMLAssertion generateAttributeAssertion(IdPProtocolSupport support, AuthNPrincipal principal,
+			RelyingParty relyingParty, SAMLSubject authNSubject) throws SAMLException {
+
+		try {
+			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty.getProviderId(), null);
+			log.info("Found " + attributes.length + " attribute(s) for " + principal.getName());
+
+			// Bail if we didn't get any attributes
+			if (attributes == null || attributes.length < 1) {
+				return null;
+
+			} else {
+				// Reference requested subject
+				SAMLSubject attrSubject = (SAMLSubject) authNSubject.clone();
+
+				ArrayList audiences = new ArrayList();
+				if (relyingParty.getProviderId() != null) {
+					audiences.add(relyingParty.getProviderId());
+				}
+				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
+					audiences.add(relyingParty.getName());
+				}
+				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
+
+				// Put all attributes into an assertion
+				SAMLStatement statement = new SAMLAttributeStatement(attrSubject, Arrays.asList(attributes));
+
+				// Set assertion expiration to longest attribute expiration
+				long max = 0;
+				for (int i = 0; i < attributes.length; i++) {
+					if (max < attributes[i].getLifetime()) {
+						max = attributes[i].getLifetime();
+					}
+				}
+				Date now = new Date();
+				Date then = new Date(now.getTime() + (max * 1000)); // max is in seconds
+
+				SAMLAssertion attrAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(),
+						now, then, Collections.singleton(condition), null, Collections.singleton(statement));
+
+				if (log.isDebugEnabled()) {
+					try {
+						log.debug("Dumping generated Attribute Assertion:"
+								+ System.getProperty("line.separator")
+								+ new String(new BASE64Decoder().decodeBuffer(new String(attrAssertion.toBase64(),
+										"ASCII")), "UTF8"));
+
+					} catch (Exception e) {
+						log.error("Unable to dump assertion to debug log: " + e);
+					}
+				}
+				return attrAssertion;
+			}
+		} catch (AAException e) {
+			log.error("An error was encountered while generating assertion for attribute push: " + e);
+			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+		} catch (CloneNotSupportedException e) {
+			log.error("An error was encountered while generating assertion for attribute push: " + e);
+			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+		}
 	}
 
 	private SAMLAssertion generateAuthNAssertion(HttpServletRequest request, RelyingParty relyingParty,
@@ -423,6 +453,8 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 
 	private static boolean useArtifactProfile(EntityDescriptor provider, String acceptanceURL) {
 
+		// TODO this logic needs to be updated
+
 		// Default to POST if we have no metadata
 		if (provider == null) { return false; }
 
@@ -440,6 +472,13 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 		}
 
 		// Default to POST if we have incomplete metadata
+		return false;
+	}
+
+	private static boolean pushAttributes(boolean artifactProfile) {
+
+		if (artifactProfile) { return true; }
+		// TODO implement overrides
 		return false;
 	}
 
