@@ -28,7 +28,7 @@
     </OriginSite>
     <OriginSite Name="psu.edu">
         <Alias>Penn State University</Alias>
-        <HandleService Location="https://aistest02.aset.psu.edu/shibboleth/HS" Name="aistest02.aset.psu.edu"></HandleService>
+        <HandleService Location="https://bsod.aset.psu.edu/shibboleth/HS" Name="bsod.aset.psu.edu"></HandleService>
         <Domain>psu.edu</Domain>
     </OriginSite>
     <OriginSite Name="osu.edu">
@@ -80,8 +80,14 @@
     <OriginSite Name="cmu.edu">
         <Alias>Carnegie Mellon University</Alias>
         <Alias>CMU</Alias>
-        <HandleService Location="https://shib-test.andrew.cmu.edu/shibboleth/HS" Name="shib-test.andrew.cmu.edu"></HandleService>
+        <HandleService Location="https://shib-test1.andrew.cmu.edu/shibboleth/HS" Name="shib-test1.andrew.cmu.edu"></HandleService>
         <Domain>cmu.edu</Domain>
+    </OriginSite>
+    <OriginSite Name="muohio.edu">
+        <Alias>Miami University</Alias>
+        <Alias>MU</Alias>
+        <HandleService Location="https://naslnx07.mcs.muohio.edu/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"></HandleService>
+        <Domain>muohio.edu</Domain>
     </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
@@ -92,15 +98,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>+Tvg/6cK0z9IYu3rDSFir5tuPPc=</ds:DigestValue>
+<ds:DigestValue>KGJX3bgsKmtZBTBEFELJtrJabXA=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-0DJrfPOFYyGvs8hh3tMWSFf2M11uSQWrWIpirlpntaxxjsLuAjqtEdpF+H/t1B/ohk8MgZY2iONE
-1yMapYuPiJ9ky4biTMfPYXpJAMywkdCCGUya4bN8cvUq9v7eSi+x9s+zlGawemn90Yhfii66N5RU
-r3GGlaM4Aji60Up41UfuxGYxgyeCiPkY9cmg/3UNlfB//0oIoWAdHt9YP7i/8WZ5xlt5pkvcxEZg
-39ZxAqcaoLPvUhl3gbx0IALeJIImhlatg/d6kcKUIIpPrkAJH9GxFv6V0w4Bm5Gbnp+EkCDBLhZ8
-qCIRBWRT3PpFBOAkaNWAUCRCELg8vs1E1c9ATA==
+XiW/h7g/iTZMB/sNed35XL2kNrFNogEPEpgVkj481x4U1jx3a3pqyUySTWu0Saju16O7LpfjF64h
+5+EqB/r5+fdFtJY/GLRjUrp8ly5QftMsp+vQDPKZ+zkjGOdKegik+2zTx5v0bsBOqUZGXkOKC4B2
+1y1xQ7PK6ZTo9go4HALtSqf4p/vFF7CXD6Yq+vm95uiq5g7fahQ9x7kz6at4M0PA4o/mSVKQSNAm
+qGwhYusGoppRNPr4DNj2bR3RjTCNxHDDOWygxM5Kj0DtB6UNYaKyBWA7UFaGR3ypItIRHozmO4ZB
+1dcI2zP3PnAbjvRBtLLB1G1QpVLgkwerJgSggw==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>

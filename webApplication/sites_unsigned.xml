@@ -28,7 +28,7 @@
     </OriginSite>
     <OriginSite Name="psu.edu">
         <Alias>Penn State University</Alias>
-        <HandleService Location="https://aistest02.aset.psu.edu/shibboleth/HS" Name="aistest02.aset.psu.edu"/>
+        <HandleService Location="https://bsod.aset.psu.edu/shibboleth/HS" Name="bsod.aset.psu.edu"/>
         <Domain>psu.edu</Domain>
     </OriginSite>
     <OriginSite Name="osu.edu">
@@ -80,7 +80,13 @@
     <OriginSite Name="cmu.edu">
         <Alias>Carnegie Mellon University</Alias>
         <Alias>CMU</Alias>
-        <HandleService Location="https://shib-test.andrew.cmu.edu/shibboleth/HS" Name="shib-test.andrew.cmu.edu"/>
+        <HandleService Location="https://shib-test1.andrew.cmu.edu/shibboleth/HS" Name="shib-test1.andrew.cmu.edu"/>
         <Domain>cmu.edu</Domain>
+    </OriginSite>
+    <OriginSite Name="muohio.edu">
+        <Alias>Miami University</Alias>
+        <Alias>MU</Alias>
+        <HandleService Location="https://naslnx07.mcs.muohio.edu/shibboleth/HS" Name="naslnx07.mcs.muohio.edu"/>
+        <Domain>muohio.edu</Domain>
     </OriginSite>
 </Sites>
