@@ -24,11 +24,16 @@ public class AASaml {
     SAMLBinding binding;
     
 
-    public AASaml(HttpServletRequest req, String myName)
-	throws SAMLException{
-
+    public AASaml(String myName){
+	
+	Init.init();
 	binding = SAMLBindingFactory.getInstance(protocol, policies);
 	this.myName = myName;
+    }
+
+    public void receive(HttpServletRequest req)
+	throws SAMLException{
+
 	sharName=new StringBuffer();
 	SAMLRequest sReq = binding.receive(req, sharName);
 	SAMLAttributeQuery q = (SAMLAttributeQuery)sReq.getQuery();
@@ -36,7 +41,7 @@ public class AASaml {
 	reqID = sReq.getRequestId();
 	sub = q.getSubject();
     }
-	
+
     public String getHandle(){
 	return sub.getName();
     }
@@ -105,5 +110,4 @@ public class AASaml {
 	    binding.respond(resp,sResp,ourSE);	    
 	}
     }
-
 }

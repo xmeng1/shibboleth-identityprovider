@@ -76,7 +76,10 @@ public class AAServlet extends HttpServlet {
 	AASaml saml = null;
 
 	try{
-	    saml = new AASaml(req, myName);
+	    System.out.println("AA about to make a saml obj");
+	    saml = new AASaml(myName);
+	    saml.receive(req);
+	    System.out.println("AA received a query");
 	    String resource = saml.getResource();
 	    String handle = saml.getHandle();
 	    String shar = saml.getShar();
@@ -90,14 +93,12 @@ public class AAServlet extends HttpServlet {
 
  	}catch (org.opensaml.SAMLException se) {
 	    ourSE = se;
+	    
 	    //	}catch (HandleException he) {
 	    //	    ourSE = new org.opensaml.SAMLException(org.opensaml.SAMLException.RESPONDER,"Bad Handle or Handle Service Problem: "+he);
 	}catch (Exception e) {
 	    ourSE = new org.opensaml.SAMLException(org.opensaml.SAMLException.RESPONDER,"AA Failed with: "+e);
 	}finally{
-
-	    if(saml == null)
-		throw new ServletException("AA failed to build a request: "+ourSE);
 	    saml.respond(resp, attrs, ourSE);
 	}
     }
