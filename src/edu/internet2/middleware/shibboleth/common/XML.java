@@ -84,7 +84,7 @@ public class XML
      * @author     Scott Cantor
      * @created    May 18, 2002
      */
-    protected static class SchemaResolver implements EntityResolver {
+    public static class SchemaResolver implements EntityResolver {
         /**
          *  A customized entity resolver for the Shibboleth extension schema
          *
