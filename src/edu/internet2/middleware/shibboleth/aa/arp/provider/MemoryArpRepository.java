@@ -54,10 +54,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
@@ -75,7 +75,7 @@ public class MemoryArpRepository implements ArpRepository {
 	private Arp sitePolicy;
 	private static Logger log = Logger.getLogger(MemoryArpRepository.class.getName());
 
-	public MemoryArpRepository(Properties props) {
+	public MemoryArpRepository(Element config) {
 	}
 
 	/**

@@ -1,50 +1,48 @@
-/* 
- * The Shibboleth License, Version 1. 
- * Copyright (c) 2002 
- * University Corporation for Advanced Internet Development, Inc. 
- * All rights reserved
+/*
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation
+ * for Advanced Internet Development, Inc. All rights reserved
  * 
  * 
- * Redistribution and use in source and binary forms, with or without 
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  * 
- * Redistributions of source code must retain the above copyright notice, this 
+ * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
  * 
- * Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation 
- * and/or other materials provided with the distribution, if any, must include 
- * the following acknowledgment: "This product includes software developed by 
- * the University Corporation for Advanced Internet Development 
- * <http://www.ucaid.edu>Internet2 Project. Alternately, this acknowledegement 
- * may appear in the software itself, if and wherever such third-party 
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution, if any, must include
+ * the following acknowledgment: "This product includes software developed by
+ * the University Corporation for Advanced Internet Development
+ * <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement
+ * may appear in the software itself, if and wherever such third-party
  * acknowledgments normally appear.
  * 
- * Neither the name of Shibboleth nor the names of its contributors, nor 
- * Internet2, nor the University Corporation for Advanced Internet Development, 
- * Inc., nor UCAID may be used to endorse or promote products derived from this 
- * software without specific prior written permission. For written permission, 
+ * Neither the name of Shibboleth nor the names of its contributors, nor
+ * Internet2, nor the University Corporation for Advanced Internet Development,
+ * Inc., nor UCAID may be used to endorse or promote products derived from this
+ * software without specific prior written permission. For written permission,
  * please contact shibboleth@shibboleth.org
  * 
- * Products derived from this software may not be called Shibboleth, Internet2, 
- * UCAID, or the University Corporation for Advanced Internet Development, nor 
- * may Shibboleth appear in their name, without prior written permission of the 
+ * Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor
+ * may Shibboleth appear in their name, without prior written permission of the
  * University Corporation for Advanced Internet Development.
  * 
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK 
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY 
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK
+ * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
+ * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.aa.arp;
@@ -60,7 +58,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -73,8 +70,8 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpAttributeSet.ArpAttributeIt
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
- *  Defines a processing engine for Attribute Release Policies.
- *
+ * Defines a processing engine for Attribute Release Policies.
+ * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
@@ -116,18 +113,13 @@ public class ArpEngine {
 			log.warn(
 				"Encountered multiple <ArpRepository> configuration elements.  Arp Engine currently only supports one.  Using first...");
 		}
-		
+
 		if (itemElements.getLength() == 0) {
 			//TODO setup a default
 		}
 
-		String implementation = ((Element) itemElements.item(0)).getAttribute("implementation");
-
-		//TODO make this work
-		//TODO pass in arpTTL
-		
 		try {
-			repository = ArpRepositoryFactory.getInstance(null);
+			repository = ArpRepositoryFactory.getInstance((Element) itemElements.item(0));
 		} catch (ArpRepositoryException e) {
 			log.error("Could not start Arp Engine: " + e);
 			throw new ArpException("Could not start Arp Engine.");
@@ -150,8 +142,7 @@ public class ArpEngine {
 			if (functionObject instanceof MatchFunction) {
 				return (MatchFunction) functionObject;
 			} else {
-				log.error(
-					"Improperly specified match function, (" + className + ") is not a match function.");
+				log.error("Improperly specified match function, (" + className + ") is not a match function.");
 				throw new ArpException(
 					"Improperly specified match function, (" + className + ") is not a match function.");
 			}
@@ -161,8 +152,7 @@ public class ArpEngine {
 		}
 	}
 
-	private Arp createEffectiveArp(Principal principal, String requester, URL resource)
-		throws ArpProcessingException {
+	private Arp createEffectiveArp(Principal principal, String requester, URL resource) throws ArpProcessingException {
 		try {
 			Arp effectiveArp = new Arp(principal);
 			effectiveArp.setDescription("Effective ARP.");
@@ -202,11 +192,14 @@ public class ArpEngine {
 	}
 
 	/**
-	 * Determines which attributes MIGHT be releasable for a given request.  This function 
-	 * may be used to determine which attributes to resolve when a request for all
-	 * attributes is made.  This is done for performance reasons only. ie: The resulting 
-	 * attributes must still be filtered before release.
-	 * @return an array of <code>URI</code> objects that name the possible attributes
+	 * Determines which attributes MIGHT be releasable for a given request.
+	 * This function may be used to determine which attributes to resolve when
+	 * a request for all attributes is made. This is done for performance
+	 * reasons only. ie: The resulting attributes must still be filtered before
+	 * release.
+	 * 
+	 * @return an array of <code>URI</code> objects that name the possible
+	 *         attributes
 	 */
 	public URI[] listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
 		throws ArpProcessingException {
@@ -244,6 +237,7 @@ public class ArpEngine {
 
 	/**
 	 * Applies all applicable ARPs to a set of attributes.
+	 * 
 	 * @return the attributes to be released
 	 */
 	public void filterAttributes(ArpAttributeSet attributes, Principal principal, String requester, URL resource)
@@ -330,25 +324,19 @@ public class ArpEngine {
 			if (!canonicalSpec.containsKey(attributes[i].getName().toString())) {
 				canonicalSpec.put(attributes[i].getName().toString(), attributes[i]);
 			} else {
-				if (((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString()))
-					.denyAnyValue()) {
+				if (((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).denyAnyValue()) {
 					continue;
 				}
 				if (attributes[i].denyAnyValue()) {
-					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValueDeny(
-						true);
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValueDeny(true);
 					continue;
 				}
 				if (attributes[i].releaseAnyValue()) {
-					(
-						(Rule.Attribute) canonicalSpec.get(
-							attributes[i].getName().toString())).setAnyValuePermit(
-						true);
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValuePermit(true);
 				}
 				Rule.AttributeValue[] values = attributes[i].getValues();
 				for (int j = 0; values.length > j; j++) {
-					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).addValue(
-						values[j]);
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).addValue(values[j]);
 				}
 			}
 		}

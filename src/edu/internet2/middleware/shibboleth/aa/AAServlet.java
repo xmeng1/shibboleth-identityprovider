@@ -105,6 +105,7 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
+import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
  * @author Walter Hoehn
@@ -196,10 +197,10 @@ public class AAServlet extends HttpServlet {
 			//Startup Attribute Resolver
 			AttributeResolver resolver = new AttributeResolver(configuration);
 
-			//Startup ARP Enginee
+			//Startup ARP Engine
 			itemElements =
 				parser.getDocument().getDocumentElement().getElementsByTagNameNS(
-					NameIdentifierMapping.mappingNamespace,
+					ShibbolethOriginConfig.originConfigNamespace,
 					"ReleasePolicyEngine");
 
 			if (itemElements.getLength() > 1) {
