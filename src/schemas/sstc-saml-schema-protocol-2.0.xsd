@@ -12,17 +12,17 @@
     <import namespace="urn:oasis:names:tc:SAML:2.0:assertion"
         schemaLocation="sstc-saml-schema-assertion-2.0.xsd"/>
     <import namespace="http://www.w3.org/2000/09/xmldsig#"
-        schemaLocation="http://www.w3.org/TR/xmldsig-core/xmldsig-core-schema.xsd"/>
+        schemaLocation="http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd"/>
     <annotation>
         <documentation>
-            Document identifier: draft-sstc-saml-schema-protocol-2.0-01
+            Document identifier: draft-sstc-saml-schema-protocol-2.0
             Location: http://www.oasis-open.org/committees/documents.php?wg_abbrev=security
             Revision history:
             V1.0 (November, 2002):
               Initial Standard Schema.
             V1.1 (September, 2003):
               Updates within the same V1.0 namespace.
-            V2.0 (August, 2004):
+            V2.0 CD-04 (January, 2005):
               New protocol schema based in a SAML V2.0 namespace.
      </documentation>
     </annotation>
@@ -35,6 +35,7 @@
         <attribute name="ID" type="ID" use="required"/>
         <attribute name="Version" type="string" use="required"/>
         <attribute name="IssueInstant" type="dateTime" use="required"/>
+        <attribute name="Destination" type="anyURI" use="optional"/>
     	<attribute name="Consent" type="anyURI" use="optional"/>
     </complexType>
     <element name="Extensions" type="samlp:ExtensionsType"/>
@@ -54,7 +55,8 @@
     	<attribute name="InResponseTo" type="NCName" use="optional"/>
     	<attribute name="Version" type="string" use="required"/>
     	<attribute name="IssueInstant" type="dateTime" use="required"/>
-    	<attribute name="Recipient" type="anyURI" use="optional"/>
+    	<attribute name="Destination" type="anyURI" use="optional"/>
+    	<attribute name="Consent" type="anyURI" use="optional"/>
     </complexType>
     <element name="Status" type="samlp:StatusType"/>
     <complexType name="StatusType">
@@ -170,8 +172,7 @@
     </complexType>
     <element name="NameIDPolicy" type="samlp:NameIDPolicyType"/>
     <complexType name="NameIDPolicyType">
-        <sequence/>
-        <attribute name="Format" type="anyURI" use="required"/>
+        <attribute name="Format" type="anyURI" use="optional"/>
         <attribute name="SPNameQualifier" type="string" use="optional"/>
         <attribute name="AllowCreate" type="boolean" use="optional"/>
     </complexType>
@@ -193,7 +194,6 @@
     </complexType>
     <element name="IDPEntry" type="samlp:IDPEntryType"/>
     <complexType name="IDPEntryType">
-        <sequence/>
         <attribute name="ProviderID" type="anyURI" use="required"/>
         <attribute name="Name" type="string" use="optional"/>
         <attribute name="Loc" type="anyURI" use="optional"/>
@@ -250,7 +250,7 @@
     	</complexContent>
     </complexType>
     <element name="NewID" type="string"/>
-    <element name="NewEncryptedID" type="saml:EncryptedIDType"/>
+    <element name="NewEncryptedID" type="saml:EncryptedElementType"/>
     <element name="Terminate" type="samlp:TerminateType"/>
     <complexType name="TerminateType"/>
     <element name="ManageNameIDResponse" type="samlp:StatusResponseType"/>
