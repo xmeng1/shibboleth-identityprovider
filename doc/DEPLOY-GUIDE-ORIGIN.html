@@ -126,6 +126,11 @@ font-color: #121212;
 color: #00FF00
 }
  </style>
+
+
+			<!-- ZoneLabs Privacy Insertion -->
+			<script language='javascript' src='http://127.0.0.1:1103/js.cgi?paw&r=7627'></script>
+
 </head>
 
 <body link="red" vlink="red" alink="black" bgcolor="white">
@@ -139,16 +144,13 @@ April 14, 2004<br>
 <h3>This version of the deploy guide is for Shibboleth v1.2. For documentation 
 related to prior versions of Shibboleth, please consult the appropriate branch 
 in the Shibboleth CVS.</h3>
-<h3>The default configuration of Shibboleth is <b>not</b> secure and should not
-be used for protection of production content.  The example private key bundled
-with the distribution is publically available, widely circulated, and
-well-known; also, the default federation and trust metadata is for testing
-purposes only.  For information about securing a Shibboleth deployment, please
-refer to the production guide.  Shibboleth should only be used to protect
-sensitive content when deployed carefully in conjunction with proper trust
-settings and policies.</h3>
-
-<p>Insert features here.</p>
+<h3>The default configuration of Shibboleth is <b>not</b> secure and should not 
+  be used for protection of production content. The example private key bundled 
+  with the distribution is publically available, widely circulated, and well-known; 
+  also, the default federation and trust metadata is for testing purposes only. 
+  For information about securing a Shibboleth deployment, please refer to the 
+  production guide. Shibboleth should only be used to protect sensitive content 
+  when deployed carefully in conjunction with proper trust settings and policies.</h3>
 
 <p>Before starting, please sign up for all applicable
 <a href="http://shibboleth.internet2.edu/shib-misc.html#mailinglist">mailing 
@@ -634,7 +636,7 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
         <li><a href="http://http://www.apache.org/dist/httpd/">Apache 1.3.26+ 
         (&lt;2.0)</a></li>
         <li><a href="http://jakarta.apache.org/tomcat/">Tomcat 4.1.18-24 LE Java 
-        server and above</a></li>
+        server and above or Tomcat 5</a></li>
         <li><a href="http://java.sun.com/j2se/">Sun J2SE JDK v1.4.1_01 and above</a>
         <blockquote>
             <p>Other versions of the JRE are not supported and are known to 
@@ -679,7 +681,7 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
             /usr/local/tomcat/webapps/</span> </p>
         </blockquote>
         </li>
-        <li>Tomcat 4.1.x requires that several Java jarfiles used by Shibboleth 
+        <li>Tomcat 4.1.x and Tomcat 5 require that several Java jarfiles used by Shibboleth 
         be located in a special &quot;endorsed&quot; folder to override obsolete classes 
         that Sun includes with their JVM. To deal with this problem use the 
         following command, adjusting paths as needed:<blockquote>
@@ -694,13 +696,22 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
         <li>Restart Tomcat, which will automatically detect that there has been 
         a new .war file added. This file will by default be expanded into
         <span class="fixed">/usr/local/tomcat/webapps/shibboleth</span>.</li>
-        <li>Apache must be told to map the URL&#39;s for the Shibboleth HS and AA to 
-        Tomcat. Two popular ways of doing this are to include the following text 
-        directly in <span class="fixed">httpd.conf</span>, or to place
-        <span class="fixed">Include conf/mod_jk.conf</span> in
-        <span class="fixed">httpd.conf</span>, and place the following 
-        lines in <span class="fixed">/etc/httpd/conf/mod_jk.conf</span>:<blockquote>
-            <p><span class="fixed">--------- begin ---------<br>
+        <li><p>Apache must be told to map the URL&#39;s for the Shibboleth HS
+        and AA to Tomcat. This is done differently depending on whether
+        Coyote/JK2 or AJP13/JK is used as the connector between Apache
+        and Tomcat.  Generally, Tomcat 4.1.x should use AJP13/JK, and Tomcat 5 can use Coyote/JK2.</p>
+
+        <p><b><span class="fixed">mod_jk</span>:</b></p>
+
+		<p>The following configuration directs Apache to use mod_jk to redirect
+		queries for Shibboleth components to Tomcat.  Two popular ways of doing
+		this are to include the following text directly in <span
+		class="fixed">httpd.conf</span>, or to make a separate file and <span
+		class="fixed">Include</span> it in <span
+		class="fixed">httpd.conf</span>.</p>
+
+        <blockquote>
+            <span class="fixed">--------- begin ---------<br>
             &lt;IfModule !mod_jk.c&gt;<br>
             &nbsp;LoadModule jk_module libexec/mod_jk.so<br>
             &lt;/IfModule&gt;<br>
@@ -712,15 +723,14 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
             <br>
             JkMount /shibboleth/* ajp13<br>
             <br>
-            --------- end ---------</span> </p>
+            --------- end ---------</span>
         </blockquote>
-        This will result in a HS URL of http://hostname/shibboleth/HS/.
-        </li>
-        <li>Tomcat&#39;s <span class="fixed">/conf/server.xml</span> ships by 
-        default with the Coyote/JK2 connector enabled, which fails with 
-        Shibboleth due to the lack of support for <span class="fixed">
-        REMOTE_USER</span>. This connector must be commented out. Then, 
-        uncomment and modify the traditional AJP 1.3 connector as follows:<ol type="A">
+
+        <p>Tomcat 4.1.x defaults to having the Coyote connector enabled in <span
+        class="fixed">/conf/server.xml</span>.  This fails with <span
+        class="fixed">mod_jk</span> and must be commented out. Then, uncomment
+        and modify the traditional AJP 1.3 connector as follows:</p>
+        <ol type="A">
             <li>Add <span class="fixed">address=&quot;127.0.0.1&quot;</span> inside 
             the <span class="fixed">&lt;Ajp13Connector&gt;</span> configuration 
             element to prevent off-host access.</li>
@@ -728,8 +738,37 @@ and <span class="fixed">JSP specification 1.2</span>.</b></p>
             to the <span class="fixed">&lt;Ajp13Connector&gt;</span> 
             configuration element to ensure that the user&#39;s identity is passed 
             from Apache to the servlet environment.</li>
-            <li>The AJP13Connector for tomcat is not compatible with the new JMX support.  To remove some warnings that will  appear in the tomcat log every time tomcat is restarted, comment out all of the JMX stuff (anything that says "mbeans") from server.xml.</li>
+            <li>The AJP13Connector for tomcat is not compatible with the new JMX support.  To remove some warnings that will appear in the Tomcat log every time Tomcat is restarted, comment out all of the JMX stuff (anything that says "mbeans") from server.xml.</li>
         </ol>
+
+        <p><b><span class="fixed">mod_jk2</span>:</b></p>
+
+        <p>The following lines must be added to or placed in a separate
+        configuration file pointed to by <span
+        class="fixed">httpd.conf</span>:</p>
+
+        <blockquote><span class="fixed">
+            --------- begin ---------<br>
+           <IfModule !mod_jk2.c><br>
+              LoadModule jk2_module libexec/mod_jk2.so<br>
+           </IfModule><br>
+           --------- end ---------
+        </span></blockquote>
+
+<p>By default, the Coyote/JK2 connector will not permit the <span class="fixed">REMOTE_USER</span> value set by Apache to pass into Tomcat, and thus into Shibboleth. If user authentication will be handled in this fashion(as is true of most deployments), then the <span class="fixed">/conf/jk2.properties</span> file must include the following line:</p>
+
+<blockquote><span class="fixed">request.tomcatAuthentication=false</span></blockquote>
+
+        <p><span class="fixed">mod_jk2</span> must also be told separately to map URL's to the servlets in Tomcat using <span class="fixed">/conf/workers2.properties</span> file in the Apache tree by adding these lines.  It may also be necessary to modify the references in the file to the socket port and make sure it matches the port set in the Coyote connector.</p>
+
+        <blockquote><span class="fixed">
+        --------- begin ---------<br>
+        [uri:/shibboleth/*]<br>
+        group=lb<br>
+        --------- end ---------
+        </span></blockquote>
+        
+        <p><b>Both the mod_jk and mod_jk2 configurations as given will result in a HS URL of <span class="fixed">http://hostname/shibboleth/HS/</span> and an AA URL of <span class="fixed">http://hostname/shibboleth/AA/</span>.</b></p>
         </li>
         <li>It is <b>strongly</b> recommended that the AA be SSL-protected to 
         protect attributes in transit. To do so, add an appropriate location 
@@ -1492,7 +1531,7 @@ signingCredential=&quot;<i>string</i>&quot;&gt;</span></a></dd>
         targets that have established bilateral agreements with the origin, or
         any other trust structure that origin must be aware of.  In addition to
         its attributes, this element may contain a <a
-        href="#confHSNameMapping"><span class="fixed">HSNameMapping</span></a>
+        href="#confHSNameFormat"><span class="fixed">HSNameFormat</span></a>
         element to specify a naming mechanism for assertions sent to this
         relying party.  The HS and AA both perform validation against federation
         metadata to ensure that targets cannot construct requests that would be
@@ -2333,3 +2372,6 @@ with a thorough description of errors and configurations used.</p>
 </body>
 
 </html>
+
+<!-- ZoneLabs Popup Blocking Insertion -->
+<script language='javascript'>postamble();</script>
