@@ -897,9 +897,9 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 
 		private void setLong(PreparedStatement preparedStatement, int valueIndex, Object object)
 			throws JDBCStatementCreatorException {
-			if (object instanceof Long) {
+			if (object instanceof Long || object instanceof Integer || object instanceof Short) {
 				try {
-					preparedStatement.setLong(valueIndex, ((Long) object).longValue());
+					preparedStatement.setLong(valueIndex, ((Number) object).longValue());
 					return;
 				} catch (SQLException e) {
 					log.error("Encountered an error while adding parameter to prepared statement: " + e);
@@ -947,9 +947,9 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 
 		private void setDouble(PreparedStatement preparedStatement, int valueIndex, Object object)
 			throws JDBCStatementCreatorException {
-			if (object instanceof Double) {
+			if (object instanceof Double || object instanceof Float) {
 				try {
-					preparedStatement.setDouble(valueIndex, ((Double) object).doubleValue());
+					preparedStatement.setDouble(valueIndex, ((Number) object).doubleValue());
 					return;
 				} catch (SQLException e) {
 					log.error("Encountered an error while adding parameter to prepared statement: " + e);
@@ -997,9 +997,9 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 
 		private void setInteger(PreparedStatement preparedStatement, int valueIndex, Object object)
 			throws JDBCStatementCreatorException {
-			if (object instanceof Integer) {
+			if (object instanceof Integer || object instanceof Short) {
 				try {
-					preparedStatement.setInt(valueIndex, ((Integer) object).intValue());
+					preparedStatement.setInt(valueIndex, ((Number) object).intValue());
 					return;
 				} catch (SQLException e) {
 					log.error("Encountered an error while adding parameter to prepared statement: " + e);
