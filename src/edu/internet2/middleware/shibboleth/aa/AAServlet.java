@@ -250,8 +250,6 @@ public class AAServlet extends HttpServlet {
 				}
 				log.info("Request is for principal (" + principal.getName() + ").");
 
-				//TODO Do something about these silly passthru errors
-
 			} catch (InvalidNameIdentifierException invalidNameE) {
 				log.info("Could not associate the request subject with a principal: " + invalidNameE);
 				try {
