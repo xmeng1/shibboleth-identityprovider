@@ -82,9 +82,9 @@
         <Alias>CMU</Alias>
         <HandleService Location="https://shib-test1.andrew.cmu.edu/shibboleth/HS" Name="shib-test1.andrew.cmu.edu"/>
         <Domain>cmu.edu</Domain>
-        <Domain>andrew.cmu.edu</Domain>
-        <Domain>cs.cmu.edu</Domain>
-        <Domain>ece.cmu.edu</Domain>
+        <Domain>ANDREW.CMU.EDU</Domain>
+        <Domain>CS.CMU.EDU</Domain>
+        <Domain>ECE.CMU.EDU</Domain>
     </OriginSite>
     <OriginSite Name="muohio.edu">
         <Alias>Miami University</Alias>
