@@ -246,13 +246,17 @@ public class HandleServlet extends TargetFederationComponent {
 	protected byte[] generateAssertion(HSRelyingParty relyingParty, SAMLNameIdentifier nameId, String shireURL,
 			String clientAddress, String authType) throws SAMLException, IOException {
 
-		SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, relyingParty.getAAUrl()
-				.toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
-
-		SAMLResponse r = postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType, new Date(System
-				.currentTimeMillis()), Collections.singleton(binding));
-
-		return r.toBase64();
+		if (relyingParty.isLegacyProvider()) {
+			//For compatibility with pre-1.2 shibboleth targets, include a pointer to the AA
+			SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, relyingParty.getAAUrl()
+					.toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
+			return postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType, new Date(System
+					.currentTimeMillis()), Collections.singleton(binding)).toBase64();
+		
+		} else {
+			return postProfile.prepare(shireURL, relyingParty, nameId, clientAddress, authType, new Date(System
+					.currentTimeMillis()), null).toBase64();
+		}
 	}
 
 	protected void createForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,
