@@ -71,7 +71,7 @@ public class HandleServlet extends HttpServlet {
 	    throw new ServletException("Cannot find Handle Service name in init parameters");
 	}
 	if ( getInitParameter("KSpath") == null || 
-	     getInitParameter("AAurl").equals("")) {
+	     getInitParameter("KSpath").equals("")) {
 	    throw new ServletException("Cannot find path to KeyStore file in init parameters");
 	}
 	if ( getInitParameter("KSpass") == null || 
@@ -79,7 +79,7 @@ public class HandleServlet extends HttpServlet {
 	    throw new ServletException("Cannot find password to KeyStore in init parameters");
 	}
 	if ( getInitParameter("KSkeyalias") == null || 
-	     getInitParameter("AAurl").equals("")) {
+	     getInitParameter("KSkeyalias").equals("")) {
 	    throw new ServletException("Cannot find private key alias to KeyStore in init parameters");
 	}
 	if ( getInitParameter("KSkeypass") == null || 
@@ -121,6 +121,7 @@ public class HandleServlet extends HttpServlet {
 	    createForm( req, res, buf );
 	}
 	catch (HandleException ex) {
+	    System.out.println(ex);
 	    handleError( req, res, ex );
 	}
 

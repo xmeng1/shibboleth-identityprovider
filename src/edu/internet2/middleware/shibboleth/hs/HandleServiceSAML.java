@@ -20,7 +20,7 @@ public class HandleServiceSAML {
     public HandleServiceSAML( String domain, String AAurl, String HSname,
 			      String KSpath, String KSpass, String KSkeyalias,
 			      String KSkeypass, String certalias ) 
-	throws SAMLException, KeyStoreException, Exception
+	throws SAMLException, KeyStoreException, IOException, FileNotFoundException, Exception
     {
 	this.domain = domain;
 	this.AAurl = AAurl;
@@ -30,7 +30,6 @@ public class HandleServiceSAML {
 	ks.load( fis, KSpass.toCharArray());
 	privateKey = (PrivateKey)ks.getKey(KSkeyalias, KSkeypass.toCharArray());
 	cert =(X509Certificate)ks.getCertificate(certalias);
-
 	
 	spp = ShibPOSTProfileFactory.getInstance( policies, HSname );
     }
@@ -46,7 +45,7 @@ public class HandleServiceSAML {
 		  new QName(org.opensaml.XML.SAMLP_NS,"AttributeQuery") );
 	    SAMLResponse r = spp.prepare 
 	    ( shireURL, handle, domain, clientAddress, authMethod, 
-	      authInstant, bindings, null, null, null, null
+	      authInstant, bindings, privateKey, cert, null, null
 	      );
 	    byte[] buf = r.toBase64();
 	    
