@@ -76,6 +76,7 @@ public class ArpTests extends TestCase {
 
 	public ArpTests(String name) {
 		super(name);
+		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
 	}
 
