@@ -13,6 +13,7 @@
     <property name="build" value="${approot}/WEB-INF/classes/" />
     <property name="libdir" value="${approot}/WEB-INF/lib/" />
     <property name="buildlibs" value="${root}/lib/" />
+    <property name="endorsed" value="${root}/endorsed/" />
     <property name="distlibs" value="${root}/lib/" />
     <property name="dist" value="${root}/dist/" />
     <property name="docs" value="${root}/docs/" />
@@ -133,6 +134,7 @@
     <target name="test-all" depends="test-origin" />
     <target name="test-origin" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
+			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
             <classpath refid="build.path" />
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
