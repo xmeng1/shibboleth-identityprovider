@@ -26,7 +26,9 @@
 package edu.internet2.middleware.shibboleth.idp;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -243,8 +245,18 @@ public class IdPResponder extends HttpServlet {
 
 		try {
 			// Determine which protocol we are responding to (at this point normally Shibv1 vs. EAuth)
-			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURL()
-					.toString());
+			String requestURL = request.getRequestURL().toString();
+			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(requestURL);
+			if (activeHandler == null) {
+				log.debug("No protocol handler registered for location (" + request.getRequestURL()
+						+ ").  Attempting to match against relative path.");
+				try {
+					activeHandler = (IdPProtocolHandler) protocolHandlers.get(new URL(requestURL).getPath());
+				} catch (MalformedURLException e) {
+					// squelch, we will just fail to find a handler
+				}
+			}
+
 			if (activeHandler == null) {
 				log.error("No protocol handler registered for location (" + request.getRequestURL() + ").");
 				throw new SAMLException("Request submitted to an invalid location.");
@@ -301,11 +313,16 @@ public class IdPResponder extends HttpServlet {
 			}
 
 			// Determine which protocol handler is active for this endpoint
-			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(request.getRequestURL()
-					.toString());
+			String requestURL = request.getRequestURL().toString();
+			IdPProtocolHandler activeHandler = (IdPProtocolHandler) protocolHandlers.get(requestURL);
 			if (activeHandler == null) {
-				log.error("No protocol handler registered for location (" + request.getRequestURL() + ").");
-				throw new SAMLException("Request submitted to an invalid location.");
+				log.debug("No protocol handler registered for location (" + request.getRequestURL()
+						+ ").  Attempting to match against relative path.");
+				try {
+					activeHandler = (IdPProtocolHandler) protocolHandlers.get(new URL(requestURL).getPath());
+				} catch (MalformedURLException e) {
+					// squelch, we will just fail to find a handler
+				}
 			}
 
 			// Pass request to the appropriate handler and respond
