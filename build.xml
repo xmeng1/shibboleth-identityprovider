@@ -66,7 +66,8 @@
     <!-- Compile classes and move them to ${build} -->
     <target name="compile" depends="init"
     	description="Compile source file, combine with schemas and conf directories">
-        <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
+        <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on" 
+        	target="1.3" source="1.3">
             <classpath refid="build.path" />
         </javac>
         <copy todir="${build}/schemas">
@@ -205,4 +206,12 @@
         <taskdef name="genSalt" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
         <genSalt keyStorePath="${appconfig}/persistent.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
     </target>
+	
+	<target name="exampleCertificate">
+		<genkey alias="tomcat" storepass="exampleorg"
+			keystore="${tomcat.home}/conf/example.jks"
+			keyalg="RSA" validity="365"
+			dname="cn=shibboleth.example.org, o=example.org, c=US"
+		/>
+	</target>
 </project>
