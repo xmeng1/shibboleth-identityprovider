@@ -62,6 +62,7 @@ public class HandleServlet extends HttpServlet {
 
     private HandleRepositoryFactory hrf;
     private long ticketExp; 
+    private String username=null;
     private HandleServiceSAML hsSAML;
     private String rep;
     private static Logger log = Logger.getLogger(HandleServlet.class.getName());; 
@@ -75,12 +76,10 @@ public class HandleServlet extends HttpServlet {
 
 	getInitParams();
 	log.info("HS: Loading init params");
-	System.err.println("HS: initializing");
 
 	try {
 	    edu.internet2.middleware.eduPerson.Init.init();
-	    InputStream is = sctx.getResourceAsStream
-		(getInitParameter("KSpath"));
+	    InputStream is = sctx.getResourceAsStream(getInitParameter("KSpath"));
 	    hsSAML = new HandleServiceSAML( getInitParameter("domain"), 
 					    getInitParameter("AAurl"),
 					    getInitParameter("HSname"),
@@ -129,6 +128,8 @@ public class HandleServlet extends HttpServlet {
 	    ticket = "1400000";
 	}
 	ticketExp = Long.parseLong(ticket);
+
+	username=getInitParameter("username");
 
 	if ( getInitParameter("domain") == null || 
 	     getInitParameter("domain").equals("")) {
@@ -184,7 +185,10 @@ public class HandleServlet extends HttpServlet {
 	    req.setAttribute("shire", req.getParameter("shire"));
 	    req.setAttribute("target", req.getParameter("target"));
 
-	    he = new HandleEntry(req.getRemoteUser(), req.getAuthType(), ticketExp);
+	    he = new HandleEntry(
+	        (username==null || username.equalsIgnoreCase("REMOTE_USER")) ? req.getRemoteUser() : req.getHeader(username),
+		req.getAuthType(),
+		ticketExp );
 	    log.info("Issued Handle (" + he.getHandle() + ") to (" + he.getUsername() + ")");
 	    hrf.insertHandleEntry( he );
 	    
