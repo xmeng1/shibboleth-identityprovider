@@ -1,39 +1,29 @@
 /*
  * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
- * following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
- * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
- * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
- * software itself, if and wherever such third-party acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
- * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
- * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
- * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
- * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
+ * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
+ * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2
+ * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
+ * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please
+ * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
+ * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
+ * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
+ * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
+ * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.internet2.middleware.shibboleth.hs.provider;
 
 import java.util.HashMap;
@@ -64,18 +54,15 @@ import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
  */
 public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements HSNameIdentifierMapping {
 
-	protected HandleCache cache = HandleCache.instance();
-	private static Logger log = Logger.getLogger(SharedMemoryShibHandle.class.getName());
+	protected HandleCache	cache	= HandleCache.instance();
+	private static Logger	log		= Logger.getLogger(SharedMemoryShibHandle.class.getName());
 
 	public SharedMemoryShibHandle(Element config) throws NameIdentifierMappingException {
 		super(config);
 	}
 
-	public SAMLNameIdentifier getNameIdentifierName(
-		AuthNPrincipal principal,
-		ServiceProvider sProv,
-		IdentityProvider idProv)
-		throws NameIdentifierMappingException {
+	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+			IdentityProvider idProv) throws NameIdentifierMappingException {
 
 		if (principal == null) {
 			log.error("A principal must be supplied for Attribute Query Handle creation.");
@@ -97,12 +84,13 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 	}
 
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
-		throws NameIdentifierMappingException, InvalidNameIdentifierException {
+			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 		synchronized (cache.handleEntries) {
 			if (!cache.handleEntries.containsKey(nameId.getName())) {
 				log.debug("The Name Mapping Cache does not contain an entry for this Attribute Query Handle.");
-				throw new NameIdentifierMappingException("The Name Mapping Cache does not contain an entry for this Attribute Query Handle.");
+				throw new InvalidNameIdentifierException(
+						"The Name Mapping Cache does not contain an entry for this Attribute Query Handle.", errorCodes);
 			}
 		}
 
@@ -116,13 +104,13 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 			synchronized (cache.handleEntries) {
 				cache.handleEntries.remove(nameId.getName());
 			}
-			throw new InvalidNameIdentifierException("Attribute Query Handle is expired.");
+			throw new InvalidNameIdentifierException("Attribute Query Handle is expired.", errorCodes);
 		} else {
 			log.debug("Attribute Query Handle recognized.");
 			return handleEntry.principal;
 		}
 	}
-	
+
 	public void destroy() {
 		cache.destroy();
 	}
@@ -131,13 +119,12 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 
 class HandleCache {
 
-	protected Map handleEntries = new HashMap();
-	private static HandleCache instance;
-	protected MemoryRepositoryCleaner cleaner = new MemoryRepositoryCleaner();
-	private static Logger log = Logger.getLogger(HandleCache.class.getName());
+	protected Map						handleEntries	= new HashMap();
+	private static HandleCache			instance;
+	protected MemoryRepositoryCleaner	cleaner			= new MemoryRepositoryCleaner();
+	private static Logger				log				= Logger.getLogger(HandleCache.class.getName());
 
-	protected HandleCache() {
-	}
+	protected HandleCache() {}
 
 	public static synchronized HandleCache instance() {
 		if (instance == null) {
@@ -151,7 +138,7 @@ class HandleCache {
 		super.finalize();
 		destroy();
 	}
-	
+
 	protected void destroy() {
 		synchronized (cleaner) {
 			if (cleaner != null) {
@@ -163,11 +150,12 @@ class HandleCache {
 
 	private class MemoryRepositoryCleaner extends Thread {
 
-		private boolean shutdown = false;
-		private Thread master;
+		private boolean	shutdown	= false;
+		private Thread	master;
 
 		public MemoryRepositoryCleaner() {
-			super("edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle.HandleCache.MemoryRepositoryCleaner");
+			super(
+					"edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle.HandleCache.MemoryRepositoryCleaner");
 			this.master = Thread.currentThread();
 			setDaemon(true);
 			if (getPriority() > Thread.MIN_PRIORITY) {

@@ -54,7 +54,6 @@ import org.opensaml.SAMLNameIdentifier;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
-import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
@@ -146,7 +145,7 @@ public class HSNameMapper extends NameMapper {
 		HSNameIdentifierMapping mapping = getNameIdentifierMappingById(id);
 
 		if (mapping == null) {
-			throw new InvalidNameIdentifierException("Name Identifier id not registered.");
+			throw new NameIdentifierMappingException("Name Identifier id not registered.");
 		}
 		return mapping.getNameIdentifierName(principal, sProv, idProv);
 	}

@@ -55,7 +55,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
-import org.opensaml.QName;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeQuery;
@@ -79,6 +78,7 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
@@ -252,25 +252,20 @@ public class AAServlet extends HttpServlet {
 
 				//TODO Do something about these silly passthru errors
 
-			} catch (NameIdentifierMappingException e) {
-				log.info("Could not associate the request subject with a principal: " + e);
+			} catch (InvalidNameIdentifierException invalidNameE) {
+				log.info("Could not associate the request subject with a principal: " + invalidNameE);
 				try {
-					//TODO this doesn't always make sense anymore
-					QName[] codes =
-						{
-							SAMLException.REQUESTER,
-							new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle")};
 					if (relyingParty.passThruErrors()) {
 						sendFailure(
 							resp,
 							samlRequest,
-							new SAMLException(Arrays.asList(codes), "The supplied Subject was unrecognized.", e));
+							new SAMLException(Arrays.asList(invalidNameE.getSAMLErrorCodes()), "The supplied Subject was unrecognized.", invalidNameE));
 
 					} else {
 						sendFailure(
 							resp,
 							samlRequest,
-							new SAMLException(Arrays.asList(codes), "The supplied Subject was unrecognized."));
+							new SAMLException(Arrays.asList(invalidNameE.getSAMLErrorCodes()), "The supplied Subject was unrecognized."));
 					}
 					return;
 				} catch (Exception ee) {
