@@ -126,6 +126,9 @@ public class AAResponder {
 							 arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1)});
 				Attribute dAttr =
 					attrs.get(arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1));
+				if (dAttr == null) {
+					continue;	
+				}
 				NamingEnumeration directoryValuesEnum = dAttr.getAll();
 				List directoryValues = new ArrayList();
 				while (directoryValuesEnum.hasMoreElements()) {
