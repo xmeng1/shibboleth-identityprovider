@@ -369,10 +369,12 @@ public class ShibPOSTProfile
         }
         catch (XMLSecurityException e)
         {
+            e.printStackTrace();
             return false;
         }
         catch (GeneralSecurityException e)
         {
+            e.printStackTrace();
             return false;
         }
     }
