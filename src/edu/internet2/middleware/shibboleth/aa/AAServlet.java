@@ -50,6 +50,8 @@
 package edu.internet2.middleware.shibboleth.aa;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -58,6 +60,9 @@ import javax.naming.directory.*;
 import org.opensaml.*;
 import org.w3c.dom.*;
 import edu.internet2.middleware.shibboleth.*;
+import edu.internet2.middleware.shibboleth.aa.arp.AAPrincipal;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
+import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.common.*;
 import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
@@ -81,7 +86,6 @@ public class AAServlet extends HttpServlet {
     String ctxFactory;
     AAResponder responder;
     HandleRepositoryFactory hrf;
-    ArpRepository arpFactory;
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
     public void init()
@@ -101,8 +105,16 @@ public class AAServlet extends HttpServlet {
             // build a properties object to be handed to ArpFactories
             // include all parameters :-(
             Enumeration en = getInitParameterNames();
+            
+            
+            
             Properties defaultProps = new Properties();
-            defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.FileArpRepository.Path", getServletContext().getRealPath("/WEB-INF/conf/arps"));
+            defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path"
+            	, getServletContext().getRealPath("/WEB-INF/conf/arps"));
+            defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation"
+            	, "edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
+            
+            
             Properties props = new Properties(defaultProps);
             while(en.hasMoreElements()){
                 String key = (String)en.nextElement();
@@ -110,12 +122,8 @@ public class AAServlet extends HttpServlet {
                 props.setProperty(key, val);
             }
 
-            arpFactoryMethod = getInitParameter("arpFactoryMethod");
-			if (arpFactoryMethod == null) {
-				arpFactoryMethod = "edu.internet2.middleware.shibboleth.aa.FileArpRepository";	
-			}
-   
-            arpFactory = ArpRepositoryFactory.getInstance(arpFactoryMethod, props);
+			ArpEngine arpEngine = new ArpEngine(props);
+	
 
 	    log.info("Using "+ctxFactory+" as directory for attributes.");
 
@@ -130,7 +138,7 @@ public class AAServlet extends HttpServlet {
 	    
 	    DirContext ctx = new InitialDirContext(env);
 	    
-	    responder = new AAResponder(arpFactory, ctx, myName);
+	    responder = new AAResponder(arpEngine, ctx, myName);
 
 	    hrf = getHandleRepository();
 
@@ -139,6 +147,9 @@ public class AAServlet extends HttpServlet {
 	}catch(NamingException ne){
 	    log.fatal("AA init failed: "+ne);
 	    throw new ServletException("Init failed: "+ne);
+	}catch(ArpException ae){
+	    log.fatal("AA init failed: "+ae);
+	    throw new ServletException("Init failed: "+ae);
 	}catch(AAException ae){
 	    log.fatal("AA init failed: "+ae);
 	    throw new ServletException("Init failed: "+ae);
@@ -164,13 +175,19 @@ public class AAServlet extends HttpServlet {
 	try{
 	    saml = new AASaml(myName);
 	    saml.receive(req);
-	    String resource = saml.getResource();
-	    String handle = saml.getHandle();
+	    
+	    URL resource = null; 
+	    try {
+	    	resource = new URL(saml.getResource());
+	    } catch (MalformedURLException mue) {
+	    	log.error("Request contained an improperly formatted resource identifier.  Attempting to "
+	    		+ "handle request without one.");
+	    }
+	    
 	    String shar = saml.getShar();
-	    log.info("AA: handle:"+handle);
 	    log.info("AA: shar:"+shar);
-
-
+	    String handle = saml.getHandle();
+		log.info("AA: handle:"+handle);
 	    if(handle.equalsIgnoreCase("foo")){
 		// for testing only
 		userName = "dummy"; 
@@ -185,7 +202,7 @@ public class AAServlet extends HttpServlet {
 		}
 	    }
 
-	    attrs = Arrays.asList(responder.getReleaseAttributes(userName, uidSyntax, handle, shar, resource));
+	    attrs = Arrays.asList(responder.getReleaseAttributes(new AAPrincipal(userName), uidSyntax, shar, resource));
 	    log.info("Got " + attrs.size() + " attributes for " + userName);
 	    saml.respond(resp, attrs, null);
 	    log.info("Successfully responded about "+userName);
