@@ -1,43 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ShibbolethOriginConfig xmlns="urn:mace:shibboleth:origin:1.0" xmlns:cred="urn:mace:shibboleth:credentials:1.0" xmlns:name="urn:mace:shibboleth:namemapper:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:origin:1.0 origin.xsd" 
-	AAUrl="http://snc.cc.columbia.edu/shibboleth/AA" defaultRelyingParty="urn:mace:inqueue" 
+	AAUrl="http://therock.cc.columbia.edu:6666/shibboleth/AA" defaultRelyingParty="urn:mace:inqueue" 
 	providerId="urn:mace:inqueue:shibdev.edu">
 
 	<RelyingParty name="urn:mace:inqueue" signingCredential="foo">
 		<HSNameFormat nameMapping="crypto"/>
 	</RelyingParty>
-
-	<RelyingParty name="urn:x-fed1" signingCredential="foo" passThruErrors="true">
-		<HSNameFormat nameMapping="crypto"/>
-	</RelyingParty>
-
-	<RelyingParty name="urn:x-columbia-intranet" signingCredential="foo" providerId="urn:x-columbia-intranet.columbia">
-		<HSNameFormat nameMapping="crypto"/>
-	</RelyingParty>
-
 	
-	<ReleasePolicyEngine  arpTTL="300">
+	<ReleasePolicyEngine>
 		<ArpRepository implementation="edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository">
 			<Path>/conf/arps/</Path>
 		</ArpRepository>
 	</ReleasePolicyEngine>
 	
-	<name:NameMapping xmlns="urn:mace:shibboleth:namemapper:1.0" id="crypto" format="urn:mace:shibboleth:1.0:nameIdentifier" type="CryptoHandleGenerator" handleTTL="1800">
-		<KeyStorePath>/conf/handle.jks</KeyStorePath>
-		<KeyStorePassword>shibhs</KeyStorePassword>
-		<KeyStoreKeyAlias>handlekey</KeyStoreKeyAlias>
-		<KeyStoreKeyPassword>shibhs</KeyStoreKeyPassword>
-	</name:NameMapping>
-
+	<name:NameMapping xmlns="urn:mace:shibboleth:namemapper:1.0" id="crypto" format="urn:mace:shibboleth:1.0:nameIdentifier" type="SharedMemoryShibHandle" handleTTL="1800"/>
 	
-	<cred:Credentials>
-		<cred:KeyStoreResolver Id="foo" storeType="JKS">
-			<cred:Path>/conf/keystore.jks</cred:Path>
-			<cred:KeyAlias>shibhs</cred:KeyAlias>
-			<cred:CertAlias>shibhs</cred:CertAlias>
-			<cred:StorePassword>shibhs</cred:StorePassword>
-			<cred:KeyPassword>shibhs</cred:KeyPassword>
-		</cred:KeyStoreResolver>
+	<cred:Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
+		<FileResolver Id="foo">
+		<Key format="DER">
+			<Path>/conf/shib2.key</Path>
+		</Key>
+		<Certificate format="PEM">
+			<Path>/conf/shib2.crt</Path>
+		</Certificate>
+	</FileResolver>
 	</cred:Credentials>
 
 </ShibbolethOriginConfig>
