@@ -187,7 +187,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	/**
 	 * @see org.opensaml.SAMLObject#toDOM(org.w3c.dom.Document)
 	 */
-	public Node toDOM(Document doc) {
+	public Node toDOM(Document doc, boolean xmlns) {
 
 		Element attributeElement = doc.createElementNS(XML.SAML_NS, "Attribute");
 		attributeElement.setAttributeNS(null, "AttributeName", name);
@@ -195,11 +195,14 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 
 		for (int i = 0; i < values.size(); i++) {
 
-			attributeElement.setAttributeNS(XML.XMLNS_NS, "xmlns:typens", type.getNamespaceURI());
-
+			if (type != null) {
+				attributeElement.setAttributeNS(XML.XMLNS_NS, "xmlns:typens", type.getNamespaceURI());
+			}
 			Element valueElement = doc.createElementNS(XML.SAML_NS, "AttributeValue");
-			valueElement.setAttributeNS(XML.XSI_NS, "xsi:type", "typens:" + type.getLocalName());
-
+			if (type != null) {
+				valueElement.setAttributeNS(XML.XSI_NS, "xsi:type", "typens:" + type.getLocalName());
+			}
+			
 			try {
 				valueHandler.toDOM(valueElement, values.get(i), doc);
 				attributeElement.appendChild(valueElement);
