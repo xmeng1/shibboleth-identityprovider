@@ -94,7 +94,7 @@ public class XML
             throws SAXException, java.io.IOException
         {
             InputSource src = null;
-            if (systemId.endsWith('/' + SHIB_SCHEMA_ID) && Shib_schema != null)
+            if (systemId.endsWith(SHIB_SCHEMA_ID) && Shib_schema != null)
                 src = new InputSource(new ByteArrayInputStream(Shib_schema));
             return src;
         }
