@@ -49,7 +49,7 @@
 
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -80,8 +80,8 @@ public abstract class BaseResolutionPlugIn implements ResolutionPlugIn {
     protected boolean propagateErrors = true;
 
     /** Dependencies. */
-    protected Set connectorDependencyIds = new HashSet();
-    protected Set attributeDependencyIds = new HashSet();
+    protected Set connectorDependencyIds = new LinkedHashSet();
+    protected Set attributeDependencyIds = new LinkedHashSet();
 
 	protected BaseResolutionPlugIn(Element e) throws ResolutionPlugInException {
 		String id = e.getAttribute("id");
