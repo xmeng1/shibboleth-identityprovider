@@ -28,6 +28,10 @@ package edu.internet2.middleware.shibboleth.idp.provider;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -47,6 +51,8 @@ public abstract class BaseHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(BaseHandler.class.getName());
 	private HashSet locations = new HashSet();
+
+	private static Pattern regex = Pattern.compile(".*?CN=([^,/]+).*");
 
 	/**
 	 * Required DOM-based constructor.
@@ -93,6 +99,16 @@ public abstract class BaseHandler implements IdPProtocolHandler {
 	public URI[] getLocations() {
 
 		return (URI[]) locations.toArray(new URI[0]);
+	}
+
+	protected static String getHostNameFromDN(X500Principal dn) {
+
+		Matcher matches = regex.matcher(dn.getName(X500Principal.RFC2253));
+		if (!matches.find() || matches.groupCount() > 1) {
+			log.error("Unable to extract host name name from certificate subject DN.");
+			return null;
+		}
+		return matches.group(1);
 	}
 
 }

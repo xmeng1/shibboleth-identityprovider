@@ -39,7 +39,6 @@ import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
@@ -75,7 +74,7 @@ public abstract class BaseServiceHandler extends BaseHandler implements IdPProto
 			log.info("Inappropriate metadata for provider.");
 			return false;
 		}
-		// TODO figure out what to do about this role business here
+
 		Iterator descriptors = sp.getKeyDescriptors();
 		while (descriptors.hasNext()) {
 			KeyInfo keyInfo = ((KeyDescriptor) descriptors.next()).getKeyInfo();
@@ -101,10 +100,8 @@ public abstract class BaseServiceHandler extends BaseHandler implements IdPProto
 						if (altNames != null) {
 							for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
 								List altName = (List) nameIterator.next();
-								if (altName.get(0).equals(new Integer(2)) || altName.get(0).equals(new Integer(6))) { // 2 is
-									// DNS,
-									// 6 is
-									// URI
+								if (altName.get(0).equals(new Integer(2)) || altName.get(0).equals(new Integer(6))) {
+									// 2 is DNS, 6 is URI
 									if (altName.get(1).equals(keyInfo.itemKeyName(l).getKeyName())) {
 										log.debug("Matched against SubjectAltName.");
 										return true;
@@ -113,16 +110,13 @@ public abstract class BaseServiceHandler extends BaseHandler implements IdPProto
 							}
 						}
 					} catch (CertificateParsingException e1) {
-						log
-								.error("Encountered an problem trying to extract Subject Alternate Name from supplied certificate: "
-										+ e1);
+						log.error("Encountered an problem trying to extract Subject Alternate "
+								+ "Name from supplied certificate: " + e1);
 					}
 
 					// If that doesn't work, try to match using
 					// SSL-style hostname matching
-
-					// TODO stop relying on this class
-					if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
+					if (getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
 							keyInfo.itemKeyName(l).getKeyName())) {
 						log.debug("Matched against hostname.");
 						return true;

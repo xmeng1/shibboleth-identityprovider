@@ -40,10 +40,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
@@ -63,8 +60,6 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContext;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
-// TODO: Do the cert extraction methods belong here? Probably not...
-
 // TODO: Suggest we implement a separation layer between the SP config pieces and the input needed
 // for this class. As long as metadata/etc. are shared, this should work.
 
@@ -75,7 +70,7 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  */
 public class ShibBrowserProfile implements SAMLBrowserProfile {
 
-	private static Pattern	regex		= Pattern.compile(".*?CN=([^,/]+).*");
+
 
 	/** XML Signature algorithm to apply */
 	protected String		algorithm	= XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
@@ -203,14 +198,7 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
         }
     }
 
-    public static String getHostNameFromDN(X500Principal dn) {
-		Matcher matches = regex.matcher(dn.getName(X500Principal.RFC2253));
-		if (!matches.find() || matches.groupCount() > 1) {
-			log.error("Unable to extract host name name from certificate subject DN.");
-			return null;
-		}
-		return matches.group(1);
-	}
+
 
     /**
      * @see org.opensaml.SAMLBrowserProfile#setVersion(int, int)

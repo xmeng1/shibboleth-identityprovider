@@ -28,15 +28,12 @@ package edu.internet2.middleware.shibboleth.aap;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Arrays;
-import java.util.Iterator;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLException;
 import org.opensaml.XML;

@@ -61,7 +61,6 @@ import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
-import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
@@ -105,7 +104,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
 			// Mockup old requester name for requests from < 1.2 targets
 			if (fromLegacyProvider(req)) {
-				String legacyName = ShibBrowserProfile.getHostNameFromDN(credential.getSubjectX500Principal());
+				String legacyName = getHostNameFromDN(credential.getSubjectX500Principal());
 				if (legacyName == null) {
 					log.error("Unable to extract legacy requester name from certificate subject.");
 				}

@@ -67,7 +67,6 @@ import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
-import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
@@ -408,8 +407,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			if (relyingParty.getIdentityProvider().getSigningCredential() == null
 					|| relyingParty.getIdentityProvider().getSigningCredential().getX509Certificate() == null) { throw new SAMLException(
 					"Cannot serve legacy style assertions without an X509 certificate"); }
-			issuer = ShibBrowserProfile.getHostNameFromDN(relyingParty.getIdentityProvider().getSigningCredential()
-					.getX509Certificate().getSubjectX500Principal());
+			issuer = getHostNameFromDN(relyingParty.getIdentityProvider().getSigningCredential().getX509Certificate()
+					.getSubjectX500Principal());
 			if (issuer == null || issuer.equals("")) { throw new SAMLException(
 					"Error parsing certificate DN while determining legacy issuer name."); }
 
