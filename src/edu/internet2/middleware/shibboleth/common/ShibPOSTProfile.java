@@ -141,19 +141,28 @@ public class ShibPOSTProfile
     }
 
     /**
-     *  Locates the first AuthenticationStatement in the response and validates
-     *  the statement and the enclosing assertion with respect to the POST
-     *  profile
+     *  Locates an assertion containing a "bearer" AuthenticationStatement in
+     *  the response and validates the enclosing assertion with respect to the
+     *  POST profile
      *
-     * @param  r                  The response to the accepting site
-     * @return                    An authentication statement
-     * @exception  SAMLException  Base class of exceptions that may be thrown
-     *      during processing
+     * @param  r          The response to the accepting site
+     * @return            An SSO assertion
      */
-    public SAMLAuthenticationStatement getSSOStatement(SAMLResponse r)
-        throws SAMLException
+    public SAMLAssertion getSSOAssertion(SAMLResponse r)
     {
-        return SAMLPOSTProfile.getSSOStatement(r, policies);
+        return SAMLPOSTProfile.getSSOAssertion(r,policies);
+    }
+
+    /**
+     *  Locates a "bearer" AuthenticationStatement in the assertion and
+     *  validates the statement with respect to the POST profile
+     *
+     * @param  a  The SSO assertion sent to the accepting site
+     * @return    A "bearer" authentication statement
+     */
+    public SAMLAuthenticationStatement getSSOStatement(SAMLAssertion a)
+    {
+        return (a==null) ? null : SAMLPOSTProfile.getSSOStatement(a);
     }
 
     /**
@@ -184,29 +193,16 @@ public class ShibPOSTProfile
         // Now we do some more non-crypto (ie. cheap) work to match up the origin site
         // with its associated data. If we can't even find a SSO statement in the response
         // we just return the response to the caller, who will presumably notice this.
-        SAMLAuthenticationStatement sso = SAMLPOSTProfile.getSSOStatement(r, policies);
+        SAMLAssertion assertion = getSSOAssertion(r);
+        if (assertion == null)
+            return r;
+
+        SAMLAuthenticationStatement sso = getSSOStatement(assertion);
         if (sso == null)
             return r;
 
-        // Kind of clunky, we need to get the assertion containing the SSO statement,
-        // currently in a brute force way...
-        SAMLAssertion assertion = null;
-        SAMLAssertion[] assertions = r.getAssertions();
-        for (int i = 0; assertion == null && i < assertions.length; i++)
-        {
-            SAMLStatement[] states = assertions[i].getStatements();
-            for (int j = 0; j < states.length; j++)
-            {
-                if (states[j] == sso)
-                {
-                    assertion = assertions[i];
-                    break;
-                }
-            }
-        }
-
         // Check for replay.
-        if (!checkReplayCache(assertion.getAssertionID(), new Date(assertion.getNotOnOrAfter().getTime() + 300000)))
+        if (!checkReplayCache(assertion))
             throw new SAMLException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() detected a replayed SSO assertion");
 
         // Examine the subject information.
@@ -340,21 +336,19 @@ public class ShibPOSTProfile
     }
 
     /**
-     *  Searches the replay cache for the specified assertion ID and inserts a
-     *  newly seen ID into the cache<P>
+     *  Searches the replay cache for the specified assertion and inserts a
+     *  newly seen assertion into the cache<P>
      *
      *  Also performs garbage collection of the cache by deleting expired
      *  entries.
      *
-     * @param  expires      The datetime at which the specified assertion ID can
-     *      be flushed
-     * @param  assertionID  Description of Parameter
+     * @param  a            The assertion to check
      * @return              true iff the assertion has not been seen before
      */
-    protected synchronized boolean checkReplayCache(String assertionID, Date expires)
+    protected synchronized boolean checkReplayCache(SAMLAssertion a)
     {
         // Default implementation uses the basic replay cache implementation.
-        return SAMLPOSTProfile.checkReplayCache(assertionID, expires);
+        return SAMLPOSTProfile.checkReplayCache(a);
     }
 
     /**

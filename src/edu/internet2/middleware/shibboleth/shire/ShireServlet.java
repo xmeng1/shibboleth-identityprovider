@@ -340,7 +340,7 @@ public class ShireServlet extends HttpServlet {
 				"Dumping parsed SAML Response:" + System.getProperty("line.separator") + bytestr.toString());
 
 			// Get the statement we need.
-			SAMLAuthenticationStatement s = profile.getSSOStatement(r);
+			SAMLAuthenticationStatement s = profile.getSSOStatement(profile.getSSOAssertion(r));
 			if (s == null) {
 				throw new ShireException("The assertion of your Shibboleth identity was missing or incompatible with the policies of this site.");
 			}
