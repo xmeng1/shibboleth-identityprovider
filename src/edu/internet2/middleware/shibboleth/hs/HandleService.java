@@ -233,7 +233,7 @@ public class HandleService extends HttpServlet {
 	private void handleError(
 		HttpServletRequest req,
 		HttpServletResponse res,
-		Exception e) {
+		Exception e) throws ServletException {
 
 		log.warn("Handle Service Failure: " + e);
 
@@ -249,6 +249,7 @@ public class HandleService extends HttpServlet {
 		} catch (ServletException se) {
 			log.error(
 				"Problem trying to display Handle Service error page: " + se);
+				throw se;
 		}
 	}
 
