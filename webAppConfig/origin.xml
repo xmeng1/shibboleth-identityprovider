@@ -105,10 +105,6 @@
 		    <param-value>file</param-value>
 		</init-param>
 
-		<init-param>
-		    <param-name>arpFactoryData</param-name>
-		    <param-value>/tmp/shib2/</param-value>
-		</init-param>
 	</servlet>
       
      <servlet-mapping>
