@@ -1,29 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ShibbolethOriginConfig xmlns="urn:mace:shibboleth:origin:1.0" xmlns:cred="urn:mace:shibboleth:credentials:1.0" xmlns:name="urn:mace:shibboleth:namemapper:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:origin:1.0 origin.xsd" 
-	AAUrl="http://therock.cc.columbia.edu:6666/shibboleth/AA" defaultRelyingParty="urn:mace:inqueue" 
+
+<ShibbolethOriginConfig 
+	xmlns="urn:mace:shibboleth:origin:1.0" 
+	xmlns:cred="urn:mace:shibboleth:credentials:1.0" 
+	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="urn:mace:shibboleth:origin:1.0 origin.xsd" 
+	AAUrl="http://therock.cc.columbia.edu:6666/shibboleth/AA" 
+	defaultRelyingParty="urn:mace:inqueue" 
 	providerId="urn:mace:inqueue:shibdev.edu">
 
 	<RelyingParty name="urn:mace:inqueue" signingCredential="foo">
 		<HSNameFormat nameMapping="crypto"/>
 	</RelyingParty>
-	
+
 	<ReleasePolicyEngine>
 		<ArpRepository implementation="edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository">
 			<Path>/conf/arps/</Path>
 		</ArpRepository>
 	</ReleasePolicyEngine>
-	
-	<name:NameMapping xmlns="urn:mace:shibboleth:namemapper:1.0" id="crypto" format="urn:mace:shibboleth:1.0:nameIdentifier" type="SharedMemoryShibHandle" handleTTL="1800"/>
-	
+
+	<!--
+	<Logging>
+		<Log4JConfig location="file:///tmp/log4j.properties" />
+	</Logging>
+	<Logging>
+		<ErrorLog level="DEBUG" location="file:///tmp/shib-error.log" />
+		<TransactionLog location="file:///tmp/shib-access.log" />
+	</Logging>
+	-->
+
+	<name:NameMapping 
+		xmlns="urn:mace:shibboleth:namemapper:1.0" 
+		id="crypto" 
+		format="urn:mace:shibboleth:1.0:nameIdentifier" 
+		type="SharedMemoryShibHandle" 
+		handleTTL="1800"/>
+
 	<cred:Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
 		<FileResolver Id="foo">
-		<Key format="DER">
-			<Path>/conf/shib2.key</Path>
-		</Key>
-		<Certificate format="PEM">
-			<Path>/conf/shib2.crt</Path>
-		</Certificate>
-	</FileResolver>
+			<Key format="DER">
+				<Path>/conf/shib2.key</Path>
+			</Key>
+			<Certificate format="PEM">
+				<Path>/conf/shib2.crt</Path>
+			</Certificate>
+		</FileResolver>
 	</cred:Credentials>
 
 </ShibbolethOriginConfig>
+

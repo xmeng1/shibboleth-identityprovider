@@ -44,6 +44,7 @@ import java.util.Date;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -66,15 +67,15 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
-import edu.internet2.middleware.shibboleth.common.OriginComponent;
+import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
-public class HandleServlet extends OriginComponent {
+public class HandleServlet extends HttpServlet {
 
 	private static Logger log = Logger.getLogger(HandleServlet.class.getName());
-	private static Logger transactionLog = Logger.getLogger("edu.internet2.middleware.shibboleth.TRANSACTION");
+	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
 
 	private Semaphore throttle;
 	private HSConfig configuration;
@@ -85,7 +86,7 @@ public class HandleServlet extends OriginComponent {
 
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
-		Document originConfig = getOriginConfig();
+		Document originConfig = OriginConfig.getOriginConfig(this.getServletContext());
 
 		//Load global configuration properties
 		configuration = new HSConfig(originConfig.getDocumentElement());

@@ -5,15 +5,11 @@
     "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
-	<servlet>
-		<servlet-name>Logging Service</servlet-name>
-		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
-		<init-param>
-			<param-name>log4jConfigFileLocation</param-name>
-			<param-value>/conf/log4j.properties</param-value>
-		</init-param>
-		<load-on-startup>1</load-on-startup>
-	</servlet>
+
+	<listener> 
+		<listener-class>edu.internet2.middleware.shibboleth.log.LoggingContextListener</listener-class> 
+	</listener>
+
 	<servlet>
 		<servlet-name>HS</servlet-name>
 		<display-name>Shibboleth Handle Service</display-name>
@@ -24,22 +20,22 @@
 		<display-name>Shibboleth Attribute Authority</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
 	</servlet>
-	
+
 	<servlet>
 		<servlet-name>WAYF</servlet-name>
 		<display-name>Shibboleth WAYF Service</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfService</servlet-class>
-                <init-param>
-                    <param-name>SiteConfigFileLocation</param-name>
-                    <param-value>/conf/sites.xml</param-value>
-                </init-param>
+		<init-param>
+			<param-name>SiteConfigFileLocation</param-name>
+			<param-value>/conf/sites.xml</param-value>
+		</init-param>
 	</servlet>
-	
-     <servlet-mapping>
+
+	<servlet-mapping>
 		<servlet-name>WAYF</servlet-name>
 		<url-pattern>/WAYF</url-pattern>
 	</servlet-mapping>
-     <servlet-mapping>
+	<servlet-mapping>
 		<servlet-name>HS</servlet-name>
 		<url-pattern>/HS</url-pattern>
 	</servlet-mapping>
@@ -47,7 +43,7 @@
 		<servlet-name>AA</servlet-name>
 		<url-pattern>/AA</url-pattern>
 	</servlet-mapping>
-	
+
 	<mime-mapping>
 		<extension>css</extension>
 		<mime-type>text/css</mime-type>

@@ -49,6 +49,7 @@ import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -81,7 +82,7 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
-import edu.internet2.middleware.shibboleth.common.OriginComponent;
+import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
@@ -92,7 +93,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
  * @author Walter Hoehn
  */
 
-public class AAServlet extends OriginComponent {
+public class AAServlet extends HttpServlet {
 
 	private AAConfig configuration;
 	protected AAResponder responder;
@@ -128,7 +129,7 @@ public class AAServlet extends OriginComponent {
 
 	protected void loadConfiguration() throws ShibbolethConfigurationException {
 
-		Document originConfig = getOriginConfig();
+		Document originConfig = OriginConfig.getOriginConfig(this.getServletContext());
 
 		//Load global configuration properties
 		configuration = new AAConfig(originConfig.getDocumentElement());

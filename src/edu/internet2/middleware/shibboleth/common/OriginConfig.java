@@ -52,6 +52,7 @@ import java.io.InputStream;
 import java.util.StringTokenizer;
 
 import javax.servlet.http.HttpServlet;
+import javax.servlet.ServletContext;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
@@ -63,14 +64,29 @@ import org.xml.sax.SAXParseException;
 import org.w3c.dom.Document;
 
 /**
- * Shared functionality for origin components.
+ * Constructs a DOM tree for the origin configuration XML file.
  * 
  * @author Walter Hoehn
+ * @author Noah Levitt
  */
-public abstract class OriginComponent extends HttpServlet {
+public class OriginConfig {
 
-	private static Logger log = Logger.getLogger(OriginComponent.class.getName());
+	private static Logger log = Logger.getLogger(OriginConfig.class);
 	private static Document originConfig = null;
+        private static String originConfigFile = null;
+
+	// never returns null
+	private static String getOriginConfigFile(ServletContext context)
+	{
+		if (context.getInitParameter("OriginConfigFile") != null)
+		{
+			return context.getInitParameter("OriginConfigFile");
+		}
+		else
+		{
+			return "/conf/origin.xml";
+		}
+	}
 
 	/**
 	 * Loads the Origin Configuration file into a DOM tree.
@@ -79,14 +95,23 @@ public abstract class OriginComponent extends HttpServlet {
 	 * @throws ShibbolethConfigurationException
 	 *             if there was an error loading the file
 	 */
-	protected synchronized Document getOriginConfig() throws ShibbolethConfigurationException {
-		/*
-		 * synchronized to make sure only one thread attempts to parse the
-		 * config file
-		 */
-		if (originConfig != null) {
+	public static synchronized Document getOriginConfig(ServletContext context) throws ShibbolethConfigurationException 
+	{
+		if (getOriginConfigFile(context).equals(originConfigFile))
+		{
 			return originConfig;
 		}
+		else if (originConfigFile == null)
+		{
+			originConfigFile = getOriginConfigFile(context);
+		}
+		else 
+		{
+			log.error("Previously read origin configuration from (" + originConfigFile + "), re-reading from (" + getOriginConfigFile(context) + "). This probably indicates a bug in shibboleth.");
+			originConfigFile = getOriginConfigFile(context);
+		}
+
+		originConfigFile = context.getInitParameter("OriginConfigFile");
 
 		DOMParser parser = new DOMParser();
 
@@ -106,7 +131,7 @@ public abstract class OriginComponent extends HttpServlet {
 						if (xsdFile.endsWith(".xsd")) {
 							InputStream stream;
 							try {
-								stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
+								stream = new ShibResource("/schemas/" + xsdFile, OriginConfig.class).getInputStream();
 							} catch (IOException ioe) {
 								log.error("Error loading schema: " + xsdFile + ": " + ioe);
 								return null;
@@ -137,18 +162,13 @@ public abstract class OriginComponent extends HttpServlet {
 			throw new ShibbolethConfigurationException("Unable to setup a workable XML parser.");
 		}
 
-		String originConfigFile = getInitParameter("OriginConfigFile");
-		if (originConfigFile == null) {
-			originConfigFile = "/conf/origin.xml";
-		}
-
 		log.debug("Loading Configuration from (" + originConfigFile + ").");
 
 		try {
-			parser.parse(new InputSource(new ShibResource(originConfigFile, this.getClass()).getInputStream()));
+			parser.parse(new InputSource(new ShibResource(originConfigFile, OriginConfig.class).getInputStream()));
 		} catch (SAXException e) {
 			log.error("Error while parsing origin configuration: " + e);
-			throw new ShibbolethConfigurationException("Error while parsing origin configuration.");
+			throw new ShibbolethConfigurationException("Error while parsing origin configuration:" + e);
 		} catch (IOException e) {
 			log.error("Could not load origin configuration: " + e);
 			throw new ShibbolethConfigurationException("Could not load origin configuration.");
@@ -157,5 +177,5 @@ public abstract class OriginComponent extends HttpServlet {
 		originConfig = parser.getDocument();
 
 		return originConfig;
-	}
+        }
 }

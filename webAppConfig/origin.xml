@@ -5,15 +5,15 @@
     "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
-	<servlet>
-		<servlet-name>Logging Service</servlet-name>
-		<servlet-class>edu.internet2.middleware.shibboleth.log.LogServ</servlet-class>
-		<init-param>
-			<param-name>log4jConfigFileLocation</param-name>
-			<param-value>/conf/log4j.properties</param-value>
-		</init-param>
-		<load-on-startup>1</load-on-startup>
-	</servlet>
+	<context-param>
+		<param-name>OriginConfigFile</param-name>
+		<param-value>/conf/origin.xml</param-value>
+	</context-param>
+
+	<listener> 
+		<listener-class>edu.internet2.middleware.shibboleth.log.LoggingContextListener</listener-class> 
+	</listener>
+
 	<servlet>
 		<servlet-name>HS</servlet-name>
 		<display-name>Shibboleth Handle Service</display-name>
@@ -24,8 +24,8 @@
 		<display-name>Shibboleth Attribute Authority</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
 	</servlet>
-	
-     <servlet-mapping>
+
+	<servlet-mapping>
 		<servlet-name>HS</servlet-name>
 		<url-pattern>/HS</url-pattern>
 	</servlet-mapping>
@@ -33,7 +33,7 @@
 		<servlet-name>AA</servlet-name>
 		<url-pattern>/AA</url-pattern>
 	</servlet-mapping>
-	
+
 	<mime-mapping>
 		<extension>css</extension>
 		<mime-type>text/css</mime-type>
