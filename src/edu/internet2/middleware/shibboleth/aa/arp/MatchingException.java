@@ -47,25 +47,15 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.aa.arp.provider;
-
-import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
-import edu.internet2.middleware.shibboleth.aa.arp.MatchingException;
+package edu.internet2.middleware.shibboleth.aa.arp;
 
 /**
- * Match function implementaiton that does regular expression matching on both
- * requesters and resources.
+ * Signals that an error occurred while processing an ARP match function.
  *
  * @author Walter Hoehn (wassa&#064;columbia.edu)
  */
-public class RegexMatchFunction implements MatchFunction {
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.arp.MatchFunction#match(Object,
-	 * 		Object)
-	 */
-	public boolean match(Object arpComponent, Object requestComponent)
-		throws MatchingException
-	{
-		return false;
+public class MatchingException extends ArpException {
+	public MatchingException(String message) {
+		super(message);
 	}
 }

@@ -50,6 +50,12 @@
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
 import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
+import edu.internet2.middleware.shibboleth.aa.arp.MatchingException;
+
+import org.apache.log4j.Logger;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * MatchFuction implementation that does "tail" matching on resources.
@@ -57,10 +63,104 @@ import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
  * @author Walter Hoehn (wassa&#064;columbia.edu)
  */
 public class ResourceTreeMatchFunction implements MatchFunction {
+	private static Logger log = Logger.getLogger(ResourceTreeMatchFunction.class.getName());
+
 	/**
-	 * Constructor for ResourceTreeMatchFunction.
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.MatchFunction#match(Object,
+	 * 		Object)
 	 */
-	public ResourceTreeMatchFunction() {
-		super();
+	public boolean match(Object arpComponent, Object requestComponent)
+		throws MatchingException
+	{
+		if (!(arpComponent instanceof String) && !(requestComponent instanceof URL)) {
+			log.error("Invalid use of ARP matching function (ExacthSharMatchFunction).");
+			throw new MatchingException(
+				"Invalid use of ARP matching function (ExacthSharMatchFunction).");
+		}
+
+		URL arpURL = null;
+
+		try {
+			arpURL = new URL((String) arpComponent);
+		} catch (MalformedURLException e) {
+			log.error(
+				"Invalid use of ARP matching function (ExacthSharMatchFunction): ARP Component is not a URL.");
+			throw new MatchingException(
+				"Invalid use of ARP matching function (ExacthSharMatchFunction).");
+		}
+
+		if (!matchProtocol(arpURL, (URL) requestComponent)) {
+			return false;
+		}
+
+		if (!matchHost(arpURL, (URL) requestComponent)) {
+			return false;
+		}
+
+		if (!matchPort(arpURL, (URL) requestComponent)) {
+			return false;
+		}
+
+		if (!matchPath(arpURL, (URL) requestComponent)) {
+			return false;
+		}
+
+		if (!matchQuery(arpURL, (URL) requestComponent)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	protected boolean matchHost(URL arpURL, URL requestURL) {
+		return arpURL.getHost().equals(requestURL.getHost());
+	}
+
+	protected boolean matchPath(URL arpURL, URL requestURL) {
+		String arpPath = arpURL.getPath();
+
+		if (arpPath.equals("")) {
+			arpPath = "/";
+		}
+
+		String requestPath = requestURL.getPath();
+
+		if (requestPath.equals("")) {
+			requestPath = "/";
+		}
+
+		return requestPath.startsWith(arpPath);
+	}
+
+	protected boolean matchPort(URL arpURL, URL requestURL) {
+		int arpPort = arpURL.getPort();
+
+		if (arpPort < 1) {
+			arpPort = arpURL.getDefaultPort();
+		}
+
+		int requestPort = requestURL.getPort();
+
+		if (requestPort < 1) {
+			requestPort = requestURL.getDefaultPort();
+		}
+
+		if (arpPort == requestPort) {
+			return true;
+		}
+
+		return false;
+	}
+
+	protected boolean matchProtocol(URL arpURL, URL requestURL) {
+		return arpURL.getProtocol().equals(requestURL.getProtocol());
+	}
+
+	protected boolean matchQuery(URL arpURL, URL requestURL) {
+		if (arpURL.getQuery() == null) {
+			return true;
+		}
+
+		return arpURL.getQuery().equals(requestURL.getQuery());
 	}
 }

@@ -49,7 +49,10 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
 
+import org.apache.log4j.Logger;
+
 import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
+import edu.internet2.middleware.shibboleth.aa.arp.MatchingException;
 
 /**
  * Match function that does exact matching on requesters.
@@ -57,10 +60,18 @@ import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
  * @author Walter Hoehn (wassa&#064;columbia.edu)
  */
 public class ExactSharMatchFunction implements MatchFunction {
+	private static Logger log = Logger.getLogger(ExactSharMatchFunction.class.getName());
 	/**
-	 * Constructor for ExactSharMatchFunction.
+	 * @see edu.internet2.middleware.shibboleth.aa.arp.MatchFunction#match(Object,
+	 * 		Object)
 	 */
-	public ExactSharMatchFunction() {
-		super();
+	public boolean match(Object arpComponent, Object requestComponent)
+		throws MatchingException
+	{
+		if (!(arpComponent instanceof String) && !(requestComponent instanceof String)) {
+			log.error("Invalid use of ARP matching function (ExacthSharMatchFunction).");
+			throw new MatchingException("Invalid use of ARP matching function (ExacthSharMatchFunction).");
+		}
+		return arpComponent.equals(requestComponent);
 	}
 }

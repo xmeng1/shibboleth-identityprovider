@@ -55,4 +55,12 @@ package edu.internet2.middleware.shibboleth.aa.arp;
  *
  * @author Walter Hoehn (wassa&#064;columbia.edu)
  */
-public interface MatchFunction {}
+public interface MatchFunction {
+	/**
+	 * Boolean indication of whether the specified ARP component matches the
+	 * specified Request component.  Used to determine if an ARP is applicable
+	 * to a particular request.
+	 */
+	public boolean match(Object arpComponent, Object requestComponent)
+		throws MatchingException;
+}

@@ -51,6 +51,10 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -62,7 +66,7 @@ import org.xml.sax.InputSource;
 /**
  * Validation suite for <code>Arp</code> processing.
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @ author Walter Hoehn(wassa@columbia.edu)
  */
 
 public class ArpTests extends TestCase {
@@ -115,6 +119,125 @@ public class ArpTests extends TestCase {
 				arp2.getAllRules()[0].getDescription());
 		} catch (Exception e) {
 			fail("Failed to marshall ARP.");
+		}
+
+	}
+
+	public void testMatchingFunctions() {
+
+		try {
+
+			/*
+			 * Test Arp Engine function retrieval
+			 */
+
+			//Lookup a function that doesn't exist
+			MatchFunction noFunction =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:dummy"));
+			assertNull("ArpEngine did not return null on dummy function.", noFunction);
+
+			//Lookup some real functions
+			MatchFunction exactSharFunction =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"));
+			assertNotNull("ArpEngine did not properly load the Exact SHAR function.", exactSharFunction);
+			MatchFunction resourceTreeFunction =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"));
+			assertNotNull(
+				"ArpEngine did not properly load the Resource Tree SHAR function.",
+				resourceTreeFunction);
+
+			/* 
+			 * Test the Exact SHAR function
+			 */
+
+			assertTrue(
+				"Exact SHAR function: false negative",
+				exactSharFunction.match("shar.example.edu", "shar.example.edu"));
+			assertTrue(
+				"Exact SHAR function: false negative",
+				!exactSharFunction.match("shar.example.edu", "www.example.edu"));
+			assertTrue(
+				"Exact SHAR function: false negative",
+				!exactSharFunction.match("example.edu", "shar.example.edu"));
+
+			//Make sure we properly handle bad input
+			try {
+				exactSharFunction.match(null, null);
+				fail("Exact SHAR function seems to take improper input without throwing an exception.");
+			} catch (ArpException ie) {
+				//This is supposed to fail
+			}
+
+			/*
+			 * Test the Resource Tree function
+			 */
+
+			URL requestURL1 = new URL("http://www.example.edu/test/");
+			URL requestURL2 = new URL("http://www.example.edu/test/index.html");
+			URL requestURL3 = new URL("http://www.example.edu/test2/index.html");
+			URL requestURL4 = new URL("http://www.example.edu/test2/index.html?test1=test1");
+
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match("http://www.example.edu/", requestURL1));
+			assertTrue(
+				"Resource Tree function: false positive",
+				!resourceTreeFunction.match("https://www.example.edu/", requestURL1));
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match("http://www.example.edu:80/", requestURL1));
+			assertTrue(
+				"Resource Tree function: false positive",
+				!resourceTreeFunction.match("http://www.example.edu:81/", requestURL1));
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match("http://www.example.edu/test/", requestURL1));
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match("http://www.example.edu/test/", requestURL2));
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match("http://www.example.edu/", requestURL3));
+			assertTrue(
+				"Resource Tree function: false positive",
+				!resourceTreeFunction.match("http://www.example.edu/test/", requestURL3));
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match("http://www.example.edu/test2/index.html", requestURL3));
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match("http://www.example.edu/test2/index.html", requestURL4));
+			assertTrue(
+				"Resource Tree function: false negative",
+				resourceTreeFunction.match(
+					"http://www.example.edu/test2/index.html?test1=test1",
+					requestURL4));
+			assertTrue(
+				"Resource Tree function: false positive",
+				!resourceTreeFunction.match(
+					"http://www.example.edu/test2/index.html?test1=test1",
+					requestURL3));
+
+			//Make sure we properly handle bad input
+			try {
+				resourceTreeFunction.match(null, null);
+				fail("Resource Tree function seems to take improper input without throwing an exception.");
+			} catch (ArpException ie) {
+				//This is supposed to fail
+			}
+			try {
+				resourceTreeFunction.match("Test", "Test");
+				fail("Resource Tree function seems to take improper input without throwing an exception.");
+			} catch (ArpException ie) {
+				//This is supposed to fail
+			}
+
+		} catch (ArpException e) {
+			fail("Encountered a problem loading match function: " + e);
+		} catch (URISyntaxException e) {
+			fail("Unable to create URI from test string.");
+		} catch (MalformedURLException e) {
+			fail("Couldn't create test URLs: " + e);
 		}
 
 	}
