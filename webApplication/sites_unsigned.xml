@@ -44,4 +44,14 @@
         <HandleService Location="https://shib.itc.virginia.edu/shibboleth/HS" Name="shib.itc.virginia.edu"/>
         <Domain>virginia.edu</Domain>
     </OriginSite>
+    <OriginSite Name="ucop.edu">
+        <Alias>University of California Shibboleth Pilot</Alias>
+        <HandleService Location="https://dwalker.ucop.edu/shibboleth/HS" Name="dwalker.ucop.edu"/>
+        <Domain>ucop.edu</Domain>
+    </OriginSite>
+    <OriginSite Name="uninett.no">
+        <Alias>uninett</Alias>
+        <HandleService Location="https://shib1.uninett.no/shibboleth/HS" Name="shib1.uninett.no"/>
+        <Domain>uninett.no</Domain>
+    </OriginSite>
 </Sites>
