@@ -62,7 +62,7 @@ public class TrustTests extends TestCase {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	public static void main(String[] args) {
@@ -97,6 +97,43 @@ public class TrustTests extends TestCase {
 			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
 			if (!successful) {
 				fail("Validation should have succeeded.");
+			}
+
+		} catch (MetadataException e) {
+			fail("Error in test specification: " + e);
+		} catch (ResourceNotAvailableException e) {
+			fail("Error in test specification: " + e);
+		} catch (IOException e) {
+			fail("Error in test specification: " + e);
+		} catch (NoSuchAlgorithmException e) {
+			fail("Error in test specification: " + e);
+		} catch (CertificateException e) {
+			fail("Error in test specification: " + e);
+		} catch (KeyStoreException e) {
+			fail("Error in test specification: " + e);
+		}
+	}
+
+	public void testInlineX509CertValidationFail() {
+
+		try {
+			// Pull the role descriptor from example metadata
+			Metadata metadata = new XMLMetadata(new File("data/metadata1.xml").toURL().toString());
+			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
+					"urn:oasis:names:tc:SAML:1.1:protocol");
+
+			// Use a pre-defined cert
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new ShibResource(new File("data/trusttest.jks").toURL().toString()).getInputStream(),
+					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
+			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline2");
+
+			// Try to validate against the metadata
+			Trust validator = new Trust();
+			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			if (successful) {
+				fail("Validation should have failed.");
 			}
 
 		} catch (MetadataException e) {
