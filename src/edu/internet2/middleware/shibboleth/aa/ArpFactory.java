@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Common interface for all ARP repositories.
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 public interface ArpFactory{
 
 

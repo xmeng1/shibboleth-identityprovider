@@ -1,5 +1,13 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Shar node in ARP tree.
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
 import java.io.*;
 import java.util.*;
 import java.security.acl.*;

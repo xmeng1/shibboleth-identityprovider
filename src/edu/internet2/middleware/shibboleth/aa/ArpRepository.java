@@ -1,5 +1,13 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Factory for generating ARP managers/factories.
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
 public class ArpRepository{
 
 

@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Attribute node in ARP tree.
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.io.*;
 import java.util.*;
 import javax.naming.directory.*;

@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  SAML Layer for AA
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.util.*;
 import java.io.IOException;
 import javax.servlet.*;

@@ -1,5 +1,13 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Access Control List Entry for ARPs
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
 import java.util.*;
 import java.io.*;
 import java.security.acl.*;

@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Simple Identity class to get Access Control for  ARPs going.
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.security.*;
 import java.io.*;
 

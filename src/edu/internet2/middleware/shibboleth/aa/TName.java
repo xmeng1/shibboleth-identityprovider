@@ -1,5 +1,13 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Tokenized form of a resource.
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
 import java.io.*;
 import java.util.*;
 class TName implements Serializable{

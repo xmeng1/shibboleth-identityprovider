@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Handles Initialization and incoming requests to AA
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.io.*;
 import java.util.*;
 import javax.servlet.*;
@@ -9,6 +18,7 @@ import javax.naming.directory.*;
 import org.opensaml.*;
 import org.w3c.dom.*;
 import edu.internet2.middleware.shibboleth.*;
+import edu.internet2.middleware.shibboleth.common.*;
 import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
 import org.apache.log4j.Logger;
@@ -98,11 +108,7 @@ public class AAServlet extends HttpServlet {
 	    log.info("AA: issuer:"+issuedBy);
 	    log.info("AA: shar:"+shar);
 
-	    // get HS and convert handle to userName
-	    ServletConfig sc = getServletConfig();
-	    ServletContext sctx = sc.getServletContext(); 
-	    hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
-	    log.debug("Context aTTR: "+sctx.getAttribute("HandleRepository"));
+	    hrf = getHandleRepository();
 
 	    if(handle.equalsIgnoreCase("foo")){
 		// for testing only
@@ -152,5 +158,27 @@ public class AAServlet extends HttpServlet {
 
 	}
     }
+
+
+    private synchronized HandleRepositoryFactory getHandleRepository()
+	throws HandleException{
+
+	ServletConfig sc = getServletConfig();
+	ServletContext sctx = sc.getServletContext(); 
+	HandleRepositoryFactory hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
+
+	log.debug("Context attribute for HandleRepository: "+hrf);
+	    
+	    
+	if(hrf == null){
+	    // make one
+	    String repositoryType = this.getServletContext().getInitParameter("repository");
+	    hrf = HandleRepositoryFactory.getInstance(						      Constants.POLICY_CLUBSHIB, 
+												      repositoryType,
+												      this );
+	}
+	return hrf;
+    }
+
 
 }

@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aa;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Simple permissions on ARPs
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.security.acl.*;
 import java.io.*;
 public class AA_Permission implements java.security.acl.Permission, Serializable{
