@@ -175,8 +175,8 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			}
 
 			// TODO Provide a mechanism for the authenticator to specify the auth time
-			SAMLAssertion[] assertions = generateAssertion(request, relyingParty, provider, nameId,
-					authenticationMethod, new Date(System.currentTimeMillis()));
+
+			ArrayList assertions = new ArrayList();
 
 			// TODO do assertion signing for artifact stuff
 
@@ -184,10 +184,14 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			if (useArtifactProfile(provider, acceptanceURL)) {
 				log.debug("Responding with Artifact profile.");
 
+				assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod,
+						new Date(System.currentTimeMillis()), false));
+
 				// Create artifacts for each assertion
 				ArrayList artifacts = new ArrayList();
-				for (int i = 0; i < assertions.length; i++) {
-					artifacts.add(support.getArtifactMapper().generateArtifact(assertions[i], relyingParty));
+				for (int i = 0; i < assertions.size(); i++) {
+					artifacts.add(support.getArtifactMapper().generateArtifact((SAMLAssertion) assertions.get(i),
+							relyingParty));
 				}
 
 				// Assemble the query string
@@ -204,7 +208,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 					Artifact artifact = (Artifact) iterator.next();
 					artifactBuffer.append("(" + artifact + ")");
 					destination.append("&SAMLart=");
-					destination.append(artifact.encode());
+					destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
 				}
 
 				log.debug("Redirecting to (" + destination.toString() + ").");
@@ -219,10 +223,14 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 				// SAML POST profile
 			} else {
 				log.debug("Responding with POST profile.");
+
+				assertions.add(generateAuthNAssertion(request, relyingParty, provider, nameId, authenticationMethod,
+						new Date(System.currentTimeMillis()), true));
+
 				request.setAttribute("acceptanceURL", acceptanceURL);
 				request.setAttribute("target", request.getParameter("target"));
 
-				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, Arrays.asList(assertions), null);
+				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, assertions, null);
 				IdPProtocolSupport.addSignatures(samlResponse, relyingParty, provider, true);
 				createPOSTForm(request, response, samlResponse.toBase64());
 
@@ -247,9 +255,9 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 		return null;
 	}
 
-	private SAMLAssertion[] generateAssertion(HttpServletRequest request, RelyingParty relyingParty,
-			EntityDescriptor provider, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime)
-			throws SAMLException, IOException {
+	private SAMLAssertion generateAuthNAssertion(HttpServletRequest request, RelyingParty relyingParty,
+			EntityDescriptor provider, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime,
+			boolean bearerConfirmation) throws SAMLException, IOException {
 
 		Document doc = org.opensaml.XML.parserPool.newDocument();
 
@@ -292,23 +300,25 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 		Vector conditions = new Vector(1);
 		if (audiences != null && audiences.size() > 0) conditions.add(new SAMLAudienceRestrictionCondition(audiences));
 
-		String[] confirmationMethods = {SAMLSubject.CONF_BEARER};
+		String[] confirmationMethods = null;
+		if (bearerConfirmation) {
+			confirmationMethods = new String[]{SAMLSubject.CONF_BEARER};
+		}
+
 		SAMLSubject subject = new SAMLSubject(nameId, Arrays.asList(confirmationMethods), null, null);
 
 		SAMLStatement[] statements = {new SAMLAuthenticationStatement(subject, authenticationMethod, authTime, request
 				.getRemoteAddr(), null, bindings)};
 
-		SAMLAssertion[] assertions = {new SAMLAssertion(issuer, new Date(System.currentTimeMillis()), new Date(System
-				.currentTimeMillis() + 300000), conditions, null, Arrays.asList(statements))};
+		SAMLAssertion assertion = new SAMLAssertion(issuer, new Date(System.currentTimeMillis()), new Date(System
+				.currentTimeMillis() + 300000), conditions, null, Arrays.asList(statements));
 
 		if (log.isDebugEnabled()) {
-			log.debug("Dumping generated SAML Assertions:"
-					+ System.getProperty("line.separator")
-					+ new String(new BASE64Decoder().decodeBuffer(new String(assertions[0].toBase64(), "ASCII")),
-							"UTF8"));
+			log.debug("Dumping generated SAML Assertions:" + System.getProperty("line.separator")
+					+ new String(new BASE64Decoder().decodeBuffer(new String(assertion.toBase64(), "ASCII")), "UTF8"));
 		}
 
-		return assertions;
+		return assertion;
 	}
 
 	/*
