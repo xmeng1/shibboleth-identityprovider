@@ -28,6 +28,7 @@ package edu.internet2.middleware.shibboleth.idp;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.security.Principal;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
@@ -40,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.security.auth.x500.X500Principal;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServletRequest;
@@ -61,6 +63,7 @@ import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLIdentifier;
+import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
@@ -82,6 +85,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverExcept
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
 import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
@@ -96,10 +100,16 @@ import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
+import edu.internet2.middleware.shibboleth.hs.HSConfig;
+import edu.internet2.middleware.shibboleth.hs.HSNameMapper;
+import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
+import edu.internet2.middleware.shibboleth.hs.HSServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
+import edu.internet2.middleware.shibboleth.metadata.Endpoint;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Provider;
 import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
+import edu.internet2.middleware.shibboleth.metadata.SPProviderRole;
 
 /**
  * Primary entry point for requests to the SAML IdP. Listens on multiple endpoints, routes requests to the appropriate
@@ -113,18 +123,27 @@ public class IdPResponder extends TargetFederationComponent {
 	//TODO Maybe should rethink the inheritance here, since there is only one
 	// servlet
 
-	private static Logger			transactionLog	= Logger.getLogger("Shibboleth-TRANSACTION");
-	private static Logger			log				= Logger.getLogger(IdPResponder.class.getName());
-	private SAMLBinding				binding;
-	private ArtifactMapper			artifactMapper;
+	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
+	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
+	private SAMLBinding binding;
+	private Semaphore throttle;
+	private ArtifactMapper artifactMapper;
+	private SSOProfileHandler[] profileHandlers;
 
 	//TODO Obviously this has got to be unified
-	private AAConfig				configuration;
-	private NameMapper				nameMapper;
-	private AAServiceProviderMapper	targetMapper;
+	private AAConfig configuration;
+	private HSConfig hsConfiguration;
+
+	//TODO unify
+	private NameMapper nameMapper;
+	private HSNameMapper hsNameMapper;
+
+	//TODO unify
+	private AAServiceProviderMapper targetMapper;
+	private HSServiceProviderMapper hsTargetMapper;
 
 	//TODO Need to rename, rework, and init
-	private AAResponder				responder;
+	private AAResponder responder;
 
 	public void init() throws ServletException {
 
@@ -150,6 +169,7 @@ public class IdPResponder extends TargetFederationComponent {
 	}
 
 	private void loadConfiguration() throws ShibbolethConfigurationException {
+
 		Document originConfig = OriginConfig.getOriginConfig(this.getServletContext());
 
 		//TODO I think some of the failure cases here are different than in the
@@ -321,6 +341,7 @@ public class IdPResponder extends TargetFederationComponent {
 	private void processAttributeQuery(SAMLRequest samlRequest, HttpServletRequest request, HttpServletResponse response)
 			throws SAMLException, IOException, ServletException, AAException, InvalidNameIdentifierException,
 			NameIdentifierMappingException {
+
 		//TODO validate that the endpoint is valid for the request type
 
 		AARelyingParty relyingParty = null;
@@ -371,7 +392,6 @@ public class IdPResponder extends TargetFederationComponent {
 		Principal principal = nameMapper.getPrincipal(attributeQuery.getSubject().getName(), relyingParty, relyingParty
 				.getIdentityProvider());
 		log.info("Request is for principal (" + principal.getName() + ").");
-		//TODO probably need to move this error handing out
 
 		SAMLAttribute[] attrs;
 		Iterator requestedAttrsIterator = attributeQuery.getDesignators();
@@ -422,13 +442,15 @@ public class IdPResponder extends TargetFederationComponent {
 
 	private void processArtifactDereference(SAMLRequest samlRequest, HttpServletRequest request,
 			HttpServletResponse response) throws SAMLException, IOException {
+
 		//TODO validate that the endpoint is valid for the request type
 		//TODO how about signatures on artifact dereferencing
 
 		// Pull credential from request
 		X509Certificate credential = getCredentialFromProvider(request);
 		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
-			//The spec says that mutual authentication is required for the artifact profile
+			//The spec says that mutual authentication is required for the
+			// artifact profile
 			log.info("Request is from an unauthenticated service provider.");
 			throw new SAMLException(SAMLException.REQUESTER,
 					"SAML Artifacts cannot be dereferenced for unauthenticated requesters.");
@@ -441,7 +463,9 @@ public class IdPResponder extends TargetFederationComponent {
 		Iterator artifacts = samlRequest.getArtifacts();
 
 		int queriedArtifacts = 0;
-		StringBuffer dereferencedArtifacts = new StringBuffer(); //for transaction log
+		StringBuffer dereferencedArtifacts = new StringBuffer(); //for
+		// transaction
+		// log
 		while (artifacts.hasNext()) {
 			queriedArtifacts++;
 			String artifact = (String) artifacts.next();
@@ -480,7 +504,8 @@ public class IdPResponder extends TargetFederationComponent {
 				SAMLException.REQUESTER, "Unable to successfully dereference all artifacts."); }
 
 		//Create and send response
-		// The spec says that we should send "success" in the case where no artifacts match
+		// The spec says that we should send "success" in the case where no
+		// artifacts match
 		SAMLResponse samlResponse = new SAMLResponse(samlRequest.getId(), null, assertions, null);
 
 		if (log.isDebugEnabled()) {
@@ -506,9 +531,169 @@ public class IdPResponder extends TargetFederationComponent {
 		MDC.put("serviceId", "[IdP] " + new SAMLIdentifier().toString());
 		MDC.put("remoteAddr", request.getRemoteAddr());
 		log.debug("Recieved a request via GET.");
+		log.info("Handling authN request.");
+
+		try {
+			throttle.enter();
+
+			//Ensure that we have the required data from the servlet container
+			validateEngineData(request);
+
+			//Determine which profile of SAML we are responding to (at this point, Shib vs. EAuth)
+			SSOProfileHandler activeHandler = null;
+			for (int i = 0; i < profileHandlers.length; i++) {
+				if (profileHandlers[i].validForRequest(request)) {
+					activeHandler = profileHandlers[i];
+					break;
+				}
+			}
+			if (activeHandler == null) { throw new InvalidClientDataException(
+					"The request did not contain sufficient parameter data to determine the protocol."); }
+
+			//Run profile specific preprocessing
+			if (activeHandler.preProcessHook(request, response)) { return; }
+
+			//Get the authN info
+			String username = hsConfiguration.getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
+					.getRemoteUser() : request.getHeader(hsConfiguration.getAuthHeaderName());
+
+			//Select the appropriate Relying Party configuration for the request
+			HSRelyingParty relyingParty = null;
+			String remoteProviderId = activeHandler.getRemoteProviderId(request);
+			//If the target did not send a Provider Id, then assume it is a Shib
+			// 1.1 or older target
+			if (remoteProviderId == null) {
+				relyingParty = hsTargetMapper.getLegacyRelyingParty();
+			} else if (remoteProviderId.equals("")) {
+				throw new InvalidClientDataException("Invalid service provider id.");
+			} else {
+				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
+				relyingParty = hsTargetMapper.getRelyingParty(remoteProviderId);
+			}
+
+			//Grab the metadata for the provider
+			Provider provider = lookup(relyingParty.getProviderId());
+
+			//Use profile-specific method for determining the acceptance URL
+			String acceptanceURL = activeHandler.getAcceptanceURL(request, relyingParty, provider);
+
+			//Make sure that the selected relying party configuration is appropriate for this
+			//acceptance URL
+			if (!relyingParty.isLegacyProvider()) {
+
+				if (provider == null) {
+					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+					relyingParty = hsTargetMapper.getRelyingParty(null);
+
+				} else {
+
+					if (isValidAssertionConsumerURL(provider, acceptanceURL)) {
+						log.info("Supplied consumer URL validated for this provider.");
+					} else {
+						log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
+								+ relyingParty.getProviderId() + ").");
+						throw new InvalidClientDataException("Invalid assertion consumer service URL.");
+					}
+				}
+			}
+
+			//Create SAML Name Identifier
+			SAMLNameIdentifier nameId = hsNameMapper.getNameIdentifierName(relyingParty.getHSNameFormatId(),
+					new AuthNPrincipal(username), relyingParty, relyingParty.getIdentityProvider());
+
+			String authenticationMethod = request.getHeader("SAMLAuthenticationMethod");
+			if (authenticationMethod == null || authenticationMethod.equals("")) {
+				authenticationMethod = relyingParty.getDefaultAuthMethod().toString();
+				log.debug("User was authenticated via the default method for this relying party ("
+						+ authenticationMethod + ").");
+			} else {
+				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
+			}
+
+			//We might someday want to provide a mechanism for the authenticator to specify the auth time
+			SAMLAssertion[] assertions = activeHandler.processHook(request, relyingParty, provider, nameId,
+					authenticationMethod, new Date(System.currentTimeMillis()));
+
+			// SAML Artifact profile
+			if (useArtifactProfile(provider, acceptanceURL)) {
+				log.debug("Responding with Artifact profile.");
+
+				// Create artifacts for each assertion
+				ArrayList artifacts = new ArrayList();
+				for (int i = 0; i < assertions.length; i++) {
+					artifacts.add(artifactMapper.generateArtifact(assertions[i], relyingParty));
+				}
+
+				// Assemble the query string
+				StringBuffer destination = new StringBuffer(acceptanceURL);
+				destination.append("?TARGET=");
+				destination.append(URLEncoder.encode(activeHandler.getSAMLTargetParameter(request, relyingParty,
+						provider), "UTF-8"));
+				Iterator iterator = artifacts.iterator();
+				StringBuffer artifactBuffer = new StringBuffer(); //Buffer for the transaction log
+				while (iterator.hasNext()) {
+					destination.append("&SAMLart=");
+					String artifact = (String) iterator.next();
+					destination.append(URLEncoder.encode(artifact, "UTF-8"));
+					artifactBuffer.append("(" + artifact + ")");
+				}
+				log.debug("Redirecting to (" + destination.toString() + ").");
+				response.sendRedirect(destination.toString()); //Redirect to the artifact receiver
+
+				transactionLog.info("Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
+						+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal (" + username
+						+ "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
+						+ nameId.getFormat() + ").");
+
+				// SAML POST profile
+			} else {
+				log.debug("Responding with POST profile.");
+				request.setAttribute("acceptanceURL", acceptanceURL);
+				request.setAttribute("target", activeHandler.getSAMLTargetParameter(request, relyingParty, provider));
+
+				SAMLResponse samlResponse = new SAMLResponse(null, acceptanceURL, Arrays.asList(assertions), null);
+				addSignatures(samlResponse, relyingParty);
+				createPOSTForm(request, response, samlResponse.toBase64());
+
+				// Make transaction log entry
+				if (relyingParty.isLegacyProvider()) {
+					transactionLog.info("Authentication assertion issued to legacy provider (SHIRE: "
+							+ request.getParameter("shire") + ") on behalf of principal (" + username
+							+ ") for resource (" + request.getParameter("target") + "). Name Identifier: ("
+							+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
+				} else {
+					transactionLog.info("Authentication assertion issued to provider ("
+							+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+							+ username + "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
+							+ nameId.getFormat() + ").");
+				}
+			}
+
+			//TODO profile specific error handling
+		} catch (NameIdentifierMappingException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} catch (InvalidClientDataException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} catch (SAMLException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} catch (InterruptedException ex) {
+			log.error(ex);
+			handleSSOError(request, response, ex);
+			return;
+		} finally {
+			throttle.exit();
+		}
+
 	}
 
 	private static X509Certificate getCredentialFromProvider(HttpServletRequest req) {
+
 		X509Certificate[] certArray = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
 		if (certArray != null && certArray.length > 0) { return certArray[0]; }
 		return null;
@@ -591,6 +776,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 	private void sendSAMLFailureResponse(HttpServletResponse httpResponse, SAMLRequest samlRequest,
 			SAMLException exception) throws IOException {
+
 		try {
 			SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
 					null, exception);
@@ -614,6 +800,7 @@ public class IdPResponder extends TargetFederationComponent {
 	}
 
 	private static boolean fromLegacyProvider(HttpServletRequest request) {
+
 		String version = request.getHeader("Shibboleth");
 		if (version != null) {
 			log.debug("Request from Shibboleth version: " + version);
@@ -748,6 +935,8 @@ public class IdPResponder extends TargetFederationComponent {
 
 	private static void addSignatures(SAMLResponse reponse, RelyingParty relyingParty) throws SAMLException {
 
+		//TODO make sure this signing optionally happens according to origin.xml params
+
 		//Sign the assertions, if appropriate
 		if (relyingParty.getIdentityProvider().getAssertionSigningCredential() != null
 				&& relyingParty.getIdentityProvider().getAssertionSigningCredential().getPrivateKey() != null) {
@@ -759,7 +948,7 @@ public class IdPResponder extends TargetFederationComponent {
 				assertionAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(SAMLException.RESPONDER,
-						"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
+						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
 			}
 
 			((SAMLAssertion) reponse.getAssertions().next()).sign(assertionAlgorithm, relyingParty
@@ -778,7 +967,7 @@ public class IdPResponder extends TargetFederationComponent {
 				responseAlgorithm = XMLSignature.ALGO_ID_SIGNATURE_DSA;
 			} else {
 				throw new InvalidCryptoException(SAMLException.RESPONDER,
-						"ShibPOSTProfile.prepare() currently only supports signing with RSA and DSA keys.");
+						"The Shibboleth IdP currently only supports signing with RSA and DSA keys.");
 			}
 
 			reponse.sign(responseAlgorithm, relyingParty.getIdentityProvider().getResponseSigningCredential()
@@ -787,11 +976,148 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 	}
 
-	class InvalidProviderCredentialException extends Exception {
+	private boolean useArtifactProfile(Provider provider, String acceptanceURL) {
+
+		//Default to POST if we have no metadata
+		if (provider == null) { return false; }
+
+		//Default to POST if we have incomplete metadata
+		ProviderRole[] roles = provider.getRoles();
+		if (roles.length == 0) { return false; }
+
+		for (int i = 0; roles.length > i; i++) {
+			if (roles[i] instanceof SPProviderRole) {
+				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
+
+				for (int j = 0; endpoints.length > j; j++) {
+					if (acceptanceURL.equals(endpoints[j].getLocation())
+							&& "urn:oasis:names:tc:SAML:1.0:profiles:artifact-01".equals(endpoints[j].getBinding())) { return true; }
+				}
+			}
+		}
+		//Default to POST if we have incomplete metadata
+		return false;
+	}
+
+	protected static void validateEngineData(HttpServletRequest req) throws InvalidClientDataException {
+
+		if ((req.getRemoteUser() == null) || (req.getRemoteUser().equals(""))) { throw new InvalidClientDataException(
+				"Unable to authenticate remote user"); }
+		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) { throw new InvalidClientDataException(
+				"Unable to obtain client address."); }
+	}
+
+	protected static boolean isValidAssertionConsumerURL(Provider provider, String shireURL)
+			throws InvalidClientDataException {
+
+		ProviderRole[] roles = provider.getRoles();
+		if (roles.length == 0) {
+			log.info("Inappropriate metadata for provider.");
+			return false;
+		}
+
+		for (int i = 0; roles.length > i; i++) {
+			if (roles[i] instanceof SPProviderRole) {
+				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
+				for (int j = 0; endpoints.length > j; j++) {
+					if (shireURL.equals(endpoints[j].getLocation())) { return true; }
+				}
+			}
+		}
+		log.info("Supplied consumer URL not found in metadata.");
+		return false;
+	}
+
+	protected void createPOSTForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,
+			ServletException {
+
+		//Hardcoded to ASCII to ensure Base64 encoding compatibility
+		req.setAttribute("assertion", new String(buf, "ASCII"));
+
+		if (log.isDebugEnabled()) {
+			try {
+				log.debug("Dumping generated SAML Response:" + System.getProperty("line.separator")
+						+ new String(new BASE64Decoder().decodeBuffer(new String(buf, "ASCII")), "UTF8"));
+			} catch (IOException e) {
+				log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+			}
+		}
+
+		//TODO rename from hs.jsp to more appropriate name
+		RequestDispatcher rd = req.getRequestDispatcher("/hs.jsp");
+		rd.forward(req, res);
+	}
+
+	protected void handleSSOError(HttpServletRequest req, HttpServletResponse res, Exception e)
+			throws ServletException, IOException {
+
+		req.setAttribute("errorText", e.toString());
+		req.setAttribute("requestURL", req.getRequestURI().toString());
+		RequestDispatcher rd = req.getRequestDispatcher("/hserror.jsp");
+		//TODO rename hserror.jsp to a more appropriate name
+		rd.forward(req, res);
+	}
+
+	private class Semaphore {
+
+		private int value;
+
+		public Semaphore(int value) {
+
+			this.value = value;
+		}
+
+		public synchronized void enter() throws InterruptedException {
+
+			--value;
+			if (value < 0) {
+				wait();
+			}
+		}
+
+		public synchronized void exit() {
+
+			++value;
+			notify();
+		}
+	}
+
+	private class InvalidProviderCredentialException extends Exception {
 
 		public InvalidProviderCredentialException(String message) {
+
 			super(message);
 		}
+	}
+
+	abstract class SSOProfileHandler {
+
+		abstract String getHandlerName();
+
+		abstract String getRemoteProviderId(HttpServletRequest req);
+
+		abstract boolean validForRequest(HttpServletRequest request);
+
+		abstract boolean preProcessHook(HttpServletRequest request, HttpServletResponse response) throws IOException;
+
+		abstract SAMLAssertion[] processHook(HttpServletRequest request, HSRelyingParty relyingParty,
+				Provider provider, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime)
+				throws SAMLException, IOException;
+
+		abstract String getSAMLTargetParameter(HttpServletRequest request, HSRelyingParty relyingParty,
+				Provider provider);
+
+		abstract String getAcceptanceURL(HttpServletRequest request, HSRelyingParty relyingParty, Provider provider)
+				throws InvalidClientDataException;
+	}
+
+}
+
+class InvalidClientDataException extends Exception {
+
+	public InvalidClientDataException(String message) {
+
+		super(message);
 	}
 
 }
