@@ -129,6 +129,8 @@
 								<xs:attribute name="maxActive" type="xs:integer" use="optional"/>
 								<xs:attribute name="maxIdle" type="xs:integer" use="optional"/>
 								<xs:attribute name="maxWait" type="xs:integer" use="optional"/>
+								<xs:attribute name="minResultSet" type="xs:integer" use="optional"/>
+								<xs:attribute name="maxResultSet" type="xs:integer" use="optional"/>
 							</xs:extension>
 						</xs:complexContent>
 					</xs:complexType>

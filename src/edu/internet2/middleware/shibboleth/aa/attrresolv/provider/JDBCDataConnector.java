@@ -88,6 +88,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 
 	private static Logger log = Logger.getLogger(JDBCDataConnector.class.getName());
 	protected String searchVal;
+    protected int minResultSet=0,maxResultSet=0;
 	protected DataSource dataSource;
 	protected JDBCAttributeExtractor extractor;
 	protected JDBCStatementCreator statementCreator;
@@ -118,6 +119,17 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			validationQuery = "select 1";
 		}
 
+        try {
+            if (e.getAttributeNode("minResultSet") != null) {
+                minResultSet = Integer.parseInt(e.getAttribute("minResultSet"));
+            }
+            if (e.getAttributeNode("maxResultSet") != null) {
+                maxResultSet = Integer.parseInt(e.getAttribute("maxResultSet"));
+            }
+        } catch (NumberFormatException ex) {
+            log.error("Malformed result set limits: using defaults.");
+        }
+        
 		//Load site-specific implementation classes	
 		setupAttributeExtractor(
 			(Element) e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "AttributeExtractor").item(
@@ -324,9 +336,14 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 			statementCreator.create(preparedStatement, principal, requester, depends);
 			rs = preparedStatement.executeQuery();
 			if (!rs.next()) {
-				return new BasicAttributes();
+                if (minResultSet == 0)
+                	return new BasicAttributes();
+                else {
+                    log.error("Statement returned no rows, violating minResultSet of " + minResultSet);
+                    throw new ResolutionPlugInException("Statement didn't return any rows, violating minResultSet of " + minResultSet);
+                }
 			}
-            return extractor.extractAttributes(rs);
+            return extractor.extractAttributes(rs,minResultSet,maxResultSet);
 		} catch (JDBCStatementCreatorException e) {
 			log.error("An ERROR occured while constructing the query");
 			throw new ResolutionPlugInException("An ERROR occured while constructing the query: " + e.getMessage());
@@ -512,14 +529,7 @@ class DefaultAE implements JDBCAttributeExtractor {
 
 	private static Logger log = Logger.getLogger(DefaultAE.class.getName());
 
-	/**
-	 * Method of extracting the attributes from the supplied result set.
-	 *
-	 * @param ResultSet The result set from the query which contains the attributes
-	 * @return BasicAttributes as objects containing all the attributes
-	 * @throws JDBCAttributeExtractorException If there is a complication in retrieving the attributes
-	 */
-	public BasicAttributes extractAttributes(ResultSet rs) throws JDBCAttributeExtractorException {
+	public BasicAttributes extractAttributes(ResultSet rs, int minResultSet, int maxResultSet) throws JDBCAttributeExtractorException {
 		BasicAttributes attributes = new BasicAttributes();
         int row = 0;
         
@@ -530,6 +540,11 @@ class DefaultAE implements JDBCAttributeExtractor {
             log.debug("Number of returned columns: " + numColumns);
 
             do {
+                if (maxResultSet > 0 && row + 1 > maxResultSet) {
+                    log.error("Statement returned too many rows, violating maxResultSet of " + maxResultSet);
+                    throw new JDBCAttributeExtractorException("Statement returned too many rows, violating maxResultSet of " + maxResultSet);
+                }
+
                 for (int i = 1; i <= numColumns; i++) {
                     String columnName = rsmd.getColumnName(i);
                     Object columnValue = rs.getObject(columnName);
@@ -560,6 +575,10 @@ class DefaultAE implements JDBCAttributeExtractor {
 				"An ERROR occured while processing result set: " + e.getMessage());
 		}
 
+        if (row < minResultSet) {
+            log.error("Statement returned " + row + " rows, violating minResultSet of " + minResultSet);
+            throw new JDBCAttributeExtractorException("Statement returned " + row + " rows, violating minResultSet of " + minResultSet);
+        }
 		return attributes;
 	}
 }

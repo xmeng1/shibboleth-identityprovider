@@ -52,10 +52,12 @@ public interface JDBCAttributeExtractor {
 	/**
 	 * Method of extracting the attributes from the supplied result set.
 	 *
-	 * @param ResultSet The result set from the query which contains the attributes
+	 * @param rs The result set from the query which contains the attributes
+     * @param minResultSet The minimum number of rows that constitutes successful extraction
+     * @param maxResultSet The maximum number of rows that constitutes successful extraction
 	 * @return BasicAttributes as objects containing all the attributes
 	 * @throws JDBCAttributeExtractorException If there is a complication in retrieving the attributes
 	 */
-	public BasicAttributes extractAttributes(ResultSet rs) throws JDBCAttributeExtractorException;
-
+	public BasicAttributes extractAttributes(ResultSet rs, int minResultSet, int maxResultSet)
+        throws JDBCAttributeExtractorException;
 }
