@@ -51,6 +51,7 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -84,8 +85,6 @@ public class ArpTests extends TestCase {
 		junit.textui.TestRunner.run(ArpTests.class);
 		BasicConfigurator.configure();
 	}
-	
-
 
 	public void testArpMarshalling() {
 
@@ -401,7 +400,7 @@ public class ArpTests extends TestCase {
 					new URI("urn:mace:eduPerson:1.0:eduPersonAffiliation"),
 					new URI("urn:mace:eduPerson:1.0:eduPersonPrincipalName")};
 			URI[] list3 = new URI[0];
-					
+
 			//Test with just a site ARP
 			InputStream inStream = new FileInputStream("test/arp1.xml");
 			DOMParser parser = new DOMParser();
@@ -412,7 +411,9 @@ public class ArpTests extends TestCase {
 			ArpEngine engine = new ArpEngine(repository, props);
 			URI[] possibleAttributes =
 				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertTrue("Incorrectly computed possible release set.", Arrays.equals(possibleAttributes, list1));
+			assertTrue(
+				"Incorrectly computed possible release set.",
+				Arrays.equals(possibleAttributes, list1));
 
 			//Test with site and user ARPs
 			inStream = new FileInputStream("test/arp7.xml");
@@ -422,8 +423,10 @@ public class ArpTests extends TestCase {
 			arp7.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp7);
 			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertTrue("Incorrectly computed possible release set.", Arrays.equals(possibleAttributes, list2));
-			
+			assertTrue(
+				"Incorrectly computed possible release set.",
+				Arrays.equals(possibleAttributes, list2));
+
 			//Ensure that explicit denies on any value are not in the release set
 			inStream = new FileInputStream("test/arp6.xml");
 			parser.parse(new InputSource(inStream));
@@ -432,16 +435,20 @@ public class ArpTests extends TestCase {
 			arp6.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp6);
 			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertTrue("Incorrectly computed possible release set.", Arrays.equals(possibleAttributes, list3));
-			
+			assertTrue(
+				"Incorrectly computed possible release set.",
+				Arrays.equals(possibleAttributes, list3));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Failed to marshall ARP: " + e);
 		}
 
 	}
-	
+
 	public void testArpApplication() {
+
+		//Setup a test ARP repository
 		Properties props = new Properties();
 		props.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
@@ -452,92 +459,614 @@ public class ArpTests extends TestCase {
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create memory-based Arp Repository" + e);
 		}
+
+		DOMParser parser = new DOMParser();
 		try {
-			Principal principal1 = new AAPrincipal("TestPrincipal");
-			URL url1 = new URL("http://www.example.edu/");
 
-			//Test with just a site ARP
-			InputStream inStream = new FileInputStream("test/arp1.xml");
-			DOMParser parser = new DOMParser();
-			parser.parse(new InputSource(inStream));
-			Arp arp1 = new Arp();
-			arp1.marshall(parser.getDocument().getDocumentElement());
-			repository.update(arp1);
-			ArpEngine engine = new ArpEngine(repository, props);
-
-			TestAttribute testAttribute1 =
-				new TestAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-					new Object[] { "member@example.edu", "faculty@example.edu" });
-			TestAttribute testAttribute2 =
-				new TestAttribute(
-					"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
-					new Object[] { "mehoehn@example.edu" });
-			ArpAttribute[] releaseAttributes =
-				engine.filterAttributes(
-					new ArpAttribute[] { testAttribute1, testAttribute2 },
-					principal1,
-					"shar.example.edu",
-					url1);
-			assertEquals(
-				"ARP not applied as expected.",
-				new HashSet(Arrays.asList(releaseAttributes)),
-				new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1 })));
-
-			//Test with site and user ARPs
-			inStream = new FileInputStream("test/arp7.xml");
-			parser.parse(new InputSource(inStream));
-			Arp arp7 = new Arp();
-			arp7.setPrincipal(principal1);
-			arp7.marshall(parser.getDocument().getDocumentElement());
-			repository.update(arp7);
-			releaseAttributes =
-				engine.filterAttributes(
-					new ArpAttribute[] { testAttribute1, testAttribute2 },
-					principal1,
-					"shar.example.edu",
-					url1);
-			assertEquals(
-				"ARP not applied as expected.",
-				new HashSet(Arrays.asList(releaseAttributes)),
-				new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1, testAttribute2 })));
-
-			//Test with site and user ARPs
-			releaseAttributes =
-				engine.filterAttributes(
-					new ArpAttribute[] { testAttribute1, testAttribute2 },
-					principal1,
-					"shar1.example.edu",
-					url1);
-			assertEquals(
-				"ARP not applied as expected.",
-				new HashSet(Arrays.asList(releaseAttributes)),
-				new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1 })));
-
-			//Test with site and user ARPs
-			inStream = new FileInputStream("test/arp6.xml");
-			parser.parse(new InputSource(inStream));
-			Arp arp6 = new Arp();
-			arp6.setPrincipal(principal1);
-			arp6.marshall(parser.getDocument().getDocumentElement());
-			repository.update(arp6);
-			releaseAttributes =
-				engine.filterAttributes(
-					new ArpAttribute[] { testAttribute1, testAttribute2 },
-					principal1,
-					"shar.example.edu",
-					url1);
-			assertEquals(
-				"ARP not applied as expected.",
-				new HashSet(Arrays.asList(releaseAttributes)),
-				new HashSet());
+			arpApplicationTest1(repository, props, parser);
+			arpApplicationTest2(repository, props, parser);
+			arpApplicationTest3(repository, props, parser);
+			arpApplicationTest4(repository, props, parser);
+			arpApplicationTest5(repository, props, parser);
+			arpApplicationTest6(repository, props, parser);
+			arpApplicationTest7(repository, props, parser);
+			arpApplicationTest8(repository, props, parser);
+			arpApplicationTest9(repository, props, parser);
+			arpApplicationTest10(repository, props, parser);
+			arpApplicationTest11(repository, props, parser);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Failed to apply ARPs: " + e);
 		}
 	}
-	
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value release,
+	 */
+	void arpApplicationTest1(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"permit\"/>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 1: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value release, implicit deny
+	 */
+	void arpApplicationTest2(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"permit\"/>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute1 =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+		TestAttribute testAttribute2 =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+				new Object[] { "mehoehn@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute1, testAttribute2 },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 2: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1 })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: One value release
+	 */
+	void arpApplicationTest3(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"permit\">member@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+		TestAttribute filteredAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 3: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value except one release, canonical representation
+	 */
+	void arpApplicationTest4(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"permit\"/>"
+				+ "					<Value release=\"deny\">member@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+		TestAttribute filteredAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "faculty@example.edu", "employee@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 4: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value except one release, expanded representation
+	 */
+	void arpApplicationTest5(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"permit\"/>"
+				+ "				</Attribute>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"deny\">member@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+		TestAttribute filteredAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "faculty@example.edu", "employee@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 5: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value except two release, expanded representation
+	 */
+	void arpApplicationTest6(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"permit\"/>"
+				+ "				</Attribute>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"deny\">member@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"deny\">faculty@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+		TestAttribute filteredAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "employee@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 6: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Two value release, canonical representation
+	 */
+	void arpApplicationTest7(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"permit\">member@example.edu</Value>"
+				+ "					<Value release=\"permit\">faculty@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+		TestAttribute filteredAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 3: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Two value release, expanded representation
+	 */
+	void arpApplicationTest8(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"permit\">member@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"permit\">faculty@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" });
+		TestAttribute filteredAttribute =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 8: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value deny
+	 */
+	void arpApplicationTest9(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"deny\"/>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute1 =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute1 },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 9: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[0])));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value deny trumps explicit permit expanded representation
+	 */
+	void arpApplicationTest10(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"deny\"/>"
+				+ "				</Attribute>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<Value release=\"permit\">member@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute1 =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute1 },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 10: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[0])));
+	}
+
+	/**
+	 * ARPs: A site ARP only
+	 * Target: Any
+	 * Attribute: Any value deny trumps explicit permit canonical representation
+	 */
+	void arpApplicationTest11(ArpRepository repository, Properties props, DOMParser parser)
+		throws Exception {
+
+		//Gather the Input
+		String rawArp =
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ARP.xsd\">"
+				+ "			<Rule>"
+				+ "				<Target>"
+				+ "					<AnyTarget/>"
+				+ "				</Target>"
+				+ "				<Attribute name=\"urn:mace:eduPerson:1.0:eduPersonAffiliation\">"
+				+ "					<AnyValue release=\"deny\"/>"
+				+ "					<Value release=\"permit\">member@example.edu</Value>"
+				+ "				</Attribute>"
+				+ "			</Rule>"
+				+ "	</AttributeReleasePolicy>";
+
+		Principal principal1 = new AAPrincipal("TestPrincipal");
+		URL url1 = new URL("http://www.example.edu/");
+		TestAttribute testAttribute1 =
+			new TestAttribute(
+				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+				new Object[] { "member@example.edu", "faculty@example.edu" });
+
+		//Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository, props);
+
+		//Apply the ARP
+		ArpAttribute[] releaseAttributes =
+			engine.filterAttributes(
+				new ArpAttribute[] { testAttribute1 },
+				principal1,
+				"shar.example.edu",
+				url1);
+
+		assertEquals(
+			"ARP application test 11: ARP not applied as expected.",
+			new HashSet(Arrays.asList(releaseAttributes)),
+			new HashSet(Arrays.asList(new ArpAttribute[0])));
+	}
+
 	public class TestAttribute implements ArpAttribute {
 		private String name;
 		private Object[] values;
@@ -568,13 +1097,26 @@ public class ArpTests extends TestCase {
 			this.values = values;
 		}
 
+		/**
+		 * @see java.lang.Object#equals(Object)
+		 */
 		public boolean equals(Object object) {
 			if (!(object instanceof TestAttribute)) {
 				return false;
 			}
-			//finish this
 			return (new HashSet(Arrays.asList(values))).equals(
-				Arrays.asList(((TestAttribute) object).getValues()));
+				new HashSet(Arrays.asList(((TestAttribute) object).getValues())));
+		}
+
+		/**
+		* @see java.lang.Object#hashCode()
+		*/
+		public int hashCode() {
+			int code = 0;
+			for (int i = 0; i < values.length; i++) {
+				code += values[i].hashCode();
+			}
+			return name.hashCode() + code;
 		}
 
 	}
