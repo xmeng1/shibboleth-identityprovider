@@ -8,17 +8,153 @@
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
 	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonNickname">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrimaryAffiliation">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrimaryOrgUnitDN">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonOrgUnitDN">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonOrgDN">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	
 	<!-- To use these attributes, you should change the smartScope value to match your site's domain name. -->
-
 	<!--
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" smartScope="shibdev.edu">
 		<AttributeDependency requires="urn:mace:dir:attribute-def:eduPersonAffiliation"/>
 	</SimpleAttributeDefinition>
 
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="shibdev.edu">
+    	<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	-->
+	
+	
+	<!-- Example persistent id attribute.  You should change the scope value to match your site's domain 
+		 name.  Since this configuration is permanent, some thought is required before deploying in 
+		 production. -->
+	<!--
+	<PersistentIDAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonTargetedID" scope="shibdev.edu" sourceName="guid">
+		<DataConnectorDependency requires="directory"/>
+		<Salt keyStorePath="/conf/persistent.jks" keyStoreKeyAlias="handleKey" keyStorePassword="shibhs" keyStoreKeyPassword="shibhs"/>
+	</PersistentIDAttributeDefinition>
+	-->
+	
+	
+	<!--Examples of common ldap-based attributes -->
+	<!--
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:cn">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:sn">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:telephoneNumber">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:title">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:initials">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:description">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:carLicense">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:departmentNumber">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:displayName">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:employeeNumber">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:employeeType">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:preferredLanguage">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:manager">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:roomNumber">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:seeAlso">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:facsimileTelephoneNumber">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:street">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:postOfficeBox">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:postalCode">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:st">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:givenName">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:l">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:businessCategory">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:ou">
+		<DataConnectorDependency requires="directory"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:physicalDeliveryOfficeName">
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
 	-->
+
 
 	<JNDIDirectoryDataConnector id="directory">
 		<Search filter="cn=%PRINCIPAL%">
@@ -29,6 +165,7 @@
 		<Property name="java.naming.security.principal" value="cn=admin,dc=example,dc=edu" />
 		<Property name="java.naming.security.credentials" value="examplepw" />
 	</JNDIDirectoryDataConnector>
+	
 	
 	<!-- An example of how to do a simple ldap bind over SSL -->
 	<!-- 
@@ -43,6 +180,7 @@
 		<Property name="java.naming.security.credentials" value="examplepw" />
 	</JNDIDirectoryDataConnector>
 	-->
+	
 	
 	<!-- An example of how to setup ldap with connection pooling -->
 	<!-- 
