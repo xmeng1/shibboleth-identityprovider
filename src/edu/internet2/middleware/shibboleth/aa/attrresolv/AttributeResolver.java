@@ -49,11 +49,8 @@
 
 package edu.internet2.middleware.shibboleth.aa.attrresolv;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,13 +64,8 @@ import java.util.Set;
 
 import javax.naming.directory.Attributes;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
-import org.apache.xml.serialize.OutputFormat;
-import org.apache.xml.serialize.XMLSerializer;
-import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -84,10 +76,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import sun.security.acl.PrincipalImpl;
-import edu.internet2.middleware.shibboleth.aa.AAAttribute;
-import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
-import edu.internet2.middleware.shibboleth.aa.AAAttributeSet.ShibAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet.ResolverAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
@@ -205,6 +193,7 @@ public class AttributeResolver {
 
 	private void verifyPlugIns() {
 		//TODO Maybe this should detect loops in the directed graph
+		//TODO this has to do better verification, if plugins are unloaded after dependants have been checked, we get null pointers
 
 		log.info("Verifying PlugIn graph consitency.");
 		Set inconsistent = new HashSet();
@@ -220,11 +209,12 @@ public class AttributeResolver {
 				depends.addAll(Arrays.asList(((AttributeDefinitionPlugIn) plugIn).getDataConnectorDependencyIds()));
 				Iterator dependsIt = depends.iterator();
 				while (dependsIt.hasNext()) {
-					if (!plugIns.containsKey(dependsIt.next())) {
+					String key = (String) dependsIt.next();
+					if (!plugIns.containsKey(key)) {
 						log.error(
 							"The PlugIn ("
 								+ plugIn.getId()
-								+ ") is inconsistent.  It depends on a PlugIn that is not registered.");
+								+ ") is inconsistent.  It depends on a PlugIn (" + key + ") that is not registered.");
 						inconsistent.add(plugIn.getId());
 					}
 				}
@@ -253,62 +243,6 @@ public class AttributeResolver {
 
 	private ResolutionPlugIn lookupPlugIn(String id) {
 		return (ResolutionPlugIn) plugIns.get(id);
-	}
-
-	public static void main(String[] args) {
-
-		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.WARN);
-
-		try {
-			Properties props = new Properties();
-			File file = new File("src/conf/resolver.xml");
-
-			props.setProperty(
-				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-				file.toURL().toString());
-			AttributeResolver ar = new AttributeResolver(props);
-			for (int j = 0; j < 2; j++) {
-				System.out.println("Resolving pass: " + (j + 1));
-				AAAttributeSet attributes = new AAAttributeSet();
-				if (j == 1) {
-					attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonPrincipalName"));
-				}
-				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonNickName"));
-				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonPrimaryAffiliation"));
-				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation"));
-				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation"));
-				attributes.add(new AAAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement"));
-				attributes.add(new AAAttribute("urn:mace:rfc2079:labeledURI"));
-
-				ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", attributes);
-				ShibAttributeIterator iterator = attributes.shibAttributeIterator();
-				while (iterator.hasNext()) {
-					AAAttribute attribute = iterator.nextShibAttribute();
-					System.out.println(attribute.getName());
-					System.out.println("LifeTime: " + attribute.getLifetime());
-					System.out.println("\t" + " values:");
-					for (Iterator attrIterator = attribute.getValues(); attrIterator.hasNext();) {
-						System.out.println("\t\t" + attrIterator.next().toString());
-					}
-					System.out.println("To DOM:");
-					Node dom = attribute.toDOM();
-					ByteArrayOutputStream xmlOut = new ByteArrayOutputStream();
-					new XMLSerializer(xmlOut, new OutputFormat()).serialize((Element) dom);
-					System.out.write(xmlOut.toByteArray());
-					System.out.println(System.getProperty("line.separator") + System.getProperty("line.separator"));
-				}
-			}
-
-		} catch (AttributeResolverException e) {
-			log.error("Couldn't load attribute resolver: " + e.getMessage());
-		} catch (MalformedURLException e1) {
-			e1.printStackTrace();
-		} catch (SAMLException se) {
-			se.printStackTrace();
-		} catch (IOException e) {
-			log.error("Couldn't load attribute resolver: " + e.getMessage());
-		}
 	}
 
 	/**

@@ -47,84 +47,45 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
+package edu.internet2.middleware.shibboleth.aa.attrresolv;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.security.Principal;
+
+import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.BasicAttributes;
 
 import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.BaseResolutionPlugIn;
+
 /**
- * <code>ValueHandler</code> implementation for String objects with a domain scope.  Includes logic to add
- * a default scope to values that don't already include a scope.
+ * <code>DataConnectorPlugIn</code> implementation for use in unit testing.
+ * 
+ * @author Walter Hoehn
  *
- * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class ScopedStringValueHandler implements ValueHandler {
+public class ScopeTestConnector extends BaseResolutionPlugIn implements DataConnectorPlugIn {
 
-	private static Logger log = Logger.getLogger(ScopedStringValueHandler.class.getName());
-	public String smartScope;
+	private static Logger log = Logger.getLogger(ScopeTestConnector.class.getName());
 
-	public ScopedStringValueHandler(String smartScope) {
-		this.smartScope = smartScope;
+	public ScopeTestConnector(Element e) throws ResolutionPlugInException {
+		super(e);
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler#toDOM(org.w3c.dom.Element, java.lang.Object, org.w3c.dom.Document)
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(Principal)
 	 */
-	public void toDOM(Element valueElement, Object value, Document document) throws ValueHandlerException {
+	public Attributes resolve(Principal principal) {
 
-		if (value instanceof String) {
-			String raw = (String) value;
-			int divider = raw.indexOf("@");
-			if (divider > 0) {
-				log.debug("Using scope (" + raw.substring(divider + 1) + ") for value.");
-				valueElement.appendChild(document.createTextNode(raw.substring(0, divider)));
-				valueElement.setAttributeNS(null, "Scope", raw.substring(divider + 1));
-			} else {
-				log.debug("Adding defult scope of (" + smartScope + ") to value.");
-				valueElement.appendChild(document.createTextNode(raw));
-				valueElement.setAttributeNS(null, "Scope", smartScope);
-			}
-			return;
-		}
-		throw new ValueHandlerException("ScopedStringValueHandler called for non-String object.");
-	}
+		log.debug("Resolving connector: (" + getId() + ")");
+		log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler#getValues(java.util.Collection)
-	 */
-	public Iterator getValues(Collection internalValues) {
-
-		ArrayList values = new ArrayList();
-		for (Iterator iterator = internalValues.iterator(); iterator.hasNext();) {
-			Object value = iterator.next();
-			if (value instanceof String) {
-				String raw = (String) value;
-				int divider = raw.indexOf("@");
-				if (divider > 0) {
-					values.add(raw);
-				} else {
-					values.add(raw + "@" + smartScope);
-				}
-				continue;
-			}
-			log.error("ScopedStringValueHandler called for non-String object.");
-		}
-		return values.iterator();
-	}
-
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	public boolean equals(Object object) {
-		if (!(object instanceof ScopedStringValueHandler)) {
-			return false;
-		}
-		return smartScope.equals(((ScopedStringValueHandler) object).smartScope);
+		BasicAttributes attributes = new BasicAttributes();
+		attributes.put(new BasicAttribute("eduPersonPrincipalName", principal.getName()));
+		attributes.put(new BasicAttribute("foo", "bar@example.com"));
+		return attributes;
 	}
 
 }

@@ -149,4 +149,21 @@ public class AAAttributeSet implements ResolverAttributeSet, ArpAttributeSet {
 		return attributes.equals(((AAAttributeSet) object).attributes);
 	}
 
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(attributes.size());
+		for (Iterator iterator = attributes.values().iterator(); iterator.hasNext();) {
+			AAAttribute attribute = (AAAttribute) iterator.next();
+			buffer.append("(" + attribute.getName() + "):");
+			for (Iterator valuesIterator = attribute.getValues(); valuesIterator.hasNext();) {
+				buffer.append(" \"" + valuesIterator.next().toString() + "\"");
+			}
+			buffer.append(System.getProperty("line.separator"));
+		}
+		return buffer.toString();
+	}
+
 }

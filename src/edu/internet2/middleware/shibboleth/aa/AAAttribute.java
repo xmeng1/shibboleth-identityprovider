@@ -95,6 +95,12 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 		this(name);
 		setValues(values);
 	}
+	
+	public AAAttribute(String name, Object[] values, ValueHandler handler) throws SAMLException {
+			this(name);
+			setValues(values);
+			registerValueHandler(handler);
+		}
 
 	public boolean hasValues() {
 		if (values.isEmpty()) {
@@ -214,16 +220,16 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	 */
 	public boolean equals(Object object) {
 
-		if (!(object instanceof AAAttribute)) {
+		if (!(object instanceof AAAttribute)) {System.err.println("hey hey hey");
 			return false;
 		}
-		if (lifetime != ((AAAttribute) object).lifetime) {
+		if (lifetime != ((AAAttribute) object).lifetime) {System.err.println("hey hey hey");
 			return false;
 		}
-		if (name != ((AAAttribute) object).name) {
+		if (name != ((AAAttribute) object).name) {System.err.println("hey hey hey");
 			return false;
 		}
-		if (!valueHandler.getClass().getName().equals(((AAAttribute) object).valueHandler.getClass().getName())) {
+		if (!valueHandler.equals(((AAAttribute) object).valueHandler)) {System.err.println("hey hey yo");
 			return false;
 		}
 		return values.equals(((AAAttribute) object).values);
