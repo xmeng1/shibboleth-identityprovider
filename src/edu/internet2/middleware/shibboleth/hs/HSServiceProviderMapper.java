@@ -189,7 +189,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 							+ ").  Ignoring all but the first.");
 				}
 
-				String hsNameFormatId = ((Element) hsNameFormats.item(0)).getAttribute("nameMapping");
+				hsNameFormatId = ((Element) hsNameFormats.item(0)).getAttribute("nameMapping");
 				if (hsNameFormatId == null || hsNameFormatId.equals("")) {
 					log.error("HS Name Format mapping not set.  Add a (nameMapping) attribute to <HSNameFormat>.");
 					throw new ServiceProviderMapperException("Required configuration not specified.");
