@@ -36,6 +36,9 @@ public class SchemasDirectoryImpl implements Schemas {
     // The default is the /schemas/ resource directory in the WAR file.
     private String resourcedir = "/schemas/";
 
+    private Map bucket = new HashMap();
+	
+	
     public String getResourcedir() {
         return resourcedir;
     }
@@ -69,12 +72,7 @@ public class SchemasDirectoryImpl implements Schemas {
      * @param resourcedir Resource directory with schema files ("/schemas/")
      * @return Schema object combining all namespaces.
      */
-    public Schema compileSchema(String[] namespaces) {
-        
-        Schema schema = null;
-        
-        Map bucket = new HashMap();
-        
+    public Schema compileSchema(String[] namespaces, String resourcedir) {
         // Find a directory of schemas
         // It is a resource in WEB-INF/classes or the same jar file
         // from which this class was loaded.
@@ -86,10 +84,42 @@ public class SchemasDirectoryImpl implements Schemas {
             return null;
         }
         
-        // for each .xsd file in the directory
+        loadBucketFromDirectory(bucket, dir);
+        
+        return generateSchema(namespaces, bucket);
+        
+    }
+	
+	public Schema compileSchema(String[] namespaces) {
+		return compileSchema(namespaces,this.resourcedir);
+	}
+
+	private Schema generateSchema(String[] namespaces, Map bucket) {
+		Schema schema = null;
+		ArrayList sources = new ArrayList();
+		for (int i=0;i<namespaces.length;i++) {
+            Document doc = (Document) bucket.get(namespaces[i]);
+            if (doc==null) {
+                log.error("Schema missing for namespace (" +namespaces[i] + ").");
+            } else {
+            sources.add(new DOMSource(doc));
+            }
+        }
+		// Now compile all the XSD files into a single composite Schema object
+        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		try {
+            schema = factory.newSchema((Source[]) sources.toArray(new Source[0]));
+        } catch (SAXException e) {
+            log.error("Schemas failed to compile, dependencies may be corrupt: " +e);
+        }
+		return schema;
+	}
+
+	private void loadBucketFromDirectory(Map bucket, File dir) {
+		// for each .xsd file in the directory
         String[] filenames = dir.list();
-        int nextsource=0;
-        for (int i=0;i<filenames.length;i++) {
+		int nextsource=0;
+		for (int i=0;i<filenames.length;i++) {
             String filename = filenames[i];
             if (!filename.endsWith(".xsd"))
                 continue;
@@ -121,36 +151,12 @@ public class SchemasDirectoryImpl implements Schemas {
             
             // Put the DOM in the Bucket keyed by namespace
             if (bucket.containsKey(targetNamespace)) {
-                log.error("Schema for already defined namespace: "+targetNamespace+" "+filename);
-                continue;
+                log.debug("Replacing XSD for namespace: "+targetNamespace+" "+filename);
+            } else {
+                log.debug("Defining XSD for namespace:  "+targetNamespace+" "+filename);
             }
             bucket.put(targetNamespace,xsddom);
         }
-        
-        // Ok, so now we have a bucket of DOM objects keyed by the 
-        // namespaces that they internally declare they define
-        
-        // Now we have a list of Namespaces in the order we need 
-        // to process them (imported dependencies first)
-        ArrayList sources = new ArrayList();
-        for (int i=0;i<namespaces.length;i++) {
-            Document doc = (Document) bucket.get(namespaces[i]);
-            if (doc==null) {
-                log.error("Schema missing for namespace (" +namespaces[i] + ").");
-            } else {
-            sources.add(new DOMSource(doc));
-            }
-        }
-        
-        // Now compile all the XSD files into a single composite Schema object
-        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        try {
-            schema = factory.newSchema((Source[]) sources.toArray(new Source[0]));
-        } catch (SAXException e) {
-            log.error("Schemas failed to compile, dependencies may be corrupt: " +e);
-        }
-        return schema;
-        
-    }
+	}
 
 }

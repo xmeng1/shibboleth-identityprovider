@@ -82,8 +82,9 @@ public class Parser {
     
     // If there were a real Framework here (like Spring) then
     // the schemaBuilder would be inserted 
-    private static Schemas schemaBuilder = new SchemasDirectoryImpl();
+    private static SchemasDirectoryImpl schemaBuilder = new SchemasDirectoryImpl();
     private static Schema schema = schemaBuilder.compileSchema(namespaces);
+	private static Schema schemaOldSAML= schemaBuilder.compileSchema(namespaces,"/schemas/saml-1.0/");
     
     /**
      * Load a DOM from a wrapped byte stream.
@@ -183,7 +184,8 @@ public class Parser {
      * SAML 1.1 plus Shibboleth (and some SAML 2.0).
      */
     static {
-        org.opensaml.XML.parserPool.setDefaultSchema(schema);
+        //org.opensaml.XML.parserPool.setDefaultSchema(schema);
+		org.opensaml.XML.parserPool.setDefaultSchemas(schemaOldSAML,schema);
     }
     
 }
