@@ -4,12 +4,12 @@ import java.io.*;
 import java.util.Date;
 import java.security.acl.*;
 import java.security.Principal;
-//import javax.security.auth.kerberos.KerberosPrincipal;
+import org.apache.log4j.Logger;
 
 public class ArpFileFactory implements ArpFactory{
 
     static String dataStore;
-
+    private static Logger log = Logger.getLogger(ArpFileFactory.class.getName());    
     public ArpFileFactory(String pathData){
 	dataStore = pathData;
     }
@@ -25,7 +25,7 @@ public class ArpFileFactory implements ArpFactory{
 	try{
 
 	    String fileName = dataStore+System.getProperty("file.separator")+arpName;
-	    System.out.println("Looking for ARP "+fileName);
+	    log.info("AA: Looking for ARP "+fileName);
 
 	    FileInputStream f = new FileInputStream(fileName);
 	    ObjectInput s = new ObjectInputStream(f);
@@ -34,12 +34,12 @@ public class ArpFileFactory implements ArpFactory{
 	       throw new AAException("Wrong ARP name.  ARP maybe renamed in datastore. ");
 	    arp.setNew(false);
 	    arp.setLastRead(new Date());
-	    System.out.println("Found and using ARP "+arpName);
+	    log.info("AA: Found and using ARP "+arpName);
 	    return arp;
 	    
 	}catch(FileNotFoundException e){
 	    // check the IO error to make sure "file not found"
-	    System.out.println("Got File Not Found for "+arpName+" in "+dataStore);
+	    log.info("AA: Got File Not Found for "+arpName+" in "+dataStore);
 	    try{
 		Arp arp = new Arp(arpName, isAdmin);
 		arp.setNew(true);
@@ -83,7 +83,9 @@ public class ArpFileFactory implements ArpFactory{
 	if(file == null)
 	    throw new AAException("Arp not found on disk while trying to re-read. :"+arp);
 	Date timeStamp = new Date(file.lastModified());
+	log.info("AA: Check ARP's freshness: in memory ("+arp.getLastRead()+") vs on disk ("+timeStamp+")");
 	if(timeStamp.after(arp.getLastRead())){
+	    log.info("AA: ARP has been modified on disk. Re-read "+arp.getName());
 	    return getInstance(arp.getName(), arp.isAdmin());
 	}
 	return arp;  // return the old one.
