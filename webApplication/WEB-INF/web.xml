@@ -21,7 +21,7 @@
 	<servlet>
 		<servlet-name>WAYF</servlet-name>
 		<display-name>WAYF</display-name>
-		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfHandler</servlet-class>
+		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfService</servlet-class>
 		<init-param>
 			<param-name>WAYFConfigFileLocation</param-name>
 			<param-value>/WEB-INF/conf/shibboleth.xml</param-value>
