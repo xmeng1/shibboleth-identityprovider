@@ -76,6 +76,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.log4j.Logger;
@@ -700,14 +701,33 @@ class FileCredentialResolver implements CredentialResolver {
 			try {
 				BASE64Decoder decoder = new BASE64Decoder();
 				byte[] encryptedBytes = decoder.decodeBuffer(base64Key.toString());
-				
-				//TODO This needs to come from the file
-				Cipher cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+
 				BigInteger parsedIv = new BigInteger(algParams, 16);
-				AlgorithmParameterSpec paramSpec = new IvParameterSpec(parsedIv.toByteArray());
-				//KeySpec keySpec = new PBEKeySpec("test123".toCharArray());
-				SecretKey key = new SecretKeySpec ("test1234".getBytes(), "DESede");
+				
+				PBEParameterSpec paramSpec = new PBEParameterSpec(parsedIv.toByteArray(), 1);
+				
+				SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+				keyFactory.getProvider().list(System.err);
+				PBEKeySpec passwordSpec = new PBEKeySpec("test123".toCharArray());
+				SecretKey key = keyFactory.generateSecret(passwordSpec);
+
+				Cipher cipher = Cipher.getInstance("PBEWithMD5AndTripleDES/CBC/PKCS5Padding");
+				System.err.println(cipher.getClass().getName());
 				cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
+				
+				
+				
+				byte[] a = parsedIv.toByteArray();
+								for (int i = 0;i < a.length; i++) {
+									System.err.println("PARSE: " + a[i]);
+								}
+				byte[] b = cipher.getIV();
+				for (int i = 0;i < b.length; i++) {
+					System.err.println("IV: " + b[i]);
+				}
+				
+				System.err.println(b.length);
+				byte[] decrypted = cipher.doFinal(encryptedBytes);
 				return null;
 
 			} catch (IOException ioe) {
