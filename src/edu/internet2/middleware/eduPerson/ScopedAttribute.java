@@ -199,7 +199,7 @@ public class ScopedAttribute extends SAMLAttribute implements Cloneable
             if (n.getNodeType()==Node.ELEMENT_NODE)
             {
                 ((Element)n).removeAttributeNS(null,"Scope");
-                if (scopes.get(i)!=null && !scopes.get(i).equals(defaultScope))
+                if (i < scopes.size() && scopes.get(i)!=null && !scopes.get(i).equals(defaultScope))
                     ((Element)n).setAttributeNS(null,"Scope",(String)scopes.get(i));
             }
             n=n.getNextSibling();
