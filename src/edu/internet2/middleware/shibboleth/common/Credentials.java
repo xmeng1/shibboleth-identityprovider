@@ -1,49 +1,57 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation
+ * for Advanced Internet Development, Inc. All rights reserved
  * 
  * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
- * following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  * 
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- * disclaimer.
+ * Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
  * 
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
- * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
- * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
- * software itself, if and wherever such third-party acknowledgments normally appear.
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution, if any, must include
+ * the following acknowledgment: "This product includes software developed by
+ * the University Corporation for Advanced Internet Development
+ * <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement
+ * may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear.
  * 
- * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
- * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
- * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
+ * Neither the name of Shibboleth nor the names of its contributors, nor
+ * Internet2, nor the University Corporation for Advanced Internet Development,
+ * Inc., nor UCAID may be used to endorse or promote products derived from this
+ * software without specific prior written permission. For written permission,
+ * please contact shibboleth@shibboleth.org
  * 
- * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
- * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
+ * Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor
+ * may Shibboleth appear in their name, without prior written permission of the
  * University Corporation for Advanced Internet Development.
  * 
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
- * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK
+ * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
+ * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.common;
-
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -69,6 +77,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.SecretKey;
@@ -246,7 +255,8 @@ class FileCredentialResolver implements CredentialResolver {
 		log.debug("Certificate Format: (" + certFormat + ").");
 		log.debug("Certificate Path: (" + certPath + ").");
 
-		//The loading code should work for other types, but the chain construction code
+		//The loading code should work for other types, but the chain
+		// construction code
 		//would break
 		if (!certType.equals("X.509")) {
 			log.error("File credential resolver only supports the X.509 certificates.");
@@ -509,9 +519,9 @@ class FileCredentialResolver implements CredentialResolver {
 				String nextStr = in.readLine();
 				if (nextStr != null && nextStr.matches("^.*Proc-Type: 4,ENCRYPTED.*$")) {
 					log.debug("Key appears to be encrypted RSA in raw format.");
-					return getRSARawEncryptedPemKey(inputBytes.toByteArray(), password);
+					return getRawEncryptedPemKey(inputBytes.toByteArray(), password);
 				}
-				
+
 				in.close();
 				log.debug("Key appears to be RSA in raw format.");
 				return getRSARawDerKey(
@@ -519,8 +529,13 @@ class FileCredentialResolver implements CredentialResolver {
 						inputBytes.toByteArray(),
 						"-----BEGIN RSA PRIVATE KEY-----",
 						"-----END RSA PRIVATE KEY-----"));
-						
+
 			} else if (str.matches("^.*-----BEGIN DSA PRIVATE KEY-----.*$")) {
+				String nextStr = in.readLine();
+				if (nextStr != null && nextStr.matches("^.*Proc-Type: 4,ENCRYPTED.*$")) {
+					log.debug("Key appears to be encrypted DSA in raw format.");
+					return getRawEncryptedPemKey(inputBytes.toByteArray(), password);
+				}
 				in.close();
 				log.debug("Key appears to be DSA in raw format.");
 				return getDSARawDerKey(
@@ -638,10 +653,9 @@ class FileCredentialResolver implements CredentialResolver {
 		}
 
 	}
-	private PrivateKey getRSARawEncryptedPemKey(byte[] bytes, String password) throws CredentialFactoryException {
+	private PrivateKey getRawEncryptedPemKey(byte[] bytes, String password) throws CredentialFactoryException {
 
 		try {
-
 			String algorithm = null;
 			String algParams = null;
 
@@ -679,13 +693,13 @@ class FileCredentialResolver implements CredentialResolver {
 						continue;
 					}
 
-					if (str.matches("^.*-----END RSA PRIVATE KEY-----.*$")) {
+					if (str.matches("^.*-----END [DR]SA PRIVATE KEY-----.*$")) {
 						break;
 					}
 					{
 						base64Key.append(str);
 					}
-				} else if (str.matches("^.*-----BEGIN RSA PRIVATE KEY-----.*$")) {
+				} else if (str.matches("^.*-----BEGIN [DR]SA PRIVATE KEY-----.*$")) {
 					insideBase64 = true;
 					base64Key = new StringBuffer();
 				}
@@ -696,59 +710,75 @@ class FileCredentialResolver implements CredentialResolver {
 				throw new IOException("Could not find Base 64 encoded entity.");
 			}
 
-			try {
-				BASE64Decoder decoder = new BASE64Decoder();
-				byte[] encryptedBytes = decoder.decodeBuffer(base64Key.toString());
+			BASE64Decoder decoder = new BASE64Decoder();
+			byte[] encryptedBytes = decoder.decodeBuffer(base64Key.toString());
 
-				BigInteger parsedIv = new BigInteger(algParams, 16);
-				IvParameterSpec paramSpec = new IvParameterSpec(parsedIv.toByteArray());
+			byte[] ivBytes = new byte[8];
+			for (int j = 0; j < 8; j++) {
+				ivBytes[j] = (byte) Integer.parseInt(algParams.substring(j * 2, j * 2 + 2), 16);
+			}
+			IvParameterSpec paramSpec = new IvParameterSpec(ivBytes);
 
-				if ((!algorithm.equals("DES-CBC")) && (!algorithm.equals("DES-EDE3-CBC"))) {
-					log.error(
-						"Connot decrypt key with algorithm ("
-							+ algorithm
-							+ ").  Supported algorithms for raw (OpenSSL) keys are (DES-CBC) and (DES-EDE3-CBC).");
-					throw new CredentialFactoryException("Unable to load private key.");
-				}
-				byte[] keyBuffer = new byte[24];
-
-				MessageDigest md = MessageDigest.getInstance("MD5");
-				md.update(password.getBytes());
-				md.update(paramSpec.getIV());
-				byte[] digested = md.digest();
-				System.arraycopy(digested, 0, keyBuffer, 0, 16);
-
-				md.update(digested);
-				md.update(password.getBytes());
-				md.update(paramSpec.getIV());
-				digested = md.digest();
-				System.arraycopy(digested, 0, keyBuffer, 16, 8);
-
-				SecretKeySpec keySpec = null;
-				Cipher cipher = null;
-				if (algorithm.equals("DES-CBC")) {
-					keySpec = new SecretKeySpec(keyBuffer, "DES");
-					cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
-				}
-				if (algorithm.equals("DES-EDE3-CBC")) {
-					keySpec = new SecretKeySpec(keyBuffer, "DESede");
-					cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
-				}
-
-				cipher.init(Cipher.DECRYPT_MODE, keySpec, paramSpec);
-				byte[] decrypted = cipher.doFinal(encryptedBytes);
-				return getRSARawDerKey(decrypted);
-
-			} catch (IOException ioe) {
-				log.error("Could not decode Base 64: " + ioe);
-				throw new IOException("Could not decode Base 64.");
+			if ((!algorithm.equals("DES-CBC")) && (!algorithm.equals("DES-EDE3-CBC"))) {
+				log.error(
+					"Connot decrypt key with algorithm ("
+						+ algorithm
+						+ ").  Supported algorithms for raw (OpenSSL) keys are (DES-CBC) and (DES-EDE3-CBC).");
+				throw new CredentialFactoryException("Unable to load private key.");
 			}
 
+			byte[] keyBuffer = new byte[24];
+			//The key generation method (with the IV used as the salt, and
+			//the single proprietary iteration)
+			//is the reason we can't use the pkcs5 providers to read the
+			// OpenSSL encrypted format
+
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			md.update(password.getBytes());
+			md.update(paramSpec.getIV());
+			byte[] digested = md.digest();
+			System.arraycopy(digested, 0, keyBuffer, 0, 16);
+
+			md.update(digested);
+			md.update(password.getBytes());
+			md.update(paramSpec.getIV());
+			digested = md.digest();
+			System.arraycopy(digested, 0, keyBuffer, 16, 8);
+
+			SecretKeySpec keySpec = null;
+			Cipher cipher = null;
+			if (algorithm.equals("DES-CBC")) {
+				//Special handling!!!
+				//For DES, we use the same key generation,
+				//then just chop off the end :-)
+				byte[] desBuff = new byte[8];
+				System.arraycopy(keyBuffer, 0, desBuff, 0, 8);
+				keySpec = new SecretKeySpec(desBuff, "DES");
+				cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
+			}
+			if (algorithm.equals("DES-EDE3-CBC")) {
+				keySpec = new SecretKeySpec(keyBuffer, "DESede");
+				cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+			}
+
+			cipher.init(Cipher.DECRYPT_MODE, keySpec, paramSpec);
+			byte[] decrypted = cipher.doFinal(encryptedBytes);
+
+			return getDERKey(new ByteArrayInputStream(decrypted), password);
+
+		} catch (IOException ioe) {
+			log.error("Could not decode Base 64: " + ioe);
+			throw new CredentialFactoryException("Unable to load private key.");
+
+		} catch (BadPaddingException e) {
+			log.debug(e.getMessage());
+			log.error("Incorrect password to unlock private key.");
+			throw new CredentialFactoryException("Unable to load private key.");
 		} catch (Exception e) {
-			e.printStackTrace();
-			//TODO handle all errors well here
-			log.error("Could not load resource from specified location: " + e);
-			throw new CredentialFactoryException("Could not load resource from specified location.");
+			log.error(
+				"Unable to decrypt private key.  Installed JCE implementations don't support the necessary algorithm: "
+					+ e);
+			throw new CredentialFactoryException("Unable to load private key.");
 		}
 	}
 
@@ -851,7 +881,8 @@ class FileCredentialResolver implements CredentialResolver {
 
 		try {
 
-			//Convince the JCE provider that it does know how to do pbeWithMD5AndDES-CBC
+			//Convince the JCE provider that it does know how to do
+			// pbeWithMD5AndDES-CBC
 			Provider provider = Security.getProvider("SunJCE");
 			if (provider != null) {
 				provider.setProperty("Alg.Alias.AlgorithmParameters.1.2.840.113549.1.5.3", "PBE");
@@ -996,7 +1027,7 @@ class FileCredentialResolver implements CredentialResolver {
 			log.error("Key not specified.");
 			throw new CredentialFactoryException("File Credential Resolver requires a <Key> specification.");
 		}
-		
+
 		if (keyElements.getLength() > 1) {
 			log.error("Multiple Key path specifications, using first.");
 		}
@@ -1108,9 +1139,11 @@ class FileCredentialResolver implements CredentialResolver {
 
 	/**
 	 * 
-	 * Loads a specified bundle of certs individually and returns an array of <code>Certificate</code> objects. This
-	 * is needed because the standard <code>CertificateFactory.getCertificates(InputStream)</code> method bails out
-	 * when it has trouble loading any cert and cannot handle "comments".
+	 * Loads a specified bundle of certs individually and returns an array of
+	 * <code>Certificate</code> objects. This is needed because the standard
+	 * <code>CertificateFactory.getCertificates(InputStream)</code> method
+	 * bails out when it has trouble loading any cert and cannot handle
+	 * "comments".
 	 */
 	private Certificate[] loadCertificates(InputStream inStream, String certType) throws CredentialFactoryException {
 
@@ -1166,15 +1199,17 @@ class FileCredentialResolver implements CredentialResolver {
 	}
 
 	/**
-	 * Given an ArrayList containing a base certificate and an array of unordered certificates, populates the ArrayList
-	 * with an ordered certificate chain, based on subject and issuer.
+	 * Given an ArrayList containing a base certificate and an array of
+	 * unordered certificates, populates the ArrayList with an ordered
+	 * certificate chain, based on subject and issuer.
 	 * 
 	 * @param chainSource
 	 *            array of certificates to pull from
 	 * @param chainDest
 	 *            ArrayList containing base certificate
 	 * @throws InvalidCertificateChainException
-	 *             thrown if a chain cannot be constructed from the specified elements
+	 *             thrown if a chain cannot be constructed from the specified
+	 *             elements
 	 */
 
 	protected void walkChain(X509Certificate[] chainSource, ArrayList chainDest) throws CredentialFactoryException {
@@ -1198,7 +1233,8 @@ class FileCredentialResolver implements CredentialResolver {
 	}
 
 	/**
-	 * Boolean indication of whether a given private key and public key form a valid keypair.
+	 * Boolean indication of whether a given private key and public key form a
+	 * valid keypair.
 	 * 
 	 * @param pubKey
 	 *            the public key
