@@ -121,7 +121,7 @@ public class AttributeResolver {
 				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig");
 
 		try {
-			ShibResource config = new ShibResource(configFile);
+			ShibResource config = new ShibResource(configFile, this.getClass());
 			DOMParser parser = new DOMParser();
 			parser.setFeature("http://xml.org/sax/features/validation", true);
 			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
