@@ -206,10 +206,10 @@ public class ExtKeyTool {
 
 			if (rfc) {
 				log.debug("Dumping with rfc encoding");
-				outStream.println("-----BEGIN " + key.getAlgorithm() + " PRIVATE KEY-----");
+				outStream.println("-----BEGIN PRIVATE KEY-----");
 				BASE64Encoder encoder = new BASE64Encoder();
 				encoder.encodeBuffer(key.getEncoded(), outStream);
-				outStream.println("-----END " + key.getAlgorithm() + " PRIVATE KEY-----");
+				outStream.println("-----END PRIVATE KEY-----");
 			} else {
 				log.debug("Dumping with default encoding.");
 				outStream.write(key.getEncoded());
@@ -288,7 +288,7 @@ public class ExtKeyTool {
 
 		} catch (Exception e) {
 			log.error("Problem reading private key: " + e.getMessage());
-			throw new ExtKeyToolException("Problem reading private key: " + e.getMessage());
+			throw new ExtKeyToolException("Problem reading private key.  Keys should be DER encoded pkcs8 or DER encoded native format.");
 		}
 	}
 
