@@ -54,11 +54,16 @@
 									</xs:complexType>
 								</xs:element>
 							</xs:sequence>
-							<xs:attribute name="AAUrl" type="xs:anyURI" use="optional"/>
-							<xs:attribute name="passThruErrors" type="xs:boolean" use="optional"/>
+							<xs:attribute name="name" type="xs:string" use="required"/>
 							<xs:attribute name="providerId" type="xs:anyURI" use="optional"/>
 							<xs:attribute name="signingCredential" type="xs:string" use="optional"/>
-							<xs:attribute name="name" type="xs:string" use="required"/>
+							<xs:attribute name="AASigningCredential" type="xs:string" use="optional"/>
+							<xs:attribute name="signAuthResponses" type="xs:boolean" use="optional" default="true"/>
+							<xs:attribute name="signAuthAssertions" type="xs:boolean" use="optional" default="false"/>
+							<xs:attribute name="signAttrAssertions" type="xs:boolean" use="optional" default="false"/>
+							<xs:attribute name="signAttrResponses" type="xs:boolean" use="optional" default="false"/>
+							<xs:attribute name="AAUrl" type="xs:anyURI" use="optional"/>
+							<xs:attribute name="passThruErrors" type="xs:boolean" use="optional"/>
 							<xs:attribute name="defaultAuthMethod" type="xs:string" use="optional"/>
 						</xs:complexType>
 					</xs:element>

@@ -1,49 +1,29 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation
- * for Advanced Internet Development, Inc. All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, if any, must include
- * the following acknowledgment: "This product includes software developed by
- * the University Corporation for Advanced Internet Development
- * <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement
- * may appear in the software itself, if and wherever such third-party
- * acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor
- * Internet2, nor the University Corporation for Advanced Internet Development,
- * Inc., nor UCAID may be used to endorse or promote products derived from this
- * software without specific prior written permission. For written permission,
- * please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2,
- * UCAID, or the University Corporation for Advanced Internet Development, nor
- * may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE.
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
+ * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
+ * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2
+ * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
+ * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please
+ * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
+ * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
+ * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
+ * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
+ * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.internet2.middleware.shibboleth.common;
 
 import java.net.URI;
@@ -66,8 +46,8 @@ import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
  */
 public abstract class ServiceProviderMapper {
 
-	private static Logger log = Logger.getLogger(ServiceProviderMapper.class.getName());
-	protected Map relyingParties = new HashMap();
+	private static Logger	log				= Logger.getLogger(ServiceProviderMapper.class.getName());
+	protected Map			relyingParties	= new HashMap();
 
 	protected abstract ShibbolethOriginConfig getOriginConfig();
 
@@ -76,8 +56,8 @@ public abstract class ServiceProviderMapper {
 		String defaultParty = configuration.getDefaultRelyingPartyName();
 		if (defaultParty == null || defaultParty.equals("")) {
 			if (relyingParties.size() != 1) {
-				log.error(
-					"Default Relying Party not specified.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
+				log
+						.error("Default Relying Party not specified.  Add a (defaultRelyingParty) attribute to <ShibbolethOriginConfig>.");
 				throw new ServiceProviderMapperException("Required configuration not specified.");
 			} else {
 				log.debug("Only one Relying Party loaded.  Using this as the default.");
@@ -106,9 +86,7 @@ public abstract class ServiceProviderMapper {
 		}
 
 		//OK, just send the default
-		log.info(
-			"Could not locate Relying Party configuration for ("
-				+ providerIdFromTarget
+		log.info("Could not locate Relying Party configuration for (" + providerIdFromTarget
 				+ ").  Using default Relying Party.");
 		return new UnknownProviderWrapper(getDefaultRelyingPatry());
 	}
@@ -138,16 +116,16 @@ public abstract class ServiceProviderMapper {
 		return (RelyingParty) relyingParties.get(defaultParty);
 	}
 
-        /**
-         * Base relying party implementation.
-         *
-         * @author Walter Hoehn
-         */
+	/**
+	 * Base relying party implementation.
+	 * 
+	 * @author Walter Hoehn
+	 */
 	protected abstract class BaseRelyingPartyImpl implements RelyingParty {
 
-		protected RelyingPartyIdentityProvider identityProvider;
-		protected String name;
-		protected String overridenOriginProviderId;
+		protected RelyingPartyIdentityProvider	identityProvider;
+		protected String						name;
+		protected String						overridenOriginProviderId;
 
 		public BaseRelyingPartyImpl(Element partyConfig) throws ServiceProviderMapperException {
 
@@ -180,18 +158,27 @@ public abstract class ServiceProviderMapper {
 			return identityProvider;
 		}
 
-                /**
-                 * Default identity provider implementation.
-                 * @author Walter Hoehn
-                 */
+		/**
+		 * Default identity provider implementation.
+		 * 
+		 * @author Walter Hoehn
+		 */
 		protected class RelyingPartyIdentityProvider implements IdentityProvider {
 
-			private String providerId;
-			private Credential responseSigningCredential;
+			private String		providerId;
+			private Credential	responseSigningCredential;
+			private Credential	assertionSigningCredential;
 
 			public RelyingPartyIdentityProvider(String providerId, Credential responseSigningCred) {
 				this.providerId = providerId;
 				this.responseSigningCredential = responseSigningCred;
+			}
+
+			public RelyingPartyIdentityProvider(String providerId, Credential responseSigningCred,
+					Credential assertionSigningCred) {
+				this.providerId = providerId;
+				this.responseSigningCredential = responseSigningCred;
+				this.assertionSigningCredential = assertionSigningCred;
 			}
 
 			public String getProviderId() {
@@ -203,21 +190,21 @@ public abstract class ServiceProviderMapper {
 			}
 
 			public Credential getAssertionSigningCredential() {
-				return null;
+				return assertionSigningCredential;
 			}
 
 		}
 	}
 
-        /**
-         * Relying party implementation wrapper for relying parties that are federations.
-         * 
-         * @author Walter Hoehn
-         */
+	/**
+	 * Relying party implementation wrapper for relying parties that are federations.
+	 * 
+	 * @author Walter Hoehn
+	 */
 	class RelyingPartyGroupWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
 
-		private RelyingParty wrapped;
-		private String providerId;
+		private RelyingParty	wrapped;
+		private String			providerId;
 
 		RelyingPartyGroupWrapper(RelyingParty wrapped, String providerId) {
 			this.wrapped = wrapped;
@@ -239,6 +226,7 @@ public abstract class ServiceProviderMapper {
 		public String getProviderId() {
 			return providerId;
 		}
+
 		public String getHSNameFormatId() {
 			if (!(wrapped instanceof HSRelyingParty)) {
 				return null;
@@ -268,13 +256,14 @@ public abstract class ServiceProviderMapper {
 		}
 	}
 
-        /**
-         * Relying party implementation wrapper for anonymous service providers.
-         *
-         * @author Walter Hoehn
-         */
+	/**
+	 * Relying party implementation wrapper for anonymous service providers.
+	 * 
+	 * @author Walter Hoehn
+	 */
 	protected class UnknownProviderWrapper implements RelyingParty, HSRelyingParty, AARelyingParty {
-		protected RelyingParty wrapped;
+
+		protected RelyingParty	wrapped;
 
 		protected UnknownProviderWrapper(RelyingParty wrapped) {
 			this.wrapped = wrapped;

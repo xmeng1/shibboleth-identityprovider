@@ -1,49 +1,29 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation
- * for Advanced Internet Development, Inc. All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution, if any, must include
- * the following acknowledgment: "This product includes software developed by
- * the University Corporation for Advanced Internet Development
- * <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement
- * may appear in the software itself, if and wherever such third-party
- * acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor
- * Internet2, nor the University Corporation for Advanced Internet Development,
- * Inc., nor UCAID may be used to endorse or promote products derived from this
- * software without specific prior written permission. For written permission,
- * please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2,
- * UCAID, or the University Corporation for Advanced Internet Development, nor
- * may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE.
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
+ * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met: Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
+ * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
+ * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
+ * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2
+ * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
+ * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please
+ * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
+ * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
+ * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
+ * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+ * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
+ * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
+ * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.internet2.middleware.shibboleth.hs;
 
 import java.net.MalformedURLException;
@@ -63,42 +43,41 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 
 /**
- * Class for determining the effective relying party for the Shibboleth handle service from the unique id of the service
- * provider.
- *
+ * Class for determining the effective relying party for the Shibboleth handle service from the unique id of the
+ * service provider.
+ * 
  * @author Walter Hoehn
  */
 public class HSServiceProviderMapper extends ServiceProviderMapper {
 
-	private static Logger log = Logger.getLogger(HSServiceProviderMapper.class.getName());
-	private HSConfig configuration;
-	private Credentials credentials;
-	private HSNameMapper nameMapper;
+	private static Logger	log	= Logger.getLogger(HSServiceProviderMapper.class.getName());
+	private HSConfig		configuration;
+	private Credentials		credentials;
+	private HSNameMapper	nameMapper;
 
 	/**
-         * Constructs a new service provider mapper for the handle service.
+	 * Constructs a new service provider mapper for the handle service.
 	 * 
-	 * @param rawConfig DOM representation of the handle service configuration
-	 * @param configuration global handle service configuration
-	 * @param credentials credentials for the handle service using this provider mapper
-	 * @param nameMapper name mapper for the handle service using this provider mapper
-         *
+	 * @param rawConfig
+	 *            DOM representation of the handle service configuration
+	 * @param configuration
+	 *            global handle service configuration
+	 * @param credentials
+	 *            credentials for the handle service using this provider mapper
+	 * @param nameMapper
+	 *            name mapper for the handle service using this provider mapper
 	 * @throws ServiceProviderMapperException
 	 *             if the configuration is invalid
 	 */
-	public HSServiceProviderMapper(
-		Element rawConfig,
-		HSConfig configuration,
-		Credentials credentials,
-		HSNameMapper nameMapper)
-		throws ServiceProviderMapperException {
+	public HSServiceProviderMapper(Element rawConfig, HSConfig configuration, Credentials credentials,
+			HSNameMapper nameMapper) throws ServiceProviderMapperException {
 
 		this.configuration = configuration;
 		this.credentials = credentials;
 		this.nameMapper = nameMapper;
 
-		NodeList itemElements =
-			rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace, "RelyingParty");
+		NodeList itemElements = rawConfig.getElementsByTagNameNS(ShibbolethOriginConfig.originConfigNamespace,
+				"RelyingParty");
 
 		for (int i = 0; i < itemElements.getLength(); i++) {
 			addRelyingParty((Element) itemElements.item(i));
@@ -121,9 +100,9 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		}
 	}
 
-        /**
-         * Returns the appropriate relying party for the supplied service provider id.
-         */
+	/**
+	 * Returns the appropriate relying party for the supplied service provider id.
+	 */
 	public HSRelyingParty getRelyingParty(String providerIdFromTarget) {
 
 		//If the target did not send a Provider Id, then assume it is a Shib
@@ -140,23 +119,20 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		return configuration;
 	}
 
-        /**
-         * HS-specific relying party implementation.
-         * @author Walter Hoehn
-         */
+	/**
+	 * HS-specific relying party implementation.
+	 * 
+	 * @author Walter Hoehn
+	 */
 	class HSRelyingPartyImpl extends BaseRelyingPartyImpl implements HSRelyingParty {
 
-		private URL overridenAAUrl;
-		private URI overridenDefaultAuthMethod;
-		protected String hsNameFormatId;
-		private HSConfig configuration;
+		private URL			overridenAAUrl;
+		private URI			overridenDefaultAuthMethod;
+		protected String	hsNameFormatId;
+		private HSConfig	configuration;
 
-		HSRelyingPartyImpl(
-			Element partyConfig,
-			HSConfig globalConfig,
-			Credentials credentials,
-			HSNameMapper nameMapper)
-			throws ServiceProviderMapperException {
+		HSRelyingPartyImpl(Element partyConfig, HSConfig globalConfig, Credentials credentials, HSNameMapper nameMapper)
+				throws ServiceProviderMapperException {
 
 			super(partyConfig);
 
@@ -164,26 +140,28 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 
 			//Load a credential for signing
 			String credentialName = ((Element) partyConfig).getAttribute("signingCredential");
+			boolean signAuthResponses = new Boolean(((Element) partyConfig).getAttribute("signAuthResponses"))
+					.booleanValue();
+			boolean signAuthAssertions = new Boolean(((Element) partyConfig).getAttribute("signAuthAssertions"))
+					.booleanValue();
 			Credential credential = credentials.getCredential(credentialName);
 
-			if (credential == null) {
+			if ((credential == null) && (signAuthResponses || signAuthAssertions)) {
 				if (credentialName == null || credentialName.equals("")) {
-					log.error(
-						"Relying Party credential not set.  Add a (signingCredential) attribute to <RelyingParty>.");
+					log
+							.error("Relying Party credential not set.  Add a (signingCredential) attribute to <RelyingParty>.");
 					throw new ServiceProviderMapperException("Required configuration not specified.");
 				} else {
-					log.error(
-						"Relying Party credential not set.  Add a (signingCredential) attribute to <RelyingParty>.");
+					log
+							.error("Relying Party credential not set.  Add a (signingCredential) attribute to <RelyingParty>.");
 					throw new ServiceProviderMapperException("Required configuration not specified.");
 				}
 			}
 
 			//Load and verify the name format that the HS should use in
 			//assertions for this RelyingParty
-			NodeList hsNameFormats =
-				((Element) partyConfig).getElementsByTagNameNS(
-					ShibbolethOriginConfig.originConfigNamespace,
-					"HSNameFormat");
+			NodeList hsNameFormats = ((Element) partyConfig).getElementsByTagNameNS(
+					ShibbolethOriginConfig.originConfigNamespace, "HSNameFormat");
 			//If no specification. Make sure we have a default mapping
 			if (hsNameFormats.getLength() < 1) {
 				if (nameMapper.getNameIdentifierMappingById(null) == null) {
@@ -195,9 +173,7 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 				//We do have a specification, so make sure it points to a
 				// valid Name Mapping
 				if (hsNameFormats.getLength() > 1) {
-					log.warn(
-						"Found multiple HSNameFormat specifications for Relying Party ("
-							+ name
+					log.warn("Found multiple HSNameFormat specifications for Relying Party (" + name
 							+ ").  Ignoring all but the first.");
 				}
 
@@ -236,10 +212,11 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 				}
 			}
 
-			identityProvider =
-				new RelyingPartyIdentityProvider(
-					overridenOriginProviderId != null ? overridenOriginProviderId : configuration.getProviderId(),
-					credential);
+			identityProvider = new RelyingPartyIdentityProvider(overridenOriginProviderId != null
+					? overridenOriginProviderId
+					: configuration.getProviderId(), signAuthResponses ? credential : null, signAuthAssertions
+					? credential
+					: null);
 		}
 
 		public boolean isLegacyProvider() {
@@ -268,15 +245,17 @@ public class HSServiceProviderMapper extends ServiceProviderMapper {
 		}
 	}
 
-        /**
-         * Relying party wrapper for Shibboleth &lt;=1.1 service providers.
-         * @author Walter Hoehn
-         */
+	/**
+	 * Relying party wrapper for Shibboleth &lt;=1.1 service providers.
+	 * 
+	 * @author Walter Hoehn
+	 */
 	class LegacyWrapper extends UnknownProviderWrapper implements HSRelyingParty {
 
 		LegacyWrapper(HSRelyingParty wrapped) {
 			super(wrapped);
 		}
+
 		public boolean isLegacyProvider() {
 			return true;
 		}
