@@ -26,15 +26,19 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import java.security.GeneralSecurityException;
-import java.security.cert.CertPath;
+import java.security.cert.CertPathBuilder;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
-import java.security.cert.CertificateFactory;
+import java.security.cert.CertStore;
 import java.security.cert.CertificateParsingException;
+import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXCertPathBuilderResult;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
+import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -183,16 +187,25 @@ public class ShibbolethTrust extends Trust {
 		if (anchors.size() > 0) {
 			log.debug("Constructed a trust list from key authority.  Attempting path validation...");
 			try {
-				CertPath path = CertificateFactory.getInstance("X.509").generateCertPath(Arrays.asList(certChain));
 				CertPathValidator validator = CertPathValidator.getInstance("PKIX");
 
-				PKIXBuilderParameters params = new PKIXBuilderParameters(anchors, null);
+				X509CertSelector selector = new X509CertSelector();
+				selector.setCertificate(certChain[0]);
+				PKIXBuilderParameters params = new PKIXBuilderParameters(anchors, selector);
 				params.setMaxPathLength(authority.getVerifyDepth());
-				//System.err.println(params.toString());
+				CertStore store = CertStore.getInstance("Collection", new CollectionCertStoreParameters(Arrays
+						.asList(certChain)));
+				List stores = new ArrayList();
+				stores.add(store);
+				params.setCertStores(stores);
 				//TODO hmm... what about revocation
 				params.setRevocationEnabled(false);
 
-				PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(path, params);
+				CertPathBuilder builder = CertPathBuilder.getInstance("PKIX");
+				PKIXCertPathBuilderResult buildResult = (PKIXCertPathBuilderResult) builder.build(params);
+
+				PKIXCertPathValidatorResult result = (PKIXCertPathValidatorResult) validator.validate(buildResult
+						.getCertPath(), params);
 				log.debug("Path successfully validated.");
 				return true;
 
