@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aaLocal;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Demonstration of SQL impl. for directory layer.
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.util.*;
 import java.sql.*;
 import javax.naming.*;

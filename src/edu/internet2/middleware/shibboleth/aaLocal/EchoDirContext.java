@@ -1,5 +1,15 @@
 package edu.internet2.middleware.shibboleth.aaLocal;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Simple implementation of a trivial directory layer
+ *  mostly for demo and testing
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.util.*;
 import javax.naming.*;
 import javax.naming.directory.*;

@@ -1,3 +1,12 @@
+
+/**
+ *  Attribute Authority & Release Policy
+ *  A specific class for EPPN
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
 import edu.internet2.middleware.eduPerson.*;
 import edu.internet2.middleware.shibboleth.common.Constants; 
 import edu.internet2.middleware.shibboleth.aa.ShibAttribute;

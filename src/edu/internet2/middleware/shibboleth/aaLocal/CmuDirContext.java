@@ -1,5 +1,14 @@
 package edu.internet2.middleware.shibboleth.aaLocal;
 
+/**
+ *  Attribute Authority & Release Policy
+ *  Directory layer for CMU
+ *
+ * @author     Parviz Dousti (dousti@cmu.edu)
+ * @created    June, 2002
+ */
+
+
 import java.util.*;
 import javax.naming.*;
 import javax.naming.directory.*;
