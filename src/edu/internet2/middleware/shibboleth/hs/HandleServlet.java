@@ -308,7 +308,7 @@ public class HandleServlet extends TargetFederationComponent {
 		Provider provider = lookup(relyingParty.getProviderId());
 		if (provider == null) {
 			log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-			throw new InvalidClientDataException("Request if from an unkown Service Provider.");
+			throw new InvalidClientDataException("Request is from an unkown Service Provider.");
 		}
 
 		ProviderRole[] roles = provider.getRoles();
