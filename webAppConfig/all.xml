@@ -68,16 +68,6 @@
 		<servlet-name>AA</servlet-name>
 		<display-name>Shibboleth Attribute Authority</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
-		<init-param>
-		    <param-name>OriginPropertiesFile</param-name>
-		    <param-value>/WEB-INF/conf/origin.properties</param-value>
-		</init-param>
-
-		<init-param>
-		    <param-name>ldapUserDnPhrase</param-name>
-		    <param-value>uid=</param-value>
-		</init-param>
-
 	</servlet>
 	
 	<servlet>

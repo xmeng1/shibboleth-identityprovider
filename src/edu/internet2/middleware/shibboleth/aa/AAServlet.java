@@ -79,7 +79,6 @@ import org.apache.log4j.MDC;
 
 public class AAServlet extends HttpServlet {
 
-    String uidSyntax;
     AAResponder responder;
     HandleRepositoryFactory hrf;
     protected Properties configuration;
@@ -96,8 +95,7 @@ public class AAServlet extends HttpServlet {
 
 			ArpEngine arpEngine = new ArpEngine(configuration);
 			edu.internet2.middleware.eduPerson.Init.init();
-
-			uidSyntax = getInitParameter("ldapUserDnPhrase");
+			hrf = getHandleRepository();
 
 			log.info(
 				"Using JNDI context ("
@@ -112,8 +110,6 @@ public class AAServlet extends HttpServlet {
 					ctx,
 					configuration.getProperty(
 						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
-
-			hrf = getHandleRepository();
 
 			log.info("Attribute Authority initialization complete.");
 
@@ -142,10 +138,11 @@ public class AAServlet extends HttpServlet {
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
 		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName", 
+			"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
 			"shib2.internet2.edu");
+		defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase", "uid=");
 		defaultProps.setProperty(
-			"java.naming.factory.initial", 
+			"java.naming.factory.initial",
 			"edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory");
 
 		//Load from file
@@ -155,93 +152,134 @@ public class AAServlet extends HttpServlet {
 			propertiesFileLocation = "/WEB-INF/conf/origin.properties";
 		}
 		try {
+			log.debug("Loading Configuration from (" + propertiesFileLocation + ").");
 			properties.load(getServletContext().getResourceAsStream(propertiesFileLocation));
 		} catch (IOException e) {
 			log.error("Could not load AA servlet configuration: " + e);
 			throw new AAException("Could not load AA servlet configuration.");
 		}
+
+		if (log.isDebugEnabled()) {
+			PrintStream debugStream = new PrintStream(new ByteArrayOutputStream());
+			properties.list(debugStream);
+			log.debug(
+				"Runtime configuration parameters: "
+					+ System.getProperty("line.separator")
+					+ debugStream.toString());
+		}
+
 		return properties;
 	}
 
-    public void doPost(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
-        	
-	log.debug("Recieved a request.");
-	MDC.put("serviceId", new SAMLIdentifier().toString());
-	MDC.put("remoteAddr", req.getRemoteAddr());
-	log.info("Handling request.");
+	public void doPost(HttpServletRequest req, HttpServletResponse resp)
+		throws ServletException, IOException {
 
-	List attrs = null;
-	SAMLException ourSE = null;
-	AASaml saml = null;
-	String userName = null;
-	    
-	try{
-	    saml = new AASaml(configuration.getProperty(
+		log.debug("Recieved a request.");
+		MDC.put("serviceId", new SAMLIdentifier().toString());
+		MDC.put("remoteAddr", req.getRemoteAddr());
+		log.info("Handling request.");
+
+		List attrs = null;
+		SAMLException ourSE = null;
+		AASaml saml = null;
+		String userName = null;
+
+		try {
+			saml =
+				new AASaml(
+					configuration.getProperty(
 						"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName"));
-	    saml.receive(req);
-	    
-	    URL resource = null; 
-	    try {
-	    	resource = new URL(saml.getResource());
-	    } catch (MalformedURLException mue) {
-	    	log.error("Request contained an improperly formatted resource identifier.  Attempting to "
-	    		+ "handle request without one.");
-	    }
-	    
-	    String shar = saml.getShar();
-	    log.info("AA: shar:"+shar);
-	    String handle = saml.getHandle();
-		log.info("AA: handle:"+handle);
-	    if(handle.equalsIgnoreCase("foo")){
-		// for testing only
-		userName = "dummy"; 
-	    }else{
-		if(hrf == null){
-		    throw new HandleException("No HandleRepository found! Has HS initialized?");
-		}else{
-		    HandleEntry he = hrf.getHandleEntry(handle);
-		    userName = he.getUsername();
-		    if(userName == null)
-			throw new HandleException("HandleServer returns null for user name!");
+			saml.receive(req);
+
+			URL resource = null;
+			try {
+				resource = new URL(saml.getResource());
+			} catch (MalformedURLException mue) {
+				log.error(
+					"Request contained an improperly formatted resource identifier.  Attempting to "
+						+ "handle request without one.");
+			}
+
+			String shar = saml.getShar();
+			log.info("AA: shar:" + shar);
+			String handle = saml.getHandle();
+			log.info("AA: handle:" + handle);
+			if (handle.equalsIgnoreCase("foo")) {
+				// for testing only
+				userName = "dummy";
+			} else {
+				if (hrf == null) {
+					throw new HandleException("No HandleRepository found! Has HS initialized?");
+				} else {
+					HandleEntry he = hrf.getHandleEntry(handle);
+					userName = he.getUsername();
+					if (userName == null)
+						throw new HandleException("HandleServer returns null for user name!");
+				}
+			}
+
+			attrs =
+				Arrays.asList(
+					responder.getReleaseAttributes(
+						new AAPrincipal(userName),
+						configuration.getProperty(
+							"edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase"),
+						shar,
+						resource));
+			log.info("Got " + attrs.size() + " attributes for " + userName);
+			saml.respond(resp, attrs, null);
+			log.info("Successfully responded about " + userName);
+
+		} catch (org.opensaml.SAMLException se) {
+			log.error("AA failed for " + userName + " because of: " + se);
+			try {
+				saml.fail(resp, se);
+			} catch (Exception ee) {
+				throw new ServletException(
+					"AA failed to even make a SAML Failure message because "
+						+ ee
+						+ "  Origianl problem: "
+						+ se);
+			}
+		} catch (HandleException he) {
+			log.error("AA failed for " + userName + " because of: " + he);
+			try {
+				QName[] codes = new QName[2];
+				codes[0] = SAMLException.REQUESTER;
+				codes[1] = new QName(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS, "InvalidHandle");
+				saml.fail(resp, new SAMLException(Arrays.asList(codes), "AA got a HandleException: " + he));
+			} catch (Exception ee) {
+				throw new ServletException(
+					"AA failed to even make a SAML Failure message because "
+						+ ee
+						+ "  Original problem: "
+						+ he);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(
+				"Attribute Authority Error for principal ("
+					+ userName
+					+ ") : "
+					+ e.getClass().getName()
+					+ " : "
+					+ e.getMessage());
+			try {
+				saml.fail(
+					resp,
+					new SAMLException(
+						SAMLException.RESPONDER,
+						"Attribute Authority Error: " + e.getMessage()));
+			} catch (Exception ee) {
+				throw new ServletException(
+					"AA failed to even make a SAML Failure message because "
+						+ ee
+						+ "  Original problem: "
+						+ e);
+			}
+
 		}
-	    }
-
-	    attrs = Arrays.asList(responder.getReleaseAttributes(new AAPrincipal(userName), uidSyntax, shar, resource));
-	    log.info("Got " + attrs.size() + " attributes for " + userName);
-	    saml.respond(resp, attrs, null);
-	    log.info("Successfully responded about "+userName);
-
- 	}catch (org.opensaml.SAMLException se) {
-	    log.error("AA failed for "+userName+" because of: "+se);
-	    try{
-    		saml.fail(resp, se);
-	    }catch(Exception ee){
-            throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Origianl problem: "+se);
-	    }
-	}catch (HandleException he) {
-	    log.error("AA failed for "+userName+" because of: "+he);
-	    try{
-		QName[] codes=new QName[2];
-		codes[0]=SAMLException.REQUESTER;
-		codes[1]=new QName(
-				   edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,
-				   "InvalidHandle");
-		saml.fail(resp, new SAMLException(Arrays.asList(codes), "AA got a HandleException: "+ he));
-	    }catch(Exception ee){
-		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Original problem: "+he);
-	    }
-	}catch (Exception e) {
-        e.printStackTrace();
-	    log.error("Attribute Authority Error for principal (" + userName + ") : " + e.getClass().getName() + " : " + e.getMessage());
-	    try{
-		saml.fail(resp, new SAMLException(SAMLException.RESPONDER, "Attribute Authority Error: " + e.getMessage()));
-	    }catch(Exception ee){
-		throw new ServletException("AA failed to even make a SAML Failure message because "+ee+"  Original problem: "+e);
-	    }
-
 	}
-    }
 
 
     private synchronized HandleRepositoryFactory getHandleRepository()
