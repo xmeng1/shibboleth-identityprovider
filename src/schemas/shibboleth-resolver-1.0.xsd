@@ -103,13 +103,7 @@
 						<xs:complexContent>
 							<xs:extension base="resolver:BaseResolutionPlugIn">
 								<xs:sequence>
-									<xs:element name="Query">
-										<xs:complexType>
-											<xs:simpleContent>
-												<xs:extension base="xs:string"/>
-											</xs:simpleContent>
-										</xs:complexType>
-									</xs:element>
+									<xs:element name="Query" type="xs:string"/>
 									<xs:element name="AttributeExtractor" minOccurs="0">
 										<xs:complexType>
 											<xs:attribute name="class" type="xs:string" use="required"/>
