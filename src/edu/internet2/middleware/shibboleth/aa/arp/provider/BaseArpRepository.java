@@ -238,7 +238,8 @@ class ArpCache {
 
 	static synchronized ArpCache instance() {
 		if (instance == null) {
-			return new ArpCache();
+			instance = new ArpCache();
+			return instance;
 		}
 		return instance;
 	}
