@@ -21,7 +21,7 @@ public class eduPersonPrincipalName implements ShibAttribute{
 	private static Logger log = Logger.getLogger(eduPersonPrincipalName.class.getName());
     
 
-    public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values)
+    public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values, String recipient)
 	throws SAMLException{
 
 	String scopes[] = new String[1];

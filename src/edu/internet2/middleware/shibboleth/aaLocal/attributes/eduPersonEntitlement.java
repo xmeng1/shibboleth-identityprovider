@@ -16,7 +16,7 @@ import org.opensaml.*;
 public class eduPersonEntitlement implements ShibAttribute{
     
 
-    public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values)
+    public SAMLAttribute toSamlAttribute(String defaultScope, Object[] values, String recipient)
 	throws SAMLException{
 
 	return new SAMLAttribute("urn:mace:eduPerson:1.0:eduPersonEntitlement",

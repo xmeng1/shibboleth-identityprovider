@@ -169,7 +169,7 @@ public class AAResponder{
 				ArpAttribute aAttr = (ArpAttribute) it.next();
 				Attribute dAttr = aAttr.getDirAttribute(userCtx, true);
 				if (dAttr != null) {
-					SAMLAttribute sAttr = jndi2saml(dAttr);
+					SAMLAttribute sAttr = jndi2saml(dAttr, sharName);
 					if (sAttr != null) {
 						sAttrs.add(sAttr);
 					}
@@ -326,7 +326,7 @@ public class AAResponder{
 	return null;
     }
     
-	private SAMLAttribute jndi2saml(Attribute jAttr) throws NamingException, AAException {
+	private SAMLAttribute jndi2saml(Attribute jAttr, String recipient) throws NamingException, AAException {
 
 		if (jAttr == null) {
 			return null;
@@ -345,7 +345,7 @@ public class AAResponder{
 			Class attrClass = Class.forName("edu.internet2.middleware.shibboleth.aaLocal.attributes." + jAttr.getID());
 			log.debug("Loaded the class for " + attrClass);
 			ShibAttribute sa = (ShibAttribute) attrClass.newInstance();
-			return sa.toSamlAttribute(this.domain, vals.toArray());
+			return sa.toSamlAttribute(this.domain, vals.toArray(), recipient);
 			
 		} catch (SAMLException e) {
 			log.error("Error converting attribute to SAML (" + jAttr.getID() + ") :" + e.getMessage());
