@@ -4,6 +4,10 @@
     PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
     "http://java.sun.com/dtd/web-app_2_3.dtd">
 
+<!--  A Servlet deployment descriptor (WEB-INF/web.xml) file
+	  defining Servlets, Filters, and Listeners for a /shibboleth
+	  context containing both an IdP and an SP  -->
+
 <web-app>
     <display-name>Shibboleth</display-name>
 	<context-param>
@@ -12,21 +16,27 @@
 	</context-param>
 	
 	<context-param>
-		<param-name>TargetConfigFile</param-name>
+		<param-name>ServiceProviderConfigFile</param-name>
 		<param-value>/conf/shibboleth.xml</param-value>
 	</context-param>
 	
 	<filter>
+	    <!--  Filter used if per-request thread local logging will
+	    	  be enabled for this context -->
 		<filter-name>RequestLogFilter</filter-name>
 		<filter-class>edu.internet2.middleware.commons.log4j.RequestLoggingFilter</filter-class>
 	</filter>
 
 	<filter>
+	    <!--  The /shibboleth context is not currently a meaningful
+	    	  resource. However, there is an intent to expose
+	    	  administrative pages and to restrict access to them
+	    	  through Shibboleth. -->
 		<filter-name>ShibFilter</filter-name>
 		<filter-class>edu.internet2.middleware.shibboleth.resource.AuthenticationFilter</filter-class>
 		<init-param>
 			<param-name>shireURL</param-name>
-			<param-value>http://shibdev.yale.edu:8080/shibboleth/Shibboleth.shire</param-value>
+			<param-value>http://shibdev.sample.edu:8080/shibboleth/Shibboleth.shire</param-value>
 		</init-param>
 		<init-param>
 			<param-name>wayfURL</param-name>
@@ -34,7 +44,7 @@
 		</init-param>
 		<init-param>
 			<param-name>providerId</param-name>
-			<param-value>http://shibdev.yale.edu/shibboleth</param-value>
+			<param-value>http://shibdev.sample.edu/shibboleth</param-value>
 		</init-param>
 		<init-param>
 			<param-name>requireId</param-name>
@@ -43,6 +53,8 @@
 	</filter>
 
  <filter>
+    <!--  Put your own Web-ISO Filter here. This Filter will be mapped
+    	  to front-end the IdP login Servlet -->
     <filter-name>CAS Filter</filter-name>
     <filter-class>edu.yale.its.tp.cas.client.filter.CASFilter</filter-class>
    <init-param>
@@ -55,7 +67,7 @@
    </init-param>
     <init-param>
      <param-name>edu.yale.its.tp.cas.client.filter.serverName</param-name>
-     <param-value>shibdev.yale.edu:8080</param-value>
+     <param-value>shibdev.sample.edu:8080</param-value>
     </init-param>
     <init-param>
      <param-name>edu.yale.its.tp.cas.client.filter.wrapRequest</param-name>
@@ -64,18 +76,21 @@
   </filter>
 	
 	<filter-mapping>
-		<filter-name>ShibFilter</filter-name>
-		<url-pattern>*.txt</url-pattern>
-	</filter-mapping>
-	
-	<filter-mapping>
+	    <!--  Frontend the IdP SSO Servlet with the institution's
+	    	  locally selected WebISO Filter. -->
 		<filter-name>CAS Filter</filter-name>
 		<servlet-name>HS</servlet-name>
 	</filter-mapping>
 
+	<!-- Frontend any protocol endpoints with the RequestLogFilter
+		 if you want to gather per-request thread local log data
+		 for subsequent request failure diagnosis. Note that 
+		 this will only gather data if the Log4J configuration
+		 in effect for the request processing includes the
+		 ThreadLocal Appender. -->
 	<filter-mapping>
 		<filter-name>RequestLogFilter</filter-name>
-		<servlet-name>SHIRE</servlet-name>
+		<servlet-name>AssertionConsumer</servlet-name>
 	</filter-mapping>
 
 	
@@ -83,28 +98,38 @@
 		<listener-class>edu.internet2.middleware.shibboleth.log.LoggingContextListener</listener-class> 
 	</listener>
 
+	<!-- Servlets for Shibboleth/SAML Protocol endpoints -->
 	<servlet>
+		<!-- IdP SSO  -->
 		<servlet-name>HS</servlet-name>
 		<display-name>Shibboleth Handle Service</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.hs.HandleServlet</servlet-class>
 	</servlet>
 	<servlet>
+		<!--  IdP AttributeAuthority -->
 		<servlet-name>AA</servlet-name>
 		<display-name>Shibboleth Attribute Authority</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.aa.AAServlet</servlet-class>
 	</servlet>
 	<servlet>
-		<servlet-name>SHIRE</servlet-name>
+	    <!--  SP Assertion Consumer -->
+		<servlet-name>AssertionConsumer</servlet-name>
 		<display-name>Authentication Assertion Consumer</display-name>
-		<servlet-class>edu.internet2.middleware.shibboleth.target.AuthenticationAssertionConsumerServlet</servlet-class>
+		<servlet-class>edu.internet2.middleware.shibboleth.serviceprovider.AuthenticationAssertionConsumerServlet</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
+	
+	<!-- Servlets for administrative functions -->
 	<servlet>
+	    <!-- Display the Request thread local log data
+	    	 This Servlet should not be mapped if the RequestLogFilter
+	    	 was not installed previously -->
 		<servlet-name>ShowLog</servlet-name>
 		<display-name>Return log data</display-name>
 		<servlet-class>edu.internet2.middleware.commons.log4j.ShowLog</servlet-class>
 	</servlet>
 
+    <!--  Mapping for SAML/Shibboleth protocol endpoints -->
 	<servlet-mapping>
 		<servlet-name>HS</servlet-name>
 		<url-pattern>/HS</url-pattern>
@@ -114,9 +139,11 @@
 		<url-pattern>/AA</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
-		<servlet-name>SHIRE</servlet-name>
-		<url-pattern>*.shire</url-pattern>
+		<servlet-name>AssertionConsumer</servlet-name>
+		<url-pattern>*.SHIRE</url-pattern>
 	</servlet-mapping>
+	
+	<!-- Mapping for administrative functions -->
 	<servlet-mapping>
 		<servlet-name>ShowLog</servlet-name>
 		<url-pattern>/showlog</url-pattern>
