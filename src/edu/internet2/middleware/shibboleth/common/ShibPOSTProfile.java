@@ -201,10 +201,6 @@ public class ShibPOSTProfile
         if (sso == null)
             return r;
 
-        // Check for replay.
-        if (!checkReplayCache(assertion))
-            throw new SAMLException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() detected a replayed SSO assertion");
-
         // Examine the subject information.
         SAMLSubject subject = sso.getSubject();
         if (subject.getNameQualifier() == null)
@@ -345,7 +341,7 @@ public class ShibPOSTProfile
      * @param  a            The assertion to check
      * @return              true iff the assertion has not been seen before
      */
-    protected synchronized boolean checkReplayCache(SAMLAssertion a)
+    public synchronized boolean checkReplayCache(SAMLAssertion a)
     {
         // Default implementation uses the basic replay cache implementation.
         return SAMLPOSTProfile.checkReplayCache(a);
