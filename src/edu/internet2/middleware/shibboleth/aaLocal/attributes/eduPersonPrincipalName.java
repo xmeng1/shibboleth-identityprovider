@@ -16,7 +16,7 @@ public class eduPersonPrincipalName implements ShibAttribute{
 	int x = eppn.indexOf("@") ;
 	System.out.println("EPPN: "+eppn+"    @ at "+x);
 	if(x > 0){
-	    vals[0] = eppn.substring(0,x);
+	    vals[0] = eppn.substring(0,x-1);
 	    scopes[0] = eppn.substring(x+1);
 	}else{
 	    vals[0] = eppn;
