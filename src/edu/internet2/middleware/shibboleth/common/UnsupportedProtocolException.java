@@ -53,6 +53,7 @@ import java.util.Collection;
 
 import org.opensaml.QName;
 import org.opensaml.SAMLException;
+import org.w3c.dom.Element;
 
 /**
  *  Indicates that an error occurred before or during the processing of a SAML
@@ -65,6 +66,19 @@ import org.opensaml.SAMLException;
  */
 public class UnsupportedProtocolException extends SAMLException implements Cloneable
 {
+    /**
+     *  Creates a new UnsupportedProtocolException
+     *
+     * @param  e    The root of a DOM tree
+     * @exception  SAMLException   Raised if an exception occurs while constructing
+     *                              the object.
+     */
+    protected UnsupportedProtocolException(Element e)
+        throws SAMLException
+    {
+        super(e);
+    }
+
     /**
      *  Creates a new UnsupportedProtocolException
      *
