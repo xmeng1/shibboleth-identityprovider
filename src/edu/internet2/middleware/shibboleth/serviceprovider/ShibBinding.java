@@ -25,8 +25,15 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
-import javax.xml.namespace.QName;
-import org.opensaml.*;
+import org.opensaml.NoSuchProviderException;
+import org.opensaml.SAMLAssertion;
+import org.opensaml.SAMLAuthorityBinding;
+import org.opensaml.SAMLBinding;
+import org.opensaml.SAMLBindingFactory;
+import org.opensaml.SAMLException;
+import org.opensaml.SAMLRequest;
+import org.opensaml.SAMLResponse;
+import org.opensaml.TrustException;
 
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityRole;
 import edu.internet2.middleware.shibboleth.metadata.Endpoint;
