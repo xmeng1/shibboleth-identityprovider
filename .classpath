@@ -7,19 +7,18 @@
     <classpathentry kind="lib"
         path="webApplication/WEB-INF/lib/commons-digester.jar" sourcepath="/Shibboleth/lib/commons-digester-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/jug.jar" sourcepath="/shib-java/webApplication/WEB-INF/lib/jug-src.jar"/>
-    <classpathentry kind="lib"
-        path="webApplication/WEB-INF/lib/bc-jce-jdk13-112.jar" sourcepath="/Shibboleth/buildlibs/jce-bc-src.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlsec.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml.jar"/>
     <classpathentry kind="lib" path="lib/junit.jar"/>
     <classpathentry kind="lib" path="lib/servlet-2.2.jar" sourcepath="/Shibboleth/lib/servlet-src.jar"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/log4j-1.2.3.jar"/>
     <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xalan.jar"/>
     <classpathentry kind="lib"
         path="webApplication/WEB-INF/lib/xercesImpl.jar" sourcepath="/Shibboleth/lib/xerces-src.jar"/>
     <classpathentry kind="lib"
-        path="webApplication/WEB-INF/lib/xml-apis.jar" rootpath="" sourcepath="/Shibboleth/lib/xerces-src.jar"/>
-    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlParserAPIs.jar"/>
+        path="webApplication/WEB-INF/lib/xml-apis.jar" sourcepath="/Shibboleth/lib/xerces-src.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/bc-jce-jdk13-114.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/ldap.jar"/>
+    <classpathentry kind="lib" path="webApplication/WEB-INF/lib/log4j-1.2.5.jar"/>
     <classpathentry kind="output" path="webApplication\WEB-INF\classes"/>
 </classpath>
