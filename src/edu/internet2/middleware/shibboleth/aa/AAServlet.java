@@ -141,12 +141,11 @@ public class AAServlet extends HttpServlet {
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
 			"/conf/arps/");
 		defaultProps.setProperty(
+					"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+					"/conf/resolver.xml");
+		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-		defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.ldapUserDnPhrase", "uid=");
-		defaultProps.setProperty(
-			"java.naming.factory.initial",
-			"edu.internet2.middleware.shibboleth.aaLocal.EchoCtxFactory");
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
 			"/conf/handle.jks");
@@ -168,7 +167,6 @@ public class AAServlet extends HttpServlet {
 			String[] requiredProperties =
 				{
 					"edu.internet2.middleware.shibboleth.aa.AAServlet.authorityName",
-					"java.naming.factory.initial",
 					"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 					"edu.internet2.middleware.shibboleth.audiences" };
 
