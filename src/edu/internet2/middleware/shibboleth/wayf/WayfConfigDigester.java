@@ -49,7 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.wayf;
 
-import javax.servlet.ServletContext;
 import javax.xml.parsers.SAXParser;
 
 import org.xml.sax.XMLReader;
@@ -78,10 +77,6 @@ public class WayfConfigDigester extends ServletDigester {
 	public WayfConfigDigester(SAXParser parser) {
 		super(parser);
 		configure();
-	}
-
-	public WayfConfigDigester(ServletContext context) {
-		super(context);
 	}
 
 	public WayfConfigDigester(XMLReader reader) {

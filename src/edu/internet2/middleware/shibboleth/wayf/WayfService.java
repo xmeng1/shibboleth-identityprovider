@@ -63,6 +63,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
+import edu.internet2.middleware.shibboleth.common.ShibResource;
+
 /**
  * A servlet implementation of the Shibboleth WAYF service.  Allows a browser user to 
  * select from among a group of origin sites.  User selection is optionally cached 
@@ -102,14 +104,11 @@ public class WayfService extends HttpServlet {
 	 * Populates WayfConfig and WayfOrigins objects from file contents.
 	 */
 	private void configure() throws UnavailableException {
-
-		InputStream is = getServletContext().getResourceAsStream(wayfConfigFileLocation);
-		WayfConfigDigester digester = new WayfConfigDigester(getServletContext());
-		InputStream siteIs = getServletContext().getResourceAsStream(siteConfigFileLocation);
-		OriginSitesDigester siteDigester = new OriginSitesDigester(getServletContext());
-
 		try {
+			InputStream is = new ShibResource(wayfConfigFileLocation, this.getClass()).getInputStream();
+			WayfConfigDigester digester = new WayfConfigDigester();
 			digester.setValidating(true);
+			System.err.println(is);
 			config = (WayfConfig) digester.parse(is);
 
 		} catch (SAXException se) {
@@ -121,6 +120,8 @@ public class WayfService extends HttpServlet {
 		}
 
 		try {
+			InputStream siteIs = getServletContext().getResourceAsStream(siteConfigFileLocation);
+			OriginSitesDigester siteDigester = new OriginSitesDigester();
 			siteDigester.setValidating(true);
 			originConfig = (WayfOrigins) siteDigester.parse(siteIs);
 
@@ -152,12 +153,12 @@ public class WayfService extends HttpServlet {
 		wayfConfigFileLocation = getServletConfig().getInitParameter("WAYFConfigFileLocation");
 		if (wayfConfigFileLocation == null) {
 			log.warn("No WAYFConfigFileLocation parameter found... using default location.");
-			wayfConfigFileLocation = "/WEB-INF/conf/wayfconfig.xml";
+			wayfConfigFileLocation = "/conf/wayfconfig.xml";
 		}
 		siteConfigFileLocation = getServletConfig().getInitParameter("SiteConfigFileLocation");
 		if (siteConfigFileLocation == null) {
 			log.warn("No SiteonfigFileLocation parameter found... using default location.");
-			siteConfigFileLocation = "/WEB-INF/conf/sites.xml";
+			siteConfigFileLocation = "/sites.xml";
 		}
 
 	}

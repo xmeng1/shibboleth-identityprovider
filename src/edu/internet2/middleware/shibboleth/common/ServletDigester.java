@@ -49,12 +49,12 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import javax.servlet.ServletContext;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -77,29 +77,19 @@ public class ServletDigester extends Digester {
 
 	private static Logger log =
 		Logger.getLogger(ServletDigester.class.getName());
-	private ServletContext context;
 	public ServletDigester() {
 		super();
-		configure();
-	}
-
-	public ServletDigester(ServletContext context) {
-		super();
-		super.setErrorHandler(new PassThruErrorHandler());
-		this.context = context;
-
+		setErrorHandler(new PassThruErrorHandler());
 	}
 
 	public ServletDigester(SAXParser parser) {
 		super(parser);
 		super.setErrorHandler(new PassThruErrorHandler());
-		configure();
 	}
 
 	public ServletDigester(XMLReader reader) {
 		super(reader);
 		super.setErrorHandler(new PassThruErrorHandler());
-		configure();
 	}
 
 	/**
@@ -108,16 +98,22 @@ public class ServletDigester extends Digester {
 	public InputSource resolveEntity(String publicId, String systemId)
 		throws SAXException {
 		log.debug("Resolving entity for System ID: " + systemId);
-		if (context != null && systemId != null) {
+		if (systemId != null) {
 			StringTokenizer tokenString = new StringTokenizer(systemId, "/");
 			String xsdFile = "";
 			while (tokenString.hasMoreTokens()) {
 				xsdFile = tokenString.nextToken();
 			}
 			if (xsdFile.endsWith(".xsd")) {
-				InputStream stream =
-					context.getResourceAsStream(
-						"/WEB-INF/classes/schemas/" + xsdFile);
+				InputStream stream;
+				try {
+				stream =
+					new ShibResource(
+						"/schemas/" + xsdFile, this.getClass()).getInputStream();
+			} catch (IOException ioe) {
+				log.error("Error loading schema: " + xsdFile + ": " + ioe);
+				return null;
+			}
 				if (stream != null) {
 					return new InputSource(stream);
 				}
@@ -164,9 +160,9 @@ public class ServletDigester extends Digester {
 				if (validating) {
 
 					Properties schemaProps = new Properties();
-					schemaProps.load(
-						context.getResourceAsStream(
-							"/WEB-INF/conf/schemas.properties"));
+					schemaProps.load(new ShibResource(
+						"/conf/schemas.properties", 
+						this.getClass()).getInputStream());
 					String schemaLocations = "";
 					Enumeration schemas = schemaProps.propertyNames();
 					while (schemas.hasMoreElements()) {

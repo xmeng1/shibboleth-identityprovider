@@ -49,7 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.wayf;
 
-import javax.servlet.ServletContext;
 import javax.xml.parsers.SAXParser;
 
 import org.xml.sax.XMLReader;
@@ -77,14 +76,6 @@ public class OriginSitesDigester extends ServletDigester {
 	 */
 	public OriginSitesDigester() {
 		super();
-	}
-
-	/**
-	 * Constructor for OriginSitesDigester.
-	 * @param context
-	 */
-	public OriginSitesDigester(ServletContext context) {
-		super(context);
 	}
 
 	/**
