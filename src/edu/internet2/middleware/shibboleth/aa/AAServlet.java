@@ -100,6 +100,7 @@ public class AAServlet extends HttpServlet {
     private static Logger log = Logger.getLogger(AAServlet.class.getName());    
     
 	public void init() throws ServletException {
+		super.init();
 
 		MDC.put("serviceId", "[AA Core]");
 		log.info("Initializing Attribute Authority.");
