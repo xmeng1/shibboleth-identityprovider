@@ -55,7 +55,7 @@ package edu.internet2.middleware.shibboleth.aa.arp;
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public class ArpRepositoryException extends Exception {
+public class ArpRepositoryException extends ArpException {
 
 	public ArpRepositoryException(String message) {
 		super(message);

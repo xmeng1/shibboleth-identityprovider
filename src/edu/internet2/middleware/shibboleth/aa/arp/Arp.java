@@ -49,8 +49,11 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.net.URL;
 import java.security.Principal;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.CharacterData;
@@ -68,7 +71,7 @@ import org.w3c.dom.NodeList;
 public class Arp {
 
 	private Principal principal;
-	private HashSet rules = new HashSet();
+	private Set rules = new HashSet();
 	private String description;
 	private boolean sitePolicy = false;
 
@@ -203,6 +206,33 @@ public class Arp {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	/**
+	 * Finds all of the rules contained in the <code>Arp</code> object that are applicable 
+	 * to a particular request.
+	 * @param requester the SHAR for this request
+	 * @param resource the resource that the requestis made on behalf of
+	 * @return the matching <code>Rule</code> objects
+	 */
+	public Rule[] getMatchingRules(String requester, URL resource) {
+		Set effectiveSet = new HashSet();
+		Iterator iterator = rules.iterator();
+		while (iterator.hasNext()) {
+			Rule rule = (Rule) iterator.next();
+			if (rule.matchesRequest(requester, resource)) {
+				effectiveSet.add(rule);
+			}
+		}
+		return (Rule[]) effectiveSet.toArray(new Rule[0]);
+	}
+
+	/**
+	 * Adds an ARP Rule to this <code>ARP</code>.
+	 * @param rule the <code>Rule</code> to add
+	 */
+	public void addRule(Rule rule) {
+		rules.add(rule);
 	}
 
 }

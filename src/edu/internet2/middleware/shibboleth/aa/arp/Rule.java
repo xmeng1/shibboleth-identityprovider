@@ -49,6 +49,8 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.net.URL;
+
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -125,6 +127,16 @@ public class Rule {
 				description = ((CharacterData) descriptionNode.getFirstChild()).getData();
 			}
 		}
+	}
+
+	/**
+	 * Method matchesRequest.
+	 * @param requester
+	 * @param resource
+	 * @return boolean
+	 */
+	public boolean matchesRequest(String requester, URL resource) {
+		return false;
 	}
 
 }

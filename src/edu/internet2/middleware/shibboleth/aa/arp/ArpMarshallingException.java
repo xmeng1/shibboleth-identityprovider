@@ -55,7 +55,7 @@ package edu.internet2.middleware.shibboleth.aa.arp;
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public class ArpMarshallingException extends Exception {
+public class ArpMarshallingException extends ArpException {
 
 	public ArpMarshallingException(String message) {
 		super(message);

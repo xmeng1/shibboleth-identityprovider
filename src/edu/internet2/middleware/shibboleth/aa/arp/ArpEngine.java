@@ -49,12 +49,102 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
+
 /**
  *  Defines a processing engine for Attribute Release Policies.
  *
  * @author Walter Hoehn (wassa@columbia.edu)
  */
 
-public interface ArpEngine {
+public class ArpEngine {
+
+	private static Logger log = Logger.getLogger(ArpEngine.class.getName());
+	private ArpRepository repository;
+	private static Map matchFunctions = Collections.synchronizedMap(new HashMap());
+	static {
+		//Initialize built-in match functions
+		try {
+			matchFunctions.put(
+				new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"),
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.ExactSharMatchFunction");
+			matchFunctions.put(
+				new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"),
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.ResourceTreeMatchFunction");
+			matchFunctions.put(
+				new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"),
+				"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexMatchFunction");
+		} catch (URISyntaxException e) {
+			log.error("Error mapping standard match functions: " + e);
+		}
+	}
+
+	public ArpEngine(Properties properties) throws ArpException {
+		try {
+			this.repository = ArpRepositoryFactory.getInstance(properties);
+		} catch (ArpRepositoryException e) {
+			log.error("Could not start Arp Engine: " + e);
+			throw new ArpException("Could not start Arp Engine.");
+		}
+	}
+
+	public static MatchFunction lookupMatchFunction(URI functionIdentifier) throws ArpException {
+		String className = null;
+
+		synchronized (matchFunctions) {
+			className = (String) matchFunctions.get(functionIdentifier);
+		}
+
+		if (className == null) {
+			return null;
+		}
+		try {
+			Class matchFunction = Class.forName(className);
+			Object functionObject = matchFunction.newInstance();
+			if (functionObject instanceof MatchFunction) {
+				return (MatchFunction) functionObject;
+			} else {
+				log.error(
+					"Improperly specified match function, (" + className + ") is not a match function.");
+				throw new ArpException(
+					"Improperly specified match function, (" + className + ") is not a match function.");
+			}
+		} catch (Exception e) {
+			log.error("Could not load Match Function: (" + className + "): " + e);
+			throw new ArpException("Could not load Match Function.");
+		}
+	}
+
+	private Arp createEffectiveArp(Principal principal, String requester, URL resource)
+		throws ArpProcessingException {
+		try {
+			Arp effectiveArp = new Arp(principal);
+			effectiveArp.setDescription("Effective ARP.");
+
+			Arp[] userPolicies = repository.getAllPolicies(principal);
+
+			for (int i = 0; userPolicies.length > i; i++) {
+				Rule[] rules = userPolicies[i].getMatchingRules(requester, resource);
+
+				for (int j = 0; rules.length > i; j++) {
+					effectiveArp.addRule(rules[i]);
+				}
+			}
+
+			return effectiveArp;
+		} catch (ArpRepositoryException e) {
+			log.error("Error creating effective policy: " + e);
+			throw new ArpProcessingException("Error creating effective policy.");
+		}
+	}
 
 }
