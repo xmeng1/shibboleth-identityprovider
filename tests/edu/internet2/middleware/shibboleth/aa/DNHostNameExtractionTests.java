@@ -96,7 +96,7 @@ public class DNHostNameExtractionTests extends TestCase {
 
 		try {
 			assertEquals("Round-trip handle validation failed on DN.", ShibPOSTProfile
-					.getHostNameFromDN(new X500Principal(dn1)), "wayf.internet2.edu");
+					.getHostNameFromDN(new X500Principal(dn4)), "wayf.internet2.edu");
 
 		} catch (Exception e) {
 			fail("Error in test specification: " + e.getMessage());

@@ -74,7 +74,7 @@ import edu.internet2.middleware.shibboleth.hs.HSRelyingParty;
  */
 public class ShibPOSTProfile {
 
-	private static Pattern	regex		= Pattern.compile(".*CN=([^,/]+).*");
+	private static Pattern	regex		= Pattern.compile(".*?CN=([^,/]+).*");
 
 	/** XML Signature algorithm to apply */
 	protected String		algorithm	= XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1;
