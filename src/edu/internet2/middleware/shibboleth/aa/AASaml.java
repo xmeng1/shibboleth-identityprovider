@@ -189,7 +189,11 @@ public class AASaml {
 						"Dumping generated SAML Response:"
 						+ System.getProperty("line.separator")
 						+ new String(new BASE64Decoder().decodeBuffer(new String(sResp.toBase64(), "ASCII")), "UTF8"));
-				} catch (IOException e) {
+				}
+                catch (SAMLException e) {
+                    log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
+                }
+                catch (IOException e) {
 					log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
 				}
 			}
