@@ -229,21 +229,15 @@ public class AAResponder{
 	while(ne.hasMore())
 	    vals.add(ne.next());
 
-
-	String[] scopes = new String[vals.size()];
-	scopes[0] = this.domain;
-	Object[] args = new Object[2];
-	args[0] = scopes;
-	args[1] = vals.toArray();
-
 	try{
 	    Class attrClass = Class.forName(id);
-	    Constructor[] cons = attrClass.getConstructors();
+	    //	    Constructor[] cons = attrClass.getConstructors();
 	    System.out.println("Got constructors for "+attrClass);
-	    System.out.println("number of constructors "+cons.length);
-	    System.out.println("first constructor is "+cons[0]);
-	    System.out.println("Make a SAML attribute with: "+scopes[0]+", "+vals.get(0));
-	    return (SAMLAttribute)cons[0].newInstance(args);
+	    //	    System.out.println("number of constructors "+cons.length);
+	    //	    System.out.println("first constructor is "+cons[0]);
+	    //	    System.out.println("Make a Shib attribute with: "+scopes[0]+", "+vals.get(0));
+	    ShibAttribute sa = (ShibAttribute)attrClass.newInstance();
+	    return sa.toSamlAttribute(this.domain, vals.toArray());
 	}catch(Exception e){
 	    throw new AAException("Failed to read the class for attribute "+id+" :"+e);
 	}
