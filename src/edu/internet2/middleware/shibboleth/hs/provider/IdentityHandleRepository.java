@@ -60,10 +60,9 @@ import edu.internet2.middleware.shibboleth.hs.HandleRepositoryException;
 import edu.internet2.middleware.shibboleth.hs.InvalidHandleException;
 
 /**
- * <code>HandleRepository</code> implementation that employs the use of a shard secret
- * in order to transmit identity information.
+ * <code>HandleRepository</code> implementation that uses principal names as handles
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Scott Cantor (cantor.2@osu.edu)
  */
 public class IdentityHandleRepository extends BaseHandleRepository implements HandleRepository {
 
