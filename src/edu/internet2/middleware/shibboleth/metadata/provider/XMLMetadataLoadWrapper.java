@@ -32,6 +32,8 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
+import org.opensaml.SAMLException;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
@@ -42,6 +44,7 @@ import org.xml.sax.SAXParseException;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
+import edu.internet2.middleware.shibboleth.common.XML;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -62,56 +65,13 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 
 	public XMLMetadataLoadWrapper(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
 		super(new ShibResource(sitesFileLocation, XMLMetadataLoadWrapper.class));
-
-		parser = new DOMParser();
 		try {
-			parser.setFeature("http://xml.org/sax/features/validation", true);
-			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
-
-			parser.setEntityResolver(new EntityResolver() {
-
-				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
-					log.debug("Resolving entity for System ID: " + systemId);
-					if (systemId != null) {
-						StringTokenizer tokenString = new StringTokenizer(systemId, "/");
-						String xsdFile = "";
-						while (tokenString.hasMoreTokens()) {
-							xsdFile = tokenString.nextToken();
-						}
-						if (xsdFile.endsWith(".xsd")) {
-							InputStream stream;
-							try {
-								stream = new ShibResource("/schemas/" + xsdFile, this.getClass()).getInputStream();
-							} catch (IOException ioe) {
-								log.error("Error loading schema: " + xsdFile + ": " + ioe);
-								return null;
-							}
-							if (stream != null) {
-								return new InputSource(stream);
-							}
-						}
-					}
-					return null;
-				}
-			});
-
-			parser.setErrorHandler(new ErrorHandler() {
-
-				public void error(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void fatalError(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-
-				public void warning(SAXParseException arg0) throws SAXException {
-					throw new SAXException("Error parsing xml file: " + arg0);
-				}
-			});
-
-			parser.parse(new InputSource(resource.getInputStream()));
-
+			org.opensaml.XML.parserPool.registerSchema(XML.SHIB_NS, XML.SHIB_SCHEMA_ID, new XML.SchemaResolver());
+			Document doc = org.opensaml.XML.parserPool.parse(resource.getInputStream());
+			currentMeta = new XMLMetadata(doc.getDocumentElement());
+		} catch (SAMLException e) {
+			log.error("Encountered a problem parsing federation metadata source: " + e);
+			throw new MetadataException("Unable to parse federation metadata.");
 		} catch (SAXException e) {
 			log.error("Encountered a problem parsing federation metadata source: " + e);
 			throw new MetadataException("Unable to parse federation metadata.");
@@ -119,8 +79,6 @@ public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata
 			log.error("Encountered a problem reading federation metadata source: " + e);
 			throw new MetadataException("Unable to read federation metadata.");
 		}
-
-		currentMeta = new XMLMetadata(parser.getDocument().getDocumentElement());
 
 		//Start checking for metadata updates
 		start();
