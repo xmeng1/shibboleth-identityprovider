@@ -114,4 +114,9 @@ public interface RelyingParty extends ServiceProvider {
 	 * Returns the type of SAML Artifact that this appropriate for use with this Relying Party.
 	 */
 	public int getPreferredArtifactType();
+
+	/**
+	 * Returns thhe default "TARGET" attribute to be used with the artifact profile or null if none is specified.
+	 */
+	public String getDefaultTarget();
 }

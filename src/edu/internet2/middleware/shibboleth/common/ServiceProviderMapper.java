@@ -228,6 +228,7 @@ public class ServiceProviderMapper {
 		private boolean defaultToPOST = true;
 		private boolean wantsAssertionsSigned = false;
 		private int preferredArtifactType = 1;
+		private String defaultTarget;
 
 		public RelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials,
 				NameMapper nameMapper) throws ServiceProviderMapperException {
@@ -299,6 +300,9 @@ public class ServiceProviderMapper {
 			} else {
 				log.debug("Relying party does not want SAML Assertions to be signed.");
 			}
+
+			// Set a default target for use in artifact redirects
+			defaultTarget = ((Element) partyConfig).getAttribute("defaultTarget");
 
 			// Determine whether or not we are forcing attribute push on or off
 			String forcePush = ((Element) partyConfig).getAttribute("forceAttributePush");
@@ -458,6 +462,11 @@ public class ServiceProviderMapper {
 			return preferredArtifactType;
 		}
 
+		public String getDefaultTarget() {
+
+			return defaultTarget;
+		}
+
 		/**
 		 * Default identity provider implementation.
 		 * 
@@ -573,6 +582,11 @@ public class ServiceProviderMapper {
 
 			return wrapped.getPreferredArtifactType();
 		}
+
+		public String getDefaultTarget() {
+
+			return wrapped.getDefaultTarget();
+		}
 	}
 
 	/**
@@ -654,6 +668,11 @@ public class ServiceProviderMapper {
 		public int getPreferredArtifactType() {
 
 			return wrapped.getPreferredArtifactType();
+		}
+
+		public String getDefaultTarget() {
+
+			return wrapped.getDefaultTarget();
 		}
 	}
 

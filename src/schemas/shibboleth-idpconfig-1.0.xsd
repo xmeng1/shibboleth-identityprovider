@@ -64,6 +64,7 @@
 							<xs:attribute name="defaultToPOSTProfile" type="xs:boolean" use="optional"/>
 							<xs:attribute name="defaultAuthMethod" type="xs:string" use="optional"/>
 							<xs:attribute name="preferredArtifactType" type="xs:integer" use="optional"/>
+							<xs:attribute name="defaultTarget" type="xs:string" use="optional"/>
 						</xs:complexType>
 					</xs:element>
 				</xs:sequence>
