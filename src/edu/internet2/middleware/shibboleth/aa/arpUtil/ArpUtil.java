@@ -352,6 +352,7 @@ class ArpUtil{
     static void doRemove(String[] args){
 
 	if(args.length < 2){
+		log.fatal("Not enough arguments.");
 	    System.out.println("Usage:\n"+removeUsage);
 	    return;
 	}
@@ -372,6 +373,7 @@ class ArpUtil{
 	   (sharName != null && sharName.startsWith("-")) ||
 	   (resourceName != null && resourceName.startsWith("-")) ||
 	   (attrName != null && attrName.startsWith("-"))){
+	   	log.fatal("Unrecognized argument.");
 	    System.out.println("Usage:\n"+removeUsage);
 	    return;
 	}
