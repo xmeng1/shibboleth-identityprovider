@@ -73,26 +73,21 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 	private String aeClassName = null;
 
 	final private static String QueryAtt = "query";
-	final private static String SearchAtt = "Search";
 	final private static String AttributeExtractorAtt = "attributeExtractor";
-	final private static String NameAtt = "name";
-	final private static String ValueAtt = "value";
 	final private static String DBDriverAtt = "dbDriver";
 	final private static String AEInstanceMethodAtt = "instance";
-	final private static String PropertyAtt = "Property";
 	final private static String DBSubProtocolAtt = "dbSubProtocol";
 	final private static String DBHostAtt = "dbHost";
 	final private static String DBNameAtt = "dbName";
 	final private static String UserNameAtt = "userName";
 	final private static String PasswordAtt = "password";
-	final private static String DefaultAEAtt = "ca.nrc.cisti.shibboleth.attrresolv.provider.DefaultAE";
 
 	public JDBCDataConnector(Element e) throws ResolutionPlugInException {
 
 		super(e);
 
-		NodeList propertiesNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, PropertyAtt);
-		NodeList searchNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, SearchAtt);
+		NodeList propertiesNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
+		NodeList searchNode = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
 
 		String propertiesName = null;
 		String propertiesValue = null;
@@ -115,8 +110,8 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		 */
 		for (int i = 0; propertiesNode.getLength() > i; i++) {
 			Element property = (Element) propertiesNode.item(i);
-			propertiesName = property.getAttribute(NameAtt);
-			propertiesValue = property.getAttribute(ValueAtt);
+			propertiesName = property.getAttribute("name");
+			propertiesValue = property.getAttribute("value");
 
 			if (propertiesName != null
 				&& !propertiesName.equals("")
@@ -194,8 +189,9 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 		 * If the user has no supplied their own class for extracting the attributes then 
 		 * the default extraction is run, which is specified in DefaultAEAtt.
 		 */
-		if (aeClassName == null || aeClassName.equals(""))
-			aeClassName = DefaultAEAtt;
+		if (aeClassName == null || aeClassName.equals("")) {
+			aeClassName = DefaultAE.class.getName();
+		}
 
 		try {
 			Class aeClass = Class.forName(aeClassName);
