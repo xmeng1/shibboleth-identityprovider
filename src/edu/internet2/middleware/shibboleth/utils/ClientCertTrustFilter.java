@@ -157,7 +157,7 @@ public class ClientCertTrustFilter implements Filter {
 	public void destroy() {
 	}
 
-	class ClientCertTrustWrapper extends HttpServletRequestWrapper implements HttpServletRequest {
+	class ClientCertTrustWrapper extends HttpServletRequestWrapper {
 
 		Principal principal;
 
