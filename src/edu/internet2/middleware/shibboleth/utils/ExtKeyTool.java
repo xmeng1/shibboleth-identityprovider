@@ -790,7 +790,7 @@ public class ExtKeyTool {
 				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 				String passwordInput = reader.readLine();
 				passwordInput.trim();
-				if (passwordInput != null) {
+				if (passwordInput != null && !passwordInput.equals("")) {
 					return passwordInput.toCharArray();
 				}
 			} catch (IOException e) {
