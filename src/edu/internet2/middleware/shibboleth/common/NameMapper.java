@@ -43,6 +43,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -174,7 +175,7 @@ public class NameMapper {
 	}
 
 	/**
-         * Adds a {@link NameIdentifierMapping} to this name mapper, registering it according to its format.
+	 * Adds a {@link NameIdentifierMapping}to this name mapper, registering it according to its format.
 	 * 
 	 * @param mapping
 	 *            the mapping to add
@@ -192,7 +193,7 @@ public class NameMapper {
 	}
 
 	/**
-	 * Returns the {@link NameIdentifierMapping} registered for a given format.
+	 * Returns the {@link NameIdentifierMapping}registered for a given format.
 	 * 
 	 * @param format
 	 *            the registered format
@@ -241,9 +242,9 @@ public class NameMapper {
 	 *            the provider handling the request
 	 * @return the local principal
 	 * @throws NameIdentifierMappingException
-	 *             If the {@link NameMapper} encounters an internal error
+	 *             If the {@link NameMapper}encounters an internal error
 	 * @throws InvalidNameIdentifierException
-	 *             If the {@link SAMLNameIdentifier} contains invalid data
+	 *             If the {@link SAMLNameIdentifier}contains invalid data
 	 */
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 		throws NameIdentifierMappingException, InvalidNameIdentifierException {
@@ -258,6 +259,16 @@ public class NameMapper {
 			throw new InvalidNameIdentifierException("Name Identifier format not registered.");
 		}
 		return mapping.getPrincipal(nameId, sProv, idProv);
+	}
+
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	public void destroy() {
+			Iterator mappingIterator = byFormat.values().iterator();
+			while (mappingIterator.hasNext()) {
+				((NameIdentifierMapping)mappingIterator.next()).destroy();
+			}
 	}
 
 }

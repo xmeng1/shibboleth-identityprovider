@@ -706,4 +706,10 @@ public class AttributeResolver {
 		}
 	}
 
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	public void destroy() {
+		resolverCache.destroy();
+	}
 }

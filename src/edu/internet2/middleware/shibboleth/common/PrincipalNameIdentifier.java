@@ -67,5 +67,4 @@ public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {
 
 		return new AuthNPrincipal(nameId.getName());
 	}
-
 }

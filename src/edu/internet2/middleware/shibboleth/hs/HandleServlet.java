@@ -238,6 +238,11 @@ public class HandleServlet extends OriginComponent {
 			throttle.exit();
 		}
 	}
+	
+	public void destroy() {
+		log.info("Cleaning up resources.");
+		nameMapper.destroy();
+	}
 
 	protected byte[] generateAssertion(
 		HSRelyingParty relyingParty,

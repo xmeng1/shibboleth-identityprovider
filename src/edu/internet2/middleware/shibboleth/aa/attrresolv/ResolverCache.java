@@ -1,49 +1,37 @@
-/* 
- * The Shibboleth License, Version 1. 
- * Copyright (c) 2002 
- * University Corporation for Advanced Internet Development, Inc. 
+/*
+ * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
  * All rights reserved
  * 
  * 
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+ * following conditions are met:
  * 
- * Redistributions of source code must retain the above copyright notice, this 
- * list of conditions and the following disclaimer.
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+ * disclaimer.
  * 
- * Redistributions in binary form must reproduce the above copyright notice, 
- * this list of conditions and the following disclaimer in the documentation 
- * and/or other materials provided with the distribution, if any, must include 
- * the following acknowledgment: "This product includes software developed by 
- * the University Corporation for Advanced Internet Development 
- * <http://www.ucaid.edu>Internet2 Project. Alternately, this acknowledegement 
- * may appear in the software itself, if and wherever such third-party 
- * acknowledgments normally appear.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+ * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
+ * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
+ * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
+ * software itself, if and wherever such third-party acknowledgments normally appear.
  * 
- * Neither the name of Shibboleth nor the names of its contributors, nor 
- * Internet2, nor the University Corporation for Advanced Internet Development, 
- * Inc., nor UCAID may be used to endorse or promote products derived from this 
- * software without specific prior written permission. For written permission, 
- * please contact shibboleth@shibboleth.org
+ * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
+ * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
+ * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
  * 
- * Products derived from this software may not be called Shibboleth, Internet2, 
- * UCAID, or the University Corporation for Advanced Internet Development, nor 
- * may Shibboleth appear in their name, without prior written permission of the 
+ * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
+ * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
  * University Corporation for Advanced Internet Development.
  * 
  * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK 
- * OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. 
- * IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY 
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
+ * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
+ * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
@@ -60,11 +48,10 @@ import javax.naming.directory.Attributes;
 import org.apache.log4j.Logger;
 
 /**
- * Rudimentary mechanism for caching objects created by the various
- * Resolution PlugIns.
+ * Rudimentary mechanism for caching objects created by the various Resolution PlugIns.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
- *
+ *  
  */
 public class ResolverCache {
 
@@ -72,7 +59,7 @@ public class ResolverCache {
 	//Hashtable handles synchronization for us
 	private Hashtable attributeDataCache = new Hashtable();
 	private Hashtable connectorDataCache = new Hashtable();
-	private Cleaner cleaner = new Cleaner(Thread.currentThread());
+	private Cleaner cleaner = new Cleaner();
 
 	ResolverCache() {
 		log.info("Initializing the Attribute Resolver cache.");
@@ -175,9 +162,18 @@ public class ResolverCache {
 	 */
 	protected void finalize() throws Throwable {
 		super.finalize();
+		destroy();
+	}
+
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	protected void destroy() {
 		synchronized (cleaner) {
-			cleaner.shutdown = true;
-			cleaner.interrupt();
+			if (cleaner != null) {
+				cleaner.shutdown = true;
+				cleaner.interrupt();
+			}
 		}
 	}
 
@@ -234,6 +230,7 @@ public class ResolverCache {
 
 		/**
 		 * Method getPlugInId.
+		 * 
 		 * @return Object
 		 */
 		private String getPlugInId() {
@@ -242,6 +239,7 @@ public class ResolverCache {
 
 		/**
 		 * Method getPrincipal.
+		 * 
 		 * @return Object
 		 */
 		private Principal getPrincipal() {
@@ -260,26 +258,30 @@ public class ResolverCache {
 	private class Cleaner extends Thread {
 
 		private boolean shutdown = false;
-		private Thread master;
+		private Object master;
 
-		public Cleaner(Thread master) {
-			super();
-			log.debug("Starting Resolver Cache cleanup thread.");
-			this.master = master;
+		public Cleaner() {
+			super("edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverCacher.Cleaner");
+			master = Thread.currentThread();
 			setDaemon(true);
+			if (getPriority() > Thread.MIN_PRIORITY) {
+				setPriority(getPriority() - 1);
+			}
+			log.debug("Starting Resolver Cache cleanup thread.");
 			start();
 		}
 
 		public void run() {
 			try {
-				sleep(5 * 60 * 1000);
+				sleep(60 * 1000); //one minute
 			} catch (InterruptedException e) {
 				log.debug("Resolver Cache Cleanup interrupted.");
 			}
 
 			while (true) {
 				try {
-					if (!master.isAlive()) {
+					if (master == null) {
+						log.debug("Resolver cache cleaner is orphaned.");
 						shutdown = true;
 					}
 					if (shutdown) {
@@ -321,7 +323,7 @@ public class ResolverCache {
 						}
 					}
 
-					sleep(5 * 60 * 1000);
+					sleep(60 * 1000); //one minute
 
 				} catch (InterruptedException e) {
 					log.debug("Resolver Cache Cleanup interrupted.");

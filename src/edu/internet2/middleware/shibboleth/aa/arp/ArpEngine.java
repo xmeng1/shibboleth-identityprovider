@@ -384,4 +384,11 @@ public class ArpEngine {
 		return canonicalSpec;
 	}
 
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	public void destroy() {
+		repository.destroy();
+	}
+
 }

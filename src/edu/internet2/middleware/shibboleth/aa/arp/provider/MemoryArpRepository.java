@@ -156,5 +156,9 @@ public class MemoryArpRepository implements ArpRepository {
 
 		userPolicies.put(arp.getPrincipal(), arp);
 	}
+	
+	public void destroy() {
+		//do nothing
+	}
 
 }

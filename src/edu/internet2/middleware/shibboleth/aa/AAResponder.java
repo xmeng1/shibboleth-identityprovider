@@ -144,4 +144,12 @@ public class AAResponder {
 		arpEngine.filterAttributes(attributeSet, principal, requester, resource);
 		return attributeSet.getAttributes();
 	}
+
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	public void destroy() {
+		resolver.destroy();
+		arpEngine.destroy();
+	}
 }

@@ -83,6 +83,7 @@ public class WayfService extends HttpServlet {
 	private WayfOrigins originConfig;
 	private WayfCacheOptions wOptions = new WayfCacheOptions();
 	private static Logger log = Logger.getLogger(WayfService.class.getName());
+	ResourceWatchdog watchdog;
 
 	/**
 	 * @see GenericServlet#init()
@@ -97,7 +98,7 @@ public class WayfService extends HttpServlet {
 
 		log.info("Initailizing site metadata watchdog.");
 		try {
-			ResourceWatchdog watchdog = new SitesFileWatchdog(siteConfigFileLocation, this);
+			watchdog = new SitesFileWatchdog(siteConfigFileLocation, this);
 			watchdog.start();
 		} catch (ResourceNotAvailableException e) {
 			log.error("Sites file watchdog could not be initialized: " + e);
@@ -210,6 +211,12 @@ public class WayfService extends HttpServlet {
 			}
 		} catch (WayfException we) {
 			handleError(req, res, we);
+		}
+	}
+	
+	public void destroy() {
+		if (watchdog != null && watchdog.isAlive()) {
+			watchdog.interrupt();
 		}
 	}
 

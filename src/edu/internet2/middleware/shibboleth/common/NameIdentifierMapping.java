@@ -75,4 +75,9 @@ public interface NameIdentifierMapping {
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 		throws NameIdentifierMappingException, InvalidNameIdentifierException;
 
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	public void destroy();
+
 }

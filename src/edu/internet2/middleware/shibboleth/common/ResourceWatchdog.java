@@ -77,6 +77,9 @@ public abstract class ResourceWatchdog extends Thread {
 		this.resource = resource;
 		setDaemon(true);
 		setDelay(DEFAULT_DELAY);
+		if (getPriority() > Thread.MIN_PRIORITY) {
+			setPriority(getPriority() - 1);
+		}
 		this.maxRetries = DEFAULT_MAX_RETRIES;
 		lastModified = System.currentTimeMillis();
 	}

@@ -101,4 +101,9 @@ public interface ArpRepository {
 
 	public void remove(Arp arp) throws ArpRepositoryException;
 
+	/**
+	 * Cleanup resources that won't be released when this object is garbage-collected
+	 */
+	public void destroy();
+
 }

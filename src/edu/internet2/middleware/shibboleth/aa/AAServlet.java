@@ -345,6 +345,12 @@ public class AAServlet extends OriginComponent {
 
 		}
 	}
+	
+	public void destroy() {
+		log.info("Cleaning up resources.");
+		responder.destroy();
+		nameMapper.destroy();
+	}
 	public void sendResponse(
 		HttpServletResponse resp,
 		SAMLAttribute[] attrs,
