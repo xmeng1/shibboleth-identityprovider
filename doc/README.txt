@@ -46,3 +46,5 @@ Source code for these libraries is available on request.
 This project includes software developed by the National Research Council 
 of Canada.
 
+This product includes software developed by The Bitzi Corporation.
+
