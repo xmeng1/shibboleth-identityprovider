@@ -39,7 +39,11 @@
 	
 <% 
     ArpAttribute adminAttr = getAdminAttr(adminArp, resource, userAttr.getName());
+    if (adminAttr == null) {
+	adminAttr = new ArpAttribute(attr.getName(), false);
+    }
     ArpFilter admFilter = adminAttr.getFilter();
+  
     ArpFilter filter = userAttr.getFilter();
 
     Attribute dAttr = attr.getDirAttribute(userCtx, true);
@@ -54,6 +58,7 @@
 	} else {
 	    checked = "<input type=\"checkbox\" name=\"filterval\" value=\""+dAttr.get(j)+"\"> Yes";
 	}
+	if (admFilter != null) {
 	ArpFilterValue[] afvi = admFilter.getFilterValues();
 	for (int k=0;k<afvi.length;k++) {
 	    if (afvi[k].equals(afv) && (afvi[k].mustInclude() == false)) {
@@ -63,7 +68,10 @@
 	        checked = "<i>released</i>";
  	    }
 	}
-      }
+	}
+      } else {
+	 checked = "<input type=\"checkbox\" name=\"filterval\" value=\""+dAttr.get(j)+"\"> Yes";
+	}
 
       out.println("<tr><td>"+dAttr.get(j)+"</td>");
       out.println("<td>"+checked+"</td></tr>");
