@@ -105,7 +105,8 @@ public class HandleService extends HttpServlet {
 	}
 
 	/**
-	 * Loads HS configuration.
+	 * Loads HS configuration.  Populates a <code>HandleServiceConfig</code> object based
+	 * on administrator supplied configuration.
 	 */
 
 	private void initConfig() throws ServletException {
