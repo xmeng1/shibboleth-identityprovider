@@ -40,6 +40,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Vector;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.RequestDispatcher;
@@ -47,6 +48,7 @@ import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -60,6 +62,8 @@ import org.opensaml.SAMLAttributeDesignator;
 import org.opensaml.SAMLAttributeQuery;
 import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
+import org.opensaml.SAMLAuthenticationStatement;
+import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBindingFactory;
 import org.opensaml.SAMLCondition;
@@ -145,6 +149,24 @@ public class IdPResponder extends TargetFederationComponent {
 			// TODO this needs to be pluggable
 			artifactMapper = new MemoryArtifactMapper();
 			loadConfiguration();
+			
+			
+			//TODO figure out how this stuff should be configured
+			// if (configuration.eAuthSupport()) {
+			if (false) {	
+			log.debug("Starting with Shibboleth & eAuth protocol handling enabled.");
+			//	profileHandlers = new SSOProfileHandler[]{new ShibbolethProfileHandler(),
+				//		new EAuthProfileHandler(configuration.getCsid())};
+			} else {
+				log.debug("Starting with Shibboleth protocol handling enabled.");
+				profileHandlers = new SSOProfileHandler[]{new ShibbolethProfileHandler()};
+			}
+			
+			
+			
+			
+			
+			
 			
 			//TODO what should we do with the throttle now!!!  default???
 			
@@ -1145,6 +1167,145 @@ public class IdPResponder extends TargetFederationComponent {
 
 		abstract String getAcceptanceURL(HttpServletRequest request, RelyingParty relyingParty, Provider provider)
 				throws InvalidClientDataException;
+	}
+	class ShibbolethProfileHandler extends SSOProfileHandler {
+
+		//private static Logger	log		= Logger.getLogger(ShibbolethProfileHandler.class.getName());
+		private final String	name	= "Shibboleth";
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#getHandlerName()
+		 */
+		String getHandlerName() {
+			return name;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#validForRequest()
+		 */
+		boolean validForRequest(HttpServletRequest request) {
+
+			if (request.getParameter("target") != null && !request.getParameter("target").equals("")
+					&& request.getParameter("shire") != null && !request.getParameter("shire").equals("")) {
+				log.debug("Found (target) and (shire) parameters.  Request "
+						+ "appears to be valid for the Shibboleth profile.");
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#preProcessHook(javax.servlet.http.HttpServletRequest)
+		 */
+		boolean preProcessHook(HttpServletRequest request, HttpServletResponse response) {
+			return false;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#getRemoteProviderId(javax.servlet.http.HttpServletRequest)
+		 */
+		String getRemoteProviderId(HttpServletRequest req) {
+			return req.getParameter("providerId");
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#processHook(javax.servlet.http.HttpServletRequest,
+		 *      edu.internet2.middleware.shibboleth.hs.HSRelyingParty, org.opensaml.SAMLNameIdentifier, java.lang.String,
+		 *      long)
+		 */
+		SAMLAssertion[] processHook(HttpServletRequest request, RelyingParty relyingParty, Provider provider,
+				SAMLNameIdentifier nameId, String authenticationMethod, Date authTime) throws SAMLException, IOException {
+			Document doc = org.opensaml.XML.parserPool.newDocument();
+
+			//Determine audiences and issuer
+			ArrayList audiences = new ArrayList();
+			if (relyingParty.getProviderId() != null) {
+				audiences.add(relyingParty.getProviderId());
+			}
+			if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
+				audiences.add(relyingParty.getName());
+			}
+
+			String issuer = null;
+			if (relyingParty.isLegacyProvider()) {
+//TODO figure this out
+				/*
+				log.debug("Service Provider is running Shibboleth <= 1.1.  Using old style issuer.");
+				if (relyingParty.getIdentityProvider().getResponseSigningCredential() == null
+						|| relyingParty.getIdentityProvider().getResponseSigningCredential().getX509Certificate() == null) { throw new SAMLException(
+						"Cannot serve legacy style assertions without an X509 certificate"); }
+				issuer = ShibBrowserProfile.getHostNameFromDN(relyingParty.getIdentityProvider()
+						.getResponseSigningCredential().getX509Certificate().getSubjectX500Principal());
+				if (issuer == null || issuer.equals("")) { throw new SAMLException(
+						"Error parsing certificate DN while determining legacy issuer name."); }
+						*/
+			} else {
+				issuer = relyingParty.getIdentityProvider().getProviderId();
+			}
+
+			//For compatibility with pre-1.2 shibboleth targets, include a pointer to the AA
+			ArrayList bindings = new ArrayList();
+			if (relyingParty.isLegacyProvider()) {
+
+				SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, relyingParty
+						.getAAUrl().toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
+				bindings.add(binding);
+			}
+
+			//Create the authN assertion
+			Vector conditions = new Vector(1);
+			if (audiences != null && audiences.size() > 0) conditions.add(new SAMLAudienceRestrictionCondition(audiences));
+
+			String[] confirmationMethods = {SAMLSubject.CONF_BEARER};
+			SAMLSubject subject = new SAMLSubject(nameId, Arrays.asList(confirmationMethods), null, null);
+
+			SAMLStatement[] statements = {new SAMLAuthenticationStatement(subject, authenticationMethod, authTime, request
+					.getRemoteAddr(), null, bindings)};
+
+			SAMLAssertion[] assertions = {new SAMLAssertion(issuer, new Date(System.currentTimeMillis()), new Date(System
+					.currentTimeMillis() + 300000), conditions, null, Arrays.asList(statements))};
+
+			if (log.isDebugEnabled()) {
+				log.debug("Dumping generated SAML Assertions:"
+						+ System.getProperty("line.separator")
+						+ new String(new BASE64Decoder().decodeBuffer(new String(assertions[0].toBase64(), "ASCII")),
+								"UTF8"));
+			}
+
+			return assertions;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#getSAMLTargetParameter(javax.servlet.http.HttpServletRequest,
+		 *      edu.internet2.middleware.shibboleth.hs.HSRelyingParty)
+		 */
+		String getSAMLTargetParameter(HttpServletRequest request, RelyingParty relyingParty, Provider provider) {
+			return request.getParameter("target");
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#getAcceptanceURL(javax.servlet.http.HttpServletRequest,
+		 *      edu.internet2.middleware.shibboleth.hs.HSRelyingParty)
+		 */
+		String getAcceptanceURL(HttpServletRequest request, RelyingParty relyingParty, Provider provider)
+				throws InvalidClientDataException {
+			return request.getParameter("shire");
+		}
 	}
 
 }
