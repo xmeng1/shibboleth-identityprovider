@@ -393,10 +393,10 @@ public class ShibPOSTProfile
                         Certificate cacert = ks.getCertificate(alias);
                         if (!(cacert instanceof X509Certificate))
                             continue;
-                        ((X509Certificate)cacert).checkValidity();
                         if (iname.equals(((X509Certificate)cacert).getSubjectDN().getName()))
                         {
                             cert.verify(cacert.getPublicKey());
+                            ((X509Certificate)cacert).checkValidity();
                             return true;
                         }
                     }
