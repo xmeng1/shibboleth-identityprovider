@@ -31,7 +31,7 @@
                         <attribute name="Name" type="string" use="required"/>
                     </complexType>
                 </element>
-                <element name="Domains" type="string" minOccurs="0" maxOccurs="unbounded"/>
+                <element name="Domain" type="string" minOccurs="0" maxOccurs="unbounded"/>
                 <element name="Alias" minOccurs="0" maxOccurs="unbounded">
                     <complexType>
                         <simpleContent>
