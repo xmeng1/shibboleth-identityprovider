@@ -57,4 +57,10 @@
         <HandleService Location="https://shibtest.georgetown.edu/shibboleth/HS" Name="shibtest.georgetown.edu"/>
         <Domain>georgetown.edu</Domain>
     </OriginSite>
+    <OriginSite Name="utk.edu">
+        <Alias>University of Tennessee</Alias>
+        <Alias>Vols</Alias>
+        <HandleService Location="http://spike.ait.utk.edu/Shibboleth/HS" Name="spike.ait.utk.edu"/>
+        <Domain>utk.edu</Domain>
+    </OriginSite>
 </Sites>

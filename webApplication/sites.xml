@@ -57,6 +57,12 @@
         <HandleService Location="https://shibtest.georgetown.edu/shibboleth/HS" Name="shibtest.georgetown.edu"></HandleService>
         <Domain>georgetown.edu</Domain>
     </OriginSite>
+    <OriginSite Name="utk.edu">
+        <Alias>University of Tennessee</Alias>
+        <Alias>Vols</Alias>
+        <HandleService Location="http://spike.ait.utk.edu/Shibboleth/HS" Name="spike.ait.utk.edu"></HandleService>
+        <Domain>utk.edu</Domain>
+    </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
@@ -66,15 +72,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>Sw8O2v3ziEjPpLCnMZSkSnGxH18=</ds:DigestValue>
+<ds:DigestValue>YSvFLpDgGvswjfFxvgBj5MVKkYk=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-gy1kHK2yHmVO/1yMfIl79YuJd+BFtYM5i3LnR3gtIb7p08sHkgzzSANcJg5iREuxlxl9H+S3xwd8
-oDWLc+2Uem0px8wbiyS8Yjl60Ay4HHGBFwOhy0a1+ajuM7G4gaRYbp71i+UxVv9tGQSOngYhODoH
-ko5eWRWnZu86cI0IYupZG87dJwsYwrt6ajLDkpvY6TE9a/7hcZLZ3a+y74gYZ5bVaXYODSplUNVE
-109UA59DfjaDUwSynwy6J4Hl7r6kjHiWzzAGcJHyZUmPZmQQ+Ln2gEpgc/YRdANszILd5dKckaRt
-rx6mJE6BBJbTtCYrV2hOjeWFpllENbtpJf8CmA==
+EjpDXZiTyz4mK+lqHoJREmf9ZHblN7B4ZoTKKXZyTuozPueTTGEZLJPnTJCIqcHknPJItp6IaAvd
+6brHB3VXWtIW/7xYZFfMjRIyOsZ81eJVpgTbq7njyM1x1i3co6+5RigTea/p0rbEHll3K0VAaMjy
+9aaNfoa8NtIKRWsR7Lqs0Os9XUiYghv0D6oC87gNP6TFOrSWpg8ad6qeVCgNE9zIDeAXL1xQu7rY
+yzueT8peQU50vUpmbxEbjh+ZJ/VM67rFzhwiuLzyLmC8EZaC6+D2ZiEiGqX8XLM3ZP5+DWNcGxZz
+mqhvj6/W49+yrY+HigfJhwGSKZwKAtuoRBagKw==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
