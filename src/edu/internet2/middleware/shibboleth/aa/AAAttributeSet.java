@@ -107,7 +107,7 @@ public class AAAttributeSet implements ResolverAttributeSet, ArpAttributeSet {
 	}
 
 	public SAMLAttribute[] getAttributes() {
-		return (SAMLAttribute[]) attributes.entrySet().toArray(new SAMLAttribute[0]);
+		return (SAMLAttribute[]) attributes.values().toArray(new SAMLAttribute[0]);
 	}
 
 	public class ShibAttributeIterator implements ResolverAttributeIterator, ArpAttributeIterator {
