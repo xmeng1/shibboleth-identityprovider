@@ -67,15 +67,13 @@ public class CredentialsTests extends TestCase {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		//TODO turn this off later
-		Logger.getRootLogger().setLevel(Level.INFO);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	public static void main(String[] args) {
 		junit.textui.TestRunner.run(CredentialsTests.class);
 		BasicConfigurator.configure();
-		//TODO turn this off later
-		Logger.getRootLogger().setLevel(Level.INFO);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	/**
