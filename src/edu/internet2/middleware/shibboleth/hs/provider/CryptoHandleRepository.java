@@ -95,6 +95,8 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	public CryptoHandleRepository(Properties properties) throws HandleRepositoryException {
 		super(properties);
 		try {
+
+			checkRequiredParams(properties);
 			KeyStore keyStore = KeyStore.getInstance("JCEKS");
 
 			keyStore.load(
@@ -113,7 +115,7 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 					properties
 						.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStoreKeyPassword")
 						.toCharArray());
-						
+
 			//Before we finish initilization, make sure that things are working
 			testEncryption();
 
@@ -145,6 +147,33 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	}
 
 	/**
+	 * 
+	 */
+	private void checkRequiredParams(Properties params) throws HandleRepositoryException {
+		StringBuffer missingProperties = new StringBuffer();
+		String[] requiredProperties =
+			{
+				"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
+				"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePassword",
+				"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStoreKeyAlias",
+				"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStoreKeyPassword" };
+
+		for (int i = 0; i < requiredProperties.length; i++) {
+			if (params.getProperty(requiredProperties[i]) == null) {
+				missingProperties.append("\"");
+				missingProperties.append(requiredProperties[i]);
+				missingProperties.append("\" ");
+			}
+		}
+		if (missingProperties.length() > 0) {
+			log.error(
+				"Missing configuration data.  The following configuration properites are required for the Crypto Handle Repository and have not been set: "
+					+ missingProperties.toString());
+			throw new HandleRepositoryException("Missing configuration data.");
+		}
+	}
+
+	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
 	public String getHandle(AuthNPrincipal principal) throws HandleRepositoryException {
@@ -161,7 +190,6 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			objectStream.writeObject(handleEntry);
 			objectStream.flush();
 			objectStream.close();
-
 
 			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, secret);
@@ -228,7 +256,7 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			throw new InvalidHandleException("The AuthNPrincipal could not be de-serialized from the supplied Attribute Query Handle.");
 		}
 	}
-	
+
 	private void testEncryption() throws HandleRepositoryException {
 
 		String decrypted;
