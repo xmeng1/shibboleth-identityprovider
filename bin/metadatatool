@@ -1,3 +1,5 @@
+#!/bin/sh
+
 ##We need a JVM
 if [ ! -n "$JAVA_HOME" ] ; then
   echo "Error: JAVA_HOME is not defined."
