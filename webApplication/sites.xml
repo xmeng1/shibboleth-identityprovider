@@ -5,7 +5,7 @@
     </OriginSite>
     <OriginSite Name="brown.edu">
         <Alias>Brown University</Alias>
-        <HandleService Location="http://dilbert2.cis.brown.edu/shibboleth/HS" Name="dilbert2.cis.brown.edu"></HandleService>
+        <HandleService Location="http://dilbert2.cis.brown.edu:1080/shibboleth/HS" Name="dilbert2.cis.brown.edu"></HandleService>
     </OriginSite>
 <ds:Signature>
 <ds:SignedInfo>
@@ -16,15 +16,15 @@
 <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-<ds:DigestValue>bxgpwAF48O/ulDAdEOtqAHpAAFY=</ds:DigestValue>
+<ds:DigestValue>IQtrvHBOZcplOCN3kNsXG9x0Kf8=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-hCxrxkm1Bo6BMXYT2i/ZVv0BbADuN786YYNgf5W7OiztBla+YV2PNxu09LIVSmVhQ4kVWndN15Ns
-xWh1PGvMfqNZ0JVsDsCODaSgkeVAlqOiPAdcXQhtEULGpVq+C9fQP/2NHjb+/aDXJBWX8IMgiSJH
-can3YS4j54ajKSnHrueVLVyH1Rxlo0PMp0iVvEfr7pfbb3RSeyilL9ZdwKOswvF/2sHFzepaeSSK
-op6SgDgzV0cQDdjCuAxTM6zainHRsahJsMg3CXspoTL506gVPdVpoB5tCRvCl+uaF9DlrbrLpkgN
-RYsoed7se372lDfcP5YgsCB+w+ZzqOA/DdeXcA==
+X11N/z/3Xk9rUI6tJPpd9uAADUS4yGESDXz8HTxbxOKeK+ossCI4dhQzi764keQSEbW5kdySRZcG
+JhKApB901vvVBkjiXHc+FMQmoNGMouex0fIO9jLWdivusE1wWJnRAvdkbVUkP4ilyy3cUASecizf
+jQnfDuk6XbEmNdsCZNNT3cuZC/xEUqIPNED9zihZ0aRVn92Un0tCdozF6r4J1uYzPzCJlJyjEJf1
+wINN6oYp6KXrHSGHne4CZK2ztUkZ5yQ+i6UbH2sJucZ6Z4eogWvjxmKoFoSfBPr6nFVkNADFzVLz
+gxOslQnmIYDX1yWIjAPEIKB83VnfHvCWQ9MBog==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:X509Data>
