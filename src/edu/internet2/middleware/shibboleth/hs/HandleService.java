@@ -70,7 +70,7 @@ public class HandleService extends HttpServlet {
 		try {
 
 			//Currently hardcoded to use Bouncy Castle
-			//Decided to change this or not based on overall shibboleth policy
+			//Decide to change this or not based on overall shibboleth policy
 			Security.addProvider(new BouncyCastleProvider());
 			SecretKeyFactory keyFactory =
 				SecretKeyFactory.getInstance("DESede");
