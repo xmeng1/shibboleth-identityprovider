@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- Test IdP configuration file for Example State University 
-	 There is one Metadata Entity: urn:mace:inqueue:example.edu
+	 There is one Metadata Entity: urn:mace:inqueue:example.org
 	 It has both IdP and SP Roles.
-	 It has one server: //shibboleth.example.edu:8080
+	 It has one server: //shibboleth.example.org:8080
 	 The endpoints are in the /shibboleth context on the server
 	 
 	 Dependencies:
 	 Must agreed with referenced external ExampleMetadata file.
 	 Endpoints must agree with Servlet mappings in web.xml
 	 Certificates must be generated for these names
-	 The "hosts" file maps shibboleth.example.edu to 127.0.0.1
+	 The "hosts" file maps shibboleth.example.org to 127.0.0.1
 -->
 
 <IdPConfig 
@@ -19,12 +19,12 @@
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 shibboleth-idpconfig-1.0.xsd" 
-	AAUrl="https://shibboleth.example.edu:8080/shibboleth/AA" 
+	AAUrl="https://shibboleth.example.org:8080/shibboleth/AA" 
 	resolverConfig="/conf/resolver.xml"
-	defaultRelyingParty="urn:mace:inqueue:example.edu" 
-	providerId="urn:mace:inqueue:example.edu">
+	defaultRelyingParty="urn:mace:inqueue:example.org" 
+	providerId="urn:mace:inqueue:example.org">
 
-	<RelyingParty name="urn:mace:inqueue:example.edu" signingCredential="foo">
+	<RelyingParty name="urn:mace:inqueue:example.org" signingCredential="foo">
 		<HSNameFormat nameMapping="shm"/>
 	</RelyingParty>
 

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- Test SP configuration file for Example State University 
-	 There is one Metadata Entity: urn:mace:inqueue:example.edu
+	 There is one Metadata Entity: urn:mace:inqueue:example.org
 	 It has both IdP and SP Roles.
-	 It has one server: //shibboleth.example.edu:8080
+	 It has one server: //shibboleth.example.org:8080
 	 The endpoints are in the /shibboleth context on the server
 	 
 	 Dependencies:
 	 Must agreed with referenced external ExampleMetadata file.
 	 Endpoints must agree with Servlet mappings in web.xml
 	 Certificates must be generated for these names
-	 The "hosts" file maps shibboleth.example.edu to 127.0.0.1
+	 The "hosts" file maps shibboleth.example.org to 127.0.0.1
 -->
 
 <ShibbolethTargetConfig xmlns="urn:mace:shibboleth:target:config:1.0"
@@ -26,10 +26,10 @@
     <SHIRE>
         <RequestMapProvider type="edu.internet2.middleware.shibboleth.serviceprovider.XMLRequestMap">
             <RequestMap applicationId="default">
-               <Host name="shibdev.sample.edu" scheme="https">
+               <Host name="shibboleth.example.org" scheme="https">
                     <Path name="secure" requireSession="true" exportAssertion="true" />
                 </Host>
-                <Host name="shibdev.sample.edu" port="8080" scheme="http">
+                <Host name="shibboleth.example.org" port="8080" scheme="http">
                     <Path name="secure" requireSession="true" exportAssertion="true"/>
                 </Host>
             </RequestMap>
@@ -37,7 +37,7 @@
     </SHIRE>
 
     <Applications xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion"
-        id="default" providerId="http://shibdev.sample.edu/shibboleth">
+        id="default" providerId="http://shibboleth.example.org/shibboleth">
 
         <!--
         Controls session lifetimes, address checks, cookie handling, WAYF, and the SHIRE location.
@@ -49,8 +49,8 @@
         Change to https://localhost/shibboleth/HS for internal testing against your own origin.
         -->
         <Sessions lifetime="7200" timeout="3600" checkAddress="true"
-            wayfURL="http://shibdev.sample.edu:8080/shibboleth/HS"
-            shireURL="http://shibdev.sample.edu:8080/shibboleth/Shibboleth.shire" 
+            wayfURL="http://shibboleth.example.org:8080/shibboleth/HS"
+            shireURL="http://shibboleth.example.org:8080/shibboleth/Shibboleth.shire" 
 			shireSSL="false"/>
 
         <!--
@@ -84,31 +84,6 @@
         <!-- Metadata consists of site/operational metadata, trust, revocation providers. Can be external or inline. -->
         <FederationProvider type="edu.internet2.middleware.shibboleth.common.provider.XMLMetadata"
             uri="/conf/ExampleMetadata.xml"/>
-			
-		<!-- Creater an inline just to test the inline parse logic -->	
-        <FederationProvider type="edu.internet2.middleware.shibboleth.common.provider.XMLMetadata">
-			<SiteGroup Name="https://bogus.org/shibboleth" xmlns="urn:mace:shibboleth:1.0">
-				<OriginSite Name="https://bogus.org/shibboleth/origin">
-					<Alias>Localhost Test Deployment</Alias>
-					<Contact Type="technical" Name="Your Name Here" Email="root@localhost"/>
-					<HandleService Location="https://localhost/shibboleth/HS" Name="CN=localhost, O=Shibboleth Project, C=US"/>
-					<AttributeAuthority Location="https://localhost/shibboleth/AA" Name="CN=localhost, O=Shibboleth Project, C=US"/>
-					<Domain>localhost</Domain>
-				</OriginSite>
-			
-				<DestinationSite Name="https://bogus.org/shibboleth/target">
-					<Alias>Localhost Test Deployment</Alias>
-					<Contact Type="technical" Name="Your Name Here" Email="root@localhost"/>
-					<AssertionConsumerServiceURL Location="https://localhost/Shibboleth.shire"/>
-					<AttributeRequester Name="CN=localhost, O=Shibboleth Project, C=US"/>
-				</DestinationSite>
-			</SiteGroup>
-		</FederationProvider>
-			
-			
-
-        <TrustProvider type="edu.internet2.middleware.shibboleth.common.provider.XMLTrust"
-            uri="/conf/testtrust.xml"/>
 
         <!--
         Revocation using X.509 CRLs is an optional feature in some trust metadata or you may
