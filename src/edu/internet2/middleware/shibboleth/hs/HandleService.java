@@ -41,7 +41,7 @@ import edu.internet2.middleware.shibboleth.common.HandleException;
 public class HandleService extends HttpServlet {
 
 	private static Logger log = Logger.getLogger(HandleService.class.getName());
-	private SAMLAuthenticationAssertionFactory factory;
+	private SAMLAuthenticationAssertionFactory assertionFactory;
 	private String hsConfigFileLocation;
 	private String log4jConfigFileLocation;
 	private SecretKey key;
@@ -158,11 +158,9 @@ public class HandleService extends HttpServlet {
 		getServletContext().setAttribute(
 			"hs_detailedHelpURL",
 			HandleServiceConfig.getDetailedHelpURL());
-		String hsLocation = HandleServiceConfig.getLocation();
-		if (hsLocation == null) {
-			hsLocation = "HS";
-		}
-		getServletContext().setAttribute("hs_location", hsLocation);
+		getServletContext().setAttribute(
+			"hs_location",
+			HandleServiceConfig.getLocation());
 	}
 
 	/**
@@ -177,7 +175,7 @@ public class HandleService extends HttpServlet {
 					AABindingInfo.SAML_SOAP_HTTPS,
 					HandleServiceConfig.getAaURL());
 			String[] policies = { Policies.POLICY_URI_CLUBSHIB };
-			factory =
+			assertionFactory =
 				SAMLAuthenticationAssertionFactory.getInstance(
 					policies,
 					HandleServiceConfig.getIssuer(),
@@ -211,7 +209,11 @@ public class HandleService extends HttpServlet {
 					req.getRemoteAddr(),
 					req.getRemoteUser(),
 					req.getAuthType());
-			log.info("Assertion Generated: " + "elapsed time " + (System.currentTimeMillis() - startTime) + " milliseconds.");
+			log.info(
+				"Assertion Generated: "
+					+ "elapsed time "
+					+ (System.currentTimeMillis() - startTime)
+					+ " milliseconds.");
 			log.debug("Assertion: " + new String(Base64.decode(assertion)));
 			handleForm(req, resp, assertion);
 		} catch (HandleServiceException e) {
@@ -232,7 +234,7 @@ public class HandleService extends HttpServlet {
 		HttpServletResponse res,
 		Exception e) {
 
-		log.info("Handle Service Failure: " + e);
+		log.warn("Handle Service Failure: " + e);
 
 		req.setAttribute("errorText", e.toString());
 		RequestDispatcher rd = req.getRequestDispatcher("/hserror.jsp");
@@ -241,7 +243,8 @@ public class HandleService extends HttpServlet {
 			rd.forward(req, res);
 		} catch (IOException ioe) {
 			log.info(
-				"IO operation interrupted when displaying Handle Service error page: " + ioe);
+				"IO operation interrupted when displaying Handle Service error page: "
+					+ ioe);
 		} catch (ServletException se) {
 			log.error(
 				"Problem trying to display Handle Service error page: " + se);
@@ -297,7 +300,7 @@ public class HandleService extends HttpServlet {
 
 			log.info("Acquired Handle: " + aqh.getHandleID());
 
-			return factory
+			return assertionFactory
 				.getAssertion(
 					aqh.serialize(),
 					shireURL,
