@@ -284,7 +284,7 @@ public class ShireServlet extends HttpServlet
         {
             out.println("<H4>There was a problem with this submission.</H4>");
             out.println("<P>The system detected the following error while processing your submission:</P>");
-            out.println("<BLOCKQUOTE>" + e.toString() + "</BLOCKQUOTE>");
+            out.println("<BLOCKQUOTE>" + e.getMessage() + "</BLOCKQUOTE>");
             out.println("<P>Please contact this site's administrator to resolve the problem.</P>");
             out.println("</BODY></HTML>");
         }
