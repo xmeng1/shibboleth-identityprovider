@@ -49,6 +49,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
@@ -60,10 +61,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.DSAPrivateKeySpec;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.ArrayList;
@@ -76,7 +75,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.log4j.Logger;
@@ -511,7 +509,7 @@ class FileCredentialResolver implements CredentialResolver {
 				String nextStr = in.readLine();
 				if (nextStr != null && nextStr.matches("^.*Proc-Type: 4,ENCRYPTED.*$")) {
 					log.debug("Key appears to be encrypted RSA in raw format.");
-					return getRSARawEncryptedPemKey(inputBytes.toByteArray());
+					return getRSARawEncryptedPemKey(inputBytes.toByteArray(), password);
 				}
 				
 				in.close();
@@ -640,7 +638,7 @@ class FileCredentialResolver implements CredentialResolver {
 		}
 
 	}
-	private PrivateKey getRSARawEncryptedPemKey(byte[] bytes) throws CredentialFactoryException {
+	private PrivateKey getRSARawEncryptedPemKey(byte[] bytes, String password) throws CredentialFactoryException {
 
 		try {
 
@@ -703,32 +701,43 @@ class FileCredentialResolver implements CredentialResolver {
 				byte[] encryptedBytes = decoder.decodeBuffer(base64Key.toString());
 
 				BigInteger parsedIv = new BigInteger(algParams, 16);
-				
-				PBEParameterSpec paramSpec = new PBEParameterSpec(parsedIv.toByteArray(), 1);
-				
-				SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-				keyFactory.getProvider().list(System.err);
-				PBEKeySpec passwordSpec = new PBEKeySpec("test123".toCharArray());
-				SecretKey key = keyFactory.generateSecret(passwordSpec);
+				IvParameterSpec paramSpec = new IvParameterSpec(parsedIv.toByteArray());
 
-				Cipher cipher = Cipher.getInstance("PBEWithMD5AndTripleDES/CBC/PKCS5Padding");
-				System.err.println(cipher.getClass().getName());
-				cipher.init(Cipher.DECRYPT_MODE, key, paramSpec);
-				
-				
-				
-				byte[] a = parsedIv.toByteArray();
-								for (int i = 0;i < a.length; i++) {
-									System.err.println("PARSE: " + a[i]);
-								}
-				byte[] b = cipher.getIV();
-				for (int i = 0;i < b.length; i++) {
-					System.err.println("IV: " + b[i]);
+				if ((!algorithm.equals("DES-CBC")) && (!algorithm.equals("DES-EDE3-CBC"))) {
+					log.error(
+						"Connot decrypt key with algorithm ("
+							+ algorithm
+							+ ").  Supported algorithms for raw (OpenSSL) keys are (DES-CBC) and (DES-EDE3-CBC).");
+					throw new CredentialFactoryException("Unable to load private key.");
 				}
-				
-				System.err.println(b.length);
+				byte[] keyBuffer = new byte[24];
+
+				MessageDigest md = MessageDigest.getInstance("MD5");
+				md.update(password.getBytes());
+				md.update(paramSpec.getIV());
+				byte[] digested = md.digest();
+				System.arraycopy(digested, 0, keyBuffer, 0, 16);
+
+				md.update(digested);
+				md.update(password.getBytes());
+				md.update(paramSpec.getIV());
+				digested = md.digest();
+				System.arraycopy(digested, 0, keyBuffer, 16, 8);
+
+				SecretKeySpec keySpec = null;
+				Cipher cipher = null;
+				if (algorithm.equals("DES-CBC")) {
+					keySpec = new SecretKeySpec(keyBuffer, "DES");
+					cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
+				}
+				if (algorithm.equals("DES-EDE3-CBC")) {
+					keySpec = new SecretKeySpec(keyBuffer, "DESede");
+					cipher = Cipher.getInstance("DESede/CBC/PKCS5Padding");
+				}
+
+				cipher.init(Cipher.DECRYPT_MODE, keySpec, paramSpec);
 				byte[] decrypted = cipher.doFinal(encryptedBytes);
-				return null;
+				return getRSARawDerKey(decrypted);
 
 			} catch (IOException ioe) {
 				log.error("Could not decode Base 64: " + ioe);
@@ -737,7 +746,7 @@ class FileCredentialResolver implements CredentialResolver {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			//TODO change these errors
+			//TODO handle all errors well here
 			log.error("Could not load resource from specified location: " + e);
 			throw new CredentialFactoryException("Could not load resource from specified location.");
 		}
