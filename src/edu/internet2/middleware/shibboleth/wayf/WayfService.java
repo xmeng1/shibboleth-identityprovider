@@ -27,6 +27,7 @@ public class WayfService extends HttpServlet {
 	private String siteConfigFileLocation;
 	private WayfConfig config;
 	private WayfOrigins originConfig;
+	private WayfCacheOptions wOptions = new WayfCacheOptions();
 	private static Logger log = Logger.getLogger(WayfService.class.getName());
 
 	/**
@@ -39,6 +40,11 @@ public class WayfService extends HttpServlet {
 		loadInitParams();
 		log.info("Loading configuration from file.");
 		configure();
+		
+		//Setup Cacheing options
+		wOptions.setDomain(config.getCacheDomain());
+		wOptions.setExpiration(config.getCacheExpiration());
+		
 		initViewConfig();
 		log.info("WAYF initialization completed.");
 	}
@@ -126,7 +132,7 @@ public class WayfService extends HttpServlet {
 		try {
 			if (requestType.equals("deleteFromCache")) {
 				log.debug("Deleting saved HS from cache");
-				WayfCacheFactory.getInstance(config.getCacheType()).deleteHsFromCache(req, res);
+				WayfCacheFactory.getInstance(config.getCacheType(), wOptions).deleteHsFromCache(req, res);
 				handleLookup(req, res);
 			} else if (WayfCacheFactory.getInstance(config.getCacheType()).hasCachedHS(req)) {
 				forwardToHS(
@@ -194,7 +200,7 @@ public class WayfService extends HttpServlet {
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
-			WayfCacheFactory.getInstance(config.getCacheType()).addHsToCache(handleService, req, res);
+			WayfCacheFactory.getInstance(config.getCacheType(), wOptions).addHsToCache(handleService, req, res);
 			forwardToHS(req, res, handleService);
 		}
 

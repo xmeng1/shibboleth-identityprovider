@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 /**
  * Class used by the  WAYF service to determine runtime options
- * Most of the fields of this class should have reasonable defaults set
+ * Most of the fields of this class should have reasonable defaults.
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
@@ -24,7 +24,8 @@ public class WayfConfig {
 	private String searchResultEmptyText =
 		"No institution found that matches your search " + "criteria, please try again.";
 	private HashSet ignoredForMatch = new HashSet();
-
+	private int cacheExpiration;
+	private String cacheDomain;
 	private String cacheType = "COOKIES";
 
 	public WayfConfig() {
@@ -98,5 +99,41 @@ public class WayfConfig {
 			log.warn("Cache type :" + cache + ": not recognized, using default.");
 		}
 	}
+
+	/**
+	 * Returns the cacheDomain.
+	 * @return String
+	 */
+	public String getCacheDomain() {
+		return cacheDomain;
+	}
+
+
+	/**
+	 * Returns the cacheExpiration.
+	 * @return int
+	 */
+	public int getCacheExpiration() {
+		return cacheExpiration;
+	}
+
+
+	/**
+	 * Sets the cacheDomain.
+	 * @param cacheDomain The cacheDomain to set
+	 */
+	public void setCacheDomain(String cacheDomain) {
+		this.cacheDomain = cacheDomain;
+	}
+
+
+	/**
+	 * Sets the cacheExpiration.
+	 * @param cacheExpiration The cacheExpiration to set
+	 */
+	public void setCacheExpiration(int cacheExpiration) {
+		this.cacheExpiration = cacheExpiration;
+	}
+
 
 }

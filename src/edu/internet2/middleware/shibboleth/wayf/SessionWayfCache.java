@@ -12,6 +12,21 @@ import javax.servlet.http.HttpSession;
  */
 
 public class SessionWayfCache extends WayfCacheBase implements WayfCache {
+	
+	private int expiration;
+	
+	/**
+	 * @param expiration The time in seconds between requests at which point this cache entry 
+	 * will be invalidated.
+	 */
+	public SessionWayfCache(int expiration) {
+		if (expiration == 0) {
+			this.expiration = 7200;
+		} else {
+			this.expiration = expiration;
+		}
+	}
+
 
 	/**
 	 * @see WayfCache#addHsToCache(HttpServletRequest)
@@ -22,7 +37,7 @@ public class SessionWayfCache extends WayfCacheBase implements WayfCache {
 		HttpServletResponse res) {
 			
 		HttpSession session = req.getSession(true);
-		session.setMaxInactiveInterval(7200);
+		session.setMaxInactiveInterval(expiration);
 		session.setAttribute("selectedHandleService", handleService);
 	}
 

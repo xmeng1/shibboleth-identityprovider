@@ -11,6 +11,24 @@ import javax.servlet.http.HttpServletResponse;
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 public class CookieWayfCache extends WayfCacheBase implements WayfCache {
+	
+	private int expiration;
+	private String domain;
+
+	/**
+	 * Constructs a <code>CookieWayfCache</code>
+	 * @param expiration Cache validity period in seconds
+	 * @param domain Domain to which the cookie will be released
+	 */
+	public CookieWayfCache(int expiration, String domain) {
+		
+			this.expiration = expiration;
+			if (domain !=null && domain != "") {
+				this.domain = domain;
+			}
+	}
+
+
 
 	/**
 	 * @see WayfCache#addHsToCache(HttpServletRequest)
@@ -19,15 +37,8 @@ public class CookieWayfCache extends WayfCacheBase implements WayfCache {
 		String handleService,
 		HttpServletRequest req,
 		HttpServletResponse res) {
-		Cookie cacheCookie = new Cookie("selectedHandleService", handleService);
-		cacheCookie.setComment(
-			"Used to cache selection of a user's Handle Service");
-
-		//Should probably get this stuff from config
-		/**     
-		 cacheCookie.setMaxAge();
-		 cacheCookie.setDomain();
-		 **/
+		Cookie cacheCookie = new Cookie("edu.internet2.middleware.shibboleth.wayf.selectedHandleService", handleService);
+		configureCookie(cacheCookie);
 		res.addCookie(cacheCookie);
 	}
 
@@ -40,7 +51,8 @@ public class CookieWayfCache extends WayfCacheBase implements WayfCache {
 
 		Cookie[] cookies = req.getCookies();
 		for (int i = 0; i < cookies.length; i++) {
-			if (cookies[i].getName().equals("selectedHandleService")) {
+			if (cookies[i].getName().equals("edu.internet2.middleware.shibboleth.wayf.selectedHandleService")) {
+				configureCookie(cookies[i]);
 				cookies[i].setMaxAge(0);
 				res.addCookie(cookies[i]);
 			}
@@ -55,12 +67,26 @@ public class CookieWayfCache extends WayfCacheBase implements WayfCache {
 		Cookie[] cookies = req.getCookies();
 		if (cookies != null) {
 			for (int i = 0; i < cookies.length; i++) {
-				if (cookies[i].getName().equals("selectedHandleService")) {
+				if (cookies[i].getName().equals("edu.internet2.middleware.shibboleth.wayf.selectedHandleService")) {
 					return cookies[i].getValue();
 				}
 			}
 		}
 		return null;
+	}
+	
+	private void configureCookie(Cookie cookie) {
+		
+		cookie.setComment(
+			"Used to cache selection of a user's Shibboleth Handle Service");
+		cookie.setPath("/");
+
+		if (expiration > 0) {    
+			cookie.setMaxAge(expiration);
+		}
+		if (domain != null && domain != "") {
+			cookie.setDomain(domain);
+		}
 	}
 
 }
