@@ -14,79 +14,60 @@ public class WayfConfig {
 
 	private static Logger log = Logger.getLogger(WayfConfig.class.getName());
 
-	private static WayfOrigins wd;
-	private static String location;
-	private static String logoLocation = "images/internet2.gif";
-	private static String supportContact = "mailto:shib-support@internet2.org";
-	private static String helpText =
+	private String logoLocation = "images/internet2.gif";
+	private String supportContact = "mailto:shib-support@internet2.org";
+	private String helpText =
 		"In order to fulfill the request for the  web resource you "
 			+ "have just chosen, information must first be obtained from "
 			+ "your home institution. Please select the institution with "
 			+ "which you are affiliated.";
-	private static String searchResultEmptyText =
-		"No institution found that matches your search "
-			+ "criteria, please try again.";
-	private static HashSet ignoredForMatch = new HashSet();
+	private String searchResultEmptyText =
+		"No institution found that matches your search " + "criteria, please try again.";
+	private HashSet ignoredForMatch = new HashSet();
 
-	private static String cache = "SESSION";
+	private String cacheType = "COOKIES";
 
 	public WayfConfig() {
 		super();
 	}
 
-	public static WayfOrigins getWAYFData() {
-		return wd;
-	}
-
-	public void setWAYFData(WayfOrigins wd) {
-		WayfConfig.wd = wd;
-	}
-
-	public static String getSearchResultEmptyText() {
+	public String getSearchResultEmptyText() {
 		return searchResultEmptyText;
 	}
 
 	public void setSearchResultEmptyText(String searchResultEmptyText) {
-		WayfConfig.searchResultEmptyText = searchResultEmptyText;
+		this.searchResultEmptyText = searchResultEmptyText;
 	}
 
-	public static String getHelpText() {
+	public String getHelpText() {
 		return helpText;
 	}
 
 	public void setHelpText(String helpText) {
-		WayfConfig.helpText = helpText;
+		this.helpText = helpText;
 	}
 
-	public static String getSupportContact() {
+	public String getSupportContact() {
 		return supportContact;
 	}
 
 	public void setSupportContact(String supportContact) {
-		WayfConfig.supportContact = supportContact;
+		this.supportContact = supportContact;
 	}
 
-	public static String getLogoLocation() {
+	public String getLogoLocation() {
 		return logoLocation;
 	}
 
 	public void setLogoLocation(String logoLocation) {
-		WayfConfig.logoLocation = logoLocation;
-	}
-
-	public static String getLocation() {
-		return location;
-	}
-
-	public void setLocation(String location) {
-		WayfConfig.location = location;
+		this.logoLocation = logoLocation;
 	}
 
 	/**
 	 * Determines if a particular string token should be used for matching when a user searches for origins.
 	 * @param str The string to lookup
 	 */
-	public static boolean isIgnoredForMatch(String str) {
+	public boolean isIgnoredForMatch(String str) {
 
 		if (ignoredForMatch.contains(str.toLowerCase())) {
 			return true;
@@ -104,18 +85,17 @@ public class WayfConfig {
 		ignoredForMatch.add(s.toLowerCase());
 	}
 
-	public static String getCache() {
-		return cache;
+	public String getCacheType() {
+		return cacheType;
 	}
 
-	public void setCache(String cache) {
+	public void setCacheType(String cache) {
 		if (cache.toUpperCase().equals("NONE")
 			|| cache.toUpperCase().equals("SESSION")
 			|| cache.toUpperCase().equals("COOKIES")) {
-			WayfConfig.cache = cache.toUpperCase();
+			this.cacheType = cache.toUpperCase();
 		} else {
-			log.warn(
-				"Cache type :" + cache + ": not recognized, using default.");
+			log.warn("Cache type :" + cache + ": not recognized, using default.");
 		}
 	}
 

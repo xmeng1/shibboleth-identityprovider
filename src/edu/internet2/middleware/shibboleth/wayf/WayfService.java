@@ -6,6 +6,7 @@ import java.net.URLEncoder;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,6 +25,9 @@ import org.xml.sax.SAXException;
 public class WayfService extends HttpServlet {
 
 	private String wayfConfigFileLocation;
+	private String siteConfigFileLocation;
+	private WayfConfig config;
+	private WayfOrigins originConfig;
 	private static Logger log = Logger.getLogger(WayfService.class.getName());
 
 	/**
@@ -32,38 +36,51 @@ public class WayfService extends HttpServlet {
 	public void init() throws ServletException {
 
 		super.init();
+		log.info("Initializing WAYF.");
 		loadInitParams();
-		//initialize configuration from file
+		log.info("Loading configuration from file.");
 		InputStream is = getServletContext().getResourceAsStream(wayfConfigFileLocation);
-		WayfConfigDigester digester = new WayfConfigDigester();
+		WayfConfigDigester digester = new WayfConfigDigester(getServletContext());
+		
+		InputStream siteIs = getServletContext().getResourceAsStream(siteConfigFileLocation);
+		OriginSitesDigester siteDigester = new OriginSitesDigester(getServletContext());
+		
 		try {
-			digester.parse(is);
+			//digester.setValidating(true);
+			config = (WayfConfig) digester.parse(is);
+			
+			//siteDigester.setValidating(true);
+			originConfig = (WayfOrigins) siteDigester.parse(siteIs);
+			
+			
 		} catch (SAXException se) {
 			log.fatal("Error parsing WAYF configuration file.", se);
-			throw new ServletException("Error parsing WAYF configuration file.", se);
+			throw new UnavailableException("Error parsing WAYF configuration file.");
 		} catch (IOException ioe) {
 			log.fatal("Error reading WAYF configuration file.", ioe);
-			throw new ServletException("Error reading WAYF configuration file.", ioe);
+			throw new UnavailableException("Error reading WAYF configuration file.");
 		}
 
 		//Setup appliation-wide beans from config
-		getServletContext().setAttribute("originsets", WayfConfig.getWAYFData().getOriginSets());
-		String wayfLocation = WayfConfig.getLocation();
-		if (wayfLocation == null) {
-			wayfLocation = "WAYF";
-		}
-		getServletContext().setAttribute("wayfLocation", wayfLocation);
-		getServletContext().setAttribute("supportContact", WayfConfig.getSupportContact());
-		getServletContext().setAttribute("helpText", WayfConfig.getHelpText());
-		getServletContext().setAttribute("searchResultEmptyText", WayfConfig.getSearchResultEmptyText());
-		getServletContext().setAttribute("logoLocation", WayfConfig.getLogoLocation());
+		getServletContext().setAttribute("originsets", originConfig.getOriginSets());
+		getServletContext().setAttribute("supportContact", config.getSupportContact());
+		getServletContext().setAttribute("helpText", config.getHelpText());
+		getServletContext().setAttribute("searchResultEmptyText", config.getSearchResultEmptyText());
+		getServletContext().setAttribute("logoLocation", config.getLogoLocation());
+		log.info("WAYF initialization completed.");
 	}
 
 	private void loadInitParams() {
 
 		wayfConfigFileLocation = getServletConfig().getInitParameter("WAYFConfigFileLocation");
 		if (wayfConfigFileLocation == null) {
-			wayfConfigFileLocation = "/WEB-INF/conf/shibboleth.xml";
+			log.warn("No WAYFConfigFileLocation parameter found... using default location.");
+			wayfConfigFileLocation = "/WEB-INF/conf/wayfconfig.xml";
+		}
+		siteConfigFileLocation = getServletConfig().getInitParameter("SiteConfigFileLocation");
+		if (siteConfigFileLocation == null) {
+			log.warn("No SiteonfigFileLocation parameter found... using default location.");
+			siteConfigFileLocation = "/WEB-INF/conf/sites.xml";
 		}
 
 	}
@@ -73,11 +90,12 @@ public class WayfService extends HttpServlet {
 	 */
 	public void doGet(HttpServletRequest req, HttpServletResponse res) {
 
+		log.info("Handling WAYF request.");
 		//Tell the browser not to cache the WAYF page
 		res.setHeader("Cache-Control", "no-cache");
 		res.setHeader("Pragma", "no-cache");
 		res.setDateHeader("Expires", 0);
-
+		
 		//Decide how to route the request based on query string
 		String requestType = req.getParameter("action");
 		if (requestType == null) {
@@ -85,10 +103,11 @@ public class WayfService extends HttpServlet {
 		}
 		try {
 			if (requestType.equals("deleteFromCache")) {
-				WayfCacheFactory.getInstance().deleteHsFromCache(req, res);
+				log.debug("Deleting saved HS from cache");
+				WayfCacheFactory.getInstance(config.getCacheType()).deleteHsFromCache(req, res);
 				handleLookup(req, res);
-			} else if (WayfCacheFactory.getInstance().hasCachedHS(req)) {
-				handleRedirect(req, res, WayfCacheFactory.getInstance().getCachedHS(req));
+			} else if (WayfCacheFactory.getInstance(config.getCacheType()).hasCachedHS(req)) {
+				handleRedirect(req, res, WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
 			} else if (requestType.equals("search")) {
 				handleSearch(req, res);
 			} else if (requestType.equals("selection")) {
@@ -110,7 +129,8 @@ public class WayfService extends HttpServlet {
 		req.setAttribute("target", getTarget(req));
 		req.setAttribute("encodedShire", URLEncoder.encode(getSHIRE(req)));
 		req.setAttribute("encodedTarget", URLEncoder.encode(getTarget(req)));
-
+		
+		log.debug("Displaying WAYF selection page.");
 		RequestDispatcher rd = req.getRequestDispatcher("/wayf.jsp");
 		try {
 			rd.forward(req, res);
@@ -124,7 +144,7 @@ public class WayfService extends HttpServlet {
 	private void handleSearch(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		if (req.getParameter("string") != null) {
-			Origin[] origins = WayfConfig.getWAYFData().seachForMatchingOrigins(req.getParameter("string"));
+			Origin[] origins = originConfig.seachForMatchingOrigins(req.getParameter("string"), config);
 			if (origins.length != 0) {
 				req.setAttribute("searchresults", origins);
 			} else {
@@ -137,11 +157,11 @@ public class WayfService extends HttpServlet {
 
 	private void handleSelection(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
-		String handleService = WayfConfig.getWAYFData().lookupHSbyName(req.getParameter("origin"));
+		String handleService = originConfig.lookupHSbyName(req.getParameter("origin"));
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
-			WayfCacheFactory.getInstance().addHsToCache(handleService, req, res);
+			WayfCacheFactory.getInstance(config.getCacheType()).addHsToCache(handleService, req, res);
 			handleRedirect(req, res, handleService);
 		}
 
@@ -149,10 +169,10 @@ public class WayfService extends HttpServlet {
 
 	private void handleRedirect(HttpServletRequest req, HttpServletResponse res, String handleService)
 		throws WayfException {
-
+		
 		String shire = getSHIRE(req);
 		String target = getTarget(req);
-
+		log.info("Redirecting to selected Handle Service");
 		try {
 			res.sendRedirect(
 				handleService
@@ -169,7 +189,9 @@ public class WayfService extends HttpServlet {
 	private void handleError(HttpServletRequest req, HttpServletResponse res, WayfException we) {
 
 		log.error("WAYF Failure: " + we.toString());
+		log.debug("Displaying WAYF error page.");
 		req.setAttribute("errorText", we.toString());
+		req.setAttribute("requestURL", req.getRequestURI().toString());
 		RequestDispatcher rd = req.getRequestDispatcher("/wayferror.jsp");
 
 		try {

@@ -58,7 +58,7 @@ public class ServletDigester extends Digester {
 			}
 			if (xsdFile.endsWith(".xsd")) {
 				InputStream stream =
-					context.getResourceAsStream("/WEB-INF/schemas/" + xsdFile);
+					context.getResourceAsStream("/WEB-INF/classes/schemas/" + xsdFile);
 				if (stream != null) {
 					return new InputSource(stream);
 				}

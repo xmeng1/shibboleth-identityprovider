@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<WayfConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://shibboleth.internet2.edu/wayf/alpha-2/wayfconfig.xsd" 
+	cacheType="COOKIES" 
+	supportContact="mailto:shib-test@internet2.org" 
+	logoLocation="images/internet2.gif">
+	<HelpText>This is the help text.</HelpText>
+	<SearchResultEmptyText>This is the search result empty text.</SearchResultEmptyText>
+	<SearchIgnore>
+		<IgnoreText>Institution</IgnoreText>
+		<IgnoreText>University</IgnoreText>
+		<IgnoreText>State </IgnoreText>
+		<IgnoreText>School</IgnoreText>
+	</SearchIgnore>
+</WayfConfig>

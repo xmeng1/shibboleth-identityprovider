@@ -5,7 +5,7 @@
 	<%@ taglib uri="/WEB-INF/tlds/struts-logic.tld" prefix="logic" %>
 	<%@ taglib uri="/WEB-INF/tlds/struts-bean.tld" prefix="bean" %>
 	<jsp:useBean id="originsets" scope="application" class="edu.internet2.middleware.shibboleth.wayf.OriginSet[]"/>
-	<jsp:useBean id="wayfLocation" scope="application" class="java.lang.String"/>
+	<jsp:useBean id="requestURL" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="helpText" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="supportContact" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="shire" scope="request" class="java.lang.String"/>
@@ -42,12 +42,12 @@
 		<ul>
 		<logic:iterate id="currResult" name="searchresults">
 			<li>
-			<a href="<bean:write name="wayfLocation" />?action=selection&amp;origin=<jsp:getProperty name="currResult" property="urlEncodedName" />&amp;shire=<bean:write name="encodedShire" />&amp;target=<bean:write name="encodedTarget" />"><jsp:getProperty name="currResult" property="name" /></a>
+			<a href="<bean:write name="requestURL" />?action=selection&amp;origin=<jsp:getProperty name="currResult" property="urlEncodedName" />&amp;shire=<bean:write name="encodedShire" />&amp;target=<bean:write name="encodedTarget" />"><jsp:getProperty name="currResult" property="name" /></a>
 			</li>
 		</logic:iterate>
 		</ul>		
 	</logic:present>
-	<form method="get" action="<bean:write name="wayfLocation" />">
+	<form method="get" action="<bean:write name="requestURL" />">
 		<p>
 			<input type="hidden" name="shire" value="<bean:write name="shire" />" />
 			<input type="hidden" name="target" value="<bean:write name="target" />" />
@@ -63,7 +63,7 @@
 
 <logic:iterate id="originset" name="originsets">
 <h2><jsp:getProperty name="originset" property="name" /></h2>
-<form method="get" action="<bean:write name="wayfLocation" />">
+<form method="get" action="<bean:write name="requestURL" />">
 <p>
 <input type="hidden" name="shire" value="<bean:write name="shire" />" />
 <input type="hidden" name="target" value="<bean:write name="target" />" />

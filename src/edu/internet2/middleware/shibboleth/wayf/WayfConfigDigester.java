@@ -1,8 +1,11 @@
 package edu.internet2.middleware.shibboleth.wayf;
 
+import javax.servlet.ServletContext;
 import javax.xml.parsers.SAXParser;
-import org.apache.commons.digester.Digester;
+
 import org.xml.sax.XMLReader;
+
+import edu.internet2.middleware.shibboleth.common.ServletDigester;
 
 /**
  * This class is a jakarta Digester style parser for the WAYF configuration file.  
@@ -13,14 +16,8 @@ import org.xml.sax.XMLReader;
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 
-public class WayfConfigDigester extends Digester {
+public class WayfConfigDigester extends ServletDigester {
 
-	protected String originClass =
-		"edu.internet2.middleware.shibboleth.wayf.Origin";
-	protected String wayfDataClass =
-		"edu.internet2.middleware.shibboleth.wayf.WayfOrigins";
-	protected String originSetClass =
-		"edu.internet2.middleware.shibboleth.wayf.OriginSet";
 	protected String wayfConfigClass =
 		"edu.internet2.middleware.shibboleth.wayf.WayfConfig";
 	private boolean configured = false;
@@ -35,17 +32,14 @@ public class WayfConfigDigester extends Digester {
 		configure();
 	}
 
+	public WayfConfigDigester(ServletContext context) {
+		super(context);
+	}
+
+
 	public WayfConfigDigester(XMLReader reader) {
 		super(reader);
 		configure();
-	}
-
-	public String getOriginClass() {
-		return originClass;
-	}
-
-	public void setOriginClass(String originClass) {
-		this.originClass = originClass;
 	}
 
 	/**
@@ -56,69 +50,20 @@ public class WayfConfigDigester extends Digester {
 		if (configured == true) {
 			return;
 		}
-		addObjectCreate("ShibbolethConfig", wayfConfigClass);
-		addSetProperties("ShibbolethConfig/WayfConfig");
-		addCallMethod("ShibbolethConfig/WayfConfig/HelpText", "setHelpText", 0);
+		addObjectCreate("WayfConfig", wayfConfigClass);
+		addSetProperties("WayfConfig");
+		addCallMethod("WayfConfig/HelpText", "setHelpText", 0);
 		addCallMethod(
-			"ShibbolethConfig/WayfConfig/SearchResultEmptyText",
+			"WayfConfig/SearchResultEmptyText",
 			"setSearchResultEmptyText",
 			0);
 		addCallMethod(
-			"ShibbolethConfig/WayfConfig/SearchIgnore/String",
+			"WayfConfig/SearchIgnore/IgnoreText",
 			"addIgnoredForMatch",
 			0);
 
-		addObjectCreate("ShibbolethConfig/CommonConfig", wayfDataClass);
-		addSetNext(
-			"ShibbolethConfig/CommonConfig",
-			"setWAYFData",
-			wayfDataClass);
-
-		addObjectCreate(
-			"ShibbolethConfig/CommonConfig/OriginSet",
-			originSetClass);
-		addSetNext(
-			"ShibbolethConfig/CommonConfig/OriginSet",
-			"addOriginSet",
-			originSetClass);
-		addSetProperties("ShibbolethConfig/CommonConfig/OriginSet");
-
-		addObjectCreate(
-			"ShibbolethConfig/CommonConfig/OriginSet/Origin",
-			originClass);
-		addSetNext(
-			"ShibbolethConfig/CommonConfig/OriginSet/Origin",
-			"addOrigin",
-			originClass);
-		addSetProperties("ShibbolethConfig/CommonConfig/OriginSet/Origin");
-
-		addCallMethod(
-			"ShibbolethConfig/CommonConfig/OriginSet/Origin/Alias",
-			"addAlias",
-			1);
-		addCallParam(
-			"ShibbolethConfig/CommonConfig/OriginSet/Origin/Alias",
-			0,
-			"name");
-
 		configured = true;
 
-	}
-
-	public String getOriginSetClass() {
-		return originSetClass;
-	}
-
-	public void setOriginSetClass(String originSetClass) {
-		this.originSetClass = originSetClass;
-	}
-
-	public String getWayfDataClass() {
-		return wayfDataClass;
-	}
-
-	public void setWayfDataClass(String wayfDataClass) {
-		this.wayfDataClass = wayfDataClass;
 	}
 
 }

@@ -76,13 +76,13 @@ public class Origin {
      * Determines if a given string matches one of the registered names/aliases of this origin.
      * @param str The string to match on
      */
-    public boolean isMatch(String str) {
+    public boolean isMatch(String str, WayfConfig config) {
 
         Enumeration input = new StringTokenizer(str);
         while (input.hasMoreElements()) {
             String currentToken = (String) input.nextElement();
 
-            if (WayfConfig.isIgnoredForMatch(currentToken)) {
+            if (config.isIgnoredForMatch(currentToken)) {
                 continue;
             }
 

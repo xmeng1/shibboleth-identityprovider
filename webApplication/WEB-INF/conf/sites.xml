@@ -1,0 +1,25 @@
+<Sites xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://shibboleth.internet2.edu/wayf/alpha-2/wayfconfig.xsd">
+<SiteGroup Name="Test">
+	<OriginSite Name="demo.edu">
+		<Alias>Demo State University</Alias>
+		<HandleService Name="shib2.internet2.edu" Location="https://shib2.internet2.edu/shibboleth-origin/servlet/HS"/>
+	</OriginSite>
+</SiteGroup>
+	<OriginSite Name="cmu.edu">
+		<Alias>Carnegie Mellon University</Alias>
+		<Alias>cmu</Alias>
+		<Alias>Tartans</Alias>
+		<HandleService Name="nada.andrew.cmu.edu" Location="https://nada.andrew.cmu.edu/shibb/servlet/HandleServlet"/>
+	</OriginSite>
+	<OriginSite Name="osu.edu">
+		<Alias>Ohio State University</Alias>
+		<Alias>osu</Alias>
+		<Alias>Buckeyes</Alias>
+		<HandleService Name="usfs2.us.ohio-state.edu" Location="https://usfs2.us.ohio-state.edu/webdev/Shibboleth/secure/servlet/HandleServlet"/>
+	</OriginSite>
+	<OriginSite Name="brown.edu">
+		<Alias>Brown University</Alias>
+		<Alias>Bears</Alias>
+		<HandleService Name="dilbert2.cis.brown.edu" Location="http://dilbert2.cis.brown.edu:1080/shibb/servlet/HandleServlet"/>
+	</OriginSite>
+</Sites>

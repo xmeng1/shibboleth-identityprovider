@@ -13,13 +13,13 @@ public class WayfCacheFactory {
 	private static Logger log =
 		Logger.getLogger(WayfCacheFactory.class.getName());
 
-	public static WayfCache getInstance() {
+	public static WayfCache getInstance(String cacheType) {
 
-		if (WayfConfig.getCache().equals("NONE")) {
+		if (cacheType.equals("NONE")) {
 			return new NullWayfCache();
-		} else if (WayfConfig.getCache().equals("SESSION")) {
+		} else if (cacheType.equals("SESSION")) {
 			return new SessionWayfCache();
-		} else if (WayfConfig.getCache().equals("COOKIES")) {
+		} else if (cacheType.equals("COOKIES")) {
 			return new CookieWayfCache();
 		} else {
 			log.warn(

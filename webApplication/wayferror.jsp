@@ -5,7 +5,7 @@
 	<%@ taglib uri="/WEB-INF/tlds/struts-logic.tld" prefix="logic" %>
 	<%@ taglib uri="/WEB-INF/tlds/struts-bean.tld" prefix="bean" %>
 	
-	<jsp:useBean id="wayfLocation" scope="application" class="java.lang.String"/>
+	<jsp:useBean id="requestURL" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="errorText" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="supportContact" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="logoLocation" scope="application" class="java.lang.String"/>
@@ -26,7 +26,7 @@
 
 <p>Please email <a href="mailto:<bean:write name="supportContact" />"><bean:write name="supportContact" /></a> and include the following error message:</p>
 
-<p class="error">WAYF failure at (<bean:write name="wayfLocation" />)</p>
+<p class="error">WAYF failure at (<bean:write name="requestURL" />)</p>
 
 <p><bean:write name="errorText" /></p>
 
