@@ -68,7 +68,7 @@ public class XML
     public final static String SHIB_NS = "urn:mace:shibboleth:1.0";
     
     /**  Shibboleth Metadata XML namespace */
-    public final static String SHIBMETA_NS = "urn:mace:shibboleth:1.0:metadata";
+    public final static String SHIBMETA_NS = "urn:mace:shibboleth:metadata:1.0";
     
     /**  Shibboleth trust metadata XML namespace */
     public final static String TRUST_NS = "urn:mace:shibboleth:trust:1.0";
