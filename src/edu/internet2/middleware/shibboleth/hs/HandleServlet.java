@@ -156,6 +156,11 @@ public class HandleServlet extends HttpServlet {
 			properties.list(debugPrinter);
 			log.debug(
 				"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
+			try {
+				debugStream.close();
+			} catch (IOException e) {
+				log.error("Encountered a problem cleaning up resources: could not close debug stream.");
+			}
 		}
 
 		return properties;
@@ -174,7 +179,11 @@ public class HandleServlet extends HttpServlet {
 
 			postProfile =
 				ShibPOSTProfileFactory.getInstance(
-					Arrays.asList(configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll("\\s", "") .split(",")),
+					Arrays.asList(
+						configuration.getProperty("edu.internet2.middleware.shibboleth.audiences").replaceAll(
+							"\\s",
+							"").split(
+							",")),
 					configuration.getProperty("edu.internet2.middleware.shibboleth.hs.HandleServlet.issuer"));
 
 			handleRepository = HandleRepositoryFactory.getInstance(configuration);
@@ -294,7 +303,7 @@ public class HandleServlet extends HttpServlet {
 				Arrays.asList(certificates),
 				null,
 				null);
-				
+
 		return r.toBase64();
 	}
 

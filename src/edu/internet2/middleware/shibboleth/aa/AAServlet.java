@@ -189,6 +189,11 @@ public class AAServlet extends HttpServlet {
 			properties.list(debugPrinter);
 			log.debug(
 				"Runtime configuration parameters: " + System.getProperty("line.separator") + debugStream.toString());
+			try {
+				debugStream.close();
+			} catch (IOException e) {
+				log.error("Encountered a problem cleaning up resources: could not close debug stream.");
+			}
 		}
 
 		return properties;

@@ -161,6 +161,7 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 		InputStream inStream = new ShibResource(fileName).getInputStream();
 		DOMParser parser = new DOMParser();
 		parser.parse(new InputSource(inStream));
+		inStream.close();
 		return parser.getDocument().getDocumentElement();
 	}
 

@@ -157,9 +157,12 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			objectStream.flush();
 			objectStream.close();
 
+
 			Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, secret);
 			byte[] cipherTextHandle = cipher.doFinal(outStream.toByteArray());
+			zipStream.close();
+			outStream.close();
 
 			String handle = new BASE64Encoder().encode(cipherTextHandle);
 			return handle.replaceAll(System.getProperty("line.separator"), "");
@@ -189,6 +192,7 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			ObjectInputStream objectStream =
 				new ObjectInputStream(new GZIPInputStream(new ByteArrayInputStream(objectArray)));
 			HandleEntry handleEntry = (HandleEntry) objectStream.readObject();
+			objectStream.close();
 			return handleEntry.principal;
 
 		} catch (Exception e) {
