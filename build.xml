@@ -34,6 +34,10 @@
 	</target>
 
 
+	<!-- This target should be run before checking code into the repository -->
+	<target name="pre-checkin" depends="compile-all, test-all, clean-all" />
+
+
 	<!-- Compile classes and move them to ${build} -->
 	<target name="compile-all" depends="init">
 		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
