@@ -22,7 +22,23 @@
     <property name="year" value="2002"/>
     <property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
 
+  	<!-- Configure properties to find Tomcat and access the Manager application -->
+	<property name="tomcat.home" value="/usr/local/tomcat"/>
+	<property name="url" value="http://localhost:8080/manager"/>
+  	<property name="username" value="manager"/>
+  	<property name="password" value="password"/>
 
+  	<!-- Uncomment this for Tomcat Tasks
+  	<path id="tomcat.classpath">
+    	<fileset dir="${tomcat.home}/server/lib" includes="catalina-ant.jar"/>
+  	</path>
+
+  	<taskdef name="tomcatStart" classname="org.apache.catalina.ant.StartTask" classpathref="tomcat.classpath"/>
+  	<taskdef name="tomcatStop" classname="org.apache.catalina.ant.StopTask" classpathref="tomcat.classpath"/>
+  	<taskdef name="tomcatDeploy" classname="org.apache.catalina.ant.DeployTask" classpathref="tomcat.classpath"/>
+  	<taskdef name="tomcatUndeploy" classname="org.apache.catalina.ant.UndeployTask" classpathref="tomcat.classpath"/>
+	-->
+	
     <!-- Construct the CLASSPATH -->
     <path id="build.path">
         <pathelement path="${classpath}" />
@@ -142,13 +158,32 @@
         </junit>
     </target>
     
+    <!-- Tomcat Management -->
+    <target name="start" description="Start a deployed webapp using Tomcat manager">
+        <tomcatStop url="${url}" username="${username}" password="${password}" path="/${distname}"/>
+    </target>
+
+    <target name="stop" description="Stop a deployed webapp using Tomcat manager">
+        <tomcatStop url="${url}" username="${username}" password="${password}" path="/${distname}"/>
+    </target>
+
+    <target name="deploy" description="Upload and deploy using Tomcat manager">
+        <tomcatDeploy url="${url}" username="${username}" password="${password}" path="/${distname}"
+        	war="file:${basedir}/${dist}/${distname}.war"/>
+    </target>
+
+    <target name="undeploy" description="Undeploy using Tomcat manager">
+        <tomcatUndeploy url="${url}" username="${username}" password="${password}" path="/${distname}"/>
+    </target>
+    
+    <!-- Automated key generation -->
 	<target name="genSecret" depends="compile">
     	<taskdef name="genSecret" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
 		<genSecret keyStorePath="${appconfig}/handle.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
 	</target>
 
-        <target name="genSalt" depends="compile">
+    <target name="genSalt" depends="compile">
         <taskdef name="genSalt" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
-                <genSalt keyStorePath="${appconfig}/persistent.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
-        </target>
+        <genSalt keyStorePath="${appconfig}/persistent.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
+    </target>
 </project>
