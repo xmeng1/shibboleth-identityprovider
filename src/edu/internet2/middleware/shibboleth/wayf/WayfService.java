@@ -21,7 +21,6 @@ import org.xml.sax.SAXException;
  *
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
-
 public class WayfService extends HttpServlet {
 
 	private String wayfConfigFileLocation;
@@ -78,6 +77,7 @@ public class WayfService extends HttpServlet {
 			throw new UnavailableException("Error reading site file.");
 		}
 	}
+	
 	/**
 	 * Setup application-wide beans for view
 	 */
@@ -129,7 +129,7 @@ public class WayfService extends HttpServlet {
 				WayfCacheFactory.getInstance(config.getCacheType()).deleteHsFromCache(req, res);
 				handleLookup(req, res);
 			} else if (WayfCacheFactory.getInstance(config.getCacheType()).hasCachedHS(req)) {
-				handleRedirect(
+				forwardToHS(
 					req,
 					res,
 					WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
@@ -145,6 +145,9 @@ public class WayfService extends HttpServlet {
 		}
 	}
 
+	/**
+	 * Displays a WAYF selection page.
+	 */
 	private void handleLookup(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		if ((getSHIRE(req) == null) || (getTarget(req) == null)) {
@@ -165,7 +168,10 @@ public class WayfService extends HttpServlet {
 			throw new WayfException("Problem displaying WAYF UI." + se.toString());
 		}
 	}
-
+	
+	/**
+	 * Looks for origin sites that match search terms supplied by the user
+	 */
 	private void handleSearch(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		if (req.getParameter("string") != null) {
@@ -177,9 +183,11 @@ public class WayfService extends HttpServlet {
 			}
 		}
 		handleLookup(req, res);
-
 	}
 
+	/**
+	 * Registers a user's HS selection and forwards appropriately
+	 */
 	private void handleSelection(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		String handleService = originConfig.lookupHSbyName(req.getParameter("origin"));
@@ -187,12 +195,16 @@ public class WayfService extends HttpServlet {
 			handleLookup(req, res);
 		} else {
 			WayfCacheFactory.getInstance(config.getCacheType()).addHsToCache(handleService, req, res);
-			handleRedirect(req, res, handleService);
+			forwardToHS(req, res, handleService);
 		}
 
 	}
 
-	private void handleRedirect(HttpServletRequest req, HttpServletResponse res, String handleService)
+	/**
+	 * Uses an HTTP Status 307 redirect to forward the user the HS.
+	 * @param handleService The URL of the Shiboleth HS.
+	 */
+	private void forwardToHS(HttpServletRequest req, HttpServletResponse res, String handleService)
 		throws WayfException {
 
 		String shire = getSHIRE(req);
@@ -211,6 +223,11 @@ public class WayfService extends HttpServlet {
 
 	}
 
+	/**
+	 * Handles all "recoverable" errors in WAYF processing by logging the error
+	 * and forwarding the user to an appropriate error page.
+	 * @param we The WayfException respective to the error being handled
+	 */
 	private void handleError(HttpServletRequest req, HttpServletResponse res, WayfException we) {
 
 		log.error("WAYF Failure: " + we.toString());
@@ -227,7 +244,10 @@ public class WayfService extends HttpServlet {
 			log.error("Problem trying to display WAYF error page: " + se.toString());
 		}
 	}
-
+	/**
+	 * Retrieves the SHIRE from the request.
+	 * @throws WayfException If the request does not contain a shire parameter.
+	 */
 	private String getSHIRE(HttpServletRequest req) throws WayfException {
 
 		String shire = (String) req.getAttribute("shire");
@@ -239,7 +259,10 @@ public class WayfService extends HttpServlet {
 		}
 		return shire;
 	}
-
+	/**
+	 * Retrieves the user's target URL from the request.
+	 * @throws WayfException If the request does not contain a target parameter
+	 */
 	private String getTarget(HttpServletRequest req) throws WayfException {
 
 		String target = (String) req.getAttribute("target");
