@@ -12,9 +12,11 @@
 		<DataConnectorDependency requires="directory"/>
 	</SimpleAttributeDefinition>
 	
+	<!-- To use this attribute, you should change the smartScope value to match your site's domain name.
 	<SimpleAttributeDefinition id="urn:mace:dir:eduperson#eduPersonScopedAffiliation" smartScope="shibdev.edu">
 		<AttributeDependency requires="urn:mace:dir:eduperson#eduPersonAffiliation"/>
 	</SimpleAttributeDefinition>
+	-->
 
 	<JNDIDirectoryDataConnector id="directory">
 		<Search filter="cn=%PRINCIPAL%">
