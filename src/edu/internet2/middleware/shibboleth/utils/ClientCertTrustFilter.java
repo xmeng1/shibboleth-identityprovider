@@ -109,7 +109,9 @@ public class ClientCertTrustFilter implements Filter {
 	 */
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 		throws IOException, ServletException {
+
 		MDC.put("serviceId", "[Client Cert Trust Filter]");
+
 		if (!(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse)) {
 			log.error("Only HTTP(s) requests are supported by the ClientCertTrustFilter.");
 			return;
@@ -129,8 +131,7 @@ public class ClientCertTrustFilter implements Filter {
 
 		log.debug("Attempting to extract principal name from Subjet: (" + certs[0].getSubjectDN().getName() + ").");
 		Matcher matches = regex.matcher(certs[0].getSubjectDN().getName());
-		boolean found = matches.find();
-		if (!found) {
+		if (!matches.find()) {
 			log.error("Principal could not be extracted from Certificate Subject.");
 			httpResponse.sendError(
 				HttpServletResponse.SC_FORBIDDEN,
@@ -155,13 +156,19 @@ public class ClientCertTrustFilter implements Filter {
 	 * @see javax.servlet.Filter#destroy()
 	 */
 	public void destroy() {
+		//required by interface
+		//no resources to clean
 	}
 
-	class ClientCertTrustWrapper extends HttpServletRequestWrapper {
+	/**
+	 * <code>HttpServletRequest</code> wrapper class.  Returns a locally specified principal
+	 * and hardcoded authType.
+	 */
+	private class ClientCertTrustWrapper extends HttpServletRequestWrapper {
 
-		Principal principal;
+		private Principal principal;
 
-		ClientCertTrustWrapper(HttpServletRequest request, Principal principal) {
+		private ClientCertTrustWrapper(HttpServletRequest request, Principal principal) {
 			super(request);
 			this.principal = principal;
 		}
