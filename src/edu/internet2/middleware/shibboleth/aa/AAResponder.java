@@ -110,8 +110,7 @@ public class AAResponder {
 
 		try {
 			//optimization... find out which attributes to resolve
-			URI[] potentialAttributes =
-				arpEngine.listPossibleReleaseAttributes(principal, requester, resource);
+			URI[] potentialAttributes = arpEngine.listPossibleReleaseAttributes(principal, requester, resource);
 
 			//resolve for each attribute
 			Set arpAttributes = new HashSet();
@@ -119,15 +118,20 @@ public class AAResponder {
 			for (int i = 0; i < potentialAttributes.length; i++) {
 				ShibArpAttribute arpAttribute = new ShibArpAttribute(potentialAttributes[i].toString());
 
-				Attributes attrs =
-					userCtx.getAttributes(
-						"",
-						new String[] {
-							 arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1)});
-				Attribute dAttr =
-					attrs.get(arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1));
+				Attribute dAttr;
+				if (potentialAttributes[i].toString().equals("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")) {
+					Attributes attrs = userCtx.getAttributes("", new String[] { "eduPersonAffiliation" });
+					dAttr = attrs.get("eduPersonAffiliation");
+				} else {
+					Attributes attrs =
+						userCtx.getAttributes(
+							"",
+							new String[] {
+								 arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1)});
+					dAttr = attrs.get(arpAttribute.getName().substring(arpAttribute.getName().lastIndexOf(":") + 1));
+				}
 				if (dAttr == null) {
-					continue;	
+					continue;
 				}
 				NamingEnumeration directoryValuesEnum = dAttr.getAll();
 				List directoryValues = new ArrayList();
