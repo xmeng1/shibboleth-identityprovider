@@ -52,8 +52,6 @@ import org.w3c.dom.NodeList;
 
 import sun.misc.BASE64Decoder;
 
-import com.sun.corba.se.internal.core.EndPoint;
-
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
