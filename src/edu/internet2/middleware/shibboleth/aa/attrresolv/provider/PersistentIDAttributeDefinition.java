@@ -251,11 +251,9 @@ public class PersistentIDAttributeDefinition extends BaseAttributeDefinition imp
             localId = principal.getName();
         }
 
-        assert(localId != null);
-
-		if (lifeTime != -1) {
-			attribute.setLifetime(lifeTime);
-		}
+	if (lifeTime != -1) {
+		attribute.setLifetime(lifeTime);
+	}
 
         //Hash the data together to produce the persistent ID.
         try
