@@ -174,6 +174,9 @@ that arises.</p>
         <li><a href="#1.b."><font color="black">Target</font></a></li>
         <li><a href="#1.c."><font color="black">WAYF</font></a></li>
         <li><a href="#1.d."><font color="black">Federations</font></a></li>
+        <li><a href="#1.e."><font color="black">Relying Parties</font></a></li>
+        <li><a href="#1.f."><font color="black">Applications</font></a></li>
+        <li><a href="#1.g."><font color="black">Sessions</font></a></li>
     </ol>
     </li>
     <li>
@@ -339,6 +342,87 @@ requesting attributes.</p>
     exchange, use, and population of attributes before and after transit, and 
     there should be a way to find information on local authentication and 
     authorization practices for federation members.</p>
+</blockquote>
+<h4><a name="1.e."></a>1.e. Relying Parties</h4>
+<blockquote>
+    <p>Some aspects of both origin and target configuration can vary and be
+    expressed in terms of the &quot;relying party&quot;. To an origin, a target
+    is a relying party, while targets consider origins to be relying
+    parties (it's a matter of perspective). Certificates, policies, and
+    other aspects of an interaction are specified on the basis of the relying
+    party, and may or may not vary between relying parties depending on the
+    deployment's needs.</p>
+    <p>Each origin and target is assigned a URI, a unique identifier to enable
+    control over configuration down to the level of an individual partner (a single
+    relying party). By convention, this is termed a &quot;providerId&quot;. More
+    frequently, an entire federation will be viewed by an origin or target as a
+    single relying party to simplify management. An individual origin or target
+    with which this deployment exchanges information may sometimes be part of
+    multiple relying parties if there are multiple trust agreements
+    under which these transactions are performed. Care should be taken to avoid
+    conflicting or inconsistent configuration in such cases.</p>
+</blockquote>
+<h4><a name="1.f."></a>1.f. Applications</h4>
+<blockquote>
+    <p>Shibboleth &quot;applications&quot; are the primary unit of target
+    configuration. Applications as viewed by the target implementation
+    are not necessarily defined by the same metrics as in other contexts.  An
+    individual application represents a set of web resources that operates
+    using the same attribute handling and trust configuration and shares a common
+    <a href="#1.g.">session</a> with the browser user. As a user navigates between
+    resources on a server that cross an application boundary, a new session is
+    established, though user interaction may not be required. As a consequence of
+    the relationship between applications and sessions (which are tracked with
+    a cookie), an application usually does not span more than one virtual host.
+    Apart from cookie-based constraints, web resources can be aggregated into
+    applications in arbitrary ways.</p>
+    <p>A single target deployment may support a large number of applications,
+    but it need not register or publish information about each one with the
+    origins it accepts information from. Instead it can communicate using a
+    more limited set of distinct &quot;providerId&quot; values (often just a
+    single one). This allows targets with a complex internal configuration
+    to be treated as a single entity by origins for the purposes of attribute
+    release.</p>
+</blockquote>
+<h4><a name="1.g."></a>1.g. Sessions</h4>
+<blockquote>
+    <p>Much of the target implementation is concerned with establishing, and
+    subsequently maintaining, sessions with the browser user on behalf of the
+    <a href="#1.f.">applications</a> at the target. A session consists of a
+    cookie passed between the browser and web server, associated with a
+    security context. The context contains the user's authentication information,
+    and generally a set of attributes that make up the user's identity. Each
+    application maintains distinct sessions with the browser by means of separate
+    cookies. It is important to note that all such sessions are independent and
+    distinct: any session can exist with or without any other session, and the
+    expiration of any one session does not imply the expiration of any other
+    session.  Shibboleth also does not support any logout functionality beyond the
+    termination of individual application sessions by deletion of respective
+    cookies; also, there is no way for the target to cause origin-side sessions,
+    such as a user's SSO login, to expire.</p>
+    <p>A browser user accessing a Shibboleth-protected resource may have two
+    outcomes: standard session establishment, and lazy session
+    establishment.  The standard session establishment mechanism in which
+    Shibboleth protects the resource in all circumstances results in the
+    establishment of a cookie-based browser session and a set of attributes
+    cached for that application. Shibboleth 1.2 also supports so-called lazy
+    session establishment, in which the resource may be accessed without prior
+    authentication.  This means the application must be intelligent enough to
+    determine whether authentication is necessary, and then construct the proper URL
+    to initiate a browser redirect to request authentication; if the
+    application determines none is necessary or uses other authorization
+    mechanisms, then the request for authentication may not need to be triggered.
+    This complex functionality is mostly useful to protect a single URL with
+    different access mechanisms, or to require authenticated access only in
+    instances where the application deems it necessary.</p>
+    <p>Independently of this, a web-based application protected by Shibboleth
+    may have a need to establish its own session with the user.  This session
+    may persist well beyond the Shibboleth session, and logouts from this
+    session, if supported, will not terminate a Shibboleth session initiated to
+    access the resource.  Application administrators should carefully evaluate
+    the expiration of all sessions to limit vulnerability to attacks or user
+    negligence. Logging out of the entire desktop session is usually the
+    only (relatively) foolproof logout mechanism on the web.</p>
 </blockquote>
 <hr>
 <h3><a name="2."></a>2. Planning</h3>
@@ -1739,9 +1823,8 @@ checkAddress=&quot;<i>true/false</i>&quot;&gt;</span></dd>
 This information is not intended to be comprehensive, but instead rudimentary 
 guidelines for basic configuration tests and problems. For more detailed 
 information or answers to specific problems not addressed in this section, 
-please mail <a href="mailto:mace-shib-users@internet2.edu">
-mace-shib-users@internet2.edu</a> with a thorough description of errors and 
-configurations used.</p>
+please mail <a href="mailto:shibboleth-users@internet2.edu">shibboleth-users@internet2.edu</a>
+with a thorough description of errors and configurations used.</p>
 <h4><a name="5.a."></a>5.a. Basic Testing</h4>
 <blockquote>
     <p>The target may be tested by generating a folder with very basic access 
@@ -1757,12 +1840,10 @@ configurations used.</p>
         <br>
         &nbsp;&nbsp;# Per-directory SHIRE Configuration<br>
         &nbsp;&nbsp;#ShibBasicHijack On<br>
-        &nbsp;&nbsp;#ShibSSLOnly On<br>
-        &nbsp;&nbsp;#ShibAuthLifetime 60<br>
-        &nbsp;&nbsp;#ShibAuthTimeout 600<br>
         <br>
         &nbsp;&nbsp;# RM Configuration<br>
         &nbsp;&nbsp;#AuthGroupFile /foo<br>
+        &nbsp;&nbsp;#ShibRequireSession On<br>
         &nbsp;&nbsp;#ShibExportAssertion On<br>
         &lt;/Location&gt;<br>
         </span></p>
@@ -1775,9 +1856,9 @@ configurations used.</p>
 <h4><a name="5.b."></a>5.b. Common Problems</h4>
 <blockquote>
     <p>A knowledge base is being developed in the
-    <a href="http://www.columbia.edu/~wassa/shib.faq/shibboleth-faq.html">
+    <a href="https://umdrive.memphis.edu/wassa/public/shib.faq/shibboleth-faq.html">
     Shibboleth Deployer&#39;s FAQ</a>. Please mail
-    <a href="mailto:mace-shib-users@internet2.edu">mace-shib-users@internet2.edu</a> 
+    <a href="mailto:shibboleth-users@internet2.edu">shibboleth-users@internet2.edu</a> 
     with any additional questions or problems encountered that are not answered 
     by this basic guide.</p>
 </blockquote>
