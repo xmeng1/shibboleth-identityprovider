@@ -60,18 +60,21 @@ import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
+ * Delivers core IdP functionality (Attribute resolution, ARP filtering, Metadata lookup, Signing, Mapping between local &
+ * SAML identifiers, etc.) to components that process protocol-specific requests.
+ * 
  * @author Walter Hoehn
  */
 public class IdPProtocolSupport implements Metadata {
 
-	private static Logger			log			= Logger.getLogger(IdPProtocolSupport.class.getName());
-	private Logger					transactionLog;
-	private IdPConfig				config;
-	private ArrayList				fedMetadata	= new ArrayList();
-	private NameMapper				nameMapper;
-	private ServiceProviderMapper	spMapper;
-	private ArpEngine				arpEngine;
-	private AttributeResolver		resolver;
+	private static Logger log = Logger.getLogger(IdPProtocolSupport.class.getName());
+	private Logger transactionLog;
+	private IdPConfig config;
+	private ArrayList fedMetadata = new ArrayList();
+	private NameMapper nameMapper;
+	private ServiceProviderMapper spMapper;
+	private ArpEngine arpEngine;
+	private AttributeResolver resolver;
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
 			ArpEngine arpEngine, AttributeResolver resolver) {

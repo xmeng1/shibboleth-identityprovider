@@ -36,13 +36,28 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 
 /**
+ * Defines the processing for an IdP-supported protocol. A particular <code>IdPProtocolHandler</code> implementation
+ * is registered to process requests delivered from one or more endpoints. Core IdP functionality is delivered through
+ * the <code>IdPProtocolSupport</code> class.
+ * 
  * @author Walter Hoehn
  */
 public interface IdPProtocolHandler {
 
-	// TODO add javadoc
+	/**
+	 * Retreives a textual name for the handler for display purposes.
+	 */
 	public String getHandlerName();
 
+	/**
+	 * Runs the protocol-specific request processing.
+	 * 
+	 * @param samlRequest
+	 *            the request that inititiated the transaction or null
+	 * @param support
+	 * @return a <code>SAMLResponse</code> object that should be delivered to the binding upon which the request was
+	 *         received or null
+	 */
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException;
 }
