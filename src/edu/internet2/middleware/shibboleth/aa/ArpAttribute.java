@@ -64,6 +64,8 @@ import javax.naming.directory.*;
 
 public class ArpAttribute implements Serializable{
 
+	static final long serialVersionUID = 1L;
+	
     // Attributes
     protected String ID;
     protected boolean exclude;

@@ -65,6 +65,8 @@ import java.io.Serializable;
 
 public class ArpCore implements Serializable{
 
+	static final long serialVersionUID = 1L;
+	
     // Attributes
     protected String userEnv = "user.name";
     protected Acl acl;

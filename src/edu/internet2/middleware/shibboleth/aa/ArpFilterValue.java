@@ -61,7 +61,8 @@ package edu.internet2.middleware.shibboleth.aa;
 import java.io.*;
 public class ArpFilterValue implements Serializable{
 
-
+	static final long serialVersionUID = 1L;
+	
     // Associations
     protected Object value;
     protected boolean include;

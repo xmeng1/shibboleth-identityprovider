@@ -62,6 +62,7 @@ import java.security.acl.*;
 import java.io.*;
 public class AA_Permission implements java.security.acl.Permission, Serializable{
 
+	static final long serialVersionUID = 1L;
     protected static int LOOKUP = 0;
     protected static int READ = 1;
     protected static int WRITE = 2;

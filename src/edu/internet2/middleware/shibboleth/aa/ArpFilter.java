@@ -62,7 +62,8 @@ import java.io.*;
 import java.util.*;
 public class ArpFilter implements Serializable{
 
-
+	static final long serialVersionUID = 1L;
+	
     // Associations
     protected Vector values;
     

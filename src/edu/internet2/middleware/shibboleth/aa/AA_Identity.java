@@ -63,6 +63,7 @@ import java.io.*;
 
 public class AA_Identity implements java.security.Principal, Serializable{
 
+	static final long serialVersionUID = 1L;
     String ident;
 
     public AA_Identity(String ident){

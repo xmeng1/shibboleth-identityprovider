@@ -61,6 +61,8 @@ import java.io.*;
 import java.util.*;
 class TName implements Serializable{
 
+	static final long serialVersionUID = 1L;
+	
     // Attributes
     private String name;
     private String[] tokens;

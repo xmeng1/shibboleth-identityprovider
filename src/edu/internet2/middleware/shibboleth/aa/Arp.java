@@ -64,6 +64,8 @@ import java.security.Principal;
 import java.security.acl.*;
 
 public class Arp extends ArpCore implements Serializable{
+	
+	static final long serialVersionUID = 1L;
 
     // Attributes
     protected String name;

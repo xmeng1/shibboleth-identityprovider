@@ -63,6 +63,8 @@ import java.security.acl.*;
 
 public class ArpShar extends ArpCore implements Serializable{
 
+	static final long serialVersionUID = 1L;
+
     // Attributes
     protected String name;
     protected boolean isDefault;

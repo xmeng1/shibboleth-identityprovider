@@ -64,6 +64,7 @@ import java.security.*;
 
 public class AA_AclEntry implements java.security.acl.AclEntry, Serializable{
 
+	static final long serialVersionUID = 1L;
     HashSet permissions;
     boolean isNegative;
     Principal principal;
