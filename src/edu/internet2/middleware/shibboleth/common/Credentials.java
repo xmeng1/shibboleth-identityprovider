@@ -95,6 +95,7 @@ public class Credentials {
 
 	private static Logger log = Logger.getLogger(Credentials.class.getName());
 	private Hashtable data = new Hashtable();
+	private boolean singleMode = false;
 
         /**
          * Creates credentials based on XML configuration.
@@ -102,9 +103,9 @@ public class Credentials {
          */
 	public Credentials(Element e) {
 
-		if (!e.getLocalName().equals("Credentials")) {
-			throw new IllegalArgumentException();
-		}
+		if (e != null && e.getLocalName().equals("Credential")) {
+			singleMode = true;
+		} else if (e == null || !e.getLocalName().equals("Credentials")) { throw new IllegalArgumentException(); }
 
 		NodeList resolverNodes = e.getChildNodes();
 		if (resolverNodes.getLength() <= 0) {
@@ -115,10 +116,13 @@ public class Credentials {
 		for (int i = 0; resolverNodes.getLength() > i; i++) {
 			if (resolverNodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
 				try {
-
 					String credentialId = ((Element) resolverNodes.item(i)).getAttribute("Id");
 					if (credentialId == null || credentialId.equals("")) {
-						log.error("Found credential that was not labeled with a unique \"Id\" attribute. Skipping.");
+						if (singleMode) {
+							credentialId = "SINGLE";
+						} else {
+							log.error("Found credential that was not labeled with a unique \"Id\" attribute. Skipping.");
+						}
 					}
 
 					if (data.containsKey(credentialId)) {
@@ -149,6 +153,11 @@ public class Credentials {
 		}
 
 		return (Credential) data.get(identifier);
+	}
+	
+	public Credential getCredential() {
+
+		return (Credential) data.values().iterator().next();
 	}
 
 	static class CredentialFactory {
@@ -207,12 +216,6 @@ class FileCredentialResolver implements CredentialResolver {
 
 		if (!e.getLocalName().equals("FileResolver")) {
 			log.error("Invalid Credential Resolver configuration: expected <FileResolver> .");
-			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
-		}
-
-		String id = e.getAttribute("Id");
-		if (id == null || id.equals("")) {
-			log.error("Credential Resolvers require specification of the attribute \"Id\".");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
@@ -1370,12 +1373,6 @@ class KeystoreCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 
-		String id = e.getAttribute("Id");
-		if (id == null || id.equals("")) {
-			log.error("Credential Resolvers require specification of the attribute \"Id\".");
-			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
-		}
-
 		String keyStoreType = e.getAttribute("storeType");
 		if (keyStoreType == null || keyStoreType.equals("")) {
 			log.debug("Using default store type for credential.");
@@ -1563,12 +1560,6 @@ class CustomCredentialResolver implements CredentialResolver {
 
 		if (!e.getLocalName().equals("CustomCredResolver")) {
 			log.error("Invalid Credential Resolver configuration: expected <CustomCredResolver> .");
-			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
-		}
-
-		String id = e.getAttribute("id");
-		if (id == null || id.equals("")) {
-			log.error("Credential Resolvers require specification of the attribute \"id\".");
 			throw new CredentialFactoryException("Failed to initialize Credential Resolver.");
 		}
 

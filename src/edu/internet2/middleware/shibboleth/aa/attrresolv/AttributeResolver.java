@@ -114,6 +114,14 @@ public class AttributeResolver {
 						} catch (IOException e) {
 							throw new SAXException("Could not load entity: " + e);
 						}
+					} else if (systemId.endsWith("credentials.xsd")) {
+						try {
+							return new InputSource(
+								new ShibResource("/schemas/credentials.xsd", this.getClass())
+									.getInputStream());
+						} catch (IOException e) {
+							throw new SAXException("Could not load entity: " + e);
+						}
 					} else {
 						return null;
 					}

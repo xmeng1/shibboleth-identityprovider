@@ -25,7 +25,13 @@
 
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.Properties;
 
 import javax.naming.CommunicationException;
@@ -37,6 +43,14 @@ import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.InitialLdapContext;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.StartTlsRequest;
+import javax.naming.ldap.StartTlsResponse;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509KeyManager;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -46,6 +60,8 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
+import edu.internet2.middleware.shibboleth.common.Credential;
+import edu.internet2.middleware.shibboleth.common.Credentials;
 
 /**
  * <code>DataConnectorPlugIn</code> implementation that utilizes a user-specified JNDI <code>DirContext</code> to
@@ -60,6 +76,9 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 	protected Properties properties;
 	protected SearchControls controls;
 	protected String failover = null;
+	protected boolean startTls = false;
+	boolean useExternalAuth = false;
+	private SSLSocketFactory sslsf;
 
 	/**
 	 * Constructs a DataConnector based on DOM configuration.
@@ -73,6 +92,14 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 
 		super(e);
 
+		// Decide if we are using starttls
+		String tlsAttribute = e.getAttribute("useStartTls");
+		if (tlsAttribute != null && tlsAttribute.equalsIgnoreCase("TRUE")) {
+			startTls = true;
+			log.debug("Start TLS support enabled for connector.");
+		}
+
+		// Determine the search filter and controls
 		NodeList searchNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Search");
 		if (searchNodes.getLength() != 1) {
 			log.error("JNDI Directory Data Connector requires a \"Search\" specification.");
@@ -90,6 +117,7 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 
 		defineSearchControls(((Element) searchNodes.item(0)));
 
+		// Load JNDI properties
 		NodeList propertyNodes = e.getElementsByTagNameNS(AttributeResolver.resolverNamespace, "Property");
 		properties = new Properties(System.getProperties());
 		for (int i = 0; propertyNodes.getLength() > i; i++) {
@@ -111,14 +139,66 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			}
 		}
 
-		//Fail-fast connection test
+		// Fail-fast connection test
 		InitialDirContext context = null;
 		try {
-			context = new InitialDirContext(properties);
+			if (!startTls) {
+				try {
+					log.debug("Attempting to connect to JNDI directory source as a sanity check.");
+					context = initConnection();
+				} catch (IOException ioe) {
+					log.error("Failed to startup directory context: " + ioe);
+					throw new ResolutionPlugInException("Failed to startup directory context.");
+				}
+			} else {
+				// UGLY!
+				// We can't do SASL EXTERNAL auth until we have a TLS session
+				// So, we need to take this out of the environment and then stick it back in later
+				if ("EXTERNAL".equals(properties.getProperty(Context.SECURITY_AUTHENTICATION))) {
+					useExternalAuth = true;
+					properties.remove(Context.SECURITY_AUTHENTICATION);
+				}
+
+				// If TLS credentials were supplied, load them and setup a KeyManager
+				KeyManager keyManager = null;
+				NodeList credNodes = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Credential");
+				if (credNodes.getLength() > 0) {
+					log.debug("JNDI Directory Data Connector has a \"Credential\" specification.  "
+							+ "Loading credential...");
+					Credentials credentials = new Credentials((Element) credNodes.item(0));
+					Credential clientCred = credentials.getCredential();
+					if (clientCred == null) {
+						log.error("No credentials were loaded.");
+						throw new ResolutionPlugInException("Error loading credential.");
+					} else {
+						keyManager = new KeyManagerImpl(clientCred.getPrivateKey(), clientCred
+								.getX509CertificateChain());
+					}
+				}
+
+				try {
+					// Setup a customized SSL socket factory that uses our implementation of KeyManager
+					// This factory will be used for all subsequent TLS negotiation
+					SSLContext sslc = SSLContext.getInstance("TLS");
+					sslc.init(new KeyManager[]{keyManager}, null, new SecureRandom());
+					sslsf = sslc.getSocketFactory();
+
+					log.debug("Attempting to connect to JNDI directory source as a sanity check.");
+					initConnection();
+				} catch (GeneralSecurityException gse) {
+					log.error("Failed to startup directory context.  Error creating SSL socket: " + gse);
+					throw new ResolutionPlugInException("Failed to startup directory context.");
+
+				} catch (IOException ioe) {
+					log.error("Failed to startup directory context.  Error negotiating Start TLS: " + ioe);
+					throw new ResolutionPlugInException("Failed to startup directory context.");
+				}
+			}
+
 			log.debug("JNDI Directory context activated.");
 
-		} catch (NamingException e1) {
-			log.error("Failed to startup directory context: " + e1);
+		} catch (NamingException ne) {
+			log.error("Failed to startup directory context: " + ne);
 			throw new ResolutionPlugInException("Failed to startup directory context.");
 		} finally {
 			try {
@@ -214,18 +294,26 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			throws ResolutionPlugInException {
 
 		InitialDirContext context = null;
+		NamingEnumeration nEnumeration = null;
 		try {
-			context = new InitialDirContext(properties);
-			NamingEnumeration nEnumeration = null;
-
 			try {
+				context = initConnection();
 				nEnumeration = context
 						.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
+
+				// If we get a failure during the init or query, attempt once to re-establish the connection
 			} catch (CommunicationException e) {
 				log.debug(e);
-				log
-						.warn("Encountered a connection problem while querying for attributes.  Re-initializing JNDI context and retrying...");
-				context = new InitialDirContext(context.getEnvironment());
+				log.warn("Encountered a connection problem while querying for attributes.  Re-initializing "
+						+ "JNDI context and retrying...");
+				context = initConnection();
+				nEnumeration = context
+						.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
+			} catch (IOException e) {
+				log.debug(e);
+				log.warn("Encountered a connection problem while querying for attributes.  Re-initializing "
+						+ "JNDI context and retrying...");
+				context = initConnection();
 				nEnumeration = context
 						.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
 			}
@@ -243,7 +331,7 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 				throw new ResolutionPlugInException("Cannot disambiguate data for this principal.");
 			}
 
-			//For Sun's ldap provider only, construct the dn of the returned entry and manually add that as an
+			// For Sun's ldap provider only, construct the dn of the returned entry and manually add that as an
 			// attribute
 			if (context.getEnvironment().get(Context.INITIAL_CONTEXT_FACTORY)
 					.equals("com.sun.jndi.ldap.LdapCtxFactory")) {
@@ -257,6 +345,11 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			log.error("An error occurred while retieving data for principal (" + principal.getName() + ") :"
 					+ e.getMessage());
 			throw new ResolutionPlugInException("Error retrieving data for principal.");
+		} catch (IOException e) {
+			log.error("An error occurred while retieving data for principal (" + principal.getName() + ") :"
+					+ e.getMessage());
+			throw new ResolutionPlugInException("Error retrieving data for principal.");
+
 		} finally {
 			try {
 				if (context != null) {
@@ -267,4 +360,73 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			}
 		}
 	}
+
+	private InitialDirContext initConnection() throws NamingException, IOException, ResolutionPlugInException {
+
+		InitialDirContext context;
+		if (!startTls) {
+			context = new InitialDirContext(properties);
+
+		} else {
+			context = new InitialLdapContext(properties, null);
+			if (!(context instanceof LdapContext)) {
+				log.error("Directory context does not appear to be an implementation of LdapContext.  "
+						+ "This is required for startTls.");
+				throw new ResolutionPlugInException("Start TLS is only supported for implementations of LdapContext.");
+			}
+			StartTlsResponse tls = (StartTlsResponse) ((LdapContext) context).extendedOperation(new StartTlsRequest());
+			tls.negotiate(sslsf);
+			if (useExternalAuth) {
+				context.addToEnvironment(Context.SECURITY_AUTHENTICATION, "EXTERNAL");
+			}
+		}
+		return context;
+	}
+}
+
+/**
+ * Implementation of <code>X509KeyManager</code> that always uses a hard-coded client certificate.
+ */
+
+class KeyManagerImpl implements X509KeyManager {
+
+	private PrivateKey key;
+	private X509Certificate[] chain;
+
+	KeyManagerImpl(PrivateKey key, X509Certificate[] chain) {
+
+		this.key = key;
+		this.chain = chain;
+	}
+
+	public String[] getClientAliases(String arg0, Principal[] arg1) {
+
+		return new String[]{"default"};
+	}
+
+	public String chooseClientAlias(String[] arg0, Principal[] arg1, Socket arg2) {
+
+		return "default";
+	}
+
+	public String[] getServerAliases(String arg0, Principal[] arg1) {
+
+		return null;
+	}
+
+	public String chooseServerAlias(String arg0, Principal[] arg1, Socket arg2) {
+
+		return null;
+	}
+
+	public X509Certificate[] getCertificateChain(String arg0) {
+
+		return chain;
+	}
+
+	public PrivateKey getPrivateKey(String arg0) {
+
+		return key;
+	}
+
 }
