@@ -88,8 +88,9 @@ public class HandleRepositoryFactory {
 					+ "configuration data.");
 			throw new HandleRepositoryException("Failed to instantiate a Handle Repository.");
 		} catch (Exception e) {
+
 			log.error("Failed to instantiate a Handle Repository: " + e + ":" + e.getCause());
-			throw new HandleRepositoryException("Failed to instantiate a Handle Repository: " + e.getMessage());
+			throw new HandleRepositoryException("Failed to instantiate a Handle Repository: " + e);
 
 		}
 	}
