@@ -20,7 +20,7 @@ public class Init
 
         initialized = true;
         
-        edu.internet2.middleware.shibboleth.Init.init();
+        edu.internet2.middleware.shibboleth.common.Init.init();
         try
         {
             org.opensaml.XML.parserPool.registerExtension(XML.EDUPERSON_NS, XML.EDUPERSON_SCHEMA_ID, new XML.SchemaResolver());

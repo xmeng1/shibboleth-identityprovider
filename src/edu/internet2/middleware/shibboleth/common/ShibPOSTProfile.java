@@ -1,4 +1,4 @@
-package edu.internet2.middleware.shibboleth;
+package edu.internet2.middleware.shibboleth.common;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -17,6 +17,7 @@ import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.*;
 import org.w3c.dom.*;
+
 
 /**
  *  Basic Shibboleth POST browser profile implementation with basic support for

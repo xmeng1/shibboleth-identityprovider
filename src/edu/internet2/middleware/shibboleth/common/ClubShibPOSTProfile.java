@@ -1,4 +1,4 @@
-package edu.internet2.middleware.shibboleth;
+package edu.internet2.middleware.shibboleth.common;
 
 import java.util.Date;
 import java.security.Key;
@@ -9,6 +9,9 @@ import org.apache.xml.security.signature.SignedInfo;
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.*;
 import org.w3c.dom.*;
+
+import edu.internet2.middleware.shibboleth.common.*;
+import edu.internet2.middleware.shibboleth.shire.*;
 
 /**
  *  ClubShib-specific POST browser profile implementation

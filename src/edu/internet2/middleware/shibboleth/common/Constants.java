@@ -1,4 +1,4 @@
-package edu.internet2.middleware.shibboleth;
+package edu.internet2.middleware.shibboleth.common;
 
 /**
  *  Collection of Shibboleth constants

@@ -2,6 +2,9 @@ package edu.internet2.middleware.shibboleth.hs;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Date;
 
@@ -17,15 +20,15 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.opensaml.SAMLException;
 import org.xml.sax.SAXException;
 
-import edu.internet2.middleware.shibboleth.AABindingInfo;
-import edu.internet2.middleware.shibboleth.Policies;
-import edu.internet2.middleware.shibboleth.SAMLAuthenticationAssertionFactory;
-import edu.internet2.middleware.shibboleth.SAMLException;
 import edu.internet2.middleware.shibboleth.common.AttributeQueryHandle;
 import edu.internet2.middleware.shibboleth.common.Base64;
+import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.HandleException;
+import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
+import edu.internet2.middleware.shibboleth.common.ShibPOSTProfileFactory;
 
 /**
  * 
@@ -42,10 +45,11 @@ import edu.internet2.middleware.shibboleth.common.HandleException;
 public class HandleService extends HttpServlet {
 
 	private static Logger log = Logger.getLogger(HandleService.class.getName());
-	private SAMLAuthenticationAssertionFactory assertionFactory;
+	private ShibPOSTProfile assertionFactory;
 	private String hsConfigFileLocation;
 	private String log4jConfigFileLocation;
-	private SecretKey key;
+	private SecretKey handleKey;
+	private PrivateKey responseKey;
 
 	/**
 	 * @see GenericServlet#init()
@@ -58,30 +62,40 @@ public class HandleService extends HttpServlet {
 		initLogger();
 		initConfig();
 		initViewConfig();
-		initSecretKey();
+		initSecretKeys();
 		initAuthNFactory();
 	}
 
 	/**
-	 * Initializes symmetric key for use in AQH creation
+	 * Initializes symmetric handleKey for use in AQH creation
 	 */
 
-	private void initSecretKey() throws ServletException {
+	private void initSecretKeys() throws ServletException {
 
+		//Currently hardcoded to use Bouncy Castle
+		//Decide to change this or not based on overall shibboleth policy
+		Security.addProvider(new BouncyCastleProvider());
 		try {
 
-			//Currently hardcoded to use Bouncy Castle
-			//Decide to change this or not based on overall shibboleth policy
-			Security.addProvider(new BouncyCastleProvider());
 			SecretKeyFactory keyFactory =
 				SecretKeyFactory.getInstance("DESede");
 			DESedeKeySpec keySpec =
 				new DESedeKeySpec(
 					Base64.decode(HandleServiceConfig.getSecretKey()));
-			key = keyFactory.generateSecret(keySpec);
+			handleKey = keyFactory.generateSecret(keySpec);
 		} catch (Exception t) {
-			log.fatal("Error reading Secret Key from configuration.", t);
-			throw new ServletException("Error reading Key from configuration.");
+			log.fatal("Error reading Handle Key from configuration.", t);
+			throw new ServletException("Error reading Handle Key from configuration.");
+		}
+		try {
+			
+			KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+			gen.initialize(1024, new SecureRandom());
+			responseKey = gen.generateKeyPair().getPrivate();
+
+		} catch (Exception t) {
+			log.fatal("Error reading Response Key from configuration.", t);
+			throw new ServletException("Error reading Response Key from configuration.");
 		}
 
 	}
@@ -171,20 +185,9 @@ public class HandleService extends HttpServlet {
 
 	private void initAuthNFactory() throws ServletException {
 		try {
-			AABindingInfo[] binfo = new AABindingInfo[1];
-			binfo[0] =
-				new AABindingInfo(
-					AABindingInfo.SAML_SOAP_HTTPS,
-					HandleServiceConfig.getAaURL());
-			String[] policies = { Policies.POLICY_URI_CLUBSHIB };
-			assertionFactory =
-				SAMLAuthenticationAssertionFactory.getInstance(
-					policies,
-					HandleServiceConfig.getIssuer(),
-					HandleServiceConfig.getDomain(),
-					binfo,
-					null,
-					null);
+			
+			String[] policies={Constants.POLICY_CLUBSHIB};
+			assertionFactory=ShibPOSTProfileFactory.getInstance(policies, HandleServiceConfig.getIssuer());
 
 		} catch (SAMLException se) {
 			log.fatal("Error initializing SAML library: ", se);
@@ -301,21 +304,20 @@ public class HandleService extends HttpServlet {
 			AttributeQueryHandle aqh =
 				new AttributeQueryHandle(
 					remoteUser,
-					key,
+					handleKey,
 					Long.parseLong(HandleServiceConfig.getValidityPeriod()),
 					hsURL);
 
 			log.info("Acquired Handle: " + aqh.getHandleID());
-
-			return assertionFactory
-				.getAssertion(
-					new String(aqh.serialize(), "ASCII"),
-					shireURL,
-					clientAddress,
-					authType,
-					new Date(),
-					null)
-				.toBase64();
+					
+			return assertionFactory.prepare(
+				shireURL,
+				new String(aqh.serialize(), "ASCII"),
+				HandleServiceConfig.getDomain(),
+				clientAddress,
+				authType,
+				new Date(),
+				null, responseKey, null, null, null).toBase64();
 
 		} catch (SAMLException se) {
 			throw new HandleServiceException(

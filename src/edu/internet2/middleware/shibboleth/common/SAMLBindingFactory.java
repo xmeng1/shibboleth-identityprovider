@@ -1,7 +1,9 @@
-package edu.internet2.middleware.shibboleth;
+package edu.internet2.middleware.shibboleth.common;
 
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLSOAPBinding;
+
+import edu.internet2.middleware.shibboleth.common.*;
 
 /**
  *  Used by Shibboleth SHAR/AA to locate a SAML binding implementation

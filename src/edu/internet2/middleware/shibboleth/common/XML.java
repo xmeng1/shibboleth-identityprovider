@@ -1,4 +1,4 @@
-package edu.internet2.middleware.shibboleth;
+package edu.internet2.middleware.shibboleth.common;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

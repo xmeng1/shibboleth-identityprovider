@@ -1,6 +1,8 @@
-package edu.internet2.middleware.shibboleth;
+package edu.internet2.middleware.shibboleth.common;
 
 import javax.xml.parsers.ParserConfigurationException;
+
+import edu.internet2.middleware.shibboleth.common.XML.SchemaResolver;
 
 /**
  *  Handles one-time library initialization
