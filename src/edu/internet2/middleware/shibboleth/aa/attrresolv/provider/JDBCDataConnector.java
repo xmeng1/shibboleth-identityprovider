@@ -159,9 +159,9 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
         }
         
 		//Initialize a pooling Data Source
-		int maxActive = 0;
-		int maxIdle = 0;
-        int maxWait = 30;
+		int maxActive = 5;
+		int maxIdle = 5;
+        int maxWait = 15;
 		try {
 			if (e.getAttributeNode("maxActive") != null) {
 				maxActive = Integer.parseInt(e.getAttribute("maxActive"));
@@ -189,15 +189,12 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 
 		GenericObjectPool objectPool = new GenericObjectPool(null);
 
-		if (maxActive > 0) {
-			objectPool.setMaxActive(maxActive);
-		}
-		if (maxIdle > 0) {
-			objectPool.setMaxIdle(maxIdle);
-		}
-		if (maxWait > 0) {
+		objectPool.setMaxActive(maxActive);
+		objectPool.setMaxIdle(maxIdle);
+		if (maxWait > 0)
 			objectPool.setMaxWait(1000*maxWait);
-		}
+        else
+            objectPool.setMaxWait(maxWait);
 
 		objectPool.setWhenExhaustedAction(GenericObjectPool.WHEN_EXHAUSTED_BLOCK);
 		objectPool.setTestOnBorrow(true);
