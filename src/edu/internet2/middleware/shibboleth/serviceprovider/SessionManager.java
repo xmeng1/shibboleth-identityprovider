@@ -71,14 +71,16 @@ public class SessionManager {
 	public String generateKey() {
 	    byte[] trash = new byte[16];
 	    char[] ctrash = new char[16];
+		String key;
 	    do {
 	        rand.nextBytes(trash);
 	        for (int i=0;i<16;i++) {
 	            trash[i]&=0x3f;
 	            ctrash[i]=(char)table.charAt(trash[i]);
 	        }
-	    } while (null!=sessions.get(ctrash));
-	    return new String(ctrash);
+			key=new String(ctrash);
+	    } while (null!=sessions.get(key));
+	    return key;
 	}
 	
 	
