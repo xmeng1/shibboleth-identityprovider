@@ -77,10 +77,8 @@ import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
  * 
  * @author Walter Hoehn
  */
-
 public class ResolverTest {
 
-	private static Logger log = Logger.getLogger(ResolverTest.class.getName());
 	private static boolean debug = false;
 	private static String file = null;
 	private static String requester = null;
@@ -168,6 +166,10 @@ public class ResolverTest {
 		}
 	}
 
+	/**
+	 * Ensures that all required parameters were specified and successfully parsed.
+	 *
+	 */
 	private static void checkRequired() {
 		if (file == null || user == null) {
 			System.err.println("Missing required parameter(s).");
@@ -181,10 +183,10 @@ public class ResolverTest {
 		}
 	}
 
-	private static void configureLogging(boolean debugOn) {
+	private static void configureLogging(boolean debugEnabled) {
 
 		BasicConfigurator.configure();
-		if (debug) {
+		if (debugEnabled) {
 			Logger.getRootLogger().setLevel(Level.DEBUG);
 		} else {
 			Logger.getRootLogger().setLevel(Level.INFO);
