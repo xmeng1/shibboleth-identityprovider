@@ -70,7 +70,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLAssertion;
-import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeQuery;
 import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
@@ -123,6 +122,10 @@ public class AASaml {
     public String getShar(){
 	return sharName.toString();
     }
+    
+    public Iterator getDesignators() {
+    	return aquery.getDesignators();
+    }
 
  
     public void respond(HttpServletResponse resp, Collection attrs, SAMLException exception)
@@ -143,24 +146,6 @@ public class AASaml {
         		Date now = new Date();
         		Date then = null;
                 long min = 0;
-                Iterator i = attrs.iterator();
-                outer_loop:
-                while (i.hasNext())
-                {
-                    SAMLAttribute attr = (SAMLAttribute)i.next();
-                    if (min == 0 || (attr.getLifetime() > 0 && attr.getLifetime() < min))
-                        min = attr.getLifetime();
-                    Iterator filter = aquery.getDesignators();
-                    if (!filter.hasNext())
-                        continue;
-                    while (filter.hasNext())
-                    {
-                        SAMLAttribute desig = (SAMLAttribute)filter.next();
-                        if (attr.getNamespace().equals(desig.getNamespace()) && attr.getName().equals(desig.getName()))
-                            continue outer_loop;
-                    }
-                    i.remove();
-                }
         
         		SAMLSubject rSubject = (SAMLSubject)aquery.getSubject().clone();
         		SAMLCondition condition = new SAMLAudienceRestrictionCondition(Arrays.asList(policies));

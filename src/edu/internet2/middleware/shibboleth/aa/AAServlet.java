@@ -53,9 +53,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -68,6 +72,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.opensaml.QName;
+import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLIdentifier;
 
@@ -247,12 +252,35 @@ public class AAServlet extends HttpServlet {
 				log.info("Request is from SHAR: (" + saml.getShar() + ").");
 			}
 
-			List attrs =
-				Arrays.asList(
-					responder.getReleaseAttributes(
-						principal,
-						saml.getShar(),
-						resource));
+			List attrs;
+			Iterator requestedAttrsIterator = saml.getDesignators();
+			if (requestedAttrsIterator.hasNext()) {
+				log.info("Request designates specific attributes, resolving this set.");
+				ArrayList requestedAttrs = new ArrayList();
+				while (requestedAttrsIterator.hasNext()) {
+					SAMLAttribute attribute = (SAMLAttribute) requestedAttrsIterator.next();
+					try {
+						log.debug("Designated attribute: (" + attribute.getName() + ")");
+						requestedAttrs.add(new URI(attribute.getName()));
+					} catch (URISyntaxException use) {
+						log.error(
+							"Request designated an attribute name that does not conform to the required URI syntax ("
+								+ attribute.getName()
+								+ ").  Ignoring this attribute");
+					}
+				}
+				attrs =
+					Arrays.asList(
+						responder.getReleaseAttributes(
+							principal,
+							saml.getShar(),
+							resource,
+							(URI[]) requestedAttrs.toArray(new URI[0])));
+			} else {
+				log.info("Request does not designate specific attributes, resolving all available.");
+				attrs = Arrays.asList(responder.getReleaseAttributes(principal, saml.getShar(), resource));
+			}
+
 			log.info("Found " + attrs.size() + " attribute(s) for " + principal.getName());
 			saml.respond(resp, attrs, null);
 			log.info("Successfully responded about " + principal.getName());
