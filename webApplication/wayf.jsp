@@ -17,7 +17,7 @@
 		<jsp:useBean id="searchresults" scope="request" type="edu.internet2.middleware.shibboleth.wayf.Origin[]"/>
 	</logic:present>
 <head>
-		<link rel="stylesheet" title="normal" type="text/css" href="wayf.css" /><title>InCommon: Identity Provider Selection</title></head>
+		<link rel="stylesheet" title="normal" type="text/css" href="wayf.css" /><title>InQueue: Identity Provider Selection</title></head>
 	<body>
 
 		<div class="head">
@@ -108,8 +108,8 @@
 			</div>
 			<div class="footer">
 
-				<p class="text">Need assistance? Send mail to <a href="mailto:shib-test@internet2.edu">shib-test@internet2.edu</a> with description.</p>
-				<div class="logo"><img src="./images/incommon.gif" alt="InCommon" /></div>
+				<p class="text">Need assistance? Send mail to <a href="mailto:inqueue-support@internet2.edu">inqueue-support@internet2.edu</a> with description.</p>
+				<div class="logo"><img src="./images/internet2.gif" alt="InQueue" /></div>
 			</div>
 			
 	</body></html>
