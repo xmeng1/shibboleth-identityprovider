@@ -82,6 +82,7 @@ public class WayfService extends HttpServlet {
 		//Tell the browser not to cache the WAYF page
 		res.setHeader("Cache-Control", "no-cache");
 		res.setHeader("Pragma", "no-cache");
+		res.setDateHeader("Expires", 0 );
 
 		//Decide how to route the request based on query string
 		String requestType = req.getParameter("action");
