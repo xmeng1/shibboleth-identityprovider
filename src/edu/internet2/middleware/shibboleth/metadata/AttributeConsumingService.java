@@ -26,26 +26,27 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
-import org.w3c.dom.Element;
+import java.util.Iterator;
+
+import org.opensaml.SAMLAttribute;
 
 /**
- * <p>Corresponds to SAML Metadata Schema "EndpointType".
- * </p><p>
- * "The complex type EndpointType describes a SAML protocol binding endpoint
- * at which a SAML entity can be sent protocol messages." That is, it is 
- * to SAML what a URL is to HTTP, the address of one end of a conversation.
- * The exact meaning depends on the SAML binding (is this a Browser POST,
- * a Web Service request, or what).
+ * <p>Corresponds to SAML Metadata Schema "AttributeConsumingServiceType".
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Scott Cantor
  */
-public interface Endpoint {
+public interface AttributeConsumingService {
 
-	public String getBinding(); // URI identifying a SAML binding
-
-	public String getLocation(); // URI(URL) of the message destination
-
-	public String getResponseLocation(); // optional second URI(URL) destination
+    public String getName();
+    public String getName(String lang);
     
-    public Element getElement(); // punch through to XML content if permitted
+    public String getDescription();
+    public String getDescription(String lang);
+
+    public class RequestedAttribute {
+        public SAMLAttribute attribute;
+        public boolean required;
+    }
+
+    public Iterator /* <RequestedAttribute> */ getRequestedAttributes();
 }

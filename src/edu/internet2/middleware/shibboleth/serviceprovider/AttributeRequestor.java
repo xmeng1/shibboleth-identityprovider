@@ -62,10 +62,11 @@ import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLSubject;
+import org.opensaml.XML;
 
 import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
 
-import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityRole;
+import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
@@ -103,7 +104,7 @@ public class AttributeRequestor {
 		ApplicationInfo appinfo = config.getApplication(session.getApplicationId());
 		
 		// The Entity name was fed by by ShibPOSTProfile.accept(). Look it up now.
-		EntityDescriptor entity = appinfo.getEntityDescriptor(session.getEntityId());
+		EntityDescriptor entity = appinfo.lookup(session.getEntityId());
 		if (entity==null) {
 			log.error("Entity(Site) deleted from Metadata since authentication POST received: "+session.getEntityId());
 			return false;
@@ -115,8 +116,8 @@ public class AttributeRequestor {
 		
 		SAMLRequest request = null;
 		
-		AttributeAuthorityRole aa = 
-		    entity.getAttributeAuthorityRole(); // throws MetadataException
+		AttributeAuthorityDescriptor aa = 
+		    entity.getAttributeAuthorityDescriptor(XML.SAML11_PROTOCOL_ENUM); // throws MetadataException
 		if (aa==null) {
 		    log.error("No Attribute Authority in Metadata for ID="+entity.getId());
 		    return false;

@@ -26,10 +26,12 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
+import java.util.Iterator;
+
 import org.apache.xml.security.keys.KeyInfo;
 
 /**
- * <p>Corresponds loosely to SAML Metadata Schema "KeyDescriptorType".
+ * <p>Corresponds to SAML Metadata Schema "KeyDescriptorType".
  * </p><p>
  * Provides information about the cryptographic keys that an EntityDescriptor/Provider
  * uses to sign data. However, this is nested inside a RoleDescriptor 
@@ -39,12 +41,13 @@ import org.apache.xml.security.keys.KeyInfo;
  */
 public interface KeyDescriptor {
 
-	public static int	ENCRYPTION	= 0;
-	public static int	SIGNING		= 1;
+    public final static int UNSPECIFIED = -1;   
+	public final static int	ENCRYPTION	= 0;
+	public final static int	SIGNING		= 1;
 
 	public int getUse();
 
-	public String[] getEncryptionMethod();
-
-	public KeyInfo[] getKeyInfo();
+	public KeyInfo getKeyInfo();
+    
+    public Iterator /* <org.apache.xml.security.encryption.EncryptionMethod.EncryptionMethod> */ getEncryptionMethods();
 }

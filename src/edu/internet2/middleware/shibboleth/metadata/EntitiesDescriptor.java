@@ -26,26 +26,27 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
+import java.util.Iterator;
+
 import org.w3c.dom.Element;
 
 /**
- * <p>Corresponds to SAML Metadata Schema "EndpointType".
- * </p><p>
- * "The complex type EndpointType describes a SAML protocol binding endpoint
- * at which a SAML entity can be sent protocol messages." That is, it is 
- * to SAML what a URL is to HTTP, the address of one end of a conversation.
- * The exact meaning depends on the SAML binding (is this a Browser POST,
- * a Web Service request, or what).
+ * <p>Corresponds to SAML Metadata Schema "EntitiesDescriptorType".</p>
+ * <p>Groups multiple entities into a named set for policy/configuration
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Scott Cantor
  */
-public interface Endpoint {
+public interface EntitiesDescriptor {
 
-	public String getBinding(); // URI identifying a SAML binding
-
-	public String getLocation(); // URI(URL) of the message destination
-
-	public String getResponseLocation(); // optional second URI(URL) destination
+	public String getName();  // name of group
     
-    public Element getElement(); // punch through to XML content if permitted
+    public boolean isValid();   // Is this group "active"?
+
+    public EntitiesDescriptor getEntitiesDescriptor(); // parent group, if any
+    
+    public Iterator /* <EntitiesDescriptor> */ getEntitiesDescriptors(); // child groups, if any
+    
+    public Iterator /* <EntityDescriptor> */ getEntityDescriptors(); // child entities, if any
+    
+    public Element getElement();    // punch through to raw XML, if enabled
 }

@@ -26,6 +26,8 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
+import org.opensaml.artifact.Artifact;
+
 /**
  * Ported from Scott Cantor's C++ interfaces
  * 
@@ -33,5 +35,19 @@ package edu.internet2.middleware.shibboleth.metadata;
  */
 public interface Metadata {
 
-	Provider lookup(final String providerId);
+	/**
+     *  Find an entity descriptor by its unique identifier.
+     * 
+	 * @param id   The unique identifier of the site of interest
+	 * @return  The corresponding entity
+	 */
+	EntityDescriptor lookup(String id);
+    
+    /**
+     *  Find an entity descriptor that issued a SAML artifact.
+     * 
+     * @param artifact  The artifact whose source site is of interest
+     * @return  The issuing entity
+     */
+    EntityDescriptor lookup(Artifact artifact);
 }

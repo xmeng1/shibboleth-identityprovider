@@ -37,8 +37,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
+import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
-import edu.internet2.middleware.shibboleth.metadata.Provider;
+import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 
 /**
  * Class for determining the effective relying party from the unique id of the service provider. Checks first for an
@@ -130,20 +131,19 @@ public class ServiceProviderMapper {
 
 	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
 
-		Provider provider = metaData.lookup(providerIdFromTarget);
+		EntityDescriptor provider = metaData.lookup(providerIdFromTarget);
 		if (provider != null) {
-			String[] groups = provider.getGroups();
-			for (int i = 0; groups.length > i; i++) {
-				// We need to iterate backward because the groups go from least to most specific
-				String group = groups[groups.length - 1 - i];
-				if (relyingParties.containsKey(group)) {
-					log.info("Found matching Relying Party for group (" + group + ").");
-					return (RelyingParty) relyingParties.get(group);
+			EntitiesDescriptor parent = provider.getEntitiesDescriptor();
+			while (parent != null) {
+				if (relyingParties.containsKey(parent.getName())) {
+					log.info("Found matching Relying Party for group (" + parent.getName() + ").");
+					return (RelyingParty)relyingParties.get(parent.getName());
 				} else {
-					log
-							.debug("Provider is a member of group (" + group
-									+ "), but no matching Relying Party was found.");
+					log.debug("Provider is a member of group (" +
+                            parent.getName() +
+                            "), but no matching Relying Party was found.");
 				}
+                parent = parent.getEntitiesDescriptor();
 			}
 		}
 		return null;

@@ -116,8 +116,8 @@ import x0.maceShibbolethTrust1.TrustDocument.Trust;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.XML;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.EntityLocator;
-import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
+import edu.internet2.middleware.shibboleth.metadata.Metadata;
+import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 
 /**
@@ -414,16 +414,16 @@ public class XMLTrustImpl
 	 */
 	public boolean validate(
 			Iterator revocations, 
-			ProviderRole role,
+			RoleDescriptor role,
 			SAMLObject token, 
-			EntityLocator locator
+			Metadata locator
 				) {
 		
 		EntityDescriptor entityDescriptor = null;
 		
 		// Did the caller designate the remote Entity
 		if (role!=null)
-			entityDescriptor = (EntityDescriptor) role.getProvider();
+			entityDescriptor = (EntityDescriptor) role.getEntityDescriptor();
 		
 		// If not, then search through the SAMLObject for the remote Entity Id
 		if (entityDescriptor==null) {
@@ -442,7 +442,7 @@ public class XMLTrustImpl
 				SAMLQuery query = request.getQuery();
 				if (query!=null && query instanceof SAMLAttributeQuery) {
 					String name = ((SAMLAttributeQuery) query).getResource();
-					entityDescriptor=locator.getEntityDescriptor(name);
+					entityDescriptor=locator.lookup(name);
 				}
 			}
 		}
@@ -470,23 +470,23 @@ public class XMLTrustImpl
 	 * @param assertion  SAMLAssertion to be verified
 	 * @return           First ntityDescriptor mapped from assertion data fields. 
 	 */
-	private EntityDescriptor getEntityFromAssertion(EntityLocator locator, SAMLAssertion assertion) {
+	private EntityDescriptor getEntityFromAssertion(Metadata locator, SAMLAssertion assertion) {
 		EntityDescriptor entityDescriptor = null;
-		entityDescriptor=locator.getEntityDescriptor(assertion.getIssuer());
+		entityDescriptor=locator.lookup(assertion.getIssuer());
 		if (entityDescriptor!=null) 
 			return entityDescriptor;
 		Iterator statements = assertion.getStatements();
 		while (entityDescriptor==null && statements.hasNext()) {
 			SAMLSubjectStatement statement = (SAMLSubjectStatement) statements.next();
 			String qname = statement.getSubject().getName().getNameQualifier();
-			entityDescriptor=locator.getEntityDescriptor(qname);
+			entityDescriptor=locator.lookup(qname);
 		}
 		return entityDescriptor;
 	}
 
 	public boolean attach(
 			Iterator revocations, 
-			ProviderRole role
+			RoleDescriptor role
 				) {
 		return false;
 	}

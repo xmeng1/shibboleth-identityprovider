@@ -133,7 +133,6 @@
 
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -148,12 +147,11 @@ import org.apache.xmlbeans.XmlOptions;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
-import org.opensaml.SAMLException;
 import org.opensaml.SAMLObject;
+import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 import x0.maceShibboleth1.AttributeAcceptancePolicyDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument;
@@ -172,10 +170,8 @@ import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.XML;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.EntityLocator;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
-import edu.internet2.middleware.shibboleth.metadata.Provider;
-import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
+import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -208,16 +204,15 @@ public class ServiceProviderConfig {
 	 * for a given configured or default application.
 	 */
 	
-	// Note EntityLocator extends and renames the old "Metadata" interface
-	private Map/*<String, EntityLocator>*/ entityLocators = 
-		new TreeMap/*<String, EntityLocator>*/();
+	private Map/*<String, Metadata>*/ entityLocators = 
+		new TreeMap/*<String, Metadata>*/();
 	
-	public void addOrReplaceMetadataImplementor(String uri, EntityLocator m) {
+	public void addOrReplaceMetadataImplementor(String uri, Metadata m) {
 	    entityLocators.put(uri, m);
 	}
 	
-	public EntityLocator getMetadataImplementor(String uri) {
-	    return (EntityLocator) entityLocators.get(uri);
+	public Metadata getMetadataImplementor(String uri) {
+	    return (Metadata)entityLocators.get(uri);
 	}
 	
 	private Map/*<String, AAP>*/ attributePolicies = 
@@ -274,9 +269,9 @@ public class ServiceProviderConfig {
 	 */
 	private final String SCHEMADIR = "/schemas/";
 	private final String MAINSCHEMA = SCHEMADIR + XML.MAIN_SHEMA_ID;
-	private final String METADATASCHEMA = SCHEMADIR + XML.SHIB_SCHEMA_ID;
-	private final String TRUSTSCHEMA = SCHEMADIR + XML.TRUST_SCHEMA_ID;
-	private final String AAPSCHEMA = SCHEMADIR + XML.SHIB_SCHEMA_ID;
+	//private final String METADATASCHEMA = SCHEMADIR + XML.SHIB_SCHEMA_ID;    //TODO: is this needed anymore?
+	//private final String TRUSTSCHEMA = SCHEMADIR + XML.TRUST_SCHEMA_ID;
+	//private final String AAPSCHEMA = SCHEMADIR + XML.SHIB_SCHEMA_ID;
 
 	private static final String XMLTRUSTPROVIDERTYPE = 
 		"edu.internet2.middleware.shibboleth.common.provider.XMLTrust";
@@ -584,7 +579,7 @@ public class ServiceProviderConfig {
     		Class implclass,
     		Class interfaceClass,
     		String builtinName,
-    		String schemaname,
+    		//String schemaname,
     		Map /*<String,PluggableConfigurationComponent>*/uriMap
     		) {
         
@@ -633,10 +628,11 @@ public class ServiceProviderConfig {
     		    return "";
     		}
     		
+            /*
             String tempname = impl.getSchemaPathname();
             if (tempname!=null)
                 schemaname=tempname;
-            
+            */
     		try {
     			Document extdoc = Parser.loadDom(uri,true);
     			if (extdoc==null)
@@ -663,9 +659,9 @@ public class ServiceProviderConfig {
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
 		            XMLMetadataImpl.class,
-		            EntityLocator.class,
+		            Metadata.class,
 		            XMLFEDERATIONPROVIDERTYPE,
-		            METADATASCHEMA,
+		            //METADATASCHEMA,
 		            entityLocators);
 		    if (uri==null)
 		        anyError=true;
@@ -713,7 +709,7 @@ public class ServiceProviderConfig {
 		            XMLAAPImpl.class,
 		            AAP.class,
 		            XMLAAPPROVIDERTYPE,
-		            AAPSCHEMA,
+		            //AAPSCHEMA,
 		            attributePolicies);
 		    if (uri==null)
 		        anyError=true;
@@ -770,7 +766,7 @@ public class ServiceProviderConfig {
 		            XMLTrustImpl.class,
 		            ITrust.class,
 		            XMLTRUSTPROVIDERTYPE,
-		            TRUSTSCHEMA,
+		            //TRUSTSCHEMA,
 		            certificateValidators);
 		    if (uri==null)
 		        anyError=true;
@@ -879,7 +875,7 @@ public class ServiceProviderConfig {
 	 * query their value directly.
 	 */
 	public class ApplicationInfo 
-		implements EntityLocator, ITrust {
+		implements Metadata, ITrust {
 		
 		private Application applicationConfig;
         public Application getApplicationConfig() {
@@ -947,28 +943,30 @@ public class ServiceProviderConfig {
 		 * @param id ID of the OriginSite entity
 		 * @return EntityDescriptor metadata object for that site.
 		 */
-		public EntityDescriptor getEntityDescriptor(String id) {
+        public EntityDescriptor lookup(String id) {
 			Iterator iuris = groupUris.iterator();
 			while (iuris.hasNext()) {
 				String uri =(String) iuris.next();
-				EntityLocator locator=getMetadataImplementor(uri);
-				EntityDescriptor entity = locator.getEntityDescriptor(id);
+				Metadata locator=getMetadataImplementor(uri);
+				EntityDescriptor entity = locator.lookup(id);
 				if (entity!=null)
 					return entity;
 			}
 			return null;
 		}
-		
-		/**
-		 * Convenience function to fulfill Metadata interface contract.
-		 * 
-		 * @param id ID of OriginSite
-		 * @return Provider object for that Site.
-		 */
-		public Provider lookup(String id) {
-			return getEntityDescriptor(id);
-		}
-		
+
+        public EntityDescriptor lookup(Artifact artifact) {
+            Iterator iuris = groupUris.iterator();
+            while (iuris.hasNext()) {
+                String uri =(String) iuris.next();
+                Metadata locator=getMetadataImplementor(uri);
+                EntityDescriptor entity = locator.lookup(artifact);
+                if (entity!=null)
+                    return entity;
+            }
+            return null;
+        }
+        
 		/**
 		 * Return the current array of objects that implement the ITrust interface
 		 * 
@@ -1087,9 +1085,9 @@ public class ServiceProviderConfig {
 		public boolean 
 		validate(
 				Iterator revocations,  // Currently unused 
-				ProviderRole role,
+				RoleDescriptor role,
 				SAMLObject token, 
-				EntityLocator dummy    // "this" is an EntityLocator 
+				Metadata dummy    // "this" is an EntityLocator 
 					) {
 			
 			// TODO If revocations are supported, "this" will provide them
@@ -1110,7 +1108,7 @@ public class ServiceProviderConfig {
 		 * @param token Signed SAMLObject
 		 * @return
 		 */
-		public boolean validate(ProviderRole role, SAMLObject token) {
+		public boolean validate(RoleDescriptor role, SAMLObject token) {
 			return validate(null,role,token,null);
 		}
 
@@ -1123,11 +1121,10 @@ public class ServiceProviderConfig {
 		 * @param role
 		 * @return  This dummy always returns false.
 		 */
-		public boolean attach(Iterator revocations, ProviderRole role) {
+		public boolean attach(Iterator revocations, RoleDescriptor role) {
 			// Unused
 			return false;
 		}
-		
 	}
 	
 

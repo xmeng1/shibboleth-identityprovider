@@ -26,88 +26,20 @@
 
 package edu.internet2.middleware.shibboleth.metadata.provider;
 
-import java.io.IOException;
-
-import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
-
-import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
-import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
-import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
-import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
-import edu.internet2.middleware.shibboleth.metadata.Provider;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * @author Walter Hoehn (wassa@columbia.edu)
+ * 
+ * Class left in as a deprecated mechanism to install metadata in older config files.
  */
-public class XMLMetadataLoadWrapper extends ResourceWatchdog implements Metadata {
-
-	private static Logger	log	= Logger.getLogger(XMLMetadataLoadWrapper.class.getName());
-	private Metadata		currentMeta;
-
-	public XMLMetadataLoadWrapper(Element configuration) throws MetadataException, ResourceNotAvailableException {
-		this(configuration.getAttribute("uri"));
-	}
-
-	public XMLMetadataLoadWrapper(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
-		super(new ShibResource(sitesFileLocation, XMLMetadataLoadWrapper.class));
-		try {
-			Document doc = Parser.loadDom(new InputSource(resource.getInputStream()),true);
-			currentMeta = new XMLMetadata(doc.getDocumentElement());
-		} catch (Exception e) {
-			log.error("Encountered a problem reading federation metadata source: " + e);
-			throw new MetadataException("Unable to read federation metadata.");
-		}
-
-		//Start checking for metadata updates
-		start();
-
-	}
-
-	public Provider lookup(String providerId) {
-		synchronized (currentMeta) {
-			return currentMeta.lookup(providerId);
-		}
-	}
-
-	protected void doOnChange() throws ResourceWatchdogExecutionException {
-        Document newDoc = null;
-		//Log
-		try {
-			log.info("Detected a change in the federation metadata.  Reloading from (" + resource.getURL().toString()
-					+ ").");
-		} catch (IOException e) {
-			log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy.");
-			return;
-		}
-
-		//Load new, but keep the old in place
-		try {
-            newDoc = Parser.loadDom(new InputSource(resource.getInputStream()),true);
-        } catch (Exception e) {
-			log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy.");
-			return;
-		}
-
-		//If things went well, replace the live copy
-		Metadata newMeta = null;
-		try {
-			newMeta = new XMLMetadata(newDoc.getDocumentElement());
-		} catch (MetadataException e1) {
-			log.error("Encountered an error loading updated federation metadata, continuing to use stale copy.");
-			return;
-		}
-
-		if (newMeta != null) {
-			synchronized (currentMeta) {
-				currentMeta = newMeta;
-			}
-		}
-	}
-
+public class XMLMetadataLoadWrapper extends XMLMetadata {
+    public XMLMetadataLoadWrapper(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
+        super(sitesFileLocation);
+    }
+    public XMLMetadataLoadWrapper(Element configuration) throws MetadataException, ResourceNotAvailableException {
+        super(configuration);
+    }
 }

@@ -58,23 +58,23 @@ package edu.internet2.middleware.shibboleth.common;
  */
 public class XML
 {
+    /**  SAMLv2 Metadata XML namespace */
+    public final static String SAML2META_NS = "urn:oasis:names:tc:SAML:2.0:metadata";
+
+    /**  SAMLv2 Assertion XML namespace */
+    public final static String SAML2ASSERT_NS = "urn:oasis:names:tc:SAML:2.0:assertion";
+    
     /**  Shibboleth XML namespace */
     public final static String SHIB_NS = "urn:mace:shibboleth:1.0";
-    
-    /**  Shibboleth XML schema identifier */
-    public final static String SHIB_SCHEMA_ID = "shibboleth.xsd";
     
     /**  Shibboleth Metadata XML namespace */
     public final static String SHIBMETA_NS = "urn:mace:shibboleth:1.0:metadata";
     
-    /**  Shibboleth XML schema identifier */
-    public final static String SHIBMETA_SCHEMA_ID = "shibboleth-metadata-1.0.xsd";
-
     /**  Shibboleth trust metadata XML namespace */
     public final static String TRUST_NS = "urn:mace:shibboleth:trust:1.0";
-    
-    /**  Shibboleth trust metadata XML schema identifier */
-    public final static String TRUST_SCHEMA_ID = "shibboleth-trust-1.0.xsd";
+
+    /**  XML Encryption namespace */
+    public final static String XMLENC_NS = "http://www.w3.org/2001/04/xmlenc#";
     
     public final static String MAIN_SHEMA_ID = "shibboleth-targetconfig-1.0.xsd";
     public final static String ORIGIN_SHEMA_ID = "shibboleth-idpconfig-1.0.xsd";

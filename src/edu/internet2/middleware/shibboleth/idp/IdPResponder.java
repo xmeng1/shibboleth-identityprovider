@@ -66,6 +66,7 @@ import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBindingFactory;
+import org.opensaml.SAMLBrowserProfile;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
@@ -101,12 +102,7 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
-import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
-import edu.internet2.middleware.shibboleth.metadata.Endpoint;
-import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.Provider;
-import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
-import edu.internet2.middleware.shibboleth.metadata.SPProviderRole;
+import edu.internet2.middleware.shibboleth.metadata.*;
 
 /**
  * Primary entry point for requests to the SAML IdP. Listens on multiple endpoints, routes requests to the appropriate
@@ -321,7 +317,7 @@ public class IdPResponder extends TargetFederationComponent {
 			}
 
 			// Grab the metadata for the provider
-			Provider provider = lookup(relyingParty.getProviderId());
+			EntityDescriptor provider = lookup(relyingParty.getProviderId());
 
 			// Use profile-specific method for determining the acceptance URL
 			String acceptanceURL = activeHandler.getAcceptanceURL(request, relyingParty, provider);
@@ -751,7 +747,7 @@ public class IdPResponder extends TargetFederationComponent {
 				SAMLAssertion assertion = mapping.getAssertion();
 
 				// See if we have metadata for this provider
-				Provider provider = lookup(mapping.getServiceProviderId());
+				EntityDescriptor provider = lookup(mapping.getServiceProviderId());
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + mapping.getServiceProviderId() + ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider.");
@@ -858,7 +854,7 @@ public class IdPResponder extends TargetFederationComponent {
 			} else {
 
 				// See if we have metadata for this provider
-				Provider provider = lookup(relyingParty.getProviderId());
+				EntityDescriptor provider = lookup(relyingParty.getProviderId());
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
 					log.info("Treating remote provider as unauthenticated.");
@@ -881,22 +877,18 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 	}
 
-	private static void addSignatures(SAMLResponse response, RelyingParty relyingParty, Provider provider,
+	private static void addSignatures(SAMLResponse response, RelyingParty relyingParty, EntityDescriptor provider,
 			boolean signResponse) throws SAMLException {
 
 		if (provider != null) {
 			boolean signAssertions = false;
 
-			ProviderRole[] roles = provider.getRoles();
-			if (roles.length == 0) {
+			SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+			if (sp == null) {
 				log.info("Inappropriate metadata for provider: " + provider.getId() + ".  Expected SPSSODescriptor.");
 			}
-			for (int i = 0; roles.length > i; i++) {
-				if (roles[i] instanceof SPProviderRole) {
-					if (((SPProviderRole) roles[i]).wantAssertionsSigned()) {
-						signAssertions = true;
-					}
-				}
+			if (sp.getWantAssertionsSigned()) {
+				signAssertions = true;
 			}
 
 			if (signAssertions && relyingParty.getIdentityProvider().getSigningCredential() != null
@@ -942,26 +934,25 @@ public class IdPResponder extends TargetFederationComponent {
 		}
 	}
 
-	private static boolean useArtifactProfile(Provider provider, String acceptanceURL) {
+	private static boolean useArtifactProfile(EntityDescriptor provider, String acceptanceURL) {
 
 		// Default to POST if we have no metadata
 		if (provider == null) { return false; }
 
 		// Default to POST if we have incomplete metadata
-		ProviderRole[] roles = provider.getRoles();
-		if (roles.length == 0) { return false; }
+        SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+		if (sp == null) { return false; }
 
-		for (int i = 0; roles.length > i; i++) {
-			if (roles[i] instanceof SPProviderRole) {
-				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
-
-				for (int j = 0; endpoints.length > j; j++) {
-					if (acceptanceURL.equals(endpoints[j].getLocation())
-							&& "urn:oasis:names:tc:SAML:1.0:profiles:artifact-01".equals(endpoints[j].getBinding())) { return true; }
-				}
-			}
+        // TODO: This will actually favor artifact, since a given location could support
+        // both profiles. If that's not what we want, needs adjustment...
+		Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
+		while (endpoints.hasNext()) {
+            Endpoint ep = (Endpoint)endpoints.next();
+			if (acceptanceURL.equals(ep.getLocation())
+					&& SAMLBrowserProfile.PROFILE_ARTIFACT_URI.equals(ep.getBinding())) { return true; }
 		}
-		// Default to POST if we have incomplete metadata
+
+        // Default to POST if we have incomplete metadata
 		return false;
 	}
 
@@ -973,22 +964,18 @@ public class IdPResponder extends TargetFederationComponent {
 				"Unable to obtain client address."); }
 	}
 
-	private static boolean isValidAssertionConsumerURL(Provider provider, String shireURL)
+	private static boolean isValidAssertionConsumerURL(EntityDescriptor provider, String shireURL)
 			throws InvalidClientDataException {
 
-		ProviderRole[] roles = provider.getRoles();
-		if (roles.length == 0) {
+        SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+		if (sp == null) {
 			log.info("Inappropriate metadata for provider.");
 			return false;
 		}
 
-		for (int i = 0; roles.length > i; i++) {
-			if (roles[i] instanceof SPProviderRole) {
-				Endpoint[] endpoints = ((SPProviderRole) roles[i]).getAssertionConsumerServiceURLs();
-				for (int j = 0; endpoints.length > j; j++) {
-					if (shireURL.equals(endpoints[j].getLocation())) { return true; }
-				}
-			}
+		Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
+		while (endpoints.hasNext()) {
+			if (shireURL.equals(((Endpoint)endpoints.next()).getLocation())) { return true; }
 		}
 		log.info("Supplied consumer URL not found in metadata.");
 		return false;
@@ -1001,74 +988,68 @@ public class IdPResponder extends TargetFederationComponent {
 		return null;
 	}
 
-	private static boolean isValidCredential(Provider provider, X509Certificate certificate) {
+	private static boolean isValidCredential(EntityDescriptor provider, X509Certificate certificate) {
 
-		ProviderRole[] roles = provider.getRoles();
-		if (roles.length == 0) {
+		SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+		if (sp == null) {
 			log.info("Inappropriate metadata for provider.");
 			return false;
 		}
 		// TODO figure out what to do about this role business here
-		for (int i = 0; roles.length > i; i++) {
-			if (roles[i] instanceof AttributeConsumerRole) {
-				KeyDescriptor[] descriptors = roles[i].getKeyDescriptors();
-				for (int j = 0; descriptors.length > j; j++) {
-					KeyInfo[] keyInfo = descriptors[j].getKeyInfo();
-					for (int k = 0; keyInfo.length > k; k++) {
-						for (int l = 0; keyInfo[k].lengthKeyName() > l; l++) {
-							try {
+		Iterator descriptors = sp.getKeyDescriptors();
+		while (descriptors.hasNext()) {
+			KeyInfo keyInfo = ((KeyDescriptor)descriptors.next()).getKeyInfo();
+			for (int l = 0; keyInfo.lengthKeyName() > l; l++) {
+				try {
 
-								// First, try to match DN against metadata
-								try {
-									if (certificate.getSubjectX500Principal().getName(X500Principal.RFC2253).equals(
-											new X500Principal(keyInfo[k].itemKeyName(l).getKeyName())
-													.getName(X500Principal.RFC2253))) {
-										log.debug("Matched against DN.");
+					// First, try to match DN against metadata
+					try {
+						if (certificate.getSubjectX500Principal().getName(X500Principal.RFC2253).equals(
+								new X500Principal(keyInfo.itemKeyName(l).getKeyName())
+										.getName(X500Principal.RFC2253))) {
+							log.debug("Matched against DN.");
+							return true;
+						}
+					} catch (IllegalArgumentException iae) {
+						// squelch this runtime exception, since
+						// this might be a valid case
+					}
+
+					// If that doesn't work, we try matching against
+					// some Subject Alt Names
+					try {
+						Collection altNames = certificate.getSubjectAlternativeNames();
+						if (altNames != null) {
+							for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
+								List altName = (List) nameIterator.next();
+								if (altName.get(0).equals(new Integer(2))
+										|| altName.get(0).equals(new Integer(6))) { // 2 is
+									// DNS,
+									// 6 is
+									// URI
+									if (altName.get(1).equals(keyInfo.itemKeyName(l).getKeyName())) {
+										log.debug("Matched against SubjectAltName.");
 										return true;
 									}
-								} catch (IllegalArgumentException iae) {
-									// squelch this runtime exception, since
-									// this might be a valid case
 								}
-
-								// If that doesn't work, we try matching against
-								// some Subject Alt Names
-								try {
-									Collection altNames = certificate.getSubjectAlternativeNames();
-									if (altNames != null) {
-										for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
-											List altName = (List) nameIterator.next();
-											if (altName.get(0).equals(new Integer(2))
-													|| altName.get(0).equals(new Integer(6))) { // 2 is
-												// DNS,
-												// 6 is
-												// URI
-												if (altName.get(1).equals(keyInfo[k].itemKeyName(l).getKeyName())) {
-													log.debug("Matched against SubjectAltName.");
-													return true;
-												}
-											}
-										}
-									}
-								} catch (CertificateParsingException e1) {
-									log
-											.error("Encountered an problem trying to extract Subject Alternate Name from supplied certificate: "
-													+ e1);
-								}
-
-								// If that doesn't work, try to match using
-								// SSL-style hostname matching
-								if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
-										keyInfo[k].itemKeyName(l).getKeyName())) {
-									log.debug("Matched against hostname.");
-									return true;
-								}
-
-							} catch (XMLSecurityException e) {
-								log.error("Encountered an error reading federation metadata: " + e);
 							}
 						}
+					} catch (CertificateParsingException e1) {
+						log
+								.error("Encountered an problem trying to extract Subject Alternate Name from supplied certificate: "
+										+ e1);
 					}
+
+					// If that doesn't work, try to match using
+					// SSL-style hostname matching
+					if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
+							keyInfo.itemKeyName(l).getKeyName())) {
+						log.debug("Matched against hostname.");
+						return true;
+					}
+
+				} catch (XMLSecurityException e) {
+					log.error("Encountered an error reading federation metadata: " + e);
 				}
 			}
 		}
@@ -1159,13 +1140,13 @@ public class IdPResponder extends TargetFederationComponent {
 
 		abstract boolean preProcessHook(HttpServletRequest request, HttpServletResponse response) throws IOException;
 
-		abstract SAMLAssertion[] processHook(HttpServletRequest request, RelyingParty relyingParty, Provider provider,
+		abstract SAMLAssertion[] processHook(HttpServletRequest request, RelyingParty relyingParty, EntityDescriptor provider,
 				SAMLNameIdentifier nameId, String authenticationMethod, Date authTime) throws SAMLException,
 				IOException;
 
-		abstract String getSAMLTargetParameter(HttpServletRequest request, RelyingParty relyingParty, Provider provider);
+		abstract String getSAMLTargetParameter(HttpServletRequest request, RelyingParty relyingParty, EntityDescriptor provider);
 
-		abstract String getAcceptanceURL(HttpServletRequest request, RelyingParty relyingParty, Provider provider)
+		abstract String getAcceptanceURL(HttpServletRequest request, RelyingParty relyingParty, EntityDescriptor provider)
 				throws InvalidClientDataException;
 	}
 	class ShibbolethProfileHandler extends SSOProfileHandler {
@@ -1224,7 +1205,7 @@ public class IdPResponder extends TargetFederationComponent {
 		 *      edu.internet2.middleware.shibboleth.hs.HSRelyingParty, org.opensaml.SAMLNameIdentifier, java.lang.String,
 		 *      long)
 		 */
-		SAMLAssertion[] processHook(HttpServletRequest request, RelyingParty relyingParty, Provider provider,
+		SAMLAssertion[] processHook(HttpServletRequest request, RelyingParty relyingParty, EntityDescriptor provider,
 				SAMLNameIdentifier nameId, String authenticationMethod, Date authTime) throws SAMLException, IOException {
 			Document doc = org.opensaml.XML.parserPool.newDocument();
 
@@ -1258,7 +1239,7 @@ public class IdPResponder extends TargetFederationComponent {
 			ArrayList bindings = new ArrayList();
 			if (relyingParty.isLegacyProvider()) {
 
-				SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SAML_SOAP_HTTPS, relyingParty
+				SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SOAP, relyingParty
 						.getAAUrl().toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
 				bindings.add(binding);
 			}
@@ -1292,7 +1273,7 @@ public class IdPResponder extends TargetFederationComponent {
 		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#getSAMLTargetParameter(javax.servlet.http.HttpServletRequest,
 		 *      edu.internet2.middleware.shibboleth.hs.HSRelyingParty)
 		 */
-		String getSAMLTargetParameter(HttpServletRequest request, RelyingParty relyingParty, Provider provider) {
+		String getSAMLTargetParameter(HttpServletRequest request, RelyingParty relyingParty, EntityDescriptor provider) {
 			return request.getParameter("target");
 		}
 
@@ -1302,7 +1283,7 @@ public class IdPResponder extends TargetFederationComponent {
 		 * @see edu.internet2.middleware.shibboleth.hs.AuthNProfileHandler#getAcceptanceURL(javax.servlet.http.HttpServletRequest,
 		 *      edu.internet2.middleware.shibboleth.hs.HSRelyingParty)
 		 */
-		String getAcceptanceURL(HttpServletRequest request, RelyingParty relyingParty, Provider provider)
+		String getAcceptanceURL(HttpServletRequest request, RelyingParty relyingParty, EntityDescriptor provider)
 				throws InvalidClientDataException {
 			return request.getParameter("shire");
 		}

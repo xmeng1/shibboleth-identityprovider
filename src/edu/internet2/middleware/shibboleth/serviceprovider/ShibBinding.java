@@ -35,7 +35,7 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.TrustException;
 
-import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityRole;
+import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Endpoint;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
@@ -64,7 +64,6 @@ public class ShibBinding {
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
 	
 	private String applicationId = null;
-	private SAMLBinding sbinding = null;
 	
 	/**
 	 * While the C++ constructor takes iterators over the Trust and 
@@ -78,7 +77,6 @@ public class ShibBinding {
 	ShibBinding(
 			String applicationId) throws NoSuchProviderException {
 		this.applicationId=applicationId;
-        sbinding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
 	}
 
 	/**
@@ -100,7 +98,7 @@ public class ShibBinding {
 			SAMLResponse 
 	send (
 			SAMLRequest req,
-			AttributeAuthorityRole role,
+			AttributeAuthorityDescriptor role,
 			String[] audiences,
 			SAMLAuthorityBinding[] bindings) 
 	throws SAMLException {
@@ -110,64 +108,57 @@ public class ShibBinding {
 		ServiceProviderConfig config = context.getServiceProviderConfig();
 		ApplicationInfo appinfo = config.getApplication(applicationId);
 		
+        SAMLBinding sbinding = null;
 		SAMLResponse resp = null;
 		String prevBinding = null;
 	
 		/*
-		 * I seriously considered commenting this block out. It makes
-		 * no particular sense for the caller to know about or provide
-		 * SAMLAuthorityBinding objects. In any rational world, 
-		 * a caller inside Shibboleth is going to represent the 
-		 * AA from the Metadata. 
+		 * Try any inline bindings provided by 1.0/1.1 origins. 
 		 */
 		if (bindings!=null) {
 			for (int ibinding=0;ibinding<bindings.length;ibinding++) {
 				try {
 					SAMLAuthorityBinding binding = bindings[ibinding];
-					String bindingString = binding.getBinding();
-					if (!bindingString.equals(prevBinding)) {
-						prevBinding = bindingString;
-						resp=sbinding.send(binding.getLocation(),req);
-					}
+					if (!binding.getBinding().equals(prevBinding)) {
+						prevBinding = binding.getBinding();
+                        sbinding = SAMLBindingFactory.getInstance(binding.getBinding());
+                    }
+					resp=sbinding.send(binding.getLocation(),req);
 					validateResponseSignatures(role, appinfo, resp);
 					return resp;
-				} catch (SAMLException e) {
-					continue;
-				}
+                } catch (TrustException e) {
+                    log.error("Unable to validate signatures on attribute response: " + e);
+                    continue;
+                } catch (SAMLException e) {
+                    log.error("Unable to query attributes: " + e);
+                    continue;
+                }
 			}
 		}
 		
 		/*
-		 * In concept, a Role can have a collection of Endpoints.
-		 * The theory is that SAML 2.0 Metadata might have different
-		 * entries for different protocols (or different versions of
-		 * the same protocol).
-		 * The current Shibboleth configuration file doesn't allow this.
-		 * Later on, when support for SAML 2.0 metadata is added, it is
-		 * just as likely that the Endpoint array would be filtered by
-		 * the configuration construction/parse process to leave only
-		 * relevant entries.
-		 * So for now, the C++ code to run the array and filter entries
-		 * is replaced by logic that "knows" there is exactly one 
-		 * Endpoint per Role (built into the XMLProviderRoleImpl).
+		 * Try each metadata endpoint...
 		 */
-		Endpoint[] ends = role.getAttributeServices();
-		Endpoint endpoint = ends[0];
-		
-		log.debug("AA is at "+endpoint.getLocation());
-		
-		try {
-			resp=sbinding.send(endpoint.getLocation(),req);
-			log.debug("AA returned Attribute Assertion");
-			validateResponseSignatures(role, appinfo, resp);
-			return resp;
-		} catch (TrustException e) {
-			log.error("Unable to validate signatures on attribute request",e);
-			throw e;
-		} catch (SAMLException e) {
-			log.error("Unable to query attributes.",e);
-			throw e;
-		}
+		Iterator ends = role.getAttributeServiceManager().getEndpoints();
+        while (ends.hasNext()) {
+            Endpoint endpoint = (Endpoint)ends.next();
+            try {
+                if (!endpoint.getBinding().equals(prevBinding)) {
+                    prevBinding = endpoint.getBinding();
+                    sbinding = SAMLBindingFactory.getInstance(endpoint.getBinding());
+                }
+                resp=sbinding.send(endpoint.getLocation(),req);
+                validateResponseSignatures(role, appinfo, resp);
+                return resp;
+            } catch (TrustException e) {
+                log.error("Unable to validate signatures on attribute response: " + e);
+                continue;
+            } catch (SAMLException e) {
+                log.error("Unable to query attributes: " + e);
+                continue;
+            }
+        }
+        return null;
 	}
 
 	/**
@@ -180,7 +171,7 @@ public class ShibBinding {
 	 */
 	private void 
 	validateResponseSignatures(
-			AttributeAuthorityRole role, 
+			AttributeAuthorityDescriptor role, 
 			ApplicationInfo appinfo, 
 			SAMLResponse resp) 
 	throws TrustException {

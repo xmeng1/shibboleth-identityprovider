@@ -58,9 +58,9 @@ import org.opensaml.SAMLSignedObject;
 import org.opensaml.TrustException;
 
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.IDPProviderRole;
+import edu.internet2.middleware.shibboleth.metadata.IDPSSODescriptor;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
-import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
+import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContext;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
@@ -249,11 +249,11 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
         ServiceProviderConfig config = context.getServiceProviderConfig();
         ApplicationInfo appinfo = config.getApplication(applicationId);
         
-        entity = appinfo.getEntityDescriptor(asn_issuer);
+        entity = appinfo.lookup(asn_issuer);
         providerId=asn_issuer;
         if (entity==null) {
             providerId=qualifier;
-            entity= appinfo.getEntityDescriptor(qualifier);
+            entity= appinfo.lookup(qualifier);
         }
         if (entity==null) {
             log.error("assertion issuer not found in metadata(Issuer ="+
@@ -262,17 +262,7 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
         }
         issuer.append(providerId);
         
-        // From the Metadata, get the HS and from it the key
-        ProviderRole[] roles = entity.getRoles();
-        for (int i=0;i<roles.length;i++) {
-            ProviderRole role = roles[i];
-            if (role instanceof IDPProviderRole) {
-                // TODO: Sync up with new SAML metadata profile (uses SAML protocol string instead of SHIB_NS)
-                if (role.hasSupport(XML.SHIB_NS)) {
-                    ;
-                }
-            }
-        }
+        // TODO: finish profile extension using metadata/trust interfaces
         
         return bpr;
     }

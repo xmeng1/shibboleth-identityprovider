@@ -26,11 +26,21 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
+import java.util.Iterator;
+
 /**
- * Ported from Scott Cantor's C++ interfaces
+ * <p>Corresponds to SAML Metadata Schema "SSODescriptorType".
+ * </p><p>Base class with common behavior among SP and IdP roles.
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Scott Cantor
  */
-public interface AttributeConsumerRole extends ProviderRole {
-	//Stub interface
+public interface SSODescriptor extends RoleDescriptor {
+
+    public EndpointManager getArtifactResolutionServiceManager();
+    
+    public EndpointManager getSingleLogoutServiceManager();
+    
+    public EndpointManager getManageNameIDServiceManager(); 
+
+    public Iterator /* <String> */ getNameIDFormats();
 }

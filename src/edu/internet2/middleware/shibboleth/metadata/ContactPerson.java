@@ -26,6 +26,10 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
+import java.util.Iterator;
+
+import org.w3c.dom.Element;
+
 /**
  * Ported from Scott Cantor's C++ interfaces
  * 
@@ -41,9 +45,15 @@ public interface ContactPerson {
 
 	public int getType();
 
-	public String getName();
+    public String getCompany();
+    
+	public String getGivenName();
+    
+    public String getSurName();
 
-	public String[] getEmails();
+	public Iterator /* <String> */ getEmailAddresses();
 
-	public String[] getTelephones();
+    public Iterator /* <String> */ getTelephoneNumbers();
+    
+    public Element getElement();
 }

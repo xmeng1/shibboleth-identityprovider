@@ -28,14 +28,16 @@ package edu.internet2.middleware.shibboleth.metadata;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.opensaml.XML;
 
-import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper;
+import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata;
 
 /**
  * Validation suite for the <code>Metadata</code> interface.
@@ -67,39 +69,80 @@ public class MetadataTests extends TestCase {
 	public void testBasicShibbolethXML() {
 
 		try {
-			Metadata metadata = new XMLMetadataLoadWrapper(new File("data/sites1.xml").toURL().toString());
+			Metadata metadata = new XMLMetadata(new File("data/sites1.xml").toURL().toString());
 
 			assertNotNull("Unable to find test provider", metadata.lookup("bahsite"));
 			assertNotNull("Unable to find test provider", metadata.lookup("rootsite"));
 
+            /* TODO: rework to walk tree
 			assertTrue("Group list is incorrect or out of order.", Arrays.equals(new String[]{"urn:mace:inqueue",
 					"foofed", "bahfed"}, metadata.lookup("bahsite").getGroups()));
-
+					*/
+            
 			//This should probably be made more robust at some point
-			assertTrue("Incorrect provider role.", metadata.lookup("bahsite").getRoles()[0] instanceof SPProviderRole);
-			assertTrue("Incorrect provider role.",
-					metadata.lookup("bahsite").getRoles()[0] instanceof AttributeConsumerRole);
+			assertNotNull("Incorrect provider role.", metadata.lookup("bahsite").getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM));
 
-			assertEquals("Incorrect parsing of assertion consumer URL.", ((SPProviderRole) metadata.lookup("bahsite")
-					.getRoles()[0]).getAssertionConsumerServiceURLs()[0].getLocation(), "http://foo.com/SHIRE");
+			assertEquals("Incorrect parsing of assertion consumer URL.",
+                    ((Endpoint)metadata.lookup("bahsite").getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM).getAssertionConsumerServiceManager().getEndpoints().next()).getLocation(),
+                    "http://foo.com/SHIRE"
+                    );
 
-			assertTrue("Incorrect attribute requester parsing.", metadata.lookup("rootsite").getRoles()[0]
-					.getKeyDescriptors().length == 2);
+            Iterator keys = metadata.lookup("rootsite").getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM).getKeyDescriptors();
+            KeyDescriptor key1 = (KeyDescriptor)keys.next();
+            KeyDescriptor key2 = (KeyDescriptor)keys.next();
+			assertTrue("Incorrect attribute requester key parsing.", key1 != null && key2 != null);
 
 			String[] control = new String[]{
 					"C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test2.memphis.edu",
 					"C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test1.memphis.edu"};
-			String[] meta = new String[]{
-					metadata.lookup("rootsite").getRoles()[0].getKeyDescriptors()[0].getKeyInfo()[0].itemKeyName(0)
-							.getKeyName(),
-					metadata.lookup("rootsite").getRoles()[0].getKeyDescriptors()[1].getKeyInfo()[0].itemKeyName(0)
-							.getKeyName()};
+			String[] meta = new String[] {
+					key1.getKeyInfo().itemKeyName(0).getKeyName(),
+					key2.getKeyInfo().itemKeyName(0).getKeyName()
+                    };
 			Arrays.sort(meta);
 			Arrays.sort(control);
 			assertTrue("Encountered unexpected key names", Arrays.equals(control, meta));
 		} catch (Exception e) {
 			fail("Failed to correctly load metadata: " + e);
 		}
-
 	}
+
+    public void testBasicSAMLXML() {
+
+        try {
+            Metadata metadata = new XMLMetadata(new File("src/conf/IQ-sites.xml").toURL().toString());
+
+            EntityDescriptor entity = metadata.lookup("urn:mace:inqueue:example.edu");
+            
+            assertNotNull("Unable to find test provider", entity);
+            assertEquals("Descriptor group is wrong.", entity.getEntitiesDescriptor().getName(),"urn:mace:inqueue");
+            
+            IDPSSODescriptor idp = entity.getIDPSSODescriptor(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS);
+            AttributeAuthorityDescriptor aa = entity.getAttributeAuthorityDescriptor(XML.SAML11_PROTOCOL_ENUM);
+            SPSSODescriptor sp = entity.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
+            
+            assertNotNull("Missing IdP provider role.", idp);
+            assertNotNull("Missing AA provider role.", aa);
+            assertNotNull("Missing SP provider role.", sp);
+
+            assertEquals("Incorrect assertion consumer service location.",
+                    ((Endpoint)sp.getAssertionConsumerServiceManager().getEndpoints().next()).getLocation(),
+                    "https://wayf.internet2.edu/Shibboleth.shire"
+                    );
+
+            Iterator keys = sp.getKeyDescriptors();
+            KeyDescriptor key = (KeyDescriptor)keys.next();
+            assertNotNull("Incorrect attribute requester key parsing.", key);
+
+            String[] control = new String[]{"wayf.internet2.edu"};
+            String[] meta = new String[] {
+                    key.getKeyInfo().itemKeyName(0).getKeyName()
+                    };
+            Arrays.sort(meta);
+            Arrays.sort(control);
+            assertTrue("Encountered unexpected key names", Arrays.equals(control, meta));
+        } catch (Exception e) {
+            fail("Failed to correctly load metadata: " + e);
+        }
+    }
 }

@@ -35,8 +35,8 @@ import java.util.Iterator;
 
 import org.opensaml.SAMLObject;
 
-import edu.internet2.middleware.shibboleth.metadata.EntityLocator;
-import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
+import edu.internet2.middleware.shibboleth.metadata.Metadata;
+import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
  * @author Howard Gilbert
@@ -54,9 +54,9 @@ public interface ITrust {
 	 */
 	boolean validate(
 		Iterator revocations,
-		ProviderRole role,
+		RoleDescriptor role,
 		SAMLObject token,
-		EntityLocator locator
+		Metadata locator
 	);
 	
 	/*
@@ -64,7 +64,7 @@ public interface ITrust {
 	 */
 	boolean attach (
 		Iterator revocations,
-		ProviderRole role
+		RoleDescriptor role
 	);
 
 }

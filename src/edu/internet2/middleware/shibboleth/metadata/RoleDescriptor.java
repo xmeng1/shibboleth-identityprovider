@@ -26,26 +26,37 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
+import java.net.URL;
+import java.util.Iterator;
+
+import org.w3c.dom.Element;
+
 /**
- * <p>Corresponds loosely to SAML Metadata Schema "EntityDescriptorType".
+ * <p>Corresponds to SAML Metadata Schema "RoleDescriptorType".
  * </p><p>
- * Entities are campuses or departments with either an origin or target
- * infrastructure (or both). Each implemented component (HS, AA, SHAR) 
- * has a Role definition with URLs and PKI to locate and authenticate
- * the provider of that role. Although the Metadata may define all 
- * roles, target code tends to build objects describing origins, and 
- * origins are only interested in targets.
+ * A child of the EntityDescriptor element (the Provider object).
+ * Example Roles are IDP (Identity Provider), Authentication Authority (HS),
+ * Attribute Authority (AA), SP
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public interface Provider {
+public interface RoleDescriptor {
 
-	public String getId();  // Unique ID used as global key of Provider
+	public EntityDescriptor getEntityDescriptor(); // parent EntityDescriptor
 
-	public String[] getGroups(); // Groups in which this Provider is nested
+	public Iterator /* <String> */ getProtocolSupportEnumeration();
 
-	public ContactPerson[] getContacts(); // People
+	public boolean hasSupport(final String version);   // does role support protocol?
 
-	public ProviderRole[] getRoles(); // HS, AA, SHAR, ... definitions
+    public boolean isValid();   // is role valid?
 
+    public URL getErrorURL();
+    
+    public Iterator /* <KeyDescriptor> */ getKeyDescriptors(); // direct or indirect key references 
+    
+    public Organization getOrganization(); // associated organization
+
+	public Iterator /* <ContactPerson> */ getContactPersons();
+
+	public Element getElement(); // punch through to XML content if permitted
 }

@@ -26,334 +26,100 @@
 
 package edu.internet2.middleware.shibboleth.metadata.provider;
 
-import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Stack;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 
 import org.apache.log4j.Logger;
-import org.apache.xml.security.Init;
-import org.apache.xml.security.keys.KeyInfo;
+import org.opensaml.SAMLException;
+import org.opensaml.XML;
+import org.opensaml.artifact.Artifact;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
-import edu.internet2.middleware.shibboleth.common.XML;
-import edu.internet2.middleware.shibboleth.metadata.AttributeConsumerRole;
-import edu.internet2.middleware.shibboleth.metadata.ContactPerson;
-import edu.internet2.middleware.shibboleth.metadata.Endpoint;
-import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
+import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
+import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
+import edu.internet2.middleware.shibboleth.common.ShibResource;
+import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
+import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
-import edu.internet2.middleware.shibboleth.metadata.Provider;
-import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
-import edu.internet2.middleware.shibboleth.metadata.SPProviderRole;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class XMLMetadata implements Metadata {
+public class XMLMetadata extends ResourceWatchdog implements Metadata {
 
-	private static Logger		log			= Logger.getLogger(XMLMetadata.class.getName());
-	public static final String	namespace	= "urn:mace:shibboleth:1.0";
-	private Map					providers	= new HashMap();
+	private static Logger	log	= Logger.getLogger(XMLMetadataLoadWrapper.class.getName());
+	private Metadata		currentMeta;
 
-	public XMLMetadata(Element root) throws MetadataException {
+	public XMLMetadata(Element configuration) throws MetadataException, ResourceNotAvailableException {
+		this(configuration.getAttribute("uri"));
+	}
+
+	public XMLMetadata(String sitesFileLocation) throws MetadataException, ResourceNotAvailableException {
+		super(new ShibResource(sitesFileLocation, XMLMetadata.class));
 		try {
-			new ShibGroup(root, new Stack(), providers);
-		} catch (XMLMetadataException e) {
-			log.error("Encountered a problem loading federation metadata: " + e);
-			throw new MetadataException("Unable to load federation metadata.");
+            InputSource src = new InputSource(resource.getInputStream());
+            src.setSystemId(resource.getURL().toString());
+			Document doc = Parser.loadDom(src,true);
+			currentMeta = new XMLMetadataProvider(doc.getDocumentElement());
+		} catch (IOException e) {
+			log.error("Encountered a problem reading metadata source: " + e);
+			throw new MetadataException("Unable to read metadata: " + e);
+		}
+        catch (SAXException e) {
+            log.error("Encountered a problem parsing metadata source: " + e);
+            throw new MetadataException("Unable to read metadata: + e");
+        }
+        catch (SAMLException e) {
+            log.error("Encountered a problem processing metadata source: " + e);
+            throw new MetadataException("Unable to read metadata: + e");
+        }
+
+		//Start checking for metadata updates
+		start();
+
+	}
+
+	public EntityDescriptor lookup(String providerId) {
+		synchronized (currentMeta) {
+			return currentMeta.lookup(providerId);
 		}
 	}
 
-	public Provider lookup(String providerId) {
-		if (providers.containsKey(providerId)) {
-			return (Provider) providers.get(providerId);
+    public EntityDescriptor lookup(Artifact artifact) {
+        synchronized (currentMeta) {
+            return currentMeta.lookup(artifact);
+        }
+    }
+    
+	protected void doOnChange() throws ResourceWatchdogExecutionException {
+        Metadata newMeta = null;
+        Document newDoc = null;
+
+		try {
+			log.info("Detected a change in the metadata. Reloading from (" + resource.getURL().toString() + ").");
+            newMeta = new XMLMetadataProvider(XML.parserPool.parse(resource.getInputStream()).getDocumentElement());
+        }
+        catch (IOException e) {
+			log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy: " + e);
+			return;
 		}
-		return null;
-	}
+        catch (SAXException e) {
+            log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy: " + e);
+            return;
+        }
+        catch (SAMLException e) {
+            log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy: " + e);
+            return;
+        }
 
-	private class ShibGroup {
-
-		private String	id;
-
-		ShibGroup(Element root, Stack parents, Map providers) throws XMLMetadataException {
-			if (!root.getNodeName().equals("SiteGroup")) {
-				throw new XMLMetadataException("Excpected \"SiteGroup\", found \"" + root.getNodeName() + "\".");
+		if (newMeta != null) {
+			synchronized (currentMeta) {
+				currentMeta = newMeta;
 			}
-
-			id = root.getAttribute("Name");
-			if (id == null || id.equals("")) {
-				throw new XMLMetadataException("A name must be specified for the site group.");
-			}
-
-			parents.push(id);
-			NodeList nodes = root.getChildNodes();
-			for (int i = 0; nodes.getLength() > i; i++) {
-				if (nodes.item(i).getNodeType() == Node.ELEMENT_NODE) {
-
-					if (nodes.item(i).getNodeName().equals("SiteGroup")) {
-						new ShibGroup((Element) nodes.item(i), parents, providers);
-
-					} else if (nodes.item(i).getNodeName().equals("DestinationSite")) {
-
-						Provider provider = new ShibTargetXMLProvider((Element) nodes.item(i), (String[]) parents
-								.toArray(new String[0]));
-						providers.put(provider.getId(), provider);
-
-					} else if (nodes.item(i).getNodeName().equals("OriginSite")) {
-						log.debug("Ignoring OriginSite.");
-					}
-				}
-			}
-			parents.pop();
-		}
-	}
-
-	class ShibTargetXMLProvider implements Provider, ProviderRole, SPProviderRole, AttributeConsumerRole {
-
-		private String		id;
-		private HashSet		contacts;
-		private String[]	groups;
-		private HashSet		assertionConsumers	= new HashSet();
-		private HashSet		keyDescriptors		= new HashSet();
-
-		ShibTargetXMLProvider(Element element, String[] groups) throws XMLMetadataException {
-			if (!element.getNodeName().equals("DestinationSite")) {
-				log.error("This provider implementation can only marshall Shibboleth target metadata.");
-				throw new XMLMetadataException("Unable to load provider.");
-			}
-
-			this.groups = groups;
-
-			id = element.getAttribute("Name");
-			if (id == null || id.equals("")) {
-				log.error("No name set for provider.");
-				throw new XMLMetadataException("Unable to load provider.");
-			}
-
-			NodeList contactNodes = element.getElementsByTagNameNS(namespace, "Contact");
-			if (contactNodes.getLength() > 0) {
-				contacts = new HashSet();
-			}
-			for (int i = 0; contactNodes.getLength() > i; i++) {
-				try {
-					contacts.add(new XMLContactPerson((Element) contactNodes.item(i)));
-				} catch (XMLMetadataException e) {
-					log.error("Error loading parsing contact person for provider (" + id + "): " + e.getMessage());
-				}
-			}
-
-			NodeList consumerNodes = element.getElementsByTagNameNS(namespace, "AssertionConsumerServiceURL");
-			for (int i = 0; consumerNodes.getLength() > i; i++) {
-				String location = ((Element) consumerNodes.item(i)).getAttribute("Location");
-				if (location == null || location.equals("")) {
-					log.error("Destination site (" + id + ") contained a malformed Assertion Consumer Service URL.");
-					continue;
-				}
-				assertionConsumers.add(new ShibEndpoint(location));
-			}
-			if (assertionConsumers.size() == 0) {
-				log.error("No assertion consumer URLs specified for this provider.");
-				throw new XMLMetadataException("Unable to load provider.");
-			}
-
-			NodeList requesterNodes = element.getElementsByTagNameNS(namespace, "AttributeRequester");
-			for (int i = 0; requesterNodes.getLength() > i; i++) {
-				String name = ((Element) requesterNodes.item(i)).getAttribute("Name");
-				if (name == null || name.equals("")) {
-					log.error("Destination site (" + id + ") contained a malformed Attribute Requester name.");
-					continue;
-				}
-
-				DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-				try {
-					if (!Init.isInitialized()) {
-						org.apache.xml.security.Init.init();
-					}
-					KeyInfo keyInfo = new KeyInfo(docFactory.newDocumentBuilder().newDocument());
-					keyInfo.addKeyName(name);
-					keyDescriptors.add(new TargetKeyDescriptor(keyInfo));
-
-				} catch (ParserConfigurationException e) {
-					log.error("Unable to create xml document needed for KeyInfo.");
-				}
-			}
-			if (keyDescriptors.size() == 0) {
-				log.error("No valid attribute requesters specified for this provider.");
-				throw new XMLMetadataException("Unable to load provider.");
-			}
-
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public String[] getGroups() {
-			return groups;
-		}
-
-		public ContactPerson[] getContacts() {
-			if (contacts != null) {
-				return (ContactPerson[]) contacts.toArray(new ContactPerson[0]);
-			}
-			return new ContactPerson[0];
-		}
-
-		public ProviderRole[] getRoles() {
-			return new ProviderRole[]{this};
-		}
-
-		public Provider getProvider() {
-			return this;
-		}
-
-		public String[] getProtocolSupport() {
-			return new String[]{XML.SHIB_NS};
-		}
-
-		public boolean hasSupport(String version) {
-			if (version.equals(XML.SHIB_NS)) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		public Endpoint[] getDefaultEndpoints() {
-			return new Endpoint[0];
-		}
-
-		public URL getErrorURL() {
-			return null;
-		}
-
-		public boolean getAuthnRequestsSigned() {
-			return true;
-		}
-
-		public Endpoint[] getAssertionConsumerServiceURLs() {
-			return (Endpoint[]) assertionConsumers.toArray(new Endpoint[0]);
-		}
-
-		public KeyDescriptor[] getKeyDescriptors() {
-			return (KeyDescriptor[]) keyDescriptors.toArray(new KeyDescriptor[0]);
-		}
-		
-		public boolean wantAssertionsSigned() {
-			return false;
-		}
-
-		class ShibEndpoint implements Endpoint {
-
-			private String	binding;
-			private String	location;
-
-			ShibEndpoint(String location) {
-				this.location = location;
-			}
-
-			public String getBinding() {
-				return XML.SHIB_NS;
-			}
-
-			public String getVersion() {
-				return null;
-			}
-
-			public String getLocation() {
-				return location;
-			}
-
-			public String getResponseLocation() {
-				return null;
-			}
-		}
-
-		class TargetKeyDescriptor implements KeyDescriptor {
-
-			private KeyInfo	keyInfo;
-
-			TargetKeyDescriptor(KeyInfo keyInfo) {
-				this.keyInfo = keyInfo;
-			}
-
-			public int getUse() {
-				return ENCRYPTION;
-			}
-
-			public String[] getEncryptionMethod() {
-				return null;
-			}
-
-			public int getKeySize() {
-				return 0;
-			}
-
-			public KeyInfo[] getKeyInfo() {
-				return new KeyInfo[]{keyInfo};
-			}
-		}
-	}
-
-	class XMLContactPerson implements ContactPerson {
-
-		private int		type;
-		private String	name;
-		private String	email;
-
-		public XMLContactPerson(Element element) throws XMLMetadataException {
-			String rawType = element.getAttribute("Type");
-			if (rawType.equalsIgnoreCase("TECHNICAL")) {
-				type = ContactPerson.TECHNICAL;
-			} else if (rawType.equalsIgnoreCase("SUPPORT")) {
-				type = ContactPerson.SUPPORT;
-			} else if (rawType.equalsIgnoreCase("ADMINISTRATIVE")) {
-				type = ContactPerson.ADMINISTRATIVE;
-			} else if (rawType.equalsIgnoreCase("BILLING")) {
-				type = ContactPerson.BILLING;
-			} else if (rawType.equalsIgnoreCase("OTHER")) {
-				type = ContactPerson.OTHER;
-			} else {
-				throw new XMLMetadataException("Unknown contact type.");
-			}
-			name = element.getAttribute("Name");
-			if (name == null || name.equals("")) {
-				throw new XMLMetadataException("No contact name.");
-			}
-			email = element.getAttribute("Email");
-		}
-
-		public int getType() {
-			return type;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String[] getEmails() {
-			if (email != null & !email.equals("")) {
-				return new String[]{email};
-			}
-			return new String[0];
-		}
-
-		public String[] getTelephones() {
-			return new String[0];
-		}
-	}
-
-	class XMLMetadataException extends Exception {
-
-		XMLMetadataException(String message) {
-			super(message);
 		}
 	}
 }

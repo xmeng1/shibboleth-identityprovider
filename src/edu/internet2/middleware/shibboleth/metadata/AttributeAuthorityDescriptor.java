@@ -26,36 +26,22 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
-import java.net.URL;
+import java.util.Iterator;
 
 /**
- * <p>Corresponds loosely to SAML Metadata Schema "RoleDescriptorType".
- * </p><p>
- * A child of the EntityDescriptor element (the Provider object).
- * Example Roles are IDP (Identity Provider), Authentication Authority (HS),
- * Attribute Authority (AA), Attribute Requestor (SHAR), ...
+ * Corresponds to SAML Metadata Schema "AttributeAuthorityDescriptorType".
  * 
- * The only role supported in the Origin is 
- * AuthenticationAssertionConsumerService (formerly know as SHIRE)
- * [not formally part of the SAML 2 Metadata standard].
- * For this there is a special extension of SPProviderRole.
- * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Scott Cantor
  */
-public interface ProviderRole {
+public interface AttributeAuthorityDescriptor extends SSODescriptor {
 
-	public Provider getProvider(); // find parent EntityDescriptor/Provider
+    public EndpointManager getAttributeServiceManager();
+    
+    public EndpointManager getAssertionIDRequestServiceManager(); 
 
-	public String[] getProtocolSupport();
-
-	public boolean hasSupport(final String version);
-
-	public ContactPerson[] getContacts();
-
-	public KeyDescriptor[] getKeyDescriptors();
-
-	public Endpoint[] getDefaultEndpoints();
-
-	public URL getErrorURL();
-
+    public Iterator /* <String> */ getNameIDFormats();
+    
+    public Iterator /* <String> */ getAttributeProfiles();
+    
+    public Iterator /* <SAMLAttribute> */ getAttributes();
 }

@@ -32,11 +32,12 @@ import java.util.Iterator;
 import javax.servlet.http.HttpServlet;
 
 import org.apache.log4j.Logger;
+import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
-import edu.internet2.middleware.shibboleth.metadata.Provider;
+import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 
 /**
  * @author Walter Hoehn (wassa@columbia.edu)
@@ -65,17 +66,28 @@ public class TargetFederationComponent extends HttpServlet implements Metadata {
 		return fedMetadata.size();
 	}
 
-	public Provider lookup(String providerId) {
+	public EntityDescriptor lookup(String providerId) {
 
 		Iterator iterator = fedMetadata.iterator();
 		while (iterator.hasNext()) {
-			Provider provider = ((Metadata) iterator.next()).lookup(providerId);
+			EntityDescriptor provider = ((Metadata) iterator.next()).lookup(providerId);
 			if (provider != null) {
 				return provider;
 			}
 		}
 		return null;
 	}
+
+    public EntityDescriptor lookup(Artifact artifact) {
+        Iterator iterator = fedMetadata.iterator();
+        while (iterator.hasNext()) {
+            EntityDescriptor provider = ((Metadata) iterator.next()).lookup(artifact);
+            if (provider != null) {
+                return provider;
+            }
+        }
+        return null;
+    }
 }
 
 class FederationProviderFactory {
