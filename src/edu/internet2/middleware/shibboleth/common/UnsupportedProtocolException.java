@@ -51,7 +51,7 @@ package edu.internet2.middleware.shibboleth.common;
 
 import java.util.Collection;
 
-import org.opensaml.QName;
+import javax.xml.namespace.QName;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
 

@@ -25,16 +25,8 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
-import org.opensaml.QName;
-import org.opensaml.SAMLAssertion;
-import org.opensaml.SAMLAuthorityBinding;
-import org.opensaml.SAMLBinding;
-import org.opensaml.SAMLException;
-import org.opensaml.SAMLRequest;
-import org.opensaml.SAMLResponse;
-import org.opensaml.SAMLSOAPBinding;
-import org.opensaml.TrustException;
-import org.opensaml.XML;
+import javax.xml.namespace.QName;
+import org.opensaml.*;
 
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityRole;
 import edu.internet2.middleware.shibboleth.metadata.Endpoint;
@@ -65,7 +57,7 @@ public class ShibBinding {
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
 	
 	private String applicationId = null;
-	private SAMLBinding sbinding = new SAMLSOAPBinding();
+	private SAMLBinding sbinding = null;
 	
 	/**
 	 * While the C++ constructor takes iterators over the Trust and 
@@ -73,11 +65,13 @@ public class ShibBinding {
 	 * that contains them.
 	 * 
 	 * @param applicationId
+	 * @throws NoSuchProviderException
 	 */
 	public 
 	ShibBinding(
-			String applicationId) {
+			String applicationId) throws NoSuchProviderException {
 		this.applicationId=applicationId;
+        sbinding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
 	}
 
 	/**
@@ -126,7 +120,7 @@ public class ShibBinding {
 					String bindingString = binding.getBinding();
 					if (!bindingString.equals(prevBinding)) {
 						prevBinding = bindingString;
-						resp=sbinding.send(binding,req);
+						resp=sbinding.send(binding.getLocation(),req);
 					}
 					validateResponseSignatures(role, appinfo, resp);
 					return resp;
@@ -155,18 +149,8 @@ public class ShibBinding {
 		
 		log.debug("AA is at "+endpoint.getLocation());
 		
-		/*
-		 * The "address" of the request is a location URL embedded in
-		 * a SAMLAuthorityBinding object. Send the request and get the
-		 * response.
-		 */
 		try {
-			SAMLAuthorityBinding authbind = 
-				new SAMLAuthorityBinding(
-						endpoint.getBinding(),
-						endpoint.getLocation(),
-						new QName(XML.SAMLP_NS,"AttributeQuery"));
-			resp=sbinding.send(authbind,req);
+			resp=sbinding.send(endpoint.getLocation(),req);
 			log.debug("AA returned Attribute Assertion");
 			validateResponseSignatures(role, appinfo, resp);
 			return resp;

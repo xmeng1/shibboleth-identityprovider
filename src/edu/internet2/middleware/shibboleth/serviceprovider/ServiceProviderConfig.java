@@ -874,7 +874,7 @@ public class ServiceProviderConfig {
 	 * can fetch the XMLBean by calling getApplicationConf() and 
 	 * query their value directly.
 	 */
-	class ApplicationInfo 
+	public class ApplicationInfo 
 		implements EntityLocator, ITrust {
 		
 		private Application applicationConfig;

@@ -56,8 +56,9 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.namespace.QName;
+
 import org.apache.log4j.Logger;
-import org.opensaml.QName;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLException;
 import org.opensaml.XML;
@@ -201,7 +202,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 			}
 			Element valueElement = doc.createElementNS(XML.SAML_NS, "AttributeValue");
 			if (type != null) {
-				valueElement.setAttributeNS(XML.XSI_NS, "xsi:type", "typens:" + type.getLocalName());
+				valueElement.setAttributeNS(XML.XSI_NS, "xsi:type", "typens:" + type.getLocalPart());
 			}
 			
 			try {

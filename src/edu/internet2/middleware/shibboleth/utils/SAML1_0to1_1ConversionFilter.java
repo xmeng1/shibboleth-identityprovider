@@ -51,6 +51,8 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.opensaml.SAMLConfig;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLIdentifier;
 
 /**
@@ -62,12 +64,12 @@ import org.opensaml.SAMLIdentifier;
 public class SAML1_0to1_1ConversionFilter implements Filter {
 
 	private static Logger log = Logger.getLogger(SAML1_0to1_1ConversionFilter.class.getName());
+    private SAMLIdentifier idgen = SAMLConfig.instance().getDefaultIDProvider();
 
 	/*
 	 * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
 	 */
 	public void init(FilterConfig config) throws ServletException {
-
 	}
 
 	/*
@@ -319,7 +321,12 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				int start = matcher.start(2);
 				int end = matcher.end(2);
 				buff.append(input.subSequence(0, start));
-				buff.append(new SAMLIdentifier().toString());
+				try {
+                    buff.append(idgen.getIdentifier());
+                }
+                catch (SAMLException e) {
+                    throw new IOException("Unable to obtain a new SAML message ID from provider");
+                }
 				buff.append(input.substring(end));
 				input = buff.toString();
 			}

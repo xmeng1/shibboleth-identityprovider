@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.ServletException;
@@ -51,6 +52,7 @@ import org.apache.log4j.MDC;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
+import org.opensaml.*;
 import org.opensaml.InvalidCryptoException;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
@@ -61,7 +63,6 @@ import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
-import org.opensaml.SAMLIdentifier;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
@@ -75,6 +76,7 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
+import edu.internet2.middleware.shibboleth.common.*;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
@@ -83,9 +85,7 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
-import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
-import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
@@ -100,14 +100,16 @@ import edu.internet2.middleware.shibboleth.metadata.ProviderRole;
 
 public class AAServlet extends TargetFederationComponent {
 
-	private AAConfig				configuration;
+    private static Logger           transactionLog  = Logger.getLogger("Shibboleth-TRANSACTION");
+    private static Logger           log             = Logger.getLogger(AAServlet.class.getName());
+    private static Random           idgen           = new Random();
+
+    private AAConfig				configuration;
 	protected AAResponder			responder;
 	private NameMapper				nameMapper;
 	private SAMLBinding				binding;
-	private static Logger			transactionLog	= Logger.getLogger("Shibboleth-TRANSACTION");
 	private AAServiceProviderMapper	targetMapper;
 
-	private static Logger			log				= Logger.getLogger(AAServlet.class.getName());
 
 	public void init() throws ServletException {
 		super.init();
@@ -119,7 +121,7 @@ public class AAServlet extends TargetFederationComponent {
 			nameMapper = new NameMapper();
 			loadConfiguration();
 
-			binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
+			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
 
 			log.info("Attribute Authority initialization complete.");
 
@@ -216,7 +218,7 @@ public class AAServlet extends TargetFederationComponent {
 
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-		MDC.put("serviceId", "[AA] " + new SAMLIdentifier().toString());
+		MDC.put("serviceId", "[AA] " + idgen.nextInt());
 		MDC.put("remoteAddr", req.getRemoteAddr());
 		log.info("Handling request.");
 
@@ -392,7 +394,7 @@ public class AAServlet extends TargetFederationComponent {
 					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
 			//Mockup old requester name for requests from < 1.2 targets
 			if (fromLegacyProvider(req)) {
-				String legacyName = ShibPOSTProfile.getHostNameFromDN(credential.getSubjectX500Principal());
+				String legacyName = ShibBrowserProfile.getHostNameFromDN(credential.getSubjectX500Principal());
 				if (legacyName == null) {
 					log.error("Unable to extract legacy requester name from certificate subject.");
 				}
@@ -502,7 +504,13 @@ public class AAServlet extends TargetFederationComponent {
 				}
 			}
 
-			binding.respond(resp, samlResponse, ourSE);
+			try {
+                binding.respond(resp, samlResponse, ourSE);
+            }
+            catch (SAMLException e) {
+                log.error("Caught exception while responding to requester: " + e.getMessage());
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+            }
 		}
 	}
 
@@ -566,7 +574,13 @@ public class AAServlet extends TargetFederationComponent {
 			binding.respond(httpResponse, samlResponse, null);
 			log.debug("Returning SAML Error Response.");
 		} catch (SAMLException se) {
-			binding.respond(httpResponse, null, exception);
+			try {
+                binding.respond(httpResponse, null, exception);
+            }
+            catch (SAMLException e) {
+                log.error("Caught exception while responding to requester: " + e.getMessage());
+                httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+            }
 			log.error("AA failed to make an error message: " + se);
 		}
 	}
@@ -622,7 +636,7 @@ public class AAServlet extends TargetFederationComponent {
 								}
 
 								//If that doesn't work, try to match using SSL-style hostname matching
-								if (ShibPOSTProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
+								if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
 										keyInfo[k].itemKeyName(l).getKeyName())) {
 									log.debug("Matched against hostname.");
 									return true;

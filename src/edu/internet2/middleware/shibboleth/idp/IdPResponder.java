@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.RequestDispatcher;
@@ -52,6 +53,7 @@ import org.apache.log4j.MDC;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.signature.XMLSignature;
+import org.opensaml.*;
 import org.opensaml.InvalidCryptoException;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
@@ -62,7 +64,6 @@ import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
-import org.opensaml.SAMLIdentifier;
 import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
@@ -94,9 +95,8 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
-import edu.internet2.middleware.shibboleth.common.SAMLBindingFactory;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
-import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
+import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethOriginConfig;
 import edu.internet2.middleware.shibboleth.common.TargetFederationComponent;
@@ -124,7 +124,9 @@ public class IdPResponder extends TargetFederationComponent {
 
 	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
 	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
-	private SAMLBinding binding;
+    private static Random           idgen           = new Random();
+
+    private SAMLBinding binding;
 	private Semaphore throttle;
 	private ArtifactMapper artifactMapper;
 	private SSOProfileHandler[] profileHandlers;
@@ -148,7 +150,7 @@ public class IdPResponder extends TargetFederationComponent {
 		log.info("Initializing Identity Provider.");
 
 		try {
-			binding = SAMLBindingFactory.getInstance(SAMLBinding.SAML_SOAP_HTTPS);
+			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
 			nameMapper = new NameMapper();
 			// TODO this needs to be pluggable
 			artifactMapper = new MemoryArtifactMapper();
@@ -259,7 +261,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		MDC.put("serviceId", "[IdP] " + new SAMLIdentifier().toString());
+		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
 		log.debug("Recieved a request via POST.");
 
@@ -538,7 +540,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		MDC.put("serviceId", "[IdP] " + new SAMLIdentifier().toString());
+		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
 		log.debug("Recieved a request via GET.");
 		log.info("Handling authN request.");
@@ -766,7 +768,7 @@ public class IdPResponder extends TargetFederationComponent {
 
 								// If that doesn't work, try to match using
 								// SSL-style hostname matching
-								if (ShibPOSTProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
+								if (ShibBrowserProfile.getHostNameFromDN(certificate.getSubjectX500Principal()).equals(
 										keyInfo[k].itemKeyName(l).getKeyName())) {
 									log.debug("Matched against hostname.");
 									return true;
@@ -804,7 +806,13 @@ public class IdPResponder extends TargetFederationComponent {
 			binding.respond(httpResponse, samlResponse, null);
 			log.debug("Returning SAML Error Response.");
 		} catch (SAMLException se) {
-			binding.respond(httpResponse, null, exception);
+			try {
+                binding.respond(httpResponse, null, exception);
+            }
+            catch (SAMLException e) {
+                log.error("Caught exception while responding to requester: " + e.getMessage());
+                httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+            }
 			log.error("Identity Provider failed to make an error message: " + se);
 		}
 	}
@@ -835,7 +843,7 @@ public class IdPResponder extends TargetFederationComponent {
 					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
 			// Mockup old requester name for requests from < 1.2 targets
 			if (fromLegacyProvider(req)) {
-				String legacyName = ShibPOSTProfile.getHostNameFromDN(credential.getSubjectX500Principal());
+				String legacyName = ShibBrowserProfile.getHostNameFromDN(credential.getSubjectX500Principal());
 				if (legacyName == null) {
 					log.error("Unable to extract legacy requester name from certificate subject.");
 				}
@@ -939,7 +947,13 @@ public class IdPResponder extends TargetFederationComponent {
 				}
 			}
 
-			binding.respond(resp, samlResponse, ourSE);
+			try {
+                binding.respond(resp, samlResponse, ourSE);
+            }
+            catch (SAMLException e) {
+                log.error("Caught exception while responding to requester: " + e.getMessage());
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+            }
 		}
 	}
 

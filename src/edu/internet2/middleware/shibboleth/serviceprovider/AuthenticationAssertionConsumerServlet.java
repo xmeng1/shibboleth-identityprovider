@@ -42,7 +42,6 @@
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -50,11 +49,10 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.opensaml.SAMLAssertion;
-import org.opensaml.SAMLAuthenticationStatement;
+
 import org.opensaml.SAMLException;
-import org.opensaml.SAMLPOSTProfile;
-import org.opensaml.SAMLResponse;
+import org.opensaml.SAMLBrowserProfile;
+import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
 import org.w3c.dom.Element;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Layout;
@@ -67,6 +65,7 @@ import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
 
 import edu.internet2.middleware.commons.log4j.ThreadLocalAppender;
 import edu.internet2.middleware.shibboleth.common.Credentials;
+import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.resource.AuthenticationFilter;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
@@ -82,8 +81,8 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
 	
-	private Element			configuration;
-	private Credentials				credentials;
+	private Element			configuration = null;
+	private Credentials		credentials = null;
 	
 	public static final String SESSIONPARM =
 	    "ShibbolethSessionId";
@@ -129,7 +128,6 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
 		
 		ServletContextInitializer.initServiceProvider(servletContext);
 		AuthenticationFilter.setFilterSupport(new FilterSupportImpl());
-		
 	}
 
 
@@ -154,11 +152,10 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             String ipaddr = request.getRemoteAddr();
             
             // URL of Resource that triggered authorization
+            // XXX: I added support to the profile for extracting TARGET, but
+            // it's not too critical in Java since you can grab it easily anyway.
+            // Might be better in the 2.0 future though, since the bindings get trickier.
             String target = request.getParameter("TARGET");
-            
-            // Bin64 encoded SAML Authentication Assertion from HS
-            String assertparm = request.getParameter("SAMLResponse");
-            byte [] bin64Assertion = assertparm.getBytes();
             
             // Map the Resource URL into an <Application>
             String applicationId = config.mapRequest(target);
@@ -181,29 +178,36 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             log.debug("Authentication received from "+ipaddr+" for "+target+
                         "(application:"+applicationId+") (Provider:"+providerId+")");
 
-            String sessionId = createSessionFromPost(ipaddr, bin64Assertion, applicationId, shireURL, providerId, null);
+            String sessionId = createSessionFromPost(ipaddr, request, applicationId, shireURL, providerId, null);
             
             Cookie cookie = new Cookie("ShibbolethSPSession",sessionId);
             response.addCookie(cookie);
             
             try {
                 response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
-            } catch (IOException e) {}
-        } catch (SAMLException e) {
-        	log.error("Authentication Assertion had invalid format.");
-        	try {
-                response.sendRedirect("/shibboleth/shireError.html");
-            } catch (IOException e1) {}
+            }
+            catch (IOException e) {
+            }
         }
         catch (MetadataException e) {
-        	log.error("Authentication Assertion source not found in Metadata.");
-        	try {
+            log.error("Authentication Assertion source not found in Metadata.");
+            try {
                 response.sendRedirect("/shibboleth/shireError.html");
-            } catch (IOException e1) {}
-        } finally {
+            }
+            catch (IOException e1) {
+            }
+        }
+        catch (SAMLException e) {
+            log.error("Authentication Assertion had invalid format.");
+            try {
+                response.sendRedirect("/shibboleth/shireError.html");
+            }
+            catch (IOException e1) {
+            }
+        }
+        finally {
             ServletContextInitializer.finishService(request,response);
         }
-
 	}
 	
     /**
@@ -216,41 +220,34 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
      * @param providerId Our Entity name
      * @return random key of Session
      * @throws SAMLException
-     * @throws MetadataException
      */
     public static 
     String createSessionFromPost(
             String ipaddr, 
-            byte[] bin64Assertion, 
+            HttpServletRequest req, 
             String applicationId, 
             String shireURL, 
             String providerId,
             String emptySessionId
             ) 
-    throws SAMLException, MetadataException {
+    throws SAMLException {
         String sessionid=null;
         StringBuffer pproviderId = // Get back Origin Entity name from SAML
             new StringBuffer();
         String[] audiences = new String[1];
         audiences[0]=providerId;
         
-        SAMLResponse samldata = null;	
-        SAMLAssertion assertion = null;
-        SAMLAuthenticationStatement authstmt = null;
-        ShibPOSTProfile profile = new ShibPOSTProfile(applicationId);
-        samldata = profile.accept(
-                bin64Assertion, // Assertion from POST of Form field
-                shireURL,   // My URL (Why??)
-                60, 
-                audiences,  // My "Provider" (Entity) ID
-                pproviderId // HS "Provider" (Entity) ID returned
+        ShibBrowserProfile profile = new ShibBrowserProfile(applicationId);
+        BrowserProfileResponse samldata = profile.receive(
+                pproviderId,
+                req,
+                shireURL,   // My URL (Why??) To prevent attackers from redirecting messages. 
+                SAMLBrowserProfile.PROFILE_POST,    // TODO: support both profiles 
+                context.getReplayCache(),
+                null
         );
         
-        assertion = SAMLPOSTProfile.getSSOAssertion(samldata,
-                Collections.singleton(providerId));
-        authstmt = SAMLPOSTProfile.getSSOStatement(assertion);
-        
-
+        // TODO: Audience/condition checking is now the profile caller's job.
         
         // The Authentication Assertion gets placed in a newly created
         // Session object. Later, someone will get an Attribute Assertion
@@ -261,8 +258,8 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
                 applicationId, 
                 ipaddr, 
                 pproviderId.toString(), 
-                assertion, 
-                authstmt,
+                samldata.assertion, 
+                samldata.authnStatement,
                 emptySessionId);
         
         // Very agressive attribute fetch rule 

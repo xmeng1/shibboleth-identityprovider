@@ -26,12 +26,14 @@
 
 package edu.internet2.middleware.shibboleth.metadata;
 
+import org.opensaml.SAMLException;
+
 /**
  * Ported from Scott Cantor's C++ interfaces
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class MetadataException extends Exception {
+public class MetadataException extends SAMLException {
 
 	public MetadataException(String message) {
 		super(message);

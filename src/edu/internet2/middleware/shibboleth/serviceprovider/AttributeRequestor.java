@@ -151,9 +151,9 @@ public class AttributeRequestor {
 		// ShibBinding will extract URLs from the Metadata and build
 		// parameters so SAML can create the session. It also interfaces
 		// to Trust to verify that any signed objects have trusted signatures.
-		ShibBinding binding = new ShibBinding(session.getApplicationId());
 		SAMLResponse response = null;
 		try {
+            ShibBinding binding = new ShibBinding(session.getApplicationId());
 			response = binding.send(request,aa,null,null);
 		} catch (SAMLException e) {;} // response will be null
 		if (response==null) {

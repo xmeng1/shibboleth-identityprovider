@@ -17,13 +17,14 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.opensaml.SAMLException;
 
 import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
 
 import edu.internet2.middleware.shibboleth.common.AAP;
 import edu.internet2.middleware.shibboleth.common.AttributeRule;
-import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.resource.FilterSupport;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
@@ -140,7 +141,7 @@ public class FilterSupportImpl implements FilterSupport {
 
     /**
      * @param ipaddr
-     * @param bin64Assertion
+     * @param request
      * @param applicationId
      * @param shireURL
      * @param providerId
@@ -148,7 +149,7 @@ public class FilterSupportImpl implements FilterSupport {
      */
     public String createSessionFromPost(
             String ipaddr, 
-            byte[] bin64Assertion, 
+            HttpServletRequest request, 
             String applicationId, 
             String shireURL, 
             String providerId,
@@ -156,10 +157,8 @@ public class FilterSupportImpl implements FilterSupport {
         String sessionid;
         try {
             sessionid = AuthenticationAssertionConsumerServlet.createSessionFromPost(
-                    ipaddr, bin64Assertion, applicationId, shireURL, providerId,emptySessionId);
+                    ipaddr, request, applicationId, shireURL, providerId,emptySessionId);
         } catch (SAMLException e) {
-            return null;
-        } catch (MetadataException e) {
             return null;
         }
         return sessionid;

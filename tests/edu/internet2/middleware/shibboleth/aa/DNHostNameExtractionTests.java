@@ -34,7 +34,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import edu.internet2.middleware.shibboleth.common.ShibPOSTProfile;
+import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 
 /**
  * Validation suite for hack to pull hostnames out of a subject DN.
@@ -73,7 +73,7 @@ public class DNHostNameExtractionTests extends TestCase {
 	public void testBasicExtraction() {
 
 		try {
-			assertEquals("Round-trip handle validation failed on DN.", ShibPOSTProfile
+			assertEquals("Round-trip handle validation failed on DN.", ShibBrowserProfile
 					.getHostNameFromDN(new X500Principal(dn1)), "wayf.internet2.edu");
 
 		} catch (Exception e) {
@@ -84,7 +84,7 @@ public class DNHostNameExtractionTests extends TestCase {
 	public void testExtractionWithLowerCaseAttrName() {
 
 		try {
-			assertEquals("Round-trip handle validation failed on DN.", ShibPOSTProfile
+			assertEquals("Round-trip handle validation failed on DN.", ShibBrowserProfile
 					.getHostNameFromDN(new X500Principal(dn2)), "wayf.internet2.edu");
 
 		} catch (Exception e) {
@@ -95,7 +95,7 @@ public class DNHostNameExtractionTests extends TestCase {
 	public void testExtractionWithMultipleCNs() {
 
 		try {
-			assertEquals("Round-trip handle validation failed on DN.", ShibPOSTProfile
+			assertEquals("Round-trip handle validation failed on DN.", ShibBrowserProfile
 					.getHostNameFromDN(new X500Principal(dn4)), "wayf.internet2.edu");
 
 		} catch (Exception e) {

@@ -25,6 +25,10 @@
  */
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
+import org.opensaml.NoSuchProviderException;
+import org.opensaml.ReplayCache;
+import org.opensaml.ReplayCacheFactory;
+
 /**
  * Unique object through which all Service Provider objects and collections
  * are found. Obtain a reference to this object by calling the static
@@ -99,7 +103,8 @@ public class ServiceProviderContext {
 	 * wanted to load and configure the Session Manager in Spring.
 	 */
 	private SessionManager sessionManager = null;
-	
+
+	private ReplayCache replayCache = null;
 	
 	private ThreadLocal requestContext = new ThreadLocal();
 		public void setRequestContext(RequestTracker trk) {
@@ -119,7 +124,7 @@ public class ServiceProviderContext {
 	
 	// property accessor methods
 
-	public SessionManager getSessionManager() {
+	public synchronized SessionManager getSessionManager() {
 	    // deferred allocation, since sessionManger needs a reference
 	    // back to context.
 	    if (sessionManager==null)
@@ -127,6 +132,18 @@ public class ServiceProviderContext {
 		return sessionManager;
 	}
 
+    // TODO: Make this pluggable / configurable
+    public synchronized ReplayCache getReplayCache() {
+        if (replayCache == null) {
+            try {
+                replayCache = ReplayCacheFactory.getInstance();
+            }
+            catch (NoSuchProviderException e) {
+            }
+        }
+        return replayCache;
+    }
+    
 	public ServiceProviderConfig getServiceProviderConfig() {
 		return serviceProviderConfig;
 	}

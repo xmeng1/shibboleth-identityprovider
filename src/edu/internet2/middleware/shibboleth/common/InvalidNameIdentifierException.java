@@ -26,7 +26,7 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import org.opensaml.QName;
+import javax.xml.namespace.QName;
 
 /**
  * @author Walter Hoehn
