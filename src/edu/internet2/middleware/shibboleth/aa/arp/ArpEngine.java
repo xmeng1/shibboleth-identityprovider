@@ -283,16 +283,15 @@ public class ArpEngine {
 				continue;
 			}
 
-			//Handle Permit All-Except and Permit Specific
+			//Handle "Permit All-Except" and "Permit Specific"
 			Object[] resolvedValues = attributes[i].getValues();
 			Set releaseValues = new HashSet();
 			for (int j = 0; resolvedValues.length > j; j++) {
-				System.err.println(attribute.isValuePermitted(resolvedValues[j]));
 				if (attribute.isValuePermitted(resolvedValues[j])) {
 					releaseValues.add(resolvedValues[j]);
 				}
 			}
-			attributes[i].setValues((ArpAttribute[]) releaseValues.toArray(new ArpAttribute[0]));
+			attributes[i].setValues((Object[]) releaseValues.toArray(new Object[0]));
 			releaseSet.add(attributes[i]);
 		}
 		return (ArpAttribute[]) releaseSet.toArray(new ArpAttribute[0]);
