@@ -58,7 +58,7 @@ package edu.internet2.middleware.shibboleth.common;
 public final class Constants
 {
     /**  Club Shibboleth policy */
-    public final static String POLICY_CLUBSHIB = "http://middleware.internet2.edu/shibboleth/clubs/clubshib/2002/05/";
+    public final static String POLICY_INCOMMON = "urn:mace:InCommon:2003";
 
     /**  Shibboleth AttributeNamespace indicating URI-based naming of Attributes */
     public final static String SHIB_ATTRIBUTE_NAMESPACE_URI = "urn:mace:shibboleth:1.0:attributeNamespace:uri";
