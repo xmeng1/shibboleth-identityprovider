@@ -97,6 +97,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
 
 		// Initialize logging specially
 		Logger targetLogger = Logger.getLogger("edu.internet2.middleware");
+		Logger samlLogger = Logger.getLogger("org.opensaml");
 		String logname = servletContext.getRealPath("/diagnose/initialize.log");
 		Layout initLayout = new PatternLayout("%d{HH:mm} %-5p %m%n");
 		
@@ -108,6 +109,8 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             targetLogger.addAppender(initLogAppender);
             targetLogger.addAppender(threadAppender);
             targetLogger.setLevel(Level.DEBUG);
+            samlLogger.addAppender(threadAppender);
+            samlLogger.setLevel(Level.DEBUG);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -179,7 +182,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             if (appSessionValues.getShireSSL()&& // Requires SSL
             		!request.isSecure()) {       // isn't SSL
             	log.error("Authentication Assersion not posted over SSL.");
-            	response.sendRedirect("/shireError.html");
+            	response.sendRedirect("/shibboleth/shireError.html");
             }
             
             log.debug("Authentication received from "+ipaddr+" for "+target+
@@ -211,12 +214,12 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             	
             } catch (SAMLException e) {
             	log.error("Authentication Assertion had invalid format.");
-            	response.sendRedirect("/shireError.html");
+            	response.sendRedirect("/shibboleth/shireError.html");
             	return;
             }
             catch (MetadataException e) {
             	log.error("Authentication Assertion source not found in Metadata.");
-            	response.sendRedirect("/shireError.html");
+            	response.sendRedirect("/shibboleth/shireError.html");
             	return;
             }
 
@@ -236,7 +239,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             Session session = sessionManager.findSession(sessionid, applicationId);
             boolean gotattributes = AttributeRequestor.fetchAttributes(session);
             if (!gotattributes)
-            	response.sendRedirect("/shireError.html");
+            	response.sendRedirect("/shibboleth/shireError.html");
             
             log.debug(SessionManager.dumpAttributes(session));
             
