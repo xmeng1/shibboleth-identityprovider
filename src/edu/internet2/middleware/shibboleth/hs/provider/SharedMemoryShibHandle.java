@@ -46,13 +46,20 @@
  */
 package edu.internet2.middleware.shibboleth.hs.provider;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+
 import org.apache.log4j.Logger;
 import org.doomdark.uuid.UUIDGenerator;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
-import edu.internet2.middleware.shibboleth.common.BaseNameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
@@ -62,22 +69,14 @@ import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
 /**
  * @author Walter Hoehn
  */
-public class SharedMemoryShibHandle extends BaseNameIdentifierMapping implements HSNameIdentifierMapping {
-//TODO need to move the guts of this class out of the HandleRepository implementations
-	private String id;
+public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements HSNameIdentifierMapping {
+
 	protected HandleCache cache = HandleCache.instance();
 	private static Logger log = Logger.getLogger(SharedMemoryShibHandle.class.getName());
 
 	public SharedMemoryShibHandle(Element config) throws NameIdentifierMappingException {
 		super(config);
-		String id = ((Element) config).getAttribute("id");
-		if (id != null || !id.equals("")) {
-			this.id = id;
-		}
-	}
-
-	public String getId() {
-		return id;
+		//If we add anything to this constructor, 
 	}
 
 	public SAMLNameIdentifier getNameIdentifierName(
@@ -96,8 +95,12 @@ public class SharedMemoryShibHandle extends BaseNameIdentifierMapping implements
 		synchronized (cache.handleEntries) {
 			cache.handleEntries.put(handle, createHandleEntry(principal));
 		}
-		
-		return new SAMLNameIdentifier(handle, "qualifier", getNameIdentifierFormat().toString());
+
+		try {
+			return new SAMLNameIdentifier(handle, idProv.getId(), getNameIdentifierFormat().toString());
+		} catch (SAMLException e) {
+			throw new NameIdentifierMappingException("Unable to generate Attribute Query Handle: " + e);
+		}
 
 	}
 
@@ -128,5 +131,83 @@ public class SharedMemoryShibHandle extends BaseNameIdentifierMapping implements
 		}
 	}
 
+}
+
+class HandleCache {
+
+	protected Map handleEntries = new HashMap();
+	private static HandleCache instance;
+	protected MemoryRepositoryCleaner cleaner = new MemoryRepositoryCleaner();
+	private static Logger log = Logger.getLogger(HandleCache.class.getName());
+
+	protected HandleCache() {
+	}
+
+	public static synchronized HandleCache instance() {
+		if (instance == null) {
+			instance = new HandleCache();
+			return instance;
+		}
+		return instance;
+	}
+	/**
+	 * @see java.lang.Object#finalize()
+	 */
+	protected void finalize() throws Throwable {
+		super.finalize();
+		synchronized (cleaner) {
+			cleaner.shutdown = true;
+			cleaner.interrupt();
+		}
+	}
+
+	private class MemoryRepositoryCleaner extends Thread {
+
+		private boolean shutdown = false;
+
+		public MemoryRepositoryCleaner() {
+			super();
+			log.debug("Starting memory-based shib handle cache cleanup thread.");
+			start();
+		}
+
+		public void run() {
+			try {
+				sleep(1 * 60 * 1000);
+			} catch (InterruptedException e) {
+				log.debug("Memory-based shib handle cache cleanup interrupted.");
+			}
+			while (true) {
+				try {
+					if (shutdown) {
+						log.debug("Stopping Memory-based shib handle cache cleanup thread.");
+						return;
+					}
+					Set needsDeleting = new HashSet();
+					synchronized (handleEntries) {
+						Iterator iterator = handleEntries.entrySet().iterator();
+						while (iterator.hasNext()) {
+							Entry entry = (Entry) iterator.next();
+							HandleEntry handleEntry = (HandleEntry) entry.getValue();
+							if (handleEntry.isExpired()) {
+								needsDeleting.add(entry.getKey());
+							}
+						}
+						//release the lock to be friendly
+						Iterator deleteIterator = needsDeleting.iterator();
+						while (deleteIterator.hasNext()) {
+							synchronized (handleEntries) {
+								log.debug("Expiring an Attribute Query Handle from the memory cache.");
+								handleEntries.remove(deleteIterator.next());
+							}
+						}
+					}
+					sleep(1 * 60 * 1000);
+				} catch (InterruptedException e) {
+					log.debug("Memory-based shib handle cache cleanup interrupted.");
+				}
+			}
+		}
+	}
 
 }

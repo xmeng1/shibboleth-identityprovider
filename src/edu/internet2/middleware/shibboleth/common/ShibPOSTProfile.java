@@ -181,7 +181,7 @@ public class ShibPOSTProfile
             {
                 SAMLStatement s=(SAMLStatement)is.next();
                 if (s instanceof SAMLAuthenticationStatement)
-                    return ((SAMLAuthenticationStatement)s).getSubject().getNameQualifier();
+                    return ((SAMLAuthenticationStatement)s).getSubject().getName().getName();
             }
         }
         return null;
@@ -234,11 +234,11 @@ public class ShibPOSTProfile
 
         // Examine the subject information.
         SAMLSubject subject = sso.getSubject();
-        if (subject.getNameQualifier() == null)
+        if (subject.getName().getName() == null)
             throw new InvalidAssertionException(SAMLException.RESPONDER, "ShibPOSTProfile.accept() requires subject name qualifier");
 
         originSite.setLength(0);
-        originSite.append(subject.getNameQualifier());
+        originSite.append(subject.getName().getName());
         String handleService = assertion.getIssuer();
 
         // Is this a trusted HS?

@@ -44,54 +44,82 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package edu.internet2.middleware.shibboleth.hs.provider;
 
-package edu.internet2.middleware.shibboleth.common;
-
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.Serializable;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.BaseNameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 
 /**
  * @author Walter Hoehn
  */
-public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping {
+public abstract class AQHNameIdentifierMapping extends BaseNameIdentifierMapping {
 
-	private static Logger log = Logger.getLogger(BaseNameIdentifierMapping.class.getName());
-	private URI format;
+	private static Logger log = Logger.getLogger(AQHNameIdentifierMapping.class.getName());
+	/** Time in seconds for which handles are valid */
+	protected long handleTTL = 1800;
+	private String id;
 
-	public BaseNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
-
-		if (!config.getTagName().equals("NameMapping")) {
-			throw new IllegalArgumentException();
-		}
-
-		String rawFormat = ((Element) config).getAttribute("format");
-		if (rawFormat == null || rawFormat.equals("")) {
-			log.error("Name Mapping requires a \"format\" attribute.");
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
-		}
-
-		try {
-			format = new URI(rawFormat);
-		} catch (URISyntaxException e) {
-			log.error("Name Mapping attribute \"format\" is not a valid URI: " + e);
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
-		}
-
+	public AQHNameIdentifierMapping(Element config) throws NameIdentifierMappingException {
+		super(config);
 		String id = ((Element) config).getAttribute("id");
-		if (id != null && (!id.equals("")) && (!(this instanceof HSNameIdentifierMapping))) {
-			log.error(
-				"\"id\" attribute is not valid for Name Mapping implementations that do are not used for Name Identifer Creation.");
-			throw new NameIdentifierMappingException("Invalid mapping information specified.");
+		if (id != null || !id.equals("")) {
+			this.id = id;
+		}
+
+		String rawTTL = ((Element) config).getAttribute("handleTTL");
+		try {
+			if (rawTTL != null && !rawTTL.equals("")) {
+				handleTTL = Long.parseLong(rawTTL);
+				if (handleTTL < 30) {
+					log.warn(
+						"You have set the Attribute Query Handle \"Time To Live\' to a very low "
+							+ "value.  It is recommended that you increase it.");
+				}
+			}
+			log.debug("Attribute Query Handle TTL set to (" + handleTTL + ") milliseconds.");
+
+		} catch (NumberFormatException nfe) {
+			log.error("Value for attribute \"handleTTL\" mus be a long integer.");
+			throw new NameIdentifierMappingException("Could not load Name Identifier Mapping with configured data.");
 		}
 	}
 
-	public URI getNameIdentifierFormat() {
-		return format;
+	protected HandleEntry createHandleEntry(AuthNPrincipal principal) {
+		return new HandleEntry(principal, handleTTL);
 	}
 
+	public String getId() {
+		return id;
+	}
+
+}
+
+class HandleEntry implements Serializable {
+
+	static final long serialVersionUID = 1L;
+	protected AuthNPrincipal principal;
+	protected long expirationTime;
+
+	/**
+	 * Creates a HandleEntry
+	 * 
+	 * @param principal
+	 *            the principal represented by this entry.
+	 * @param TTL
+	 *            the time, in seconds, for which the handle should be valid.
+	 */
+	protected HandleEntry(AuthNPrincipal principal, long TTL) {
+		this.principal = principal;
+		expirationTime = System.currentTimeMillis() + (TTL * 1000);
+	}
+
+	protected boolean isExpired() {
+		return (System.currentTimeMillis() > expirationTime);
+	}
 }

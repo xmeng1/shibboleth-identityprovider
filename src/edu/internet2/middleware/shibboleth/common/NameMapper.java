@@ -48,12 +48,17 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import java.lang.reflect.Constructor;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
+
+import edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle;
 
 /**
  * @author Walter Hoehn
@@ -63,6 +68,7 @@ public class NameMapper {
 	private static Logger log = Logger.getLogger(NameMapper.class.getName());
 	private Map byFormat = new HashMap();
 	private static Map registeredMappingTypes = Collections.synchronizedMap(new HashMap());
+	protected boolean initialized = false;
 
 	static {
 		try {
@@ -75,7 +81,7 @@ public class NameMapper {
 				Class.forName("edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle"));
 
 			registeredMappingTypes.put(
-				"PassThruNameIdentifier",
+				"Principal",
 				Class.forName("edu.internet2.middleware.shibboleth.common.PrincipalNameIdentifier"));
 
 		} catch (ClassNotFoundException e) {
@@ -130,10 +136,24 @@ public class NameMapper {
 	}
 
 	public void addNameMapping(NameIdentifierMapping mapping) {
+
+		initialized = true;
+		if (byFormat.containsKey(mapping.getNameIdentifierFormat())) {
+			log.error("Attempted to register multiple Name Mappings with the same format.  Skipping duplicates...");
+			return;
+		}
 		byFormat.put(mapping.getNameIdentifierFormat(), mapping);
+
 	}
 
-	public NameIdentifierMapping getNameIdentifierMapping(String format) {
+	public NameIdentifierMapping getNameIdentifierMapping(URI format) {
+		if (!initialized) {
+			try {
+				return new SharedMemoryShibHandle(null);
+			} catch (NameIdentifierMappingException e) {
+				return null;
+			}
+		}
 		return (NameIdentifierMapping) byFormat.get(format);
 	}
 
@@ -160,6 +180,21 @@ public class NameMapper {
 
 		}
 
+	}
+
+	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+		throws NameIdentifierMappingException, InvalidNameIdentifierException {
+
+		NameIdentifierMapping mapping = null;
+		try {
+			mapping = getNameIdentifierMapping(new URI(nameId.getFormat()));
+		} catch (URISyntaxException e) {
+			log.error("Invalid Name Identifier format.");
+		}
+		if (mapping == null) {
+			throw new InvalidNameIdentifierException("Name Identifier format not registered.");
+		}
+		return mapping.getPrincipal(nameId, sProv, idProv);
 	}
 
 }

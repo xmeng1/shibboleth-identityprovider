@@ -49,8 +49,15 @@ package edu.internet2.middleware.shibboleth.hs;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.opensaml.SAMLNameIdentifier;
+
+import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.IdentityProvider;
+import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
+import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
  * @author Walter Hoehn
@@ -68,8 +75,23 @@ public class HSNameMapper extends NameMapper {
 			}
 		}
 	}
-	
+
 	public HSNameIdentifierMapping getNameIdentifierMappingById(String id) {
 		return (HSNameIdentifierMapping) byId.get(id);
+	}
+
+	public SAMLNameIdentifier getNameIdentifierName(
+		String id,
+		AuthNPrincipal principal,
+		ServiceProvider sProv,
+		IdentityProvider idProv)
+		throws NameIdentifierMappingException {
+
+		HSNameIdentifierMapping mapping = getNameIdentifierMappingById(id);
+
+		if (mapping == null) {
+			throw new InvalidNameIdentifierException("Name Identifier id not registered.");
+		}
+		return mapping.getNameIdentifierName(principal, sProv, idProv);
 	}
 }
