@@ -225,6 +225,7 @@ public class ServiceProviderMapper {
 		private boolean passThruIsOverriden = false;
 		private boolean forceAttributePush = false;
 		private boolean forceAttributeNoPush = false;
+		private boolean defaultToPOST = true;
 
 		public RelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials,
 				NameMapper nameMapper) throws ServiceProviderMapperException {
@@ -273,6 +274,17 @@ public class ServiceProviderMapper {
 				log.debug("Overriding passThruErrors for Relying Pary (" + name + ") with (" + attribute + ").");
 				overridenPassThruErrors = Boolean.valueOf(attribute).booleanValue();
 				passThruIsOverriden = true;
+			}
+
+			// SSO profile defaulting
+			attribute = ((Element) partyConfig).getAttribute("defaultToPOSTProfile");
+			if (attribute != null && !attribute.equals("")) {
+				defaultToPOST = Boolean.valueOf(attribute).booleanValue();
+				if (defaultToPOST) {
+					log.debug("Relying party defaults to POST profile.");
+				} else {
+					log.debug("Relying party defaults to Artifact profile.");
+				}
 			}
 
 			// Determine whether or not we are forcing attribute push on or off
@@ -406,6 +418,11 @@ public class ServiceProviderMapper {
 			return forceAttributeNoPush;
 		}
 
+		public boolean defaultToPOSTProfile() {
+
+			return defaultToPOST;
+		}
+
 		/**
 		 * Default identity provider implementation.
 		 * 
@@ -438,6 +455,7 @@ public class ServiceProviderMapper {
 				return credential;
 			}
 		}
+
 	}
 
 	/**
@@ -505,6 +523,11 @@ public class ServiceProviderMapper {
 
 			return wrapped.forceAttributeNoPush();
 		}
+
+		public boolean defaultToPOSTProfile() {
+
+			return wrapped.defaultToPOSTProfile();
+		}
 	}
 
 	/**
@@ -571,6 +594,11 @@ public class ServiceProviderMapper {
 		public boolean forceAttributeNoPush() {
 
 			return false;
+		}
+
+		public boolean defaultToPOSTProfile() {
+
+			return true;
 		}
 	}
 

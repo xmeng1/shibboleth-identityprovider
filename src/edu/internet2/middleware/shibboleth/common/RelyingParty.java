@@ -97,4 +97,10 @@ public interface RelyingParty extends ServiceProvider {
 	 * Artifact).
 	 */
 	public boolean forceAttributeNoPush();
+
+	/**
+	 * A boolean indication of whether the default SSO browser profile should be POST or Artifact. "true" indicates POST
+	 * and "false" indicates Artifact.
+	 */
+	public boolean defaultToPOSTProfile();
 }

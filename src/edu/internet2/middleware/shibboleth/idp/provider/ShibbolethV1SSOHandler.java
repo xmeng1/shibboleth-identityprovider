@@ -184,7 +184,7 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 			ArrayList assertions = new ArrayList();
 
 			// Is this artifact or POST?
-			boolean artifactProfile = useArtifactProfile(provider, acceptanceURL);
+			boolean artifactProfile = useArtifactProfile(provider, acceptanceURL, relyingParty);
 
 			// TODO make sure we support adding signatures to attribute assertion
 
@@ -457,28 +457,55 @@ public class ShibbolethV1SSOHandler extends BaseHandler implements IdPProtocolHa
 	/**
 	 * Boolean indication of which browser profile is in effect. "true" indicates Artifact and "false" indicates POST.
 	 */
-	private static boolean useArtifactProfile(EntityDescriptor provider, String acceptanceURL) {
+	private static boolean useArtifactProfile(EntityDescriptor provider, String acceptanceURL, RelyingParty relyingParty) {
 
-		// TODO this logic needs to be updated
+		boolean artifactMeta = false;
+		boolean postMeta = false;
 
-		// Default to POST if we have no metadata
-		if (provider == null) { return false; }
+		// Look at the metadata bindings, if we can find them
+		if (provider != null) {
+			SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 
-		// Default to POST if we have incomplete metadata
-		SPSSODescriptor sp = provider.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
-		if (sp == null) { return false; }
+			if (sp != null) {
 
-		// Look at the bindings.. prefer POST if we have multiple
-		Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
-		while (endpoints.hasNext()) {
-			Endpoint ep = (Endpoint) endpoints.next();
-			if (acceptanceURL.equals(ep.getLocation()) && SAMLBrowserProfile.PROFILE_POST_URI.equals(ep.getBinding())) { return false; }
-			if (acceptanceURL.equals(ep.getLocation())
-					&& SAMLBrowserProfile.PROFILE_ARTIFACT_URI.equals(ep.getBinding())) { return true; }
+				Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
+				while (endpoints.hasNext()) {
+					Endpoint ep = (Endpoint) endpoints.next();
+					if (acceptanceURL.equals(ep.getLocation())
+							&& SAMLBrowserProfile.PROFILE_POST_URI.equals(ep.getBinding())) {
+						log.debug("Metadata indicates support for POST profile.");
+						postMeta = true;
+						continue;
+					}
+				}
+				endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
+				while (endpoints.hasNext()) {
+					Endpoint ep = (Endpoint) endpoints.next();
+					if (acceptanceURL.equals(ep.getLocation())
+							&& SAMLBrowserProfile.PROFILE_ARTIFACT_URI.equals(ep.getBinding())) {
+						log.debug("Metadata indicates support for Artifact profile.");
+						artifactMeta = true;
+						continue;
+					}
+				}
+			}
 		}
 
-		// Default to POST if we have incomplete metadata
-		return false;
+		// If we have metadata for both, use the relying party default
+		if (!(artifactMeta && postMeta)) {
+
+			// If we only have metadata for one, use it
+			if (artifactMeta) { return true; }
+			if (postMeta) { return false; }
+
+		}
+
+		// If we have missing or incomplete metadata, use relying party default
+		if (relyingParty.defaultToPOSTProfile()) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	/**
