@@ -58,3 +58,5 @@ Thanks to:
 
     Joel Murphy (Buffalo), for much help with load testing and generally
       pushing the software to its limits.
+
+    Derek Morr (PSU) for improving the Crypto Handle Repository.
