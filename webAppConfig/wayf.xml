@@ -21,7 +21,7 @@
 		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfService</servlet-class>
                 <init-param>
                     <param-name>SiteConfigFileLocation</param-name>
-                    <param-value>/sites.xml</param-value>
+                    <param-value>/conf/sites.xml</param-value>
                 </init-param>
 	</servlet>
 	

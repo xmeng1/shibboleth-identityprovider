@@ -63,7 +63,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
+import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
+import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
+import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 
 /**
  * A servlet implementation of the Shibboleth WAYF service.  Allows a browser user to 
@@ -91,11 +94,19 @@ public class WayfService extends HttpServlet {
 		loadInitParams();
 		log.info("Loading configuration from file.");
 		configure();
-		
+
+		log.info("Initailizing site metadata watchdog.");
+		try {
+			ResourceWatchdog watchdog = new SitesFileWatchdog(siteConfigFileLocation, this);
+			watchdog.start();
+		} catch (ResourceNotAvailableException e) {
+			log.error("Sites file watchdog could not be initialized: " + e);
+		}
+
 		//Setup Cacheing options
 		wOptions.setDomain(config.getCacheDomain());
 		wOptions.setExpiration(config.getCacheExpiration());
-		
+
 		initViewConfig();
 		log.info("WAYF initialization completed.");
 	}
@@ -120,10 +131,11 @@ public class WayfService extends HttpServlet {
 
 		loadSiteConfig();
 	}
-	
+
 	private void loadSiteConfig() throws UnavailableException {
 		try {
-			InputStream siteIs = getServletContext().getResourceAsStream(siteConfigFileLocation);
+
+			InputStream siteIs = new ShibResource(siteConfigFileLocation, this.getClass()).getInputStream();
 			OriginSitesDigester siteDigester = new OriginSitesDigester();
 			siteDigester.setValidating(true);
 			originConfig = (WayfOrigins) siteDigester.parse(siteIs);
@@ -188,10 +200,7 @@ public class WayfService extends HttpServlet {
 				WayfCacheFactory.getInstance(config.getCacheType(), wOptions).deleteHsFromCache(req, res);
 				handleLookup(req, res);
 			} else if (WayfCacheFactory.getInstance(config.getCacheType()).hasCachedHS(req)) {
-				forwardToHS(
-					req,
-					res,
-					WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
+				forwardToHS(req, res, WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
 			} else if (requestType.equals("search")) {
 				handleSearch(req, res);
 			} else if (requestType.equals("selection")) {
@@ -229,7 +238,7 @@ public class WayfService extends HttpServlet {
 			throw new WayfException("Problem displaying WAYF UI." + se.toString());
 		}
 	}
-	
+
 	/**
 	 * Looks for origin sites that match search terms supplied by the user
 	 */
@@ -256,8 +265,7 @@ public class WayfService extends HttpServlet {
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
-			if ((req.getParameter("cache") != null)
-				&& req.getParameter("cache").equalsIgnoreCase("TRUE")) {
+			if ((req.getParameter("cache") != null) && req.getParameter("cache").equalsIgnoreCase("TRUE")) {
 				WayfCacheFactory.getInstance(config.getCacheType(), wOptions).addHsToCache(handleService, req, res);
 			}
 			forwardToHS(req, res, handleService);
@@ -339,28 +347,60 @@ public class WayfService extends HttpServlet {
 		}
 		return target;
 	}
-	
+
 	private WayfOrigins getOrigins() {
 		synchronized (originConfig) {
 			return originConfig;
 		}
 	}
-	
-	private void reloadOriginMetadata() {
+
+	private void reloadOriginMetadata() throws UnavailableException {
 
 		WayfOrigins safetyCache = getOrigins();
 		try {
 			synchronized (originConfig) {
 				loadSiteConfig();
+				getServletContext().setAttribute("originsets", getOrigins().getOriginSets());
 			}
-			getServletContext().setAttribute("originsets", getOrigins().getOriginSets());
+
 		} catch (UnavailableException e) {
 			log.error("Failed to load updated origin site metadata: " + e);
 			synchronized (originConfig) {
 				originConfig = safetyCache;
 			}
+			throw e;
 		}
 	}
 
-}
+	private class SitesFileWatchdog extends ResourceWatchdog {
 
+		private WayfService wayfService;
+		private SitesFileWatchdog(String sitesFileLocation, WayfService wayfService)
+			throws ResourceNotAvailableException {
+
+			super(new ShibResource(sitesFileLocation, wayfService.getClass()));
+			this.wayfService = wayfService;
+		}
+
+		/**
+		 * @see edu.internet2.middleware.shibboleth.common.ResourceWatchdog#doOnChange()
+		 */
+		protected void doOnChange() throws ResourceWatchdogExecutionException {
+			try {
+				wayfService.reloadOriginMetadata();
+			} catch (UnavailableException e) {
+				try {
+						log.error(
+							"Sites file at ("
+								+ resource.getURL().toString()
+								+ ") could not be loaded: " + e);
+				} catch (IOException ioe) {
+					log.error("Sites file could not be loaded.");
+				}
+				finally {
+					throw new ResourceWatchdogExecutionException("Watchdog reload failed.");
+				}
+			}
+		}
+	}
+}
