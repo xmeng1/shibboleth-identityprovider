@@ -55,12 +55,12 @@ import edu.internet2.middleware.shibboleth.aa.arp.MatchFunction;
 import edu.internet2.middleware.shibboleth.aa.arp.MatchingException;
 
 /**
- * Match function that does exact matching on requesters.
+ * Match function that matches strings that are not the same.
  *
  * @author Walter Hoehn (wassa&#064;columbia.edu)
  */
-public class ExactSharMatchFunction implements MatchFunction {
-	private static Logger log = Logger.getLogger(ExactSharMatchFunction.class.getName());
+public class StringValueNotMatchFunction implements MatchFunction {
+	private static Logger log = Logger.getLogger(StringValueNotMatchFunction.class.getName());
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.MatchFunction#match(Object,
 	 * 		Object)
@@ -68,14 +68,10 @@ public class ExactSharMatchFunction implements MatchFunction {
 	public boolean match(Object arpComponent, Object requestComponent)
 		throws MatchingException
 	{
-		if (arpComponent == null || requestComponent == null) {
-            log.error("Invalid use of ARP matching function (ExactSharMatchFunction). One of the operands was null.");
-            throw new MatchingException("Invalid use of ARP matching function (ExactSharMatchFunction).");
+		if (!(arpComponent instanceof String) || !(requestComponent instanceof String)) {
+			log.error("Invalid use of ARP matching function (StringValueNotMatchFunction).");
+			throw new MatchingException("Invalid use of ARP matching function (StringValueNotMatchFunction).");
 		}
-		else if (!(arpComponent instanceof String) || !(requestComponent instanceof String)) {
-			log.error("Invalid use of ARP matching function (ExactSharMatchFunction). arpComponent: (" + arpComponent + "). requestComponent: (" + requestComponent + ").");
-			throw new MatchingException("Invalid use of ARP matching function (ExactSharMatchFunction).");
-		}
-		return arpComponent.equals(requestComponent);
+		return !arpComponent.equals(requestComponent);
 	}
 }

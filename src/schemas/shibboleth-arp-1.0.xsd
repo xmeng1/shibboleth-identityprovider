@@ -18,7 +18,7 @@
 					<xs:sequence minOccurs="0">
 						<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 					</xs:sequence>
-					<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:stringValue"/>
+					<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:stringMatch"/>
 					<xs:attribute name="release" type="arp:RequireType" use="required"/>
 				</xs:complexType>
 			</xs:element>
@@ -46,7 +46,7 @@
 													<xs:complexType>
 														<xs:simpleContent>
 															<xs:extension base="xs:string">
-																<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:exactShar"/>
+																<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:stringMatch"/>
 															</xs:extension>
 														</xs:simpleContent>
 													</xs:complexType>

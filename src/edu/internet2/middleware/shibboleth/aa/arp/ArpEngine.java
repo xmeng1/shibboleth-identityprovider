@@ -78,18 +78,25 @@ public class ArpEngine {
 	static {
 		//Initialize built-in match functions
 		try {
-			matchFunctions.put(
-				new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"),
-				"edu.internet2.middleware.shibboleth.aa.arp.provider.ExactSharMatchFunction");
-			matchFunctions.put(
-				new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"),
-				"edu.internet2.middleware.shibboleth.aa.arp.provider.ResourceTreeMatchFunction");
-			matchFunctions.put(
-				new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"),
-				"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexMatchFunction");
-			matchFunctions.put(
-				new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"),
-				"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
+			
+			// Current
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"),
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexMatchFunction");
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:regexNotMatch"),
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexNotMatchFunction");
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch"),
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringNotMatch"),
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueNotMatchFunction");
+			
+			// Legacy
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"),
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"),
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.ResourceTreeMatchFunction");
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"),
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
+			
 		} catch (URISyntaxException e) {
 			log.error("Error mapping standard match functions: " + e);
 		}

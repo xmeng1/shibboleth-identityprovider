@@ -238,6 +238,12 @@ public class ArpTests extends TestCase {
 			assertNull("ArpEngine did not return null on dummy function.", noFunction);
 
 			//Lookup some real functions
+			MatchFunction stringMatch =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch"));
+			assertNotNull("ArpEngine did not properly load the String Match function.", stringMatch);
+			MatchFunction stringValue =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"));
+			assertNotNull("ArpEngine did not properly load the String Value function.", stringValue);
 			MatchFunction exactSharFunction =
 				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"));
 			assertNotNull("ArpEngine did not properly load the Exact SHAR function.", exactSharFunction);
@@ -247,6 +253,12 @@ public class ArpTests extends TestCase {
 			MatchFunction regexFunction =
 				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"));
 			assertNotNull("ArpEngine did not properly load the Regex function.", regexFunction);
+			MatchFunction regexNotFunction =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:regexNotMatch"));
+			assertNotNull("ArpEngine did not properly load the Regex Not Match function.", regexNotFunction);
+			MatchFunction stringNotFunction =
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:stringNotMatch"));
+			assertNotNull("ArpEngine did not properly load the String Not Match function.", stringNotFunction);
 
 			/* 
 			 * Test the Exact SHAR function (requester)
@@ -383,6 +395,39 @@ public class ArpTests extends TestCase {
 			} catch (ArpException ie) {
 				//This is supposed to fail
 			}
+			
+			// Test the StringNotMatch function
+			assertFalse(
+					"StringNotMatch function: false positive",
+					stringNotFunction.match("foo", "foo"));
+			assertTrue(
+					"StringNotMatch function: false negative",
+					stringNotFunction.match("foo", "bar"));
+			//Make sure we properly handle bad input
+			try {
+				stringNotFunction.match(null, null);
+				fail("StringNotMatch function seems to take improper input without throwing an exception.");
+			} catch (ArpException ie) {
+				//This is supposed to fail
+			}
+			
+			//Test the RegexNotMatch function
+			
+			assertFalse("Regex function: false positive", regexNotFunction.match("^foo$", "foo"));
+			assertTrue("Regex function: false negative", regexNotFunction.match("foo$", "bar"));
+			
+			// Make sure we properly handle bad input
+			try {
+				regexNotFunction.match(null, null);
+				fail("RegexNotMatch function seems to take improper input without throwing an exception.");
+			} catch (ArpException ie) {
+				//This is supposed to fail
+			}
+			
+			
+			
+			
+			
 
 		} catch (ArpException e) {
 			fail("Encountered a problem loading match function: " + e);

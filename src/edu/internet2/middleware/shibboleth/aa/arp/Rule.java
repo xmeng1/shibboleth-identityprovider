@@ -455,7 +455,7 @@ public class Rule {
 					DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 				Element requesterNode = placeHolder.createElementNS(Arp.arpNamespace, "Requester");
 				if (!matchFunctionIdentifier
-					.equals(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"))) {
+					.equals(new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch"))) {
 					requesterNode.setAttributeNS(Arp.arpNamespace, "matchFunction", matchFunctionIdentifier.toString());
 				}
 				Text valueNode = placeHolder.createTextNode(value);
@@ -495,7 +495,7 @@ public class Rule {
 				if (element.hasAttribute("matchFunction")) {
 					matchFunctionIdentifier = new URI(element.getAttribute("matchFunction"));
 				} else {
-					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:exactShar");
+					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch");
 				}
 			} catch (URISyntaxException e) {
 				log.error("ARP match function not identified by a proper URI.");
@@ -685,7 +685,7 @@ public class Rule {
 					valueNode.setAttributeNS(Arp.arpNamespace, "release", value.getRelease());
 					if (!value
 						.getMatchFunctionIdentifier()
-						.equals(new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"))) {
+						.equals(new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch"))) {
 						valueNode.setAttributeNS(
 							Arp.arpNamespace,
 							"matchFunction",
@@ -800,7 +800,7 @@ public class Rule {
 				this.matchFunctionIdentifier = matchFunctionIdentifier;
 			} else {
 				try {
-					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:stringValue");
+					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch");
 				} catch (URISyntaxException e) {
 					throw new ArpMarshallingException("ARP Engine internal error: could not set default matching function for attribute value.");
 				}
