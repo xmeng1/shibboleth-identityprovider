@@ -78,6 +78,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import edu.internet2.middleware.shibboleth.aa.AAAttribute;
+import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 
 /**
@@ -125,8 +127,7 @@ public class ArpTests extends TestCase {
 			parser.setFeature("http://xml.org/sax/features/validation", true);
 			parser.setFeature("http://apache.org/xml/features/validation/schema", true);
 			parser.setEntityResolver(new EntityResolver() {
-				public InputSource resolveEntity(String publicId, String systemId)
-					throws SAXException {
+				public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
 
 					if (systemId.endsWith("shibboleth-arp-1.0.xsd")) {
 						InputStream stream;
@@ -170,10 +171,7 @@ public class ArpTests extends TestCase {
 			parser.parse(new InputSource(inStream));
 			Arp arp1 = new Arp();
 			arp1.marshall(parser.getDocument().getDocumentElement());
-			assertEquals(
-				"ARP Description not marshalled properly",
-				arp1.getDescription(),
-				"Simplest possible ARP.");
+			assertEquals("ARP Description not marshalled properly", arp1.getDescription(), "Simplest possible ARP.");
 
 			//Test Rule description
 			assertEquals(
@@ -193,9 +191,7 @@ public class ArpTests extends TestCase {
 			assertNull("ARP Description not marshalled properly", arp2.getDescription());
 
 			//Test case where ARP Rule description does not exist	
-			assertNull(
-				"ARP Rule Description not marshalled properly",
-				arp2.getAllRules()[0].getDescription());
+			assertNull("ARP Rule Description not marshalled properly", arp2.getAllRules()[0].getDescription());
 		} catch (Exception e) {
 			fail("Failed to marshall ARP.");
 		}
@@ -212,26 +208,18 @@ public class ArpTests extends TestCase {
 
 			//Lookup a function that doesn't exist
 			MatchFunction noFunction =
-				ArpEngine.lookupMatchFunction(
-					new URI("urn:mace:shibboleth:arp:matchFunction:dummy"));
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:dummy"));
 			assertNull("ArpEngine did not return null on dummy function.", noFunction);
 
 			//Lookup some real functions
 			MatchFunction exactSharFunction =
-				ArpEngine.lookupMatchFunction(
-					new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"));
-			assertNotNull(
-				"ArpEngine did not properly load the Exact SHAR function.",
-				exactSharFunction);
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"));
+			assertNotNull("ArpEngine did not properly load the Exact SHAR function.", exactSharFunction);
 			MatchFunction resourceTreeFunction =
-				ArpEngine.lookupMatchFunction(
-					new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"));
-			assertNotNull(
-				"ArpEngine did not properly load the Resource Tree SHAR function.",
-				resourceTreeFunction);
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"));
+			assertNotNull("ArpEngine did not properly load the Resource Tree SHAR function.", resourceTreeFunction);
 			MatchFunction regexFunction =
-				ArpEngine.lookupMatchFunction(
-					new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"));
+				ArpEngine.lookupMatchFunction(new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"));
 			assertNotNull("ArpEngine did not properly load the Regex function.", regexFunction);
 
 			/* 
@@ -297,14 +285,10 @@ public class ArpTests extends TestCase {
 				resourceTreeFunction.match("http://www.example.edu/test2/index.html", requestURL4));
 			assertTrue(
 				"Resource Tree function: false negative",
-				resourceTreeFunction.match(
-					"http://www.example.edu/test2/index.html?test1=test1",
-					requestURL4));
+				resourceTreeFunction.match("http://www.example.edu/test2/index.html?test1=test1", requestURL4));
 			assertTrue(
 				"Resource Tree function: false positive",
-				!resourceTreeFunction.match(
-					"http://www.example.edu/test2/index.html?test1=test1",
-					requestURL3));
+				!resourceTreeFunction.match("http://www.example.edu/test2/index.html?test1=test1", requestURL3));
 
 			//Make sure we properly handle bad input
 			try {
@@ -334,9 +318,7 @@ public class ArpTests extends TestCase {
 			assertTrue(
 				"Regex function: false negative",
 				regexFunction.match("^shar[1-9]?\\.example\\.edu$", "shar1.example.edu"));
-			assertTrue(
-				"Regex function: false negative",
-				regexFunction.match(".*\\.edu", "shar.example.edu"));
+			assertTrue("Regex function: false negative", regexFunction.match(".*\\.edu", "shar.example.edu"));
 			assertTrue(
 				"Regex function: false positive",
 				!regexFunction.match("^shar[1-9]\\.example\\.edu$", "shar.example.edu"));
@@ -410,9 +392,7 @@ public class ArpTests extends TestCase {
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create memory-based Arp Repository" + e);
 		}
-		assertNotNull(
-			"Failed to create memory-based Arp Repository: Factory returned null.",
-			repository);
+		assertNotNull("Failed to create memory-based Arp Repository: Factory returned null.", repository);
 
 		/*
 		 * Exercise the Memory Arp Repository
@@ -428,9 +408,7 @@ public class ArpTests extends TestCase {
 				siteArp1,
 				repository.getSitePolicy());
 			repository.remove(repository.getSitePolicy());
-			assertNull(
-				"Memorty Repository does not properly delete Site ARPs.",
-				repository.getSitePolicy());
+			assertNull("Memorty Repository does not properly delete Site ARPs.", repository.getSitePolicy());
 		} catch (ArpRepositoryException e) {
 			fail("Error adding Site ARP to Memory Repository.");
 		}
@@ -474,18 +452,14 @@ public class ArpTests extends TestCase {
 		props.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository.Path",
 			new File("data/").toURI().toString());
-		props.setProperty(
-			"edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL",
-			"65535");
+		props.setProperty("edu.internet2.middleware.shibboleth.aa.arp.BaseArpRepository.ArpTTL", "65535");
 		repository = null;
 		try {
 			repository = ArpRepositoryFactory.getInstance(props);
 		} catch (ArpRepositoryException e) {
 			fail("Failed to create file-based Arp Repository" + e.getMessage());
 		}
-		assertNotNull(
-			"Failed to create file-based Arp Repository: Factory returned null.",
-			repository);
+		assertNotNull("Failed to create file-based Arp Repository: Factory returned null.", repository);
 
 		try {
 			Arp siteArp = repository.getSitePolicy();
@@ -493,8 +467,7 @@ public class ArpTests extends TestCase {
 			InputStream inStream = new FileInputStream("data/arp.site.xml");
 			parser.parse(new InputSource(inStream));
 			ByteArrayOutputStream directXML = new ByteArrayOutputStream();
-			new XMLSerializer(directXML, new OutputFormat()).serialize(
-				parser.getDocument().getDocumentElement());
+			new XMLSerializer(directXML, new OutputFormat()).serialize(parser.getDocument().getDocumentElement());
 
 			ByteArrayOutputStream processedXML = new ByteArrayOutputStream();
 			new XMLSerializer(processedXML, new OutputFormat()).serialize(siteArp.unmarshall());
@@ -509,8 +482,7 @@ public class ArpTests extends TestCase {
 			inStream = new FileInputStream("data/arp.user.test.xml");
 			parser.parse(new InputSource(inStream));
 			directXML = new ByteArrayOutputStream();
-			new XMLSerializer(directXML, new OutputFormat()).serialize(
-				parser.getDocument().getDocumentElement());
+			new XMLSerializer(directXML, new OutputFormat()).serialize(parser.getDocument().getDocumentElement());
 
 			processedXML = new ByteArrayOutputStream();
 			new XMLSerializer(processedXML, new OutputFormat()).serialize(userArp.unmarshall());
@@ -523,7 +495,7 @@ public class ArpTests extends TestCase {
 			Arp[] allArps = repository.getAllPolicies(new AuthNPrincipal("test"));
 
 			assertTrue("File-based ARP Repository did not return the correct number of ARPs.", (allArps.length == 2));
-		
+
 		} catch (Exception e) {
 			fail("Error retrieving ARP from Repository: " + e);
 		}
@@ -559,8 +531,7 @@ public class ArpTests extends TestCase {
 			arp1.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp1);
 			ArpEngine engine = new ArpEngine(repository, props);
-			URI[] possibleAttributes =
-				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
+			URI[] possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertEquals(
 				"Incorrectly computed possible release set (1).",
 				new HashSet(Arrays.asList(possibleAttributes)),
@@ -573,8 +544,7 @@ public class ArpTests extends TestCase {
 			arp7.setPrincipal(principal1);
 			arp7.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp7);
-			possibleAttributes =
-				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
+			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertEquals(
 				"Incorrectly computed possible release set (2).",
 				new HashSet(Arrays.asList(possibleAttributes)),
@@ -587,8 +557,7 @@ public class ArpTests extends TestCase {
 			arp6.setPrincipal(principal1);
 			arp6.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp6);
-			possibleAttributes =
-				engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
+			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
 			assertEquals(
 				"Incorrectly computed possible release set (3).",
 				new HashSet(Arrays.asList(possibleAttributes)),
@@ -653,8 +622,7 @@ public class ArpTests extends TestCase {
 				InputStream inStream = new FileInputStream(arpExamples[i]);
 				parser.parse(new InputSource(inStream));
 				ByteArrayOutputStream directXML = new ByteArrayOutputStream();
-				new XMLSerializer(directXML, new OutputFormat()).serialize(
-					parser.getDocument().getDocumentElement());
+				new XMLSerializer(directXML, new OutputFormat()).serialize(parser.getDocument().getDocumentElement());
 
 				Arp arp1 = new Arp();
 				arp1.marshall(parser.getDocument().getDocumentElement());
@@ -678,8 +646,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest1(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest1(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -697,10 +664,17 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
+
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -710,17 +684,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 1: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute })));
+		assertEquals("ARP application test 1: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -728,8 +694,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release, implicit deny
 	 */
-	void arpApplicationTest2(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest2(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -747,14 +712,24 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute1 =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
-		TestAttribute testAttribute2 =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
-				new Object[] { "mehoehn@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "faculty@example.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "mehoehn@example.edu" })
+		});
+
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					 new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "faculty@example.edu" })
+		});
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -764,17 +739,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute1, testAttribute2 },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 2: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1 })));
+		assertEquals("ARP application test 2: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -782,8 +749,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: One value release
 	 */
-	void arpApplicationTest3(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest3(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -801,14 +767,14 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
-		TestAttribute filteredAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute("urn:mace:eduPerson:1.0:eduPersonAffiliation", new Object[] { "member@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -818,17 +784,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 3: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+		assertEquals("ARP application test 3: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -836,8 +794,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, canonical representation
 	 */
-	void arpApplicationTest4(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest4(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -856,17 +813,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"faculty@example.edu",
-					"employee@example.edu" });
-		TestAttribute filteredAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "faculty@example.edu", "employee@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "faculty@example.edu", "employee@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -876,17 +832,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 4: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+		assertEquals("ARP application test 4: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -894,8 +842,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except one release, expanded representation
 	 */
-	void arpApplicationTest5(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest5(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -916,17 +863,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"faculty@example.edu",
-					"employee@example.edu" });
-		TestAttribute filteredAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "faculty@example.edu", "employee@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "faculty@example.edu", "employee@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -936,17 +882,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 5: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+		assertEquals("ARP application test 5: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -954,8 +892,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value except two release, expanded representation
 	 */
-	void arpApplicationTest6(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest6(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -979,17 +916,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"faculty@example.edu",
-					"employee@example.edu" });
-		TestAttribute filteredAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "employee@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "employee@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -999,17 +935,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 6: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+		assertEquals("ARP application test 6: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1017,8 +945,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, canonical representation
 	 */
-	void arpApplicationTest7(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest7(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1037,17 +964,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"faculty@example.edu",
-					"employee@example.edu" });
-		TestAttribute filteredAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1057,17 +983,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 3: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+		assertEquals("ARP application test 3: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1075,8 +993,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Two value release, expanded representation
 	 */
-	void arpApplicationTest8(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest8(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1097,17 +1014,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"faculty@example.edu",
-					"employee@example.edu" });
-		TestAttribute filteredAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1117,17 +1033,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 8: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { filteredAttribute })));
+		assertEquals("ARP application test 8: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1135,8 +1043,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny
 	 */
-	void arpApplicationTest9(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest9(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1154,10 +1061,11 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1167,17 +1075,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 9: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[0])));
+		assertEquals("ARP application test 9: ARP not applied as expected.", inputSet, new AAAttributeSet());
 	}
 
 	/**
@@ -1185,8 +1085,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny trumps explicit permit expanded representation
 	 */
-	void arpApplicationTest10(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest10(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1207,10 +1106,11 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1220,17 +1120,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 10: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[0])));
+		assertEquals("ARP application test 10: ARP not applied as expected.", inputSet, new AAAttributeSet());
 	}
 
 	/**
@@ -1238,8 +1130,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value deny trumps explicit permit canonical representation
 	 */
-	void arpApplicationTest11(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest11(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1258,10 +1149,11 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1271,17 +1163,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 11: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[0])));
+		assertEquals("ARP application test 11: ARP not applied as expected.", inputSet, new AAAttributeSet());
 	}
 
 	/**
@@ -1289,8 +1173,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Any Resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest12(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest12(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1309,10 +1192,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1322,17 +1211,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 12: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute })));
+		assertEquals("ARP application test 12: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1340,8 +1221,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Any Resource (another example)
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest13(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest13(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1360,10 +1240,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("https://foo.com/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1373,17 +1259,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 13: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute })));
+		assertEquals("ARP application test 13: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1391,8 +1269,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar (no match), Any Resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest14(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest14(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1411,10 +1288,11 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1424,17 +1302,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"www.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "www.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 14: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[0])));
+		assertEquals("ARP application test 14: ARP not applied as expected.", inputSet, new AAAttributeSet());
 	}
 
 	/**
@@ -1442,8 +1312,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest15(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest15(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1462,10 +1331,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/index.html");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1475,17 +1350,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 15: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute })));
+		assertEquals("ARP application test 15: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1493,8 +1360,7 @@ public class ArpTests extends TestCase {
 	 * Target: Specific shar, Specific resource (no match)
 	 * Attribute: Any value release
 	 */
-	void arpApplicationTest16(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest16(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1513,10 +1379,11 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1526,17 +1393,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 16: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[0])));
+		assertEquals("ARP application test 16: ARP not applied as expected.", inputSet, new AAAttributeSet());
 	}
 
 	/**
@@ -1544,8 +1403,7 @@ public class ArpTests extends TestCase {
 	 * Target: Multiple matching rules
 	 * Attribute: various
 	 */
-	void arpApplicationTest17(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest17(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1581,18 +1439,27 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
-		TestAttribute testAttribute1 =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
-		TestAttribute testAttribute2 =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
-				new Object[] { "wassa@columbia.edu" });
-		TestAttribute filteredAttribute1 =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "faculty@example.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "wassa@columbia.edu" })
+		});
+
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "wassa@columbia.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu" })
+		});
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1602,17 +1469,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute1, testAttribute2 },
-				principal1,
-				"shar1.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar1.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 17: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute2, filteredAttribute1 })));
+		assertEquals("ARP application test 17: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1620,8 +1479,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release of two attributes in one rule
 	 */
-	void arpApplicationTest18(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest18(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1642,14 +1500,27 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute1 =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
-		TestAttribute testAttribute2 =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
-				new Object[] { "mehoehn@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "faculty@example.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "mehoehn@example.edu" })
+		});
+
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "faculty@example.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "mehoehn@example.edu" })
+		});
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1659,17 +1530,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute1, testAttribute2 },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 18: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute1, testAttribute2 })));
+		assertEquals("ARP application test 18: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1677,8 +1540,7 @@ public class ArpTests extends TestCase {
 	 * Target: Any
 	 * Attribute: Any value release,
 	 */
-	void arpApplicationTest19(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest19(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawArp =
@@ -1696,10 +1558,16 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		TestAttribute testAttribute =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "faculty@example.edu" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute(
+					"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+					new Object[] { "member@example.edu", "faculty@example.edu" }));
 
 		//Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1710,17 +1578,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] { testAttribute },
-				principal1,
-				"shar.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 19: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(Arrays.asList(new ArpAttribute[] { testAttribute })));
+		assertEquals("ARP application test 19: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1728,8 +1588,7 @@ public class ArpTests extends TestCase {
 	 * Target: various
 	 * Attribute: various combinations
 	 */
-	void arpApplicationTest20(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest20(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawSiteArp =
@@ -1806,40 +1665,39 @@ public class ArpTests extends TestCase {
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/test/index.html");
 
-		TestAttribute entitlementInput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonEntitlement",
-				new Object[] {
-					"urn:example:lovesIceCream",
-					"urn:example:poorlyDressed",
-					"urn:example:contract:113455",
-					"urn:example:contract:4657483" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						new Object[] {
+							"urn:example:lovesIceCream",
+							"urn:example:poorlyDressed",
+							"urn:example:contract:113455",
+							"urn:example:contract:4657483" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "wassa@example.edu" }),
+					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
+		});
 
-		TestAttribute affiliationInput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"faculty@example.edu",
-					"employee@example.edu" });
-
-		TestAttribute principalNameInput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
-				new Object[] { "wassa@example.edu" });
-
-		TestAttribute preferredLanguageInput =
-			new TestAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" });
-
-		TestAttribute entitlementOutput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonEntitlement",
-				new Object[] { "urn:example:lovesIceCream", "urn:example:contract:4657483" });
-
-		TestAttribute affiliationOutput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu", "employee@example.edu" });
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						new Object[] { "urn:example:lovesIceCream", "urn:example:contract:4657483" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "employee@example.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "wassa@example.edu" }),
+					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
+		});
 
 		//Add the site ARP
 		parser.parse(new InputSource(new StringReader(rawSiteArp)));
@@ -1857,27 +1715,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] {
-					entitlementInput,
-					affiliationInput,
-					principalNameInput,
-					preferredLanguageInput },
-				principal1,
-				"www.example.edu",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "www.example.edu", url1);
 
-		assertEquals(
-			"ARP application test 20: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(
-				Arrays.asList(
-					new ArpAttribute[] {
-						entitlementOutput,
-						affiliationOutput,
-						principalNameInput,
-						preferredLanguageInput })));
+		assertEquals("ARP application test 20: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 	/**
@@ -1885,8 +1725,7 @@ public class ArpTests extends TestCase {
 	 * Target: various
 	 * Attribute: various combinations (same ARPs as 20, different requester)
 	 */
-	void arpApplicationTest21(ArpRepository repository, Properties props, DOMParser parser)
-		throws Exception {
+	void arpApplicationTest21(ArpRepository repository, Properties props, DOMParser parser) throws Exception {
 
 		//Gather the Input
 		String rawSiteArp =
@@ -1963,40 +1802,36 @@ public class ArpTests extends TestCase {
 		Principal principal1 = new AuthNPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.external.com/");
 
-		TestAttribute entitlementInput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonEntitlement",
-				new Object[] {
-					"urn:example:lovesIceCream",
-					"urn:example:poorlyDressed",
-					"urn:example:contract:113455",
-					"urn:example:contract:4657483" });
+		AAAttributeSet inputSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						new Object[] {
+							"urn:example:lovesIceCream",
+							"urn:example:poorlyDressed",
+							"urn:example:contract:113455",
+							"urn:example:contract:4657483" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu", "faculty@example.edu", "employee@example.edu" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
+						new Object[] { "wassa@example.edu" }),
+					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
+		});
 
-		TestAttribute affiliationInput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] {
-					"member@example.edu",
-					"faculty@example.edu",
-					"employee@example.edu" });
-
-		TestAttribute principalNameInput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonPrincipalName",
-				new Object[] { "wassa@example.edu" });
-
-		TestAttribute preferredLanguageInput =
-			new TestAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" });
-
-		TestAttribute entitlementOutput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonEntitlement",
-				new Object[] { "urn:example:contract:113455" });
-
-		TestAttribute affiliationOutput =
-			new TestAttribute(
-				"urn:mace:eduPerson:1.0:eduPersonAffiliation",
-				new Object[] { "member@example.edu" });
+		AAAttributeSet releaseSet =
+			new AAAttributeSet(
+				new AAAttribute[] {
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonEntitlement",
+						new Object[] { "urn:example:contract:113455" }),
+					new AAAttribute(
+						"urn:mace:eduPerson:1.0:eduPersonAffiliation",
+						new Object[] { "member@example.edu" }),
+					new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[] { "EO" })
+		});
 
 		//Add the site ARP
 		parser.parse(new InputSource(new StringReader(rawSiteArp)));
@@ -2014,80 +1849,9 @@ public class ArpTests extends TestCase {
 		ArpEngine engine = new ArpEngine(repository, props);
 
 		//Apply the ARP
-		ArpAttribute[] releaseAttributes =
-			engine.filterAttributes(
-				new ArpAttribute[] {
-					entitlementInput,
-					affiliationInput,
-					principalNameInput,
-					preferredLanguageInput },
-				principal1,
-				"www.external.com",
-				url1);
+		engine.filterAttributes(inputSet, principal1, "www.external.com", url1);
 
-		assertEquals(
-			"ARP application test 21: ARP not applied as expected.",
-			new HashSet(Arrays.asList(releaseAttributes)),
-			new HashSet(
-				Arrays.asList(
-					new ArpAttribute[] {
-						entitlementOutput,
-						affiliationOutput,
-						preferredLanguageInput })));
-	}
-
-	public class TestAttribute implements ArpAttribute {
-		private String name;
-		private Object[] values;
-
-		public TestAttribute(String name, Object[] values) {
-			this.name = name;
-			this.values = values;
-		}
-
-		/**
-		 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute#getName()
-		 */
-		public String getName() {
-			return name;
-		}
-
-		/**
-		 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute#getValues()
-		 */
-		public Object[] getValues() {
-			return values;
-		}
-
-		/**
-		 * @see edu.internet2.middleware.shibboleth.aa.arp.ArpAttribute#setValues(Object[])
-		 */
-		public void setValues(Object[] values) {
-			this.values = values;
-		}
-
-		/**
-		 * @see java.lang.Object#equals(Object)
-		 */
-		public boolean equals(Object object) {
-			if (!(object instanceof TestAttribute)) {
-				return false;
-			}
-			return (new HashSet(Arrays.asList(values))).equals(
-				new HashSet(Arrays.asList(((TestAttribute) object).getValues())));
-		}
-
-		/**
-		* @see java.lang.Object#hashCode()
-		*/
-		public int hashCode() {
-			int code = 0;
-			for (int i = 0; i < values.length; i++) {
-				code += values[i].hashCode();
-			}
-			return name.hashCode() + code;
-		}
-
+		assertEquals("ARP application test 21: ARP not applied as expected.", inputSet, releaseSet);
 	}
 
 }
