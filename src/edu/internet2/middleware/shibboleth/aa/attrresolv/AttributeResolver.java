@@ -250,6 +250,18 @@ public class AttributeResolver {
 				inconsistent.add(plugIn.getId());
 				return;
 			}
+			
+			ResolutionPlugIn dependent = lookupPlugIn(key);
+			if (!(dependent instanceof DataConnectorPlugIn)) {
+				log.error(
+					"The PlugIn ("
+						+ plugIn.getId()
+						+ ") is inconsistent.  It depends on a PlugIn ("
+						+ key
+						+ ") that is mislabeled as an DataConnectorPlugIn.");
+				inconsistent.add(plugIn.getId());
+				return;
+			}
 		}
 
 		//Recursively go through all AttributeDefinition dependencies and make sure all are registered and consistent.

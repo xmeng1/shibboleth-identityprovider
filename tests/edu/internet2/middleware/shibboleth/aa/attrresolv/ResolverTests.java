@@ -354,6 +354,67 @@ public class ResolverTests extends TestCase {
 			fail("Error creating SAML Attribute: " + e.getMessage());
 		}
 	}
+	
+	public void testMisLabeledDataConnector() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver11.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+
+			AAAttributeSet inputAttributes =
+				new AAAttributeSet(
+					new AAAttribute[] { new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")});
+
+			AAAttributeSet outputAttributes = new AAAttributeSet();
+
+			ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", inputAttributes);
+
+			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
+
+		} catch (AttributeResolverException e) {
+			fail("Couldn't load attribute resolver: " + e.getMessage());
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		} catch (SAMLException e) {
+			fail("Error creating SAML Attribute: " + e.getMessage());
+		}
+	}
+
+	public void testMisLabeledAttributeDefinition() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver10.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+
+			AAAttributeSet inputAttributes =
+				new AAAttributeSet(
+					new AAAttribute[] { new AAAttribute("urn:mace:eduPerson:1.0:eduPersonScopedAffiliation")});
+
+			AAAttributeSet outputAttributes = new AAAttributeSet();
+
+			ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", inputAttributes);
+
+			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
+		} catch (ClassCastException e) {
+			fail("Failed to detect that an Attribute Definition was mislabeled as a Data Connector: " + e.getMessage());
+		} catch (AttributeResolverException e) {
+			fail("Couldn't load attribute resolver: " + e.getMessage());
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		} catch (SAMLException e) {
+			fail("Error creating SAML Attribute: " + e.getMessage());
+		}
+	}
 
 
 }
