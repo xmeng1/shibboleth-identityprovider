@@ -317,7 +317,6 @@ public class JDBCDataConnector extends BaseResolutionPlugIn implements DataConne
 			if (!rs.next()) {
 				return new BasicAttributes();
 			}
-
 		} catch (JDBCStatementCreatorException e) {
 			log.error("An ERROR occured while constructing the query");
 			throw new ResolutionPlugInException("An ERROR occured while constructing the query: " + e.getMessage());
@@ -521,42 +520,43 @@ class DefaultAE implements JDBCAttributeExtractor {
 	 */
 	public BasicAttributes extractAttributes(ResultSet rs) throws JDBCAttributeExtractorException {
 		BasicAttributes attributes = new BasicAttributes();
-
+        int row = 0;
+        
 		try {
-			ResultSetMetaData rsmd = rs.getMetaData();
-			int numColumns = rsmd.getColumnCount();
-			log.debug("Number of returned columns: " + numColumns);
+            // Get metadata about result set.
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int numColumns = rsmd.getColumnCount();
+            log.debug("Number of returned columns: " + numColumns);
 
-			for (int i = 1; i <= numColumns; i++) {
-				String columnName = rsmd.getColumnName(i);
-				String columnType = rsmd.getColumnTypeName(i);
-				Object columnValue = rs.getObject(columnName);
-				log.debug(
-					"("
-						+ i
-						+ ". ColumnType = "
-						+ columnType
-						+ ") "
-						+ columnName
-						+ " -> "
-						+ (columnValue != null ? columnValue.toString() : "(null)"));
-				attributes.put(new BasicAttribute(columnName, columnValue));
-			}
+            do {
+                for (int i = 1; i <= numColumns; i++) {
+                    String columnName = rsmd.getColumnName(i);
+                    Object columnValue = rs.getObject(columnName);
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            "("
+                                + i
+                                + ". ColumnType = " + rsmd.getColumnTypeName(i)
+                                + ") "
+                                + columnName
+                                + " -> "
+                                + (columnValue != null ? columnValue.toString() : "(null)"));
+                    }
+                    if (row == 0) {
+                        BasicAttribute ba = new BasicAttribute(columnName, true);
+                        ba.add(row,columnValue);
+                        attributes.put(ba);
+                    }
+                    else {
+                        attributes.get(columnName).add(row,columnValue);
+                    }
+                }
+                row++;
+            } while (rs.next());
 		} catch (SQLException e) {
-			log.error("An ERROR occured while retrieving result set meta data");
+			log.error("An ERROR occured while processing result set");
 			throw new JDBCAttributeExtractorException(
-				"An ERROR occured while retrieving result set meta data: " + e.getMessage());
-		}
-
-		// Check for multiple rows.
-		try {
-			if (rs.next()) {
-				throw new JDBCAttributeExtractorException("Query returned more than one row.");
-			}
-		} catch (SQLException e) {
-			log.error("An ERROR occured while retrieving result set meta data");
-			throw new JDBCAttributeExtractorException(
-				"An ERROR occured while retrieving result set meta data: " + e.getMessage());
+				"An ERROR occured while processing result set: " + e.getMessage());
 		}
 
 		return attributes;
