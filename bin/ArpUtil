@@ -1,20 +1,63 @@
 #!/bin/sh
 
-#The Shibboleth webapp root
-if [ -n SHIB_ROOT ]
-	then
-		SHIB_ROOT=/usr/local/tomcat/webapps/shibboleth
+##We need a JVM
+if [ ! -n "$JAVA_HOME" ] ; then
+  echo "Error: JAVA_HOME is not defined."
+  exit
 fi
 
-#Where log4j config file is
-LOG_CONFIG=$SHIB_ROOT/WEB-INF/conf/log4j.properties
-
-#Where ARPs directory is
-ARP_DIR=$SHIB_ROOT/arps
-
-if [ -n JAVA_HOME ]
-	then
-		$JAVA_HOME/bin/java -Dlog.config=$LOG_CONFIG -Darp.dir=$ARP_DIR -cp $SHIB_ROOT/WEB-INF/classes:$SHIB_ROOT/WEB-INF/lib/log4j-1.2.5.jar edu.internet2.middleware.shibboleth.aa.arpUtil.ArpUtil "$@"
-	else
-		echo "JAVA_HOME not set."
+if [ ! -n "$JAVACMD" ] ; then
+  JAVACMD=$JAVA_HOME/bin/java
 fi
+
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly."
+  echo "Cannot execute $JAVACMD"
+  exit
+fi
+
+
+##Find the shibboleth components
+if [ ! -n "$SHIB_HOME" ] ; then
+  echo "Error: SHIB_HOME is not defined."
+  exit
+fi
+
+if [ ! \( -f "$SHIB_HOME/lib/shib-util.jar" -a -r "$SHIB_HOME/lib/shib-util.jar" \) ] ; then
+  echo "Error: Cannot find shibboleth utility jar."
+  echo "       If you downloaded the shibboleth source, you need to run \"ant build-util\""
+  exit
+fi
+
+if [ ! -n "$ARP_DIR" ] ; then
+  echo "Warning: Using working directory for ARP storage.  Define ARP_DIR to use another directory."
+  ARP_DIR=.
+fi
+
+if [ ! -n "$LOG_CONFIG" ] ; then
+  LOG_CONFIG=$SHIB_HOME/conf/log4j.properties
+fi
+
+
+##Grab all the dependencies
+if [ -n "$CLASSPATH" ] ; then
+  SHIB_UTIL_CLASSPATH=$CLASSPATH
+fi
+
+DIRLIBS=${SHIB_HOME}/lib/*.jar
+for i in ${DIRLIBS}
+do
+    # if the directory is empty, then it will return the input string
+    # this is stupid, so case for it
+    if [ "$i" != "${DIRLIBS}" ] ; then
+      if [ -z "$SHIB_UTIL_CLASSPATH" ] ; then
+        SHIB_UTIL_CLASSPATH=$i
+      else
+        SHIB_UTIL_CLASSPATH="$i":$SHIB_UTIL_CLASSPATH
+      fi
+    fi
+done
+
+
+##Here we go
+$JAVACMD -Dlog.config=$LOG_CONFIG -Darp.dir=$ARP_DIR -classpath $SHIB_UTIL_CLASSPATH edu.internet2.middleware.shibboleth.utils.ArpUtil "$@"
