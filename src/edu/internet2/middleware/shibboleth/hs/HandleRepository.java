@@ -62,8 +62,9 @@ public interface HandleRepository {
 	/**
 	 * Creates an opaque identifier that may be shared with target sites and subsequently 
 	 * used in attribute requests for the given <code>AuthNPrincipal</code>.
+	 * @throws HandleRepositoryException if a Attribute Query Handle could not be created.
 	 */
-	public String getHandle(AuthNPrincipal principal);
+	public String getHandle(AuthNPrincipal principal) throws HandleRepositoryException;
 
 	/**
 	 * Finds the <code>AuthNPrincipal</code> associated with a given opaque identifier.

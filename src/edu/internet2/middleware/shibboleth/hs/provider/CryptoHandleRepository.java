@@ -56,6 +56,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -69,7 +71,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 
 import org.apache.log4j.Logger;
-
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -95,8 +96,8 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 
 			keyStore.load(
 				new FileInputStream(
-					properties
-						.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath")),
+					properties.getProperty(
+						"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath")),
 				properties
 					.getProperty("edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePassword")
 					.toCharArray());
@@ -138,8 +139,13 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
-	public String getHandle(AuthNPrincipal principal) {
+	public String getHandle(AuthNPrincipal principal) throws HandleRepositoryException {
 		try {
+			if (principal == null) {
+				log.error("A principal must be supplied for Attribute Query Handle creation.");
+				throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
+			}
+
 			HandleEntry handleEntry = createHandleEntry(principal);
 			ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 			GZIPOutputStream zipStream = new GZIPOutputStream(outStream);
@@ -155,9 +161,15 @@ public class CryptoHandleRepository extends BaseHandleRepository implements Hand
 			String handle = new BASE64Encoder().encode(cipherTextHandle);
 			return handle.replaceAll(System.getProperty("line.separator"), "");
 
-		} catch (Exception e) {
-			System.err.println(e);
-			return null;
+		} catch (KeyException e) {
+			log.error("Could not use the supplied secret key for Triple DES encryption: " + e);
+			throw new HandleRepositoryException("Could not use the supplied secret key for Triple DES encryption.");
+		} catch (GeneralSecurityException e) {
+			log.error("Appropriate JCE provider not found in the java environment.  Could not load Cipher: " + e);
+			throw new HandleRepositoryException("Appropriate JCE provider not found in the java environment.  Could not load Cipher.");
+		} catch (IOException e) {
+			log.error("Could not serialize Principal for handle creation: " + e);
+			throw new HandleRepositoryException("Could not serialize Principal for Attribute Query Handle creation.");
 		}
 	}
 

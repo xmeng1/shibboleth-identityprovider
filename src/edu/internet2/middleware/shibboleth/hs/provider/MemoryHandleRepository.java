@@ -82,7 +82,13 @@ public class MemoryHandleRepository extends BaseHandleRepository implements Hand
 	/**
 	 * @see edu.internet2.middleware.shibboleth.hs.HandleRepository#getHandle(Principal)
 	 */
-	public String getHandle(AuthNPrincipal principal) {
+	public String getHandle(AuthNPrincipal principal) throws HandleRepositoryException {
+
+		if (principal == null) {
+			log.error("A principal must be supplied for Attribute Query Handle creation.");
+			throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
+		}
+
 		String handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
 		log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
 		synchronized (cache.handleEntries) {

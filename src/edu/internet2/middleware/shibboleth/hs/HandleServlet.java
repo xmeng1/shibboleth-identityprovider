@@ -236,11 +236,14 @@ public class HandleServlet extends HttpServlet {
 			String handle = handleRepository.getHandle(new AuthNPrincipal(req.getRemoteUser()));
 			log.info("Issued Handle (" + handle + ") to (" + req.getRemoteUser() + ")");
 
-			byte[] buf =
-				generateAssertion(handle, req.getParameter("shire"), req.getRemoteAddr(), req.getAuthType());
+			byte[] buf = generateAssertion(handle, req.getParameter("shire"), req.getRemoteAddr(), req.getAuthType());
 
 			createForm(req, res, buf);
 
+		} catch (HandleRepositoryException ex) {
+			log.error(ex);
+			handleError(req, res, ex);
+			return;
 		} catch (HandleException ex) {
 			log.error(ex);
 			handleError(req, res, ex);
