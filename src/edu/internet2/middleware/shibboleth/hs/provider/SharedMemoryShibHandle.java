@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.doomdark.uuid.UUIDGenerator;
+import org.opensaml.SAMLConfig;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
@@ -55,6 +55,7 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 
 	protected HandleCache cache = HandleCache.instance();
 	private static Logger log = Logger.getLogger(SharedMemoryShibHandle.class.getName());
+    private static SAMLConfig config = SAMLConfig.instance();
 
 	public SharedMemoryShibHandle(Element config) throws NameIdentifierMappingException {
 
@@ -69,7 +70,7 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 			throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
 		}
 
-		String handle = UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
+		String handle = new String(config.getDefaultIDProvider().generateRandomBytes(36));
 		log.debug("Assigning handle (" + handle + ") to principal (" + principal.getName() + ").");
 		synchronized (cache.handleEntries) {
 			cache.handleEntries.put(handle, createHandleEntry(principal));
