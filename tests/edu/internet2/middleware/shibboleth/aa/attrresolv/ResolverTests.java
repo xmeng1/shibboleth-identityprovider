@@ -229,20 +229,49 @@ public class ResolverTests extends TestCase {
 	
 	public void testFailToLoadCircularDependenciesDeeper() {
 
-			try {
-				Properties props = new Properties();
-				File file = new File("data/resolver6.xml");
-				props.setProperty(
-					"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
-					file.toURL().toString());
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver6.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
 
-				AttributeResolver ar = new AttributeResolver(props);
-				fail("Attribute Resolver loaded even when no only PlugIns with circular dependencies were configured.");
-			} catch (AttributeResolverException e) {
-				//This exception should be thrown, ignoring
-			} catch (MalformedURLException e) {
-				fail("Error in test specification: " + e.getMessage());
-			}
+			AttributeResolver ar = new AttributeResolver(props);
+			fail("Attribute Resolver loaded even when no only PlugIns with circular dependencies were configured.");
+		} catch (AttributeResolverException e) {
+			//This exception should be thrown, ignoring
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
 		}
+	}
+
+	public void testSourceNameMapping() {
+
+		try {
+			Properties props = new Properties();
+			File file = new File("data/resolver7.xml");
+			props.setProperty(
+				"edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver.ResolverConfig",
+				file.toURL().toString());
+
+			AttributeResolver ar = new AttributeResolver(props);
+
+			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[] { new AAAttribute("myAffiliation")});
+
+			AAAttributeSet outputAttributes =
+				new AAAttributeSet(new AAAttribute[] { new AAAttribute("myAffiliation", new Object[] { "member" })
+			});
+
+			ar.resolveAttributes(new PrincipalImpl("mytestuser"), "shar.example.edu", inputAttributes);
+			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
+
+		} catch (AttributeResolverException e) {
+			fail("Couldn't load attribute resolver: " + e.getMessage());
+		} catch (MalformedURLException e) {
+			fail("Error in test specification: " + e.getMessage());
+		} catch (SAMLException e) {
+			fail("Error creating SAML Attribute: " + e.getMessage());
+		}
+	}
 
 }
