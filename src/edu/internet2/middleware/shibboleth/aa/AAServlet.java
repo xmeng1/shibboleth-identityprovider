@@ -150,9 +150,6 @@ public class AAServlet extends HttpServlet {
 		defaultProps.setProperty(
 			"edu.internet2.middleware.shibboleth.aa.arp.ArpRepository.implementation",
 			"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
-		defaultProps.setProperty(
-			"edu.internet2.middleware.shibboleth.hs.provider.CryptoHandleRepository.keyStorePath",
-			"/conf/handle.jks");
 		defaultProps.setProperty("edu.internet2.middleware.shibboleth.audiences", "urn:mace:incommon:pilot");
 		defaultProps.setProperty("edu.internet2.middleware.shibboleth.aa.AAServlet.passThruErrors", "false");
 
