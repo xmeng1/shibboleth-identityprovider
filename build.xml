@@ -64,7 +64,8 @@
 
 
     <!-- Compile classes and move them to ${build} -->
-    <target name="compile" depends="init">
+    <target name="compile" depends="init"
+    	description="Compile source file, combine with schemas and conf directories">
         <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on">
             <classpath refid="build.path" />
         </javac>
@@ -109,8 +110,10 @@
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
     </target>
 	
-    <target name="dist-IdP-SP" depends="compile, test-IdP, package-IdP-SP, clean-build" />
-    <target name="package-IdP-SP">
+    <target name="dist-IdP-SP" depends="compile, package-IdP-SP, clean-build" 
+    	description="Build application from source, create shibboleth.war file for IdP and SP"/>
+    <target name="package-IdP-SP" depends="compile"
+    	description="Create shibboleth.war file from build output and IdP-SP deployment descriptor">
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/IdP-SP.xml" basedir="${approot}" update="no" />
     </target>
 
@@ -182,7 +185,7 @@
         <tomcatUndeploy url="${url}" username="${username}" password="${password}" path="/${distname}"/>
     </target>
 	
-	<target name="distcopy">
+	<target name="distcopy" description="Copy shibboleth.war to {tomcat.home}/webapps (Tomcat must be stopped first)">
 		<!-- Deploy war file by copy and delete. Tomcat must not be
 		     running when this occurs. --> 
 		<copy file="${dist}/${distname}.war" 
