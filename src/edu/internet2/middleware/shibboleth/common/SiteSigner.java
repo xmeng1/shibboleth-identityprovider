@@ -52,7 +52,6 @@ package edu.internet2.middleware.shibboleth.common;
 import java.io.*;
 import java.security.*;
 import java.security.cert.*;
-import javax.xml.parsers.*;
 import org.apache.xml.security.c14n.*;
 import org.apache.xml.security.signature.*;
 import org.apache.xml.security.transforms.*;
@@ -162,8 +161,7 @@ public class SiteSigner
             System.exit(1);
         }
 
-        DocumentBuilder builder = org.opensaml.XML.parserPool.get();
-        Document doc = builder.parse(arg);
+        Document doc = org.opensaml.XML.parserPool.parse(arg);
         Element e = doc.getDocumentElement();
         if (!XML.SHIB_NS.equals(e.getNamespaceURI()) || !"Sites".equals(e.getLocalName()))
         {

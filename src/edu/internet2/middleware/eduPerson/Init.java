@@ -49,8 +49,6 @@
 
 package edu.internet2.middleware.eduPerson;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 /**
  *  Handles one-time library initialization
  *
@@ -70,14 +68,7 @@ public class Init
         initialized = true;
         
         edu.internet2.middleware.shibboleth.common.Init.init();
-        try
-        {
-            org.opensaml.XML.parserPool.registerExtension(XML.EDUPERSON_NS, XML.EDUPERSON_SCHEMA_ID, new XML.SchemaResolver());
-        }
-        catch (ParserConfigurationException e)
-        {
-            throw new RuntimeException("Init.init() unable to register extension schema");
-        }
+        org.opensaml.XML.parserPool.registerSchema(XML.EDUPERSON_NS, XML.EDUPERSON_SCHEMA_ID, new XML.SchemaResolver());
     }
 
     static

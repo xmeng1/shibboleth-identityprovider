@@ -59,8 +59,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import javax.crypto.SecretKey;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
 import org.apache.xml.security.exceptions.XMLSecurityException;
@@ -278,11 +276,9 @@ public class ShibPOSTProfile
         if (assertionKey != null && !(assertionKey instanceof PrivateKey) && !(assertionKey instanceof SecretKey))
             throw new InvalidCryptoException(SAMLException.RESPONDER, "ShibPOSTProfile.prepare() detected an invalid type of assertion key");
 
-        DocumentBuilder builder = null;
         try
         {
-            builder = org.opensaml.XML.parserPool.get();
-            Document doc = builder.newDocument();
+            Document doc = org.opensaml.XML.parserPool.newDocument();
 
             XMLSignature rsig = new XMLSignature(doc, null, algorithm);
             XMLSignature asig = null;
@@ -320,18 +316,9 @@ public class ShibPOSTProfile
                 rsig.sign((SecretKey)responseKey);
             return r;
         }
-        catch (ParserConfigurationException pce)
-        {
-            throw new SAMLException(SAMLException.RESPONDER, "ShibPOSTProfile.prepare() unable to obtain XML parser instance: " + pce.getMessage(), pce);
-        }
         catch (XMLSecurityException e)
         {
             throw new InvalidCryptoException(SAMLException.RESPONDER, "ShibPOSTProfile.prepare() detected an XML security problem during signature creation", e);
-        }
-        finally
-        {
-            if (builder != null)
-                org.opensaml.XML.parserPool.put(builder);
         }
     }
 

@@ -57,9 +57,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.log4j.Logger;
 import org.apache.xml.security.c14n.Canonicalizer;
 import org.apache.xml.security.exceptions.XMLSecurityException;
@@ -110,11 +107,8 @@ public class XMLOriginSiteMapper implements OriginSiteMapper {
 		originSites = new HashMap();
 		hsKeys = new HashMap();
 
-		DocumentBuilder builder = null;
 		try {
-			builder = org.opensaml.XML.parserPool.get();
-			Document doc;
-			doc = builder.parse(registryURI);
+			Document doc=org.opensaml.XML.parserPool.parse(registryURI);
 			log.info("Located site file (" +registryURI +").");
 			Element e = doc.getDocumentElement();
 			if (!XML.SHIB_NS.equals(e.getNamespaceURI()) || !"Sites".equals(e.getLocalName())) {
@@ -186,13 +180,10 @@ public class XMLOriginSiteMapper implements OriginSiteMapper {
 		} catch (IOException e) {
 			log.error("Problem accessing site configuration" + e);
 			throw new OriginSiteMapperException("Problem accessing site configuration" + e);
-		} catch (ParserConfigurationException pce) {
-			log.error("Parser configuration error" + pce);
-			throw new OriginSiteMapperException("Parser configuration error" + pce);
-		} finally {
-			if (builder != null)
-				org.opensaml.XML.parserPool.put(builder);
-		}
+		} catch (org.opensaml.SAMLException e) {
+                        log.error("Problem configuring parser: " + e);
+                        throw new OriginSiteMapperException("Problem configuring parser: " + e);
+                }
 	}
 
 	private void validateSignature(Key verifyKey, Element e) throws OriginSiteMapperException {

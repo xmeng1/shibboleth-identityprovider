@@ -49,8 +49,6 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import edu.internet2.middleware.shibboleth.common.XML.SchemaResolver;
 
 /**
@@ -72,14 +70,7 @@ public class Init
         initialized = true;
         
         org.opensaml.Init.init();
-        try
-        {
-            org.opensaml.XML.parserPool.registerExtension(XML.SHIB_NS, XML.SHIB_SCHEMA_ID, new XML.SchemaResolver());
-        }
-        catch (ParserConfigurationException e)
-        {
-            throw new RuntimeException("Init.init() unable to register extension schema");
-        }
+        org.opensaml.XML.parserPool.registerSchema(XML.SHIB_NS, XML.SHIB_SCHEMA_ID, new XML.SchemaResolver());
     }
 
     static
