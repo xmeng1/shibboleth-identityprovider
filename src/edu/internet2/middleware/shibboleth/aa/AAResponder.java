@@ -1,6 +1,5 @@
 package edu.internet2.middleware.shibboleth.aa;
 
-//import aa.*;
 import java.io.*;
 import java.util.*;
 import java.lang.reflect.*;
@@ -9,22 +8,23 @@ import javax.servlet.http.*;
 import javax.naming.*;
 import javax.naming.directory.*;
 import edu.internet2.middleware.shibboleth.*;
+import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
 import org.w3c.dom.*;
 import org.opensaml.*;
 
 public class AAResponder{
 
-    //HandleRepositoryFactory hrf;
+    HandleRepositoryFactory hrf;
     ArpFactory arpFactory;
     Arp adminArp;
     DirContext ctx;
     String domain;
 
-    public AAResponder(/*HandleRepositoryFactory*/String hrf, ArpFactory arpFactory, DirContext ctx, String domain)
+    public AAResponder(HandleRepositoryFactory hrf, ArpFactory arpFactory, DirContext ctx, String domain)
 	throws AAException{
 
-	//this.hrf = hrf;
+	this.hrf = hrf;
 	this.arpFactory = arpFactory;
 	adminArp = arpFactory.getInstance("admin", true);
 	if(adminArp.isNew())
@@ -35,17 +35,24 @@ public class AAResponder{
 
 
     public SAMLAttribute[] getReleaseAttributes(String uidSyntax, String handle, String sharName, String url)
-	throws AAException/*,HandleException*/ {
+	throws AAException,HandleException {
 
 	DirContext userCtx = null;
-	//HandleEntry he = hrf.getHandleEntry(handle);
-	// temp for testing
 	String userName = null;
-	if(handle.equalsIgnoreCase("foo"))
-	   userName = "dousti"; //he.getUsername();
+
+	if(hrf == null){
+	    if(handle.equalsIgnoreCase("foo"))
+		userName = "dousti"; 
+	    if(userName == null)
+		throw new AAException("No HandleRepository found!");
+	}else{
+	    HandleEntry he = hrf.getHandleEntry(handle);
+	    userName = he.getUsername();
+	    if(userName == null)
+		throw new AAException("HandleServer returns null for user name!");
+	}
 	    
-	if(userName == null)
-	    throw new AAException("user name is null");
+
 
 	try{
 	    if(uidSyntax == null)
@@ -223,7 +230,8 @@ public class AAResponder{
 	    vals.add(ne.next());
 
 
-	String[] scopes = { this.domain };
+	String[] scopes = new String[vals.size()];
+	scopes[0] = this.domain;
 	Object[] args = new Object[2];
 	args[0] = scopes;
 	args[1] = vals.toArray();

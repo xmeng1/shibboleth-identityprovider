@@ -9,6 +9,7 @@ import javax.naming.directory.*;
 import org.opensaml.*;
 import org.w3c.dom.*;
 import edu.internet2.middleware.shibboleth.*;
+import edu.internet2.middleware.shibboleth.hs.*;
 import edu.internet2.middleware.eduPerson.*;
 
 
@@ -23,7 +24,7 @@ public class AAServlet extends HttpServlet {
     String arpFactoryData;
     String ctxFactory;
     AAResponder responder;
-    //HandleRepositoryFactory hrf;
+    HandleRepositoryFactory hrf;
     ArpFactory arpFactory;
     
     
@@ -42,7 +43,10 @@ public class AAServlet extends HttpServlet {
 	    arpFactoryMethod = getInitParameter("arpFactoryMethod");
 	    arpFactoryData = getInitParameter("arpFactoryData");
 
-	    //hrf = HandleRepositoryFactory.getInstance(Constants.POLICY_CLUBSHIB, this);
+	    ServletConfig sc = getServletConfig();
+	    ServletContext sctx = sc.getServletContext(); 
+	    hrf = (HandleRepositoryFactory)sctx.getAttribute("HandleRepository");
+      
 	    arpFactory = ArpRepository.getInstance(arpFactoryMethod, arpFactoryData);
 
 	    Hashtable env = new Hashtable(11);
@@ -51,9 +55,8 @@ public class AAServlet extends HttpServlet {
 	    env.put(Context.PROVIDER_URL, dirUrl);
 	    DirContext ctx = new InitialDirContext(env);
 	    
-	    responder = new AAResponder(/*hrf*/ null, arpFactory, ctx, myName);
-	    //	}catch(HandleException he){
-	    //	    throw new ServletException("Init failed: "+he);
+	    responder = new AAResponder(hrf, arpFactory, ctx, myName);
+
 	}catch(NamingException ne){
 	    throw new ServletException("Init failed: "+ne);
 	}catch(AAException ae){
