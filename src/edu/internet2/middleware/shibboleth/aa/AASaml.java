@@ -91,7 +91,7 @@ public class AASaml {
         SAMLQuery q = sreq.getQuery();
         if (q == null || !(q instanceof SAMLAttributeQuery))
             throw new SAMLException(SAMLException.REQUESTER,"AASaml.receive() can only respond to a SAML Attribute Query");
-        SAMLAttributeQuery aquery = (SAMLAttributeQuery)q;
+        aquery = (SAMLAttributeQuery)q;
     }
 
     public String getHandle(){
