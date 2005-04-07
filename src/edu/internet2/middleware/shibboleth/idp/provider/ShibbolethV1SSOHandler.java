@@ -256,7 +256,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		// Construct the artifact query parameter
 		while (iterator.hasNext()) {
 			Artifact artifact = (Artifact) iterator.next();
-			artifactBuffer.append("(" + artifact + ")");
+			artifactBuffer.append("(" + artifact.encode() + ")");
 			destination.append("&SAMLart=");
 			destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
 		}
