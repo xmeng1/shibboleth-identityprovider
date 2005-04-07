@@ -40,6 +40,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
+import edu.internet2.middleware.shibboleth.common.provider.BasicTrust;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
@@ -94,7 +95,7 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inliine1");
 
 			// Try to validate against the metadata
-			Trust validator = new Trust();
+			Trust validator = new BasicTrust();
 			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
 			if (!successful) {
 				fail("Validation should have succeeded.");
@@ -131,7 +132,7 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline2");
 
 			// Try to validate against the metadata
-			Trust validator = new Trust();
+			Trust validator = new BasicTrust();
 			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
 			if (successful) {
 				fail("Validation should have failed.");
@@ -262,7 +263,7 @@ public class TrustTests extends TestCase {
 			fail("Error in test specification: " + e);
 		}
 	}
-	
+
 	public void testPkixX509CertFailValidateWithPathTooLong() {
 
 		try {

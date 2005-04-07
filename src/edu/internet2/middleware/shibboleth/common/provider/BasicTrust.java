@@ -23,31 +23,73 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.common;
+package edu.internet2.middleware.shibboleth.common.provider;
 
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Iterator;
 
+import org.apache.log4j.Logger;
+import org.apache.xml.security.keys.KeyInfo;
+import org.apache.xml.security.keys.keyresolver.KeyResolverException;
+
+import edu.internet2.middleware.shibboleth.common.Trust;
+import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
- * Defines methodology for determing whether or not a system entity should trust the messages issued by another.
+ * <code>Trust</code> implementation that validates against standard inline keying data within SAML 2 metadata.
  * 
  * @author Walter Hoehn
  */
-public interface Trust {
+public class BasicTrust implements Trust {
 
-	/**
-	 * Verifies that a certificate or ordered chain of certificates represents a valid credential set for a specific
-	 * action by a specific entity.
-	 * 
-	 * @param descriptor
-	 *            the SAML 2 role descriptor of the entity purported to be performing the action
-	 * @param certificateChain
-	 *            the credentials supplied by the entity (if this contains a certificate chain, it should be ordered
-	 *            with the end-entity certificate first
-	 * @param keyUse
-	 *            the action being performed (must be valid <code>KeyDescriptor</code> usage type
-	 * @return true if the validation was successful and false if it was not successful
+	private static Logger log = Logger.getLogger(BasicTrust.class.getName());
+
+	/*
+	 * @see edu.internet2.middleware.shibboleth.common.Trust#validate(edu.internet2.middleware.shibboleth.metadata.RoleDescriptor,
+	 *      java.security.cert.X509Certificate[], int)
 	 */
-	public boolean validate(RoleDescriptor descriptor, X509Certificate[] certificateChain, int keyUse);
+	public boolean validate(RoleDescriptor descriptor, X509Certificate[] certificateChain, int keyUse) {
+
+		if (descriptor == null || certificateChain == null || certificateChain.length < 1) {
+			log.error("Appropriate data was not supplied for trust evaluation.");
+			return false;
+		}
+
+		// Iterator through all the keys in the metadata
+		Iterator keyDescriptors = descriptor.getKeyDescriptors();
+		while (keyDescriptors.hasNext()) {
+			// Look for a key descriptor with the right usage bits
+			KeyDescriptor keyDescriptor = (KeyDescriptor) keyDescriptors.next();
+			if (keyDescriptor.getUse() != KeyDescriptor.UNSPECIFIED && keyDescriptor.getUse() != keyUse) {
+				log.debug("Role contains a key descriptor, but the usage specification is not valid for this action.");
+				continue;
+			}
+
+			// We found one, attempt to do an exact match between the metadata certificate
+			// and the supplied end-entity certificate
+			KeyInfo keyInfo = keyDescriptor.getKeyInfo();
+			if (keyInfo.containsX509Data()) {
+				log.debug("Attempting to match X509 certificate.");
+				try {
+					X509Certificate metaCert = keyInfo.getX509Certificate();
+					if (certificateChain != null && certificateChain.length > 0
+							&& Arrays.equals(metaCert.getEncoded(), certificateChain[0].getEncoded())) {
+						log.debug("Match successful.");
+						return true;
+					} else {
+						log.debug("Certificate did not match.");
+					}
+
+				} catch (KeyResolverException e) {
+					log.error("Error extracting X509 certificate from metadata.");
+				} catch (CertificateEncodingException e) {
+					log.error("Error while comparing X509 encoded data.");
+				}
+			}
+		}
+		return false;
+	}
 }

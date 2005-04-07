@@ -67,13 +67,20 @@ import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
+ * <code>Trust</code> implementation that does PKIX validation against key authorities included in shibboleth-specific
+ * extensions to SAML 2 metadata.
+ * 
  * @author Walter Hoehn
  */
-public class ShibbolethTrust extends Trust {
+public class ShibbolethTrust extends BasicTrust implements Trust {
 
 	private static Logger log = Logger.getLogger(ShibbolethTrust.class.getName());
 	private static Pattern regex = Pattern.compile(".*?CN=([^,/]+).*");
 
+	/*
+	 * @see edu.internet2.middleware.shibboleth.common.Trust#validate(edu.internet2.middleware.shibboleth.metadata.RoleDescriptor,
+	 *      java.security.cert.X509Certificate[], int)
+	 */
 	public boolean validate(RoleDescriptor descriptor, X509Certificate[] certificateChain, int keyUse) {
 
 		// If we can successfully validate with an inline key, that's fine
