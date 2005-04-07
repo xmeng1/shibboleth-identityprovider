@@ -54,8 +54,7 @@ public class IdPConfig {
 
 	public IdPConfig(Element config) throws ShibbolethConfigurationException {
 
-		if (!config.getTagName().equals("IdPConfig") && !config.getTagName().equals("ShibbolethOriginConfig")) { 
-			throw new ShibbolethConfigurationException(
+		if (!config.getTagName().equals("IdPConfig") && !config.getTagName().equals("ShibbolethOriginConfig")) { throw new ShibbolethConfigurationException(
 				"Unexpected configuration data.  <IdPConfig/> is needed."); }
 
 		log.debug("Loading global configuration properties.");
@@ -106,12 +105,13 @@ public class IdPConfig {
 				// Shouldn't happen
 				throw new ShibbolethConfigurationException("Default Auth Method URI could not be constructed.");
 			}
-		}
-		try {
-			defaultAuthMethod = new URI(attribute);
-		} catch (URISyntaxException e1) {
-			log.error("(defaultAuthMethod) attribute to is not a valid URI.");
-			throw new ShibbolethConfigurationException("Required configuration is invalid.");
+		} else {
+			try {
+				defaultAuthMethod = new URI(attribute);
+			} catch (URISyntaxException e1) {
+				log.error("(defaultAuthMethod) attribute to is not a valid URI.");
+				throw new ShibbolethConfigurationException("Required configuration is invalid.");
+			}
 		}
 
 		attribute = ((Element) config).getAttribute("maxHSThreads");
