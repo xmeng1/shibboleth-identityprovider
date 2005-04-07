@@ -146,7 +146,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 				}
 				log.debug("Supplied credential validated for the provider to which this artifact was issued.");
 				assertions.add(assertion);
-				dereferencedArtifacts.append("(" + artifact + ")");
+				dereferencedArtifacts.append("(" + artifact.encode() + ")");
 			}
 		}
 
