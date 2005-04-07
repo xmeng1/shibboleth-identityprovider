@@ -120,7 +120,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
 		// Sanity check
-		if (request != null) {
+		if (samlRequest != null) {
 			log.error("Protocol Handler received a SAML Request, but is unable to handle it.");
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
 		}
@@ -191,8 +191,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 		// The EAuth profile requires metadata, since the assertion consumer is not supplied as a request parameter
 		// Pull the consumer URL from the metadata
-		Iterator endpoints = role.getAttributeConsumingServices();
-		if (!endpoints.hasNext()) {
+		Iterator endpoints = role.getAssertionConsumerServiceManager().getEndpoints();
+		if (endpoints == null || !endpoints.hasNext()) {
 			log.error("Inappropriate metadata for provider: no roles specified.");
 			eAuthError(response, 30, remoteProviderId, csid);
 			return null;
@@ -203,9 +203,9 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		// Create SAML Name Identifier & Subject
 		SAMLNameIdentifier nameId;
 		try {
-			nameId = support.getNameMapper().getNameIdentifierName(
-					"urn:oasis:names:tc:SAML:1.0:assertion#X509SubjectName", principal, relyingParty,
-					relyingParty.getIdentityProvider());
+			// TODO verify that the nameId is the right format here and error if not
+			nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(), principal,
+					relyingParty, relyingParty.getIdentityProvider());
 		} catch (NameIdentifierMappingException e) {
 			log.error("Error converting principal to SAML Name Identifier: " + e);
 			eAuthError(response, 60, remoteProviderId, csid);
@@ -261,7 +261,12 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			// OK, we got attributes back, package them as required for eAuth and combine them with the authN data in an
 			// assertion
 		} else {
-			repackageForEauth(attributes);
+			try {
+				attributes = repackageForEauth(attributes);
+			} catch (SAMLException e) {
+				eAuthError(response, 90, remoteProviderId, csid);
+				return null;
+			}
 
 			// Put all attributes into an assertion
 			try {
@@ -321,7 +326,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		// Construct the artifact query parameter
 		while (iterator.hasNext()) {
 			Artifact artifact = (Artifact) iterator.next();
-			artifactBuffer.append("(" + artifact + ")");
+			artifactBuffer.append("(" + artifact.encode() + ")");
+			System.err.println(artifact.encode());
 			destination.append("&SAMLart=");
 			destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
 		}
@@ -336,10 +342,11 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 	}
 
-	private void repackageForEauth(List attributes) throws SAMLException {
+	private List repackageForEauth(List attributes) throws SAMLException {
 
+		ArrayList  writeable = new ArrayList(attributes); 
 		// Bail if we didn't get a commonName, because it is required by the profile
-		SAMLAttribute commonName = getAttribute("commonName", attributes);
+		SAMLAttribute commonName = getAttribute("commonName", writeable);
 		if (commonName == null) {
 			log.error("The attribute resolver did not return a (commonName) attribute, "
 					+ " which is required for the E-Authentication profile.");
@@ -349,11 +356,12 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			commonName.setNamespace("http://eauthentication.gsa.gov/federated/attribute");
 			// TODO Maybe the resolver should set this
 		}
-		attributes.add(new SAMLAttribute("csid", "http://eauthentication.gsa.gov/federated/attribute", null, 0, Arrays
+		writeable.add(new SAMLAttribute("csid", "http://eauthentication.gsa.gov/federated/attribute", null, 0, Arrays
 				.asList(new String[]{csid})));
 		// TODO pull from authN system? or make configurable
-		attributes.add(new SAMLAttribute("assuranceLevel", "http://eauthentication.gsa.gov/federated/attribute", null,
+		writeable.add(new SAMLAttribute("assuranceLevel", "http://eauthentication.gsa.gov/federated/attribute", null,
 				0, Arrays.asList(new String[]{"2"})));
+		return writeable;
 	}
 
 	private SAMLAttribute getAttribute(String name, List attributes) {
