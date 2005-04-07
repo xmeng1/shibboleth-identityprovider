@@ -51,9 +51,9 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
  */
 public abstract class BaseArtifactMapper implements ArtifactMapper {
 
-	private static Logger log = Logger.getLogger(BaseArtifactMapper.class.getName());
-	private URI type2SourceLocation;
-	private MessageDigest md;
+	private static Logger	log	= Logger.getLogger(BaseArtifactMapper.class.getName());
+	private URI				type2SourceLocation;
+	private MessageDigest	md;
 
 	public BaseArtifactMapper() throws ShibbolethConfigurationException {
 
@@ -93,10 +93,7 @@ public abstract class BaseArtifactMapper implements ArtifactMapper {
 
 		// If the relying party prefers type 2 and we have the proper data, use it
 		if (relyingParty.getPreferredArtifactType() == 2 && type2SourceLocation != null) {
-			synchronized (md) {
-				artifact = new SAMLArtifactType0002(Util.generateSourceId(md, relyingParty.getIdentityProvider()
-						.getProviderId()), type2SourceLocation);
-			}
+			artifact = new SAMLArtifactType0002(type2SourceLocation);
 			// Else, use type 1
 		} else {
 			if (relyingParty.getPreferredArtifactType() == 2) {
