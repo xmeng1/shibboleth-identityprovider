@@ -109,7 +109,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 		while (artifacts.hasNext()) {
 			queriedArtifacts++;
 			Artifact artifact = (Artifact) artifacts.next();
-			log.info("Dereferencing artifact: (" + artifact.toString() + ").");
+			log.info("Dereferencing artifact: (" + artifact.encode() + ").");
 			ArtifactMapping mapping = support.getArtifactMapper().recoverAssertion(artifact);
 
 			if (mapping == null) {
