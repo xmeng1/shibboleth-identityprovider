@@ -327,7 +327,6 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		while (iterator.hasNext()) {
 			Artifact artifact = (Artifact) iterator.next();
 			artifactBuffer.append("(" + artifact.encode() + ")");
-			System.err.println(artifact.encode());
 			destination.append("&SAMLart=");
 			destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
 		}
