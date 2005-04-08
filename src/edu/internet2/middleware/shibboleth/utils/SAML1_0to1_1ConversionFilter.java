@@ -205,7 +205,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 
 			//Replace deprecated artifact confirmation method
 			regex = Pattern
-					.compile("<(.+:)?ConfirmationMethod>(urn:oasis:names:tc:SAML:1.0:cm:artifact)</<(.+:)?ConfirmationMethod>");
+					.compile("<(.+:)?ConfirmationMethod>(urn:oasis:names:tc:SAML:1.0:cm:artifact)</(.+:)?ConfirmationMethod>");
 			matcher = regex.matcher(result);
 			buff = new StringBuffer();
 			end = 0;
