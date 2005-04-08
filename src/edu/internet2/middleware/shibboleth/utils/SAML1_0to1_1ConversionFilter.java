@@ -122,8 +122,8 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 	 */
 	private boolean isSAML1_0(String input) {
 
-		Pattern majorRegex = Pattern.compile("<(.+:)?Request[^>]+(MajorVersion=\"1\")");
-		Pattern minorRegex = Pattern.compile("<(.+:)?Request[^>]+(MinorVersion=\"0\")");
+		Pattern majorRegex = Pattern.compile("<(.+:)?Request[^>]+(MajorVersion=['\"]1['\"])");
+		Pattern minorRegex = Pattern.compile("<(.+:)?Request[^>]+(MinorVersion=['\"]0['\"])");
 		Matcher majorMatcher = majorRegex.matcher(input);
 		Matcher minorMatcher = minorRegex.matcher(input);
 
@@ -163,7 +163,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 			}
 
 			//Update SAML minor verion on Response and assertions
-			regex = Pattern.compile("<(.+:)?Response[^>]+(MinorVersion=\"1\")");
+			regex = Pattern.compile("<(.+:)?Response[^>]+(MinorVersion=['\"]1['\"])");
 			matcher = regex.matcher(result);
 			if (matcher.find()) {
 				StringBuffer buff = new StringBuffer();
@@ -175,7 +175,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				result = buff.toString();
 			}
 
-			regex = Pattern.compile("<(.+:)?Assertion[^>]+(MinorVersion=\"1\")");
+			regex = Pattern.compile("<(.+:)?Assertion[^>]+(MinorVersion=['\"]1['\"])");
 			matcher = regex.matcher(result);
 			StringBuffer buff = new StringBuffer();
 			int end = 0;
@@ -191,7 +191,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 			}
 
 			//Substitue in the real identifier from the original request
-			regex = Pattern.compile("<(.+:)?Response[^>]+InResponseTo=\"([^\"]+)\"");
+			regex = Pattern.compile("<(.+:)?Response[^>]+InResponseTo=['\"]([^\"]+)['\"]");
 			matcher = regex.matcher(result);
 			if (matcher.find()) {
 				buff = new StringBuffer();
@@ -299,7 +299,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 			}
 
 			//Update SAML minor verion on Request
-			regex = Pattern.compile("<(.+:)?Request[^>]+(MinorVersion=\"0\")");
+			regex = Pattern.compile("<(.+:)?Request[^>]+(MinorVersion=['\"]0['\"])");
 			matcher = regex.matcher(input);
 			if (matcher.find()) {
 				StringBuffer buff = new StringBuffer();
@@ -313,7 +313,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 
 			//Substitute in a fake request id that is valid in SAML 1.1, but save the original so that we can put it
 			// back later
-			regex = Pattern.compile("<(.+:)?Request[^>]+RequestID=\"([^\"]+)\"");
+			regex = Pattern.compile("<(.+:)?Request[^>]+RequestID=['\"]([^\"]+)]'\"]");
 			matcher = regex.matcher(input);
 			if (matcher.find()) {
 				StringBuffer buff = new StringBuffer();
