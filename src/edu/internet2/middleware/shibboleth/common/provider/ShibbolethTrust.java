@@ -25,11 +25,13 @@
 
 package edu.internet2.middleware.shibboleth.common.provider;
 
+import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
 import java.security.cert.CertPathBuilder;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
+import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
@@ -55,6 +57,7 @@ import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.content.KeyName;
 import org.apache.xml.security.keys.content.X509Data;
+import org.apache.xml.security.keys.content.x509.XMLX509CRL;
 import org.apache.xml.security.keys.content.x509.XMLX509Certificate;
 
 import edu.internet2.middleware.shibboleth.common.Trust;
@@ -171,11 +174,13 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 	private boolean pkixValidate(X509Certificate[] certChain, KeyAuthority authority) {
 
 		Set anchors = new HashSet();
+		Set crls = new HashSet();
 		Iterator keyInfos = authority.getKeyInfos();
 		while (keyInfos.hasNext()) {
 			KeyInfo keyInfo = (KeyInfo) keyInfos.next();
 			if (keyInfo.containsX509Data()) {
 				try {
+					//Add all certificates in the authority as trust anchors
 					for (int i = 0; i < keyInfo.lengthX509Data(); i++) {
 						X509Data data = keyInfo.itemX509Data(i);
 						if (data.containsCertificate()) {
@@ -184,7 +189,20 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 								anchors.add(new TrustAnchor(xmlCert.getX509Certificate(), null));
 							}
 						}
+						// Compile all CRLs in the authority
+						if (data.containsCRL()) {
+							for (int j = 0; j < data.lengthCRL(); j++) {
+								XMLX509CRL xmlCrl = data.itemCRL(j);
+								try {
+									crls.add(CertificateFactory.getInstance("X.509").generateCRL(
+											new ByteArrayInputStream(xmlCrl.getCRLBytes())));
+								} catch (GeneralSecurityException e) {
+									log.error("Encountered an error parsing CRL from shibboleth metadata: " + e);
+								}
+							}
+						}
 					}
+
 				} catch (XMLSecurityException e) {
 					log.error("Encountered an error constructing trust list from shibboleth metadata: " + e);
 				}
@@ -201,13 +219,17 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 				selector.setCertificate(certChain[0]);
 				PKIXBuilderParameters params = new PKIXBuilderParameters(anchors, selector);
 				params.setMaxPathLength(authority.getVerifyDepth());
-				CertStore store = CertStore.getInstance("Collection", new CollectionCertStoreParameters(Arrays
-						.asList(certChain)));
+				List storeMaterial = new ArrayList(crls);
+				storeMaterial.addAll(Arrays.asList(certChain));
+				CertStore store = CertStore.getInstance("Collection", new CollectionCertStoreParameters(storeMaterial));
 				List stores = new ArrayList();
 				stores.add(store);
 				params.setCertStores(stores);
-				//TODO hmm... what about revocation
-				params.setRevocationEnabled(false);
+				if (crls.size() > 0) {
+					params.setRevocationEnabled(true);
+				} else {
+					params.setRevocationEnabled(false);
+				}
 
 				CertPathBuilder builder = CertPathBuilder.getInstance("PKIX");
 				PKIXCertPathBuilderResult buildResult = (PKIXCertPathBuilderResult) builder.build(params);

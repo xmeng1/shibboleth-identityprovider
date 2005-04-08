@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="urn:oasis:names:tc:SAML:2.0:metadata ../schemas/sstc-saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 ../schemas/shibboleth-metadata-1.0.xsd" 
+	Name="urn-x:testFed1" validUntil="3010-01-01T00:00:00Z">
+	<EntityDescriptor entityID="urn-x:testSP1">
+		 <Extensions>
+			<KeyAuthority xmlns="urn:mace:shibboleth:metadata:1.0">
+				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+           <ds:X509Data>
+                <ds:X509Certificate>MIIC4zCCAkygAwIBAgIBADANBgkqhkiG9w0BAQQFADBbMQswCQYDVQQGEwJVUzEL
+MAkGA1UECBMCVE4xEDAOBgNVBAcTB01lbXBoaXMxEjAQBgNVBAoTCVdhc3NhLk9y
+RzEZMBcGA1UEAxMQV2FsdGVyJ3MgVGVzdCBDQTAeFw0wNTA0MDgwMzU1MzdaFw0w
+NjA0MDgwMzU1MzdaMFsxCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJUTjEQMA4GA1UE
+BxMHTWVtcGhpczESMBAGA1UEChMJV2Fzc2EuT3JHMRkwFwYDVQQDExBXYWx0ZXIn
+cyBUZXN0IENBMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDi0Lwb7bURmrS1
+cpMuBAfYhAqd5jbnIOzJ9U8TfM0e6eTnPZMrWw3fhtbTu//RY2yMwGi4bEJqtkWo
+IsOPK3Zu8iawHXdmJx6jYigWOHljQKQDDo2YQGwHiEmsfyeZLLcDLmb9mAZV1MEP
+Qo+gv13T3DPJI/lt2xNhbUulHr+XGwIDAQABo4G2MIGzMB0GA1UdDgQWBBRwbYDU
+/IGFzPTOpQlqjhTQHPnQITCBgwYDVR0jBHwweoAUcG2A1PyBhcz0zqUJao4U0Bz5
+0CGhX6RdMFsxCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJUTjEQMA4GA1UEBxMHTWVt
+cGhpczESMBAGA1UEChMJV2Fzc2EuT3JHMRkwFwYDVQQDExBXYWx0ZXIncyBUZXN0
+IENBggEAMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEEBQADgYEAG3yK1mpA8gq+
+RTSBS7HfW7Y7x7D0kSbQHBW6WXXrSEcTJ3lbph3MjMjJZw0+p4xiIG/k4ErAKjIY
+6w4NWRNEFsSdoxnBhest6RZFEA+VN9/YafqucvG0DAnOD6yGFbXOcMPG3LYK+vOe
+HOaSn5DIb/jt04vkJnXrZ6GrHiMGxxM=
+</ds:X509Certificate>
+			<ds:X509CRL>MIIBNjCBoDANBgkqhkiG9w0BAQQFADBbMQswCQYDVQQGEwJVUzELMAkGA1UECBMC
+VE4xEDAOBgNVBAcTB01lbXBoaXMxEjAQBgNVBAoTCVdhc3NhLk9yRzEZMBcGA1UE
+AxMQV2FsdGVyJ3MgVGVzdCBDQRcNMDUwNDA4MDQwMTU2WhcNMDUwNTA4MDQwMTU2
+WjAUMBICAQEXDTA1MDQwODA0MDA1MVowDQYJKoZIhvcNAQEEBQADgYEAETadhKU8
+nrxii0wwkbdfBZ5lmlBu0z9wqobPCH/oSlkMZ9FlE/LmADEclR2hqOgczMRz/BwL
+kghUXSJe4yuXl2gvGrTd/Mn36HQ/rvr6dbgLzpuNWHRAW99o4Wpf5o+Hi9iEyF2J
+/50cy2EUSe6YtzA8pGXzSP67YC/3U0D8U4A=
+</ds:X509CRL>
+            </ds:X509Data>
+				</ds:KeyInfo>
+			</KeyAuthority>
+		</Extensions>
+		<SPSSODescriptor 
+			protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
+			<KeyDescriptor>
+				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+					<ds:KeyName>foo.wassa.org</ds:KeyName>
+				</ds:KeyInfo>
+			</KeyDescriptor>
+			<NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+			<AssertionConsumerService index="1" 
+				Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01" 
+				Location="https://www.example.org/Shibboleth.shire"/>
+		</SPSSODescriptor>
+		
+	</EntityDescriptor>
+</EntitiesDescriptor>
