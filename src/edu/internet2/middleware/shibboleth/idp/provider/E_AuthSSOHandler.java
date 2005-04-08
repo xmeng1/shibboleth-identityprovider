@@ -336,7 +336,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
 		support.getTransactionLog().info(
 				"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to E-Authentication provider ("
-						+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+						+ relyingParty.getProviderId() + ") on behalf of principal ("
 						+ principal.getName() + "). Name Identifier: (" + nameId.getName()
 						+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
 
