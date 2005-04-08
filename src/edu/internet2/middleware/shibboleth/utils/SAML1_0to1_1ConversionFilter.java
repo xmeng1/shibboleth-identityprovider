@@ -313,7 +313,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 
 			//Substitute in a fake request id that is valid in SAML 1.1, but save the original so that we can put it
 			// back later
-			regex = Pattern.compile("<(.+:)?Request[^>]+RequestID=['\"]([^\"]+)]'\"]");
+			regex = Pattern.compile("<(.+:)?Request[^>]+RequestID=['\"]([^\"]+)['\"]");
 			matcher = regex.matcher(input);
 			if (matcher.find()) {
 				StringBuffer buff = new StringBuffer();
