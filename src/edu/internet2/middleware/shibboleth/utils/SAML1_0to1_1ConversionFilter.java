@@ -64,12 +64,13 @@ import org.opensaml.SAMLIdentifier;
 public class SAML1_0to1_1ConversionFilter implements Filter {
 
 	private static Logger log = Logger.getLogger(SAML1_0to1_1ConversionFilter.class.getName());
-    private SAMLIdentifier idgen = SAMLConfig.instance().getDefaultIDProvider();
+	private SAMLIdentifier idgen = SAMLConfig.instance().getDefaultIDProvider();
 
 	/*
 	 * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
 	 */
 	public void init(FilterConfig config) throws ServletException {
+
 	}
 
 	/*
@@ -154,7 +155,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 
 			String result = output.toString();
 
-			//Fail if we encounter XML Dsig, since the conversion would break it anyway
+			// Fail if we encounter XML Dsig, since the conversion would break it anyway
 			Pattern regex = Pattern.compile("<(.+:)?Signature");
 			Matcher matcher = regex.matcher(result);
 			if (matcher.find()) {
@@ -162,7 +163,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				throw new IOException("Unable to auto-convert SAML messages containing digital signatures.");
 			}
 
-			//Update SAML minor verion on Response and assertions
+			// Update SAML minor verion on Response and assertions
 			regex = Pattern.compile("<(.+:)?Response[^>]+(MinorVersion=['\"]1['\"])");
 			matcher = regex.matcher(result);
 			if (matcher.find()) {
@@ -190,7 +191,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				result = buff.toString();
 			}
 
-			//Substitue in the real identifier from the original request
+			// Substitue in the real identifier from the original request
 			regex = Pattern.compile("<(.+:)?Response[^>]+InResponseTo=['\"]([^\"]+)['\"]");
 			matcher = regex.matcher(result);
 			if (matcher.find()) {
@@ -203,7 +204,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				result = buff.toString();
 			}
 
-			//Replace deprecated artifact confirmation method
+			// Replace deprecated artifact confirmation method
 			regex = Pattern
 					.compile("<(.+:)?ConfirmationMethod>(urn:oasis:names:tc:SAML:1.0:cm:artifact)</(.+:)?ConfirmationMethod>");
 			matcher = regex.matcher(result);
@@ -290,7 +291,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 
 			super(request);
 
-			//Fail if we encounter XML Dsig, since the conversion would break it anyway
+			// Fail if we encounter XML Dsig, since the conversion would break it anyway
 			Pattern regex = Pattern.compile("<(.+:)?Signature");
 			Matcher matcher = regex.matcher(input);
 			if (matcher.find()) {
@@ -298,7 +299,7 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				throw new IOException("Unable to auto-convert SAML messages containing digital signatures.");
 			}
 
-			//Update SAML minor verion on Request
+			// Update SAML minor verion on Request
 			regex = Pattern.compile("<(.+:)?Request[^>]+(MinorVersion=['\"]0['\"])");
 			matcher = regex.matcher(input);
 			if (matcher.find()) {
@@ -311,9 +312,9 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				input = buff.toString();
 			}
 
-			//Substitute in a fake request id that is valid in SAML 1.1, but save the original so that we can put it
+			// Substitute in a fake request id that is valid in SAML 1.1, but save the original so that we can put it
 			// back later
-			regex = Pattern.compile("<(.+:)?Request[^>]+RequestID=['\"]([^\"]+)['\"]");
+			regex = Pattern.compile("<(.+:)?Request[^>]+RequestID=['\"]([^'\"]+)['\"]");
 			matcher = regex.matcher(input);
 			if (matcher.find()) {
 				StringBuffer buff = new StringBuffer();
@@ -322,17 +323,15 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 				int end = matcher.end(2);
 				buff.append(input.subSequence(0, start));
 				try {
-                    buff.append(idgen.getIdentifier());
-                }
-                catch (SAMLException e) {
-                    throw new IOException("Unable to obtain a new SAML message ID from provider");
-                }
+					buff.append(idgen.getIdentifier());
+				} catch (SAMLException e) {
+					throw new IOException("Unable to obtain a new SAML message ID from provider");
+				}
 				buff.append(input.substring(end));
 				input = buff.toString();
 			}
 
 			newLength = input.length();
-
 			stream = new ModifiedInputStream(new ByteArrayInputStream(input.getBytes()));
 		}
 
