@@ -96,7 +96,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new BasicTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
@@ -133,7 +133,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new BasicTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
 			if (successful) {
 				fail("Validation should have failed.");
 			}
@@ -170,7 +170,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
@@ -207,7 +207,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
@@ -244,7 +244,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
@@ -282,8 +282,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{endEntity, intermediate},
-					KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(endEntity, new X509Certificate[]{endEntity, intermediate}, role);
 			if (successful) {
 				fail("Validation should not have succeeded.");
 			}
@@ -321,8 +320,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{endEntity, intermediate},
-					KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(endEntity, new X509Certificate[]{endEntity, intermediate}, role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
@@ -359,7 +357,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
 			if (successful) {
 				fail("Validation should not have succeeded.");
 			}
@@ -396,7 +394,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(role, new X509Certificate[]{cert}, KeyDescriptor.ENCRYPTION);
+			boolean successful = validator.validate(cert,  new X509Certificate[]{cert}, role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}

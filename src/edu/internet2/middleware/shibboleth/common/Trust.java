@@ -27,6 +27,8 @@ package edu.internet2.middleware.shibboleth.common;
 
 import java.security.cert.X509Certificate;
 
+import org.opensaml.SAMLSignedObject;
+
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
@@ -36,18 +38,46 @@ import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
  */
 public interface Trust {
 
-	/**
+    /**
+     * Verifies that a certificate or ordered chain of certificates represents a valid credential set for a specific
+     * action by a specific entity.
+     * 
+     * @param certificateEE
+     *            the end-entity certificate being validated
+     * @param certificateChain
+     *            additional certificates supplied by the entity (may also contain the end-entity certificate)
+     * @param descriptor
+     *            the SAML 2 role descriptor of the entity purported to be performing the action
+     * @return true if the validation was successful and false if it was not successful
+     */
+    public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor);
+
+    /**
 	 * Verifies that a certificate or ordered chain of certificates represents a valid credential set for a specific
 	 * action by a specific entity.
 	 * 
-	 * @param descriptor
-	 *            the SAML 2 role descriptor of the entity purported to be performing the action
+     * @param certificateEE
+     *            the end-entity certificate being validated
 	 * @param certificateChain
-	 *            the credentials supplied by the entity (if this contains a certificate chain, it should be ordered
-	 *            with the end-entity certificate first
-	 * @param keyUse
-	 *            the action being performed (must be valid <code>KeyDescriptor</code> usage type
+	 *            additional certificates supplied by the entity (may also contain the end-entity certificate)
+     * @param descriptor
+     *            the SAML 2 role descriptor of the entity purported to be performing the action
+     * @param checkName
+     *            whether the check the name of the certificate during the validation process, normally true unless
+     *  the name has already been checked as part of other processing (for example, TLS)
 	 * @return true if the validation was successful and false if it was not successful
 	 */
-	public boolean validate(RoleDescriptor descriptor, X509Certificate[] certificateChain, int keyUse);
+	public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor, boolean checkName);
+
+    /**
+     * Verifies that a certificate or ordered chain of certificates represents a valid credential set for a specific
+     * action by a specific entity.
+     * 
+     * @param token
+     *            the signed object to validate
+     * @param descriptor
+     *            the SAML 2 role descriptor of the entity purported to be performing the action
+     * @return true if the validation was successful and false if it was not successful
+     */
+    public boolean validate(SAMLSignedObject token, RoleDescriptor descriptor);
 }

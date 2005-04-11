@@ -33,6 +33,7 @@ import java.util.Iterator;
 import org.apache.log4j.Logger;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.keyresolver.KeyResolverException;
+import org.opensaml.SAMLSignedObject;
 
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
@@ -48,12 +49,12 @@ public class BasicTrust implements Trust {
 	private static Logger log = Logger.getLogger(BasicTrust.class.getName());
 
 	/*
-	 * @see edu.internet2.middleware.shibboleth.common.Trust#validate(edu.internet2.middleware.shibboleth.metadata.RoleDescriptor,
-	 *      java.security.cert.X509Certificate[], int)
+	 * @see edu.internet2.middleware.shibboleth.common.Trust#validate(java.security.cert.X509Certificate,
+     *  java.security.cert.X509Certificate[], edu.internet2.middleware.shibboleth.metadata.RoleDescriptor, boolean)
 	 */
-	public boolean validate(RoleDescriptor descriptor, X509Certificate[] certificateChain, int keyUse) {
+	public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor, boolean checkName) {
 
-		if (descriptor == null || certificateChain == null || certificateChain.length < 1) {
+		if (descriptor == null || certificateEE == null) {
 			log.error("Appropriate data was not supplied for trust evaluation.");
 			return false;
 		}
@@ -63,8 +64,8 @@ public class BasicTrust implements Trust {
 		while (keyDescriptors.hasNext()) {
 			// Look for a key descriptor with the right usage bits
 			KeyDescriptor keyDescriptor = (KeyDescriptor) keyDescriptors.next();
-			if (keyDescriptor.getUse() != KeyDescriptor.UNSPECIFIED && keyDescriptor.getUse() != keyUse) {
-				log.debug("Role contains a key descriptor, but the usage specification is not valid for this action.");
+			if (keyDescriptor.getUse() == KeyDescriptor.ENCRYPTION) {
+				log.debug("Skipping key descriptor with inappropriate usage indicator.");
 				continue;
 			}
 
@@ -75,8 +76,7 @@ public class BasicTrust implements Trust {
 				log.debug("Attempting to match X509 certificate.");
 				try {
 					X509Certificate metaCert = keyInfo.getX509Certificate();
-					if (certificateChain != null && certificateChain.length > 0
-							&& Arrays.equals(metaCert.getEncoded(), certificateChain[0].getEncoded())) {
+					if (Arrays.equals(metaCert.getEncoded(), certificateEE.getEncoded())) {
 						log.debug("Match successful.");
 						return true;
 					} else {
@@ -92,4 +92,25 @@ public class BasicTrust implements Trust {
 		}
 		return false;
 	}
+
+    /*
+     * @see edu.internet2.middleware.shibboleth.common.Trust#validate(java.security.cert.X509Certificate, java.security.cert.X509Certificate[], edu.internet2.middleware.shibboleth.metadata.RoleDescriptor)
+     */
+    public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor) {
+        return validate(certificateEE, certificateChain, descriptor, true);
+    }
+
+    /*
+     * @see edu.internet2.middleware.shibboleth.common.Trust#validate(org.opensaml.SAMLSignedObject, edu.internet2.middleware.shibboleth.metadata.RoleDescriptor)
+     */
+    public boolean validate(SAMLSignedObject token, RoleDescriptor descriptor) {
+        // TODO Auto-generated method stub
+        
+        /*
+         * Proposed algorithm for this is just to walk each KeyDescriptor with keyUse of signing
+         * and try and extract a public key to use and try and verify the token. If it works, we're
+         * done.
+         */ 
+        return false;
+    }
 }

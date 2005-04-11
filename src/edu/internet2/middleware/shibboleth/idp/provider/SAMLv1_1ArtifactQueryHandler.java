@@ -135,9 +135,8 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 				}
 
 				// Make sure that the suppplied credential is valid for the provider to which the artifact was issued
-				if (!support.getTrust().validate(role,
-						(X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate"),
-						KeyDescriptor.ENCRYPTION)) {
+                X509Certificate[] chain = (X509Certificate[])request.getAttribute("javax.servlet.request.X509Certificate");
+				if (!support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, role)) {
 					log.error("Supplied credential ("
 							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
 							+ ") is NOT valid for provider (" + mapping.getServiceProviderId()

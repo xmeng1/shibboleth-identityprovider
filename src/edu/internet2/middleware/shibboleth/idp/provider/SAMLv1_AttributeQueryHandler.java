@@ -131,9 +131,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 				// Make sure that the suppplied credential is valid for the
 				// selected relying party
-				if (support.getTrust().validate(role,
-						(X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate"),
-						KeyDescriptor.ENCRYPTION)) {
+                X509Certificate[] chain = (X509Certificate[])req.getAttribute("javax.servlet.request.X509Certificate");
+                if (support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, role)) {
 					log.info("Supplied credential validated for this provider.");
 					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
 					return relyingParty.getProviderId();

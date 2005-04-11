@@ -59,6 +59,7 @@ import org.apache.xml.security.keys.content.KeyName;
 import org.apache.xml.security.keys.content.X509Data;
 import org.apache.xml.security.keys.content.x509.XMLX509CRL;
 import org.apache.xml.security.keys.content.x509.XMLX509Certificate;
+import org.opensaml.SAMLSignedObject;
 
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
@@ -80,18 +81,41 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 	private static Logger log = Logger.getLogger(ShibbolethTrust.class.getName());
 	private static Pattern regex = Pattern.compile(".*?CN=([^,/]+).*");
 
-	/*
-	 * @see edu.internet2.middleware.shibboleth.common.Trust#validate(edu.internet2.middleware.shibboleth.metadata.RoleDescriptor,
-	 *      java.security.cert.X509Certificate[], int)
-	 */
-	public boolean validate(RoleDescriptor descriptor, X509Certificate[] certificateChain, int keyUse) {
+    /*
+     * @see edu.internet2.middleware.shibboleth.common.Trust#validate(java.security.cert.X509Certificate, java.security.cert.X509Certificate[], edu.internet2.middleware.shibboleth.metadata.RoleDescriptor)
+     */
+    public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor) {
+        return validate(certificateEE, certificateChain, descriptor, true);
+    }
+
+    /*
+     * @see edu.internet2.middleware.shibboleth.common.Trust#validate(org.opensaml.SAMLSignedObject, edu.internet2.middleware.shibboleth.metadata.RoleDescriptor)
+     */
+    public boolean validate(SAMLSignedObject token, RoleDescriptor descriptor) {
+        // TODO Auto-generated method stub
+        
+        /*
+         * Proposed algorithm for this (will modify C++ to match:
+         * 
+         * - get the certificates from the token
+         * - iterate over them in order, until one verifies the signature
+         * - pass that as the EE cert to the other validate method, with the full set as a chain
+         */ 
+        return false;
+    }
+
+    /*
+     * @see edu.internet2.middleware.shibboleth.common.Trust#validate(java.security.cert.X509Certificate,
+     *  java.security.cert.X509Certificate[], edu.internet2.middleware.shibboleth.metadata.RoleDescriptor, boolean)
+     */
+    public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor, boolean checkName) {
 
 		// If we can successfully validate with an inline key, that's fine
-		boolean defaultValidation = super.validate(descriptor, certificateChain, keyUse);
+		boolean defaultValidation = super.validate(certificateEE, certificateChain, descriptor, checkName);
 		if (defaultValidation == true) { return true; }
 
 		// Make sure we have the data we need
-		if (descriptor == null || certificateChain == null || certificateChain.length < 1) {
+		if (descriptor == null || certificateEE == null) {
 			log.error("Appropriate data was not supplied for trust evaluation.");
 			return false;
 		}
@@ -100,42 +124,50 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 
 		// First, we want to see if we can match a keyName from the metadata against the cert
 		// Iterator through all the keys in the metadata
-		Iterator keyDescriptors = descriptor.getKeyDescriptors();
-		while (keyDescriptors.hasNext()) {
-			// Look for a key descriptor with the right usage bits
-			KeyDescriptor keyDescriptor = (KeyDescriptor) keyDescriptors.next();
-			if (keyDescriptor.getUse() != KeyDescriptor.UNSPECIFIED && keyDescriptor.getUse() != keyUse) {
-				log.debug("Role contains a key descriptor, but the usage specification is not valid for this action.");
-				continue;
-			}
+        if (checkName) {
+            Iterator keyDescriptors = descriptor.getKeyDescriptors();
+    		while (checkName && keyDescriptors.hasNext()) {
+    			// Look for a key descriptor with the right usage bits
+    			KeyDescriptor keyDescriptor = (KeyDescriptor) keyDescriptors.next();
+    			if (keyDescriptor.getUse() == KeyDescriptor.ENCRYPTION) {
+                    log.debug("Skipping key descriptor with inappropriate usage indicator.");
+    				continue;
+    			}
 
-			// We found one, see if we can match the metadata's keyName against the cert
-			KeyInfo keyInfo = keyDescriptor.getKeyInfo();
-			if (keyInfo.containsKeyName()) {
-				for (int i = 0; i < keyInfo.lengthKeyName(); i++) {
-					try {
-						if (matchKeyName(certificateChain[0], keyInfo.itemKeyName(i))) {
-							// If we find a match, try to do path validation against any key authorities we might have
-							// in the metadata
-							if (pkixValidate(certificateChain, descriptor.getEntityDescriptor())) { return true; }
-						}
-					} catch (XMLSecurityException e) {
-						log.error("Problem retrieving key name from metadata: " + e);
-					}
-				}
-			}
-		}
-		return false;
+    			// We found one, see if we can match the metadata's keyName against the cert
+    			KeyInfo keyInfo = keyDescriptor.getKeyInfo();
+    			if (keyInfo.containsKeyName()) {
+    			    for (int i = 0; i < keyInfo.lengthKeyName(); i++) {
+    			        try {
+    			            if (matchKeyName(certificateChain[0], keyInfo.itemKeyName(i))) {
+    			                checkName = false;
+                                break;
+                            }
+    					} catch (XMLSecurityException e) {
+    						log.error("Problem retrieving key name from metadata: " + e);
+    					}
+    				}
+    			}
+    		}
+        }
+
+        if (checkName) {
+            log.error("cannot match certificate subject against acceptable key names based on KeyDescriptors");
+            return false;
+        }
+        
+        if (pkixValidate(certificateEE, certificateChain, descriptor.getEntityDescriptor())) { return true; }
+        return false;    
 	}
 
-	private boolean pkixValidate(X509Certificate[] certChain, EntityDescriptor entity) {
+	private boolean pkixValidate(X509Certificate certEE, X509Certificate[] certChain, EntityDescriptor entity) {
 
 		if (entity instanceof ExtendedEntityDescriptor) {
 			Iterator keyAuthorities = ((ExtendedEntityDescriptor) entity).getKeyAuthorities();
 			// if we have any key authorities, construct a flat list of trust anchors representing each and attempt to
 			// validate against them in turn
 			while (keyAuthorities.hasNext()) {
-				if (pkixValidate(certChain, (KeyAuthority) keyAuthorities.next())) { return true; }
+				if (pkixValidate(certEE, certChain, (KeyAuthority) keyAuthorities.next())) { return true; }
 			}
 		}
 
@@ -143,14 +175,14 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 		// nested entities and attempt to validate at each group level
 		EntitiesDescriptor group = entity.getEntitiesDescriptor();
 		if (group != null) {
-			if (pkixValidate(certChain, group)) { return true; }
+			if (pkixValidate(certEE, certChain, group)) { return true; }
 		}
 
 		// We've walked the entire metadata chain with no success, so fail
 		return false;
 	}
 
-	private boolean pkixValidate(X509Certificate[] certChain, EntitiesDescriptor group) {
+	private boolean pkixValidate(X509Certificate certEE, X509Certificate[] certChain, EntitiesDescriptor group) {
 
 		log.debug("Attemping to validate against parent group.");
 		if (group instanceof ExtendedEntitiesDescriptor) {
@@ -158,20 +190,20 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 			// if we have any key authorities, construct a flat list of trust anchors representing each and attempt to
 			// validate against them in turn
 			while (keyAuthorities.hasNext()) {
-				if (pkixValidate(certChain, (KeyAuthority) keyAuthorities.next())) { return true; }
+				if (pkixValidate(certEE, certChain, (KeyAuthority) keyAuthorities.next())) { return true; }
 			}
 		}
 
 		// If not, attempt to walk up the chain for validation
 		EntitiesDescriptor parent = group.getEntitiesDescriptor();
 		if (parent != null) {
-			if (pkixValidate(certChain, parent)) { return true; }
+			if (pkixValidate(certEE, certChain, parent)) { return true; }
 		}
 
 		return false;
 	}
 
-	private boolean pkixValidate(X509Certificate[] certChain, KeyAuthority authority) {
+	private boolean pkixValidate(X509Certificate certEE, X509Certificate[] certChain, KeyAuthority authority) {
 
 		Set anchors = new HashSet();
 		Set crls = new HashSet();
@@ -216,7 +248,7 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 				CertPathValidator validator = CertPathValidator.getInstance("PKIX");
 
 				X509CertSelector selector = new X509CertSelector();
-				selector.setCertificate(certChain[0]);
+				selector.setCertificate(certEE);
 				PKIXBuilderParameters params = new PKIXBuilderParameters(anchors, selector);
 				params.setMaxPathLength(authority.getVerifyDepth());
 				List storeMaterial = new ArrayList(crls);
