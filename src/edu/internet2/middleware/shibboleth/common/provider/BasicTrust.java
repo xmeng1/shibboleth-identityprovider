@@ -25,6 +25,7 @@
 
 package edu.internet2.middleware.shibboleth.common.provider;
 
+import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -33,6 +34,7 @@ import java.util.Iterator;
 import org.apache.log4j.Logger;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.keyresolver.KeyResolverException;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLSignedObject;
 
 import edu.internet2.middleware.shibboleth.common.Trust;
@@ -104,13 +106,29 @@ public class BasicTrust implements Trust {
      * @see edu.internet2.middleware.shibboleth.common.Trust#validate(org.opensaml.SAMLSignedObject, edu.internet2.middleware.shibboleth.metadata.RoleDescriptor)
      */
     public boolean validate(SAMLSignedObject token, RoleDescriptor descriptor) {
-        // TODO Auto-generated method stub
-        
-        /*
-         * Proposed algorithm for this is just to walk each KeyDescriptor with keyUse of signing
-         * and try and extract a public key to use and try and verify the token. If it works, we're
-         * done.
-         */ 
+		/*
+		 * Run through the Role Metadata testing Public Keys 
+		 */
+		Iterator ikeyDescriptors = descriptor.getKeyDescriptors();
+		while (ikeyDescriptors.hasNext()) {
+			KeyDescriptor keyDescriptor = (KeyDescriptor) ikeyDescriptors.next();
+			if (keyDescriptor.getUse()!=KeyDescriptor.ENCRYPTION) {
+				// KeyInfo can be used for signing
+				KeyInfo keyInfo = keyDescriptor.getKeyInfo();
+				try {
+					// XMLSEC drills down to extract a Public Key
+					PublicKey publicKey = keyInfo.getPublicKey();
+					try {
+						token.verify(publicKey);
+						return true;
+					} catch(SAMLException e) {
+						continue;
+					}
+				} catch (KeyResolverException e) {
+					continue;
+				}
+			}
+		}
         return false;
     }
 }

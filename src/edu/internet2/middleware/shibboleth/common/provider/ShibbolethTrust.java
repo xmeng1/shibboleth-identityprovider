@@ -59,6 +59,7 @@ import org.apache.xml.security.keys.content.KeyName;
 import org.apache.xml.security.keys.content.X509Data;
 import org.apache.xml.security.keys.content.x509.XMLX509CRL;
 import org.apache.xml.security.keys.content.x509.XMLX509Certificate;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLSignedObject;
 
 import edu.internet2.middleware.shibboleth.common.Trust;
@@ -92,16 +93,42 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
      * @see edu.internet2.middleware.shibboleth.common.Trust#validate(org.opensaml.SAMLSignedObject, edu.internet2.middleware.shibboleth.metadata.RoleDescriptor)
      */
     public boolean validate(SAMLSignedObject token, RoleDescriptor descriptor) {
-        // TODO Auto-generated method stub
-        
-        /*
-         * Proposed algorithm for this (will modify C++ to match:
-         * 
-         * - get the certificates from the token
-         * - iterate over them in order, until one verifies the signature
-         * - pass that as the EE cert to the other validate method, with the full set as a chain
-         */ 
-        return false;
+		if (super.validate(token,descriptor))
+			return true;
+		
+		/* Certificates supplied with the signed object */
+		ArrayList/*<X509Certificate>*/ certificates = new ArrayList/*<X509Certificate>*/();
+		X509Certificate certificateEE = null;
+		
+		/* Iterate to count the certificates, and look for the signer */
+		Iterator icertificates;
+		try {
+			icertificates = token.getX509Certificates();
+		} catch (SAMLException e1) {
+			return false;
+		}
+		while (icertificates.hasNext()) {
+			X509Certificate certificate = (X509Certificate) icertificates.next();
+			try {
+				token.verify(certificate);
+				// This is the certificate that signed the object
+				certificateEE = certificate;
+				certificates.add(certificate);
+			} catch (SAMLException e) {
+				certificates.add(certificate);
+			}
+		}
+		
+		if (certificateEE==null)
+			return false; // No key validates the signature
+		
+		// With a count we can now build a typed array
+		X509Certificate[] certificateChain = new X509Certificate[certificates.size()];
+		int i=0;
+		for (icertificates = certificates.iterator();icertificates.hasNext();) {
+			certificateChain[i++]=(X509Certificate) icertificates.next();
+		}
+		return validate(certificateEE, certificateChain, descriptor);	
     }
 
     /*
