@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -44,7 +43,6 @@ import org.apache.log4j.Logger;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
-import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
@@ -225,19 +223,6 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			log.debug("User was authenticated via the method (" + authenticationMethod + ").");
 		}
 
-		// Generate SAML audiences
-		ArrayList audiences = new ArrayList();
-		if (relyingParty.getProviderId() != null) {
-			audiences.add(relyingParty.getProviderId());
-		}
-		if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
-			audiences.add(relyingParty.getName());
-		}
-		Vector conditions = new Vector(1);
-		if (audiences != null && audiences.size() > 0) {
-			conditions.add(new SAMLAudienceRestrictionCondition(audiences));
-		}
-
 		String issuer = relyingParty.getIdentityProvider().getProviderId();
 
 		log.info("Resolving attributes.");
@@ -276,7 +261,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 						new SAMLAuthenticationStatement(authNSubject, authenticationMethod, new Date(System
 								.currentTimeMillis()), request.getRemoteAddr(), null, null), attrStatement};
 				SAMLAssertion assertion = new SAMLAssertion(issuer, new Date(System.currentTimeMillis()), new Date(
-						System.currentTimeMillis() + 300000), conditions, null, Arrays.asList(statements));
+						System.currentTimeMillis() + 300000), null, null, Arrays.asList(statements));
 				if (log.isDebugEnabled()) {
 					log.debug("Dumping generated SAML Assertion:" + System.getProperty("line.separator")
 							+ assertion.toString());
