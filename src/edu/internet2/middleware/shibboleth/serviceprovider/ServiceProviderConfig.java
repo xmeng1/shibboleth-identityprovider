@@ -135,6 +135,7 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -148,7 +149,7 @@ import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLException;
-import org.opensaml.SAMLObject;
+import org.opensaml.SAMLSignedObject;
 import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -169,7 +170,8 @@ import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.common.XML;
+import edu.internet2.middleware.shibboleth.common.Trust;
+import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
@@ -230,12 +232,12 @@ public class ServiceProviderConfig {
 	private Map/*<String, ITrust>*/ certificateValidators = 
 		new TreeMap/*<String, ITrust>*/();
 	
-	public void addOrReplaceTrustImplementor(String uri, ITrust t) {
+	public void addOrReplaceTrustImplementor(String uri, Trust t) {
 	    certificateValidators.put(uri,t);
 	}
 	
-	public ITrust getTrustImplementor(String uri) {
-	    return (ITrust) certificateValidators.get(uri);
+	public Trust getTrustImplementor(String uri) {
+	    return (Trust) certificateValidators.get(uri);
 	}
 	
 	
@@ -268,11 +270,6 @@ public class ServiceProviderConfig {
 	/*
 	 * A few constants
 	 */
-	private final String SCHEMADIR = "/schemas/";
-	private final String MAINSCHEMA = SCHEMADIR + XML.MAIN_SHEMA_ID;
-	//private final String METADATASCHEMA = SCHEMADIR + XML.SHIB_SCHEMA_ID;    //TODO: is this needed anymore?
-	//private final String TRUSTSCHEMA = SCHEMADIR + XML.TRUST_SCHEMA_ID;
-	//private final String AAPSCHEMA = SCHEMADIR + XML.SHIB_SCHEMA_ID;
 
 	private static final String XMLTRUSTPROVIDERTYPE = 
 		"edu.internet2.middleware.shibboleth.common.provider.XMLTrust";
@@ -761,8 +758,8 @@ public class ServiceProviderConfig {
 		PluggableType[] pluggable = appinfo.getApplicationConfig().getTrustProviderArray();
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
-		            XMLTrustImpl.class,
-		            ITrust.class,
+		            ShibbolethTrust.class,
+		            Trust.class,
 		            XMLTRUSTPROVIDERTYPE,
 		            //TRUSTSCHEMA,
 		            certificateValidators);
@@ -775,29 +772,6 @@ public class ServiceProviderConfig {
 		return anyError;
 	}
 
-	/**
-	 * Reload XML Trust configuration after file changed.
-	 * @param uri Path to Trust XML configuration
-	 * @return true if file reloaded.
-	 */
-	public boolean reloadTrust(String uri) {
-	    if (getTrustImplementor(uri)!=null||
-	            uri.startsWith(INLINEURN))
-	        return false;
-		try {
-			Document trustdoc = Parser.loadDom(uri,true);
-			if (trustdoc==null)
-			    return false;
-			XMLTrustImpl impl = new XMLTrustImpl();
-			impl.initialize(trustdoc);
-			addOrReplaceTrustImplementor(uri,impl);
-		} catch (Exception e) {
-			log.error("Error while parsing Trust file "+uri);
-			log.error("XML error " + e);
-			return false;
-		}
-	    return true;
-	}
 	
 	
 	private boolean processPluggableRequestMapProvider(){
@@ -873,7 +847,7 @@ public class ServiceProviderConfig {
 	 * query their value directly.
 	 */
 	public class ApplicationInfo 
-		implements Metadata, ITrust {
+		implements Metadata, Trust {
 		
 		private Application applicationConfig;
         public Application getApplicationConfig() {
@@ -970,10 +944,10 @@ public class ServiceProviderConfig {
 		 * 
 		 * @return ITrust[]
 		 */
-		public ITrust[] getTrustProviders() {
+		public Trust[] getTrustProviders() {
 			Iterator iuris = groupUris.iterator();
 			int count = groupUris.size();
-			ITrust[] trusts = new ITrust[count];
+			Trust[] trusts = new Trust[count];
 			for (int i=0;i<count;i++) {
 				String uri =(String) iuris.next();
 				trusts[i]=getTrustImplementor(uri);
@@ -1099,33 +1073,20 @@ public class ServiceProviderConfig {
 		 */
 		public boolean 
 		validate(
-				Iterator revocations,  // Currently unused 
-				RoleDescriptor role,
-				SAMLObject token, 
-				Metadata dummy    // "this" is an EntityLocator 
+				SAMLSignedObject token, 
+				RoleDescriptor role
 					) {
 			
-			// TODO If revocations are supported, "this" will provide them
-			
-			ITrust[] trustProviders = getTrustProviders();
+	
+			Trust[] trustProviders = getTrustProviders();
 			for (int i=0;i<trustProviders.length;i++) {
-				ITrust trust = trustProviders[i];
-				if (trust.validate(null,role,token,this))
+				Trust trust = trustProviders[i];
+				if (trust.validate(token,role))
 					return true;
 			}
 			return false;
 		}
 		
-		/**
-		 * Simpler version of validate that avoids dummy arguments
-		 * 
-		 * @param role  Entity that sent Token (from Metadata)
-		 * @param token Signed SAMLObject
-		 * @return
-		 */
-		public boolean validate(RoleDescriptor role, SAMLObject token) {
-			return validate(null,role,token,null);
-		}
 
 		/**
 		 * A method of ITrust that we must declare to claim that 
@@ -1138,6 +1099,26 @@ public class ServiceProviderConfig {
 		 */
 		public boolean attach(Iterator revocations, RoleDescriptor role) {
 			// Unused
+			return false;
+		}
+
+		public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor) {
+			Trust[] trustProviders = getTrustProviders();
+			for (int i=0;i<trustProviders.length;i++) {
+				Trust trust = trustProviders[i];
+				if (trust.validate(certificateEE,certificateChain,descriptor))
+					return true;
+			}
+			return false;
+		}
+
+		public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor, boolean checkName) {
+			Trust[] trustProviders = getTrustProviders();
+			for (int i=0;i<trustProviders.length;i++) {
+				Trust trust = trustProviders[i];
+				if (trust.validate(certificateEE,certificateChain,descriptor,checkName))
+					return true;
+			}
 			return false;
 		}
 	}

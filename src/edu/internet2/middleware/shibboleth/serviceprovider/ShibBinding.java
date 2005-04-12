@@ -176,7 +176,7 @@ public class ShibBinding {
 			SAMLResponse resp) 
 	throws TrustException {
 		
-		if (resp.isSigned()&& !appinfo.validate(role,resp)) {
+		if (resp.isSigned()&& !appinfo.validate(resp,role)) {
 			throw new TrustException("Unable to validate signature of response");
 		}
 		
@@ -187,7 +187,7 @@ public class ShibBinding {
 			// TODO Dropped some logic validating conditions
 			
 			if (assertion.isSigned() && 
-				!appinfo.validate(role,assertion)) {
+				!appinfo.validate(assertion,role)) {
 				throw new TrustException("Unable to validate signature of assertion in response");
 			}
 		}
