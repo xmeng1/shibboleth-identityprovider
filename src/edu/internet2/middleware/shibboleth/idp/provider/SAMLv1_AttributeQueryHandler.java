@@ -205,7 +205,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		// Map Subject to local principal
 		Principal principal;
 		try {
-			principal = support.getNameMapper().getPrincipal(attributeQuery.getSubject().getName(), relyingParty,
+			principal = support.getNameMapper().getPrincipal(attributeQuery.getSubject().getNameIdentifier(), relyingParty,
 					relyingParty.getIdentityProvider());
 
 			log.info("Request is for principal (" + principal.getName() + ").");

@@ -140,7 +140,7 @@ public class AttributeRequestor {
 		    log.error("Unable to generate the query SAMLSubject from the Authenticaiton." );
 		    return false;
 		}
-		log.debug("Subject (Handle) is "+subject.getName());
+		log.debug("Subject (Handle) is "+subject.getNameIdentifier());
 		Collection attributeDesignators = appinfo.getAttributeDesignators();
 		try {
             query = 

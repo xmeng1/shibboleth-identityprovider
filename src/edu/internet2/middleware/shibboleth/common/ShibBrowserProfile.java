@@ -231,7 +231,7 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
          */
         EntityDescriptor entity = null;
         String asn_issuer = bpr.assertion.getIssuer();
-        String qualifier = bpr.authnStatement.getSubject().getName().getNameQualifier();
+        String qualifier = bpr.authnStatement.getSubject().getNameIdentifier().getNameQualifier();
         ServiceProviderConfig config = context.getServiceProviderConfig();
         ApplicationInfo appinfo = config.getApplication(applicationId);
         
