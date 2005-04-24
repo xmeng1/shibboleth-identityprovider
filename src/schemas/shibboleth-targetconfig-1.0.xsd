@@ -21,16 +21,12 @@
     </annotation>
 
 	<complexType name="PluggableType">
-        <complexContent>
-            <restriction base="anyType">
-                <sequence>
-                    <any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-                </sequence>
-				<attribute name="type" type="string" use="required"/>
-				<attribute name="uri" type="anyURI" use="optional"/>
-                <anyAttribute namespace="##other" processContents="lax"/>
-            </restriction>
-        </complexContent>
+		<sequence>
+			<any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="type" type="string" use="required"/>
+		<attribute name="uri" type="anyURI" use="optional"/>
+		<anyAttribute namespace="##any" processContents="lax"/>
 	</complexType>
 
 	<element name="ShibbolethTargetConfig" type="conf:SPConfigType"/>
@@ -65,16 +61,12 @@
 			<sequence>
 				<element name="Library" minOccurs="0" maxOccurs="unbounded">
 					<complexType>
-			            <complexContent>
-			                <restriction base="anyType">
-								<sequence>
-									<any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-								</sequence>
-			                	<attribute name="path" type="anyURI" use="required"/>
-								<attribute name="fatal" type="boolean" use="optional"/>
-								<anyAttribute namespace="##other" processContents="lax"/>
-			                </restriction>
-			            </complexContent>
+						<sequence>
+							<any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+						</sequence>
+						<attribute name="path" type="anyURI" use="required"/>
+						<attribute name="fatal" type="boolean" use="optional"/>
+						<anyAttribute namespace="##other" processContents="lax"/>
 					</complexType>
 				</element>
 				<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
@@ -90,40 +82,28 @@
 			<element ref="conf:Extensions" minOccurs="0"/>
 			<choice>
 				<element name="UnixListener">
-					<complexType mixed="false">
-						<complexContent>
-							<restriction base="anyType">
-								<attribute name="address" type="string" use="required"/>
-							</restriction>
-						</complexContent>
+					<complexType>
+						<attribute name="address" type="string" use="required"/>
 					</complexType>
 				</element>
 				<element name="TCPListener">
-					<complexType mixed="false">
-						<complexContent>
-							<restriction base="anyType">
-								<attribute name="address" type="string" use="required"/>
-								<attribute name="port" type="unsignedInt" use="required"/>
-								<attribute name="acl" use="optional" default="127.0.0.1">
-									<simpleType>
-										<list itemType="string"/>
-									</simpleType>
-								</attribute>
-							</restriction>
-						</complexContent>
+					<complexType>
+						<attribute name="address" type="string" use="required"/>
+						<attribute name="port" type="unsignedInt" use="required"/>
+						<attribute name="acl" use="optional" default="127.0.0.1">
+							<simpleType>
+								<list itemType="string"/>
+							</simpleType>
+						</attribute>
 					</complexType>
 				</element>
 				<element name="Listener" type="conf:PluggableType"/>
 			</choice>
 			<choice>
 				<element name="MemorySessionCache">
-					<complexType mixed="false">
-						<complexContent>
-							<restriction base="anyType">
-								<attributeGroup ref="conf:SessionCacheProperties"/>
-								<anyAttribute namespace="##other" processContents="lax"/>
-							</restriction>
-						</complexContent>
+					<complexType>
+						<attributeGroup ref="conf:SessionCacheProperties"/>
+						<anyAttribute namespace="##other" processContents="lax"/>
 					</complexType>
 				</element>
 				<element name="MySQLSessionCache">
@@ -189,8 +169,6 @@
 				<complexType>
 					<choice maxOccurs="unbounded">
 						<element ref="conf:ISAPI"/>
-						<element ref="conf:NSAPI"/>
-						<element ref="conf:Java"/>
 						<any namespace="##other" processContents="lax"/>
 					</choice>
 				</complexType>
@@ -206,19 +184,15 @@
 		<complexType>
 			<sequence>
 				<element name="Site" maxOccurs="unbounded">
-					<complexType mixed="false">
-						<complexContent>
-							<restriction base="anyType">
-								<sequence>
-									<element name="Alias" type="string" minOccurs="0" maxOccurs="unbounded"/>
-								</sequence>
-								<attribute name="id" type="unsignedInt" use="required"/>
-								<attribute name="name" type="string" use="required"/>
-                        		<attribute name="port" type="unsignedInt" use="optional"/>
-                        		<attribute name="sslport" type="unsignedInt" use="optional"/>
-								<attribute name="scheme" type="string" use="optional"/>
-							</restriction>
-						</complexContent>
+					<complexType>
+						<sequence>
+							<element name="Alias" type="string" minOccurs="0" maxOccurs="unbounded"/>
+						</sequence>
+						<attribute name="id" type="unsignedInt" use="required"/>
+						<attribute name="name" type="string" use="required"/>
+						<attribute name="port" type="unsignedInt" use="optional"/>
+						<attribute name="sslport" type="unsignedInt" use="optional"/>
+						<attribute name="scheme" type="string" use="optional"/>
 					</complexType>
 				</element>
 				<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
@@ -230,7 +204,7 @@
 	<element name="NSAPI" type="anyType"/>
 	<element name="Java" type="anyType"/>
 
-	<element name="htaccess" type="conf:UniOperatorType">
+	<element name="AccessControl" type="conf:UniOperatorType">
 		<annotation>
 			<documentation>
 			A simple example access policy language extension that supersedes Apache .htaccess
@@ -266,16 +240,18 @@
 		</complexType>
 	</element>
 	<simpleType name="listOfStrings">
-		<list itemType='string'/>
+		<list itemType="string"/>
 	</simpleType>
 	
 	<attributeGroup name="ContentSettings">
+		<attribute name="authType" type="string" use="optional"/>
 		<attribute name="requireSession" type="boolean" use="optional"/>
 		<attribute name="requireSessionWith" type="string" use="optional"/>
 		<attribute name="exportAssertion" type="boolean" use="optional"/>
 		<anyAttribute namespace="##other" processContents="lax"/>
 	</attributeGroup>
 	<element name="AccessControlProvider" type="conf:PluggableType"/>
+	<element name="htaccess" type="conf:PluggableType"/>
 
     <element name="RequestMap">
 		<annotation>
@@ -287,6 +263,7 @@
             <sequence>
             	<choice minOccurs="0">
             		<element ref="conf:htaccess"/>
+					<element ref="conf:AccessControl"/>
 	            	<element ref="conf:AccessControlProvider"/>
 	            </choice>
                 <element ref="conf:Host" minOccurs="0" maxOccurs="unbounded"/>
@@ -301,6 +278,7 @@
     		<sequence>
             	<choice minOccurs="0">
             		<element ref="conf:htaccess"/>
+					<element ref="conf:AccessControl"/>
 	            	<element ref="conf:AccessControlProvider"/>
 	            </choice>
     			<element ref="conf:Path" minOccurs="0" maxOccurs="unbounded"/>
@@ -328,6 +306,7 @@
     		<sequence>
             	<choice minOccurs="0">
             		<element ref="conf:htaccess"/>
+					<element ref="conf:AccessControl"/>
 	            	<element ref="conf:AccessControlProvider"/>
 	            </choice>
     			<element ref="conf:Path" minOccurs="0" maxOccurs="unbounded"/>
@@ -340,9 +319,7 @@
 
 	<element name="Applications">
 		<annotation>
-			<documentation>
-			Container for global target settings and application-specific overrides
-			</documentation>
+			<documentation>Container for global target settings and application-specific overrides</documentation>
 		</annotation>
 		<complexType>
 			<sequence>
@@ -354,9 +331,9 @@
                     <element ref="saml:AttributeDesignator"/>
                     <element ref="saml:Audience"/>
                     <element name="AAPProvider" type="conf:PluggableType"/>
-                    <element name="FederationProvider" type="conf:PluggableType"/>
+                    <!-- deprecated --> <element name="FederationProvider" type="conf:PluggableType"/>
+                    <element name="MetadataProvider" type="conf:PluggableType"/>
                     <element name="TrustProvider" type="conf:PluggableType"/>
-                    <element name="RevocationProvider" type="conf:PluggableType"/>
 				</choice>
 				<element ref="conf:Application" minOccurs="0" maxOccurs="unbounded"/>
 			</sequence>
@@ -369,9 +346,7 @@
 	
 	<element name="Application">
 		<annotation>
-			<documentation>
-			Container for application-specific overrides
-			</documentation>
+			<documentation>Container for application-specific overrides</documentation>
 		</annotation>
 		<complexType>
 			<sequence>
@@ -383,9 +358,9 @@
                     <element ref="saml:AttributeDesignator"/>
                     <element ref="saml:Audience"/>
                     <element name="AAPProvider" type="conf:PluggableType"/>
-                    <element name="FederationProvider" type="conf:PluggableType"/>
+                    <!-- deprecated --> <element name="FederationProvider" type="conf:PluggableType"/>
+                    <element name="MetadataProvider" type="conf:PluggableType"/>
                     <element name="TrustProvider" type="conf:PluggableType"/>
-                    <element name="RevocationProvider" type="conf:PluggableType"/>
 				</choice>
 			</sequence>
 			<attribute name="id" type="string" use="required"/>
@@ -393,6 +368,15 @@
 			<attribute name="homeURL" type="anyURI" use="optional"/>
 	        <anyAttribute namespace="##other" processContents="lax"/>
 		</complexType>
+	</element>
+
+	<element name="KeyInfoResolver" type="conf:PluggableType">
+		<annotation>
+			<documentation>
+			Custom plug-in that resolves ds:KeyInfo elements into public keys, used in
+			TrustProvider elements.
+			</documentation>
+		</annotation>
 	</element>
 
 	<element name="Sessions">
@@ -474,13 +458,13 @@
 		<complexType>
 			<sequence>
 				<element name="RelyingParty" minOccurs="0" maxOccurs="unbounded">
-					<complexType mixed="false">
-						<complexContent>
-							<restriction base="anyType">
-								<attribute name="Name" type="string" use="required"/>
-								<attributeGroup ref="conf:CredentialUseGroup"/>
-							</restriction>
-						</complexContent>
+					<complexType>
+						<sequence>
+							<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+						</sequence>
+						<attribute name="Name" type="string" use="required"/>
+						<attributeGroup ref="conf:CredentialUseGroup"/>
+						<anyAttribute namespace="##other" processContents="lax"/>
 					</complexType>
 				</element>
 				<any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
