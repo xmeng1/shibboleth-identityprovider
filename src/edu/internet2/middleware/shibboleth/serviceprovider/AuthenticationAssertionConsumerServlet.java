@@ -55,7 +55,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLBrowserProfile;
 import org.opensaml.SAMLResponse;
-import org.opensaml.XML;
 import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
 import org.w3c.dom.Element;
 import org.apache.log4j.FileAppender;

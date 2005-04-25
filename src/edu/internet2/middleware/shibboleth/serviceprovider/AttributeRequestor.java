@@ -69,7 +69,6 @@ import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
 
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
 /**
