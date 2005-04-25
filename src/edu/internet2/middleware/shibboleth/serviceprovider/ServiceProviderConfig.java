@@ -160,6 +160,7 @@ import x0.maceShibbolethTargetConfig1.ApplicationDocument;
 import x0.maceShibbolethTargetConfig1.LocalConfigurationType;
 import x0.maceShibbolethTargetConfig1.PluggableType;
 import x0.maceShibbolethTargetConfig1.RequestMapDocument;
+import x0.maceShibbolethTargetConfig1.SPConfigDocument;
 import x0.maceShibbolethTargetConfig1.SPConfigType;
 import x0.maceShibbolethTargetConfig1.ShibbolethTargetConfigDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
@@ -403,21 +404,34 @@ public class ServiceProviderConfig {
 	private void loadConfigBean(Document configDoc) 
 		throws ShibbolethConfigurationException {
 	    boolean anyError=false;
-		ShibbolethTargetConfigDocument configBeanDoc;
-        try {
-			// reprocess the already validated DOM to create a bean with typed fields
-			// dump the trash (comments, processing instructions, extra whitespace)
-			configBeanDoc = ShibbolethTargetConfigDocument.Factory.parse(configDoc,
-				new XmlOptions().setLoadStripComments().setLoadStripProcinsts().setLoadStripWhitespace());
-			config=configBeanDoc.getShibbolethTargetConfig();
+		
+		Element documentElement = configDoc.getDocumentElement();
+		// reprocess the already validated DOM to create a bean with typed fields
+		// dump the trash (comments, processing instructions, extra whitespace)
+		
+		SPConfigType config	=null;
+		try {
+			if (documentElement.getLocalName().equals("ShibbolethTargetConfig")) {
+				ShibbolethTargetConfigDocument configBeanDoc;
+				configBeanDoc = ShibbolethTargetConfigDocument.Factory.parse(configDoc,
+						new XmlOptions().setLoadStripComments().setLoadStripProcinsts().setLoadStripWhitespace());
+				config=configBeanDoc.getShibbolethTargetConfig();
+				config = configBeanDoc.getShibbolethTargetConfig();
+			} else if (documentElement.getLocalName().equals("SPConfig")) {
+				SPConfigDocument configBeanDoc;
+				configBeanDoc = SPConfigDocument.Factory.parse(configDoc,
+						new XmlOptions().setLoadStripComments().setLoadStripProcinsts().setLoadStripWhitespace());
+				config=configBeanDoc.getSPConfig();
+				config = configBeanDoc.getSPConfig();
+			} else {
+				throw new XmlException("Root element not ShibbolethTargetConfig or SPConfig");
+			}
 		} catch (XmlException e) {
 			// Since the DOM was already validated against the schema, errors will not typically occur here
 			log.error("Error while parsing shibboleth configuration");
 			throw new ShibbolethConfigurationException("Error while parsing shibboleth configuration");
 		}
 		
-		// Extract the "root Element" object from the "Document" object
-		SPConfigType config = configBeanDoc.getShibbolethTargetConfig();
 		
 		Applications apps = config.getApplications(); // <Applications>
 		
@@ -440,8 +454,8 @@ public class ServiceProviderConfig {
 		defaultApp.setCredentialUse(apps.getCredentialUse());
 		defaultApp.setErrors(apps.getErrors());
 		defaultApp.setFederationProviderArray(apps.getFederationProviderArray());
+		defaultApp.setMetadataProviderArray(apps.getMetadataProviderArray());
 		defaultApp.setProviderId(apps.getProviderId());
-		defaultApp.setRevocationProviderArray(apps.getRevocationProviderArray());
 		defaultApp.setSessions(apps.getSessions());
 		defaultApp.setTrustProviderArray(apps.getTrustProviderArray());
 		
@@ -651,7 +665,22 @@ public class ServiceProviderConfig {
 	 */
 	private boolean processPluggableMetadata(ApplicationInfo appinfo) {
 	    boolean anyError = false;
-		PluggableType[] pluggable = appinfo.getApplicationConfig().getFederationProviderArray();
+		PluggableType[] pluggable1 = appinfo.getApplicationConfig().getFederationProviderArray();
+		PluggableType[] pluggable2 = appinfo.getApplicationConfig().getMetadataProviderArray();
+		PluggableType[] pluggable;
+		if (pluggable1.length==0) {
+			pluggable=pluggable2;
+		} else if (pluggable2.length==0) {
+			pluggable=pluggable1;
+		} else {
+			pluggable = new PluggableType[pluggable1.length+pluggable2.length];
+			for (int i=0;i<pluggable2.length;i++) {
+				pluggable[i]=pluggable2[i];
+			}
+			for (int i=0;i<pluggable1.length;i++) {
+				pluggable[i+pluggable2.length]=pluggable1[i];
+			}
+		}
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
 		            XMLMetadataImpl.class,
