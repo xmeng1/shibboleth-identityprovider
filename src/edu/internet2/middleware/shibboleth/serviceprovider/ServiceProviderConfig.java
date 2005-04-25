@@ -229,8 +229,8 @@ public class ServiceProviderConfig {
 	    return (AAP) attributePolicies.get(uri);
 	}
 	
-	private Map/*<String, ITrust>*/ certificateValidators = 
-		new TreeMap/*<String, ITrust>*/();
+	private Map/*<String, Trust>*/ certificateValidators = 
+		new TreeMap/*<String, Trust>*/();
 	
 	public void addOrReplaceTrustImplementor(String uri, Trust t) {
 	    certificateValidators.put(uri,t);
@@ -240,6 +240,7 @@ public class ServiceProviderConfig {
 	    return (Trust) certificateValidators.get(uri);
 	}
 	
+	private Trust[] defaultTrust = {new ShibbolethTrust()};
 	
 	/*
 	 * Objects created from the <Application(s)> elements.
@@ -554,7 +555,7 @@ public class ServiceProviderConfig {
      * object is stored in the appropriate Map.</p>
      * 
      * <p>The objects created implement two interfaces. Mostly they
-     * implement a configuration interface (EntityDescriptor, ITrust,
+     * implement a configuration interface (EntityDescriptor, Trust,
      * AAP, etc). However, for the purpose of this routine they also
      * must be declared to implement PluggableConfigurationComponent
      * and provide an initialize() method that parses a DOM Node 
@@ -940,13 +941,15 @@ public class ServiceProviderConfig {
         }
         
 		/**
-		 * Return the current array of objects that implement the ITrust interface
+		 * Return the current array of objects that implement the Trust interface
 		 * 
-		 * @return ITrust[]
+		 * @return Trust[]
 		 */
 		public Trust[] getTrustProviders() {
-			Iterator iuris = groupUris.iterator();
-			int count = groupUris.size();
+			Iterator iuris = trustUris.iterator();
+			int count = trustUris.size();
+			if (count==0)
+				return defaultTrust;
 			Trust[] trusts = new Trust[count];
 			for (int i=0;i<count;i++) {
 				String uri =(String) iuris.next();
@@ -1063,7 +1066,7 @@ public class ServiceProviderConfig {
 
 		
 		/**
-		 * Convenience method implementing ITrust.validate() across 
+		 * Convenience method implementing Trust.validate() across 
 		 * the collection of implementing objects. Returns true if
 		 * any Trust implementor approves the signatures in the object.
 		 * 
@@ -1089,8 +1092,8 @@ public class ServiceProviderConfig {
 		
 
 		/**
-		 * A method of ITrust that we must declare to claim that 
-		 * ApplicationInfo implements ITrust. However, no code in the
+		 * A method of Trust that we must declare to claim that 
+		 * ApplicationInfo implements Trust. However, no code in the
 		 * ServiceProvider calls this (probably an Origin thing).
 		 * 
 		 * @param revocations
