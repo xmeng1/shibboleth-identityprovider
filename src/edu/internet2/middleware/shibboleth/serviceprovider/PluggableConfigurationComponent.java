@@ -23,7 +23,7 @@
  * an interface like this.
  * 
  * Note: To be useful, the implementing class must also
- * implement some functional interface, such as ITrust or
+ * implement some functional interface, such as Trust or
  * AAP. This interface just manages the load and initialization
  * part.
  * 
