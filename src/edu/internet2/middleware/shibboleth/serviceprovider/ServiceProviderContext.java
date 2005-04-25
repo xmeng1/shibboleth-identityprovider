@@ -54,7 +54,7 @@ public class ServiceProviderContext {
 	 * indirectly by creating this first new object of type
 	 * ServiceProviderContext() there is some code that calls
 	 * back to getServiceProviderContext() then it will get back
-	 * a null from that call. This is because the targetContext
+	 * a null from that call. This is because the SPContext
 	 * variable is not filled in with a reference to the object 
 	 * until it is constructed, and we are still in the middle of
 	 * constructing it.  
