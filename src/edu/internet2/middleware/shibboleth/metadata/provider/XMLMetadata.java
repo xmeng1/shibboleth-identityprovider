@@ -104,15 +104,15 @@ public class XMLMetadata extends ResourceWatchdog implements Metadata {
             newMeta = new XMLMetadataProvider(XML.parserPool.parse(resource.getInputStream()).getDocumentElement());
         }
         catch (IOException e) {
-			log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy: " + e);
+			log.error("Encountered an error retrieving updated SAML metadata, continuing to use stale copy: " + e);
 			return;
 		}
         catch (SAXException e) {
-            log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy: " + e);
+            log.error("Encountered an error retrieving updated SAML metadata, continuing to use stale copy: " + e);
             return;
         }
         catch (SAMLException e) {
-            log.error("Encountered an error retrieving updated federation metadata, continuing to use stale copy: " + e);
+            log.error("Encountered an error retrieving updated SAML metadata, continuing to use stale copy: " + e);
             return;
         }
 

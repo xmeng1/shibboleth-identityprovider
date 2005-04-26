@@ -212,13 +212,13 @@ public class IdPResponder extends HttpServlet {
 
 			// Load metadata
 			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
-					"FederationProvider");
+					"MetadataProvider");
 			for (int i = 0; i < itemElements.getLength(); i++) {
-				protocolSupport.addFederationProvider((Element) itemElements.item(i));
+				protocolSupport.addMetadataProvider((Element) itemElements.item(i));
 			}
 			if (protocolSupport.providerCount() < 1) {
-				log.error("No Federation Provider metadata loaded.");
-				throw new ShibbolethConfigurationException("Could not load federation metadata.");
+				log.error("No Metadata Provider metadata loaded.");
+				throw new ShibbolethConfigurationException("Could not load SAML metadata.");
 			}
 
 			log.info("Identity Provider initialization complete.");
@@ -367,28 +367,28 @@ public class IdPResponder extends HttpServlet {
 
 }
 
-class FederationProviderFactory {
+class MetadataProviderFactory {
 
-	private static Logger log = Logger.getLogger(FederationProviderFactory.class.getName());
+	private static Logger log = Logger.getLogger(MetadataProviderFactory.class.getName());
 
 	public static Metadata loadProvider(Element e) throws MetadataException {
 
 		String className = e.getAttribute("type");
 		if (className == null || className.equals("")) {
-			log.error("Federation Provider requires specification of the attribute \"type\".");
-			throw new MetadataException("Failed to initialize Federation Provider.");
+			log.error("Metadata Provider requires specification of the attribute \"type\".");
+			throw new MetadataException("Failed to initialize Metadata Provider.");
 		} else {
 			try {
 				Class[] params = {Class.forName("org.w3c.dom.Element"),};
 				return (Metadata) Class.forName(className).getConstructor(params).newInstance(new Object[]{e});
 			} catch (Exception loaderException) {
-				log.error("Failed to load Federation Provider implementation class: " + loaderException);
+				log.error("Failed to load Metadata Provider implementation class: " + loaderException);
 				Throwable cause = loaderException.getCause();
 				while (cause != null) {
 					log.error("caused by: " + cause);
 					cause = cause.getCause();
 				}
-				throw new MetadataException("Failed to initialize Federation Provider.");
+				throw new MetadataException("Failed to initialize Metadata Provider.");
 			}
 		}
 	}

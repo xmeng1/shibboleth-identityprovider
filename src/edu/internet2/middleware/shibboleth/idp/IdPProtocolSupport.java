@@ -71,7 +71,7 @@ public class IdPProtocolSupport implements Metadata {
 	private static Logger log = Logger.getLogger(IdPProtocolSupport.class.getName());
 	private Logger transactionLog;
 	private IdPConfig config;
-	private ArrayList fedMetadata = new ArrayList();
+	private ArrayList metadata = new ArrayList();
 	private NameMapper nameMapper;
 	private ServiceProviderMapper spMapper;
 	private ArpEngine arpEngine;
@@ -172,29 +172,29 @@ public class IdPProtocolSupport implements Metadata {
 		}
 	}
 
-	protected void addFederationProvider(Element element) {
+	protected void addMetadataProvider(Element element) {
 
-		log.debug("Found Federation Provider configuration element.");
-		if (!element.getTagName().equals("FederationProvider")) {
-			log.error("Error while attemtping to load Federation Provider.  Malformed provider specificaion.");
+		log.debug("Found Metadata Provider configuration element.");
+		if (!element.getTagName().equals("MetadataProvider")) {
+			log.error("Error while attemtping to load Metadata Provider.  Malformed provider specificaion.");
 			return;
 		}
 
 		try {
-			fedMetadata.add(FederationProviderFactory.loadProvider(element));
+			metadata.add(MetadataProviderFactory.loadProvider(element));
 		} catch (MetadataException e) {
-			log.error("Unable to load Federation Provider.  Skipping...");
+			log.error("Unable to load Metadata Provider.  Skipping...");
 		}
 	}
 
 	public int providerCount() {
 
-		return fedMetadata.size();
+		return metadata.size();
 	}
 
 	public EntityDescriptor lookup(String providerId) {
 
-		Iterator iterator = fedMetadata.iterator();
+		Iterator iterator = metadata.iterator();
 		while (iterator.hasNext()) {
 			EntityDescriptor provider = ((Metadata) iterator.next()).lookup(providerId);
 			if (provider != null) { return provider; }
@@ -204,7 +204,7 @@ public class IdPProtocolSupport implements Metadata {
 
 	public EntityDescriptor lookup(Artifact artifact) {
 
-		Iterator iterator = fedMetadata.iterator();
+		Iterator iterator = metadata.iterator();
 		while (iterator.hasNext()) {
 			EntityDescriptor provider = ((Metadata) iterator.next()).lookup(artifact);
 			if (provider != null) { return provider; }
