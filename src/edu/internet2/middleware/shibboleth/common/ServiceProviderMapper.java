@@ -43,8 +43,8 @@ import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 
 /**
  * Class for determining the effective relying party from the unique id of the service provider. Checks first for an
- * exact match on the service provider, then for membership in a federation. Uses the default relying party if neither
- * is found.
+ * exact match on the service provider, then for membership in a group of providers (perhaps a federation). Uses the
+ * default relying party if neither is found.
  * 
  * @author Walter Hoehn
  */
@@ -503,7 +503,7 @@ public class ServiceProviderMapper {
 	}
 
 	/**
-	 * Relying party implementation wrapper for relying parties that are federations.
+	 * Relying party implementation wrapper for relying parties that are groups.
 	 * 
 	 * @author Walter Hoehn
 	 */
