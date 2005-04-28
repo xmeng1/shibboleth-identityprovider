@@ -46,7 +46,7 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
- * {@link HSNameIdentifierMapping}implementation that uses an in-memory cache to store mappings between principal names
+ * {@link NameIdentifierMapping}implementation that uses an in-memory cache to store mappings between principal names
  * and Shibboleth Attribute Query Handles.
  * 
  * @author Walter Hoehn
@@ -62,8 +62,15 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 		super(config);
 	}
 
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
-			IdentityProvider idProv) throws NameIdentifierMappingException {
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifier(edu.internet2.middleware.shibboleth.common.AuthNPrincipal,
+	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
+	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
+	 */
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+			throws NameIdentifierMappingException {
 
 		if (principal == null) {
 			log.error("A principal must be supplied for Attribute Query Handle creation.");
@@ -83,6 +90,13 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getPrincipal(org.opensaml.SAMLNameIdentifier,
+	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
+	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
+	 */
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
@@ -164,7 +178,7 @@ class HandleCache {
 		public MemoryRepositoryCleaner() {
 
 			super(
-					"edu.internet2.middleware.shibboleth.hs.provider.SharedMemoryShibHandle.HandleCache.MemoryRepositoryCleaner");
+					"edu.internet2.middleware.shibboleth.common.provider.SharedMemoryShibHandle.HandleCache.MemoryRepositoryCleaner");
 			this.master = Thread.currentThread();
 			setDaemon(true);
 			if (getPriority() > Thread.MIN_PRIORITY) {
