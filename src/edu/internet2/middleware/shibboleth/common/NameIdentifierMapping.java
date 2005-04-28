@@ -85,7 +85,7 @@ public interface NameIdentifierMapping {
 	 * @throws NameIdentifierMappingException
 	 *             If the {@link NameMapper}encounters an internal error
 	 */
-	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException;
 
 	/**

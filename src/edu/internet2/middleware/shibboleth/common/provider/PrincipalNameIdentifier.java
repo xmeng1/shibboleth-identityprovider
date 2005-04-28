@@ -59,7 +59,7 @@ public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {
 		return new AuthNPrincipal(nameId.getName());
 	}
 
-	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException {
 
 		if (principal == null) {

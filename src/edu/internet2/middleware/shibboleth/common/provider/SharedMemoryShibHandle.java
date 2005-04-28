@@ -62,7 +62,7 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 		super(config);
 	}
 
-	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException {
 
 		if (principal == null) {

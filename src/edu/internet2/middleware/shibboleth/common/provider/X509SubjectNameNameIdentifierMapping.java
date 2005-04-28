@@ -96,7 +96,7 @@ public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapp
 	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 	 */
-	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException {
 
 		try {

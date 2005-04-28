@@ -250,7 +250,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 	 * to encode the IV or MAC's lengths. They can be obtained from Cipher.getBlockSize() and Mac.getMacLength(),
 	 * respectively.
 	 */
-	public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException {
 
 		try {

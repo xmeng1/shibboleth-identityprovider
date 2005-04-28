@@ -289,7 +289,7 @@ public class NameMapper {
 		NameIdentifierMapping mapping = getNameIdentifierMappingById(id);
 
 		if (mapping == null) { throw new NameIdentifierMappingException("Name Identifier id not registered."); }
-		return mapping.getNameIdentifierName(principal, sProv, idProv);
+		return mapping.getNameIdentifier(principal, sProv, idProv);
 	}
 
 	/**
@@ -366,7 +366,7 @@ public class NameMapper {
 		 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 		 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 		 */
-		public SAMLNameIdentifier getNameIdentifierName(AuthNPrincipal principal, ServiceProvider sProv,
+		public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
 				IdentityProvider idProv) throws NameIdentifierMappingException {
 
 			try {
