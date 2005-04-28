@@ -1,3 +1,4 @@
+
 package edu.internet2.middleware.shibboleth.common.provider;
 
 import java.util.regex.Matcher;
@@ -18,7 +19,7 @@ import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
- * <code>HSNameIdentifierMapping</code> implementation that translates principal names to E-Auth compliant
+ * <code>NameIdentifierMapping</code> implementation that translates principal names to E-Auth compliant
  * X509SubjectNames.
  * 
  * @author Walter Hoehn
@@ -70,7 +71,6 @@ public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapp
 	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 	 */
-
 	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
@@ -92,12 +92,12 @@ public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapp
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see edu.internet2.middleware.shibboleth.hs.HSNameIdentifierMapping#getNameIdentifierName(edu.internet2.middleware.shibboleth.common.AuthNPrincipal,
+	 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifier(edu.internet2.middleware.shibboleth.common.AuthNPrincipal,
 	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 	 */
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
-			IdentityProvider idProv) throws NameIdentifierMappingException {
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+			throws NameIdentifierMappingException {
 
 		try {
 			return new SAMLNameIdentifier(internalNameContext.replaceAll("%PRINCIPAL%", principal.getName()),
