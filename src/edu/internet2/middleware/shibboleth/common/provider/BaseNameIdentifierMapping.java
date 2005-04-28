@@ -65,7 +65,7 @@ public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping
 		}
 
 		String id = ((Element) config).getAttribute("id");
-		if (id != null || !id.equals("")) {
+		if (id != null && !id.equals("")) {
 			this.id = id;
 		}
 
@@ -83,7 +83,7 @@ public abstract class BaseNameIdentifierMapping implements NameIdentifierMapping
 
 	public void destroy() {
 
-	//nothing to do
+	// nothing to do
 	}
 
 	protected void verifyQualifier(SAMLNameIdentifier nameId, IdentityProvider idProv)
