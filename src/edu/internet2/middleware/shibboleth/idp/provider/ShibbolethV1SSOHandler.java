@@ -326,7 +326,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			RelyingParty relyingParty, SAMLSubject authNSubject) throws SAMLException {
 
 		try {
-			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty.getProviderId(), null);
+			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty, relyingParty
+					.getProviderId(), null);
 			log.info("Found " + attributes.length + " attribute(s) for " + principal.getName());
 
 			// Bail if we didn't get any attributes

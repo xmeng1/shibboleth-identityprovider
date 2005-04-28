@@ -228,7 +228,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		log.info("Resolving attributes.");
 		List attributes = null;
 		try {
-			attributes = Arrays.asList(support.getReleaseAttributes(principal, relyingParty.getProviderId(), null));
+			attributes = Arrays.asList(support.getReleaseAttributes(principal, relyingParty, relyingParty.getProviderId(), null));
 		} catch (AAException e1) {
 			log.error("Error resolving attributes: " + e1);
 			eAuthError(response, 90, remoteProviderId, csid);

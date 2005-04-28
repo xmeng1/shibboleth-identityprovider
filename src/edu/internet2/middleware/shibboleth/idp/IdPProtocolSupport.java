@@ -212,11 +212,12 @@ public class IdPProtocolSupport implements Metadata {
 		return null;
 	}
 
-	public SAMLAttribute[] getReleaseAttributes(Principal principal, String requester, URL resource) throws AAException {
+	public SAMLAttribute[] getReleaseAttributes(Principal principal, RelyingParty relyingParty, String requester,
+			URL resource) throws AAException {
 
 		try {
 			URI[] potentialAttributes = arpEngine.listPossibleReleaseAttributes(principal, requester, resource);
-			return getReleaseAttributes(principal, requester, resource, potentialAttributes);
+			return getReleaseAttributes(principal, relyingParty, requester, resource, potentialAttributes);
 
 		} catch (ArpProcessingException e) {
 			log.error("An error occurred while processing the ARPs for principal (" + principal.getName() + ") :"
@@ -225,13 +226,20 @@ public class IdPProtocolSupport implements Metadata {
 		}
 	}
 
-	public SAMLAttribute[] getReleaseAttributes(Principal principal, String requester, URL resource,
-			URI[] attributeNames) throws AAException {
+	public SAMLAttribute[] getReleaseAttributes(Principal principal, RelyingParty relyingParty, String requester,
+			URL resource, URI[] attributeNames) throws AAException {
 
 		try {
 			AAAttributeSet attributeSet = new AAAttributeSet();
 			for (int i = 0; i < attributeNames.length; i++) {
-				AAAttribute attribute = new AAAttribute(attributeNames[i].toString());
+
+				AAAttribute attribute = null;
+				if (relyingParty.wantsSchemaHack()) {
+					attribute = new AAAttribute(attributeNames[i].toString(), true);
+				} else {
+					attribute = new AAAttribute(attributeNames[i].toString(), false);
+				}
+
 				attributeSet.add(attribute);
 			}
 

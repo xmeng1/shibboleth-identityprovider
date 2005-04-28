@@ -229,6 +229,7 @@ public class ServiceProviderMapper {
 		private boolean wantsAssertionsSigned = false;
 		private int preferredArtifactType = 1;
 		private String defaultTarget;
+		private boolean wantsSchemaHack = false;
 
 		public RelyingPartyImpl(Element partyConfig, IdPConfig globalConfig, Credentials credentials,
 				NameMapper nameMapper) throws ServiceProviderMapperException {
@@ -299,6 +300,15 @@ public class ServiceProviderMapper {
 				log.debug("Relying party wants SAML Assertions to be signed.");
 			} else {
 				log.debug("Relying party does not want SAML Assertions to be signed.");
+			}
+
+			// Decide whether or not to use the schema hack for old xerces
+			attribute = ((Element) partyConfig).getAttribute("schemaHack");
+			if (attribute != null && !attribute.equals("")) {
+				wantsSchemaHack = Boolean.valueOf(attribute).booleanValue();
+			}
+			if (wantsSchemaHack) {
+				log.debug("XML schema hack enabled for this relying party.");
 			}
 
 			// Set a default target for use in artifact redirects
@@ -467,6 +477,11 @@ public class ServiceProviderMapper {
 			return defaultTarget;
 		}
 
+		public boolean wantsSchemaHack() {
+
+			return wantsSchemaHack;
+		}
+
 		/**
 		 * Default identity provider implementation.
 		 * 
@@ -587,6 +602,11 @@ public class ServiceProviderMapper {
 
 			return wrapped.getDefaultTarget();
 		}
+
+		public boolean wantsSchemaHack() {
+
+			return wrapped.wantsSchemaHack();
+		}
 	}
 
 	/**
@@ -673,6 +693,11 @@ public class ServiceProviderMapper {
 		public String getDefaultTarget() {
 
 			return wrapped.getDefaultTarget();
+		}
+
+		public boolean wantsSchemaHack() {
+
+			return wrapped.wantsSchemaHack();
 		}
 	}
 

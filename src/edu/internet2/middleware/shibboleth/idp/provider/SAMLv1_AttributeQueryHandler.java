@@ -64,7 +64,6 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
@@ -131,8 +130,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 				// Make sure that the suppplied credential is valid for the
 				// selected relying party
-                X509Certificate[] chain = (X509Certificate[])req.getAttribute("javax.servlet.request.X509Certificate");
-                if (support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, role)) {
+				X509Certificate[] chain = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
+				if (support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, role)) {
 					log.info("Supplied credential validated for this provider.");
 					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
 					return relyingParty.getProviderId();
@@ -205,8 +204,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		// Map Subject to local principal
 		Principal principal;
 		try {
-			principal = support.getNameMapper().getPrincipal(attributeQuery.getSubject().getNameIdentifier(), relyingParty,
-					relyingParty.getIdentityProvider());
+			principal = support.getNameMapper().getPrincipal(attributeQuery.getSubject().getNameIdentifier(),
+					relyingParty, relyingParty.getIdentityProvider());
 
 			log.info("Request is for principal (" + principal.getName() + ").");
 
@@ -226,11 +225,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					}
 				}
 
-				attrs = support.getReleaseAttributes(principal, effectiveName, null, (URI[]) requestedAttrs
-						.toArray(new URI[0]));
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null,
+						(URI[]) requestedAttrs.toArray(new URI[0]));
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
-				attrs = support.getReleaseAttributes(principal, effectiveName, null);
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null);
 			}
 
 			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());

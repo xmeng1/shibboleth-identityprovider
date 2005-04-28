@@ -60,10 +60,33 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	private static long defaultLifetime = 1800; // 30 minutes
 	private ValueHandler valueHandler = new StringValueHandler();
 
+	/**
+	 * Constructs a skeleton attribute with no values.
+	 * 
+	 * @param name
+	 *            the name of the attribute
+	 * @param legacyCompat
+	 *            boolean indicator of whether or not the legacy namespace hack should be used (this is required for SPs
+	 *            running old versions of xerces)
+	 * @throws SAMLException
+	 */
+	public AAAttribute(String name, boolean legacyCompat) throws SAMLException {
+
+		super(name, SHIB_ATTRIBUTE_NAMESPACE_URI, legacyCompat ? new QName("urn:mace:shibboleth:1.0",
+				"AttributeValueType") : null, defaultLifetime, null);
+	}
+
+	/**
+	 * Constructs a skeleton attribute with no values.
+	 * 
+	 * @param name
+	 *            the name of the attribute
+	 * @throws SAMLException
+	 *             if the attribute could not be created
+	 */
 	public AAAttribute(String name) throws SAMLException {
 
-		super(name, SHIB_ATTRIBUTE_NAMESPACE_URI, new QName("urn:mace:shibboleth:1.0", "AttributeValueType"),
-				defaultLifetime, null);
+		super(name, SHIB_ATTRIBUTE_NAMESPACE_URI, null, defaultLifetime, null);
 	}
 
 	public AAAttribute(String name, Object[] values) throws SAMLException {

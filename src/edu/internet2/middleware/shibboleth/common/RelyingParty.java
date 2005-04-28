@@ -119,4 +119,10 @@ public interface RelyingParty extends ServiceProvider {
 	 * Returns thhe default "TARGET" attribute to be used with the artifact profile or null if none is specified.
 	 */
 	public String getDefaultTarget();
+
+	/**
+	 * Boolean indicator of whether or not the legacy schema hack should be used. Older versions of xerces require
+	 * (xsi:type="typens:AttributeValueType") on the attribute value to get around a validation bug.
+	 */
+	public boolean wantsSchemaHack();
 }
