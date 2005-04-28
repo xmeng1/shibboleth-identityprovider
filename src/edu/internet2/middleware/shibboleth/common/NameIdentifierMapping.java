@@ -73,8 +73,6 @@ public interface NameIdentifierMapping {
 	/**
 	 * Maps a local principal to a SAML Name Identifier.
 	 * 
-	 * @param id
-	 *            the id under which the effective {@link HSNameIdentifierMapping}is registered
 	 * @param principal
 	 *            the principal to map
 	 * @param sProv
