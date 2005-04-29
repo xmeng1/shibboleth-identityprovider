@@ -53,13 +53,6 @@ public interface AttributeRule {
     String getNamespace();
     
     /**
-     *  Get the name of the class responsible for implementing this attribute 
-     *
-     * @return The factory class name
-     */
-    String getFactory();
-    
-    /**
      *  Get the shorthand name of the attribute 
      *
      * @return The shorthand name

@@ -59,7 +59,6 @@ public class XMLAAPProvider implements AAP {
 
         private String name = null;
         private String namespace = null;
-        private String factory = null;
         private String alias = null;
         private String header = null;
         private boolean caseSensitive = true;
@@ -89,7 +88,6 @@ public class XMLAAPProvider implements AAP {
         }
         
         XMLAttributeRule(Element e) throws MalformedException {
-            factory = XML.assign(e.getAttributeNS(null,"Factory"));
             alias = XML.assign(e.getAttributeNS(null,"Alias"));
             header = XML.assign(e.getAttributeNS(null,"Header"));
             name = XML.assign(e.getAttributeNS(null,"Name"));
@@ -204,10 +202,6 @@ public class XMLAAPProvider implements AAP {
 
         public String getNamespace() {
             return namespace;
-        }
-
-        public String getFactory() {
-            return factory;
         }
 
         public String getAlias() {
