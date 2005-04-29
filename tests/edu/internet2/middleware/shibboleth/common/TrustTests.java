@@ -43,7 +43,6 @@ import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvaila
 import edu.internet2.middleware.shibboleth.common.provider.BasicTrust;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
@@ -394,7 +393,7 @@ public class TrustTests extends TestCase {
 
 			// Try to validate against the metadata
 			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert,  new X509Certificate[]{cert}, role);
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
