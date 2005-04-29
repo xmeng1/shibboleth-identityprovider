@@ -39,11 +39,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.log4j.Logger;
 import org.apache.xml.security.encryption.EncryptionMethod;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
+import org.bouncycastle.util.encoders.Hex;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBrowserProfile;
@@ -1162,7 +1162,7 @@ public class XMLMetadataProvider implements Metadata {
                     else {
                         String sourceId;
                         try {
-                            sourceId = new String(Hex.encodeHex(Util.generateSourceId(id)));
+                            sourceId = new String(Hex.encode(Util.generateSourceId(id)));
                         }
                         catch (NoSuchAlgorithmException e1) {
                             log.error("caught exception while encoding sourceId: " + e1.getMessage());
