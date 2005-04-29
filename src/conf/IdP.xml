@@ -89,7 +89,7 @@
 	</ProtocolHandler>
 
 	
-	<FederationProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
+	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataLoadWrapper"
                 uri="/conf/ExampleMetadata.xml"/>
                 
 </IdPConfig>
