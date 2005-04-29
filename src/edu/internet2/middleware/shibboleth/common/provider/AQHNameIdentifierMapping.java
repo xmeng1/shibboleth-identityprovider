@@ -99,4 +99,14 @@ class HandleEntry implements Serializable {
 
 		return (System.currentTimeMillis() >= expirationTime);
 	}
+
+	public long getExpirationTime() {
+
+		return expirationTime;
+	}
+
+	public void setExpirationTime(long expr) {
+
+		expirationTime = expr;
+	}
 }

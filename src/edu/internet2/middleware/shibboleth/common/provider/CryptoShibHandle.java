@@ -67,8 +67,8 @@ import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.utils.Base32;
 
 /**
- * {@link HSNameIdentifierMapping}implementation that uses symmetric encryption to store principal data inside
- * Shibboleth Attribute Query Handles.
+ * {@link NameIdentifierMapping}implementation that uses symmetric encryption to store principal data inside Shibboleth
+ * Attribute Query Handles.
  * 
  * @author Walter Hoehn
  * @author Derek Morr
@@ -176,7 +176,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 			int macSize = mac.getMacLength();
 
 			if (in.length < ivSize) {
-				log.debug("Attribute Query Handle is malformed (not enough bytes).");
+				log.error("Attribute Query Handle is malformed (not enough bytes).");
 				throw new NameIdentifierMappingException("Attribute Query Handle is malformed (not enough bytes).");
 			}
 
@@ -250,14 +250,15 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 	 * to encode the IV or MAC's lengths. They can be obtained from Cipher.getBlockSize() and Mac.getMacLength(),
 	 * respectively.
 	 */
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
-			IdentityProvider idProv) throws NameIdentifierMappingException {
+	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+			throws NameIdentifierMappingException {
+
+		if (principal == null) {
+			log.error("A principal must be supplied for Attribute Query Handle creation.");
+			throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
+		}
 
 		try {
-			if (principal == null) {
-				log.error("A principal must be supplied for Attribute Query Handle creation.");
-				throw new IllegalArgumentException("A principal must be supplied for Attribute Query Handle creation.");
-			}
 
 			Mac mac = Mac.getInstance(macAlgorithm);
 			mac.init(secret);
@@ -305,7 +306,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 			throw new NameIdentifierMappingException(
 					"Appropriate JCE provider not found in the java environment.  Could not load Cipher.");
 		} catch (IOException e) {
-			log.warn("IO error while decoding handle.");
+			log.error("IO error while decoding handle.");
 			throw new NameIdentifierMappingException("IO error while decoding handle.");
 		}
 
@@ -434,15 +435,5 @@ class HMACHandleEntry extends HandleEntry {
 		mac.update(getLongBytes(expirationTime));
 
 		return mac.doFinal();
-	}
-
-	public long getExpirationTime() {
-
-		return expirationTime;
-	}
-
-	public void setExpirationTime(long expr) {
-
-		expirationTime = expr;
 	}
 }
