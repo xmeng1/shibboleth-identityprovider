@@ -43,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
+import org.bouncycastle.util.encoders.Base64;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
@@ -62,7 +63,6 @@ import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import sun.misc.BASE64Decoder;
 import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
@@ -460,12 +460,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		req.setAttribute("assertion", new String(buf, "ASCII"));
 
 		if (log.isDebugEnabled()) {
-			try {
-				log.debug("Dumping generated SAML Response:" + System.getProperty("line.separator")
-						+ new String(new BASE64Decoder().decodeBuffer(new String(buf, "ASCII")), "UTF8"));
-			} catch (IOException e) {
-				log.error("Encountered an error while decoding SAMLReponse for logging purposes.");
-			}
+			log.debug("Dumping generated SAML Response:" + System.getProperty("line.separator")
+					+ new String(Base64.decode(buf)));
 		}
 
 		RequestDispatcher rd = req.getRequestDispatcher("/IdP.jsp");

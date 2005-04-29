@@ -28,10 +28,9 @@ package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.bouncycastle.util.encoders.Base64;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import sun.misc.BASE64Encoder;
 
 /**
  * <code>ValueHandler</code> implementation for encoding byte array values in Base64..
@@ -44,7 +43,7 @@ public class Base64ValueHandler implements ValueHandler {
 
 		if (!(value instanceof byte[])) { throw new ValueHandlerException(
 				"Base64ValueHandler could not encode a value of type: " + value.getClass().getName()); }
-		valueElement.appendChild(document.createTextNode(new BASE64Encoder().encode((byte[]) value)));
+		valueElement.appendChild(document.createTextNode(new String(Base64.encode((byte[]) value))));
 	}
 
 	public Iterator getValues(Collection internalValues) {

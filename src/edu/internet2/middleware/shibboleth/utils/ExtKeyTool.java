@@ -68,7 +68,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import sun.misc.BASE64Encoder;
+import org.bouncycastle.util.encoders.Base64;
 
 /**
  * Extension utility for use alongside Sun's keytool program. Performs useful functions not found in original.
@@ -190,8 +190,8 @@ public class ExtKeyTool {
 			if (rfc) {
 				log.debug("Dumping with rfc encoding");
 				outStream.println("-----BEGIN PRIVATE KEY-----");
-				BASE64Encoder encoder = new BASE64Encoder();
-				encoder.encodeBuffer(key.getEncoded(), outStream);
+				outStream.println(Base64.encode(key.getEncoded()));
+
 				outStream.println("-----END PRIVATE KEY-----");
 			} else {
 				log.debug("Dumping with default encoding.");
@@ -213,47 +213,44 @@ public class ExtKeyTool {
 		}
 	}
 
-    /**
-     * Attempts to unmarshall a secret key from a given stream.
-     * 
-     * @param keyStream
-     *            the <code>InputStream</code> suppying the key
-     * @param algorithm
-     *            the key algorithm
-     * @throws ExtKeyToolException
-     *             if there a problem unmarshalling the key
-     */
+	/**
+	 * Attempts to unmarshall a secret key from a given stream.
+	 * 
+	 * @param keyStream
+	 *            the <code>InputStream</code> suppying the key
+	 * @param algorithm
+	 *            the key algorithm
+	 * @throws ExtKeyToolException
+	 *             if there a problem unmarshalling the key
+	 */
 
-    protected SecretKey readSecretKey(String provider, InputStream keyStream, String algorithm)
-            throws ExtKeyToolException {
+	protected SecretKey readSecretKey(String provider, InputStream keyStream, String algorithm)
+			throws ExtKeyToolException {
 
-        try {
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(algorithm, provider);
+		try {
+			SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(algorithm, provider);
 
-            byte[] inputBuffer = new byte[8];
-            int i;
-            ByteContainer inputBytes = new ByteContainer(400);
-            do {
-                i = keyStream.read(inputBuffer);
-                for (int j = 0; j < i; j++) {
-                    inputBytes.append(inputBuffer[j]);
-                }
-            } while (i > -1);
+			byte[] inputBuffer = new byte[8];
+			int i;
+			ByteContainer inputBytes = new ByteContainer(400);
+			do {
+				i = keyStream.read(inputBuffer);
+				for (int j = 0; j < i; j++) {
+					inputBytes.append(inputBuffer[j]);
+				}
+			} while (i > -1);
 
-            KeySpec keySpec = null;
-            if (algorithm.equals("DESede"))
-                keySpec = new DESedeKeySpec(inputBytes.toByteArray());
-            else if (algorithm.equals("DES"))
-                keySpec = new DESKeySpec(inputBytes.toByteArray());
-            return keyFactory.generateSecret(keySpec);
+			KeySpec keySpec = null;
+			if (algorithm.equals("DESede")) keySpec = new DESedeKeySpec(inputBytes.toByteArray());
+			else if (algorithm.equals("DES")) keySpec = new DESKeySpec(inputBytes.toByteArray());
+			return keyFactory.generateSecret(keySpec);
 
-        } catch (Exception e) {
-            log.error("Problem reading secret key: " + e.getMessage());
-            throw new ExtKeyToolException(
-                    "Problem reading secret key.  Keys should be DER encoded native format.");
-        }
-    }
-    
+		} catch (Exception e) {
+			log.error("Problem reading secret key: " + e.getMessage());
+			throw new ExtKeyToolException("Problem reading secret key.  Keys should be DER encoded native format.");
+		}
+	}
+
 	/**
 	 * Boolean indication of whether a given private key and public key form a valid keypair.
 	 * 
@@ -444,8 +441,8 @@ public class ExtKeyTool {
 	 *            password used to verify the integrity of the old keystore and save the new keystore
 	 * @param keyPassword
 	 *            the password for saving the key
-     * @param secret
-     *            indicates this is a secret key import
+	 * @param secret
+	 *            indicates this is a secret key import
 	 * @return an OutputStream containing the new keystore
 	 * @throws ExtKeyToolException
 	 *             if there a problem importing the key
@@ -477,38 +474,37 @@ public class ExtKeyTool {
 			}
 			keyStore.deleteEntry(keyAlias);
 
-            if (secret) {
-                log.info("Reading secret key.");
-                if (keyAlgorithm == null) {
-                    keyAlgorithm = "AES";
-                }
-                log.debug("Using key algorithm: (" + keyAlgorithm + ")");
-                SecretKey key = readSecretKey(provider, keyStream, keyAlgorithm);
-                keyStore.setKeyEntry(keyAlias, key, keyPassword, null);
-            }
-            else {
-    			log.info("Reading private key.");
-    			if (keyAlgorithm == null) {
-    				keyAlgorithm = "RSA";
-    			}
-    			log.debug("Using key algorithm: (" + keyAlgorithm + ")");
-    			PrivateKey key = readPrivateKey(provider, keyStream, keyAlgorithm);
-    
-    			log.info("Reading certificate chain.");
-    
-    			CertificateFactory certFactory = CertificateFactory.getInstance("X.509", provider);
-    			Collection chain = certFactory.generateCertificates(new BufferedInputStream(chainStream));
-    			if (chain.isEmpty()) {
-    				log.error("Input did not contain any valid certificates.");
-    				throw new ExtKeyToolException("Input did not contain any valid certificates.");
-    			}
-    
-    			X509Certificate[] verifiedChain = linkChain(keyAlgorithm, (X509Certificate[]) chain
-    					.toArray(new X509Certificate[0]), key);
+			if (secret) {
+				log.info("Reading secret key.");
+				if (keyAlgorithm == null) {
+					keyAlgorithm = "AES";
+				}
+				log.debug("Using key algorithm: (" + keyAlgorithm + ")");
+				SecretKey key = readSecretKey(provider, keyStream, keyAlgorithm);
+				keyStore.setKeyEntry(keyAlias, key, keyPassword, null);
+			} else {
+				log.info("Reading private key.");
+				if (keyAlgorithm == null) {
+					keyAlgorithm = "RSA";
+				}
+				log.debug("Using key algorithm: (" + keyAlgorithm + ")");
+				PrivateKey key = readPrivateKey(provider, keyStream, keyAlgorithm);
 
-                keyStore.setKeyEntry(keyAlias, key, keyPassword, verifiedChain);
-            }
-            
+				log.info("Reading certificate chain.");
+
+				CertificateFactory certFactory = CertificateFactory.getInstance("X.509", provider);
+				Collection chain = certFactory.generateCertificates(new BufferedInputStream(chainStream));
+				if (chain.isEmpty()) {
+					log.error("Input did not contain any valid certificates.");
+					throw new ExtKeyToolException("Input did not contain any valid certificates.");
+				}
+
+				X509Certificate[] verifiedChain = linkChain(keyAlgorithm, (X509Certificate[]) chain
+						.toArray(new X509Certificate[0]), key);
+
+				keyStore.setKeyEntry(keyAlias, key, keyPassword, verifiedChain);
+			}
+
 			ByteArrayOutputStream keyStoreOutStream = new ByteArrayOutputStream();
 			keyStore.store(keyStoreOutStream, keyStorePassword);
 			log.info("Key Store saved to stream.");
@@ -548,18 +544,17 @@ public class ExtKeyTool {
 
 			String flags = args[i];
 
-			//parse actions
+			// parse actions
 			if (flags.equalsIgnoreCase("-exportkey")) {
 				parsedArguments.setProperty("command", "exportKey");
 			} else if (flags.equalsIgnoreCase("-importkey")) {
 				parsedArguments.setProperty("command", "importKey");
 			}
 
-			//parse specifiers
-            else if (flags.equalsIgnoreCase("-secret")) {
-                parsedArguments.setProperty("secret", "true");
-            }
-			else if (flags.equalsIgnoreCase("-alias")) {
+			// parse specifiers
+			else if (flags.equalsIgnoreCase("-secret")) {
+				parsedArguments.setProperty("secret", "true");
+			} else if (flags.equalsIgnoreCase("-alias")) {
 				if (++i == args.length) { throw new IllegalArgumentException("The argument -alias requires a parameter"); }
 				parsedArguments.setProperty("alias", args[i]);
 			} else if (flags.equalsIgnoreCase("-keyfile")) {
@@ -599,7 +594,7 @@ public class ExtKeyTool {
 				parsedArguments.setProperty("keyAlgorithm", args[i]);
 			}
 
-			//options
+			// options
 			else if (flags.equalsIgnoreCase("-v")) {
 				parsedArguments.setProperty("verbose", "true");
 			} else if (flags.equalsIgnoreCase("-rfc")) {
@@ -688,7 +683,7 @@ public class ExtKeyTool {
 
 	private void run(Properties arguments) throws ExtKeyToolException {
 
-		//common for all actions
+		// common for all actions
 		char[] storePassword = null;
 		if (arguments.getProperty("storePass", null) != null) {
 			storePassword = arguments.getProperty("storePass").toCharArray();
@@ -701,7 +696,7 @@ public class ExtKeyTool {
 			providerName = "SUN";
 		}
 
-		//export key action
+		// export key action
 		if (arguments.getProperty("command").equals("exportKey")) {
 
 			boolean rfc = false;
@@ -730,7 +725,7 @@ public class ExtKeyTool {
 			}
 			outStream.close();
 
-			//import action
+			// import action
 		} else if (arguments.getProperty("command").equals("importKey")) {
 
 			InputStream keyInStream = null;
@@ -751,24 +746,16 @@ public class ExtKeyTool {
 				} catch (FileNotFoundException e) {
 					throw new ExtKeyToolException("Could not open cert file." + e.getMessage());
 				}
-			} else if (!arguments.getProperty("secret").equalsIgnoreCase("true")){
-				throw new IllegalArgumentException("Certificate file must be specified.");
-			}
+			} else if (!arguments.getProperty("secret").equalsIgnoreCase("true")) { throw new IllegalArgumentException(
+					"Certificate file must be specified."); }
 
 			try {
 
-				ByteArrayOutputStream keyStoreOutStream = importKey(
-                        providerName,
-                        arguments.getProperty("keyAlgorithm", null),
-                        keyInStream,
-                        certInStream,
-                        new FileInputStream(resolveKeyStore(arguments.getProperty("keyStore", null))),
-                        arguments.getProperty("storeType", null),
-                        arguments.getProperty("alias", null),
-                        storePassword,
-                        resolveKeyPass(arguments.getProperty("keyPass", null), storePassword),
-                        arguments.getProperty("secret","false").equalsIgnoreCase("true")
-                        );
+				ByteArrayOutputStream keyStoreOutStream = importKey(providerName, arguments.getProperty("keyAlgorithm",
+						null), keyInStream, certInStream, new FileInputStream(resolveKeyStore(arguments.getProperty(
+						"keyStore", null))), arguments.getProperty("storeType", null), arguments.getProperty("alias",
+						null), storePassword, resolveKeyPass(arguments.getProperty("keyPass", null), storePassword),
+						arguments.getProperty("secret", "false").equalsIgnoreCase("true"));
 
 				keyInStream.close();
 				// A quick sanity check before we overwrite the old keystore
