@@ -76,7 +76,7 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.OriginConfig;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
@@ -114,7 +114,7 @@ public class ResolverTest
 
 	private static void resolveAttributes(AAAttributeSet attributeSet)
 	{
-		Principal principal = new AuthNPrincipal(user);
+		Principal principal = new LocalPrincipal(user);
 
 		resolver.resolveAttributes(principal, requester, attributeSet);
 

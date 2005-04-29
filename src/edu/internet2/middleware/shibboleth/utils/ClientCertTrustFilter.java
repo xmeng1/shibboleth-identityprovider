@@ -45,7 +45,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 
 /**
  * Simple Servlet Filter that populates the ServletRequest with data from a client certificate. Relies on external
@@ -127,7 +127,7 @@ public class ClientCertTrustFilter implements Filter {
 			return;
 		}
 		log.debug("Extracted principal name (" + principalName + ") from Subject.");
-		chain.doFilter(new ClientCertTrustWrapper(httpRequest, new AuthNPrincipal(principalName)), response);
+		chain.doFilter(new ClientCertTrustWrapper(httpRequest, new LocalPrincipal(principalName)), response);
 	}
 
 	/**

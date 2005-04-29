@@ -76,7 +76,7 @@ import org.xml.sax.InputSource;
 
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
 import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
@@ -465,7 +465,7 @@ public class ArpTests extends TestCase {
 			fail("Error adding User ARP to Memory Repository.");
 		}
 
-		Arp userArp2 = new Arp(new AuthNPrincipal("TestPrincipal"));
+		Arp userArp2 = new Arp(new LocalPrincipal("TestPrincipal"));
 		userArp2.setDescription("Test User Arp 2.");
 		try {
 			repository.update(userArp2);
@@ -525,7 +525,7 @@ public class ArpTests extends TestCase {
 				directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
 					processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
 
-			Arp userArp = repository.getUserPolicy(new AuthNPrincipal("test"));
+			Arp userArp = repository.getUserPolicy(new LocalPrincipal("test"));
 
 			inStream = new FileInputStream("data/arp.user.test.xml");
 			parser.parse(new InputSource(inStream));
@@ -538,7 +538,7 @@ public class ArpTests extends TestCase {
 				directXML.toString().replaceAll(">[\t\r\n ]+<", "><").equals(
 					processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
 
-			Arp[] allArps = repository.getAllPolicies(new AuthNPrincipal("test"));
+			Arp[] allArps = repository.getAllPolicies(new LocalPrincipal("test"));
 
 			assertTrue("File-based ARP Repository did not return the correct number of ARPs.", (allArps.length == 2));
 
@@ -558,7 +558,7 @@ public class ArpTests extends TestCase {
 		}
 
 		try {
-			Principal principal1 = new AuthNPrincipal("TestPrincipal");
+			Principal principal1 = new LocalPrincipal("TestPrincipal");
 			URL url1 = new URL("http://www.example.edu/");
 			URI[] list1 = { new URI("urn:mace:dir:attribute-def:eduPersonAffiliation")};
 			URI[] list2 =
@@ -703,7 +703,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -751,7 +751,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -806,7 +806,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -854,7 +854,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -904,7 +904,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -957,7 +957,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1005,7 +1005,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1055,7 +1055,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1102,7 +1102,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1147,7 +1147,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1190,7 +1190,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1233,7 +1233,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1281,7 +1281,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("https://foo.com/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1329,7 +1329,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1372,7 +1372,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/index.html");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1420,7 +1420,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1480,7 +1480,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1541,7 +1541,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1599,7 +1599,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1705,7 +1705,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/test/index.html");
 
 		AAAttributeSet inputSet =
@@ -1842,7 +1842,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("TestPrincipal");
+		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.external.com/");
 
 		AAAttributeSet inputSet =
@@ -1918,7 +1918,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("Test2Principal");
+		Principal principal1 = new LocalPrincipal("Test2Principal");
 		URL url1 = new URL("http://www.example.edu/index.html");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -1966,7 +1966,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("Test2Principal");
+		Principal principal1 = new LocalPrincipal("Test2Principal");
 		URL url1 = new URL("http://www.example.edu/index.html");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(
@@ -2017,7 +2017,7 @@ public class ArpTests extends TestCase {
 				+ "			</Rule>"
 				+ "	</AttributeReleasePolicy>";
 
-		Principal principal1 = new AuthNPrincipal("Test2Principal");
+		Principal principal1 = new LocalPrincipal("Test2Principal");
 		URL url1 = new URL("http://www.example.edu/index.html");
 		AAAttributeSet inputSet =
 			new AAAttributeSet(

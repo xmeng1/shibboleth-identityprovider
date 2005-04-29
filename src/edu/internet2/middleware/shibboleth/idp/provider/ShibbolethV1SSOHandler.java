@@ -64,7 +64,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -119,7 +119,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 					.getRemoteUser() : request.getHeader(support.getIdPConfig().getAuthHeaderName());
 			if ((username == null) || (username.equals(""))) { throw new InvalidClientDataException(
 					"Unable to authenticate remote user"); }
-			AuthNPrincipal principal = new AuthNPrincipal(username);
+			LocalPrincipal principal = new LocalPrincipal(username);
 
 			// Select the appropriate Relying Party configuration for the request
 			RelyingParty relyingParty = null;
@@ -215,7 +215,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 	}
 
 	private void respondWithArtifact(HttpServletRequest request, HttpServletResponse response,
-			IdPProtocolSupport support, AuthNPrincipal principal, RelyingParty relyingParty,
+			IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
 			EntityDescriptor descriptor, String acceptanceURL, SAMLNameIdentifier nameId, String authenticationMethod,
 			SAMLSubject authNSubject, List assertions) throws SAMLException, IOException, UnsupportedEncodingException {
 
@@ -271,7 +271,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 	}
 
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
-			AuthNPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
+			LocalPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
 			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject, List assertions)
 			throws SAMLException, IOException, ServletException {
 
@@ -322,7 +322,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 	}
 
-	private SAMLAssertion generateAttributeAssertion(IdPProtocolSupport support, AuthNPrincipal principal,
+	private SAMLAssertion generateAttributeAssertion(IdPProtocolSupport support, LocalPrincipal principal,
 			RelyingParty relyingParty, SAMLSubject authNSubject) throws SAMLException {
 
 		try {

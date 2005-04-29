@@ -63,7 +63,7 @@ import org.opensaml.SAMLException;
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
 import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ScopedStringValueHandler;
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 
 /**
  * Validation suite for the <code>AttributeResolver</code>.
@@ -113,7 +113,7 @@ public class ResolverTests extends TestCase {
 							new Object[] { "urn:mace:example.edu:exampleEntitlement" })
 						});
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -152,7 +152,7 @@ public class ResolverTests extends TestCase {
 					new ScopedStringValueHandler("example.edu"))
 				});
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
 		} catch (AttributeResolverException e) {
@@ -229,7 +229,7 @@ public class ResolverTests extends TestCase {
 				new AAAttributeSet(new AAAttribute[] { new AAAttribute("myAffiliation", new Object[] { "member" })
 			});
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
 		} catch (AttributeResolverException e) {
@@ -267,7 +267,7 @@ public class ResolverTests extends TestCase {
 							new Object[] { "urn:mace:example.edu:exampleEntitlement" })
 						});
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -299,7 +299,7 @@ public class ResolverTests extends TestCase {
 							new ScopedStringValueHandler("example.edu"))
 						});
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -324,7 +324,7 @@ public class ResolverTests extends TestCase {
 
 			AAAttributeSet outputAttributes = new AAAttributeSet();
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -349,7 +349,7 @@ public class ResolverTests extends TestCase {
 
 			AAAttributeSet outputAttributes = new AAAttributeSet();
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 		} catch (ClassCastException e) {
@@ -386,7 +386,7 @@ public class ResolverTests extends TestCase {
 						new AAAttribute("urn:mace:shibboleth:test:eduPersonAffiliation", new Object[] { "member" })
 					});
 
-			ar.resolveAttributes(new AuthNPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 

@@ -54,7 +54,7 @@ import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -160,7 +160,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			log.error("Unable to authenticate remote user.");
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
 		}
-		AuthNPrincipal principal = new AuthNPrincipal(username);
+		LocalPrincipal principal = new LocalPrincipal(username);
 
 		// Select the appropriate Relying Party configuration for the request
 		String remoteProviderId = request.getParameter("aaid");
