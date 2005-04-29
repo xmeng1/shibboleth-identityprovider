@@ -409,19 +409,16 @@ public class ServiceProviderConfig {
 		// reprocess the already validated DOM to create a bean with typed fields
 		// dump the trash (comments, processing instructions, extra whitespace)
 		
-		SPConfigType config	=null;
 		try {
 			if (documentElement.getLocalName().equals("ShibbolethTargetConfig")) {
 				ShibbolethTargetConfigDocument configBeanDoc;
 				configBeanDoc = ShibbolethTargetConfigDocument.Factory.parse(configDoc,
 						new XmlOptions().setLoadStripComments().setLoadStripProcinsts().setLoadStripWhitespace());
-				config=configBeanDoc.getShibbolethTargetConfig();
 				config = configBeanDoc.getShibbolethTargetConfig();
 			} else if (documentElement.getLocalName().equals("SPConfig")) {
 				SPConfigDocument configBeanDoc;
 				configBeanDoc = SPConfigDocument.Factory.parse(configDoc,
 						new XmlOptions().setLoadStripComments().setLoadStripProcinsts().setLoadStripWhitespace());
-				config=configBeanDoc.getSPConfig();
 				config = configBeanDoc.getSPConfig();
 			} else {
 				throw new XmlException("Root element not ShibbolethTargetConfig or SPConfig");
