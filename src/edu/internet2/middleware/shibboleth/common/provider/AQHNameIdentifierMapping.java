@@ -32,7 +32,7 @@ import javax.xml.namespace.QName;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 
 /**
@@ -69,7 +69,7 @@ public abstract class AQHNameIdentifierMapping extends BaseNameIdentifierMapping
 		}
 	}
 
-	protected HandleEntry createHandleEntry(AuthNPrincipal principal) {
+	protected HandleEntry createHandleEntry(LocalPrincipal principal) {
 
 		return new HandleEntry(principal, handleTTL);
 	}
@@ -78,7 +78,7 @@ public abstract class AQHNameIdentifierMapping extends BaseNameIdentifierMapping
 class HandleEntry implements Serializable {
 
 	static final long serialVersionUID = 1L;
-	protected AuthNPrincipal principal;
+	protected LocalPrincipal principal;
 	protected long expirationTime;
 
 	/**
@@ -89,7 +89,7 @@ class HandleEntry implements Serializable {
 	 * @param TTL
 	 *            the time, in seconds, for which the handle should be valid.
 	 */
-	protected HandleEntry(AuthNPrincipal principal, long TTL) {
+	protected HandleEntry(LocalPrincipal principal, long TTL) {
 
 		this.principal = principal;
 		expirationTime = System.currentTimeMillis() + (TTL * 1000);

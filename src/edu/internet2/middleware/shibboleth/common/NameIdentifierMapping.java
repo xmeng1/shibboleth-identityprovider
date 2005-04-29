@@ -26,11 +26,12 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import java.net.URI;
+import java.security.Principal;
 
 import org.opensaml.SAMLNameIdentifier;
 
 /**
- * Defines a mechanism for converting back and forth between SAML Name Identifiers and local {@link AuthNPrincipal}
+ * Defines a mechanism for converting back and forth between SAML Name Identifiers and local {@link LocalPrincipal}
  * objects.
  * 
  * @author Walter Hoehn
@@ -67,7 +68,7 @@ public interface NameIdentifierMapping {
 	 * @throws InvalidNameIdentifierException
 	 *             If the {@link SAMLNameIdentifier}contains invalid data
 	 */
-	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+	public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException;
 
 	/**
@@ -83,8 +84,8 @@ public interface NameIdentifierMapping {
 	 * @throws NameIdentifierMappingException
 	 *             If the {@link NameMapper}encounters an internal error
 	 */
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
-			IdentityProvider idProv) throws NameIdentifierMappingException;
+	public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+			throws NameIdentifierMappingException;
 
 	/**
 	 * Cleanup resources that won't be released when this object is garbage-collected

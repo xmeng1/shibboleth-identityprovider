@@ -37,6 +37,7 @@ import java.security.KeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
@@ -57,9 +58,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
@@ -159,7 +160,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 	/**
 	 * Decode an encrypted handle back into a principal
 	 */
-	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+	public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 		verifyQualifier(nameId, idProv);
@@ -204,7 +205,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 			long decodedExpirationTime = dataStream.readLong();
 			String decodedPrincipal = dataStream.readUTF();
 
-			HMACHandleEntry macHandleEntry = createHMACHandleEntry(new AuthNPrincipal(decodedPrincipal));
+			HMACHandleEntry macHandleEntry = createHMACHandleEntry(new LocalPrincipal(decodedPrincipal));
 			macHandleEntry.setExpirationTime(decodedExpirationTime);
 			byte[] generatedMac = macHandleEntry.getMAC(mac);
 
@@ -250,7 +251,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 	 * to encode the IV or MAC's lengths. They can be obtained from Cipher.getBlockSize() and Mac.getMacLength(),
 	 * respectively.
 	 */
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+	public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException {
 
 		if (principal == null) {
@@ -395,7 +396,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 		return Arrays.equals(defaultKey, encodedKey);
 	}
 
-	protected HMACHandleEntry createHMACHandleEntry(AuthNPrincipal principal) {
+	protected HMACHandleEntry createHMACHandleEntry(LocalPrincipal principal) {
 
 		return new HMACHandleEntry(principal, handleTTL);
 	}
@@ -408,7 +409,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 
 class HMACHandleEntry extends HandleEntry {
 
-	protected HMACHandleEntry(AuthNPrincipal principal, long TTL) {
+	protected HMACHandleEntry(LocalPrincipal principal, long TTL) {
 
 		super(principal, TTL);
 	}

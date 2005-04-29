@@ -28,6 +28,7 @@ package edu.internet2.middleware.shibboleth.common.provider;
 import java.io.File;
 import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.security.Principal;
 
 import junit.framework.TestCase;
 
@@ -37,15 +38,14 @@ import org.apache.log4j.Logger;
 import org.opensaml.SAMLNameIdentifier;
 import org.xml.sax.InputSource;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
-import edu.internet2.middleware.shibboleth.common.provider.CryptoShibHandle;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -101,10 +101,10 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new AuthNPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
 
@@ -139,13 +139,13 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new AuthNPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			log.debug("Waiting 11 seconds for the handle to expire.");
 			Thread.sleep(11000);
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			fail("Error: crypto handle should have expired but appears to work.");
@@ -186,10 +186,10 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new AuthNPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
 
@@ -224,10 +224,10 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new AuthNPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:good"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:bad"));
 
 			fail("Expected failure for bad name qualifier.");
@@ -250,10 +250,10 @@ public class NameMapperTests extends TestCase {
 
 			NameMapper nameMapper = new NameMapper();
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(null, new AuthNPrincipal("testprincipal"),
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(null, new LocalPrincipal("testprincipal"),
 					new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
@@ -286,10 +286,10 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(null, new AuthNPrincipal("testprincipal"),
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(null, new LocalPrincipal("testprincipal"),
 					new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
@@ -341,7 +341,7 @@ public class NameMapperTests extends TestCase {
 
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			nameMapper.getNameIdentifierName(null, new AuthNPrincipal("testprincipal"), new BasicServiceProvider(),
+			nameMapper.getNameIdentifierName(null, new LocalPrincipal("testprincipal"), new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			fail("HSNameMapper defaulted to incorrect name mapping.");
@@ -371,10 +371,10 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("memorytest", new AuthNPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("memorytest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
@@ -404,10 +404,10 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("memory", new AuthNPrincipal("testprincipal"),
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("memory", new LocalPrincipal("testprincipal"),
 					new BasicServiceProvider(), new BasicIdentityProvider("urn-x:good"));
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:bad"));
 
 			fail("Expected failure for bad name qualifier.");
@@ -440,7 +440,7 @@ public class NameMapperTests extends TestCase {
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
 			SAMLNameIdentifier nameId = new SAMLNameIdentifier("testprincipal", "urn-x:testid", format);
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			assertEquals("Round-trip handle validation failed.", principal.getName(), "testprincipal");
@@ -472,7 +472,7 @@ public class NameMapperTests extends TestCase {
 
 			SAMLNameIdentifier nameId = new SAMLNameIdentifier("testprincipal", "urn-x:good", format);
 
-			AuthNPrincipal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
+			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:bad"));
 
 			fail("Expected failure for bad name qualifier.");

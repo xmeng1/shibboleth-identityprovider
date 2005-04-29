@@ -29,6 +29,7 @@ import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,7 +45,7 @@ import edu.internet2.middleware.shibboleth.common.provider.SharedMemoryShibHandl
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
- * Facility for managing mappings from SAML Name Identifiers to local {@link AuthNPrincipal}objects. Mappings are
+ * Facility for managing mappings from SAML Name Identifiers to local {@link LocalPrincipal}objects. Mappings are
  * registered by Name Identifier format and can be associated with a <code>String</code> id and recovered based on the
  * same.
  * 
@@ -62,7 +63,7 @@ public class NameMapper {
 	/** Mapping to use if no other mappings have been added */
 	protected SharedMemoryShibHandle defaultMapping;
 
-	//Preload aliases for bundled mappings
+	// Preload aliases for bundled mappings
 	static {
 		try {
 			registeredMappingTypes.put("CryptoHandleGenerator", Class
@@ -85,11 +86,12 @@ public class NameMapper {
 	public NameMapper() {
 
 		try {
-			//Load the default mapping
+			// Load the default mapping
 			String rawConfig = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\"" + "		handleTTL=\"1800\"/>";
+					+ "<NameMapping xmlns=\"urn:mace:shibboleth:namemapper:1.0\" format=\"urn:mace:shibboleth:1.0:nameIdentifier\""
+					+ "		handleTTL=\"1800\"/>";
 			Parser.DOMParser parser = new Parser.DOMParser(false);
-			parser.parse(new InputSource(new StringReader(rawConfig)));			
+			parser.parse(new InputSource(new StringReader(rawConfig)));
 			defaultMapping = new SharedMemoryShibHandle(parser.getDocument().getDocumentElement());
 
 		} catch (Exception e) {
@@ -254,7 +256,7 @@ public class NameMapper {
 	 * @throws InvalidNameIdentifierException
 	 *             If the {@link SAMLNameIdentifier}contains invalid data
 	 */
-	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+	public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 		NameIdentifierMapping mapping = null;
@@ -283,7 +285,7 @@ public class NameMapper {
 	 * @throws NameIdentifierMappingException
 	 *             If the <code>NameMapper</code> encounters an internal error
 	 */
-	public SAMLNameIdentifier getNameIdentifierName(String id, AuthNPrincipal principal, ServiceProvider sProv,
+	public SAMLNameIdentifier getNameIdentifierName(String id, LocalPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException {
 
 		NameIdentifierMapping mapping = getNameIdentifierMappingById(id);
@@ -299,7 +301,7 @@ public class NameMapper {
 
 		private TestNameIdentifierMapping() {
 
-		//Constructor to prevent others from creating this class
+		// Constructor to prevent others from creating this class
 		}
 
 		/*
@@ -324,7 +326,7 @@ public class NameMapper {
 		 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 		 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 		 */
-		public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+		public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 				throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 			log.info("Request references built-in test principal.");
@@ -336,7 +338,7 @@ public class NameMapper {
 						+ ") for the referenced subject is not valid for this identity provider.");
 			}
 
-			return new AuthNPrincipal("test-handle");
+			return new LocalPrincipal("test-handle");
 		}
 
 		/*
@@ -346,7 +348,7 @@ public class NameMapper {
 		 */
 		public void destroy() {
 
-		//Nothing to do
+		// Nothing to do
 		}
 
 		/*
@@ -362,11 +364,11 @@ public class NameMapper {
 		/*
 		 * (non-Javadoc)
 		 * 
-		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifierName(edu.internet2.middleware.shibboleth.common.AuthNPrincipal,
+		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifierName(edu.internet2.middleware.shibboleth.common.LocalPrincipal,
 		 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 		 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 		 */
-		public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
+		public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv,
 				IdentityProvider idProv) throws NameIdentifierMappingException {
 
 			try {

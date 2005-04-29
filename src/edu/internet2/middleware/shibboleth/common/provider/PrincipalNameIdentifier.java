@@ -25,14 +25,16 @@
 
 package edu.internet2.middleware.shibboleth.common.provider;
 
+import java.security.Principal;
+
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
@@ -52,15 +54,15 @@ public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {
 		super(config);
 	}
 
-	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+	public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 		verifyQualifier(nameId, idProv);
-		return new AuthNPrincipal(nameId.getName());
+		return new LocalPrincipal(nameId.getName());
 	}
 
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv,
-			IdentityProvider idProv) throws NameIdentifierMappingException {
+	public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+			throws NameIdentifierMappingException {
 
 		if (principal == null) {
 			log.error("A principal must be supplied for Name Identifier creation.");

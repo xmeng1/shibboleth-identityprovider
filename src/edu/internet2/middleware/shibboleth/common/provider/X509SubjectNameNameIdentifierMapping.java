@@ -1,19 +1,21 @@
 
 package edu.internet2.middleware.shibboleth.common.provider;
 
+import java.security.Principal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.apache.log4j.Logger;
 import javax.xml.namespace.QName;
+
+import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
@@ -71,7 +73,7 @@ public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapp
 	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 	 */
-	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+	public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 		if (!nameId.getNameQualifier().equals(qualifier)) {
@@ -86,17 +88,17 @@ public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapp
 		String principal = matcher.group(1);
 		if (principal == null) { throw new InvalidNameIdentifierException("Unable to map X509SubjectName ("
 				+ nameId.getName() + ") to a local principal.", errorCodes); }
-		return new AuthNPrincipal(principal);
+		return new LocalPrincipal(principal);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifier(edu.internet2.middleware.shibboleth.common.AuthNPrincipal,
+	 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifier(edu.internet2.middleware.shibboleth.common.LocalPrincipal,
 	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 	 */
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+	public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException {
 
 		try {

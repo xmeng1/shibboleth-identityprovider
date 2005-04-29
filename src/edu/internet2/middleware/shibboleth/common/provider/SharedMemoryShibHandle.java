@@ -25,6 +25,7 @@
 
 package edu.internet2.middleware.shibboleth.common.provider;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,9 +39,9 @@ import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.AuthNPrincipal;
 import edu.internet2.middleware.shibboleth.common.IdentityProvider;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.ServiceProvider;
@@ -65,11 +66,11 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifier(edu.internet2.middleware.shibboleth.common.AuthNPrincipal,
+	 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifier(edu.internet2.middleware.shibboleth.common.LocalPrincipal,
 	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 	 */
-	public SAMLNameIdentifier getNameIdentifier(AuthNPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+	public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException {
 
 		if (principal == null) {
@@ -97,7 +98,7 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 	 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
 	 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
 	 */
-	public AuthNPrincipal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+	public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
 		verifyQualifier(nameId, idProv);
