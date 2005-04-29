@@ -43,6 +43,9 @@
     <path id="build.path">
         <pathelement path="${classpath}" />
         <pathelement location="${build}" />
+        <fileset dir="${endorsed}">
+            <include name="**/*.jar" />
+        </fileset>
         <fileset dir="${libdir}">
             <include name="**/*.jar" />
         </fileset>
