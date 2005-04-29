@@ -431,8 +431,8 @@ class HMACHandleEntry extends HandleEntry {
 
 	public byte[] getMAC(Mac mac) {
 
-		mac.update(principal.getName().getBytes());
 		mac.update(getLongBytes(expirationTime));
+		mac.update(principal.getName().getBytes());
 
 		return mac.doFinal();
 	}
