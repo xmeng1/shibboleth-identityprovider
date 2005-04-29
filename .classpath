@@ -29,5 +29,6 @@
 	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlsec-20050423.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bc-asn1.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
