@@ -72,6 +72,9 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 	private static Logger log = Logger.getLogger(CustomAttributeDefinition.class.getName());
 	private AttributeDefinitionPlugIn custom;
 
+    /** The time, in seconds, for which attribute created from this definition should be valid. */
+    protected long lifeTime = -1;
+    
 	public CustomAttributeDefinition(Element e) throws ResolutionPlugInException {
 		if (!e.getTagName().equals("CustomAttributeDefinition")) {
 			log.error("Incorrect attribute definition configuration: expected <CustomAttributeDefinition> .");
@@ -96,7 +99,17 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 				throw new ResolutionPlugInException("Failed to initialize Attribute Definition PlugIn.");
 			}
 		}
-	}
+
+        String lifeTimeSpec = e.getAttribute("lifeTime");
+        if (lifeTimeSpec != null && !lifeTimeSpec.equals("")) {
+            try {
+                lifeTime = Long.valueOf(lifeTimeSpec).longValue();
+                log.debug("Explicit lifetime set for attribute (" + getId() + ").  Lifetime: (" + lifeTime + ").");
+            } catch (NumberFormatException nfe) {
+                log.error("Bad value for attribute (lifeTime) for Attribute Definition (" + getId() + ").");
+            }
+        }
+    }
 
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute, java.security.Principal, java.lang.String, edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
@@ -104,6 +117,9 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
 		throws ResolutionPlugInException {
 		custom.resolve(attribute, principal, requester, depends);
+        if (lifeTime != -1) {
+            attribute.setLifetime(lifeTime);
+        }
 	}
 
 	/**
