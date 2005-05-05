@@ -71,12 +71,12 @@ public class Parser {
             "urn:mace:shibboleth:idp:config:1.0",
             "urn:mace:shibboleth:arp:1.0",
             "urn:mace:shibboleth:resolver:1.0",
+            "urn:oasis:names:tc:SAML:2.0:metadata",
             "urn:mace:shibboleth:target:config:1.0",
             "urn:mace:shibboleth:trust:1.0",
             "urn:mace:shibboleth:metadata:1.0",
             "urn:mace:shibboleth:1.0",
-            "http://schemas.xmlsoap.org/soap/envelope/",
-            "urn:oasis:names:tc:SAML:2.0:metadata"
+            "http://schemas.xmlsoap.org/soap/envelope/"
       };
     
     // If there were a real Framework here (like Spring) then
