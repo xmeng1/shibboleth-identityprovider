@@ -191,8 +191,10 @@ public class MetadataTool
         }
         else if (!org.opensaml.XML.isElementNamed(e,XML.SHIB_NS,"SiteGroup") &&
         		    !org.opensaml.XML.isElementNamed(e,XML.SHIB_NS,"Trust") &&
-					!org.opensaml.XML.isElementNamed(e,XML.TRUST_NS,"Trust")) {
-            System.err.println("error: root element must be shib:SiteGroup, shib:Trust, or trust:Trust");
+					!org.opensaml.XML.isElementNamed(e,XML.TRUST_NS,"Trust") &&
+                    !org.opensaml.XML.isElementNamed(e,XML.SAML2META_NS,"EntityDescriptor") &&
+                    !org.opensaml.XML.isElementNamed(e,XML.SAML2META_NS,"EntitiesDescriptor")) {
+            System.err.println("error: root element must be SiteGroup, Trust, EntitiesDescriptor, or EntityDescriptor");
             System.exit(1);
         }
 
@@ -203,7 +205,7 @@ public class MetadataTool
                 e.removeChild(old);
 
             // Create new signature.
-            XMLSignature sig = new XMLSignature(doc, null, XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1);
+            XMLSignature sig = new XMLSignature(doc, "", XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1, Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
             Transforms transforms = new Transforms(doc);
             transforms.addTransform(Transforms.TRANSFORM_ENVELOPED_SIGNATURE);
             transforms.addTransform(Transforms.TRANSFORM_C14N_EXCL_OMIT_COMMENTS);
@@ -221,14 +223,14 @@ public class MetadataTool
                     System.err.println("error: file is not signed");
                     System.exit(1);
                 }
-                XMLSignature sig = new XMLSignature(sigElement, null);
+                XMLSignature sig = new XMLSignature(sigElement, "");
                 if (!sig.checkSignatureValue(cert)) {
                     System.err.println("error: signature on file did not verify");
                     System.exit(1);
                 }
             }
             else if (sigElement != null) {
-                XMLSignature sig = new XMLSignature(sigElement, null);
+                XMLSignature sig = new XMLSignature(sigElement, "");
                 System.err.println("verification of signer disabled, make sure you trust the source of this file!");
                 if (!sig.checkSignatureValue(sig.getKeyInfo().getPublicKey())) {
                     System.err.println("error: signature on file did not verify");
