@@ -117,7 +117,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 			if (usingDefaultSecret()) {
 				log.warn("You are running Crypto AQH Name Mapping with the "
 						+ "default secret key.  This is UNSAFE!  Please change "
-						+ "this configuration and restart the origin.");
+						+ "this configuration and restart the IdP.");
 			}
 		} catch (StreamCorruptedException e) {
 			if (System.getProperty("java.version").startsWith("1.4.2")) {

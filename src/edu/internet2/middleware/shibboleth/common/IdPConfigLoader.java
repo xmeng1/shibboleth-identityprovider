@@ -34,7 +34,7 @@ import org.w3c.dom.Document;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
- * Constructs a DOM tree for the origin configuration XML file.
+ * Constructs a DOM tree for the IdP configuration XML file.
  * 
  * @author Walter Hoehn
  * @author Noah Levitt
