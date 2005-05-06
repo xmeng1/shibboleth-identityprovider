@@ -273,11 +273,10 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 			// Put all attributes into an assertion
 			try {
-				// TODO provide a way to override authN time
 				SAMLStatement attrStatement = new SAMLAttributeStatement((SAMLSubject) authNSubject.clone(), attributes);
 				SAMLStatement[] statements = {
-						new SAMLAuthenticationStatement(authNSubject, authenticationMethod, new Date(System
-								.currentTimeMillis()), request.getRemoteAddr(), null, null), attrStatement};
+						new SAMLAuthenticationStatement(authNSubject, authenticationMethod, getAuthNTime(request),
+								request.getRemoteAddr(), null, null), attrStatement};
 				SAMLAssertion assertion = new SAMLAssertion(issuer, new Date(System.currentTimeMillis()), new Date(
 						System.currentTimeMillis() + 300000), null, null, Arrays.asList(statements));
 				if (log.isDebugEnabled()) {

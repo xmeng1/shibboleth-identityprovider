@@ -25,9 +25,14 @@
 
 package edu.internet2.middleware.shibboleth.idp.provider;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -54,5 +59,22 @@ public abstract class SSOHandler extends BaseHandler implements IdPProtocolHandl
 
 		if ((req.getRemoteAddr() == null) || (req.getRemoteAddr().equals(""))) { throw new InvalidClientDataException(
 				"Unable to obtain client address."); }
+	}
+
+	protected Date getAuthNTime(HttpServletRequest request) throws SAMLException {
+
+		// Determine, if possible, when the authentication actually happened
+		String suppliedAuthNInstant = request.getHeader("SAMLAuthenticationInstant");
+		if (suppliedAuthNInstant != null && !suppliedAuthNInstant.equals("")) {
+			try {
+				return new SimpleDateFormat().parse(suppliedAuthNInstant);
+			} catch (ParseException e) {
+				log.error("An error was encountered while receiving authentication "
+						+ "instant from authentication mechanism: " + e);
+				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			}
+		} else {
+			return new Date(System.currentTimeMillis());
+		}
 	}
 }

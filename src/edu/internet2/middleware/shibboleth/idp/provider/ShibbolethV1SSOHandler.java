@@ -177,10 +177,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				log.debug("User was authenticated via the method (" + authenticationMethod + ").");
 			}
 
-			// TODO Provide a mechanism for the authenticator to specify the auth time
-
 			SAMLSubject authNSubject = new SAMLSubject(nameId, null, null, null);
-
 			ArrayList assertions = new ArrayList();
 
 			// Is this artifact or POST?
@@ -223,7 +220,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
 		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
-				new Date(System.currentTimeMillis()), authNSubject));
+				getAuthNTime(request), authNSubject));
 
 		// Sign the assertions, if necessary
 		boolean metaDataIndicatesSignAssertions = false;
@@ -276,10 +273,9 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			throws SAMLException, IOException, ServletException {
 
 		log.debug("Responding with POST profile.");
-
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
 		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
-				new Date(System.currentTimeMillis()), authNSubject));
+				getAuthNTime(request), authNSubject));
 
 		// Sign the assertions, if necessary
 		boolean metaDataIndicatesSignAssertions = false;
