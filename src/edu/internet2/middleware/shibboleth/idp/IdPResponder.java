@@ -98,14 +98,14 @@ public class IdPResponder extends HttpServlet {
 		try {
 			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
 
-			Document originConfig = IdPConfigLoader.getIdPConfig(this.getServletContext());
+			Document idPConfig = IdPConfigLoader.getIdPConfig(this.getServletContext());
 
 			// Load global configuration properties
-			configuration = new IdPConfig(originConfig.getDocumentElement());
+			configuration = new IdPConfig(idPConfig.getDocumentElement());
 
 			// Load name mappings
 			NameMapper nameMapper = new NameMapper();
-			NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
+			NodeList itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(
 					NameIdentifierMapping.mappingNamespace, "NameMapping");
 
 			for (int i = 0; i < itemElements.getLength(); i++) {
@@ -117,7 +117,7 @@ public class IdPResponder extends HttpServlet {
 			}
 
 			// Load signing credentials
-			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(Credentials.credentialsNamespace,
+			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(Credentials.credentialsNamespace,
 					"Credentials");
 			if (itemElements.getLength() < 1) {
 				log.error("No credentials specified.");
@@ -130,7 +130,7 @@ public class IdPResponder extends HttpServlet {
 			// Load relying party config
 			ServiceProviderMapper spMapper;
 			try {
-				spMapper = new ServiceProviderMapper(originConfig.getDocumentElement(), configuration, credentials,
+				spMapper = new ServiceProviderMapper(idPConfig.getDocumentElement(), configuration, credentials,
 						nameMapper);
 			} catch (ServiceProviderMapperException e) {
 				log.error("Could not load Identity Provider configuration: " + e);
@@ -143,7 +143,7 @@ public class IdPResponder extends HttpServlet {
 			try {
 				resolver = new AttributeResolver(configuration);
 
-				itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+				itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 						"ReleasePolicyEngine");
 
 				if (itemElements.getLength() > 1) {
@@ -167,7 +167,7 @@ public class IdPResponder extends HttpServlet {
 
 			// Load artifact mapping implementation
 			ArtifactMapper artifactMapper = null;
-			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"ArtifactMapper");
 			if (itemElements.getLength() > 1) {
 				log.warn("Encountered multiple <ArtifactMapper/> configuration elements.  Using first...");
@@ -182,7 +182,7 @@ public class IdPResponder extends HttpServlet {
 			// Load protocol handlers and support library
 			protocolSupport = new IdPProtocolSupport(configuration, transactionLog, nameMapper, spMapper, arpEngine,
 					resolver, artifactMapper);
-			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"ProtocolHandler");
 
 			// Default if no handlers are specified
@@ -211,7 +211,7 @@ public class IdPResponder extends HttpServlet {
 			}
 
 			// Load metadata
-			itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"MetadataProvider");
 			for (int i = 0; i < itemElements.getLength(); i++) {
 				protocolSupport.addMetadataProvider((Element) itemElements.item(i));

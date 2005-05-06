@@ -79,7 +79,7 @@ public class ServiceProviderMapper {
 		this.metaData = metadata;
 	}
 
-	private IdPConfig getOriginConfig() {
+	private IdPConfig getIdPConfig() {
 
 		return configuration;
 	}
@@ -158,7 +158,7 @@ public class ServiceProviderMapper {
 
 		// If there is no explicit default, pick the single configured Relying
 		// Party
-		String defaultParty = getOriginConfig().getDefaultRelyingPartyName();
+		String defaultParty = getIdPConfig().getDefaultRelyingPartyName();
 		if (defaultParty == null || defaultParty.equals("")) { return (RelyingParty) relyingParties.values().iterator()
 				.next(); }
 
@@ -216,7 +216,7 @@ public class ServiceProviderMapper {
 
 		private RelyingPartyIdentityProvider identityProvider;
 		private String name;
-		private String overridenOriginProviderId;
+		private String overridenIdPProviderId;
 		private URL overridenAAUrl;
 		private URI overridenDefaultAuthMethod;
 		private String hsNameFormatId;
@@ -248,7 +248,7 @@ public class ServiceProviderMapper {
 			String attribute = ((Element) partyConfig).getAttribute("providerId");
 			if (attribute != null && !attribute.equals("")) {
 				log.debug("Overriding providerId for Relying Pary (" + name + ") with (" + attribute + ").");
-				overridenOriginProviderId = attribute;
+				overridenIdPProviderId = attribute;
 			}
 
 			attribute = ((Element) partyConfig).getAttribute("AAUrl");
@@ -389,8 +389,8 @@ public class ServiceProviderMapper {
 			}
 
 			// Initialize and Identity Provider object for this use by this relying party
-			identityProvider = new RelyingPartyIdentityProvider(overridenOriginProviderId != null
-					? overridenOriginProviderId
+			identityProvider = new RelyingPartyIdentityProvider(overridenIdPProviderId != null
+					? overridenIdPProviderId
 					: configuration.getProviderId(), signingCredential);
 
 		}

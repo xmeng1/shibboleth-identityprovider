@@ -78,8 +78,8 @@ public class LoggingContextListener implements ServletContextListener {
 		rootAppender.setLayout(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"));
 
 		try {
-			Document originConfig = IdPConfigLoader.getIdPConfig(sce.getServletContext());
-			loadConfiguration(originConfig);
+			Document idpConfig = IdPConfigLoader.getIdPConfig(sce.getServletContext());
+			loadConfiguration(idpConfig);
 		} catch (ShibbolethConfigurationException e) {
 			sce.getServletContext().log("Problem setting up logging.", e);
 			log.fatal("Problem setting up logging: " + e);
@@ -94,8 +94,8 @@ public class LoggingContextListener implements ServletContextListener {
 		LogManager.shutdown();
 	}
 
-	protected void loadConfiguration(Document originConfig) throws ShibbolethConfigurationException {
-		NodeList itemElements = originConfig.getDocumentElement().getElementsByTagNameNS(
+	protected void loadConfiguration(Document idpConfig) throws ShibbolethConfigurationException {
+		NodeList itemElements = idpConfig.getDocumentElement().getElementsByTagNameNS(
 				IdPConfig.configNameSpace, "Logging");
 		Node errorLogNode = null;
 		boolean encounteredLog4JConfig = false;

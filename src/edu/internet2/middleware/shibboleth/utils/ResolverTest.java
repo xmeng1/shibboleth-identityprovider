@@ -92,7 +92,7 @@ public class ResolverTest
 {
 	private static boolean debug = false;
 	private static String resolverxml = null;
-	private static String originxml = null;
+	private static String idpXml = null;
 	private static String requester = null;
 	private static String user = null;
 	private static String resource = null;
@@ -135,7 +135,7 @@ public class ResolverTest
 
 		CmdLineParser.Option helpOption = parser.addBooleanOption('h', "help");
 		CmdLineParser.Option debugOption = parser.addBooleanOption('d', "debug");
-		CmdLineParser.Option originxmlOption = parser.addStringOption('\u0000', "originxml");
+		CmdLineParser.Option idpXmlOption = parser.addStringOption('\u0000', "idpXml");
 		CmdLineParser.Option userOption = parser.addStringOption('u', "user");
 		CmdLineParser.Option requesterOption = parser.addStringOption('r', "requester");
 		CmdLineParser.Option resolverxmlOption = parser.addStringOption('\u0000', "resolverxml");
@@ -168,7 +168,7 @@ public class ResolverTest
 			resolverxml = (String) parser.getOptionValue(fileOption);
 		}
 
-		originxml = (String) parser.getOptionValue(originxmlOption); 
+		idpXml = (String) parser.getOptionValue(idpXmlOption); 
 
 		user = (String) parser.getOptionValue(userOption);
 		requester = (String) parser.getOptionValue(requesterOption);
@@ -189,8 +189,8 @@ public class ResolverTest
 			printUsage(System.out);
 			System.exit(1);
 		}
-		if ((resolverxml == null && originxml == null) || (resolverxml != null && originxml != null)) {
-			System.out.println("Exactly one of --originxml and --resolverxml is required.");
+		if ((resolverxml == null && idpXml == null) || (resolverxml != null && idpXml != null)) {
+			System.out.println("Exactly one of --idpXml and --resolverxml is required.");
 			System.out.println();
 			printUsage(System.out);
 			System.exit(1);
@@ -217,20 +217,20 @@ public class ResolverTest
 
 	private static void initializeResolver()
 	{
-		if (originxml != null) {
+		if (idpXml != null) {
 			try {
-				Document originConfig = IdPConfigLoader.getIdPConfig(originxml);
-				IdPConfig configuration = new IdPConfig(originConfig.getDocumentElement());
+				Document idpConfig = IdPConfigLoader.getIdPConfig(idpXml);
+				IdPConfig configuration = new IdPConfig(idpConfig.getDocumentElement());
 
 				resolver = new AttributeResolver(configuration);
 
 				NodeList itemElements =
-					originConfig.getDocumentElement().getElementsByTagNameNS(
+					idpConfig.getDocumentElement().getElementsByTagNameNS(
 							IdPConfig.configNameSpace,
 							"ReleasePolicyEngine");
 
 				if (itemElements.getLength() > 1) {
-					System.err.println("Warning: encountered multiple <ReleasePolicyEngine> configuration elements in (" + originxml + "). Using first...");
+					System.err.println("Warning: encountered multiple <ReleasePolicyEngine> configuration elements in (" + idpXml + "). Using first...");
 				}
 
 				if (itemElements.getLength() < 1) {
@@ -244,7 +244,7 @@ public class ResolverTest
 				}
 			} 
 			catch (ShibbolethConfigurationException e) {
-				System.err.println("Error loading origin configuration file (" + originxml + "): " + e.getMessage());
+				System.err.println("Error loading IdP configuration file (" + idpXml + "): " + e.getMessage());
 				System.exit(1);
 			}
 			catch (AttributeResolverException e) {
@@ -316,12 +316,12 @@ public class ResolverTest
 	private static void printUsage(PrintStream out) 
 	{
 		// out.println("Tests an AA Attribute Resolver configuration.");
-		out.println("Usage: resolvertest --user=USER {--originxml=URL|--resolverxml=URL} [OPTION...]");
+		out.println("Usage: resolvertest --user=USER {--idpXml=URL|--resolverxml=URL} [OPTION...]");
 		out.println();
 		out.println("Options:");
 		out.println("  -h, --help                Print usage information");
 		out.println("  -d, --debug               Run in debug mode");
-		out.println("  --originxml=FILEURL       URL of the origin configuration file. Attributes");
+		out.println("  --idpXml=FILEURL       URL of the IdP configuration file. Attributes");
 		out.println("                            will be filtered according to the Attribute Release");
 		out.println("                            Policy (ARP) specified in the configuration file");
 		out.println("  --resolverxml=FILEURL     URL of the resolver configuration file. No ARP");
