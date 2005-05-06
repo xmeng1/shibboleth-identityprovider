@@ -130,7 +130,7 @@ public class PersistentIDAttributeDefinition extends BaseAttributeDefinition imp
 				if (usingDefaultSecret()) {
 					log
 							.warn("You are running the PersistentIDAttributeDefinition PlugIn with the default secret key as a salt.  This is UNSAFE!  Please change "
-									+ "this configuration and restart the origin.");
+									+ "this configuration and restart the IdP.");
 				}
 				this.salt = secret.getEncoded();
 

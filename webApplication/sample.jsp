@@ -33,7 +33,7 @@ require valid-user
 </p>
 
 <p>Because of the "require valid-user" rule, any user from a trusted
-origin-site is allowed access, once they establish a session using
+Identity Provider is allowed access, once they establish a session using
 Shibboleth.</p>
 
 <p>Here are some pieces of information I can tell about you using

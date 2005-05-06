@@ -39,23 +39,23 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
  * @author Walter Hoehn
  * @author Noah Levitt
  */
-public class OriginConfig {
+public class IdPConfigLoader {
 
-	private static Logger	log					= Logger.getLogger(OriginConfig.class);
-	private static Document	originConfig		= null;
-	private static String	originConfigFile	= null;
+	private static Logger	log					= Logger.getLogger(IdPConfigLoader.class);
+	private static Document	idpConfig		= null;
+	private static String	idpConfigFile	= null;
 
 	// never returns null
-	private static String getOriginConfigFile(ServletContext context) {
-		if (context.getInitParameter("OriginConfigFile") != null) {
-			return context.getInitParameter("OriginConfigFile");
+	private static String getIdPConfigFile(ServletContext context) {
+		if (context.getInitParameter("IdpConfigFile") != null) {
+			return context.getInitParameter("IdPConfigFile");
 		} else {
-			return "/conf/origin.xml";
+			return "/conf/idp.xml";
 		}
 	}
 
 	/**
-	 * Loads the Origin Configuration file into a DOM tree.
+	 * Loads the IdP Configuration file into a DOM tree.
 	 * 
 	 * @param configFileLocation
 	 *            URL of the configuration file
@@ -63,41 +63,41 @@ public class OriginConfig {
 	 * @throws ShibbolethConfigurationException
 	 *             if there was an error loading the file
 	 */
-	public static synchronized Document getOriginConfig(String configFileLocation)
+	public static synchronized Document getIdPConfig(String configFileLocation)
 			throws ShibbolethConfigurationException {
 
-		if (configFileLocation.equals(originConfigFile)) {
-			return originConfig;
+		if (configFileLocation.equals(idpConfigFile)) {
+			return idpConfig;
 			
-		} else if (originConfigFile == null) {
-			originConfigFile = configFileLocation;
+		} else if (idpConfigFile == null) {
+			idpConfigFile = configFileLocation;
 			
 		} else {
-			log.error("Previously read origin configuration from (" + originConfigFile + "), re-reading from ("
+			log.error("Previously read IdP configuration from (" + idpConfigFile + "), re-reading from ("
 					+ configFileLocation + "). This probably indicates a bug in shibboleth.");
-			originConfigFile = configFileLocation;
+			idpConfigFile = configFileLocation;
 		}
 
 		try {
-			originConfig = Parser.loadDom(configFileLocation, true);
+			idpConfig = Parser.loadDom(configFileLocation, true);
 		} catch (Exception e) {
 			log.error("Encountered an error while parsing Shibboleth Identity Provider configuration file: " + e);
 			throw new ShibbolethConfigurationException("Unable to parse IdP configuration file.");
 		}
-		return originConfig;
+		return idpConfig;
 	}
 
 	/**
-	 * Loads the Origin Configuration file into a DOM tree.
+	 * Loads the IdP Configuration file into a DOM tree.
 	 * 
 	 * @param context
-	 *            {@link ServletContext}from which to figure out the location of origin.xml
+	 *            {@link ServletContext}from which to figure out the location of IdP
 	 * @return the DOM Document
 	 * @throws ShibbolethConfigurationException
 	 *             if there was an error loading the file
 	 */
-	public static Document getOriginConfig(ServletContext context) throws ShibbolethConfigurationException {
-		return getOriginConfig(getOriginConfigFile(context));
+	public static Document getIdPConfig(ServletContext context) throws ShibbolethConfigurationException {
+		return getIdPConfig(getIdPConfigFile(context));
 
 	}
 }

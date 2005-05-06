@@ -61,7 +61,7 @@ import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
-import edu.internet2.middleware.shibboleth.common.OriginConfig;
+import edu.internet2.middleware.shibboleth.common.IdPConfigLoader;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -98,7 +98,7 @@ public class IdPResponder extends HttpServlet {
 		try {
 			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
 
-			Document originConfig = OriginConfig.getOriginConfig(this.getServletContext());
+			Document originConfig = IdPConfigLoader.getIdPConfig(this.getServletContext());
 
 			// Load global configuration properties
 			configuration = new IdPConfig(originConfig.getDocumentElement());

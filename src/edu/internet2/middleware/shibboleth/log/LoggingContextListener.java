@@ -47,7 +47,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import edu.internet2.middleware.shibboleth.common.OriginConfig;
+import edu.internet2.middleware.shibboleth.common.IdPConfigLoader;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
@@ -78,7 +78,7 @@ public class LoggingContextListener implements ServletContextListener {
 		rootAppender.setLayout(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"));
 
 		try {
-			Document originConfig = OriginConfig.getOriginConfig(sce.getServletContext());
+			Document originConfig = IdPConfigLoader.getIdPConfig(sce.getServletContext());
 			loadConfiguration(originConfig);
 		} catch (ShibbolethConfigurationException e) {
 			sce.getServletContext().log("Problem setting up logging.", e);

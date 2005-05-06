@@ -77,7 +77,7 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolverException;
 import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
-import edu.internet2.middleware.shibboleth.common.OriginConfig;
+import edu.internet2.middleware.shibboleth.common.IdPConfigLoader;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
@@ -219,7 +219,7 @@ public class ResolverTest
 	{
 		if (originxml != null) {
 			try {
-				Document originConfig = OriginConfig.getOriginConfig(originxml);
+				Document originConfig = IdPConfigLoader.getIdPConfig(originxml);
 				IdPConfig configuration = new IdPConfig(originConfig.getDocumentElement());
 
 				resolver = new AttributeResolver(configuration);

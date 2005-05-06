@@ -54,7 +54,7 @@ public class IdPConfig {
 
 	public IdPConfig(Element config) throws ShibbolethConfigurationException {
 
-		if (!config.getTagName().equals("IdPConfig") && !config.getTagName().equals("ShibbolethOriginConfig")) { throw new ShibbolethConfigurationException(
+		if (!config.getTagName().equals("IdPConfig")) { throw new ShibbolethConfigurationException(
 				"Unexpected configuration data.  <IdPConfig/> is needed."); }
 
 		log.debug("Loading global configuration properties.");
