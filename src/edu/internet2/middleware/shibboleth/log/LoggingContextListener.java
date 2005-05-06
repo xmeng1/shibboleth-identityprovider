@@ -83,7 +83,7 @@ public class LoggingContextListener implements ServletContextListener {
 		} catch (ShibbolethConfigurationException e) {
 			sce.getServletContext().log("Problem setting up logging.", e);
 			log.fatal("Problem setting up logging: " + e);
-			throw new Error("Problem setting up logging: " + e); // XXX
+			throw new Error("Problem setting up logging: " + e);
 		}
 
 		log.info("Logger initialized.");
