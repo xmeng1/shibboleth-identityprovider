@@ -201,9 +201,14 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		// Create SAML Name Identifier & Subject
 		SAMLNameIdentifier nameId;
 		try {
-			// TODO verify that the nameId is the right format here and error if not
 			nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(), principal,
 					relyingParty, relyingParty.getIdentityProvider());
+			if (!nameId.getFormat().equals(SAMLNameIdentifier.FORMAT_X509)) {
+				log.error("SAML Name Identifier format is inappropriate for use with E-Authentication provider.  Was ("
+						+ nameId.getFormat() + ").  Expected (" + SAMLNameIdentifier.FORMAT_X509 + ").");
+				eAuthError(response, 60, remoteProviderId, csid);
+				return null;
+			}
 		} catch (NameIdentifierMappingException e) {
 			log.error("Error converting principal to SAML Name Identifier: " + e);
 			eAuthError(response, 60, remoteProviderId, csid);
@@ -228,7 +233,8 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		log.info("Resolving attributes.");
 		List attributes = null;
 		try {
-			attributes = Arrays.asList(support.getReleaseAttributes(principal, relyingParty, relyingParty.getProviderId(), null));
+			attributes = Arrays.asList(support.getReleaseAttributes(principal, relyingParty, relyingParty
+					.getProviderId(), null));
 		} catch (AAException e1) {
 			log.error("Error resolving attributes: " + e1);
 			eAuthError(response, 90, remoteProviderId, csid);
@@ -320,15 +326,15 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
 		support.getTransactionLog().info(
 				"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to E-Authentication provider ("
-						+ relyingParty.getProviderId() + ") on behalf of principal ("
-						+ principal.getName() + "). Name Identifier: (" + nameId.getName()
-						+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+						+ relyingParty.getProviderId() + ") on behalf of principal (" + principal.getName()
+						+ "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
+						+ nameId.getFormat() + ").");
 
 	}
 
 	private List repackageForEauth(List attributes) throws SAMLException {
 
-		ArrayList  writeable = new ArrayList(attributes); 
+		ArrayList writeable = new ArrayList(attributes);
 		// Bail if we didn't get a commonName, because it is required by the profile
 		SAMLAttribute commonName = getAttribute("commonName", writeable);
 		if (commonName == null) {
