@@ -77,6 +77,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 	private String eAuthPortal = "http://eauth.firstgov.gov/service/select";
 	private String eAuthError = "http://eauth.firstgov.gov/service/error";
 	private String csid;
+	private int defaultAssuranceLevel = 1;
 
 	/**
 	 * Required DOM-based constructor.
@@ -98,6 +99,17 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		String error = config.getAttribute("eAuthError");
 		if (error != null && !error.equals("")) {
 			eAuthError = portal;
+		}
+
+		String rawAssurance = config.getAttribute("defaultAssuranceLevel");
+		if (rawAssurance != null && !rawAssurance.equals("")) {
+			try {
+				defaultAssuranceLevel = Integer.parseInt(rawAssurance);
+				if (defaultAssuranceLevel < 1 || defaultAssuranceLevel > 5) { throw new NumberFormatException(); }
+			} catch (NumberFormatException e) {
+				log.error("E-Authentication (defaultAssuranceLevel) attribute must be an integer between 1 & 5.");
+				throw new ShibbolethConfigurationException("Unable to initialize protocol handler.");
+			}
 		}
 	}
 
@@ -348,9 +360,17 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		}
 		writeable.add(new SAMLAttribute("csid", "http://eauthentication.gsa.gov/federated/attribute", null, 0, Arrays
 				.asList(new String[]{csid})));
-		// TODO pull from authN system? or make configurable
-		writeable.add(new SAMLAttribute("assuranceLevel", "http://eauthentication.gsa.gov/federated/attribute", null,
-				0, Arrays.asList(new String[]{"2"})));
+
+		// Pull assurance level from the resolver, if it is available
+		// If it isn't, use the handler default
+		SAMLAttribute assuranceLevel = getAttribute("assuranceLevel", writeable);
+		if (assuranceLevel == null) {
+			writeable.add(new SAMLAttribute("assuranceLevel", "http://eauthentication.gsa.gov/federated/attribute",
+					null, 0, Arrays.asList(new String[]{Integer.toString(defaultAssuranceLevel)})));
+		} else {
+			log.debug("Using user-specifc assuranceLevel override.");
+		}
+
 		return writeable;
 	}
 
