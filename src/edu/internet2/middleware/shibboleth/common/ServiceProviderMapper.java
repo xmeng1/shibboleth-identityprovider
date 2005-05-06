@@ -104,40 +104,40 @@ public class ServiceProviderMapper {
 		}
 	}
 
-	protected RelyingParty getRelyingPartyImpl(String providerIdFromTarget) {
+	protected RelyingParty getRelyingPartyImpl(String providerIdFromSP) {
 
 		// Null request, send the default
-		if (providerIdFromTarget == null) {
+		if (providerIdFromSP == null) {
 			RelyingParty relyingParty = getDefaultRelyingParty();
 			log.info("Using default Relying Party: (" + relyingParty.getName() + ").");
-			return new UnknownProviderWrapper(relyingParty, providerIdFromTarget);
+			return new UnknownProviderWrapper(relyingParty, providerIdFromSP);
 		}
 
 		// Look for a configuration for the specific relying party
-		if (relyingParties.containsKey(providerIdFromTarget)) {
-			log.info("Found Relying Party for (" + providerIdFromTarget + ").");
-			return (RelyingParty) relyingParties.get(providerIdFromTarget);
+		if (relyingParties.containsKey(providerIdFromSP)) {
+			log.info("Found Relying Party for (" + providerIdFromSP + ").");
+			return (RelyingParty) relyingParties.get(providerIdFromSP);
 		}
 
 		// Next, check to see if the relying party is in any groups
-		RelyingParty groupParty = findRelyingPartyByGroup(providerIdFromTarget);
+		RelyingParty groupParty = findRelyingPartyByGroup(providerIdFromSP);
 		if (groupParty != null) {
 			log.info("Provider is a member of Relying Party (" + groupParty.getName() + ").");
-			return new RelyingPartyGroupWrapper(groupParty, providerIdFromTarget);
+			return new RelyingPartyGroupWrapper(groupParty, providerIdFromSP);
 		}
 
 		// OK, we can't find it... just send the default
 		RelyingParty relyingParty = getDefaultRelyingParty();
-		log.info("Could not locate Relying Party configuration for (" + providerIdFromTarget
+		log.info("Could not locate Relying Party configuration for (" + providerIdFromSP
 				+ ").  Using default Relying Party: (" + relyingParty.getName() + ").");
-		return new UnknownProviderWrapper(relyingParty, providerIdFromTarget);
+		return new UnknownProviderWrapper(relyingParty, providerIdFromSP);
 	}
 
-	private RelyingParty findRelyingPartyByGroup(String providerIdFromTarget) {
+	private RelyingParty findRelyingPartyByGroup(String providerIdFromSP) {
 
 		if (metaData == null) { return null; }
 
-		EntityDescriptor provider = metaData.lookup(providerIdFromTarget);
+		EntityDescriptor provider = metaData.lookup(providerIdFromSP);
 		if (provider != null) {
 			EntitiesDescriptor parent = provider.getEntitiesDescriptor();
 			while (parent != null) {
@@ -172,7 +172,7 @@ public class ServiceProviderMapper {
 	public RelyingParty getLegacyRelyingParty() {
 
 		RelyingParty relyingParty = getDefaultRelyingParty();
-		log.info("Request is from legacy shib target.  Selecting default Relying Party: (" + relyingParty.getName()
+		log.info("Request is from legacy shib SP.  Selecting default Relying Party: (" + relyingParty.getName()
 				+ ").");
 		return new LegacyWrapper((RelyingParty) relyingParty);
 
@@ -181,15 +181,15 @@ public class ServiceProviderMapper {
 	/**
 	 * Returns the appropriate relying party for the supplied service provider id.
 	 */
-	public RelyingParty getRelyingParty(String providerIdFromTarget) {
+	public RelyingParty getRelyingParty(String providerIdFromSP) {
 
-		if (providerIdFromTarget == null || providerIdFromTarget.equals("")) {
+		if (providerIdFromSP == null || providerIdFromSP.equals("")) {
 			RelyingParty relyingParty = getDefaultRelyingParty();
 			log.info("Selecting default Relying Party: (" + relyingParty.getName() + ").");
 			return new NoMetadataWrapper((RelyingParty) relyingParty);
 		}
 
-		return (RelyingParty) getRelyingPartyImpl(providerIdFromTarget);
+		return (RelyingParty) getRelyingPartyImpl(providerIdFromSP);
 	}
 
 	private void addRelyingParty(Element e) throws ServiceProviderMapperException {

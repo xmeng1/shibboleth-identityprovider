@@ -102,7 +102,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		} else {
 			log.info("Request contains credential: ("
 					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
-			// Mockup old requester name for requests from < 1.2 targets
+			// Mockup old requester name for requests from < 1.2 SPs
 			if (fromLegacyProvider(req)) {
 				String legacyName = getHostNameFromDN(credential.getSubjectX500Principal());
 				if (legacyName == null) {

@@ -124,8 +124,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			// Select the appropriate Relying Party configuration for the request
 			RelyingParty relyingParty = null;
 			String remoteProviderId = request.getParameter("providerId");
-			// If the target did not send a Provider Id, then assume it is a Shib
-			// 1.1 or older target
+			// If the SP did not send a Provider Id, then assume it is a Shib
+			// 1.1 or older SP
 			if (remoteProviderId == null) {
 				relyingParty = support.getServiceProviderMapper().getLegacyRelyingParty();
 			} else if (remoteProviderId.equals("")) {

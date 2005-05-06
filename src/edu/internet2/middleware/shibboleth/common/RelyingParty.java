@@ -116,7 +116,7 @@ public interface RelyingParty extends ServiceProvider {
 	public int getPreferredArtifactType();
 
 	/**
-	 * Returns thhe default "TARGET" attribute to be used with the artifact profile or null if none is specified.
+	 * Returns the default "TARGET" attribute to be used with the artifact profile or null if none is specified.
 	 */
 	public String getDefaultTarget();
 
