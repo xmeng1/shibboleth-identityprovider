@@ -14,7 +14,7 @@
 	<display-name>Shibboleth</display-name>
 	
 	<context-param>
-		<param-name>OriginConfigFile</param-name>
+		<param-name>IdPConfigFile</param-name>
 		<param-value>/conf/IdP.xml</param-value>
 	</context-param>
 
