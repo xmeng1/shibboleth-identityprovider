@@ -1,15 +1,16 @@
 /*
  * SchemasDirectoryImpl.java
  * 
- * Find Schemas in a Resource directory
+ * Find Schemas as a list of resource files.
  * 
- * 
+ * <p>Java resources are files found in the Classpath of the current
+ * ClassLoader. They may be in directories on disk, in jar files, or
+ * elsewhere. This class must be passed a list of resource names, but
+ * it uses the Java runtime to actually locate the xsd data.
  */
 package edu.internet2.middleware.shibboleth.xml;
 
-import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
@@ -19,42 +20,40 @@ import org.xml.sax.InputSource;
 /**
  * @author Howard Gilbert
  */
-public class SchemasDirectoryImpl extends SchemaStore {
+public class SchemasResourceListImpl extends SchemaStore {
     
     private static Logger log = Logger.getLogger(SchemasDirectoryImpl.class);
     
-    private String resourcedir = "/schemas/";
+    private String resourceprefix = "/schemas/";
+    private String[] resourceNames = null;
 
-	
     /**
-     * Load the bucket initially from a supplied directory.
-     * 
      * @param resourcedir
      */
-    public SchemasDirectoryImpl(String resourcedir) {
-        super();
-        this.resourcedir = resourcedir;
+    public SchemasResourceListImpl(String resourcedir, String[] resources) {
+        this.resourceprefix = resourcedir;
+        this.resourceNames = resources;
         this.loadBucket();
     }
     
-	private boolean loadBucket() {
+   
+    private void loadBucket() {
 		// for each .xsd file in the directory
-        URL resource = Parser.class.getResource(resourcedir);
-        String path = resource.getPath();
-        File dir = new File(path);
-        if (!dir.isDirectory()) {
-            log.error("Cannot find the schemas resource directory");
-            return false;
-        }
-        String[] filenames = dir.list();
 		int nextsource=0;
-		for (int i=0;i<filenames.length;i++) {
-            String filename = filenames[i];
-            if (!filename.endsWith(".xsd"))
+		for (int i=0;i<resourceNames.length;i++) {
+            String filename = resourceNames[i];
+            if (!filename.endsWith(".xsd")) {
+                log.error(filename + " doesn't end in .xsd, ignoring it.");
                 continue;
+            }
+            String resourceName = resourceprefix+filename;
             InputStream inputStream =
                     Parser.class.getResourceAsStream(
-                        "/schemas/" + filename);
+                            resourceName);
+            if (inputStream == null) {
+                log.error("Resource "+resourceName+" not found, ignoring it.");
+                continue;
+            }
             InputSource insrc = new InputSource(inputStream);
            
             // Non-validating parse to DOM
@@ -62,19 +61,19 @@ public class SchemasDirectoryImpl extends SchemaStore {
 			try {
 				xsddom = Parser.loadDom(insrc,false);
 			} catch (Exception e) {
-				log.error("Error parsing XML schema (" + filename + "): " + e);
+				log.error("Error parsing XML schema (" + resourceName + "): " + e);
 				continue;
 			}
             
             // Get the target namespace from the root element
             Element ele = xsddom.getDocumentElement();
             if (!ele.getLocalName().equals("schema")) {
-                log.error("Schema file wrong root element:"+filename);
+                log.error("Schema file wrong root element:"+resourceName);
                 continue;
             }
             String targetNamespace = ele.getAttribute("targetNamespace");
             if (targetNamespace==null) {
-                log.error("Schema has no targetNamespace: "+filename);
+                log.error("Schema has no targetNamespace: "+resourceName);
                 continue;
             }
             
@@ -86,7 +85,6 @@ public class SchemasDirectoryImpl extends SchemaStore {
             }
             bucket.put(targetNamespace,xsddom);
         }
-		return true;
 	}
 
 }
