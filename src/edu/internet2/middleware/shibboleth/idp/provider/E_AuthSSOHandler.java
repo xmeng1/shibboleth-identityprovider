@@ -74,6 +74,7 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(E_AuthSSOHandler.class.getName());
+	private final static String E_AUTH_NAMEID = "urn:oasis:names:tc:SAML:1.0:assertion#X509SubjectName";
 	private String eAuthPortal = "http://eauth.firstgov.gov/service/select";
 	private String eAuthError = "http://eauth.firstgov.gov/service/error";
 	private String csid;
@@ -215,9 +216,9 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		try {
 			nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(), principal,
 					relyingParty, relyingParty.getIdentityProvider());
-			if (!nameId.getFormat().equals(SAMLNameIdentifier.FORMAT_X509)) {
+			if (!nameId.getFormat().equals(E_AUTH_NAMEID)) {
 				log.error("SAML Name Identifier format is inappropriate for use with E-Authentication provider.  Was ("
-						+ nameId.getFormat() + ").  Expected (" + SAMLNameIdentifier.FORMAT_X509 + ").");
+						+ nameId.getFormat() + ").  Expected (" + E_AUTH_NAMEID + ").");
 				eAuthError(response, 60, remoteProviderId, csid);
 				return null;
 			}
