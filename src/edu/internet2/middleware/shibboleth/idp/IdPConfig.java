@@ -114,12 +114,12 @@ public class IdPConfig {
 			}
 		}
 
-		attribute = ((Element) config).getAttribute("maxHSThreads");
+		attribute = ((Element) config).getAttribute("maxSigningThreads");
 		if (attribute != null && !attribute.equals("")) {
 			try {
 				maxThreads = Integer.parseInt(attribute);
 			} catch (NumberFormatException e) {
-				log.error("(maxHSThreads) attribute to is not a valid integer.");
+				log.error("(maxSigningThreads) attribute to is not a valid integer.");
 				throw new ShibbolethConfigurationException("Configuration is invalid.");
 			}
 		}
@@ -131,7 +131,7 @@ public class IdPConfig {
 
 		log.debug("Global IdP config: (AAUrl) = (" + getAAUrl() + ").");
 		log.debug("Global IdP config: (defaultAuthMethod) = (" + getDefaultAuthMethod() + ").");
-		log.debug("Global IdP config: (maxHSThreads) = (" + getMaxThreads() + ").");
+		log.debug("Global IdP config: (maxSigningThreads) = (" + getMaxThreads() + ").");
 		log.debug("Global IdP config: (authHeaderName) = (" + getAuthHeaderName() + ").");
 
 		log.debug("Global IdP config: (resolverConfig) = (" + getResolverConfigLocation() + ").");
