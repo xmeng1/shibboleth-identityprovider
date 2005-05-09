@@ -47,7 +47,7 @@ public class IdPConfigLoader {
 
 	// never returns null
 	private static String getIdPConfigFile(ServletContext context) {
-		if (context.getInitParameter("IdpConfigFile") != null) {
+		if (context.getInitParameter("IdPConfigFile") != null) {
 			return context.getInitParameter("IdPConfigFile");
 		} else {
 			return "/conf/idp.xml";
