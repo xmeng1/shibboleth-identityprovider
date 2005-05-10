@@ -629,10 +629,14 @@ public class XMLMetadataProvider implements Metadata {
                     nameid.add(new XMLEndpoint((Element)nlist.item(i)));
 
                 nlist=e.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"NameIDFormat");
-                for (i=0; i<nlist.getLength(); i++) {
-                    if (nlist.item(i).hasChildNodes())
-                        formats.add(nlist.item(i).getNodeValue());
-                }
+                for (i = 0; i < nlist.getLength(); i++) {
+					if (nlist.item(i).hasChildNodes()) {
+						Node tnode = nlist.item(i).getFirstChild();
+						if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+							formats.add(tnode.getNodeValue());
+						}
+					}
+				}
             }
             else {
                 // For old style, we just do SAML 1.1 compatibility with Shib handles.
