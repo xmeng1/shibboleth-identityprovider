@@ -316,6 +316,11 @@ public class IdPResponder extends HttpServlet {
 				}
 			}
 
+			if (activeHandler == null) {
+				log.error("No protocol handler registered for location (" + request.getRequestURL() + ").");
+				throw new SAMLException("Request submitted to an invalid location.");
+			}
+
 			// Pass request to the appropriate handler and respond
 			log.info("Processing " + activeHandler.getHandlerName() + " request.");
 
