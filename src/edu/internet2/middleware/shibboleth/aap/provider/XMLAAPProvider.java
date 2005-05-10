@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.PatternSyntaxException;
 
 import org.apache.log4j.Logger;
@@ -27,8 +29,8 @@ import edu.internet2.middleware.shibboleth.metadata.ScopedRoleDescriptor.Scope;
 public class XMLAAPProvider implements AAP {
 
     private static Logger log = Logger.getLogger(XMLAAPProvider.class.getName());
-    private Map /* <String,AttributeRule> */ attrmap = new HashMap();
-    private Map /* <String,AttributeRule> */ aliasmap = new HashMap();
+    private SortedMap /* <String,AttributeRule> */ attrmap = new TreeMap();
+    private SortedMap /* <String,AttributeRule> */ aliasmap = new TreeMap();
     private boolean anyAttribute = false;
     
     public XMLAAPProvider(Element e) throws MalformedException {
@@ -412,6 +414,14 @@ public class XMLAAPProvider implements AAP {
     }
 
     public AttributeRule lookup(String name, String namespace) {
+    	if (namespace==null) {
+    		String keyGreaterEqual = (String) attrmap.tailMap(name).firstKey();
+    		if (keyGreaterEqual.startsWith(name+"!!")) {
+    			return (AttributeRule) attrmap.get(keyGreaterEqual);
+    		} else {
+    			return null;
+    		}
+    	}
         return (AttributeRule)attrmap.get(name + "!!" + namespace);
     }
 
