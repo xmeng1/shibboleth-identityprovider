@@ -214,8 +214,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 		// Create SAML Name Identifier & Subject
 		SAMLNameIdentifier nameId;
 		try {
-			nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(), principal,
-					relyingParty, relyingParty.getIdentityProvider());
+			nameId = getNameIdentifier(support.getNameMapper(), principal, relyingParty, entity);
 			if (!nameId.getFormat().equals(E_AUTH_NAMEID)) {
 				log.error("SAML Name Identifier format is inappropriate for use with E-Authentication provider.  Was ("
 						+ nameId.getFormat() + ").  Expected (" + E_AUTH_NAMEID + ").");

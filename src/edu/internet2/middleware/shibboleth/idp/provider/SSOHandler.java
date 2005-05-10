@@ -28,16 +28,25 @@ package edu.internet2.middleware.shibboleth.idp.provider;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
+import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
+import edu.internet2.middleware.shibboleth.common.NameMapper;
+import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
+import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * @author Walter Hoehn
@@ -76,5 +85,57 @@ public abstract class SSOHandler extends BaseHandler implements IdPProtocolHandl
 		} else {
 			return new Date(System.currentTimeMillis());
 		}
+	}
+
+	/**
+	 * Constructs a SAML Name Identifier of a given principal that is most appropriate to the relying party.
+	 * 
+	 * @param mapper
+	 *            name mapping facility
+	 * @param principal
+	 *            the principal represented by the name identifier
+	 * @param relyingParty
+	 *            the party that will consume the name identifier
+	 * @param descriptor
+	 *            metadata descriptor for the party that will consume the name identifier
+	 * @return the SAML Name identifier
+	 * @throws NameIdentifierMappingException
+	 *             if a name identifier could not be created
+	 */
+	protected SAMLNameIdentifier getNameIdentifier(NameMapper mapper, LocalPrincipal principal,
+			RelyingParty relyingParty, EntityDescriptor descriptor) throws NameIdentifierMappingException {
+
+		String[] availableMappings = relyingParty.getNameMapperIds();
+
+		SPSSODescriptor role = descriptor.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+
+		// If we have preferred Name Identifier formats from the metadata, see if the we can find one that is configured
+		// for this relying party
+		if (role != null) {
+			Iterator spPreferredFormats = role.getNameIDFormats();
+			while (spPreferredFormats.hasNext()) {
+
+				String preferredFormat = (String) spPreferredFormats.next();
+				for (int i = 0; availableMappings != null && i < availableMappings.length; i++) {
+					NameIdentifierMapping mapping = mapper.getNameIdentifierMappingById(availableMappings[i]);
+					if (mapping != null && preferredFormat.equals(mapping.getNameIdentifierFormat().toString())) {
+						log.debug("Found a supported name identifier format that "
+								+ "matches the metadata for the relying party: ("
+								+ mapping.getNameIdentifierFormat().toString() + ").");
+						return mapping.getNameIdentifier(principal, relyingParty, relyingParty.getIdentityProvider());
+					}
+				}
+			}
+		}
+
+		// If we didn't find any matches, then just use the default for the relying party
+		String defaultNameMapping = null;
+		if (availableMappings != null && availableMappings.length > 0) {
+			defaultNameMapping = availableMappings[0];
+		}
+		SAMLNameIdentifier nameId = mapper.getNameIdentifier(defaultNameMapping, principal, relyingParty, relyingParty
+				.getIdentityProvider());
+		log.debug("Using the default name identifier format for this relying party: (" + nameId.getFormat());
+		return nameId;
 	}
 }

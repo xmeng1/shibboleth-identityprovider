@@ -101,7 +101,7 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
@@ -139,7 +139,7 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			log.debug("Waiting 11 seconds for the handle to expire.");
@@ -186,7 +186,7 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
@@ -224,7 +224,7 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("cryptotest", new LocalPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier("cryptotest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:good"));
 
 			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
@@ -250,7 +250,7 @@ public class NameMapperTests extends TestCase {
 
 			NameMapper nameMapper = new NameMapper();
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(null, new LocalPrincipal("testprincipal"),
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier(null, new LocalPrincipal("testprincipal"),
 					new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
@@ -286,7 +286,7 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName(null, new LocalPrincipal("testprincipal"),
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier(null, new LocalPrincipal("testprincipal"),
 					new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
@@ -341,7 +341,7 @@ public class NameMapperTests extends TestCase {
 
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			nameMapper.getNameIdentifierName(null, new LocalPrincipal("testprincipal"), new BasicServiceProvider(),
+			nameMapper.getNameIdentifier(null, new LocalPrincipal("testprincipal"), new BasicServiceProvider(),
 					new BasicIdentityProvider("urn-x:testid"));
 
 			fail("HSNameMapper defaulted to incorrect name mapping.");
@@ -371,7 +371,7 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("memorytest", new LocalPrincipal(
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier("memorytest", new LocalPrincipal(
 					"testprincipal"), new BasicServiceProvider(), new BasicIdentityProvider("urn-x:testid"));
 
 			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),
@@ -404,7 +404,7 @@ public class NameMapperTests extends TestCase {
 			parser.parse(new InputSource(new StringReader(rawConfig)));
 			nameMapper.addNameMapping(parser.getDocument().getDocumentElement());
 
-			SAMLNameIdentifier nameId = nameMapper.getNameIdentifierName("memory", new LocalPrincipal("testprincipal"),
+			SAMLNameIdentifier nameId = nameMapper.getNameIdentifier("memory", new LocalPrincipal("testprincipal"),
 					new BasicServiceProvider(), new BasicIdentityProvider("urn-x:good"));
 
 			Principal principal = nameMapper.getPrincipal(nameId, new BasicServiceProvider(),

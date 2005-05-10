@@ -29,7 +29,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -38,8 +40,8 @@ import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.Metadata;
 
 /**
  * Class for determining the effective relying party from the unique id of the service provider. Checks first for an
@@ -172,8 +174,7 @@ public class ServiceProviderMapper {
 	public RelyingParty getLegacyRelyingParty() {
 
 		RelyingParty relyingParty = getDefaultRelyingParty();
-		log.info("Request is from legacy shib SP.  Selecting default Relying Party: (" + relyingParty.getName()
-				+ ").");
+		log.info("Request is from legacy shib SP.  Selecting default Relying Party: (" + relyingParty.getName() + ").");
 		return new LegacyWrapper((RelyingParty) relyingParty);
 
 	}
@@ -219,7 +220,7 @@ public class ServiceProviderMapper {
 		private String overridenIdPProviderId;
 		private URL overridenAAUrl;
 		private URI overridenDefaultAuthMethod;
-		private String hsNameFormatId;
+		private List mappingIds = new ArrayList();
 		private IdPConfig configuration;
 		private boolean overridenPassThruErrors = false;
 		private boolean passThruIsOverriden = false;
@@ -341,34 +342,36 @@ public class ServiceProviderMapper {
 				log.debug("Preferred artifact type: (" + preferredArtifactType + ").");
 			}
 
-			// Load and verify the name format that the HS should use in
+			// Load and verify the name mappings that should be used in
 			// assertions for this RelyingParty
-			NodeList hsNameFormats = ((Element) partyConfig).getElementsByTagNameNS(IdPConfig.configNameSpace,
-					"HSNameFormat");
+
+			NodeList nameIDs = ((Element) partyConfig).getElementsByTagNameNS(IdPConfig.configNameSpace, "NameID");
 			// If no specification. Make sure we have a default mapping
-			if (hsNameFormats.getLength() < 1) {
+			if (nameIDs.getLength() < 1) {
 				if (nameMapper.getNameIdentifierMappingById(null) == null) {
-					log.error("Relying Party HS Name Format not set.  Add a <HSNameFormat> element to <RelyingParty>.");
+					log.error("Relying Party NameId configuration not set.  Add a <NameID> element to <RelyingParty>.");
 					throw new ServiceProviderMapperException("Required configuration not specified.");
 				}
 
 			} else {
+
 				// We do have a specification, so make sure it points to a
 				// valid Name Mapping
-				if (hsNameFormats.getLength() > 1) {
-					log.warn("Found multiple HSNameFormat specifications for Relying Party (" + name
-							+ ").  Ignoring all but the first.");
-				}
 
-				hsNameFormatId = ((Element) hsNameFormats.item(0)).getAttribute("nameMapping");
-				if (hsNameFormatId == null || hsNameFormatId.equals("")) {
-					log.error("HS Name Format mapping not set.  Add a (nameMapping) attribute to <HSNameFormat>.");
-					throw new ServiceProviderMapperException("Required configuration not specified.");
-				}
+				for (int i = 0; i < nameIDs.getLength(); i++) {
 
-				if (nameMapper.getNameIdentifierMappingById(hsNameFormatId) == null) {
-					log.error("Relying Party HS Name Format refers to a name mapping that is not loaded.");
-					throw new ServiceProviderMapperException("Required configuration not specified.");
+					String mappingId = ((Element) nameIDs.item(i)).getAttribute("nameMapping");
+					if (mappingId == null || mappingId.equals("")) {
+						log.error("Name mapping not set.  Add a (nameMapping) attribute to <NameID>.");
+						throw new ServiceProviderMapperException("Required configuration not specified.");
+					}
+
+					if (nameMapper.getNameIdentifierMappingById(mappingId) == null) {
+						log.error("Relying Party NameID refers to a name mapping that is not loaded.");
+						throw new ServiceProviderMapperException("Required configuration not specified.");
+					}
+
+					mappingIds.add(mappingId);
 				}
 			}
 
@@ -415,9 +418,9 @@ public class ServiceProviderMapper {
 			return false;
 		}
 
-		public String getHSNameFormatId() {
+		public String[] getNameMapperIds() {
 
-			return hsNameFormatId;
+			return (String[]) mappingIds.toArray(new String[0]);
 		}
 
 		public URI getDefaultAuthMethod() {
@@ -553,9 +556,9 @@ public class ServiceProviderMapper {
 			return providerId;
 		}
 
-		public String getHSNameFormatId() {
+		public String[] getNameMapperIds() {
 
-			return wrapped.getHSNameFormatId();
+			return wrapped.getNameMapperIds();
 		}
 
 		public URL getAAUrl() {
@@ -640,9 +643,9 @@ public class ServiceProviderMapper {
 			return providerId;
 		}
 
-		public String getHSNameFormatId() {
+		public String[] getNameMapperIds() {
 
-			return wrapped.getHSNameFormatId();
+			return wrapped.getNameMapperIds();
 		}
 
 		public boolean isLegacyProvider() {
@@ -718,9 +721,9 @@ public class ServiceProviderMapper {
 			return true;
 		}
 
-		public String getHSNameFormatId() {
+		public String[] getNameMapperIds() {
 
-			return ((RelyingParty) wrapped).getHSNameFormatId();
+			return ((RelyingParty) wrapped).getNameMapperIds();
 		}
 
 		public URL getAAUrl() {
@@ -746,9 +749,9 @@ public class ServiceProviderMapper {
 			super(wrapped, null);
 		}
 
-		public String getHSNameFormatId() {
+		public String[] getNameMapperIds() {
 
-			return ((RelyingParty) wrapped).getHSNameFormatId();
+			return ((RelyingParty) wrapped).getNameMapperIds();
 		}
 
 		public URL getAAUrl() {

@@ -285,7 +285,7 @@ public class NameMapper {
 	 * @throws NameIdentifierMappingException
 	 *             If the <code>NameMapper</code> encounters an internal error
 	 */
-	public SAMLNameIdentifier getNameIdentifierName(String id, LocalPrincipal principal, ServiceProvider sProv,
+	public SAMLNameIdentifier getNameIdentifier(String id, LocalPrincipal principal, ServiceProvider sProv,
 			IdentityProvider idProv) throws NameIdentifierMappingException {
 
 		NameIdentifierMapping mapping = getNameIdentifierMappingById(id);

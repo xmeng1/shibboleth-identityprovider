@@ -161,8 +161,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			// Create SAML Name Identifier & Subject
 			SAMLNameIdentifier nameId;
 			try {
-				nameId = support.getNameMapper().getNameIdentifierName(relyingParty.getHSNameFormatId(), principal,
-						relyingParty, relyingParty.getIdentityProvider());
+				nameId = getNameIdentifier(support.getNameMapper(), principal, relyingParty, descriptor);
 			} catch (NameIdentifierMappingException e) {
 				log.error("Error converting principal to SAML Name Identifier: " + e);
 				throw new SAMLException("Error converting principal to SAML Name Identifier.", e);

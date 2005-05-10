@@ -50,6 +50,7 @@ import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
+import org.opensaml.SAMLNameIdentifier;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
@@ -58,6 +59,7 @@ import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
 import edu.internet2.middleware.shibboleth.common.InvalidNameIdentifierException;
+import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -202,13 +204,27 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		}
 
 		// Map Subject to local principal
-		Principal principal;
+		Principal principal = null;
 		try {
-			principal = support.getNameMapper().getPrincipal(attributeQuery.getSubject().getNameIdentifier(),
-					relyingParty, relyingParty.getIdentityProvider());
+			SAMLNameIdentifier nameId = attributeQuery.getSubject().getNameIdentifier();
+			log.debug("Name Identifier format: (" + nameId.getFormat() + ").");
+			NameIdentifierMapping mapping = null;
+			try {
+				mapping = support.getNameMapper().getNameIdentifierMapping(new URI(nameId.getFormat()));
+			} catch (URISyntaxException e) {
+				log.error("Invalid Name Identifier format.");
+			}
+			if (mapping == null) { throw new NameIdentifierMappingException("Name Identifier format not registered."); }
 
+			// Don't honor the request if the active relying party configuration does not contain a mapping with the
+			// name identifier format from the request
+			if (!Arrays.asList(relyingParty.getNameMapperIds()).contains(mapping.getId())) { throw new NameIdentifierMappingException(
+					"Name Identifier format not valid for this relying party."); }
+
+			principal = mapping.getPrincipal(nameId, relyingParty, relyingParty.getIdentityProvider());
 			log.info("Request is for principal (" + principal.getName() + ").");
 
+			// Get attributes from resolver
 			SAMLAttribute[] attrs;
 			Iterator requestedAttrsIterator = attributeQuery.getDesignators();
 			if (requestedAttrsIterator.hasNext()) {

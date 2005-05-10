@@ -44,8 +44,8 @@
 					<xs:sequence>
 						<xs:element name="RelyingParty" maxOccurs="unbounded">
 							<xs:complexType>
-								<xs:sequence minOccurs="0">
-									<xs:element name="HSNameFormat">
+								<xs:sequence minOccurs="0" maxOccurs="unbounded">
+									<xs:element name="NameID">
 										<xs:complexType>
 											<xs:attribute name="nameMapping" type="xs:string" use="required"/>
 										</xs:complexType>

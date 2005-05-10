@@ -52,12 +52,13 @@ public interface RelyingParty extends ServiceProvider {
 	public IdentityProvider getIdentityProvider();
 
 	/**
-	 * Returns the id of the name format that should be used in authentication assertions issued to this
-	 * {@link RelyingParty}.
+	 * Returns an array of identifiers for looking up the name mappings to be used when responding to queries from this
+	 * {@link RelyingParty}. The array is ordered by the preference that should be given to use of the given name
+	 * mappings.
 	 * 
-	 * @return the id for the format
+	 * @return the ids of the mappers
 	 */
-	public String getHSNameFormatId();
+	public String[] getNameMapperIds();
 
 	/**
 	 * Returns a boolean indication of whether this {@link RelyingParty}is running &lt;= Shibboleth v1.1. Used to
