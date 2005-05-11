@@ -261,7 +261,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
 		support.getTransactionLog().info(
 				"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
-						+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+						+ relyingParty.getProviderId() + ") on behalf of principal ("
 						+ principal.getName() + "). Name Identifier: (" + nameId.getName()
 						+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
 	}
@@ -311,7 +311,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		} else {
 			support.getTransactionLog().info(
 					"Authentication assertion issued to provider ("
-							+ relyingParty.getIdentityProvider().getProviderId() + ") on behalf of principal ("
+							+ relyingParty.getProviderId() + ") on behalf of principal ("
 							+ principal.getName() + "). Name Identifier: (" + nameId.getName()
 							+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
 		}
