@@ -118,7 +118,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			String username = support.getIdPConfig().getAuthHeaderName().equalsIgnoreCase("REMOTE_USER") ? request
 					.getRemoteUser() : request.getHeader(support.getIdPConfig().getAuthHeaderName());
 			if ((username == null) || (username.equals(""))) { throw new InvalidClientDataException(
-					"Unable to authenticate remote user"); }
+					"Unauthenticated principal. This protocol handler requires that authentication information be "
+							+ "provided from the servlet container."); }
 			LocalPrincipal principal = new LocalPrincipal(username);
 
 			// Select the appropriate Relying Party configuration for the request
