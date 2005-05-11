@@ -250,6 +250,17 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
 
+			// Put attributes names in the transaction log when it is set to DEBUG
+			if (support.getTransactionLog().isDebugEnabled() && attrs.length > 0) {
+				StringBuffer attrNameBuffer = new StringBuffer();
+				for (int i = 0; i < attrs.length; i++) {
+					attrNameBuffer.append("(" + attrs[i].getName() + ")");
+				}
+				support.getTransactionLog().debug(
+						"Attribute assertion generated for provider (" + effectiveName + ") on behalf of principal ("
+								+ principal.getName() + ") with the following attributes: " + attrNameBuffer.toString());
+			}
+
 			SAMLResponse samlResponse = null;
 
 			if (attrs == null || attrs.length == 0) {

@@ -238,8 +238,28 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		// Create artifacts for each assertion
 		ArrayList artifacts = new ArrayList();
 		for (int i = 0; i < assertions.size(); i++) {
-			artifacts
-					.add(support.getArtifactMapper().generateArtifact((SAMLAssertion) assertions.get(i), relyingParty));
+			SAMLAssertion assertion = (SAMLAssertion) assertions.get(i);
+			Artifact artifact = support.getArtifactMapper().generateArtifact(assertion, relyingParty);
+			artifacts.add(artifact);
+
+			// Put attributes names in the transaction log when it is set to DEBUG
+			if (support.getTransactionLog().isDebugEnabled()) {
+				Iterator statements = assertion.getStatements();
+				while (statements.hasNext()) {
+					SAMLStatement statement = (SAMLStatement) statements.next();
+					if (statement instanceof SAMLAttributeStatement) {
+						Iterator attributes = ((SAMLAttributeStatement) statement).getAttributes();
+						StringBuffer attributeBuffer = new StringBuffer();
+						while (attributes.hasNext()) {
+							SAMLAttribute attribute = (SAMLAttribute) attributes.next();
+							attributeBuffer.append("(" + attribute.getName() + ")");
+							support.getTransactionLog().debug(
+									"Artifact (" + artifact.encode() + ") created with the following attributes: "
+											+ attributeBuffer.toString());
+						}
+					}
+				}
+			}
 		}
 
 		// Assemble the query string
@@ -261,9 +281,9 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
 		support.getTransactionLog().info(
 				"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
-						+ relyingParty.getProviderId() + ") on behalf of principal ("
-						+ principal.getName() + "). Name Identifier: (" + nameId.getName()
-						+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+						+ relyingParty.getProviderId() + ") on behalf of principal (" + principal.getName()
+						+ "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
+						+ nameId.getFormat() + ").");
 	}
 
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
@@ -310,10 +330,9 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 		} else {
 			support.getTransactionLog().info(
-					"Authentication assertion issued to provider ("
-							+ relyingParty.getProviderId() + ") on behalf of principal ("
-							+ principal.getName() + "). Name Identifier: (" + nameId.getName()
-							+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+					"Authentication assertion issued to provider (" + relyingParty.getProviderId()
+							+ ") on behalf of principal (" + principal.getName() + "). Name Identifier: ("
+							+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
 		}
 	}
 

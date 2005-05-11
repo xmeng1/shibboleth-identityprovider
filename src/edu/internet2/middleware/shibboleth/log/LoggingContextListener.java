@@ -2,26 +2,25 @@
  * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
  * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
  * provided that the following conditions are met: Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
- * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
- * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
- * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu>Internet2
- * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
- * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
- * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
- * products derived from this software without specific prior written permission. For written permission, please
- * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
- * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
- * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
- * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
- * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
- * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
- * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution, if any, must include the following acknowledgment: "This product includes software
+ * developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu>Internet2 Project.
+ * Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
+ * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor
+ * the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
+ * products derived from this software without specific prior written permission. For written permission, please contact
+ * shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the
+ * University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name, without prior
+ * written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS PROVIDED BY THE
+ * COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE
+ * DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO
+ * EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC.
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package edu.internet2.middleware.shibboleth.log;
@@ -60,11 +59,12 @@ import edu.internet2.middleware.shibboleth.idp.IdPConfig;
  */
 public class LoggingContextListener implements ServletContextListener {
 
-	private static Logger	log	= Logger.getLogger(LoggingContextListener.class.getName());
+	private static Logger log = Logger.getLogger(LoggingContextListener.class.getName());
 
 	// tomcat calls this before the servlet init()s, but is that guaranteed?
 	public void contextInitialized(ServletContextEvent sce) {
-		//Silliness to get around xmlsec doing its own configuration, ie: we might need to override it
+
+		// Silliness to get around xmlsec doing its own configuration, ie: we might need to override it
 		Init.init();
 
 		ConsoleAppender rootAppender = new ConsoleAppender();
@@ -90,13 +90,15 @@ public class LoggingContextListener implements ServletContextListener {
 	}
 
 	public void contextDestroyed(ServletContextEvent sce) {
+
 		log.info("Shutting down logging infrastructure.");
 		LogManager.shutdown();
 	}
 
 	protected void loadConfiguration(Document idpConfig) throws ShibbolethConfigurationException {
-		NodeList itemElements = idpConfig.getDocumentElement().getElementsByTagNameNS(
-				IdPConfig.configNameSpace, "Logging");
+
+		NodeList itemElements = idpConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+				"Logging");
 		Node errorLogNode = null;
 		boolean encounteredLog4JConfig = false;
 
@@ -138,6 +140,7 @@ public class LoggingContextListener implements ServletContextListener {
 	}
 
 	private void configureErrorLog(Node node) throws ShibbolethConfigurationException {
+
 		NamedNodeMap attributes = node.getAttributes();
 
 		// schema check should catch if "location" is missing, NullPointerException here if not
@@ -146,17 +149,18 @@ public class LoggingContextListener implements ServletContextListener {
 		try {
 			String logPath = new ShibResource(location, LoggingContextListener.class).getFile().getCanonicalPath();
 			log.debug("logPath = " + logPath);
-			appender = new DailyRollingFileAppender(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"), logPath, "'.'yyyy-MM-dd");
-		}
-		catch (Exception e) {  // catch any exception
+			appender = new DailyRollingFileAppender(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"),
+					logPath, "'.'yyyy-MM-dd");
+		} catch (Exception e) { // catch any exception
 			log.fatal("<ErrorLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
-			throw new ShibbolethConfigurationException("<ErrorLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
+			throw new ShibbolethConfigurationException("<ErrorLog location=\"" + location
+					+ "\">: error creating DailyRollingFileAppender: " + e);
 		}
 		appender.setName("error");
 
 		Level level = (Level) Level.WARN;
 		if (attributes.getNamedItem("level") != null) {
-			log.info("Setting log level to " + attributes.getNamedItem("level").getNodeValue());
+			log.info("Setting error log level to " + attributes.getNamedItem("level").getNodeValue());
 			level = Level.toLevel(attributes.getNamedItem("level").getNodeValue());
 			Logger.getRootLogger().setLevel(level);
 		}
@@ -177,25 +181,35 @@ public class LoggingContextListener implements ServletContextListener {
 		String location = attributes.getNamedItem("location").getNodeValue();
 		DailyRollingFileAppender appender = null;
 		try {
-			String logPath = new ShibResource(attributes.getNamedItem("location").getNodeValue(), LoggingContextListener.class).getFile().getCanonicalPath();
+			String logPath = new ShibResource(attributes.getNamedItem("location").getNodeValue(),
+					LoggingContextListener.class).getFile().getCanonicalPath();
 			log.debug("logPath = " + logPath);
 			appender = new DailyRollingFileAppender(new PatternLayout("%d{ISO8601} %m%n"), logPath, "'.'yyyy-MM-dd");
-		}
-		catch (Exception e) {  // catch any exception
+		} catch (Exception e) { // catch any exception
 			log.fatal("<TransactionLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
-			throw new ShibbolethConfigurationException("<TransactionLog location=\"" + location + "\">: error creating DailyRollingFileAppender: " + e);
+			throw new ShibbolethConfigurationException("<TransactionLog location=\"" + location
+					+ "\">: error creating DailyRollingFileAppender: " + e);
 		}
 		appender.setName("transaction");
 
 		Logger log = Logger.getLogger("Shibboleth-TRANSACTION");
 		log.setAdditivity(false); // do not want parent's messages
-		log.setLevel((Level) Level.INFO); // all messages to this log are INFO
+
+		// Standard transaction stuff is INFO, but some more detailed info is available via DEBUG
+		Level level = Level.INFO;
+		if (attributes.getNamedItem("level") != null) {
+			log.info("Setting transaction log level to " + attributes.getNamedItem("level").getNodeValue());
+			level = Level.toLevel(attributes.getNamedItem("level").getNodeValue());
+			Logger.getRootLogger().setLevel(level);
+		}
+		log.setLevel(level);
 
 		// log.removeAllAppenders(); // imho we want these messages to appear in the "error" log if level >= INFO
 		log.addAppender(appender);
 	}
 
 	private void doLog4JConfig(Node node) throws ShibbolethConfigurationException {
+
 		NamedNodeMap attributes = node.getAttributes();
 
 		// schema check should catch if location is missing, NullPointerException here if not

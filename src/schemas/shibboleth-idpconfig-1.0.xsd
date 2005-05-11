@@ -24,11 +24,7 @@
 
 	<xs:complexType name="LogWithLevels">
 		<xs:attribute name="location" type="xs:anyURI" use="required" />
-		<xs:attribute name="level" type="idp:LevelType" use="optional" default="WARN" />
-	</xs:complexType>
-
-	<xs:complexType name="Log">
-		<xs:attribute name="location" type="xs:anyURI" use="required"/>
+		<xs:attribute name="level" type="idp:LevelType" use="optional" />
 	</xs:complexType>
 
 	<xs:simpleType name="Log4JConfigType">
@@ -88,7 +84,8 @@
 							<xs:choice>
 								<xs:sequence>
 									<xs:element name="ErrorLog" type="idp:LogWithLevels" minOccurs="0" maxOccurs="1" />
-									<xs:element name="TransactionLog" type="idp:Log" minOccurs="0" maxOccurs="1" />
+									<xs:element name="TransactionLog" type="idp:LogWithLevels" minOccurs="0" 
+										maxOccurs="1" />
 								</xs:sequence>
 								<xs:element name="Log4JConfig">
 									<xs:complexType>
