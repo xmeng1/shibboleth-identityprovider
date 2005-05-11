@@ -26,8 +26,10 @@
 package edu.internet2.middleware.shibboleth.idp.provider;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -224,6 +226,16 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			principal = mapping.getPrincipal(nameId, relyingParty, relyingParty.getIdentityProvider());
 			log.info("Request is for principal (" + principal.getName() + ").");
 
+			URL resource = null;
+			if (fromLegacyProvider(request)) {
+				try {
+					resource = new URL(attributeQuery.getResource());
+				} catch (MalformedURLException mue) {
+					log.error("Request from legacy provider contained an improperly formatted resource "
+							+ "identifier.  Attempting to handle request without one.");
+				}
+			}
+
 			// Get attributes from resolver
 			SAMLAttribute[] attrs;
 			Iterator requestedAttrsIterator = attributeQuery.getDesignators();
@@ -241,11 +253,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					}
 				}
 
-				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null,
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, resource,
 						(URI[]) requestedAttrs.toArray(new URI[0]));
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
-				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null);
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, resource);
 			}
 
 			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
@@ -256,9 +268,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				for (int i = 0; i < attrs.length; i++) {
 					attrNameBuffer.append("(" + attrs[i].getName() + ")");
 				}
-				support.getTransactionLog().debug(
-						"Attribute assertion generated for provider (" + effectiveName + ") on behalf of principal ("
-								+ principal.getName() + ") with the following attributes: " + attrNameBuffer.toString());
+				support.getTransactionLog()
+						.debug(
+								"Attribute assertion generated for provider (" + effectiveName
+										+ ") on behalf of principal (" + principal.getName()
+										+ ") with the following attributes: " + attrNameBuffer.toString());
 			}
 
 			SAMLResponse samlResponse = null;
