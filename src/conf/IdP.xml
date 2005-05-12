@@ -18,14 +18,14 @@
 	xmlns:cred="urn:mace:shibboleth:credentials:1.0" 
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 shibboleth-idpconfig-1.0.xsd" 
+	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 ../schemas/shibboleth-idpconfig-1.0.xsd" 
 	AAUrl="http://shibboleth.example.org:8080/shibboleth/AA" 
 	resolverConfig="/conf/resolver.xml"
 	defaultRelyingParty="urn:mace:inqueue:example.org" 
 	providerId="urn:mace:inqueue:example.org">
 
 	<RelyingParty name="urn:mace:inqueue:example.org" signingCredential="foo">
-		<HSNameFormat nameMapping="shm"/>
+		<NameID nameMapping="shm"/>
 	</RelyingParty>
 
 	<!-- You'll need to get a test credential from an InQueue CA -->
