@@ -25,6 +25,15 @@
 
 package edu.internet2.middleware.shibboleth.idp.provider;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
 import javax.security.auth.x500.X500Principal;
 
 import junit.framework.TestCase;
@@ -33,6 +42,9 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import edu.internet2.middleware.shibboleth.common.ShibResource;
+import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
+
 /**
  * Validation suite for hack to pull hostnames out of a subject DN.
  * 
@@ -40,13 +52,13 @@ import org.apache.log4j.Logger;
  */
 public class DNHostNameExtractionTests extends TestCase {
 
-	//Basic
+	// Basic
 	String dn1 = "CN=wayf.internet2.edu,OU=TSG,O=University Corporation for Advanced Internet Development,L=Ann Arbor,ST=Michigan,C=US";
 
-	//lowercase CN
+	// lowercase CN
 	String dn2 = "cn=wayf.internet2.edu,OU=TSG,O=University Corporation for Advanced Internet Development,L=Ann Arbor,ST=Michigan,C=US";
 
-	//Multiple CNs
+	// Multiple CNs
 	String dn4 = "CN=wayf.internet2.edu,OU=TSG, CN=foo, O=University Corporation for Advanced Internet Development,L=Ann Arbor,ST=Michigan,C=US";
 
 	public DNHostNameExtractionTests(String name) {
@@ -98,6 +110,38 @@ public class DNHostNameExtractionTests extends TestCase {
 			assertEquals("Round-trip handle validation failed on DN.", BaseHandler.getHostNameFromDN(new X500Principal(
 					dn4)), "wayf.internet2.edu");
 
+		} catch (Exception e) {
+			fail("Error in test specification: " + e.getMessage());
+		}
+	}
+
+	public void testExtractionWithStrangeDN() {
+
+		try {
+			// Use the cert referenced in bugzilla #143
+			// This cert was breaking previously because of java's conversion of the dn to string form
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new ShibResource(new File("data/cnextract.jks").toURL().toString()).getInputStream(),
+					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
+			X509Certificate cert = (X509Certificate) keyStore.getCertificate("scott");
+			
+			FileOutputStream output = new FileOutputStream("/tmp/principal.der");
+			output.write(cert.getSubjectX500Principal().getEncoded());
+			output.close();
+			
+			assertEquals("Round-trip handle validation failed on DN.", BaseHandler.getHostNameFromDN(cert
+					.getSubjectX500Principal()), "asd3.ais.ucla.edu");
+
+		} catch (ResourceNotAvailableException e) {
+			fail("Error in test specification: " + e);
+		} catch (IOException e) {
+			fail("Error in test specification: " + e);
+		} catch (NoSuchAlgorithmException e) {
+			fail("Error in test specification: " + e);
+		} catch (CertificateException e) {
+			fail("Error in test specification: " + e);
+		} catch (KeyStoreException e) {
+			fail("Error in test specification: " + e);
 		} catch (Exception e) {
 			fail("Error in test specification: " + e.getMessage());
 		}
