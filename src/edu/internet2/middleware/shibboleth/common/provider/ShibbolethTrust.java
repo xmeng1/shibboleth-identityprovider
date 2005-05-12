@@ -62,9 +62,9 @@ import org.apache.xml.security.keys.content.x509.XMLX509Certificate;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
-import org.bouncycastle.asn1.DERPrintableString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERSet;
+import org.bouncycastle.asn1.DERString;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLSignedObject;
 
@@ -406,7 +406,6 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 
 		// Parse the ASN.1 representation of the dn and grab the last CN component that we find
 		// We used to do this with the dn string, but the JDK's default parsing caused problems with some DNs
-
 		try {
 			ASN1InputStream asn1Stream = new ASN1InputStream(dn.getEncoded());
 			DERObject parent = asn1Stream.readObject();
@@ -420,6 +419,7 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 			for (int i = 0; i < ((DERSequence) parent).size(); i++) {
 				DERObject dnComponent = ((DERSequence) parent).getObjectAt(i).getDERObject();
 				if (!(dnComponent instanceof DERSet)) {
+					log.debug("No DN components.");
 					continue;
 				}
 
@@ -435,9 +435,8 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 						if (CN_OID.equals(componentId.getId())) {
 							// OK, this dn component is actually a cn attribute
 							if (((DERSequence) grandChild).getObjectAt(1) != null
-									&& ((DERSequence) grandChild).getObjectAt(1).getDERObject() instanceof DERPrintableString) {
-								cn = ((DERPrintableString) ((DERSequence) grandChild).getObjectAt(1).getDERObject())
-										.getString();
+									&& ((DERSequence) grandChild).getObjectAt(1).getDERObject() instanceof DERString) {
+								cn = ((DERString) ((DERSequence) grandChild).getObjectAt(1).getDERObject()).getString();
 							}
 						}
 					}
