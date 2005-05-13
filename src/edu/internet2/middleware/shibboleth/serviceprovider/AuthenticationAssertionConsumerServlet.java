@@ -245,7 +245,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             ) 
     throws SAMLException {
         String sessionid=null;
-        StringBuffer pproviderId = // Get back Origin Entity name from SAML
+        StringBuffer pproviderId = // Get back IdP Entity name from SAML
             new StringBuffer();
         String[] audiences = new String[1];
         audiences[0]=providerId;

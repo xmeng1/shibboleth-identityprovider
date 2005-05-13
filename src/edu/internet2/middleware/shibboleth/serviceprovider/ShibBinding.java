@@ -113,7 +113,7 @@ public class ShibBinding {
 		String prevBinding = null;
 	
 		/*
-		 * Try any inline bindings provided by 1.0/1.1 origins. 
+		 * Try any inline bindings provided by 1.0/1.1 IdPs. 
 		 */
 		if (bindings!=null) {
 			for (int ibinding=0;ibinding<bindings.length;ibinding++) {

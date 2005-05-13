@@ -88,7 +88,7 @@ public class AttributeRequestor {
 	 * 
 	 * @param session Session object (from authentication POST)
 	 * @return true if Attributes successfully stored in the Session
-	 * @throws MetadataException If Origin has no configured AA
+	 * @throws MetadataException If IdP has no configured AA
 	 * @throws SAMLException If there is a problem with the reply
 	 */
 	static 
@@ -145,7 +145,7 @@ public class AttributeRequestor {
             query = 
                 new SAMLAttributeQuery(
             		subject,     		 // Subject (i.e. Handle) from authentication
-            		entity.getId(),      // ID of user's Entity (i.e. Origin Site)
+            		entity.getId(),      // ID of user's Entity (i.e. IdP)
             		attributeDesignators // Attributes to request, null for everything
             		);
 

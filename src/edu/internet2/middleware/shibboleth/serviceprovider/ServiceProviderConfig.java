@@ -483,7 +483,7 @@ public class ServiceProviderConfig {
 	 * Routine to handle CredentialProvider
 	 * 
 	 * <p>Note: This only handles in-line XML.
-	 * Also, Credentials was an existing Origin class, so it doesn't
+	 * Also, Credentials was an existing IdP class, so it doesn't
 	 * implement the new PluggableConfigurationComponent interface and
 	 * can't be loaded by generic plugin support.
 	 * </p>
@@ -939,7 +939,7 @@ public class ServiceProviderConfig {
 		 * function in the new interface that will use the new term, but
 		 * it does the same thing.</p>
 		 *  
-		 * @param id ID of the OriginSite entity
+		 * @param id ID of the IdP entity
 		 * @return EntityDescriptor metadata object for that site.
 		 */
         public EntityDescriptor lookup(String id) {
@@ -1120,7 +1120,7 @@ public class ServiceProviderConfig {
 		/**
 		 * A method of Trust that we must declare to claim that 
 		 * ApplicationInfo implements Trust. However, no code in the
-		 * ServiceProvider calls this (probably an Origin thing).
+		 * ServiceProvider calls this (probably an IdP thing).
 		 * 
 		 * @param revocations
 		 * @param role
