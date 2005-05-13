@@ -26,7 +26,6 @@
 package edu.internet2.middleware.shibboleth.idp;
 
 import java.io.IOException;
-import java.net.URI;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -65,5 +64,5 @@ public interface IdPProtocolHandler {
 	/**
 	 * Returns the locations for which this handler should process requests.
 	 */
-	public URI[] getLocations();
+	public String[] getLocations();
 }

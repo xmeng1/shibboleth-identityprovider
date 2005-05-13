@@ -26,7 +26,6 @@
 package edu.internet2.middleware.shibboleth.idp;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
@@ -37,6 +36,8 @@ import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
@@ -186,26 +187,23 @@ public class IdPResponder extends HttpServlet {
 
 			// Default if no handlers are specified
 			if (itemElements.getLength() < 1) {
-				// TODO work out defaulting
+				itemElements = getDefaultHandlers();
 
 				// If handlers were specified, load them and register them against their locations
-			} else {
-				EACHHANDLER : for (int i = 0; i < itemElements.getLength(); i++) {
-					IdPProtocolHandler handler = ProtocolHandlerFactory.getInstance((Element) itemElements.item(i));
-					URI[] locations = handler.getLocations();
-					EACHLOCATION : for (int j = 0; j < locations.length; j++) {
-						if (protocolHandlers.containsKey(locations[j].toString())) {
-							log.error("Multiple protocol handlers are registered to listen at ("
-									+ locations[j]
-									+ ").  Ignoring all except ("
-									+ ((IdPProtocolHandler) protocolHandlers.get(locations[j].toString()))
-											.getHandlerName() + ").");
-							continue EACHLOCATION;
-						}
-						log.info("Registering handler (" + handler.getHandlerName() + ") to listen at (" + locations[j]
-								+ ").");
-						protocolHandlers.put(locations[j].toString(), handler);
+			}
+			EACHHANDLER : for (int i = 0; i < itemElements.getLength(); i++) {
+				IdPProtocolHandler handler = ProtocolHandlerFactory.getInstance((Element) itemElements.item(i));
+				String[] locations = handler.getLocations();
+				EACHLOCATION : for (int j = 0; j < locations.length; j++) {
+					if (protocolHandlers.containsKey(locations[j])) {
+						log.error("Multiple protocol handlers are registered to listen at (" + locations[j]
+								+ ").  Ignoring all except ("
+								+ ((IdPProtocolHandler) protocolHandlers.get(locations[j])).getHandlerName() + ").");
+						continue EACHLOCATION;
 					}
+					log.info("Registering handler (" + handler.getHandlerName() + ") to listen at (" + locations[j]
+							+ ").");
+					protocolHandlers.put(locations[j].toString(), handler);
 				}
 			}
 
@@ -318,6 +316,47 @@ public class IdPResponder extends HttpServlet {
 			throw new SAMLException("Request submitted to an invalid location.");
 		}
 		return activeHandler;
+	}
+
+	private NodeList getDefaultHandlers() throws ShibbolethConfigurationException {
+
+		log.debug("Loading default protocol handler configuration.");
+		try {
+			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+			docFactory.setNamespaceAware(true);
+			Document placeHolder = docFactory.newDocumentBuilder().newDocument();
+			Element baseNode = placeHolder.createElementNS(IdPConfig.configNameSpace, "IdPConfig");
+
+			Element ssoHandler = placeHolder.createElementNS(IdPConfig.configNameSpace, "ProtocolHandler");
+			ssoHandler.setAttribute("implementation",
+					"edu.internet2.middleware.shibboleth.idp.provider.ShibbolethV1SSOHandler");
+			Element ssoLocation = placeHolder.createElementNS(IdPConfig.configNameSpace, "Location");
+			ssoLocation.appendChild(placeHolder.createTextNode("https?://[^/]+(:443)?/shibboleth/SSO"));
+			ssoHandler.appendChild(ssoLocation);
+			baseNode.appendChild(ssoHandler);
+
+			Element attributeHandler = placeHolder.createElementNS(IdPConfig.configNameSpace, "ProtocolHandler");
+			attributeHandler.setAttribute("implementation",
+					"edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_AttributeQueryHandler");
+			Element attributeLocation = placeHolder.createElementNS(IdPConfig.configNameSpace, "Location");
+			attributeLocation.appendChild(placeHolder.createTextNode("https?://[^/]+:8443/shibboleth/AA"));
+			attributeHandler.appendChild(attributeLocation);
+			baseNode.appendChild(attributeHandler);
+
+			Element artifactHandler = placeHolder.createElementNS(IdPConfig.configNameSpace, "ProtocolHandler");
+			artifactHandler.setAttribute("implementation",
+					"edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_1ArtifactQueryHandler");
+			Element artifactLocation = placeHolder.createElementNS(IdPConfig.configNameSpace, "Location");
+			artifactLocation.appendChild(placeHolder.createTextNode("https?://[^/]+:8443/shibboleth/Artifact"));
+			artifactHandler.appendChild(artifactLocation);
+			baseNode.appendChild(artifactHandler);
+
+			return baseNode.getElementsByTagNameNS(IdPConfig.configNameSpace, "ProtocolHandler");
+
+		} catch (ParserConfigurationException e) {
+			log.fatal("Encoutered an error while loading default protocol handlers: " + e);
+			throw new ShibbolethConfigurationException("Could not load protocol handlers.");
+		}
 	}
 
 	private void sendFailureToSAMLBinding(HttpServletResponse httpResponse, SAMLRequest samlRequest,

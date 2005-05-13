@@ -25,8 +25,6 @@
 
 package edu.internet2.middleware.shibboleth.idp.provider;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashSet;
 
 import javax.security.auth.x500.X500Principal;
@@ -70,21 +68,15 @@ public abstract class BaseHandler implements IdPProtocolHandler {
 				String rawURI = tnode.getNodeValue();
 
 				if (rawURI == null || rawURI.equals("")) {
-					log.error("The <Location/> element inside the <ProtocolHandler/> element must contain a URI.");
+					log.error("The <Location/> element inside the <ProtocolHandler/> element must "
+							+ "contain a URI or regular expressions.");
 					throw new ShibbolethConfigurationException("Unable to load ProtocolHandler.");
 				}
-
-				try {
-					URI location = new URI(rawURI);
-					this.locations.add(location);
-				} catch (URISyntaxException e) {
-					log.error("The <Location/> element inside the <ProtocolHandler/> element contains "
-							+ "an improperly formatted URI: " + e);
-					throw new ShibbolethConfigurationException("Unable to load ProtocolHandler.");
-				}
+				this.locations.add(rawURI);
 
 			} else {
-				log.error("The <Location/> element inside the <ProtocolHandler/> element must contain a URI.");
+				log.error("The <Location/> element inside the <ProtocolHandler/> element must contain a "
+						+ "URI or regular expression.");
 				throw new ShibbolethConfigurationException("Unable to load ProtocolHandler.");
 			}
 		}
@@ -93,9 +85,9 @@ public abstract class BaseHandler implements IdPProtocolHandler {
 	/*
 	 * @see edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler#getLocations()
 	 */
-	public URI[] getLocations() {
+	public String[] getLocations() {
 
-		return (URI[]) locations.toArray(new URI[0]);
+		return (String[]) locations.toArray(new String[0]);
 	}
 
 	protected static String getHostNameFromDN(X500Principal dn) {
