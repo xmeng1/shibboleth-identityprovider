@@ -10,7 +10,6 @@
 	<classpathentry kind="lib" path="lib/ant-optional-1.5.1.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
@@ -20,6 +19,7 @@
 	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
 	<classpathentry sourcepath="lib/commons-pool-1.2-src.jar" kind="lib" path="lib/commons-pool-1.2.jar"/>
 	<classpathentry sourcepath="lib/commons-dbcp-1.2.1-src.jar" kind="lib" path="lib/commons-dbcp-1.2.1.jar"/>
+	<classpathentry sourcepath="C:/cvs/xml-security/src" kind="lib" path="webApplication/WEB-INF/lib/xmlsec-20050514.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmltypes.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean_xpath.jar"/>
@@ -27,7 +27,7 @@
 	<classpathentry kind="lib" path="endorsed/jaxp-api.jar"/>
 	<classpathentry kind="lib" path="endorsed/dom.jar"/>
 	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmlsec-20050423.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bc-asn1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
