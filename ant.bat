@@ -15,7 +15,7 @@ if not defined JAVA_HOME  (
 )
 
 if not defined JAVACMD (
-  set JAVACMD=%JAVA_HOME%\bin\java.exe
+  set JAVACMD="%JAVA_HOME%\bin\java.exe"
 )
 
 if not exist %JAVACMD% (
