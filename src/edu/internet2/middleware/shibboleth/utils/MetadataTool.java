@@ -55,7 +55,6 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.*;
-import java.util.Iterator;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -98,6 +97,7 @@ public class MetadataTool
         CmdLineParser.Option pwOption = parser.addStringOption('p', "password");
         CmdLineParser.Option nsOption = parser.addStringOption('x', "ns");
         CmdLineParser.Option nameOption = parser.addStringOption('n', "name");
+        CmdLineParser.Option idOption = parser.addStringOption('I', "id");
         CmdLineParser.Option debugOption = parser.addBooleanOption('d', "debug");
 		
 		Boolean debugEnabled = ((Boolean) parser.getOptionValue(debugOption));
@@ -137,16 +137,17 @@ public class MetadataTool
         String outfile = (String)parser.getOptionValue(outOption);
         String ns = (String)parser.getOptionValue(nsOption);
         String name = (String)parser.getOptionValue(nameOption);
+        String id = (String)parser.getOptionValue(idOption);
 
         if (infile == null || infile.length() == 0) {
             printUsage(System.out);
-            System.exit(1);
+            System.exit(-1);
         }
         
         if (keystore != null && keystore.length() > 0) {
             if (alias == null || alias.length() == 0) {
                 printUsage(System.out);
-                System.exit(1);
+                System.exit(-1);
             }
         }
 
@@ -157,7 +158,7 @@ public class MetadataTool
         if (sign != null && sign.booleanValue()) {
             if (keystore == null || keystore.length() == 0 || pw == null || pw.length() == 0) {
                 printUsage(System.out);
-                System.exit(1);
+                System.exit(-1);
             }
             KeyStore ks = KeyStore.getInstance("JKS");
             FileInputStream fis = new FileInputStream(keystore);
@@ -181,7 +182,7 @@ public class MetadataTool
         }
         else if (noverify == null || !noverify.booleanValue()) {
             printUsage(System.out);
-            System.exit(1);
+            System.exit(-1);
         }
         
         
@@ -200,6 +201,14 @@ public class MetadataTool
             System.err.println("error: root element must be SiteGroup, Trust, EntitiesDescriptor, or EntityDescriptor");
             System.exit(1);
         }
+        
+        if (id != null) {
+            e = doc.getElementById(id);
+            if (e == null) {
+                System.err.println("error: no element with ID (" + id + ") found in document");
+                System.exit(1);
+            }
+        }
 
         if (sign != null && sign.booleanValue()) {
             // Remove any existing signature.
@@ -212,16 +221,20 @@ public class MetadataTool
             Transforms transforms = new Transforms(doc);
             transforms.addTransform(Transforms.TRANSFORM_ENVELOPED_SIGNATURE);
             transforms.addTransform(Transforms.TRANSFORM_C14N_EXCL_WITH_COMMENTS);
-            sig.addDocument("", transforms, org.apache.xml.security.utils.Constants.ALGO_ID_DIGEST_SHA1);
+            sig.addDocument(
+                (id == null) ? ("") : ("#" + id),
+                transforms,
+                org.apache.xml.security.utils.Constants.ALGO_ID_DIGEST_SHA1
+                );
 
             // Add any X.509 certificates provided.
             if (chain!=null && chain.length > 0) {
-                X509Data x509 = new X509Data(e.getOwnerDocument());
+                X509Data x509 = new X509Data(doc);
                 for (int i=0; i < chain.length; i++) {
                     if (chain[i] instanceof X509Certificate)
                         x509.addCertificate((X509Certificate)chain[i]);
                 }
-                KeyInfo keyinfo = new KeyInfo(e.getOwnerDocument());
+                KeyInfo keyinfo = new KeyInfo(doc);
                 keyinfo.add(x509);
                 sig.getElement().appendChild(keyinfo.getElement());
             }
@@ -233,6 +246,7 @@ public class MetadataTool
             sig.sign(privateKey);
         }
         else {
+            // Check the root element's signature or the particular one specified.
             Element sigElement = org.opensaml.XML.getLastChildElement(e, org.opensaml.XML.XMLSIG_NS, "Signature");
             boolean v = (noverify == null || !noverify.booleanValue());
             if (v) {
@@ -240,22 +254,29 @@ public class MetadataTool
                     System.err.println("error: file is not signed");
                     System.exit(1);
                 }
-                XMLSignature sig = new XMLSignature(sigElement, "");
-                if (!sig.checkSignatureValue(cert)) {
-                    System.err.println("error: signature on file did not verify");
+                if (!verifySignature(doc, sigElement, cert)) {
+                    System.err.println("error: signature did not verify");
                     System.exit(1);
                 }
             }
             else if (sigElement != null) {
-                XMLSignature sig = new XMLSignature(sigElement, "");
                 System.err.println("verification of signer disabled, make sure you trust the source of this file!");
-                if (!sig.checkSignatureValue(sig.getKeyInfo().getPublicKey())) {
-                    System.err.println("error: signature on file did not verify");
+                if (!verifySignature(doc, sigElement, cert)) {
+                    System.err.println("error: signature did not verify");
                     System.exit(1);
                 }
             }
             else {
                 System.err.println("verification disabled, and file is unsigned!");
+            }
+            
+            // Check all the signatures.
+            NodeList nlist = e.getElementsByTagNameNS(org.opensaml.XML.XMLSIG_NS, "Signature");
+            for (int i=0; i < nlist.getLength(); i++) {
+                if (!verifySignature(doc, (Element)nlist.item(i), cert)) {
+                    System.err.println("error: signature did not verify");
+                    System.exit(1);
+                }
             }
         }
         
@@ -266,13 +287,48 @@ public class MetadataTool
             out.close();
         }
         else {
-        	System.out.write(c.canonicalizeSubtree(doc));
+            // For some reason, using write(byte[]) doesn't work.
+        	System.out.print(new String(c.canonicalizeSubtree(doc)));
         }
+    }
+    
+    private static boolean verifySignature(Document doc, Element sigNode, X509Certificate cert) throws Exception
+    {
+        XMLSignature sig = new XMLSignature(sigNode, "");
+
+        // Validate the signature content by checking for specific Transforms.
+        boolean valid=false;
+        SignedInfo si=sig.getSignedInfo();
+        if (si.getLength()==1) {
+            Reference ref = si.item(0);
+            if (ref.getURI() == null || ref.getURI().equals("") ||
+                    ref.getURI().equals("#" + ((Element)sigNode.getParentNode()).getAttributeNS(null,"ID"))) {
+                Transforms trans = ref.getTransforms();
+                for (int i=0; i < trans.getLength(); i++) {
+                    if (trans.item(i).getURI().equals(Transforms.TRANSFORM_ENVELOPED_SIGNATURE))
+                        valid = true;
+                    else if (!trans.item(i).getURI().equals(Transforms.TRANSFORM_C14N_EXCL_OMIT_COMMENTS) &&
+                             !trans.item(i).getURI().equals(Transforms.TRANSFORM_C14N_EXCL_WITH_COMMENTS)) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!valid) {
+            System.err.println("error: signature profile was invalid");
+            return false;
+        }
+        
+        if (cert != null)
+            return sig.checkSignatureValue(cert);
+        else
+            return sig.checkSignatureValue(sig.getKeyInfo().getPublicKey());
     }
 
     private static void printUsage(PrintStream out)
     {
-
         out.println("usage: java edu.internet2.middleware.shibboleth.utils.MetadataTool");
         out.println();
         out.println("when signing:   -i <uri> -s -k <keystore> -a <alias> -p <pass> [-o <outfile>]");
@@ -287,6 +343,7 @@ public class MetadataTool
         out.println("  -h,--help            print this message");
         out.println("  -x,--ns              XML namespace of root element");
         out.println("  -n,--name            name of root element");
+        out.println("  -I,--id              ID attribute value of element to sign");
         out.println("  -d, --debug          run in debug mode");
         out.println();
         System.exit(1);
@@ -295,7 +352,7 @@ public class MetadataTool
 	private static void configureLogging(boolean debugEnabled) 
 	{
 		ConsoleAppender rootAppender = new ConsoleAppender();
-		rootAppender.setWriter(new PrintWriter(System.out));
+		rootAppender.setWriter(new PrintWriter(System.err));
 		rootAppender.setName("stdout");
 		Logger.getRootLogger().addAppender(rootAppender);
 
