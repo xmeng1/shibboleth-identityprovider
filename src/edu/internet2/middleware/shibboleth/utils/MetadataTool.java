@@ -55,12 +55,15 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.*;
+import java.util.Iterator;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.xml.security.c14n.*;
+import org.apache.xml.security.keys.KeyInfo;
+import org.apache.xml.security.keys.content.X509Data;
 import org.apache.xml.security.signature.*;
 import org.apache.xml.security.transforms.*;
 import org.w3c.dom.*;
@@ -200,19 +203,33 @@ public class MetadataTool
 
         if (sign != null && sign.booleanValue()) {
             // Remove any existing signature.
-            Element old = org.opensaml.XML.getLastChildElement(e, org.opensaml.XML.XMLSIG_NS, "Signature");
+            Element old = org.opensaml.XML.getFirstChildElement(e, org.opensaml.XML.XMLSIG_NS, "Signature");
             if (old != null)
                 e.removeChild(old);
 
             // Create new signature.
-            XMLSignature sig = new XMLSignature(doc, "", XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1, Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+            XMLSignature sig = new XMLSignature(doc, "", XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1, Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS);
             Transforms transforms = new Transforms(doc);
             transforms.addTransform(Transforms.TRANSFORM_ENVELOPED_SIGNATURE);
-            transforms.addTransform(Transforms.TRANSFORM_C14N_EXCL_OMIT_COMMENTS);
+            transforms.addTransform(Transforms.TRANSFORM_C14N_EXCL_WITH_COMMENTS);
             sig.addDocument("", transforms, org.apache.xml.security.utils.Constants.ALGO_ID_DIGEST_SHA1);
-            for (int i=0; i < chain.length; i++)
-            	sig.addKeyInfo((X509Certificate)chain[i]);
-            e.appendChild(sig.getElement());
+
+            // Add any X.509 certificates provided.
+            if (chain!=null && chain.length > 0) {
+                X509Data x509 = new X509Data(e.getOwnerDocument());
+                for (int i=0; i < chain.length; i++) {
+                    if (chain[i] instanceof X509Certificate)
+                        x509.addCertificate((X509Certificate)chain[i]);
+                }
+                KeyInfo keyinfo = new KeyInfo(e.getOwnerDocument());
+                keyinfo.add(x509);
+                sig.getElement().appendChild(keyinfo.getElement());
+            }
+
+            if (XML.SAML2META_NS.equals(e.getNamespaceURI()))
+                e.insertBefore(sig.getElement(),e.getFirstChild());
+            else
+                e.appendChild(sig.getElement());
             sig.sign(privateKey);
         }
         else {
@@ -242,10 +259,9 @@ public class MetadataTool
             }
         }
         
-        OutputStream out = null;
         Canonicalizer c = Canonicalizer.getInstance(Canonicalizer.ALGO_ID_C14N_EXCL_WITH_COMMENTS);
         if (outfile != null && outfile.length() > 0) {
-            out = new FileOutputStream(outfile);
+            OutputStream out = new FileOutputStream(outfile);
             out.write(c.canonicalizeSubtree(doc));
             out.close();
         }
