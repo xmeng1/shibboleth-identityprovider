@@ -23,13 +23,23 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Contributed by SungGard SCT.
+ */
+
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -40,29 +50,22 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 
 /**
- * Basic <code>AttributeDefinitionPlugIn</code> implementation. Operates as a proxy for attributes gathered by
- * Connectors.
+ * This is an abstract class that all other attribute definitions in this package extend. It provides processing of
+ * common attributes as well as dependency resolutions.
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author <a href="mailto:vgoenka@sungardsct.com">Vishal Goenka </a>
  */
-public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition implements AttributeDefinitionPlugIn {
+abstract class SimpleBaseAttributeDefinition extends BaseAttributeDefinition implements AttributeDefinitionPlugIn {
 
-	private static Logger log = Logger.getLogger(SimpleAttributeDefinition.class.getName());
-	private String connectorMapping;
-	private String smartScope;
-	private ValueHandler valueHandler;
-	private boolean allowEmpty = false;
-	private boolean downCase = false;
+	private static Logger log = Logger.getLogger(SimpleBaseAttributeDefinition.class.getName());
 
-	/**
-	 * Constructor for SimpleAttributeDefinition. Creates a PlugIn based on configuration information presented in a DOM
-	 * Element.
-	 */
-	public SimpleAttributeDefinition(Element e) throws ResolutionPlugInException {
+	protected ValueHandler valueHandler;
+	protected String connectorMapping;
+
+	protected SimpleBaseAttributeDefinition(Element e) throws ResolutionPlugInException {
 
 		super(e);
 
-		// Parse source name
 		String sourceName = e.getAttribute("sourceName");
 		if (sourceName == null || sourceName.equals("")) {
 			int index = getId().lastIndexOf("#");
@@ -78,41 +81,22 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 			connectorMapping = sourceName;
 		}
 
-		log.debug("Mapping attribute to name (" + connectorMapping + ") in connector.");
-
-		// Configure smart scoping
-		String smartScopingSpec = e.getAttribute("smartScope");
-		if (smartScopingSpec != null && !smartScopingSpec.equals("")) {
-			smartScope = smartScopingSpec;
-		}
-		if (smartScope != null) {
-			log.debug("Smart Scope (" + smartScope + ") enabled for attribute (" + getId() + ").");
-		} else {
-			log.debug("Smart Scoping disabled for attribute (" + getId() + ").");
-		}
-
-		// Load a value handler
 		String valueHandlerSpec = e.getAttribute("valueHandler");
 
 		if (valueHandlerSpec != null && !valueHandlerSpec.equals("")) {
-			if (smartScope == null) {
-				try {
-					Class handlerClass = Class.forName(valueHandlerSpec);
-					valueHandler = (ValueHandler) handlerClass.newInstance();
-				} catch (ClassNotFoundException cnfe) {
-					log.error("Value Handler implementation specified for attribute (" + getId()
-							+ ") cannot be found: " + cnfe);
-					throw new ResolutionPlugInException("Value Handler implementation specified for attribute ("
-							+ getId() + ") cannot be found.");
-				} catch (Exception oe) {
-					log.error("Value Handler implementation specified for attribute (" + getId()
-							+ ") coudl not be loaded: " + oe);
-					throw new ResolutionPlugInException("Value Handler implementation specified for attribute ("
-							+ getId() + ") could not be loaded.");
-				}
-			} else {
-				log.error("Specification of \"valueHandler\' cannot be used in combination with \"smartScope\". "
-						+ " Ignoring Value Handler for attribute (" + getId() + ").");
+			try {
+				Class handlerClass = Class.forName(valueHandlerSpec);
+				valueHandler = (ValueHandler) handlerClass.newInstance();
+			} catch (ClassNotFoundException cnfe) {
+				log.error("Value Handler implementation specified for attribute (" + getId() + ") cannot be found: "
+						+ cnfe);
+				throw new ResolutionPlugInException("Value Handler implementation specified for attribute (" + getId()
+						+ ") cannot be found.");
+			} catch (Exception oe) {
+				log.error("Value Handler implementation specified for attribute (" + getId()
+						+ ") coudl not be loaded: " + oe);
+				throw new ResolutionPlugInException("Value Handler implementation specified for attribute (" + getId()
+						+ ") could not be loaded.");
 			}
 		}
 
@@ -120,33 +104,10 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 			log.debug("Custom Value Handler enabled for attribute (" + getId() + ").");
 		}
 
-		// Decide whether or not to allow empty string values
-		String rawAllowEmpty = e.getAttribute("allowEmpty");
-		if (rawAllowEmpty != null) {
-			if (rawAllowEmpty.equalsIgnoreCase("TRUE")) {
-				allowEmpty = true;
-			}
-		}
-
-		log.debug("Allowal of empty string values is set to (" + allowEmpty + ") for attribute (" + getId() + ").");
-
-		// Decide whether or not to force values to lower case
-		String rawDownCase = e.getAttribute("downCase");
-		if (rawDownCase != null) {
-			if (rawDownCase.equalsIgnoreCase("TRUE")) {
-				downCase = true;
-				log.debug("Forcing values to lower case for attribute (" + getId() + ").");
-			}
-		}
-
 	}
 
-	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute,
-	 *      java.security.Principal, java.lang.String, edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
-	 */
-	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
-			throws ResolutionPlugInException {
+	protected Collection resolveDependencies(ResolverAttribute attribute, Principal principal, String requester,
+			Dependencies depends) throws ResolutionPlugInException {
 
 		log.debug("Resolving attribute: (" + getId() + ")");
 		Set results = new LinkedHashSet();
@@ -162,27 +123,77 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 			attribute.setLifetime(lifeTime);
 		}
 
-		if (smartScope != null) {
-			attribute.registerValueHandler(new ScopedStringValueHandler(smartScope));
-		}
-		if (smartScope == null && valueHandler != null) {
+		if (valueHandler != null) {
 			attribute.registerValueHandler(valueHandler);
 		}
 
-		Iterator resultsIt = results.iterator();
-		while (resultsIt.hasNext()) {
-			Object value = resultsIt.next();
-			if (!allowEmpty && value.equals("")) {
-				log.debug("Skipping empty string value.");
-				continue;
-			}
-
-			if (downCase && value instanceof String) {
-				value = ((String) value).toLowerCase();
-			}
-
-			attribute.addValue(value);
-		}
-		attribute.setResolved();
+		return results;
 	}
+
+	protected Object[] getValuesFromAttributes(Dependencies depends) {
+
+		Set results = new LinkedHashSet();
+
+		Iterator attrDependIt = attributeDependencyIds.iterator();
+		while (attrDependIt.hasNext()) {
+			ResolverAttribute attribute = depends.getAttributeResolution((String) attrDependIt.next());
+			if (attribute != null) {
+				log.debug("Found value(s) for attribute (" + getId() + ").");
+				for (Iterator iterator = attribute.getValues(); iterator.hasNext();) {
+					results.add(iterator.next());
+				}
+			} else {
+				log.error("An attribute dependency of attribute (" + getId()
+						+ ") was not included in the dependency chain.");
+			}
+		}
+
+		if (results.isEmpty()) {
+			log.debug("An attribute dependency of attribute (" + getId() + ") supplied no values.");
+		}
+		return results.toArray();
+	}
+
+	protected Object[] getValuesFromConnectors(Dependencies depends) {
+
+		Set results = new LinkedHashSet();
+
+		Iterator connectorDependIt = connectorDependencyIds.iterator();
+		while (connectorDependIt.hasNext()) {
+			Attributes attrs = depends.getConnectorResolution((String) connectorDependIt.next());
+			if (attrs != null) {
+				Attribute attr = attrs.get(connectorMapping);
+				if (attr != null) {
+					log.debug("Found value(s) for attribute (" + getId() + ").");
+					try {
+						NamingEnumeration valuesEnum = attr.getAll();
+						while (valuesEnum.hasMore()) {
+							results.add(valuesEnum.next());
+						}
+					} catch (NamingException e) {
+						log.error("An problem was encountered resolving the dependencies of attribute (" + getId()
+								+ "): " + e);
+					}
+				}
+			}
+		}
+
+		if (results.isEmpty()) {
+			log.debug("A connector dependency of attribute (" + getId() + ") supplied no values.");
+		}
+		return results.toArray();
+	}
+
+	protected String getString(Object value) {
+
+		// if (value instanceof String) return (String)value;
+		// This was inspired by the fact that certain attributes (such as userPassword, when read using JNDI) are
+		// returned
+		// from data connectors as byte [] rather than String, and doing a .toString() returns something like
+		// B[@aabljadj,
+		// which is a reference to the array, rather than the string value.
+		if (value instanceof byte[]) return new String((byte[]) value);
+		return value.toString();
+	}
+
 }

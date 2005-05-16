@@ -1,0 +1,35 @@
+<AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
+
+	<RegExAttributeDefinition id="cn" regex="[\\](.)" replacement="$1" partialMatch="true">
+		<AttributeDependency requires="_cn_"/>
+	</RegExAttributeDefinition>
+
+    <!-- Extract cn, but only if CN is the RDN. Ignore Case -->
+    <RegExAttributeDefinition id="_cn_" sourceName="dn"
+      regex='(^cn|[^\w]*cn) *= *(( ?([^, &lt;&gt;+=;#"\\]|[\\][, &lt;&gt;+=;#"\\]))+).*'
+      replacement="$2"
+      ignoreCase="true">
+      <DataConnectorDependency requires="file"/>
+    </RegExAttributeDefinition>
+
+    <!-- Extract uid, even if it is embedded inside the dn. Retrieve the first value of uid from the DN. Case sensitive,
+    since ignoreCase defaults to false -->
+    <RegExAttributeDefinition id="uid" 
+      regex="[\\](.)"
+      replacement="$1"
+      partialMatch="true">
+      <AttributeDependency requires="_uid_"/>
+    </RegExAttributeDefinition>
+
+    <RegExAttributeDefinition id="_uid_" sourceName="dn"
+      regex='(^uid|.*[^\w]uid) *= *(( ?([^, &lt;&gt;+=;#"\\]|[\\][, &lt;&gt;+=;#"\\]))+).*'
+      replacement="$2">
+      <DataConnectorDependency requires="file"/>
+    </RegExAttributeDefinition>
+
+    <CustomDataConnector id="file"
+      class="edu.internet2.middleware.shibboleth.aa.attrresolv.FileConnector"
+      datafile="data/attr-regex.datafile.1"
+      ordered="true"/>
+
+</AttributeResolver>

@@ -1,0 +1,13 @@
+<AttributeResolver xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:resolver:1.0" xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 shibboleth-resolver-1.0.xsd">
+
+  <CompositeAttributeDefinition id="labeledURI"
+    orderedSourceNames="url, title">
+    <DataConnectorDependency requires="file"/>
+  </CompositeAttributeDefinition>
+  
+  <CustomDataConnector id="file"
+    class="edu.internet2.middleware.shibboleth.aa.attrresolv.FileConnector"
+    datafile="data/attr-composite.datafile.1"
+    ordered="true"/>
+
+</AttributeResolver>
