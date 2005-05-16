@@ -61,6 +61,9 @@ public class XML
     /**  SAMLv2 Metadata XML namespace */
     public final static String SAML2META_NS = "urn:oasis:names:tc:SAML:2.0:metadata";
 
+    /**  SAMLv2 Metadata Extension XML namespace */
+    public final static String SAML2METAEXT_NS = "urn:oasis:names:tc:SAML:metadata:extension";
+    
     /**  SAMLv2 Assertion XML namespace */
     public final static String SAML2ASSERT_NS = "urn:oasis:names:tc:SAML:2.0:assertion";
     
@@ -78,10 +81,4 @@ public class XML
     
     public final static String MAIN_SHEMA_ID = "shibboleth-targetconfig-1.0.xsd";
     public final static String IDP_SHEMA_ID = "shibboleth-idpconfig-1.0.xsd";
-    
-    public final static String XMLSIG_RETMETHOD_RAWX509    = "http://www.w3.org/2000/09/xmldsig#rawX509Certificate";
-    public final static String XMLSIG_RETMETHOD_RAWX509CRL = "http://www.w3.org/2000/09/xmldsig-more#rawX509CRL";
-    public final static String SHIB_RETMETHOD_PEMX509      = "urn:mace:shibboleth:RetrievalMethod:pemX509Certificate";
-    public final static String SHIB_RETMETHOD_PEMX509CRL   = "urn:mace:shibboleth:RetrievalMethod:pemX509CRL";
-    
 }

@@ -39,6 +39,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TimeZone;
 
+import javax.xml.namespace.QName;
+
 import org.apache.log4j.Logger;
 import org.apache.xml.security.encryption.EncryptionMethod;
 import org.apache.xml.security.exceptions.XMLSecurityException;
@@ -1022,6 +1024,51 @@ public class XMLMetadataProvider implements Metadata {
             return null;
         }
     }
+
+    class AttributeRequesterRole extends Role implements AttributeRequesterDescriptor {
+        private boolean wantAssertionsSigned = false;
+        private ArrayList /* <String> */ formats = new ArrayList();
+        
+        public AttributeRequesterRole(XMLEntityDescriptor provider, long validUntil, Element e) throws MetadataException {
+            super(provider, validUntil, e);
+
+            String flag=XML.assign(e.getAttributeNS(null,"WantAssertionsSigned"));
+            wantAssertionsSigned=(XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"));
+
+            NodeList nlist=e.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"NameIDFormat");
+            for (int i = 0; i < nlist.getLength(); i++) {
+                if (nlist.item(i).hasChildNodes()) {
+                    Node tnode = nlist.item(i).getFirstChild();
+                    if (tnode != null && tnode.getNodeType() == Node.TEXT_NODE) {
+                        formats.add(tnode.getNodeValue());
+                    }
+                }
+            }
+        }
+
+        public boolean getWantAssertionsSigned() {
+            return wantAssertionsSigned;
+        }
+
+        public Iterator getNameIDFormats() {
+            return formats.iterator();
+        }
+
+        public Iterator getAttributeConsumingServices() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        public AttributeConsumingService getDefaultAttributeConsumingService() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        public AttributeConsumingService getAttributeConsumingServiceByID(String id) {
+            // TODO Auto-generated method stub
+            return null;
+        }
+    }
     
     class XMLEntityDescriptor implements ExtendedEntityDescriptor {
         private Element root = null;
@@ -1091,6 +1138,12 @@ public class XMLMetadataProvider implements Metadata {
                     }
                     else if (XML.isElementNamed(child,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"SPSSODescriptor")) {
                         roles.add(new SPRole(this,validUntil,child));
+                    }
+                    else if (XML.isElementNamed(child,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"RoleDescriptor")) {
+                        QName xsitype = XML.getQNameAttribute(child,XML.XSI_NS,"type");
+                        if (edu.internet2.middleware.shibboleth.common.XML.SAML2METAEXT_NS.equals(xsitype.getNamespaceURI()) &&
+                                "AttributeRequesterDescriptorType".equals(xsitype.getLocalPart()))
+                            roles.add(new AttributeRequesterRole(this,validUntil,child));
                     }
                     child = XML.getNextSiblingElement(child);
                 }
@@ -1234,6 +1287,10 @@ public class XMLMetadataProvider implements Metadata {
             return (AttributeAuthorityDescriptor)getRoleByType(AttributeAuthorityDescriptor.class, protocol);
         }
 
+        public AttributeRequesterDescriptor getAttributeRequesterDescriptor(String protocol) {
+            return (AttributeRequesterDescriptor)getRoleByType(AttributeRequesterDescriptor.class, protocol);
+        }
+        
         public PDPDescriptor getPDPDescriptor(String protocol) {
             return (PDPDescriptor)getRoleByType(PDPDescriptor.class, protocol);
         }

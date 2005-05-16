@@ -43,6 +43,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
+import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata;
 import edu.internet2.middleware.shibboleth.xml.Parser;
@@ -195,4 +196,22 @@ public class MetadataTests extends TestCase {
 			fail("Failed to correctly load metadata: " + e);
 		}
 	}
+
+    public void testExtensionSAMLXML() {
+
+        try {
+            Metadata metadata = new XMLMetadata(new File("data/metadata10.xml").toURL().toString());
+
+            EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
+            assertNotNull("Unable to find test provider", entity);
+
+            AttributeRequesterDescriptor ar = entity.getAttributeRequesterDescriptor(XML.SAML11_PROTOCOL_ENUM);
+            assertNotNull("Missing AR provider role.", ar);
+            
+            Iterator formats = ar.getNameIDFormats();
+            assertTrue("Encountered unexpected NameIDFormat", formats.hasNext() && Constants.SHIB_NAMEID_FORMAT_URI.equals(formats.next()));
+        } catch (Exception e) {
+            fail("Failed to correctly load metadata: " + e);
+        }
+    }
 }

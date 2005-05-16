@@ -27,55 +27,21 @@
 package edu.internet2.middleware.shibboleth.metadata;
 
 import java.util.Iterator;
-import java.util.Map;
-
-import org.w3c.dom.Element;
 
 /**
- * <p>Corresponds to SAML Metadata Schema "EntityDescriptorType".
- * </p><p>
- * Entities are campuses or departments with either an origin or target
- * infrastructure (or both). Each implemented component (HS, AA, SHAR) 
- * has a Role definition with URLs and PKI to locate and authenticate
- * the provider of that role. Although the Metadata may define all 
- * roles, target code tends to build objects describing origins, and 
- * origins are only interested in targets.
+ * Corresponds to SAML Metadata Extension Schema "AttributeRequesterDescriptorType".
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Scott Cantor
  */
-public interface EntityDescriptor {
+public interface AttributeRequesterDescriptor extends RoleDescriptor {
 
-	public String getId();  // Unique ID used as global key of Provider
-    
-    public boolean isValid();   // Is this entity descriptor "active"?
+    public boolean getWantAssertionsSigned();
 
-    public Iterator /* <RoleDescriptor> */ getRoleDescriptors(); // Role definitions
+    public Iterator /* <String> */ getNameIDFormats();
+    
+    public Iterator /* <AttributeConsumingService> */ getAttributeConsumingServices();
 
-    /**
-     *  Finds a role descriptor of a particular type that supports the
-     *  specified protocol.
-     * 
-     * @param type  The type of role to locate
-     * @param protocol  The protocol constant that must be supported
-     * @return  The matching role decsriptor, if any
-     */
-    public RoleDescriptor getRoleByType(Class type, String protocol);
+    public AttributeConsumingService getDefaultAttributeConsumingService();
     
-    public IDPSSODescriptor getIDPSSODescriptor(String protocol);
-    public SPSSODescriptor getSPSSODescriptor(String protocol);
-    public AuthnAuthorityDescriptor getAuthnAuthorityDescriptor(String protocol);
-    public AttributeAuthorityDescriptor getAttributeAuthorityDescriptor(String protocol);
-    public AttributeRequesterDescriptor getAttributeRequesterDescriptor(String protocol);
-    public PDPDescriptor getPDPDescriptor(String protocol);
-    public AffiliationDescriptor getAffiliationDescriptor();
-    
-    public Organization getOrganization();  // associated organization
-    
-    public Iterator /* <ContactPerson> */ getContactPersons();    // support contacts
-    
-    public Map /* <String,String> */ getAdditionalMetadataLocations(); // XML Namespace - location pairs
-    
-    public EntitiesDescriptor getEntitiesDescriptor(); // parent group, if any
-    
-    public Element getElement();    // punch through to raw XML, if enabled
+    public AttributeConsumingService getAttributeConsumingServiceByID(String id);
 }
