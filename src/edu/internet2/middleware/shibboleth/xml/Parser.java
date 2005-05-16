@@ -46,6 +46,9 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.validation.Schema;
 
 import org.apache.log4j.Logger;
+import org.apache.xml.security.c14n.CanonicalizationException;
+import org.apache.xml.security.c14n.Canonicalizer;
+import org.apache.xml.security.c14n.InvalidCanonicalizerException;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -218,6 +221,32 @@ public class Parser {
         }
         return stringWriter.toString();
     }
+    
+    /**
+     *  Serializes the XML representation of the SAML object to a stream
+     *
+     * @param  out                      Stream to use for output
+     * @exception  java.io.IOException  Raised if an I/O problem is detected
+     * @exception  SAMLException Raised if the object is incompletely defined 
+     */
+    public static String serializeC14N(Node root){
+    	byte[] bs = null;
+        try
+        {
+            Canonicalizer c = Canonicalizer.getInstance(Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+            bs = c.canonicalizeSubtree(root, "#default saml samlp ds xsd xsi code kind rw typens");
+        }
+        catch (InvalidCanonicalizerException e)
+        {
+            return null;
+        }
+        catch (CanonicalizationException e)
+        {
+            return null;
+        }
+        return new String(bs);
+    }
+
     
     /**
      * Version of loadDom where the file is specified as a resource name
