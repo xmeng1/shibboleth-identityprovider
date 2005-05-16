@@ -67,6 +67,7 @@ import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
+import edu.internet2.middleware.shibboleth.metadata.AttributeRequesterDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
@@ -125,9 +126,10 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					log.info("Treating remote provider as unauthenticated.");
 					return null;
 				}
-				RoleDescriptor role = provider.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
-				if (role == null) {
-					log.info("SPSSO role not found in metadata for provider: (" + relyingParty.getProviderId() + ").");
+                RoleDescriptor ar_role = provider.getAttributeRequesterDescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+				RoleDescriptor sp_role = provider.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+				if (ar_role == null && sp_role == null) {
+					log.info("SPSSO and Stand-Alone Requester roles not found in metadata for provider: (" + relyingParty.getProviderId() + ").");
 					log.info("Treating remote provider as unauthenticated.");
 					return null;
 				}
@@ -135,7 +137,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				// Make sure that the suppplied credential is valid for the
 				// selected relying party
 				X509Certificate[] chain = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
-				if (support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, role)) {
+				if (support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, ar_role) ||
+                    support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, sp_role)) {
 					log.info("Supplied credential validated for this provider.");
 					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
 					return relyingParty.getProviderId();
@@ -315,12 +318,20 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				boolean metaDataIndicatesSignAssertions = false;
 				EntityDescriptor descriptor = support.lookup(relyingParty.getProviderId());
 				if (descriptor != null) {
-					SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
-					if (sp != null) {
-						if (sp.getWantAssertionsSigned()) {
-							metaDataIndicatesSignAssertions = true;
-						}
-					}
+                    AttributeRequesterDescriptor ar = descriptor.getAttributeRequesterDescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+                    if (ar != null) {
+                        if (ar.getWantAssertionsSigned()) {
+                            metaDataIndicatesSignAssertions = true;
+                        }
+                    }
+                    if (!metaDataIndicatesSignAssertions) {
+    					SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
+                        if (sp != null) {
+    						if (sp.getWantAssertionsSigned()) {
+    							metaDataIndicatesSignAssertions = true;
+    						}
+    					}
+                    }
 				}
 				if (relyingParty.wantsAssertionsSigned() || metaDataIndicatesSignAssertions) {
 					support.signAssertions(new SAMLAssertion[]{sAssertion}, relyingParty);
