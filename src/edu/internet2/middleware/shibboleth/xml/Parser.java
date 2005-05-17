@@ -187,7 +187,7 @@ public class Parser {
         }
         
         public Document parse(InputSource ins) throws SAXException, IOException, SAMLException {
-            doc = loadDom(ins,true);
+            doc = loadDom(ins,validate);
             return doc;
         }
         
