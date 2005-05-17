@@ -107,11 +107,11 @@ public abstract class SSOHandler extends BaseHandler implements IdPProtocolHandl
 
 		String[] availableMappings = relyingParty.getNameMapperIds();
 
-		SPSSODescriptor role = descriptor.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
-
 		// If we have preferred Name Identifier formats from the metadata, see if the we can find one that is configured
 		// for this relying party
-		if (role != null) {
+		SPSSODescriptor role;
+		if (descriptor != null
+				&& (role = descriptor.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol")) != null) {
 			Iterator spPreferredFormats = role.getNameIDFormats();
 			while (spPreferredFormats.hasNext()) {
 
