@@ -187,7 +187,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			// it)
 			if (!relyingParty.isLegacyProvider() && pushAttributes(artifactProfile, relyingParty)) {
 				log.info("Resolving attributes for push.");
-				SAMLAssertion attrAssertion = generateAttributeAssertion(support, principal, relyingParty, authNSubject);
+				SAMLAssertion attrAssertion = generateAttributeAssertion(support, principal, relyingParty,
+						authNSubject, request);
 				if (attrAssertion != null) {
 					assertions.add(attrAssertion);
 				} else {
@@ -338,7 +339,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 	}
 
 	private SAMLAssertion generateAttributeAssertion(IdPProtocolSupport support, LocalPrincipal principal,
-			RelyingParty relyingParty, SAMLSubject authNSubject) throws SAMLException {
+			RelyingParty relyingParty, SAMLSubject authNSubject, HttpServletRequest request) throws SAMLException {
 
 		try {
 			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty, relyingParty
@@ -360,6 +361,11 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
 					audiences.add(relyingParty.getName());
 				}
+				String remoteProviderId = request.getParameter("providerId");
+				if (remoteProviderId != null && !remoteProviderId.equals("") && !audiences.contains(remoteProviderId)) {
+					audiences.add(remoteProviderId);
+				}
+
 				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
 
 				// Put all attributes into an assertion
@@ -406,6 +412,10 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 		if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
 			audiences.add(relyingParty.getName());
+		}
+		String remoteProviderId = request.getParameter("providerId");
+		if (remoteProviderId != null && !remoteProviderId.equals("") && !audiences.contains(remoteProviderId)) {
+			audiences.add(remoteProviderId);
 		}
 
 		// Determine the correct issuer
