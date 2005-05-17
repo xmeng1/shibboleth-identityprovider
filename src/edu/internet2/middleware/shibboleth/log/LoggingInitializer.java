@@ -89,7 +89,7 @@ public class LoggingInitializer {
 	 */
 	public static void initializeLogging(Element configuration) throws ShibbolethConfigurationException {
 
-		NodeList txLogElems = configuration.getElementsByTagNameNS(IdPConfig.configNameSpace, "TransactonLog");
+		NodeList txLogElems = configuration.getElementsByTagNameNS(IdPConfig.configNameSpace, "TransactionLog");
 		if (txLogElems.getLength() > 0) {
 			if (txLogElems.getLength() > 1) {
 				System.err.println("WARNING: More than one TransactionLog element detected in IdP logging "
