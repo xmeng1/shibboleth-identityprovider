@@ -149,7 +149,7 @@
     </target>
 
     <!-- Run automated tests on compiled code -->
-    <target name="test-all" depends="test-IdP" />
+    <target name="test-all" depends="test-IdP, test-SP" />
     <target name="test-IdP" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
@@ -157,6 +157,19 @@
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
 			<test name="edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverTests" />
+			<test name="edu.internet2.middleware.shibboleth.common.CredentialsTests" />
+			<test name="edu.internet2.middleware.shibboleth.common.provider.NameMapperTests" />
+			<test name="edu.internet2.middleware.shibboleth.common.TrustTests" />
+			<test name="edu.internet2.middleware.shibboleth.idp.provider.DNHostNameExtractionTests" />
+			<test name="edu.internet2.middleware.shibboleth.metadata.MetadataTests" />
+        </junit>
+    </target>
+    <target name="test-SP" depends="compile-tests">
+        <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
+			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
+            <classpath refid="build.path" />
+            <formatter type="plain" />
+            <test name="edu.internet2.middleware.shibboleth.aap.AAPTests" />
         </junit>
     </target>
     
