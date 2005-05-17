@@ -202,7 +202,7 @@ public class Parser {
      * @param dom The DOM tree to write
      * @return A string containing the XML in character form.
      */
-    public static String serialize(Node dom) {
+    public static String jaxpSerialize(Node dom) {
         String ret = null;
         
         TransformerFactory factory = TransformerFactory.newInstance();
@@ -231,7 +231,7 @@ public class Parser {
      * @exception  java.io.IOException  Raised if an I/O problem is detected
      * @exception  SAMLException Raised if the object is incompletely defined 
      */
-    public static String serializeC14N(Node root){
+    public static String serialize(Node root){
     	byte[] bs = null;
         try
         {

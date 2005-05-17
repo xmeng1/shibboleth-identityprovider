@@ -516,9 +516,9 @@ public class ArpTests extends TestCase {
 
 			InputStream inStream = new FileInputStream("data/arp.site.xml");
 			parser.parse(new InputSource(inStream));
-			String directXML = Parser.serializeC14N(parser.getDocument().getDocumentElement());
+			String directXML = Parser.serialize(parser.getDocument().getDocumentElement());
 
-			String processedXML = Parser.serializeC14N(siteArp.unmarshall());
+			String processedXML = Parser.serialize(siteArp.unmarshall());
 
 			assertTrue(
 				"File-based ARP Repository did not return the correct site ARP.",
@@ -529,9 +529,9 @@ public class ArpTests extends TestCase {
 
 			inStream = new FileInputStream("data/arp.user.test.xml");
 			parser.parse(new InputSource(inStream));
-			directXML = Parser.serializeC14N(parser.getDocument().getDocumentElement());
+			directXML = Parser.serialize(parser.getDocument().getDocumentElement());
 
-			processedXML = Parser.serializeC14N(userArp.unmarshall());
+			processedXML = Parser.serialize(userArp.unmarshall());
 
 			assertTrue(
 				"File-based ARP Repository did not return the correct user ARP.",
@@ -664,12 +664,12 @@ public class ArpTests extends TestCase {
 
 				InputStream inStream = new FileInputStream(arpExamples[i]);
 				parser.parse(new InputSource(inStream));
-				String directXML = Parser.serializeC14N(parser.getDocument().getDocumentElement());
+				String directXML = Parser.serialize(parser.getDocument().getDocumentElement());
 
 				Arp arp1 = new Arp();
 				arp1.marshall(parser.getDocument().getDocumentElement());
 
-				String processedXML = Parser.serializeC14N(arp1.unmarshall());
+				String processedXML = Parser.serialize(arp1.unmarshall());
 
 				assertTrue(
 					"Round trip marshall/unmarshall failed for file (" + arpExamples[i] + ")",
