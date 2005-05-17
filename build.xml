@@ -1,6 +1,6 @@
 <!-- Main build configutaion for Shibboleth java components - Walter Hoehn 06/04/2002 -->
 
-<project name="Shibboleth" default="dist-IdP" basedir=".">
+<project name="Shibboleth" default="install" basedir=".">
 
     <!-- Set global properties for this build -->
     <property name="distname" value="shibboleth" />
@@ -21,23 +21,11 @@
 
     <property name="year" value="2002-2005"/>
     <property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
-
-  	<!-- Configure properties to find Tomcat and access the Manager application -->
-	<property name="tomcat.home" value="/usr/local/tomcat"/>
-	<property name="url" value="http://localhost:8080/manager"/>
-  	<property name="username" value="manager"/>
-  	<property name="password" value="password"/>
-
-  	<!-- Uncomment this for Tomcat Tasks
-  	<path id="tomcat.classpath">
-    	<fileset dir="${tomcat.home}/server/lib" includes="catalina-ant.jar"/>
-  	</path>
-
-  	<taskdef name="tomcatStart" classname="org.apache.catalina.ant.StartTask" classpathref="tomcat.classpath"/>
-  	<taskdef name="tomcatStop" classname="org.apache.catalina.ant.StopTask" classpathref="tomcat.classpath"/>
-  	<taskdef name="tomcatDeploy" classname="org.apache.catalina.ant.DeployTask" classpathref="tomcat.classpath"/>
-  	<taskdef name="tomcatUndeploy" classname="org.apache.catalina.ant.UndeployTask" classpathref="tomcat.classpath"/>
-	-->
+  	
+    <!-- antcontrib tasks -->
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${buildlibs}/ant-contrib.jar"/>
+    <taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}"/>
+    <typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}"/>
 	
     <!-- Construct the CLASSPATH -->
     <path id="build.path">
@@ -57,8 +45,9 @@
 
     <!-- Prepare directory structure for project build-->
     <target name="init">
-    <mkdir dir="${build}" />
-    <mkdir dir="${dist}" />
+        <mkdir dir="${build}" />
+        <mkdir dir="${dist}" />
+        <var file="build.properties" />
     </target>
 
 
@@ -76,13 +65,15 @@
         <copy todir="${build}/schemas">
             <fileset dir="${src}/schemas"/>
         </copy>
+        <!-- configuration is now stored outside of shibboleth.war
         <copy todir="${build}/conf">
             <fileset dir="${src}/conf"/>
         </copy>
+        -->
     </target>
     
     <target name="compile-tests" depends="compile">
-        <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on">
+        <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on" target="1.4" source="1.4">
             <classpath refid="build.path" />
         </javac>
     </target>
@@ -109,11 +100,6 @@
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/all.xml" basedir="${approot}" update="no" />
     </target>
 
-    <target name="dist-IdP" depends="compile, test-IdP, package-IdP, clean-build" />
-    <target name="package-IdP">
-        <war warfile="${dist}/${distname}.war" webxml="${configroot}/origin.xml" basedir="${approot}" update="no" />
-    </target>
-	
     <target name="dist-IdP-SP" depends="compile, package-IdP-SP, clean-build" 
     	description="Build application from source, create shibboleth.war file for IdP and SP"/>
     <target name="package-IdP-SP" depends="compile"
@@ -172,31 +158,33 @@
     </target>
     
     <!-- Tomcat Management -->
-    <target name="start" description="Start a deployed webapp using Tomcat manager">
-        <tomcatStop url="${url}" username="${username}" password="${password}" path="/${distname}"/>
+    <target name="setupTomcatTasks">
+      	<path id="tomcat.classpath">
+        	    <fileset dir="${tomcat.home}/server/lib" includes="catalina-ant.jar"/>
+  	    </path>
+
+      	<taskdef name="tomcatStart" classname="org.apache.catalina.ant.StartTask" classpathref="tomcat.classpath"/>
+      	<taskdef name="tomcatStop" classname="org.apache.catalina.ant.StopTask" classpathref="tomcat.classpath"/>
+  	    <taskdef name="tomcatDeploy" classname="org.apache.catalina.ant.DeployTask" classpathref="tomcat.classpath"/>
+      	<taskdef name="tomcatUndeploy" classname="org.apache.catalina.ant.UndeployTask" classpathref="tomcat.classpath"/>
+	</target>
+    
+    <target name="tomcat.start" depends="setupTomcatTasks" description="Start a deployed webapp using Tomcat manager">
+        <tomcatStart url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"/>
     </target>
 
-    <target name="stop" description="Stop a deployed webapp using Tomcat manager">
-        <tomcatStop url="${url}" username="${username}" password="${password}" path="/${distname}"/>
+    <target name="tomcat.stop" depends="setupTomcatTasks" description="Stop a deployed webapp using Tomcat manager">
+        <tomcatStop url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"/>
     </target>
 
-    <target name="deploy" description="Upload and deploy using Tomcat manager">
-        <tomcatDeploy url="${url}" username="${username}" password="${password}" path="/${distname}"
+    <target name="tomcat.deploy" depends="setupTomcatTasks" description="Upload and deploy using Tomcat manager">
+        <tomcatDeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"
         	war="file:${basedir}/${dist}/${distname}.war"/>
     </target>
 
-    <target name="undeploy" description="Undeploy using Tomcat manager">
-        <tomcatUndeploy url="${url}" username="${username}" password="${password}" path="/${distname}"/>
+    <target name="tomcat.undeploy" depends="setupTomcatTasks" description="Undeploy using Tomcat manager">
+        <tomcatUndeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"/>
     </target>
-	
-	<target name="distcopy" description="Copy shibboleth.war to {tomcat.home}/webapps (Tomcat must be stopped first)">
-		<!-- Deploy war file by copy and delete. Tomcat must not be
-		     running when this occurs. --> 
-		<copy file="${dist}/${distname}.war" 
-			tofile="${tomcat.home}/webapps/${distname}.war" 
-		/>
-		<delete dir="${tomcat.home}/webapps/${distname}" quiet="yes" />
-	</target>
 	
     
     <!-- Automated key generation -->
@@ -217,4 +205,98 @@
 			dname="cn=shibboleth.example.org, o=example.org, c=US"
 		/>
 	</target>
+	
+	
+    <!-- Install Shibboleth -->
+    <target name="install" depends="init" description="Install Shibboleth">
+
+        <if>
+            <xinput type="confirm" defaultvalue="y">Do you want to install the Shibboleth Identity Provider?</xinput>
+            <then>
+                <antcall target="install.idp" />
+            </then>
+        </if>
+    </target>
+
+    <target name="install.idp">
+        <xinput message="Deploying java web application...  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
+            addproperty="idp.install-type" type="menu" casesensitive="no">
+            <xoption>filesystem</xoption>
+            <xoption>manager</xoption>
+        </xinput>
+        
+        <antcall target="install.idp.${idp.install-type}" />
+    </target>
+
+    <target name="install.idp.filesystem">
+        
+        <input message="Enter Shibboleth install directory [default: ${shib.home}]"
+            addproperty="shib.home.input" defaultvalue="${shib.home}" />
+        <var name="shib.home" value="${shib.home.input}" />
+
+        <input message="Enter tomcat home directory [default: ${tomcat.home}]"
+            addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
+        <var name="tomcat.home" value="${tomcat.home.input}" />
+        
+        <copy file="${configroot}/IdP.xml.dist" tofile="${configroot}/IdP.xml" overwrite="true" />
+        <replace file="${configroot}/IdP.xml" token="$SHIB_HOME$" value="${shib.home}" />
+        <war warfile="${dist}/${distname}.war" webxml="${configroot}/IdP.xml" basedir="${approot}" update="no" />
+        <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${distname}.war" />
+
+        <if>
+            <available file="${shib.home}" />
+            <then>
+                <if>
+                    <xinput type="confirm">The directory `${shib.home}` already exists.  Do you want to overwrite the existing configuration?</xinput>
+                    <then>
+                        <delete dir="${shib.home}/etc" />
+                        <antcall target="install.idp.filesystem.config" />
+                    </then>
+                </if>
+            </then>
+            <else>
+                <antcall target="install.idp.filesystem.config" />
+            </else>
+        </if>
+
+        <antcall target="savePropertyFile" />
+    </target>
+
+    <target name="install.idp.filesystem.config">
+        <mkdir dir="${shib.home}/etc" />
+        <copy todir="${shib.home}/etc" overwrite="true">
+            <fileset dir="${src}/conf" />
+        </copy>
+        <replace file="${shib.home}/etc/IdP.xml" token="$SHIB_HOME$" value="${shib.home}" />
+    </target>
+
+    <target name="install.idp.manager">
+        <antcall target="setupTomcatTasks" />
+        
+        <input message="Enter local tomcat directory [default: ${tomcat.home}]" addproperty="tomcat.home.input" defaultValue="${tomcat.home}" />
+        <var name="tomcat.home" value="${tomcat.home.input}" />
+        
+        <input message="Enter tomcat url [default: ${tomcat.url}]" addproperty="tomcat.url.input" defaultValue="${tomcat.url}" />
+        <var name="tomcat.url" value="${tomcat.url.input}" />
+        
+        <input message="Enter tomcat username [default: ${tomcat.username}]" addproperty="tomcat.username.input" defaultValue="${tomcat.username}" />
+        <var name="tomcat.username" value="${tomcat.username.input}" />
+        
+        <input message="Enter tomcat password [default: ${tomcat.password}]" addproperty="tomcat.password.input" defaultValue="${tomcat.password}" />
+        <var name="tomcat.password" value="${tomcat.password.input}" />
+        
+        <antcall target="tomcat.deploy" />
+        <antcall target="savePropertyFile" />
+    </target>
+
+    <target name="savePropertyFile">
+        <propertyfile file="build.properties">
+            <entry key="shib.home" value="${shib.home}" />
+            <entry key="tomcat.home" value="${tomcat.home}" />
+            <entry key="tomcat.url" value="${tomcat.url}" />
+            <entry key="tomcat.username" value="${tomcat.username}" />
+            <entry key="tomcat.password" value="${tomcat.password}" />
+        </propertyfile>
+    </target>
+    
 </project>
