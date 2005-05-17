@@ -50,7 +50,7 @@ public class XMenuInputHandler extends DefaultInputHandler {
 		String prompt = request.getPrompt();
 		if (request instanceof XMultipleChoiceInputRequest) {
 			StringBuffer sb = new StringBuffer("\n" + prompt);
-			sb.append("\n");
+			sb.append("\n\n");
 			Iterator i = ((XMultipleChoiceInputRequest) request).getOptions().iterator();
 			boolean first = true;
 			int count = 0;

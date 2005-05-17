@@ -222,7 +222,7 @@
     </target>
 
 	<target name="install.idp" depends="init, install.init">
-        <xinput message="Deploying java web application...  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
+        <xinput message="Deploying java web application.  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
             addproperty="idp.install-type" type="menu" casesensitive="no">
             <xoption>filesystem</xoption>
             <xoption>manager</xoption>
