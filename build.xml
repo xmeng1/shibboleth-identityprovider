@@ -238,9 +238,9 @@
             addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
         <var name="tomcat.home" value="${tomcat.home.input}" />
         
-        <copy file="${configroot}/IdP.xml.dist" tofile="${configroot}/IdP.xml" overwrite="true" />
-        <replace file="${configroot}/IdP.xml" token="$SHIB_HOME$" value="${shib.home}" />
-        <war warfile="${dist}/${distname}.war" webxml="${configroot}/IdP.xml" basedir="${approot}" update="no" />
+        <copy file="${configroot}/idp.xml.dist" tofile="${configroot}/idp.xml" overwrite="true" />
+        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
+        <war warfile="${dist}/${distname}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
         <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${distname}.war" />
 
         <if>
@@ -267,7 +267,7 @@
         <copy todir="${shib.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" />
         </copy>
-        <replace file="${shib.home}/etc/IdP.xml" token="$SHIB_HOME$" value="${shib.home}" />
+        <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
     </target>
 
     <target name="install.idp.manager">

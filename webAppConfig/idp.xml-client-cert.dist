@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+	<filter>
+		<filter-name>Client Cert AuthN Filter</filter-name>
+		<filter-class>edu.internet2.middleware.shibboleth.utils.ClientCertTrustFilter</filter-class>
+		<init-param>
+			<param-name>regex</param-name>
+			<param-value>.*CN=([^,/]+).*</param-value>
+		</init-param>
+				<init-param>
+			<param-name>matchGroup</param-name>
+			<param-value>1</param-value>
+		</init-param>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>Client Cert AuthN Filter</filter-name>
+		<url-pattern>/SSO</url-pattern>
+	</filter-mapping>
+
+	<context-param>
+        <param-name>IdPConfigFile</param-name>
+        <param-value>$SHIB_HOME$/etc/idp.xml</param-value>
+    </context-param>
+
+    <servlet>
+        <servlet-name>IdP</servlet-name>
+        <display-name>Shibboleth Identity Provider</display-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.IdPResponder</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>IdP</servlet-name>
+        <url-pattern>/SSO</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>IdP</servlet-name>
+        <url-pattern>/AA</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>IdP</servlet-name>
+        <url-pattern>/Artifact</url-pattern>
+    </servlet-mapping>
+
+	<mime-mapping>
+		<extension>css</extension>
+		<mime-type>text/css</mime-type>
+	</mime-mapping>
+	
+</web-app>
