@@ -55,6 +55,8 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import edu.internet2.middleware.shibboleth.common.ShibResource;
+
 /**
  * Obtain schema validating and non-validating XML parsers.
  * 
@@ -262,7 +264,9 @@ public class Parser {
         InputSource insrc;
         String schemaCannonicalFilePath;
        try {
-            InputStream resourceAsStream = Parser.class.getResourceAsStream(configFilePath);
+            InputStream resourceAsStream = 
+ //               Parser.class.getResourceAsStream(configFilePath);
+                new ShibResource(configFilePath).getInputStream();
             insrc = new InputSource(resourceAsStream);
             insrc.setSystemId(configFilePath);
         } catch (Exception e1) {
