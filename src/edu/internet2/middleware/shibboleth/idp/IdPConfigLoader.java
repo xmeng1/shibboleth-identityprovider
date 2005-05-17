@@ -23,13 +23,14 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package edu.internet2.middleware.shibboleth.common;
+package edu.internet2.middleware.shibboleth.idp;
 
 import javax.servlet.ServletContext;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**

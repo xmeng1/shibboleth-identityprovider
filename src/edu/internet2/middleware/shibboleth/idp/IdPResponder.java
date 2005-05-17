@@ -58,13 +58,13 @@ import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapperFactory;
 import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credentials;
-import edu.internet2.middleware.shibboleth.common.IdPConfigLoader;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
+import edu.internet2.middleware.shibboleth.log.LoggingInitializer;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
@@ -77,8 +77,8 @@ import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
 public class IdPResponder extends HttpServlet {
 
-	private static Logger transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
-	private static Logger log = Logger.getLogger(IdPResponder.class.getName());
+	private static Logger transactionLog;
+	private static Logger log;
 	private static Random idgen = new Random();
 	private SAMLBinding binding;
 
@@ -92,20 +92,35 @@ public class IdPResponder extends HttpServlet {
 	public void init() throws ServletException {
 
 		super.init();
-		MDC.put("serviceId", "[IdP] Core");
-		log.info("Initializing Identity Provider.");
 
 		try {
 			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
 
 			Document idPConfig = IdPConfigLoader.getIdPConfig(this.getServletContext());
 
+			// Initialize logging
+			NodeList itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
+					"Logging");
+			if (itemElements.getLength() > 0) {
+				if (itemElements.getLength() > 1) {
+					System.err
+							.println("WARNING: More than one Logging element in IdP configuration, using the first one.");
+				} else {
+					Element loggingConfig = (Element) itemElements.item(0);
+					LoggingInitializer.initializeLogging(loggingConfig);
+					transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
+					log = Logger.getLogger(IdPResponder.class);
+					MDC.put("serviceId", "[IdP] Core");
+					log.info("Initializing Identity Provider.");
+				}
+			}
+
 			// Load global configuration properties
 			configuration = new IdPConfig(idPConfig.getDocumentElement());
 
 			// Load name mappings
 			NameMapper nameMapper = new NameMapper();
-			NodeList itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(
+			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(
 					NameIdentifierMapping.mappingNamespace, "NameMapping");
 
 			for (int i = 0; i < itemElements.getLength(); i++) {
