@@ -190,12 +190,13 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
  */
 public class ServiceProviderConfig {
 
-	
+	// Map key prefix for inline plugin configuration elements 
 	private static final String INLINEURN = "urn:inlineBS:ID";
+    
     private static Logger log = Logger.getLogger(ServiceProviderConfig.class);
 
 	private SPConfigType  // The XMLBean from the main config file
-		config = null;              // (i.e. shibboleth.xml)
+		config = null;    
 	
 	
 	/*
@@ -586,7 +587,6 @@ public class ServiceProviderConfig {
     		Class implclass,
     		Class interfaceClass,
     		String builtinName,
-    		//String schemaname,
     		Map /*<String,PluggableConfigurationComponent>*/uriMap
     		) {
         
@@ -635,11 +635,6 @@ public class ServiceProviderConfig {
     		    return "";
     		}
     		
-            /*
-            String tempname = impl.getSchemaPathname();
-            if (tempname!=null)
-                schemaname=tempname;
-            */
     		try {
     			Document extdoc = Parser.loadDom(uri,true);
     			if (extdoc==null)
@@ -683,7 +678,6 @@ public class ServiceProviderConfig {
 		            XMLMetadataImpl.class,
 		            Metadata.class,
 		            XMLFEDERATIONPROVIDERTYPE,
-		            //METADATASCHEMA,
 		            entityLocators);
 		    if (uri==null)
 		        anyError=true;
@@ -731,7 +725,6 @@ public class ServiceProviderConfig {
 		            XMLAAPImpl.class,
 		            AAP.class,
 		            XMLAAPPROVIDERTYPE,
-		            //AAPSCHEMA,
 		            attributePolicies);
 		    if (uri==null)
 		        anyError=true;
@@ -788,7 +781,6 @@ public class ServiceProviderConfig {
 		            ShibbolethTrust.class,
 		            Trust.class,
 		            XMLTRUSTPROVIDERTYPE,
-		            //TRUSTSCHEMA,
 		            certificateValidators);
 		    if (uri==null)
 		        anyError=true;
@@ -849,7 +841,7 @@ public class ServiceProviderConfig {
 	}
 
 	
-	
+	// Generate Map keys for inline plugin configuration Elements
 	private int inlinenum = 1;
 	private String genDummyUri() {
 		return INLINEURN+Integer.toString(inlinenum++);
