@@ -145,7 +145,7 @@ public class AttributeRequestor {
             query = 
                 new SAMLAttributeQuery(
             		subject,     		 // Subject (i.e. Handle) from authentication
-            		entity.getId(),      // ID of user's Entity (i.e. IdP)
+            		appinfo.getProviderId(),  // SP Entity name
             		attributeDesignators // Attributes to request, null for everything
             		);
 

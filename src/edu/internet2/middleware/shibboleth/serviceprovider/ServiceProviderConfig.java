@@ -1142,6 +1142,14 @@ public class ServiceProviderConfig {
 			}
 			return false;
 		}
+        
+        public String getProviderId() {
+            String entityId = this.applicationConfig.getProviderId();
+            if (entityId==null && this!=defaultApplicationInfo) {
+                entityId = defaultApplicationInfo.getProviderId();
+            }
+            return entityId;
+        }
 	}
 	
 
