@@ -24,8 +24,6 @@
   	
     <!-- antcontrib tasks -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${buildlibs}/ant-contrib.jar"/>
-    <taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}"/>
-    <typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}"/>
 	
     <!-- Construct the CLASSPATH -->
     <path id="build.path">
@@ -48,6 +46,11 @@
         <mkdir dir="${build}" />
         <mkdir dir="${dist}" />
         <var file="build.properties" />
+    </target>
+
+    <target name="install.init">
+    	<taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}"/>
+    	<typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}"/>
     </target>
 
 
@@ -208,7 +211,7 @@
 	
 	
     <!-- Install Shibboleth -->
-    <target name="install" depends="init" description="Install Shibboleth">
+    <target name="install" depends="init, install.init" description="Install Shibboleth">
 
         <if>
             <xinput type="confirm" defaultvalue="y">Do you want to install the Shibboleth Identity Provider?</xinput>
@@ -218,7 +221,7 @@
         </if>
     </target>
 
-    <target name="install.idp">
+	<target name="install.idp" depends="init, install.init">
         <xinput message="Deploying java web application...  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
             addproperty="idp.install-type" type="menu" casesensitive="no">
             <xoption>filesystem</xoption>
@@ -228,7 +231,7 @@
         <antcall target="install.idp.${idp.install-type}" />
     </target>
 
-    <target name="install.idp.filesystem">
+    <target name="install.idp.filesystem" depends="init, install.init">
         
         <input message="Enter Shibboleth install directory [default: ${shib.home}]"
             addproperty="shib.home.input" defaultvalue="${shib.home}" />
@@ -262,7 +265,7 @@
         <antcall target="savePropertyFile" />
     </target>
 
-    <target name="install.idp.filesystem.config">
+	<target name="install.idp.filesystem.config" depends="init, install.init">
         <mkdir dir="${shib.home}/etc" />
         <copy todir="${shib.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" />
@@ -270,7 +273,7 @@
         <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
     </target>
 
-    <target name="install.idp.manager">
+	<target name="install.idp.manager" depends="init, install.init">
         <antcall target="setupTomcatTasks" />
         
         <input message="Enter local tomcat directory [default: ${tomcat.home}]" addproperty="tomcat.home.input" defaultValue="${tomcat.home}" />
