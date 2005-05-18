@@ -201,14 +201,7 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
 
 
     /**
-     * @see org.opensaml.SAMLBrowserProfile#setVersion(int, int)
-     */
-    public void setVersion(int major, int minor) throws SAMLException {
-        profile.setVersion(major, minor);
-    }
-
-    /**
-     * @see org.opensaml.SAMLBrowserProfile#receive(java.lang.StringBuffer, javax.servlet.http.HttpServletRequest, java.lang.String, int, org.opensaml.ReplayCache, org.opensaml.SAMLBrowserProfile.ArtifactMapper)
+     * @see org.opensaml.SAMLBrowserProfile#receive(java.lang.StringBuffer, javax.servlet.http.HttpServletRequest, java.lang.String, int, org.opensaml.ReplayCache, org.opensaml.SAMLBrowserProfile.ArtifactMapper, int)
      */
     public BrowserProfileResponse receive(
             StringBuffer issuer,
@@ -216,14 +209,15 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
             String recipient,
             int supportedProfiles,
             ReplayCache replayCache,
-            ArtifactMapper artifactMapper
+            ArtifactMapper artifactMapper,
+            int minorVersion
             ) throws SAMLException {
         
         String providerId = null;
         issuer.setLength(0);
         
         // Let SAML do all the decoding and parsing
-        BrowserProfileResponse bpr = profile.receive(issuer, reqContext, recipient, supportedProfiles, replayCache, artifactMapper);
+        BrowserProfileResponse bpr = profile.receive(issuer, reqContext, recipient, supportedProfiles, replayCache, artifactMapper, minorVersion);
         
         /*
          * Now find the Metadata for the Entity that send this assertion.
