@@ -295,6 +295,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
 					audiences.add(relyingParty.getName());
 				}
+				//String remoteProviderId = request.getParameter("providerId");
+				if (attributeQuery.getResource() != null && !attributeQuery.getResource().equals("") && !audiences.contains(attributeQuery.getResource())) {
+					audiences.add(attributeQuery.getResource());
+				}
+				
 				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
 
 				// Put all attributes into an assertion
