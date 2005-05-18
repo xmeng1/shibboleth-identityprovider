@@ -52,13 +52,6 @@
 		<servlet-name>AssertionConsumer</servlet-name>
 	</filter-mapping>
 
-	<!-- The IdP context initialization -->
-	<listener>
-		<listener-class>
-			edu.internet2.middleware.shibboleth.log.LoggingContextListener
-		</listener-class>
-	</listener>
-
 	<!-- Servlets for Shibboleth/SAML Protocol endpoints -->
 	<servlet>
 		<!-- All IdP Services -->
