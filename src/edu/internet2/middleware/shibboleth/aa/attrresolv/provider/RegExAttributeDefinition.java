@@ -24,7 +24,7 @@
  */
 
 /*
- * Contributed by SungGard SCT.
+ * Contributed by SunGard SCT.
  */
 
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
