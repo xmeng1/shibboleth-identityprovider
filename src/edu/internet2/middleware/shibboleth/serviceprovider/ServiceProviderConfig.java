@@ -1159,5 +1159,11 @@ public class ServiceProviderConfig {
 	        super();
 	    }
 	}
+
+
+
+    public Credentials getCredentials() {
+        return credentials;
+    }
 	
 }

@@ -163,7 +163,7 @@ public class AttributeRequestor {
 		SAMLResponse response = null;
 		try {
             ShibBinding binding = new ShibBinding(session.getApplicationId());
-			response = binding.send(request,aa,null,null);
+			response = binding.send(request,aa,null,null,appinfo);
 		} catch (SAMLException e) {;} // response will be null
 		if (response==null) {
 			log.error("AttributeRequestor Query to remote AA returned no response from "+session.getEntityId());

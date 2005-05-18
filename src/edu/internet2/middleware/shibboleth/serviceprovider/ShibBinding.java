@@ -33,8 +33,11 @@ import org.opensaml.SAMLBindingFactory;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
+import org.opensaml.SAMLSOAPHTTPBinding;
 import org.opensaml.TrustException;
+import org.opensaml.provider.SOAPHTTPBindingProvider;
 
+import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Endpoint;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
@@ -100,7 +103,8 @@ public class ShibBinding {
 			SAMLRequest req,
 			AttributeAuthorityDescriptor role,
 			String[] audiences,
-			SAMLAuthorityBinding[] bindings) 
+			SAMLAuthorityBinding[] bindings,
+            Trust trust) 
 	throws SAMLException {
 		
 		// For the duration of the request, get local references to
@@ -146,6 +150,10 @@ public class ShibBinding {
                 if (!endpoint.getBinding().equals(prevBinding)) {
                     prevBinding = endpoint.getBinding();
                     sbinding = SAMLBindingFactory.getInstance(endpoint.getBinding());
+                }
+                if (sbinding instanceof SAMLSOAPHTTPBinding) {
+                    SAMLSOAPHTTPBinding httpbind = (SAMLSOAPHTTPBinding)sbinding;
+                    httpbind.addHook(new ShibHttpHook(role,trust));
                 }
                 resp=sbinding.send(endpoint.getLocation(),req);
                 validateResponseSignatures(role, appinfo, resp);
