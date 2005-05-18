@@ -66,8 +66,7 @@
     <!-- Compile classes and move them to ${build} -->
     <target name="compile" depends="init"
     	description="Compile source file, combine with schemas and conf directories">
-        <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on" 
-        	target="1.4" source="1.4">
+        <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
             <classpath refid="build.path" />
         </javac>
         <copy todir="${build}/schemas">
@@ -81,7 +80,7 @@
     </target>
     
     <target name="compile-tests" depends="compile">
-        <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on" target="1.4" source="1.4">
+        <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
             <classpath refid="build.path" />
         </javac>
     </target>
