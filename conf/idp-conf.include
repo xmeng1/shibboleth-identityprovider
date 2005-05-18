@@ -1,0 +1,10 @@
+ExampleMetadata.xml
+IQ-sites.xml
+idp.xml
+arps/
+handle.jks
+persistent.jks
+resolver.xml
+resolver.jdbc.xml
+resolver.ldap.xml
+schemas.properties

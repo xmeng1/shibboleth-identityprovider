@@ -249,7 +249,7 @@
         <antcall target="install.idp.${idp.install-type}" />
     </target>
 
-    <target name="install.idp.filesystem" depends="init, install.init">
+    <target name="install.idp.filesystem" depends="init, install.init, build-util">
         
         <input message="Enter Shibboleth install directory [default: ${shib.home}]"
             addproperty="shib.home.input" defaultvalue="${shib.home}" />
@@ -280,13 +280,18 @@
             </else>
         </if>
 
+        <copy file="lib/shib-util.jar" todir="${shib.home}/lib" />
+        <copy todir="${shib.home}/bin">
+            <fileset dir="bin"/>
+        </copy>
+
         <antcall target="savePropertyFile" />
     </target>
 
 	<target name="install.idp.filesystem.config" depends="init, install.init">
         <mkdir dir="${shib.home}/etc" />
         <copy todir="${shib.home}/etc" overwrite="true">
-            <fileset dir="${src}/conf" />
+            <fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
         </copy>
         <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
     </target>
