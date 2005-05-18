@@ -257,7 +257,8 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
                 shireURL,   // My URL (Why??) To prevent attackers from redirecting messages. 
                 SAMLBrowserProfile.PROFILE_POST,    // TODO: support both profiles 
                 context.getReplayCache(),
-                null
+                null,
+                1
         );
         
         // TODO: Audience/condition checking is now the profile caller's job.

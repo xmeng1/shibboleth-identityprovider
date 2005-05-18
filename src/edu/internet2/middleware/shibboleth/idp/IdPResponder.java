@@ -285,7 +285,7 @@ public class IdPResponder extends HttpServlet {
 		SAMLRequest samlRequest = null;
 		try {
 			try {
-				samlRequest = binding.receive(request);
+				samlRequest = binding.receive(request,1);
 			} catch (SAMLException e) {
 				log.fatal("Unable to parse request: " + e);
 				throw new SAMLException("Invalid request data.");
