@@ -40,6 +40,11 @@
         </fileset>
     </path>
 
+   <path id="test.path">
+      <path refid="build.path"/>
+      <pathelement location="${tests}"/>
+    </path>
+
 
     <!-- Prepare directory structure for project build-->
     <target name="init">
@@ -153,7 +158,7 @@
     <target name="test-IdP" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
-            <classpath refid="build.path" />
+            <classpath refid="test.path" />
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
 			<test name="edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverTests" />
@@ -167,7 +172,7 @@
     <target name="test-SP" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
-            <classpath refid="build.path" />
+            <classpath refid="test.path" />
             <formatter type="plain" />
             <test name="edu.internet2.middleware.shibboleth.aap.AAPTests" />
         </junit>
