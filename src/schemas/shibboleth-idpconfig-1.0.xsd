@@ -113,7 +113,7 @@
 					<xs:element name="ProtocolHandler" minOccurs="0" maxOccurs="unbounded">
 						<xs:complexType>
 							<xs:sequence>
-								<xs:element name="Location" type="xs:anyURI" minOccurs="1" maxOccurs="unbounded" />
+								<xs:element name="Location" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
 								<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 							</xs:sequence>
 							<xs:attribute name="implementation" type="xs:string" use="required" />
