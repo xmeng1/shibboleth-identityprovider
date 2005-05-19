@@ -3,7 +3,8 @@
 <project name="Shibboleth" default="install" basedir=".">
 
     <!-- Set global properties for this build -->
-    <property name="distname" value="shibboleth" />
+    <property name="distname" value="shibboleth-idp" />
+    <property name="distnameWayf" value="shibboleth-wayf" />
     <property name="root" value="." />
     <property name="src" value="${root}/src/" />
     <property name="tests" value="${root}/tests/" />
@@ -52,11 +53,6 @@
         <mkdir dir="${build}" />
         <mkdir dir="${dist}" />
         <property file="build.properties" />
-    </target>
-
-    <target name="install.init">
-    	<taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}"/>
-    	<typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}"/>
     </target>
 
 
@@ -225,9 +221,14 @@
 			dname="cn=shibboleth.example.org, o=example.org, c=US"
 		/>
 	</target>
-	
-	
+
+
     <!-- Install Shibboleth -->
+    <target name="install.init">
+    	<taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}"/>
+    	<typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}"/>
+    </target>
+
     <target name="install" depends="init, install.init" description="Install Shibboleth">
         <if>
             <xinput type="confirm" defaultvalue="y">Do you want to install the Shibboleth Identity Provider?</xinput>
@@ -336,10 +337,21 @@
         </propertyfile>
     </target>
 
+
+	<!-- Create an IdP war and copy it to the pre-configured tomcat directory -->
+	<target name="copy-IdP" depends="compile" description="Copy shibboleth.war to {tomcat.home}/webapps (Tomcat must be stopped first)">
+		<!-- This task assumes that a pre-existing properties file has the correct path information -->
+        <copy file="${configroot}/idp.xml.dist" tofile="${configroot}/idp.xml" overwrite="true" />
+        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
+        <war warfile="${dist}/${distname}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
+        <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
+		<delete dir="${tomcat.home}/webapps/${distname}" quiet="yes" />
+	</target>
+
+
     <!-- Create WAYF and move it to ${dist} -->
-    <target name="dist-wayf" depends="compile, package-wayf, clean-build" />
-    <target name="package-wayf">
-        <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
+    <target name="package-wayf" depends="compile, clean-build">
+        <war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
     </target>
     
 </project>
