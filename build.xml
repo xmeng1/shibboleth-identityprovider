@@ -15,22 +15,24 @@
     <property name="buildlibs" value="${root}/lib/" />
     <property name="endorsed" value="${root}/endorsed/" />
     <property name="distlibs" value="${root}/lib/" />
-    <property name="customlibs" value="${root}/custom/" />
+    <property name="custom" value="${root}/custom/" />
     <property name="dist" value="${root}/dist/" />
     <property name="docs" value="${root}/doc/" />
     <property name="javadocs" value="${docs}/api/" />
 
     <property name="year" value="2002-2005"/>
     <property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
-  	
+
+
     <!-- antcontrib tasks -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${buildlibs}/ant-contrib.jar"/>
-	
+
+
     <!-- Construct the CLASSPATH -->
     <path id="build.path">
         <pathelement path="${classpath}" />
         <pathelement location="${build}" />
-        <fileset dir="${customlibs}">
+        <fileset dir="${custom}">
             <include name="**/*.jar" />
         </fileset>
         <fileset dir="${endorsed}">
@@ -42,11 +44,6 @@
         <fileset dir="${buildlibs}">
             <include name="**/*.jar" />
         </fileset>
-    </path>
-
-   <path id="test.path">
-      <path refid="build.path"/>
-      <pathelement location="${tests}"/>
     </path>
 
 
@@ -69,19 +66,23 @@
 
     <!-- Compile classes and move them to ${build} -->
     <target name="compile" depends="init"
-    	description="Compile source file, combine with schemas and conf directories">
+    	description="Compile source files">
+		<!-- Compile the shib code into the build path -->
         <javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
             <classpath refid="build.path" />
         </javac>
+		<!-- Compile site-specific code into the build path -->
+        <javac srcdir="${custom}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
+            <classpath refid="build.path" />
+        </javac>
+		<!-- Copy xml schemas to the build path -->
         <copy todir="${build}/schemas">
             <fileset dir="${src}/schemas"/>
         </copy>
-    </target>
-    
-    <target name="compile-tests" depends="compile">
-        <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
-            <classpath refid="build.path" />
-        </javac>
+		<!-- Copy any site-specific jars to the build path -->
+		<copy todir="${libdir}">
+        	<fileset dir="${custom}" includes="**/*.jar" />
+        </copy>
     </target>
 
 
@@ -98,13 +99,8 @@
         </javadoc>
 	</target>
 
-    <!-- Create WAYF and move it to ${dist} -->
-    <target name="dist-wayf" depends="compile, package-wayf, clean-build" />
-    <target name="package-wayf">
-        <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
-    </target>
 
-    <!-- Build utilities -->
+    <!-- Build command-line utilities -->
     <target name="build-util" depends="compile">
         <jar jarfile="${distlibs}/shib-util.jar" basedir="${build}" />
     </target>
@@ -137,8 +133,23 @@
         </delete>
     </target>
 
+
+	<!-- Add to the classpath for unit tests -->
+   <path id="test.path">
+      <path refid="build.path"/>
+      <pathelement location="${tests}"/>
+    </path>
+
+	<!-- Compile classes needed for unit testing -->
+    <target name="compile-tests" depends="compile">
+        <javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
+            <classpath refid="build.path" />
+        </javac>
+    </target>
+
     <!-- Run automated tests on compiled code -->
     <target name="test-all" depends="test-IdP, test-SP" />
+
     <target name="test-IdP" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
@@ -153,6 +164,7 @@
 			<test name="edu.internet2.middleware.shibboleth.metadata.MetadataTests" />
         </junit>
     </target>
+
     <target name="test-SP" depends="compile-tests">
         <junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
@@ -161,7 +173,8 @@
             <test name="edu.internet2.middleware.shibboleth.aap.AAPTests" />
         </junit>
     </target>
-    
+
+
     <!-- Tomcat Management -->
     <target name="setupTomcatTasks">
       	<path id="tomcat.classpath">
@@ -192,12 +205,14 @@
     </target>
 	
     
-    <!-- Automated key generation -->
+    <!-- Automated key generation for crypto handles -->
 	<target name="genSecret" depends="compile">
     	<taskdef name="genSecret" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
 		<genSecret keyStorePath="${appconfig}/handle.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
 	</target>
 
+
+	<!-- Generate salt for use with targetted id -->
     <target name="genSalt" depends="compile">
         <taskdef name="genSalt" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
         <genSalt keyStorePath="${appconfig}/persistent.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
@@ -319,6 +334,12 @@
             <entry key="tomcat.username" value="${tomcat.username}" />
             <entry key="tomcat.password" value="${tomcat.password}" />
         </propertyfile>
+    </target>
+
+    <!-- Create WAYF and move it to ${dist} -->
+    <target name="dist-wayf" depends="compile, package-wayf, clean-build" />
+    <target name="package-wayf">
+        <war warfile="${dist}/${distname}-wayf.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
     </target>
     
 </project>
