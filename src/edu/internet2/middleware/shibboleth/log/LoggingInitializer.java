@@ -25,8 +25,7 @@
 
 package edu.internet2.middleware.shibboleth.log;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.IOException;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.DailyRollingFileAppender;
@@ -269,18 +268,21 @@ public class LoggingInitializer {
 			type = typeNode.getNodeValue();
 		}
 
-		URL url;
+		ShibResource log4jConfig;
 		try {
-			url = new URL(location);
-		} catch (MalformedURLException e) {
+			log4jConfig = new ShibResource(location);
+			if (type == null || "properties".equals(type)) {
+				PropertyConfigurator.configure(log4jConfig.getURL());
+			} else if ("xml".equals(type)) {
+				DOMConfigurator.configure(log4jConfig.getURL());
+			} else {
+				throw new ShibbolethConfigurationException(
+						"<Log4JConfig (type) attribute must be one of \"xml\" or \"properties\".");
+			}
+		} catch (IOException e) {
 			throw new ShibbolethConfigurationException("<Log4JConfig location=\"" + location + "\">: not a valid URL: "
 					+ e);
 		}
 
-		if (type == null || "properties".equals(type)) {
-			PropertyConfigurator.configure(url);
-		} else if ("xml".equals(type)) {
-			DOMConfigurator.configure(url);
-		}
 	}
 }
