@@ -275,7 +275,7 @@
             <fileset dir="bin"/>
         </copy>
 
-        <mkdir dir="${shib.home}/logs />
+        <mkdir dir="${shib.home}/logs" />
 
         <antcall target="savePropertyFile" />
     </target>
@@ -285,6 +285,8 @@
         <copy todir="${shib.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
         </copy>
+		<copy file="${shib.home}/etc/idp.xml.dist" tofile="${shib.home}/etc/idp.xml" overwrite="true" />
+		<delete file="${shib.home}/etc/idp.xml.dist"/>
         <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
     </target>
 
