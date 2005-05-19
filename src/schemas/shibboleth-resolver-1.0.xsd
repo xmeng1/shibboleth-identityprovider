@@ -22,6 +22,32 @@
 						</xs:complexContent>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="SAML2PersistentID" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="resolver:BaseAttributeDefinition">
+								<xs:sequence>
+									<xs:element name="Salt">
+										<xs:complexType>
+											<xs:simpleContent>
+												<xs:extension base="xs:string">
+													<xs:attribute name="keyStorePath" type="xs:string" use="optional"/>
+													<xs:attribute name="keyStoreKeyAlias" type="xs:string" 
+														use="optional"/>
+													<xs:attribute name="keyStorePassword" type="xs:string" 
+														use="optional"/>
+													<xs:attribute name="keyStoreKeyPassword" type="xs:string" 
+														use="optional"/>
+												</xs:extension>
+											</xs:simpleContent>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+								<xs:attribute name="sourceName" type="xs:string" use="optional"/>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="PersistentIDAttributeDefinition" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:complexContent>

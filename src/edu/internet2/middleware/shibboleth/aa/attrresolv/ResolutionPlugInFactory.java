@@ -37,6 +37,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.JNDIDirectoryD
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.MappedAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.PersistentIDAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.RegExAttributeDefinition;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SAML2PersistentID;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SimpleAttributeDefinition;
 
 /**
@@ -56,6 +57,8 @@ public class ResolutionPlugInFactory {
 		if (e.getTagName().equals("CustomAttributeDefinition")) { return new CustomAttributeDefinition(e); }
 
 		if (e.getTagName().equals("SimpleAttributeDefinition")) { return new SimpleAttributeDefinition(e); }
+		
+		if (e.getTagName().equals("SAML2PersistentID")) { return new SAML2PersistentID(e); }
 
 		if (e.getTagName().equals("PersistentIDAttributeDefinition")) { return new PersistentIDAttributeDefinition(e); }
 

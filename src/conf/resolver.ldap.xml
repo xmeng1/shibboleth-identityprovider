@@ -41,14 +41,13 @@
 	-->
 	
 	
-	<!-- Example persistent id attribute.  You should change the scope value to match your site's domain 
-		 name.  Since this configuration is permanent, some thought is required before deploying in 
-		 production. -->
+	<!-- Example persistent id attribute.  Since this configuration is permanent, some thought is required before 
+		deploying in  production. -->	 
 	<!--
-	<PersistentIDAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonTargetedID" scope="shibdev.edu" sourceName="guid">
-		<DataConnectorDependency requires="directory"/>
+	<SAML2PersistentID id="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" sourceName="guid">
+		<DataConnectorDependency requires="echo"/>
 		<Salt keyStorePath="/conf/persistent.jks" keyStoreKeyAlias="handleKey" keyStorePassword="shibhs" keyStoreKeyPassword="shibhs"/>
-	</PersistentIDAttributeDefinition>
+	</SAML2PersistentID>
 	-->
 	
 	
