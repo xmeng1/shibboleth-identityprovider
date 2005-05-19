@@ -168,6 +168,8 @@
 									</xs:element>
 								</xs:sequence>
 								<xs:attribute name="useStartTls" type="xs:boolean" use="optional" default="false"/>
+								<xs:attribute name="mergeMultipleResults" type="xs:boolean" use="optional" 
+									default="false"/>
 							</xs:extension>
 						</xs:complexContent>
 					</xs:complexType>

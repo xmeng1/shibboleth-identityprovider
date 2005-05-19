@@ -32,14 +32,20 @@ import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.naming.CommunicationException;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
@@ -75,7 +81,7 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 	protected String searchFilter;
 	protected Properties properties;
 	protected SearchControls controls;
-	protected String failover = null;
+	protected boolean mergeMultiResults = false;
 	protected boolean startTls = false;
 	boolean useExternalAuth = false;
 	private SSLSocketFactory sslsf;
@@ -97,6 +103,13 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 		if (tlsAttribute != null && tlsAttribute.equalsIgnoreCase("TRUE")) {
 			startTls = true;
 			log.debug("Start TLS support enabled for connector.");
+		}
+
+		// Do we merge the attributes in the event of multiple results from a search?
+		String mergeMultiResultsAttrib = e.getAttribute("mergeMultipleResults");
+		if (mergeMultiResultsAttrib != null && mergeMultiResultsAttrib.equalsIgnoreCase("TRUE")) {
+			mergeMultiResults = true;
+			log.debug("Multiple searcg result merging enabled for connector.");
 		}
 
 		// Determine the search filter and controls
@@ -170,10 +183,8 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 					if (clientCred == null) {
 						log.error("No credentials were loaded.");
 						throw new ResolutionPlugInException("Error loading credential.");
-					} else {
-						keyManager = new KeyManagerImpl(clientCred.getPrivateKey(), clientCred
-								.getX509CertificateChain());
 					}
+					keyManager = new KeyManagerImpl(clientCred.getPrivateKey(), clientCred.getX509CertificateChain());
 				}
 
 				try {
@@ -288,18 +299,18 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(java.security.Principal)
+	 * See {@link DataConnectorPlugIn#resolve(Principal, String, Dependencies)}
 	 */
 	public Attributes resolve(Principal principal, String requester, Dependencies depends)
 			throws ResolutionPlugInException {
 
 		InitialDirContext context = null;
 		NamingEnumeration nEnumeration = null;
+		String populatedSearch = searchFilter.replaceAll("%PRINCIPAL%", principal.getName());
 		try {
 			try {
 				context = initConnection();
-				nEnumeration = context
-						.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
+				nEnumeration = context.search("", populatedSearch, controls);
 
 				// If we get a failure during the init or query, attempt once to re-establish the connection
 			} catch (CommunicationException e) {
@@ -307,15 +318,13 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 				log.warn("Encountered a connection problem while querying for attributes.  Re-initializing "
 						+ "JNDI context and retrying...");
 				context = initConnection();
-				nEnumeration = context
-						.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
+				nEnumeration = context.search("", populatedSearch, controls);
 			} catch (IOException e) {
 				log.debug(e);
 				log.warn("Encountered a connection problem while querying for attributes.  Re-initializing "
 						+ "JNDI context and retrying...");
 				context = initConnection();
-				nEnumeration = context
-						.search("", searchFilter.replaceAll("%PRINCIPAL%", principal.getName()), controls);
+				nEnumeration = context.search("", populatedSearch, controls);
 			}
 
 			if (nEnumeration == null || !nEnumeration.hasMore()) {
@@ -326,9 +335,16 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			SearchResult result = (SearchResult) nEnumeration.next();
 			Attributes attributes = result.getAttributes();
 
-			if (nEnumeration.hasMore()) {
-				log.error("Unable to disambiguate date for principal (" + principal.getName() + ") in search.");
-				throw new ResolutionPlugInException("Cannot disambiguate data for this principal.");
+			if (!mergeMultiResults) {
+				if (nEnumeration.hasMore()) {
+					log.error("Multiple results returned from filter " + searchFilter + " for principal " + principal
+							+ ", only one expected.");
+					throw new ResolutionPlugInException("Multiple results returned when only one expected.");
+				}
+			} else {
+				log.debug("Multiple results returned by filter " + populatedSearch
+						+ " merging attributes from each result");
+				attributes = mergeResults(nEnumeration, attributes);
 			}
 
 			// For Sun's ldap provider only, construct the dn of the returned entry and manually add that as an
@@ -355,9 +371,90 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 				if (context != null) {
 					context.close();
 				}
+				if (nEnumeration != null) {
+					nEnumeration.close();
+				}
 			} catch (NamingException e) {
 				log.error("An error occured while closing the JNDI context: " + e);
 			}
+		}
+	}
+
+	/**
+	 * Merges the attributes found in each result and a base Attributes object. If a named attribute appears in more
+	 * than one result it's values are added to any existing values already in the given Attributes object. Duplicate
+	 * attribute values are eliminated.
+	 * 
+	 * @param searchResults
+	 *            the search result
+	 * @param attributes
+	 *            the container to add the attributes from the search result to (may already contain attributes)
+	 * @return all the attributes and values merged from search results and initial attributes set
+	 * @throws NamingException
+	 *             thrown if there is a problem reading result data
+	 */
+	private Attributes mergeResults(NamingEnumeration searchResults, Attributes attributes) throws NamingException {
+
+		HashMap attributeMap = new HashMap();
+
+		mergeAttributes(attributeMap, attributes);
+
+		SearchResult result;
+		while (searchResults.hasMore()) {
+			result = (SearchResult) searchResults.next();
+			mergeAttributes(attributeMap, result.getAttributes());
+		}
+
+		Attributes mergedAttribs = new BasicAttributes(false);
+		Attribute mergedAttrib;
+		Iterator attribNames = attributeMap.keySet().iterator();
+		Iterator attribValues;
+		String attribName;
+		while (attribNames.hasNext()) {
+			attribName = (String) attribNames.next();
+			mergedAttrib = new BasicAttribute(attribName, false);
+			Set valueSet = (Set) attributeMap.get(attribName);
+			attribValues = valueSet.iterator();
+			while (attribValues.hasNext()) {
+				mergedAttrib.add(attribValues.next());
+			}
+			mergedAttribs.put(mergedAttrib);
+		}
+
+		return mergedAttribs;
+	}
+
+	/**
+	 * Merges a given collection of Attributes into an existing collection.
+	 * 
+	 * @param attributeMap
+	 *            existing collection of attribute data
+	 * @param attributes
+	 *            collection of attribute data to be merged in
+	 * @throws NamingException
+	 *             thrown if there is a problem getting attribute information
+	 */
+	private void mergeAttributes(HashMap attributeMap, Attributes attributes) throws NamingException {
+
+		if (attributes == null || attributes.size() <= 0) {
+			// In case the search result this came from was empty
+			return;
+		}
+
+		HashSet valueSet;
+		NamingEnumeration baseAttribs = attributes.getAll();
+		Attribute baseAttrib;
+		while (baseAttribs.hasMore()) {
+			baseAttrib = (Attribute) baseAttribs.next();
+			if (attributeMap.containsKey(baseAttrib.getID())) {
+				valueSet = (HashSet) attributeMap.get(baseAttrib.getID());
+			} else {
+				valueSet = new HashSet();
+			}
+			for (int i = 0; i < baseAttrib.size(); i++) {
+				valueSet.add(baseAttrib.get(i));
+			}
+			attributeMap.put(baseAttrib.getID(), valueSet);
 		}
 	}
 
