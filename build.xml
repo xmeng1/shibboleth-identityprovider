@@ -15,6 +15,7 @@
     <property name="buildlibs" value="${root}/lib/" />
     <property name="endorsed" value="${root}/endorsed/" />
     <property name="distlibs" value="${root}/lib/" />
+    <property name="customlibs" value="${root}/custom/" />
     <property name="dist" value="${root}/dist/" />
     <property name="docs" value="${root}/doc/" />
     <property name="javadocs" value="${docs}/api/" />
@@ -29,6 +30,9 @@
     <path id="build.path">
         <pathelement path="${classpath}" />
         <pathelement location="${build}" />
+        <fileset dir="${customlibs}">
+            <include name="**/*.jar" />
+        </fileset>
         <fileset dir="${endorsed}">
             <include name="**/*.jar" />
         </fileset>
@@ -50,7 +54,7 @@
     <target name="init">
         <mkdir dir="${build}" />
         <mkdir dir="${dist}" />
-        <var file="build.properties" />
+        <property file="build.properties" />
     </target>
 
     <target name="install.init">
@@ -229,10 +233,13 @@
 	
     <!-- Install Shibboleth -->
     <target name="install" depends="init, install.init" description="Install Shibboleth">
-
         <if>
             <xinput type="confirm" defaultvalue="y">Do you want to install the Shibboleth Identity Provider?</xinput>
             <then>
+                <input message="What name do you want to use for the web application? [default: ${shib.webapp.name}]" 
+                    addproperty="shib.webapp.name.input" defaultValue="${shib.webapp.name}" />
+                <var name="shib.webapp.name" value="${shib.webapp.name.input}" />
+
                 <antcall target="install.idp" />
             </then>
         </if>
@@ -240,16 +247,16 @@
 
 	<target name="install.idp" depends="init, install.init">
         <xinput message="Deploying java web application.  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
-            addproperty="idp.install-type" type="menu" casesensitive="no">
+            addproperty="idp.install-type.input" type="menu" casesensitive="no" defaultValue="${idp.install-type}">
             <xoption>filesystem</xoption>
             <xoption>manager</xoption>
         </xinput>
+        <var name="idp.install-type" value="${idp.install-type.input}" />
         
         <antcall target="install.idp.${idp.install-type}" />
     </target>
 
     <target name="install.idp.filesystem" depends="init, install.init, build-util">
-        
         <input message="Enter Shibboleth install directory [default: ${shib.home}]"
             addproperty="shib.home.input" defaultvalue="${shib.home}" />
         <var name="shib.home" value="${shib.home.input}" />
@@ -261,13 +268,13 @@
         <copy file="${configroot}/idp.xml.dist" tofile="${configroot}/idp.xml" overwrite="true" />
         <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
-        <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${distname}.war" />
+        <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
 
         <if>
             <available file="${shib.home}" />
             <then>
                 <if>
-                    <xinput type="confirm">The directory `${shib.home}` already exists.  Do you want to overwrite the existing configuration?</xinput>
+                    <xinput type="confirm">WARNING!! The directory `${shib.home}/etc` already exists.  Do you want to overwrite the existing configuration?</xinput>
                     <then>
                         <delete dir="${shib.home}/etc" />
                         <antcall target="install.idp.filesystem.config" />
@@ -279,10 +286,15 @@
             </else>
         </if>
 
-        <copy file="lib/shib-util.jar" todir="${shib.home}/lib" />
+        <copy todir="${shib.home}/lib">
+            <fileset dir="lib" includesfile="conf/idp-lib.include" />
+        </copy>
+
         <copy todir="${shib.home}/bin">
             <fileset dir="bin"/>
         </copy>
+
+        <mkdir dir="${shib.home}/logs />
 
         <antcall target="savePropertyFile" />
     </target>
@@ -317,6 +329,8 @@
     <target name="savePropertyFile">
         <propertyfile file="build.properties">
             <entry key="shib.home" value="${shib.home}" />
+            <entry key="shib.webapp.name" value="${shib.webapp.name}" />
+            <entry key="idp.install-type" value="${idp.install-type}" />
             <entry key="tomcat.home" value="${tomcat.home}" />
             <entry key="tomcat.url" value="${tomcat.url}" />
             <entry key="tomcat.username" value="${tomcat.username}" />
