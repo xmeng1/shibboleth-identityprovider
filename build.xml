@@ -265,6 +265,7 @@
         <copy file="${configroot}/idp.xml.dist" tofile="${configroot}/idp.xml" overwrite="true" />
         <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
         <war warfile="${dist}/${distname}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
+		<delete file="${configroot}/idp.xml"/>
         <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
 
         <if>
