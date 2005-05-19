@@ -9,11 +9,7 @@ case "`uname`" in
 esac
 
 #Find the necessary resources
-if [ -n "$SHIB_HOME" ] ; then
-  ANT_HOME=$SHIB_HOME
-else
-  ANT_HOME=.
-fi
+ANT_HOME=.
 
 if [ -z "$JAVACMD" ] ; then 
   if [ -n "$JAVA_HOME"  ] ; then

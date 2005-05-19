@@ -2,11 +2,7 @@
 setlocal
 
 REM Find the necessary resources
-if defined SHIB_HOME (
-  set ANT_HOME=%SHIB_HOME%
-) else (
-  set ANT_HOME=.
-)
+set ANT_HOME=.
 
 REM We need a JVM
 if not defined JAVA_HOME  (
