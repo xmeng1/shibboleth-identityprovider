@@ -70,6 +70,7 @@ public class ResolverTest {
 	private static String resolverxml = null;
 	private static String idpXml = null;
 	private static String requester = null;
+	private static String responder = null;
 	private static String user = null;
 	private static String resource = null;
 	private static URL resourceUrl = null;
@@ -92,7 +93,7 @@ public class ResolverTest {
 
 		Principal principal = new LocalPrincipal(user);
 
-		resolver.resolveAttributes(principal, requester, attributeSet);
+		resolver.resolveAttributes(principal, requester, responder, attributeSet);
 
 		try {
 			if (arpEngine != null) {
@@ -113,6 +114,7 @@ public class ResolverTest {
 		CmdLineParser.Option idpXmlOption = parser.addStringOption('\u0000', "idpXml");
 		CmdLineParser.Option userOption = parser.addStringOption('u', "user");
 		CmdLineParser.Option requesterOption = parser.addStringOption('r', "requester");
+		CmdLineParser.Option responderOption = parser.addStringOption('i', "responder");
 		CmdLineParser.Option resolverxmlOption = parser.addStringOption('\u0000', "resolverxml");
 		CmdLineParser.Option fileOption = parser.addStringOption('f', "file"); // deprecated
 		CmdLineParser.Option resourceOption = parser.addStringOption('\u0000', "resource");
@@ -146,6 +148,7 @@ public class ResolverTest {
 
 		user = (String) parser.getOptionValue(userOption);
 		requester = (String) parser.getOptionValue(requesterOption);
+		responder = (String) parser.getOptionValue(responderOption);
 		resource = (String) parser.getOptionValue(resourceOption);
 
 		configureLogging(debug);
@@ -285,15 +288,16 @@ public class ResolverTest {
 		out.println("Options:");
 		out.println("  -h, --help                Print usage information");
 		out.println("  -d, --debug               Run in debug mode");
-		out.println("  --idpXml=FILEURL       URL of the IdP configuration file. Attributes");
-		out.println("                            will be filtered according to the Attribute Release");
-		out.println("                            Policy (ARP) specified in the configuration file");
+		out.println("  --idpXml=FILEURL          URL of the IdP configuration file. Attributes");
+		out.println("                              will be filtered according to the Attribute Release");
+		out.println("                              Policy (ARP) specified in the configuration file");
 		out.println("  --resolverxml=FILEURL     URL of the resolver configuration file. No ARP");
-		out.println("                            filtering will be done");
+		out.println("                              filtering will be done");
 		out.println("  --user=USER               User for whom attributes should be resolved");
-		out.println("  --requester=REQUESTER     Name of the requester (SHAR). Emulates");
-		out.println("                            unauthenticated requester if not specified");
+		out.println("  --requester=REQUESTER     Name of the requester (SP). Emulates");
+		out.println("                              unauthenticated requester if not specified");
+		out.println("  --responder=RESPONDER     Name of the responder (IdP).");
 		out.println("  --resource=URL            URL of the resource. Only attributes available");
-		out.println("                            to any resource will be returned if not specified");
+		out.println("                              to any resource will be returned if not specified");
 	}
 }

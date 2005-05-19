@@ -299,9 +299,10 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 	}
 
 	/**
-	 * See {@link DataConnectorPlugIn#resolve(Principal, String, Dependencies)}
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(java.security.Principal,
+	 *      java.lang.String, java.lang.String, edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
 	 */
-	public Attributes resolve(Principal principal, String requester, Dependencies depends)
+	public Attributes resolve(Principal principal, String requester, String responder, Dependencies depends)
 			throws ResolutionPlugInException {
 
 		InitialDirContext context = null;

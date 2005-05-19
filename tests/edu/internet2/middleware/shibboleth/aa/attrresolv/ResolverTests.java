@@ -96,7 +96,7 @@ public class ResolverTests extends TestCase {
 					"urn:mace:dir:attribute-def:eduPersonEntitlement",
 					new Object[]{"urn:mace:example.edu:exampleEntitlement"})});
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -128,7 +128,7 @@ public class ResolverTests extends TestCase {
 							new AAAttribute("foo", new Object[]{"bar@example.com"}, new ScopedStringValueHandler(
 									"example.edu"))});
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
 		} catch (AttributeResolverException e) {
@@ -204,7 +204,7 @@ public class ResolverTests extends TestCase {
 			AAAttributeSet outputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute("myAffiliation",
 					new Object[]{"member"})});
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
 		} catch (AttributeResolverException e) {
@@ -234,7 +234,7 @@ public class ResolverTests extends TestCase {
 					new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement",
 							new Object[]{"urn:mace:example.edu:exampleEntitlement"})});
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -260,7 +260,7 @@ public class ResolverTests extends TestCase {
 					"urn:mace:dir:attribute-def:eduPersonScopedAffiliation", new Object[]{"member@example.edu"},
 					new ScopedStringValueHandler("example.edu"))});
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -284,7 +284,7 @@ public class ResolverTests extends TestCase {
 
 			AAAttributeSet outputAttributes = new AAAttributeSet();
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -308,7 +308,7 @@ public class ResolverTests extends TestCase {
 
 			AAAttributeSet outputAttributes = new AAAttributeSet();
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 		} catch (ClassCastException e) {
@@ -339,7 +339,7 @@ public class ResolverTests extends TestCase {
 					new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member"}),
 					new AAAttribute("urn:mace:shibboleth:test:eduPersonAffiliation", new Object[]{"member"})});
 
-			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", inputAttributes);
+			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
 
@@ -378,7 +378,7 @@ public class ResolverTests extends TestCase {
 
 			// Read only the attribute names from the output file. The values are set by the resolver
 			ResolverAttributeSet attrsToBeResolved = attrFile.getResolverAttributes(false);
-			ar.resolveAttributes(new LocalPrincipal(principal), requester, attrsToBeResolved);
+			ar.resolveAttributes(new LocalPrincipal(principal), requester, null, attrsToBeResolved);
 
 			// Read the attribute names and values from the output file
 			ResolverAttributeSet expectedAttributes = attrFile.getResolverAttributes(true);

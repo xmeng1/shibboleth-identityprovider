@@ -77,7 +77,7 @@ public class FileConnector extends BaseResolutionPlugIn implements DataConnector
 	/**
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(Principal)
 	 */
-	public Attributes resolve(Principal principal, String requester, Dependencies depends) {
+	public Attributes resolve(Principal principal, String requester, String responder, Dependencies depends) {
 
 		log.debug("Resolving connector: (" + getId() + ")");
 		log.debug(getId() + " resolving for principal: (" + principal.getName() + ")");

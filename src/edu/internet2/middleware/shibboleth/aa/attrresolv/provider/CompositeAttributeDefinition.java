@@ -72,6 +72,9 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
  * @author <a href="mailto:vgoenka@sungardsct.com">Vishal Goenka </a>
  */
 
+/**
+ * @author Walter Hoehn
+ */
 public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition implements AttributeDefinitionPlugIn {
 
 	private static Logger log = Logger.getLogger(CompositeAttributeDefinition.class.getName());
@@ -211,12 +214,12 @@ public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition 
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(
-	 *      edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute, java.security.Principal, java.lang.String,
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute,
+	 *      java.security.Principal, java.lang.String, java.lang.String,
 	 *      edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
 	 */
-	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
-			throws ResolutionPlugInException {
+	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
+			Dependencies depends) throws ResolutionPlugInException {
 
 		// Collect attribute values from dependencies
 		BasicAttributes attributes = new BasicAttributes();

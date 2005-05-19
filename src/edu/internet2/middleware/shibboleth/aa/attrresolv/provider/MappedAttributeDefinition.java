@@ -61,13 +61,21 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
  * <pre>
  * 
  *  
- *        &lt;ValueMap value=&quot;affiliate&quot;  keyset=&quot;guest, prospect[a-z ]*, friends&quot;                        /&gt;
- *        &lt;ValueMap value=&quot;alum&quot;       keyset=&quot;alum, alumni&quot;                                           /&gt;
- *        &lt;ValueMap value=&quot;employee&quot;   keyset=&quot;employee&quot;                                               /&gt;
- *        &lt;ValueMap value=&quot;faculty&quot;    keyset=&quot;faculty&quot;                                                /&gt;
- *        &lt;ValueMap value=&quot;member&quot;     keyset=&quot;student, faculty, admin[a-z ]*, [a-z ]*admin, employee&quot; /&gt;
- *        &lt;ValueMap value=&quot;staff&quot;      keyset=&quot;admin[a-z ]*, [a-z ]*admin&quot;                             /&gt;
- *        &lt;ValueMap value=&quot;student&quot;    keyset=&quot;student&quot;                                                /&gt;
+ *   
+ *    
+ *     
+ *      
+ *            &lt;ValueMap value=&quot;affiliate&quot;  keyset=&quot;guest, prospect[a-z ]*, friends&quot;                        /&gt;
+ *            &lt;ValueMap value=&quot;alum&quot;       keyset=&quot;alum, alumni&quot;                                           /&gt;
+ *            &lt;ValueMap value=&quot;employee&quot;   keyset=&quot;employee&quot;                                               /&gt;
+ *            &lt;ValueMap value=&quot;faculty&quot;    keyset=&quot;faculty&quot;                                                /&gt;
+ *            &lt;ValueMap value=&quot;member&quot;     keyset=&quot;student, faculty, admin[a-z ]*, [a-z ]*admin, employee&quot; /&gt;
+ *            &lt;ValueMap value=&quot;staff&quot;      keyset=&quot;admin[a-z ]*, [a-z ]*admin&quot;                             /&gt;
+ *            &lt;ValueMap value=&quot;student&quot;    keyset=&quot;student&quot;                                                /&gt;
+ *       
+ *      
+ *     
+ *    
  *   
  *  
  * </pre>
@@ -142,12 +150,12 @@ public class MappedAttributeDefinition extends SimpleBaseAttributeDefinition imp
 	}
 
 	/**
-	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(
-	 *      edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute, java.security.Principal, java.lang.String,
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute,
+	 *      java.security.Principal, java.lang.String, java.lang.String,
 	 *      edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
 	 */
-	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
-			throws ResolutionPlugInException {
+	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
+			Dependencies depends) throws ResolutionPlugInException {
 
 		// Resolve all dependencies to arrive at the source values (unformatted)
 		Collection results = resolveDependencies(attribute, principal, requester, depends);

@@ -172,8 +172,8 @@ public class PersistentIDAttributeDefinition extends BaseAttributeDefinition imp
 	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn#resolve(edu.internet2.middleware.shibboleth.aa.attrresolv.ArpAttribute,
 	 *      java.security.Principal, java.lang.String, edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
 	 */
-	public void resolve(ResolverAttribute attribute, Principal principal, String requester, Dependencies depends)
-			throws ResolutionPlugInException {
+	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
+			Dependencies depends) throws ResolutionPlugInException {
 
 		log.debug("Resolving attribute: (" + getId() + ")");
 

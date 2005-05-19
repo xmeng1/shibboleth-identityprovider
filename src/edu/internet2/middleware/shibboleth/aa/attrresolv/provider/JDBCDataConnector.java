@@ -285,7 +285,11 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 		}
 	}
 
-	public Attributes resolve(Principal principal, String requester, Dependencies depends)
+	/**
+	 * @see edu.internet2.middleware.shibboleth.aa.attrresolv.DataConnectorPlugIn#resolve(java.security.Principal,
+	 *      java.lang.String, java.lang.String, edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies)
+	 */
+	public Attributes resolve(Principal principal, String requester, String responder, Dependencies depends)
 			throws ResolutionPlugInException {
 
 		log.debug("Resolving connector: (" + getId() + ")");
@@ -330,7 +334,7 @@ public class JDBCDataConnector extends BaseDataConnector implements DataConnecto
 		try {
 			preparedStatement = conn.prepareStatement(searchVal);
 			preparedStatement.clearParameters();
-			statementCreator.create(preparedStatement, principal, requester, depends);
+			statementCreator.create(preparedStatement, principal, requester, responder, depends);
 			rs = preparedStatement.executeQuery();
 			if (!rs.next()) {
 				if (minResultSet == 0) return new BasicAttributes();
@@ -611,8 +615,8 @@ class DefaultStatementCreator implements JDBCStatementCreator {
 
 	private static Logger log = Logger.getLogger(DefaultStatementCreator.class.getName());
 
-	public void create(PreparedStatement preparedStatement, Principal principal, String requester, Dependencies depends)
-			throws JDBCStatementCreatorException {
+	public void create(PreparedStatement preparedStatement, Principal principal, String requester, String responder,
+			Dependencies depends) throws JDBCStatementCreatorException {
 
 		log.debug("Creating prepared statement.  Substituting principal: (" + principal.getName() + ")");
 		// Tried using ParameterMetaData to determine param count, but it fails, so...
@@ -666,8 +670,8 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 		log.debug("Parameters configured: " + parameters.size());
 	}
 
-	public void create(PreparedStatement preparedStatement, Principal principal, String requester, Dependencies depends)
-			throws JDBCStatementCreatorException {
+	public void create(PreparedStatement preparedStatement, Principal principal, String requester, String responder,
+			Dependencies depends) throws JDBCStatementCreatorException {
 
 		try {
 			log.debug("Creating prepared statement.  Substituting values from dependencies.");

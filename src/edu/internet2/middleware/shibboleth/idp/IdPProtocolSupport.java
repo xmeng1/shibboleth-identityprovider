@@ -243,7 +243,8 @@ public class IdPProtocolSupport implements Metadata {
 				attributeSet.add(attribute);
 			}
 
-			return resolveAttributes(principal, requester, resource, attributeSet);
+			return resolveAttributes(principal, requester, relyingParty.getIdentityProvider().getProviderId(),
+					resource, attributeSet);
 
 		} catch (SAMLException e) {
 			log.error("An error occurred while creating attributes for principal (" + principal.getName() + ") :"
@@ -257,10 +258,10 @@ public class IdPProtocolSupport implements Metadata {
 		}
 	}
 
-	private SAMLAttribute[] resolveAttributes(Principal principal, String requester, URL resource,
+	private SAMLAttribute[] resolveAttributes(Principal principal, String requester, String responder, URL resource,
 			AAAttributeSet attributeSet) throws ArpProcessingException {
 
-		resolver.resolveAttributes(principal, requester, attributeSet);
+		resolver.resolveAttributes(principal, requester, responder, attributeSet);
 		arpEngine.filterAttributes(attributeSet, principal, requester, resource);
 		return attributeSet.getAttributes();
 	}
