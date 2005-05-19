@@ -83,7 +83,7 @@
 
         <!-- Metadata consists of site/operational metadata, trust, revocation providers. Can be external or inline. -->
         <FederationProvider type="edu.internet2.middleware.shibboleth.common.provider.XMLMetadata"
-            uri="/conf/ExampleMetadata.xml"/>
+            uri="/conf/example-sites.xml"/>
 
 
         <!-- zero or more SAML Audience condition matches -->
@@ -97,10 +97,10 @@
         <Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
             <FileResolver Id="defcreds">
                 <Key format="PEM">
-                    <Path>/conf/localhost.key</Path>
+                    <Path>/conf/sp-example.key</Path>
                 </Key>
                 <Certificate format="PEM">
-                    <Path>/conf/localhost.crt</Path>
+                    <Path>/conf/sp-example.crt</Path>
                 </Certificate>
             </FileResolver>
         </Credentials>
