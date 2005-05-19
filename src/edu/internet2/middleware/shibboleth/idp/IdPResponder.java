@@ -108,12 +108,15 @@ public class IdPResponder extends HttpServlet {
 				} else {
 					Element loggingConfig = (Element) itemElements.item(0);
 					LoggingInitializer.initializeLogging(loggingConfig);
-					transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
-					log = Logger.getLogger(IdPResponder.class);
-					MDC.put("serviceId", "[IdP] Core");
-					log.info("Initializing Identity Provider.");
 				}
+			} else {
+				LoggingInitializer.initializeLogging();
 			}
+
+			transactionLog = Logger.getLogger("Shibboleth-TRANSACTION");
+			log = Logger.getLogger(IdPResponder.class);
+			MDC.put("serviceId", "[IdP] Core");
+			log.info("Initializing Identity Provider.");
 
 			// Load global configuration properties
 			configuration = new IdPConfig(idPConfig.getDocumentElement());
@@ -285,7 +288,7 @@ public class IdPResponder extends HttpServlet {
 		SAMLRequest samlRequest = null;
 		try {
 			try {
-				samlRequest = binding.receive(request,1);
+				samlRequest = binding.receive(request, 1);
 			} catch (SAMLException e) {
 				log.fatal("Unable to parse request: " + e);
 				throw new SAMLException("Invalid request data.");

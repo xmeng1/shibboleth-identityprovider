@@ -28,6 +28,7 @@ package edu.internet2.middleware.shibboleth.log;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.DailyRollingFileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -97,6 +98,8 @@ public class LoggingInitializer {
 			}
 			Element txLogConfig = (Element) txLogElems.item(0);
 			configureTransactionLog(txLogConfig);
+		} else {
+			configureTransactionLog();
 		}
 
 		NodeList sysLogElems = configuration.getElementsByTagNameNS(IdPConfig.configNameSpace, "ErrorLog");
@@ -107,6 +110,8 @@ public class LoggingInitializer {
 			}
 			Element sysLogConfig = (Element) sysLogElems.item(0);
 			configureSystemLog(sysLogConfig);
+		} else {
+			configureSystemLog();
 		}
 
 		NodeList log4jElems = configuration.getElementsByTagNameNS(IdPConfig.configNameSpace, "Log4JConfig");
@@ -118,6 +123,30 @@ public class LoggingInitializer {
 			Element log4jConfig = (Element) log4jElems.item(0);
 			configureLog4J(log4jConfig);
 		}
+	}
+
+	/**
+	 * Initialize the logs for the Shibboleth-TRANSACTION log, edu.internet2.middleware.shibboleth, and org.opensaml
+	 * logs. Output is directed to the standard out with the the transaction log at INFO level and the remainder at
+	 * warn.
+	 */
+	public static void initializeLogging() {
+
+		configureTransactionLog();
+		configureSystemLog();
+	}
+
+	/**
+	 * Configured the transaction log to log to the console at INFO level.
+	 */
+	private static void configureTransactionLog() {
+
+		ConsoleAppender appender = new ConsoleAppender(new PatternLayout(txLogLayoutPattern),
+				ConsoleAppender.SYSTEM_OUT);
+		Logger log = Logger.getLogger("Shibboleth-TRANSACTION");
+		log.setAdditivity(false); // do not want parent's messages
+		log.setLevel(Level.INFO);
+		log.addAppender(appender);
 	}
 
 	/**
@@ -157,6 +186,23 @@ public class LoggingInitializer {
 		log.setAdditivity(false); // do not want parent's messages
 		log.setLevel(level);
 		log.addAppender(appender);
+	}
+
+	/**
+	 * Configures the standard system log to log messages from edu.internet2.middleware.shibboleth and org.opensaml to
+	 * the console at WARN level.
+	 */
+	private static void configureSystemLog() {
+
+		ConsoleAppender appender = new ConsoleAppender(new PatternLayout(sysLogLayoutPattern),
+				ConsoleAppender.SYSTEM_OUT);
+		Logger shibLog = Logger.getLogger("edu.internet2.middleware.shibboleth");
+		shibLog.setLevel(Level.WARN);
+		shibLog.addAppender(appender);
+
+		Logger openSAMLLog = Logger.getLogger("org.opensaml");
+		openSAMLLog.setLevel(Level.WARN);
+		openSAMLLog.addAppender(appender);
 	}
 
 	/**
