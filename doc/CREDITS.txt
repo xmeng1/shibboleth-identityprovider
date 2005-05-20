@@ -15,6 +15,10 @@ Shibboleth Implementation Team
    Scott Cantor
    The Ohio State University
    cantor.2@osu.edu
+   
+   Howard Gilbert
+   Yale University
+   Howard.Gilbert@yale.edu
 
    Walter Hoehn
    The University of Memphis
