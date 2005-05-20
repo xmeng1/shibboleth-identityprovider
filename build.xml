@@ -291,6 +291,7 @@
         <copy todir="${shib.home}/bin">
             <fileset dir="bin"/>
         </copy>
+		<chmod dir="${shib.home}/bin" perm="ug+rx" includes="**/*"/>
 
         <mkdir dir="${shib.home}/logs" />
 
