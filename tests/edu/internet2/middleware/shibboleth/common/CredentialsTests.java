@@ -1,38 +1,17 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
- * following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
- * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
- * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
- * software itself, if and wherever such third-party acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
- * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
- * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
- * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
- * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package edu.internet2.middleware.shibboleth.common;
@@ -59,6 +38,7 @@ public class CredentialsTests extends TestCase {
 	private Parser.DOMParser parser = new Parser.DOMParser(true);
 
 	public CredentialsTests(String name) {
+
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
@@ -66,6 +46,7 @@ public class CredentialsTests extends TestCase {
 	}
 
 	public static void main(String[] args) {
+
 		junit.textui.TestRunner.run(CredentialsTests.class);
 		BasicConfigurator.configure();
 		Logger.getRootLogger().setLevel(Level.OFF);
@@ -75,6 +56,7 @@ public class CredentialsTests extends TestCase {
 	 * @see junit.framework.TestCase#setUp()
 	 */
 	protected void setUp() throws Exception {
+
 		super.setUp();
 	}
 
@@ -88,26 +70,22 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[1].getSubjectDN().getName(),
+					"CN=HEPKI Server CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[1].getSubjectDN().getName(),
-				"CN=HEPKI Server CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -123,18 +101,14 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(1));
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(1));
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -150,27 +124,23 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(2));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(2));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[1].getSubjectDN().getName(),
-				"CN=HEPKI Server CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[1].getSubjectDN().getName(),
+					"CN=HEPKI Server CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
 	}
-	
+
 	public void testFileX509RSANoCert() {
 
 		try {
@@ -181,18 +151,12 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.hasX509Certificate(),
-				false);
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(0));
+			assertEquals("Unexpected X509 certificate found.", credential.hasX509Certificate(), false);
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(0));
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -208,22 +172,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -239,22 +199,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -270,22 +226,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -301,22 +253,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -332,22 +280,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -363,22 +307,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -394,18 +334,14 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.DSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(1));
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(1));
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -421,18 +357,14 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.DSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(1));
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(1));
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -448,18 +380,14 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.DSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(1));
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(1));
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -475,22 +403,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -506,22 +430,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -537,22 +457,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -568,22 +484,18 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.RSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.RSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(3));
 			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=shib2.internet2.edu, OU=Unknown, O=Unknown, ST=Unknown, C=Unknown");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(3));
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509CertificateChain()[2].getSubjectDN().getName(),
-				"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
+					"Unexpected X509 certificate found.",
+					credential.getX509CertificateChain()[2].getSubjectDN().getName(),
+					"CN=HEPKI Master CA -- 20020701A, OU=Division of Information Technology, O=University of Wisconsin, L=Madison, ST=Wisconsin, C=US");
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
@@ -599,18 +511,14 @@ public class CredentialsTests extends TestCase {
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
-			assertTrue(
-				"Credential was loaded with an incorrect type.",
-				credential.getCredentialType() == Credential.DSA);
+			assertTrue("Credential was loaded with an incorrect type.",
+					credential.getCredentialType() == Credential.DSA);
 			assertNotNull("Private key was not loaded correctly.", credential.getPrivateKey());
-			assertEquals(
-				"Unexpected X509 certificate found.",
-				credential.getX509Certificate().getSubjectDN().getName(),
-				"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
-			assertEquals(
-				"Unexpected certificate chain length.",
-				new Integer(credential.getX509CertificateChain().length),
-				new Integer(1));
+			assertEquals("Unexpected X509 certificate found.",
+					credential.getX509Certificate().getSubjectDN().getName(),
+					"CN=test.columbia.edu, OU=ACIS, O=Columbia University, L=New York, ST=NY, C=US");
+			assertEquals("Unexpected certificate chain length.", new Integer(
+					credential.getX509CertificateChain().length), new Integer(1));
 		} catch (Exception e) {
 			fail("Failed to load credentials: " + e);
 		}
