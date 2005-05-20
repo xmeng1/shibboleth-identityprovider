@@ -77,8 +77,6 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
-		// TODO how about pass thruu errors on artifact dereferencing
-
 		log.info("Recieved a request to dereference assertion artifacts.");
 
 		// Pull credential from request
@@ -134,7 +132,8 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 				}
 
 				// Make sure that the suppplied credential is valid for the provider to which the artifact was issued
-                X509Certificate[] chain = (X509Certificate[])request.getAttribute("javax.servlet.request.X509Certificate");
+				X509Certificate[] chain = (X509Certificate[]) request
+						.getAttribute("javax.servlet.request.X509Certificate");
 				if (!support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, role)) {
 					log.error("Supplied credential ("
 							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
