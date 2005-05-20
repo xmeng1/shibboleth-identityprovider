@@ -34,15 +34,19 @@ import java.security.Principal;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 
 import javax.crypto.SecretKey;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Base64;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -53,6 +57,8 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
+import edu.internet2.middleware.shibboleth.common.XML;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * <code>AttributeDefinition</code> implementation that provides a persistent, but pseudonymous, identifier for
@@ -248,18 +254,23 @@ public class SAML2PersistentID extends BaseAttributeDefinition implements Attrib
 			md.update((byte) '!');
 			String result = new String(Base64.encode(md.digest(salt)));
 
-			// :-/ String-ified SAML2 persistent NameId format
-			StringBuffer id = new StringBuffer();
-			id.append("<saml2:NameID Format=\"urn:oasis:names:tc:SAML:2.0:nameid-format:persistent\" NameQualifier=\"");
-			id.append(responder);
-			id.append("\" SPNameQualifier=\"");
-			id.append(requester);
-			id.append("\" >");
-			id.append(result.replaceAll(System.getProperty("line.separator"), ""));
-			id.append("</saml2:NameID>");
+			// SAML2 persistent NameId format
+			try {
+				Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				Element nameIDNode = placeHolder.createElementNS(XML.SAML2ASSERT_NS, "NameID");
+				nameIDNode.setAttribute("Format", "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
+				nameIDNode.setAttribute("NameQualifier", responder);
+				nameIDNode.setAttribute("SPNameQualifier", requester);
+				nameIDNode.appendChild(placeHolder.createTextNode(result.replaceAll(System
+						.getProperty("line.separator"), "")));
 
-			attribute.addValue(id.toString());
-			attribute.setResolved();
+				attribute.addValue(nameIDNode);
+				attribute.registerValueHandler(new DOMValueHandler());
+				attribute.setResolved();
+			} catch (ParserConfigurationException pce) {
+				log.error("Unable to create DOM for persistent ID: " + pce);
+				throw new ResolutionPlugInException("Error generating persistent ID.");
+			}
 
 		} catch (NoSuchAlgorithmException e) {
 			log.error("Unable to load SHA-1 hash algorithm.");
@@ -274,5 +285,50 @@ public class SAML2PersistentID extends BaseAttributeDefinition implements Attrib
 				(byte) 0x20, (byte) 0x15, (byte) 0xC7, (byte) 0x49, (byte) 0x80, (byte) 0xD3, (byte) 0x02, (byte) 0x4A,
 				(byte) 0x61, (byte) 0xEF};
 		return Arrays.equals(defaultKey, salt);
+	}
+
+	class DOMValueHandler implements ValueHandler {
+
+		public void toDOM(Element valueElement, Object value, Document document) {
+
+			valueElement.appendChild(document.importNode((Node) value, true));
+		}
+
+		public Iterator getValues(Collection internalValues) {
+
+			return new SerializationIterator(internalValues.iterator());
+		}
+
+		public boolean equals(Object object) {
+
+			if (object instanceof DOMValueHandler) { return true; }
+			return false;
+		}
+
+		private class SerializationIterator implements Iterator {
+
+			Iterator wrapped;
+
+			SerializationIterator(Iterator i) {
+
+				wrapped = i;
+			}
+
+			public boolean hasNext() {
+
+				return wrapped.hasNext();
+			}
+
+			public Object next() {
+
+				return Parser.serialize(((Element) wrapped.next()));
+			}
+
+			public void remove() {
+
+				wrapped.remove();
+			}
+
+		}
 	}
 }
