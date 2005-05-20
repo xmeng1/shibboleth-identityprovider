@@ -241,9 +241,7 @@ public class SAML2PersistentID extends BaseAttributeDefinition implements Attrib
 			return;
 		}
 
-		if (lifeTime != -1) {
-			attribute.setLifetime(lifeTime);
-		}
+		standardProcessing(attribute);
 
 		// Hash the data together to produce the persistent ID.
 		try {

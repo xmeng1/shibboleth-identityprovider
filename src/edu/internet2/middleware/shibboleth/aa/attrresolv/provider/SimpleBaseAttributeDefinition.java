@@ -110,6 +110,7 @@ abstract class SimpleBaseAttributeDefinition extends BaseAttributeDefinition imp
 			Dependencies depends) throws ResolutionPlugInException {
 
 		log.debug("Resolving attribute: (" + getId() + ")");
+
 		Set results = new LinkedHashSet();
 		if (!connectorDependencyIds.isEmpty()) {
 			results.addAll(Arrays.asList(getValuesFromConnectors(depends)));
@@ -117,10 +118,6 @@ abstract class SimpleBaseAttributeDefinition extends BaseAttributeDefinition imp
 
 		if (!attributeDependencyIds.isEmpty()) {
 			results.addAll(Arrays.asList(getValuesFromAttributes(depends)));
-		}
-
-		if (lifeTime != -1) {
-			attribute.setLifetime(lifeTime);
 		}
 
 		if (valueHandler != null) {

@@ -75,6 +75,7 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(E_AuthSSOHandler.class.getName());
 	private final static String E_AUTH_NAMEID = "urn:oasis:names:tc:SAML:1.0:assertion#X509SubjectName";
+	private final static String E_AUTH_ATTR_NAMESPACE = "http://eauthentication.gsa.gov/federated/attribute";
 	private String eAuthPortal = "http://eauth.firstgov.gov/service/select";
 	private String eAuthError = "http://eauth.firstgov.gov/service/error";
 	private String csid;
@@ -352,13 +353,11 @@ public class E_AuthSSOHandler extends SSOHandler implements IdPProtocolHandler {
 			log.error("The attribute resolver did not return a (commonName) attribute, "
 					+ " which is required for the E-Authentication profile.");
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
-		} else {
-			// This namespace is required by the eAuth profile
-			commonName.setNamespace("http://eauthentication.gsa.gov/federated/attribute");
-			// TODO Maybe the resolver should set this
+		} else if (!E_AUTH_ATTR_NAMESPACE.equals(commonName.getNamespace())) {
+			log.warn("The (commonName) attribute seems to have an incorrect namespace set.  It should be ("
+					+ E_AUTH_ATTR_NAMESPACE + "), but it is currently set to " + commonName.getNamespace() + ").");
 		}
-		writeable.add(new SAMLAttribute("csid", "http://eauthentication.gsa.gov/federated/attribute", null, 0, Arrays
-				.asList(new String[]{csid})));
+		writeable.add(new SAMLAttribute("csid", E_AUTH_ATTR_NAMESPACE, null, 0, Arrays.asList(new String[]{csid})));
 
 		// Pull assurance level from the resolver, if it is available
 		// If it isn't, use the handler default

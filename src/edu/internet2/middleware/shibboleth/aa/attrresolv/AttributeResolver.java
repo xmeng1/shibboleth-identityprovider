@@ -568,6 +568,10 @@ public class AttributeResolver {
 		public void setLifetime(long lifetime) {
 
 		}
+		
+		public void setNamespace(String namespace) {
+			
+		}
 
 		public long getLifetime() {
 

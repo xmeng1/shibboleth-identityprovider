@@ -54,8 +54,6 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	private static Logger log = Logger.getLogger(AAAttribute.class.getName());
 	private boolean resolved = false;
 
-	public final static String SHIB_ATTRIBUTE_NAMESPACE_URI = "urn:mace:shibboleth:1.0:attributeNamespace:uri";
-
 	/** Default lifetime, in seconds * */
 	private static long defaultLifetime = 1800; // 30 minutes
 	private ValueHandler valueHandler = new StringValueHandler();
@@ -72,7 +70,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	 */
 	public AAAttribute(String name, boolean legacyCompat) throws SAMLException {
 
-		super(name, SHIB_ATTRIBUTE_NAMESPACE_URI, legacyCompat ? new QName("urn:mace:shibboleth:1.0",
+		super(name, null, legacyCompat ? new QName("urn:mace:shibboleth:1.0",
 				"AttributeValueType") : null, defaultLifetime, null);
 	}
 
@@ -86,7 +84,7 @@ public class AAAttribute extends SAMLAttribute implements ResolverAttribute, Arp
 	 */
 	public AAAttribute(String name) throws SAMLException {
 
-		super(name, SHIB_ATTRIBUTE_NAMESPACE_URI, null, defaultLifetime, null);
+		super(name, null, null, defaultLifetime, null);
 	}
 
 	public AAAttribute(String name, Object[] values) throws SAMLException {

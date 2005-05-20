@@ -159,9 +159,7 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 			results.addAll(Arrays.asList(getValuesFromAttributes(depends)));
 		}
 
-		if (lifeTime != -1) {
-			attribute.setLifetime(lifeTime);
-		}
+		standardProcessing(attribute);
 
 		if (smartScope != null) {
 			attribute.registerValueHandler(new ScopedStringValueHandler(smartScope));

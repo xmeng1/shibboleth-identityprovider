@@ -119,6 +119,8 @@ public class RegExAttributeDefinition extends SimpleBaseAttributeDefinition impl
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
 			Dependencies depends) throws ResolutionPlugInException {
 
+		standardProcessing(attribute);
+
 		// Resolve all dependencies to arrive at the source values (unformatted)
 		Collection results = resolveDependencies(attribute, principal, requester, depends);
 

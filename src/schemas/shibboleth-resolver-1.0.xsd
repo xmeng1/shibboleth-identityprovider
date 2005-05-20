@@ -249,6 +249,7 @@
 		<xs:complexContent>
 			<xs:extension base="resolver:BaseResolutionPlugIn">
 				<xs:attribute name="lifeTime" type="xs:long" use="optional"/>
+				<xs:attribute name="namespace" type="xs:string" use="optional"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>

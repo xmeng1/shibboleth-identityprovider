@@ -258,9 +258,8 @@ public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition 
 				throw new ResolutionPlugInException(err.toString());
 			}
 		}
-		if (lifeTime != -1) {
-			attribute.setLifetime(lifeTime);
-		}
+
+		standardProcessing(attribute);
 
 		if (valueHandler != null) {
 			attribute.registerValueHandler(valueHandler);

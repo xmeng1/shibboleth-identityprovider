@@ -45,6 +45,7 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 
 	private static Logger log = Logger.getLogger(CustomAttributeDefinition.class.getName());
 	private AttributeDefinitionPlugIn custom;
+	private String namespace = BaseAttributeDefinition.SHIB_ATTRIBUTE_NAMESPACE_URI;
 
 	/** The time, in seconds, for which attribute created from this definition should be valid. */
 	protected long lifeTime = -1;
@@ -82,6 +83,11 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 				log.error("Bad value for attribute (lifeTime) for Attribute Definition (" + getId() + ").");
 			}
 		}
+
+		String namespaceSpec = e.getAttribute("namespace");
+		if (namespaceSpec != null && !namespaceSpec.equals("")) {
+			namespace = namespaceSpec;
+		}
 	}
 
 	/**
@@ -96,6 +102,7 @@ public class CustomAttributeDefinition implements ResolutionPlugIn, AttributeDef
 		if (lifeTime != -1) {
 			attribute.setLifetime(lifeTime);
 		}
+		attribute.setNamespace(namespace);
 	}
 
 	/**

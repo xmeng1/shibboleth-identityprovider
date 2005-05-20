@@ -240,9 +240,7 @@ public class PersistentIDAttributeDefinition extends BaseAttributeDefinition imp
 			return;
 		}
 
-		if (lifeTime != -1) {
-			attribute.setLifetime(lifeTime);
-		}
+		standardProcessing(attribute);
 
 		// Hash the data together to produce the persistent ID.
 		try {
