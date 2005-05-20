@@ -90,12 +90,16 @@ public class IdPConfigLoader {
 
 		try {
 			idpConfig = Parser.loadDom(configFileLocation, true);
+
+			if (idpConfig == null) { throw new Exception("IdP configuration could not be loaded from (" + idpConfigFile
+					+ ")."); }
+
 			if (log.isDebugEnabled()) {
 				log.debug("IdP configuration file " + configFileLocation + " successfully read and cached.");
 			}
 		} catch (Exception e) {
-			log.error("Encountered an error while parsing Shibboleth Identity Provider configuration file: " + e);
-			throw new ShibbolethConfigurationException("Unable to parse IdP configuration file.");
+			throw new ShibbolethConfigurationException(
+					"Encountered an error while parsing Shibboleth Identity Provider configuration file: " + e);
 		}
 		return idpConfig;
 	}

@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.Random;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
@@ -89,9 +90,9 @@ public class IdPResponder extends HttpServlet {
 	/*
 	 * @see javax.servlet.GenericServlet#init()
 	 */
-	public void init() throws ServletException {
+	public void init(ServletConfig servletConfig) throws ServletException {
 
-		super.init();
+		super.init(servletConfig);
 
 		try {
 			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
@@ -103,8 +104,8 @@ public class IdPResponder extends HttpServlet {
 					"Logging");
 			if (itemElements.getLength() > 0) {
 				if (itemElements.getLength() > 1) {
-					System.err
-							.println("WARNING: More than one Logging element in IdP configuration, using the first one.");
+					System.err.println("WARNING: More than one Logging element in IdP configuration, "
+							+ "using the first one.");
 				} else {
 					Element loggingConfig = (Element) itemElements.item(0);
 					LoggingInitializer.initializeLogging(loggingConfig);
@@ -239,7 +240,10 @@ public class IdPResponder extends HttpServlet {
 			log.info("Identity Provider initialization complete.");
 
 		} catch (ShibbolethConfigurationException ae) {
-			log.fatal("The Identity Provider could not be initialized: " + ae);
+			servletConfig.getServletContext().log("The Identity Provider could not be initialized: " + ae);
+			if (log != null) {
+				log.fatal("The Identity Provider could not be initialized: " + ae);
+			}
 			throw new UnavailableException("Identity Provider failed to initialize.");
 		} catch (SAMLException se) {
 			log.fatal("SAML SOAP binding could not be loaded: " + se);
