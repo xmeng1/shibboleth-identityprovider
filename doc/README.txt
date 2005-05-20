@@ -48,3 +48,6 @@ of Canada.
 
 This product includes software developed by The Bitzi Corporation.
 
+This project includes software developed by The Legion Of The Bouncy 
+Castle. (http://www.bouncycastle.org)
+
