@@ -1,38 +1,17 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
- * following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
- * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
- * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
- * software itself, if and wherever such third-party acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
- * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
- * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
- * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
- * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package edu.internet2.middleware.shibboleth.aa.arp;
@@ -74,19 +53,19 @@ public class ArpEngine {
 	private ArpRepository repository;
 	private static Map matchFunctions = Collections.synchronizedMap(new HashMap());
 	static {
-		//Initialize built-in match functions
+		// Initialize built-in match functions
 		try {
-			
+
 			// Current
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:regexMatch"),
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexMatchFunction");
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:regexNotMatch"),
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexNotMatchFunction");
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.RegexNotMatchFunction");
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch"),
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringNotMatch"),
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueNotMatchFunction");
-			
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueNotMatchFunction");
+
 			// Legacy
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"),
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
@@ -94,7 +73,7 @@ public class ArpEngine {
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.ResourceTreeMatchFunction");
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"),
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
-			
+
 		} catch (URISyntaxException e) {
 			log.error("Error mapping standard match functions: " + e);
 		}
@@ -108,16 +87,13 @@ public class ArpEngine {
 	 */
 	public ArpEngine(Element config) throws ArpException {
 
-		if (!config.getLocalName().equals("ReleasePolicyEngine")) {
-			throw new IllegalArgumentException();
-		}
+		if (!config.getLocalName().equals("ReleasePolicyEngine")) { throw new IllegalArgumentException(); }
 
-		NodeList itemElements =
-			config.getElementsByTagNameNS(IdPConfig.configNameSpace, "ArpRepository");
+		NodeList itemElements = config.getElementsByTagNameNS(IdPConfig.configNameSpace, "ArpRepository");
 
 		if (itemElements.getLength() > 1) {
-			log.warn(
-				"Encountered multiple <ArpRepository> configuration elements.  Arp Engine currently only supports one.  Using first...");
+			log
+					.warn("Encountered multiple <ArpRepository> configuration elements.  Arp Engine currently only supports one.  Using first...");
 		}
 
 		if (itemElements.getLength() == 0) {
@@ -134,6 +110,7 @@ public class ArpEngine {
 	}
 
 	public ArpEngine(ArpRepository preLoadedRepository) throws ArpException {
+
 		repository = preLoadedRepository;
 	}
 
@@ -151,12 +128,9 @@ public class ArpEngine {
 		try {
 			placeHolder = docFactory.newDocumentBuilder().newDocument();
 
-			Element defRepository =
-				placeHolder.createElementNS(IdPConfig.configNameSpace, "ArpRepository");
-			defRepository.setAttributeNS(
-				IdPConfig.configNameSpace,
-				"implementation",
-				"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
+			Element defRepository = placeHolder.createElementNS(IdPConfig.configNameSpace, "ArpRepository");
+			defRepository.setAttributeNS(IdPConfig.configNameSpace, "implementation",
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository");
 
 			Element path = placeHolder.createElementNS(IdPConfig.configNameSpace, "Path");
 			Text text = placeHolder.createTextNode("/conf/arps/");
@@ -176,15 +150,14 @@ public class ArpEngine {
 	}
 
 	public static MatchFunction lookupMatchFunction(URI functionIdentifier) throws ArpException {
+
 		String className = null;
 
 		synchronized (matchFunctions) {
 			className = (String) matchFunctions.get(functionIdentifier);
 		}
 
-		if (className == null) {
-			return null;
-		}
+		if (className == null) { return null; }
 		try {
 			Class matchFunction = Class.forName(className);
 			Object functionObject = matchFunction.newInstance();
@@ -192,8 +165,8 @@ public class ArpEngine {
 				return (MatchFunction) functionObject;
 			} else {
 				log.error("Improperly specified match function, (" + className + ") is not a match function.");
-				throw new ArpException(
-					"Improperly specified match function, (" + className + ") is not a match function.");
+				throw new ArpException("Improperly specified match function, (" + className
+						+ ") is not a match function.");
 			}
 		} catch (Exception e) {
 			log.error("Could not load Match Function: (" + className + "): " + e);
@@ -202,6 +175,7 @@ public class ArpEngine {
 	}
 
 	private Arp createEffectiveArp(Principal principal, String requester, URL resource) throws ArpProcessingException {
+
 		try {
 			Arp effectiveArp = new Arp(principal);
 			effectiveArp.setDescription("Effective ARP.");
@@ -212,12 +186,12 @@ public class ArpEngine {
 				log.debug("Creating effective ARP from (" + userPolicies.length + ") polic(y|ies).");
 				try {
 					for (int i = 0; userPolicies.length > i; i++) {
-						String dump=Parser.serialize(userPolicies[i].unmarshall());
+						String dump = Parser.serialize(userPolicies[i].unmarshall());
 						log.debug("Dumping ARP:" + System.getProperty("line.separator") + dump);
 					}
 				} catch (Exception e) {
-					log.error(
-						"Encountered a strange error while writing ARP debug messages.  This should never happen.");
+					log
+							.error("Encountered a strange error while writing ARP debug messages.  This should never happen.");
 				}
 			}
 
@@ -237,14 +211,15 @@ public class ArpEngine {
 	}
 
 	/**
-	 * Determines which attributes MIGHT be releasable for a given request. This function may be used to determine
-	 * which attributes to resolve when a request for all attributes is made. This is done for performance reasons
-	 * only. ie: The resulting attributes must still be filtered before release.
+	 * Determines which attributes MIGHT be releasable for a given request. This function may be used to determine which
+	 * attributes to resolve when a request for all attributes is made. This is done for performance reasons only. ie:
+	 * The resulting attributes must still be filtered before release.
 	 * 
 	 * @return an array of <code>URI</code> objects that name the possible attributes
 	 */
 	public URI[] listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
-		throws ArpProcessingException {
+			throws ArpProcessingException {
+
 		Set possibleReleaseSet = new HashSet();
 		Set anyValueDenies = new HashSet();
 		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
@@ -283,7 +258,7 @@ public class ArpEngine {
 	 * @return the attributes to be released
 	 */
 	public void filterAttributes(ArpAttributeSet attributes, Principal principal, String requester, URL resource)
-		throws ArpProcessingException {
+			throws ArpProcessingException {
 
 		ArpAttributeIterator iterator = attributes.arpAttributeIterator();
 		if (!iterator.hasNext()) {
@@ -299,7 +274,7 @@ public class ArpEngine {
 			}
 		}
 
-		//Gather all applicable ARP attribute specifiers
+		// Gather all applicable ARP attribute specifiers
 		Set attributeNames = new HashSet();
 		for (ArpAttributeIterator nameIterator = attributes.arpAttributeIterator(); nameIterator.hasNext();) {
 			attributeNames.add(nameIterator.nextArpAttribute().getName());
@@ -315,34 +290,34 @@ public class ArpEngine {
 			}
 		}
 
-		//Canonicalize specifiers
-		Map arpAttributeSpecs =
-			createCanonicalAttributeSpec((Rule.Attribute[]) applicableRuleAttributes.toArray(new Rule.Attribute[0]));
+		// Canonicalize specifiers
+		Map arpAttributeSpecs = createCanonicalAttributeSpec((Rule.Attribute[]) applicableRuleAttributes
+				.toArray(new Rule.Attribute[0]));
 
-		//Filter
+		// Filter
 		for (ArpAttributeIterator returnIterator = attributes.arpAttributeIterator(); returnIterator.hasNext();) {
 
 			ArpAttribute arpAttribute = returnIterator.nextArpAttribute();
 			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(arpAttribute.getName());
 
-			//Handle no specifier
+			// Handle no specifier
 			if (attribute == null) {
 				returnIterator.remove();
 				continue;
 			}
 
-			//Handle Deny All
+			// Handle Deny All
 			if (attribute.denyAnyValue()) {
 				returnIterator.remove();
 				continue;
 			}
 
-			//Handle Permit All
+			// Handle Permit All
 			if (attribute.releaseAnyValue() && attribute.getValues().length == 0) {
 				continue;
 			}
 
-			//Handle "Permit All-Except" and "Permit Specific"
+			// Handle "Permit All-Except" and "Permit Specific"
 			ArrayList releaseValues = new ArrayList();
 			for (Iterator valueIterator = arpAttribute.getValues(); valueIterator.hasNext();) {
 				Object value = valueIterator.next();
@@ -361,6 +336,7 @@ public class ArpEngine {
 	}
 
 	private Map createCanonicalAttributeSpec(Rule.Attribute[] attributes) {
+
 		Map canonicalSpec = new HashMap();
 		for (int i = 0; attributes.length > i; i++) {
 			if (!canonicalSpec.containsKey(attributes[i].getName().toString())) {
@@ -389,6 +365,7 @@ public class ArpEngine {
 	 * Cleanup resources that won't be released when this object is garbage-collected
 	 */
 	public void destroy() {
+
 		repository.destroy();
 	}
 

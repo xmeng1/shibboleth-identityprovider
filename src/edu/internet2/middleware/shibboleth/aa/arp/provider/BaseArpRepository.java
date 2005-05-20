@@ -1,27 +1,17 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
- * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
- * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
- * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu> Internet2
- * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
- * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
- * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
- * products derived from this software without specific prior written permission. For written permission, please
- * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
- * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
- * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
- * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
- * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
- * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
- * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package edu.internet2.middleware.shibboleth.aa.arp.provider;
@@ -51,8 +41,8 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 
 public abstract class BaseArpRepository implements ArpRepository {
 
-	private static Logger	log	= Logger.getLogger(BaseArpRepository.class.getName());
-	private ArpCache		arpCache;
+	private static Logger log = Logger.getLogger(BaseArpRepository.class.getName());
+	private ArpCache arpCache;
 
 	BaseArpRepository(Element config) throws ArpRepositoryException {
 
@@ -78,6 +68,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 	 */
 
 	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
+
 		log.debug("Received a query for all policies applicable to principal: (" + principal.getName() + ").");
 		Set allPolicies = new HashSet();
 		Arp sitePolicy = getSitePolicy();
@@ -112,9 +103,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 			}
 
 			Element xml = retrieveSiteArpXml();
-			if (xml == null) {
-				return null;
-			}
+			if (xml == null) { return null; }
 
 			Arp siteArp = new Arp();
 			siteArp.marshall(xml);
@@ -142,6 +131,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 	protected abstract Element retrieveSiteArpXml() throws IOException, SAXException;
 
 	public void destroy() {
+
 		if (arpCache != null) {
 			arpCache.destroy();
 		}
@@ -162,9 +152,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 
 		try {
 			Element xml = retrieveUserArpXml(principal);
-			if (xml == null) {
-				return null;
-			}
+			if (xml == null) { return null; }
 
 			Arp userArp = new Arp();
 			userArp.setPrincipal(principal);
@@ -197,16 +185,19 @@ public abstract class BaseArpRepository implements ArpRepository {
 
 class ArpCache {
 
-	private static ArpCache	instance	= null;
+	private static ArpCache instance = null;
 	/** Time in seconds for which ARPs should be cached. */
-	private long			cacheLength;
-	private Map				cache		= new HashMap();
-	private static Logger	log			= Logger.getLogger(ArpCache.class.getName());
-	private ArpCacheCleaner	cleaner		= new ArpCacheCleaner();
+	private long cacheLength;
+	private Map cache = new HashMap();
+	private static Logger log = Logger.getLogger(ArpCache.class.getName());
+	private ArpCacheCleaner cleaner = new ArpCacheCleaner();
 
-	protected ArpCache() {}
+	protected ArpCache() {
+
+	}
 
 	static synchronized ArpCache instance() {
+
 		if (instance == null) {
 			instance = new ArpCache();
 			return instance;
@@ -216,10 +207,12 @@ class ArpCache {
 
 	/** Set time in seconds for which ARPs should be cached. */
 	void setCacheLength(long cacheLength) {
+
 		this.cacheLength = cacheLength;
 	}
 
 	void cache(Arp arp) {
+
 		if (arp.isSitePolicy() == false) {
 			synchronized (cache) {
 				cache.put(arp.getPrincipal(), new CachedArp(arp, System.currentTimeMillis()));
@@ -232,10 +225,12 @@ class ArpCache {
 	}
 
 	Arp retrieveUserArpFromCache(Principal principal) {
+
 		return retrieveArpFromCache(principal);
 	}
 
 	Arp retrieveSiteArpFromCache() {
+
 		return retrieveArpFromCache(new SiteCachePrincipal());
 	}
 
@@ -246,13 +241,9 @@ class ArpCache {
 			cachedArp = (CachedArp) cache.get(principal);
 		}
 
-		if (cachedArp == null) {
-			return null;
-		}
+		if (cachedArp == null) { return null; }
 
-		if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) < (cacheLength * 1000)) {
-			return cachedArp.arp;
-		}
+		if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) < (cacheLength * 1000)) { return cachedArp.arp; }
 
 		synchronized (cache) {
 			cache.remove(principal);
@@ -264,11 +255,13 @@ class ArpCache {
 	 * @see java.lang.Object#finalize()
 	 */
 	protected void finalize() throws Throwable {
+
 		super.finalize();
 		destroy();
 	}
 
 	public void destroy() {
+
 		synchronized (cleaner) {
 			if (cleaner != null) {
 				cleaner.shutdown = true;
@@ -279,10 +272,11 @@ class ArpCache {
 
 	private class CachedArp {
 
-		Arp		arp;
-		long	creationTimeMillis;
+		Arp arp;
+		long creationTimeMillis;
 
 		CachedArp(Arp arp, long creationTimeMillis) {
+
 			this.arp = arp;
 			this.creationTimeMillis = creationTimeMillis;
 		}
@@ -291,6 +285,7 @@ class ArpCache {
 	private class SiteCachePrincipal implements Principal {
 
 		public String getName() {
+
 			return "ARP admin";
 		}
 
@@ -298,9 +293,8 @@ class ArpCache {
 		 * @see java.lang.Object#equals(Object)
 		 */
 		public boolean equals(Object object) {
-			if (object instanceof SiteCachePrincipal) {
-				return true;
-			}
+
+			if (object instanceof SiteCachePrincipal) { return true; }
 			return false;
 		}
 
@@ -308,6 +302,7 @@ class ArpCache {
 		 * @see java.lang.Object#hashCode()
 		 */
 		public int hashCode() {
+
 			return "edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository.SiteCachePrincipal"
 					.hashCode();
 		}
@@ -315,10 +310,11 @@ class ArpCache {
 
 	private class ArpCacheCleaner extends Thread {
 
-		private boolean	shutdown	= false;
-		private Thread	master;
+		private boolean shutdown = false;
+		private Thread master;
 
 		public ArpCacheCleaner() {
+
 			super("edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository.ArpCache.ArpCacheCleaner");
 			master = Thread.currentThread();
 			setDaemon(true);
@@ -330,8 +326,9 @@ class ArpCache {
 		}
 
 		public void run() {
+
 			try {
-				sleep(60 * 1000); //one minute
+				sleep(60 * 1000); // one minute
 			} catch (InterruptedException e) {
 				log.debug("ArpCache Cleanup interrupted.");
 			}
@@ -356,7 +353,7 @@ class ArpCache {
 							}
 						}
 					}
-					//release the lock to be friendly
+					// release the lock to be friendly
 					Iterator deleteIterator = needsDeleting.iterator();
 					while (deleteIterator.hasNext()) {
 						synchronized (cache) {
@@ -371,7 +368,7 @@ class ArpCache {
 						}
 					}
 
-					sleep(60 * 1000); //one minute
+					sleep(60 * 1000); // one minute
 				} catch (InterruptedException e) {
 					log.debug("ArpCache Cleanup interrupted.");
 				}

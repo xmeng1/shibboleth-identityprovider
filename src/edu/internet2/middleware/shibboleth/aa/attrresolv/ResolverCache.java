@@ -1,38 +1,17 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved
- * 
- * 
- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
- * following conditions are met:
- * 
- * Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- * disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- * disclaimer in the documentation and/or other materials provided with the distribution, if any, must include the
- * following acknowledgment: "This product includes software developed by the University Corporation for Advanced
- * Internet Development <http://www.ucaid.edu> Internet2 Project. Alternately, this acknowledegement may appear in the
- * software itself, if and wherever such third-party acknowledgments normally appear.
- * 
- * Neither the name of Shibboleth nor the names of its contributors, nor Internet2, nor the University Corporation for
- * Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote products derived from this software
- * without specific prior written permission. For written permission, please contact shibboleth@shibboleth.org
- * 
- * Products derived from this software may not be called Shibboleth, Internet2, UCAID, or the University Corporation
- * for Advanced Internet Development, nor may Shibboleth appear in their name, without prior written permission of the
- * University Corporation for Advanced Internet Development.
- * 
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, AND NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE,
- * ACCURACY, AND EFFORT IS WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY
- * CORPORATION FOR ADVANCED INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package edu.internet2.middleware.shibboleth.aa.attrresolv;
@@ -51,17 +30,18 @@ import org.apache.log4j.Logger;
  * Rudimentary mechanism for caching objects created by the various Resolution PlugIns.
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
- *  
+ * 
  */
 public class ResolverCache {
 
 	private static Logger log = Logger.getLogger(ResolverCache.class.getName());
-	//Hashtable handles synchronization for us
+	// Hashtable handles synchronization for us
 	private Hashtable attributeDataCache = new Hashtable();
 	private Hashtable connectorDataCache = new Hashtable();
 	private Cleaner cleaner = new Cleaner();
 
 	ResolverCache() {
+
 		log.info("Initializing the Attribute Resolver cache.");
 	}
 
@@ -69,9 +49,9 @@ public class ResolverCache {
 
 		if (principal != null && cacheLength > 0 && plugInId != null && !plugInId.equals("") && toCache != null) {
 			log.debug("Adding resolved Connector data to Attribute Resolver cache.");
-			connectorDataCache.put(
-				new CacheKey(principal, plugInId),
-				new CacheObject(toCache, System.currentTimeMillis() + (cacheLength * 1000)));
+			connectorDataCache.put(new CacheKey(principal, plugInId), new CacheObject(toCache, System
+					.currentTimeMillis()
+					+ (cacheLength * 1000)));
 
 		} else {
 			log.error("Attempted to add bad data to Attribute Resolver cache.");
@@ -82,9 +62,9 @@ public class ResolverCache {
 
 		if (principal != null && cacheLength > 0 && plugInId != null && !plugInId.equals("") && toCache != null) {
 			log.debug("Adding resolved Attribute data to Attribute Resolver cache.");
-			attributeDataCache.put(
-				new CacheKey(principal, plugInId),
-				new CacheObject(toCache, System.currentTimeMillis() + (cacheLength * 1000)));
+			attributeDataCache.put(new CacheKey(principal, plugInId), new CacheObject(toCache, System
+					.currentTimeMillis()
+					+ (cacheLength * 1000)));
 
 		} else {
 			log.error("Attempted to add bad data to Attribute Resolver cache.");
@@ -132,6 +112,7 @@ public class ResolverCache {
 	}
 
 	private void deleteAttributeResolution(CacheKey cacheKey) {
+
 		synchronized (attributeDataCache) {
 			Object object = attributeDataCache.get(cacheKey);
 			if (object != null) {
@@ -145,6 +126,7 @@ public class ResolverCache {
 	}
 
 	private void deleteConnectorResolution(CacheKey cacheKey) {
+
 		synchronized (connectorDataCache) {
 			Object object = connectorDataCache.get(cacheKey);
 			if (object != null) {
@@ -161,6 +143,7 @@ public class ResolverCache {
 	 * @see java.lang.Object#finalize()
 	 */
 	protected void finalize() throws Throwable {
+
 		super.finalize();
 		destroy();
 	}
@@ -169,6 +152,7 @@ public class ResolverCache {
 	 * Cleanup resources that won't be released when this object is garbage-collected
 	 */
 	protected void destroy() {
+
 		synchronized (cleaner) {
 			if (cleaner != null) {
 				cleaner.shutdown = true;
@@ -183,15 +167,18 @@ public class ResolverCache {
 		long expiration;
 
 		private CacheObject(Object object, long expiration) {
+
 			this.object = object;
 			this.expiration = expiration;
 		}
 
 		private Object getCached() {
+
 			return object;
 		}
 
 		private boolean isExpired() {
+
 			if (System.currentTimeMillis() > expiration) {
 				return true;
 			} else {
@@ -206,25 +193,21 @@ public class ResolverCache {
 		private String plugInId;
 
 		private CacheKey(Principal principal, String plugInId) {
-			if (principal == null || plugInId == null) {
-				throw new IllegalArgumentException("Cannot use null value in as cache key.");
-			}
+
+			if (principal == null || plugInId == null) { throw new IllegalArgumentException(
+					"Cannot use null value in as cache key."); }
 			this.principal = principal;
 			this.plugInId = plugInId;
 		}
+
 		/**
 		 * @see java.lang.Object#equals(Object)
 		 */
 		public boolean equals(Object object) {
-			if (object == null || !(object instanceof CacheKey)) {
-				return false;
-			}
-			if (!plugInId.equals(((CacheKey) object).getPlugInId())) {
-				return false;
-			}
-			if (!principal.equals(((CacheKey) object).getPrincipal())) {
-				return false;
-			}
+
+			if (object == null || !(object instanceof CacheKey)) { return false; }
+			if (!plugInId.equals(((CacheKey) object).getPlugInId())) { return false; }
+			if (!principal.equals(((CacheKey) object).getPrincipal())) { return false; }
 			return true;
 		}
 
@@ -234,6 +217,7 @@ public class ResolverCache {
 		 * @return Object
 		 */
 		private String getPlugInId() {
+
 			return plugInId;
 		}
 
@@ -243,6 +227,7 @@ public class ResolverCache {
 		 * @return Object
 		 */
 		private Principal getPrincipal() {
+
 			return principal;
 		}
 
@@ -250,6 +235,7 @@ public class ResolverCache {
 		 * @see java.lang.Object#hashCode()
 		 */
 		public int hashCode() {
+
 			return (principal.hashCode() + ":" + plugInId.hashCode()).hashCode();
 		}
 
@@ -261,6 +247,7 @@ public class ResolverCache {
 		private Object master;
 
 		public Cleaner() {
+
 			super("edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverCacher.Cleaner");
 			master = Thread.currentThread();
 			setDaemon(true);
@@ -272,8 +259,9 @@ public class ResolverCache {
 		}
 
 		public void run() {
+
 			try {
-				sleep(60 * 1000); //one minute
+				sleep(60 * 1000); // one minute
 			} catch (InterruptedException e) {
 				log.debug("Resolver Cache Cleanup interrupted.");
 			}
@@ -290,7 +278,7 @@ public class ResolverCache {
 					}
 
 					log.debug("Resolver Cache cleanup thread searching cache for stale entries.");
-					Hashtable[] caches = { attributeDataCache, connectorDataCache };
+					Hashtable[] caches = {attributeDataCache, connectorDataCache};
 
 					for (int i = 0; i < caches.length; i++) {
 						Set stale = new HashSet();
@@ -323,7 +311,7 @@ public class ResolverCache {
 						}
 					}
 
-					sleep(60 * 1000); //one minute
+					sleep(60 * 1000); // one minute
 
 				} catch (InterruptedException e) {
 					log.debug("Resolver Cache Cleanup interrupted.");

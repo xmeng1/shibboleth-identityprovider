@@ -1,27 +1,17 @@
 /*
- * The Shibboleth License, Version 1. Copyright (c) 2002 University Corporation for Advanced Internet Development, Inc.
- * All rights reserved Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the following conditions are met: Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the
- * above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other
- * materials provided with the distribution, if any, must include the following acknowledgment: "This product includes
- * software developed by the University Corporation for Advanced Internet Development <http://www.ucaid.edu>Internet2
- * Project. Alternately, this acknowledegement may appear in the software itself, if and wherever such third-party
- * acknowledgments normally appear. Neither the name of Shibboleth nor the names of its contributors, nor Internet2,
- * nor the University Corporation for Advanced Internet Development, Inc., nor UCAID may be used to endorse or promote
- * products derived from this software without specific prior written permission. For written permission, please
- * contact shibboleth@shibboleth.org Products derived from this software may not be called Shibboleth, Internet2,
- * UCAID, or the University Corporation for Advanced Internet Development, nor may Shibboleth appear in their name,
- * without prior written permission of the University Corporation for Advanced Internet Development. THIS SOFTWARE IS
- * PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND WITH ALL FAULTS. ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
- * NON-INFRINGEMENT ARE DISCLAIMED AND THE ENTIRE RISK OF SATISFACTORY QUALITY, PERFORMANCE, ACCURACY, AND EFFORT IS
- * WITH LICENSEE. IN NO EVENT SHALL THE COPYRIGHT OWNER, CONTRIBUTORS OR THE UNIVERSITY CORPORATION FOR ADVANCED
- * INTERNET DEVELOPMENT, INC. BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package edu.internet2.middleware.shibboleth.wayf;
@@ -47,21 +37,21 @@ import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionExcep
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 
 /**
- * A servlet implementation of the Shibboleth WAYF service. Allows a browser user to select from among a group of
- * origin sites. User selection is optionally cached and the user is forwarded to the HandleService appropriate to his
+ * A servlet implementation of the Shibboleth WAYF service. Allows a browser user to select from among a group of origin
+ * sites. User selection is optionally cached and the user is forwarded to the HandleService appropriate to his
  * selection.
  * 
  * @author Walter Hoehn wassa&#064;columbia.edu
  */
 public class WayfService extends HttpServlet {
 
-	private String				wayfConfigFileLocation;
-	private String				siteConfigFileLocation;
-	private WayfConfig			config;
-	private WayfOrigins			originConfig;
-	private WayfCacheOptions	wOptions	= new WayfCacheOptions();
-	private static Logger		log			= Logger.getLogger(WayfService.class.getName());
-	ResourceWatchdog			watchdog;
+	private String wayfConfigFileLocation;
+	private String siteConfigFileLocation;
+	private WayfConfig config;
+	private WayfOrigins originConfig;
+	private WayfCacheOptions wOptions = new WayfCacheOptions();
+	private static Logger log = Logger.getLogger(WayfService.class.getName());
+	ResourceWatchdog watchdog;
 
 	/**
 	 * @see GenericServlet#init()
@@ -82,7 +72,7 @@ public class WayfService extends HttpServlet {
 			log.error("Sites file watchdog could not be initialized: " + e);
 		}
 
-		//Setup Cacheing options
+		// Setup Cacheing options
 		wOptions.setDomain(config.getCacheDomain());
 		wOptions.setExpiration(config.getCacheExpiration());
 
@@ -94,6 +84,7 @@ public class WayfService extends HttpServlet {
 	 * Populates WayfConfig and WayfOrigins objects from file contents.
 	 */
 	private void configure() throws UnavailableException {
+
 		try {
 			InputStream is = new ShibResource(wayfConfigFileLocation, this.getClass()).getInputStream();
 			WayfConfigDigester digester = new WayfConfigDigester();
@@ -112,6 +103,7 @@ public class WayfService extends HttpServlet {
 	}
 
 	private void loadSiteConfig() throws UnavailableException {
+
 		try {
 
 			InputStream siteIs = new ShibResource(siteConfigFileLocation, this.getClass()).getInputStream();
@@ -132,6 +124,7 @@ public class WayfService extends HttpServlet {
 	 * Setup application-wide beans for view
 	 */
 	private void initViewConfig() {
+
 		getServletContext().setAttribute("originsets", getOrigins().getOriginSets());
 		getServletContext().setAttribute("supportContact", config.getSupportContact());
 		getServletContext().setAttribute("helpText", config.getHelpText());
@@ -163,12 +156,12 @@ public class WayfService extends HttpServlet {
 	public void doGet(HttpServletRequest req, HttpServletResponse res) {
 
 		log.info("Handling WAYF request.");
-		//Tell the browser not to cache the WAYF page
+		// Tell the browser not to cache the WAYF page
 		res.setHeader("Cache-Control", "no-cache");
 		res.setHeader("Pragma", "no-cache");
 		res.setDateHeader("Expires", 0);
 
-		//Decide how to route the request based on query string
+		// Decide how to route the request based on query string
 		String requestType = req.getParameter("action");
 		if (requestType == null) {
 			requestType = "lookup";
@@ -193,6 +186,7 @@ public class WayfService extends HttpServlet {
 	}
 
 	public void destroy() {
+
 		if (watchdog != null && watchdog.isAlive()) {
 			watchdog.interrupt();
 		}
@@ -204,9 +198,8 @@ public class WayfService extends HttpServlet {
 	private void handleLookup(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		try {
-			if ((getSHIRE(req) == null) || (getTarget(req) == null)) {
-				throw new WayfException("Invalid or missing data from SHIRE");
-			}
+			if ((getSHIRE(req) == null) || (getTarget(req) == null)) { throw new WayfException(
+					"Invalid or missing data from SHIRE"); }
 			req.setAttribute("shire", getSHIRE(req));
 			req.setAttribute("target", getTarget(req));
 			String providerId = getProviderId(req);
@@ -324,9 +317,7 @@ public class WayfService extends HttpServlet {
 		if (req.getParameter("shire") != null) {
 			shire = req.getParameter("shire");
 		}
-		if (shire == null) {
-			throw new WayfException("Invalid data from SHIRE: No acceptance URL received.");
-		}
+		if (shire == null) { throw new WayfException("Invalid data from SHIRE: No acceptance URL received."); }
 		return shire;
 	}
 
@@ -342,26 +333,24 @@ public class WayfService extends HttpServlet {
 		if (req.getParameter("target") != null) {
 			target = req.getParameter("target");
 		}
-		if (target == null) {
-			throw new WayfException("Invalid data from SHIRE: No target URL received.");
-		}
+		if (target == null) { throw new WayfException("Invalid data from SHIRE: No target URL received."); }
 		return target;
 	}
 
 	private String getProviderId(HttpServletRequest req) {
+
 		if (req.getParameter("providerId") != null && !(req.getParameter("providerId").length() == 0)) {
 			return req.getParameter("providerId");
 
 		} else {
 			String attr = (String) req.getAttribute("providerId");
-			if (attr == null || attr.length() == 0) {
-				return null;
-			}
+			if (attr == null || attr.length() == 0) { return null; }
 			return attr;
 		}
 	}
 
 	private WayfOrigins getOrigins() {
+
 		synchronized (originConfig) {
 			return originConfig;
 		}
@@ -387,7 +376,7 @@ public class WayfService extends HttpServlet {
 
 	private class SitesFileWatchdog extends ResourceWatchdog {
 
-		private WayfService	wayfService;
+		private WayfService wayfService;
 
 		private SitesFileWatchdog(String sitesFileLocation, WayfService wayfService)
 				throws ResourceNotAvailableException {
@@ -400,6 +389,7 @@ public class WayfService extends HttpServlet {
 		 * @see edu.internet2.middleware.shibboleth.common.ResourceWatchdog#doOnChange()
 		 */
 		protected void doOnChange() throws ResourceWatchdogExecutionException {
+
 			try {
 				wayfService.reloadOriginMetadata();
 			} catch (UnavailableException e) {
