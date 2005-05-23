@@ -11,7 +11,7 @@
 	AAUrl="https://idp.example.org:8443/shibboleth-idp/AA" 
 	resolverConfig="$SHIB_HOME$/etc/resolver.xml"
 	defaultRelyingParty="urn:mace:inqueue" 
-	providerId="https://idp.example.org/shibboleth-idp">
+	providerId="https://idp.example.org/shibboleth">
 
 
 	<!-- This section contains configuration options that apply only to a site or group of sites
@@ -90,9 +90,9 @@
 		how to authenticate them.  The metadatatool utility can be used to keep federation metadata files in synch.
 		Metadata can also be placed directly within this these elements. -->
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-                uri="$SHIB_HOME$/etc/example-sites.xml"/>
+                uri="$SHIB_HOME$/etc/example-metadata.xml"/>
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-                uri="$SHIB_HOME$/etc/example-sites.xml"/>
+                uri="$SHIB_HOME$/etc/IQ-metadata.xml"/>
 
 </IdPConfig>
 
