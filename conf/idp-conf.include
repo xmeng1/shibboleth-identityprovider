@@ -1,6 +1,6 @@
 example-metadata.xml
 IQ-metadata.xml
-idp.xml.dist
+dist.idp.xml
 arps/
 handle.jks
 persistent.jks
