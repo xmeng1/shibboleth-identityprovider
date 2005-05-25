@@ -10,16 +10,22 @@
 	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 shibboleth-idpconfig-1.0.xsd" 
 	AAUrl="https://idp.example.org:8443/shibboleth-idp/AA" 
 	resolverConfig="$SHIB_HOME$/etc/resolver.xml"
-	defaultRelyingParty="urn:mace:inqueue" 
+	defaultRelyingParty="urn:mace:shibboleth:examples" 
 	providerId="https://idp.example.org/shibboleth">
 
 
 	<!-- This section contains configuration options that apply only to a site or group of sites
 		This would normally be adjusted when a new federation or bilateral trust relationship is established -->
-	<RelyingParty name="urn:mace:inqueue" signingCredential="inqueue_cred"> <!-- (signingCredential) must correspond to a <Credential/> element below -->
+	<RelyingParty name="urn:mace:shibboleth:examples" signingCredential="example_cred"> <!-- (signingCredential) must correspond to a <Credential/> element below -->
 		<NameID nameMapping="shm"/> <!-- (nameMapping) must correspond to a <NameMapping/> element below -->
 	</RelyingParty>
 
+	<!-- InQueue example -->
+	<!--
+	<RelyingParty name="urn:mace:inqueue" signingCredential="inqueue_cred"> 
+		<NameID nameMapping="shm"/>
+	</RelyingParty> -->
+	
 	
 	<!-- Configuration for the attribute release policy engine
 		For most configurations this won't need adjustment -->
@@ -41,8 +47,7 @@
     <!--
 	<Logging>
 		<Log4JConfig location="file:///tmp/log4j.properties" />
-	</Logging>
-        -->
+	</Logging> -->
 
 
 	<!-- This configuration section determines how Shibboleth maps between SAML Subjects and local principals.
@@ -55,6 +60,7 @@
 		type="SharedMemoryShibHandle" 
 		handleTTL="1800"/>
 
+
 	<!-- Determines how SAML artifacts are stored and retrieved
 		The (sourceLocation) attribute must be specified when using type 2 artifacts -->
 	<ArtifactMapper implementation="edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper" />
@@ -63,7 +69,7 @@
 	<!-- This configuration section determines the keys/certs to be used when signing SAML assertions -->
 	<!-- The credentials listed here are used when referenced within <RelyingParty/> elements above -->
 	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
-		<FileResolver Id="inqueue_cred">
+		<FileResolver Id="example_cred">
 			<Key>
 				<Path>$SHIB_HOME$/etc/idp-example.key</Path>
 			</Key>
@@ -72,6 +78,19 @@
 			</Certificate>
 		</FileResolver>
 	</Credentials>
+	
+	<!-- InQueue example (Deployments would need to generate an InQueue-compatible certificate) -->
+	<!--
+	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
+		<FileResolver Id="inqueue_cred">
+			<Key>
+				<Path>$SHIB_HOME$/etc/idp-inqueue.key</Path>
+			</Key>
+			<Certificate>
+				<Path>$SHIB_HOME$/etc/idp-inqueue.crt</Path>
+			</Certificate>
+		</FileResolver>
+	</Credentials> -->
 
 
 	<!-- Protocol handlers specify what type of requests the IdP can respond to.  The default set listed here should work 
@@ -92,8 +111,11 @@
 		Metadata can also be placed directly within this these elements. -->
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
                 uri="$SHIB_HOME$/etc/example-metadata.xml"/>
+	
+	
+	<!-- InQueue example (Deployments would need to get updated InQueue metadata) -->
+	<!--
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-                uri="$SHIB_HOME$/etc/IQ-metadata.xml"/>
-
+                uri="$SHIB_HOME$/etc/IQ-metadata.xml"/> -->
 </IdPConfig>
 
