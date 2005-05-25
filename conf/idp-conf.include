@@ -8,3 +8,5 @@ resolver.xml
 resolver.jdbc.xml
 resolver.ldap.xml
 schemas.properties
+idp-example.crt
+idp-example.key
