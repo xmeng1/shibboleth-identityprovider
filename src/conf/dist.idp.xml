@@ -63,13 +63,14 @@
 	<!-- This configuration section determines the keys/certs to be used when signing SAML assertions -->
 	<!-- The credentials listed here are used when referenced within <RelyingParty/> elements above -->
 	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
-		<KeyStoreResolver Id="inqueue_cred" storeType="JKS">
-			<Path>$SHIB_HOME$/etc/keystore.jks</Path>
-			<KeyAlias>example</KeyAlias>
-			<CertAlias>example</CertAlias>
-			<StorePassword>example</StorePassword>
-			<KeyPassword>example</KeyPassword>
-		</KeyStoreResolver>
+		<FileResolver Id="inqueue_cred">
+			<Key>
+				<Path>$SHIB_HOME$/etc/idp-example.key</Path>
+			</Key>
+			<Certificate>
+				<Path>$SHIB_HOME$/etc/idp-example.crt</Path>
+			</Certificate>
+		</FileResolver>
 	</Credentials>
 
 
