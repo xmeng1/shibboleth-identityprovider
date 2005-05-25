@@ -308,7 +308,10 @@
 
         <!-- copy IdP configuration -->
         <if>
-            <equals arg1="${copy-idp-conf}" arg2="y" />
+            <or>
+                <equals arg1="${copy-idp-conf}" arg2="y" />
+                <not> <available file="${shib.home}/etc" /> </not>
+            </or>
             <then>
                 <delete dir="${shib.home}/etc" />
                 <antcall target="install.idp.filesystem.config" />
