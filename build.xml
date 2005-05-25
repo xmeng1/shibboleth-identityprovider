@@ -3,7 +3,6 @@
 <project name="Shibboleth" default="install" basedir=".">
 
     <!-- Set global properties for this build -->
-    <property name="distname" value="shibboleth-idp" />
     <property name="distnameWayf" value="shibboleth-wayf" />
     <property name="root" value="." />
     <property name="src" value="${root}/src/" />
@@ -52,6 +51,14 @@
     <target name="init">
         <mkdir dir="${build}" />
         <mkdir dir="${dist}" />
+
+        <if>
+            <not> <available file="build.properties" /> </not>
+            <then>
+                <copy file="conf/default.build.properties" tofile="build.properties" />
+            </then>
+        </if>
+
         <property file="build.properties" />
     </target>
 
@@ -101,7 +108,6 @@
         <jar jarfile="${distlibs}/shib-util.jar" basedir="${build}" />
     </target>
 
-    
     <!-- Cleanup after the build, test, and distribution processes -->
     <target name="clean" depends="clean-all" />
     <target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util" />
@@ -184,20 +190,20 @@
 	</target>
     
     <target name="tomcat.start" depends="setupTomcatTasks" description="Start a deployed webapp using Tomcat manager">
-        <tomcatStart url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"/>
+        <tomcatStart url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"/>
     </target>
 
     <target name="tomcat.stop" depends="setupTomcatTasks" description="Stop a deployed webapp using Tomcat manager">
-        <tomcatStop url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"/>
+        <tomcatStop url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"/>
     </target>
 
     <target name="tomcat.deploy" depends="setupTomcatTasks" description="Upload and deploy using Tomcat manager">
-        <tomcatDeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"
-        	war="file:${basedir}/${dist}/${distname}.war"/>
+        <tomcatDeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"
+        	war="file:${basedir}/${dist}/${shib.webapp.name}.war"/>
     </target>
 
     <target name="tomcat.undeploy" depends="setupTomcatTasks" description="Undeploy using Tomcat manager">
-        <tomcatUndeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${distname}"/>
+        <tomcatUndeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"/>
     </target>
 	
     
@@ -225,8 +231,8 @@
 
     <!-- Install Shibboleth -->
     <target name="install.init">
-    	<taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}"/>
-    	<typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}"/>
+        <taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}" />
+        <typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}" />
     </target>
 
     <target name="install" depends="init, install.init" description="Install Shibboleth">
@@ -245,7 +251,7 @@
 	<target name="install.idp" depends="init, install.init">
         <xinput message="Deploying the java web application.  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
             addproperty="idp.install-type.input" type="menu" casesensitive="no" defaultValue="${idp.install-type}">
-            <xoption>filesystem</xoption>
+            <xoption value="filesystem.prompt">filesystem</xoption>
             <xoption>manager</xoption>
         </xinput>
         <var name="idp.install-type" value="${idp.install-type.input}" />
@@ -253,7 +259,8 @@
         <antcall target="install.idp.${idp.install-type}" />
     </target>
 
-    <target name="install.idp.filesystem" depends="init, install.init, build-util">
+    <!-- Prompt user for filesystem installation options and save them to build.properties -->
+    <target name="install.idp.filesystem.prompt" depends="init, install.init">
         <input message="Select an installation base for the Shibboleth Identity Provider [default: ${shib.home}]"
             addproperty="shib.home.input" defaultvalue="${shib.home}" />
         <var name="shib.home" value="${shib.home.input}" />
@@ -262,28 +269,32 @@
             addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
         <var name="tomcat.home" value="${tomcat.home.input}" />
         
-        <copy file="${configroot}/idp.xml.dist" tofile="${configroot}/idp.xml" overwrite="true" />
-        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
-        <war warfile="${dist}/${distname}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
-		<delete file="${configroot}/idp.xml"/>
-        <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
-
         <if>
 			<available file="${shib.home}/etc" />
             <then>
-                <if>
-                    <xinput type="confirm">WARNING!! The directory `${shib.home}/etc` already exists.  Do you want to overwrite the existing configuration?</xinput>
-                    <then>
-                        <delete dir="${shib.home}/etc" />
-                        <antcall target="install.idp.filesystem.config" />
-                    </then>
-                </if>
+                <xinput type="confirm" addproperty="copy-idp-conf">WARNING!! The directory `${shib.home}/etc` already exists.  Do you want to overwrite the existing configuration?</xinput>
             </then>
             <else>
-                <antcall target="install.idp.filesystem.config" />
+                <property name="copy-idp-conf" value="y" />
             </else>
         </if>
 
+        <antcall target="install.idp.filesystem" />
+        <antcall target="savePropertyFile" />
+    </target>
+
+    <!-- Install Shibboleth IdP to filesystem using the properties in build.properties -->
+    <target name="install.idp.filesystem" depends="init, install.init, build-util" 
+        description="Install Shibboleth IdP to filesystem using the properties in build.properties">
+
+        <!-- copy values to deployment descriptor and create war -->
+        <copy file="${configroot}/dist.idp.xml" tofile="${configroot}/idp.xml" overwrite="true" />
+        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
+        <war warfile="${dist}/${shib.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
+		<delete file="${configroot}/idp.xml"/>
+        <copy file="${dist}/${shib.webapp.name}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
+
+        <!-- copy IdP jars and utilities -->
         <copy todir="${shib.home}/lib">
             <fileset dir="lib" includesfile="conf/idp-lib.include" />
         </copy>
@@ -295,19 +306,27 @@
 
         <mkdir dir="${shib.home}/logs" />
 
-        <antcall target="savePropertyFile" />
+        <!-- copy IdP configuration -->
+        <if>
+            <equals arg1="${copy-idp-conf}" arg2="y" />
+            <then>
+                <delete dir="${shib.home}/etc" />
+                <antcall target="install.idp.filesystem.config" />
+            </then>
+        </if>
     </target>
 
+    <!-- copy shibboleth configuration to $SHIB_HOME/etc, overwriting any existing configuration -->
 	<target name="install.idp.filesystem.config" depends="init, install.init">
         <mkdir dir="${shib.home}/etc" />
         <copy todir="${shib.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
         </copy>
-		<copy file="${shib.home}/etc/idp.xml.dist" tofile="${shib.home}/etc/idp.xml" overwrite="true" />
-		<delete file="${shib.home}/etc/idp.xml.dist"/>
+		<move file="${shib.home}/etc/dist.idp.xml" tofile="${shib.home}/etc/idp.xml" overwrite="true" />
         <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
     </target>
 
+    <!-- install Shibboleth-IdP war using tomcat's manager app -->
 	<target name="install.idp.manager" depends="init, install.init">
         <antcall target="setupTomcatTasks" />
         
@@ -327,6 +346,7 @@
         <antcall target="savePropertyFile" />
     </target>
 
+    <!-- save configuration to build.properties -->
     <target name="savePropertyFile">
         <propertyfile file="build.properties">
             <entry key="shib.home" value="${shib.home}" />
@@ -338,18 +358,6 @@
             <entry key="tomcat.password" value="${tomcat.password}" />
         </propertyfile>
     </target>
-
-
-	<!-- Create an IdP war and copy it to the pre-configured tomcat directory -->
-	<target name="copy-IdP" depends="compile" description="Copy shibboleth.war to {tomcat.home}/webapps (Tomcat must be stopped first)">
-		<!-- This task assumes that a pre-existing properties file has the correct path information -->
-        <copy file="${configroot}/idp.xml.dist" tofile="${configroot}/idp.xml" overwrite="true" />
-        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
-        <war warfile="${dist}/${distname}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
-        <copy file="${dist}/${distname}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
-		<delete dir="${tomcat.home}/webapps/${distname}" quiet="yes" />
-	</target>
-
 
     <!-- Create WAYF and move it to ${dist} -->
     <target name="package-wayf" depends="compile, clean-build">
