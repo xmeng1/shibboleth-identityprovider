@@ -233,6 +233,7 @@
     <target name="install.init">
         <taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}" />
         <typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}" />
+		<taskdef name="urlconvert" classname="edu.internet2.middleware.shibboleth.utils.ant.URLConvert" classpath="${build}"/>
     </target>
 
     <target name="install" depends="init, install.init" description="Install Shibboleth">
@@ -264,7 +265,7 @@
         <input message="Select an installation base for the Shibboleth Identity Provider [default: ${shib.home}]"
             addproperty="shib.home.input" defaultvalue="${shib.home}" />
         <var name="shib.home" value="${shib.home.input}" />
-
+		<urlconvert path="${shib.home}" addProperty="shib.home.url"/>
         <input message="Enter tomcat home directory [default: ${tomcat.home}]"
             addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
         <var name="tomcat.home" value="${tomcat.home.input}" />
@@ -289,7 +290,7 @@
 
         <!-- copy values to deployment descriptor and create war -->
         <copy file="${configroot}/dist.idp.xml" tofile="${configroot}/idp.xml" overwrite="true" />
-        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
+        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home.url}" />
         <war warfile="${dist}/${shib.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
 		<delete file="${configroot}/idp.xml"/>
         <copy file="${dist}/${shib.webapp.name}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
@@ -326,7 +327,7 @@
             <fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
         </copy>
 		<move file="${shib.home}/etc/dist.idp.xml" tofile="${shib.home}/etc/idp.xml" overwrite="true" />
-        <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home}" />
+        <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home.url}" />
     </target>
 
     <!-- install Shibboleth-IdP war using tomcat's manager app -->
