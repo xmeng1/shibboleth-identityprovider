@@ -89,6 +89,7 @@ public class IdPConfigLoader {
 				log.debug("IdP configuration file " + configFileLocation + " successfully read and cached.");
 			}
 		} catch (Exception e) {
+			System.err.println("Unable to parse Shibboleth Identity Provider configuration file: " + e);
 			throw new ShibbolethConfigurationException(
 					"Encountered an error while parsing Shibboleth Identity Provider configuration file: " + e);
 		}
