@@ -22,14 +22,14 @@
 	
 	
 	<!-- Example persistent id attribute.  Since this configuration is permanent, some thought is required before 
-		deploying in  production. -->	 
+		deploying in production. Consider replacing this with a database-backed mechanism of some sort. -->	 
 	<!--
 	<SAML2PersistentID id="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" sourceName="guid">
 		<DataConnectorDependency requires="echo"/>
 		<Salt keyStorePath="/conf/persistent.jks" keyStoreKeyAlias="handleKey" keyStorePassword="shibhs" keyStoreKeyPassword="shibhs"/>
 	</SAML2PersistentID>
 	-->
-	<!--  Deprecated persistent id examle -->
+	<!--  Deprecated persistent id example, use only with SPs that are already relying on your values. -->
 	<!--
 	<PersistentIDAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonTargetedID" scope="shibdev.edu" sourceName="guid">
 		<DataConnectorDependency requires="echo"/>
