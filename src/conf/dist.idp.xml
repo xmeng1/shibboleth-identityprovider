@@ -77,11 +77,9 @@
 				<Path>$SHIB_HOME$/etc/idp-example.crt</Path>
 			</Certificate>
 		</FileResolver>
-	</Credentials>
 	
-	<!-- InQueue example (Deployments would need to generate an InQueue-compatible certificate) -->
-	<!--
-	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
+		<!-- InQueue example (Deployments would need to generate an InQueue-compatible certificate) -->
+		<!--
 		<FileResolver Id="inqueue_cred">
 			<Key>
 				<Path>$SHIB_HOME$/etc/idp-inqueue.key</Path>
@@ -90,7 +88,8 @@
 				<Path>$SHIB_HOME$/etc/idp-inqueue.crt</Path>
 			</Certificate>
 		</FileResolver>
-	</Credentials> -->
+		 -->
+	</Credentials>
 
 
 	<!-- Protocol handlers specify what type of requests the IdP can respond to.  The default set listed here should work 
