@@ -364,7 +364,7 @@
     </target>
 
     <!-- Create WAYF and move it to ${dist} -->
-    <target name="package-wayf" depends="compile, clean-build">
+    <target name="package-wayf" depends="compile">
         <war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
     </target>
     
