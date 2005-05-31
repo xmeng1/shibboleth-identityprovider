@@ -233,7 +233,11 @@
     <target name="install.init">
         <taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}" />
         <typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}" />
+    </target>
+
+    <target name="install.url">
 		<taskdef name="urlconvert" classname="edu.internet2.middleware.shibboleth.utils.ant.URLConvert" classpath="${build}"/>
+		<urlconvert path="${shib.home}" addProperty="shib.home.url"/>
     </target>
 
     <target name="install" depends="init, install.init" description="Install Shibboleth">
@@ -265,7 +269,6 @@
         <input message="Select an installation base for the Shibboleth Identity Provider [default: ${shib.home}]"
             addproperty="shib.home.input" defaultvalue="${shib.home}" />
         <var name="shib.home" value="${shib.home.input}" />
-		<urlconvert path="${shib.home}" addProperty="shib.home.url"/>
         <input message="Enter tomcat home directory [default: ${tomcat.home}]"
             addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
         <var name="tomcat.home" value="${tomcat.home.input}" />
@@ -285,7 +288,7 @@
     </target>
 
     <!-- Install Shibboleth IdP to filesystem using the properties in build.properties -->
-    <target name="install.idp.filesystem" depends="init, install.init, build-util" 
+    <target name="install.idp.filesystem" depends="init, install.init, build-util, install.url" 
         description="Install Shibboleth IdP to filesystem using the properties in build.properties">
 
         <!-- copy values to deployment descriptor and create war -->
@@ -321,7 +324,7 @@
     </target>
 
     <!-- copy shibboleth configuration to $SHIB_HOME/etc, overwriting any existing configuration -->
-	<target name="install.idp.filesystem.config" depends="init, install.init">
+	<target name="install.idp.filesystem.config" depends="init, install.init, install.url">
         <mkdir dir="${shib.home}/etc" />
         <copy todir="${shib.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
