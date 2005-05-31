@@ -19,18 +19,7 @@
 <h1>Shibboleth Inter-institutional Access Control System</h1>
 </div>
 
-<p>
-This is an example of a page protected by the Shibboleth system. The
-Apache server hosting this page contains the following configuration
-block in its httpd.conf file:
-<blockquote>
-<pre>&lt;Location /shibboleth-target/sample.jsp&gt;
-AuthType shibboleth
-ShibRequireSession On
-require valid-user
-&lt;/Location&gt;</pre>
-</blockquote>
-</p>
+<p>This is an example of a page protected by the Shibboleth system.</p>
 
 <p>Because of the "require valid-user" rule, any user from a trusted
 Identity Provider is allowed access, once they establish a session using
@@ -41,23 +30,33 @@ the information Shibboleth gives me:<p>
 
 <p>
 <ul>
-<% if (request.getRemoteUser()!=null) { %>
-    <li>Your eduPersonPrincipalName is: <b><%= request.getRemoteUser() %></b></li>
-<% } %>
-<% if (request.getHeader("Shib-EP-Affiliation")!=null) { %>
-    <li>Your eduPersonScopedAffiliation value(s):
-    <b><%= request.getHeader("Shib-EP-Affiliation") %></b></li>
-<% } %>
-<% if (request.getHeader("Shib-EP-Entitlement")!=null) { %>
-    <li>Your eduPersonEntitlement value(s):
-    <b><%= request.getHeader("Shib-EP-Entitlement") %></b></li>
-<% } %>
-<% if (request.getHeader("Shib-TargetedID")!=null) { %>
-    <li>Your PersistentID value(s):
-    <b><%= request.getHeader("Shib-TargetedID") %></b></li>
+<%
+String h = null;
+java.util.Enumeration headers = request.getHeaderNames();
+while (headers != null && headers.hasMoreElements()) {
+        h = (String)headers.nextElement();
+        if (!h.equals("Shib-Attributes") && !h.equals("Shib-Application-ID") && ((h.startsWith("Shib-") || h.equalsIgnoreCase("remote_user")))) {
+%>
+                <li><%= h %> is: <b><%= request.getHeader(h) %></b></li>
+<%
+        }
+%>
 <% } %>
 </ul>
 </p>
+
+<p>The raw SAML attribute assertion I received is below. If it makes sense to
+you, seek medical attention immediately.</p>
+<%
+String encoded=request.getHeader("Shib-Attributes");
+String a = "";
+if (encoded != null && !encoded.equals("")) {
+        byte[] decoded=org.apache.xml.security.utils.Base64.decode(encoded.getBytes());
+        a = new String(decoded);
+}
+%>
+
+<textarea wrap="soft" rows="20" cols="80"><%= a %></textarea>
 
 </body>
 </html>
