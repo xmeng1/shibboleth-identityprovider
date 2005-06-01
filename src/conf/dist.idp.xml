@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.1" encoding="ISO-8859-1"?>
 
 <!-- Shibboleth Identity Provider configuration -->
 
@@ -7,7 +7,7 @@
 	xmlns:cred="urn:mace:shibboleth:credentials:1.0" 
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 shibboleth-idpconfig-1.0.xsd" 
+	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 ../schemas/shibboleth-idpconfig-1.0.xsd" 
 	AAUrl="https://idp.example.org:8443/shibboleth-idp/AA" 
 	resolverConfig="$SHIB_HOME$/etc/resolver.xml"
 	defaultRelyingParty="urn:mace:shibboleth:examples" 
