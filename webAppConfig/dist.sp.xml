@@ -1,0 +1,93 @@
+<?xml version="1.1" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<!--  A Servlet deployment descriptor (WEB-INF/web.xml) file
+	defining Servlets, Filters, and Listeners for a /shibboleth
+	context containing both an IdP and an SP.  
+-->
+
+<web-app>
+
+	<display-name>Shibboleth SP</display-name>
+	
+	<context-param>
+		<param-name>ServiceProviderConfigFile</param-name>
+		<param-value>$SHIB_HOME$/etc/sp.xml</param-value>
+	</context-param>
+
+	<filter>
+		<!-- Gather log data in a per-request in memory buffer
+		 	 Requires /showlog Servlet to return log data to client
+		-->
+		<filter-name>RequestLogFilter</filter-name>
+		<filter-class>
+			edu.internet2.middleware.commons.log4j.RequestLoggingFilter
+		</filter-class>
+	</filter>
+
+	<filter>
+		<!-- You must create an instance of the Filter class in
+			 the /shibboleth application context to allow Filter-Support
+			 communication to other applications. 
+			 -->
+		<filter-name>ShibFilter</filter-name>
+		<filter-class>
+			edu.internet2.middleware.shibboleth.resource.AuthenticationFilter
+		</filter-class>
+	</filter>
+
+	<!-- Attach per-request in memory log data gathering to the 
+		 processing of the POST through the AssertionConsumer.
+	-->
+	<filter-mapping>
+		<filter-name>RequestLogFilter</filter-name>
+		<servlet-name>AssertionConsumer</servlet-name>
+	</filter-mapping>
+
+	<!-- Servlets for Shibboleth/SAML Protocol endpoints -->
+	<servlet>
+		<!--  SP Assertion Consumer -->
+		<servlet-name>AssertionConsumer</servlet-name>
+		<display-name>Authentication Assertion Consumer</display-name>
+		<servlet-class>
+			edu.internet2.middleware.shibboleth.serviceprovider.AssertionConsumerServlet
+		</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<!-- Servlets for administrative functions -->
+	<servlet>
+		<!-- Display in memory log data from the previous request
+			from the same Browser. 
+			Requires the RequestLogFilter to be installed and mapped. 
+		-->
+		<servlet-name>ShowLog</servlet-name>
+		<display-name>Return log data</display-name>
+		<servlet-class>
+			edu.internet2.middleware.commons.log4j.ShowLog
+		</servlet-class>
+	</servlet>
+
+	<!--  Mapping for SAML/Shibboleth protocol endpoints -->
+	<servlet-mapping>
+		<servlet-name>AssertionConsumer</servlet-name>
+		<url-pattern>/Shibboleth.sso/SAML/POST</url-pattern>
+	</servlet-mapping>
+
+	<!-- Mapping for administrative functions -->
+	<servlet-mapping>
+		<servlet-name>ShowLog</servlet-name>
+		<url-pattern>/showlog</url-pattern>
+	</servlet-mapping>
+
+	<mime-mapping>
+		<extension>css</extension>
+		<mime-type>text/css</mime-type>
+	</mime-mapping>
+	
+	
+
+</web-app>
