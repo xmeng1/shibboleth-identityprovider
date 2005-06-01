@@ -130,7 +130,7 @@ AtThLg==
 			
 			<!-- This tells SPs how and where to request authentication. -->
 			<SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"
-			    Location="https://idp.example.org/shibboleth-idp/SSO"/>
+			    Location="https://idp.example.org:8443/shibboleth-idp/SSO"/>
 
 			<!-- This enables testing against Internet2's test site. -->
 			<SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"
@@ -278,10 +278,10 @@ Yt0LOC4i/8fpCqcHaHVNKvgWipNyEXr6r0nia5NmmrM7I5SQMM2VZv2G4c/KogBe
 			-->
 		    <AssertionConsumerService index="1" isDefault="true"
 		        Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post"
-		        Location="https://sp.example.org/Shibboleth.sso/SAML/POST"/>
+		        Location="https://sp.example.org:9443/shibboleth-sp/Shibboleth.sso/SAML/POST"/>
 		    <AssertionConsumerService index="2"
 		        Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01"
-		        Location="https://sp.example.org/Shibboleth.sso/SAML/Artifact"/>
+		        Location="https://sp.example.org:9443/shibboleth-sp/Shibboleth.sso/SAML/Artifact"/>
 
 		</SPSSODescriptor>
 		
