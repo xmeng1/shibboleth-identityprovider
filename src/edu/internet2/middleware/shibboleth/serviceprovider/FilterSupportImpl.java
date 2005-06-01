@@ -70,7 +70,7 @@ public class FilterSupportImpl implements FilterSupport {
     }
     
     /**
-     * Get the URL of the local AuthenticationAssertionConsumerServlet.
+     * Get the URL of the local AssertionConsumerServlet.
      * 
      * @param applicationId
      * @return URL string
@@ -163,7 +163,7 @@ public class FilterSupportImpl implements FilterSupport {
             String emptySessionId) {
         String sessionid;
         try {
-            sessionid = AuthenticationAssertionConsumerServlet.createSessionFromPost(
+            sessionid = AssertionConsumerServlet.createSessionFromPost(
                     ipaddr, request, applicationId, shireURL, providerId,emptySessionId);
         } catch (SAMLException e) {
             return null;

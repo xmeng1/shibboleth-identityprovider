@@ -85,7 +85,7 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  * 
  * @author Howard Gilbert
  */
-public class AuthenticationAssertionConsumerServlet extends HttpServlet {
+public class AssertionConsumerServlet extends HttpServlet {
 
 	private static Logger log = null;
 	
@@ -136,7 +136,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
 		Logger.getRootLogger().setLevel((Level) Level.INFO);
 		rootAppender.setLayout(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"));
 */
-		log = Logger.getLogger(AuthenticationAssertionConsumerServlet.class.getName());
+		log = Logger.getLogger(AssertionConsumerServlet.class.getName());
 		
 		ServletContextInitializer.initServiceProvider(servletContext);
 		AuthenticationFilter.setFilterSupport(new FilterSupportImpl());
@@ -173,7 +173,7 @@ public class AuthenticationAssertionConsumerServlet extends HttpServlet {
             String applicationId = config.mapRequest(target);
             ApplicationInfo appinfo = config.getApplication(applicationId);
             Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
-            String shireURL = appSessionValues.getShireURL();
+            String shireURL = request.getRequestURL().toString();
             String providerId = appinfo.getApplicationConfig().getProviderId();
             
            

@@ -173,6 +173,7 @@ import x0.maceShibbolethTargetConfig1.ShibbolethTargetConfigDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
 import x0.maceShibbolethTargetConfig1.ApplicationsDocument.Applications;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host;
+import x0.maceShibbolethTargetConfig1.HostDocument.Host.Scheme.Enum;
 import x0.maceShibbolethTargetConfig1.PathDocument.Path;
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
@@ -282,15 +283,13 @@ public class ServiceProviderConfig {
 	 */
 
 	private static final String XMLTRUSTPROVIDERTYPE = 
-		"edu.internet2.middleware.shibboleth.common.provider.XMLTrust";
+		"edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust";
 	private static final String XMLAAPPROVIDERTYPE = 
-		"edu.internet2.middleware.shibboleth.serviceprovider.XMLAAP";
+		"edu.internet2.middleware.shibboleth.aap.provider.XMLAAP";
 	private static final String XMLFEDERATIONPROVIDERTYPE = 
-		"edu.internet2.middleware.shibboleth.common.provider.XMLMetadata";
-	private static final String XMLREVOCATIONPROVIDERTYPE =
-	    "edu.internet2.middleware.shibboleth.common.provider.XMLRevocation";
+		"edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata";
 	private static final String XMLREQUESTMAPPROVIDERTYPE = 
-	    "edu.internet2.middleware.shibboleth.serviceprovider.XMLRequestMap";
+	    "edu.internet2.middleware.shibboleth.sp.provider.NativeRequestMapProvider";
 	private static final String XMLCREDENTIALSPROVIDERTYPE = 
 	    "edu.internet2.middleware.shibboleth.common.Credentials";
 	
@@ -356,30 +355,23 @@ public class ServiceProviderConfig {
         String urlhostname = url.getHost();
         String urlpath = url.getPath();
         int urlport = url.getPort();
-        if (urlport==0) {
-            if (urlscheme.equals("http"))
-                urlport=80;
-            else if (urlscheme.equals("https"))
-                urlport=443;
-        }
         
         // find Host entry for this virtual server
         Host[] hostArray = requestMap.getHostArray();
         for (int ihost=0;ihost<hostArray.length;ihost++) {
             Host host = hostArray[ihost];
-            String hostScheme = host.getScheme().toString();
+            Enum scheme = host.getScheme();
             String hostName = host.getName();
             String hostApplicationId = host.getApplicationId();
             long hostport = host.getPort();
-            if (hostport==0) {
-                if (hostScheme.equals("http"))
-                    hostport=80;
-                else if (hostScheme.equals("https"))
-                    hostport=443;
-            }
             
-            if (!urlscheme.equals(hostScheme) ||
-                !urlhostname.equals(hostName)||
+            if (scheme != null &&
+                !urlscheme.equals(scheme.toString()))
+                continue;
+            if (!urlhostname.equals(hostName))
+                continue;
+            if (hostport!=0 &&
+                urlport!=0 &&    
                 urlport!=hostport)
                 continue;
             
@@ -785,7 +777,7 @@ public class ServiceProviderConfig {
 		PluggableType[] pluggable = appinfo.getApplicationConfig().getTrustProviderArray();
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
-		            ShibbolethTrust.class,
+		            ShibbolethTrustPluggable.class,
 		            Trust.class,
 		            XMLTRUSTPROVIDERTYPE,
 		            certificateValidators);
@@ -802,6 +794,12 @@ public class ServiceProviderConfig {
 	
 	private boolean processPluggableRequestMapProvider(){
 	    LocalConfigurationType shire = config.getSHIRE();
+        if (shire==null)
+            shire = config.getLocal();
+        if (shire==null) {
+            log.error("No Local element.");
+            return true;
+        }
 	    PluggableType mapProvider = shire.getRequestMapProvider();
 	    
 	    String pluggabletype = mapProvider.getType();
