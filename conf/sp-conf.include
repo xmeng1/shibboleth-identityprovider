@@ -4,3 +4,4 @@ dist.sp.xml
 sp-example.crt
 sp-example.key
 AAP.xml
+sp-init.logger

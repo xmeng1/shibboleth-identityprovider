@@ -1,0 +1,12 @@
+# A log4j configuration file for initialization
+# This configuration file starts logging when the only available information
+# comes from the Servlet context parameter. It does not depend on XML parsing
+# or any other configuration file. However, its location must have been 
+# correctly installed in WEB-INF/web.xml for the SP
+
+log4j.logger.edu.internet2.middleware=INFO, stdout
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%-5p %-36X{serviceId} %d{ISO8601} (%c:%L) - %m%n
+
