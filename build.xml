@@ -231,13 +231,22 @@
     </target>
 	
 	<target name="exampleCertificates">
+		<!--
+		This target provides an example of the generation of
+		self-signed Certificates for the IdP and SP. You may
+		change the cn= and use it to generate new identities
+		when you want to replace "example.org" with your real
+		organization dns. However,the generated key and 
+		certificate also have to be defined to the Credentials
+		of the IdP and SP config files and added to the Metadata.
+		-->
 		<genkey alias="tomcat" storepass="exampleorg"
-			keystore="${tomcat.home}/conf/idpexample.jks"
+			keystore="${tomcat.home}/conf/idp-example.jks"
 			keyalg="RSA" validity="365"
 			dname="cn=idp.example.org, o=example.org, c=US"
 		/>
 		<genkey alias="tomcat" storepass="exampleorg"
-			keystore="${tomcat.home}/conf/spexample.jks"
+			keystore="${tomcat.home}/conf/sp-example.jks"
 			keyalg="RSA" validity="365"
 			dname="cn=sp.example.org, o=example.org, c=US"
 		/>
@@ -253,6 +262,7 @@
     <target name="install.url">
 		<taskdef name="urlconvert" classname="edu.internet2.middleware.shibboleth.utils.ant.URLConvert" classpath="${build}"/>
 		<urlconvert path="${shib.home}" addProperty="shib.home.url"/>
+		<urlconvert path="${shibsp.home}" addProperty="shibsp.home.url"/>
     </target>
 
     <target name="install" depends="init, install.init" description="Install Shibboleth">
@@ -339,7 +349,7 @@
     </target>
 
     <!-- Install Shibboleth SP to filesystem using the properties in build.properties -->
-    <target name="install.sp.filesystem" depends="init, install.init, build-util" 
+    <target name="install.sp.filesystem" depends="init, install.init, build-util, install.url" 
         description="Install Shibboleth SP to filesystem using the properties in build.properties">
 
         <!-- copy values to deployment descriptor and create war -->
