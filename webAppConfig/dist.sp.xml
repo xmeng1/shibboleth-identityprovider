@@ -17,7 +17,11 @@
 		<param-name>ServiceProviderConfigFile</param-name>
 		<param-value>$SHIB_HOME$/etc/sp.xml</param-value>
 	</context-param>
-
+	<context-param>
+		<param-name>InitializationLog</param-name>
+		<param-value>$SHIB_HOME$/etc/sp-init.logger</param-value>
+	</context-param>
+	
 	<filter>
 		<!-- Gather log data in a per-request in memory buffer
 		 	 Requires /showlog Servlet to return log data to client
@@ -46,6 +50,11 @@
 		<filter-name>RequestLogFilter</filter-name>
 		<servlet-name>AssertionConsumer</servlet-name>
 	</filter-mapping>
+	
+	<listener>
+		<listener-class>edu.internet2.middleware.shibboleth.serviceprovider.ContextListener
+		</listener-class>
+	</listener>
 
 	<!-- Servlets for Shibboleth/SAML Protocol endpoints -->
 	<servlet>
