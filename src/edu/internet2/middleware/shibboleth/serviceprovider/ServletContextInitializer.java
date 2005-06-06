@@ -66,7 +66,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
  */
 public class ServletContextInitializer {
 	
-	private static Logger log = Logger.getLogger(ServletContextInitializer.class.getName());
+	private static Logger log = Logger.getLogger(ContextListener.SHIBBOLETH_INIT+".Initializer");
 	private static ServiceProviderContext context   = ServiceProviderContext.getInstance();
 
 	public static boolean initialized = false;

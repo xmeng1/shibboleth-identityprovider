@@ -42,8 +42,6 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLSOAPHTTPBinding;
 import org.opensaml.TrustException;
-import org.opensaml.provider.SOAPHTTPBindingProvider;
-
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Endpoint;

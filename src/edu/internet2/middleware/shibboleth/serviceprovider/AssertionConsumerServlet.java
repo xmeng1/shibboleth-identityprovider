@@ -48,7 +48,6 @@
  */
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
-import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.ServletContext;
@@ -59,21 +58,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.opensaml.SAMLException;
+import org.apache.log4j.Logger;
 import org.opensaml.SAMLBrowserProfile;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
 import org.w3c.dom.Element;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.xml.security.Init;
 
 import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
-
-import edu.internet2.middleware.commons.log4j.ThreadLocalAppender;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -87,7 +79,7 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  */
 public class AssertionConsumerServlet extends HttpServlet {
 
-	private static Logger log = null;
+	private static Logger log = Logger.getLogger(AssertionConsumerServlet.class.getName());
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
 	
@@ -102,43 +94,10 @@ public class AssertionConsumerServlet extends HttpServlet {
 		super.init();
 		ServletContext servletContext = this.getServletContext();
 		
-		Init.init();
-
-		// Initialize logging specially
-		Logger targetLogger = Logger.getLogger("edu.internet2.middleware");
-		Logger samlLogger = Logger.getLogger("org.opensaml");
-		File diagdir = new File(servletContext.getRealPath("/diagnose"));
-		diagdir.mkdirs();
-		String logname = servletContext.getRealPath("/diagnose/initialize.log");
-		Layout initLayout = new PatternLayout("%d{HH:mm} %-5p %m%n");
-		
-		try {
-            FileAppender initLogAppender = new FileAppender(initLayout,logname);
-            ThreadLocalAppender threadAppender = new ThreadLocalAppender();
-            threadAppender.setLayout(initLayout);
-            targetLogger.setAdditivity(false);
-            targetLogger.addAppender(initLogAppender);
-            targetLogger.addAppender(threadAppender);
-            targetLogger.setLevel(Level.DEBUG);
-            samlLogger.addAppender(threadAppender);
-            samlLogger.setLevel(Level.DEBUG);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-		
-/*		ConsoleAppender rootAppender = new ConsoleAppender();
-		rootAppender.setWriter(new PrintWriter(System.out));
-		rootAppender.setName("stdout");
-		targetLogger.addAppender(rootAppender);
-
-		// rootAppender.setLayout(new PatternLayout("%-5p %-41X{serviceId} %d{ISO8601} (%c:%L) - %m%n"));
-		// Logger.getRootLogger().setLevel((Level) Level.DEBUG);
-		Logger.getRootLogger().setLevel((Level) Level.INFO);
-		rootAppender.setLayout(new PatternLayout("%d{ISO8601} %-5p %-41X{serviceId} - %m%n"));
-*/
-		log = Logger.getLogger(AssertionConsumerServlet.class.getName());
-		
+		// Note: the ServletContext should have been initialized by the Listener
 		ServletContextInitializer.initServiceProvider(servletContext);
+		
+		// Establish linkage between the SP context and the RM Filter class
 		AuthenticationFilter.setFilterSupport(new FilterSupportImpl());
 	}
 
@@ -164,7 +123,7 @@ public class AssertionConsumerServlet extends HttpServlet {
             String ipaddr = request.getRemoteAddr();
             
             // URL of Resource that triggered authorization
-            // XXX: I added support to the profile for extracting TARGET, but
+            // I added support to the profile for extracting TARGET, but
             // it's not too critical in Java since you can grab it easily anyway.
             // Might be better in the 2.0 future though, since the bindings get trickier.
             String target = request.getParameter("TARGET");
@@ -295,8 +254,7 @@ public class AssertionConsumerServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest arg0, HttpServletResponse arg1)
     	throws ServletException, IOException {
-        // TODO Auto-generated method stub
-        super.doGet(arg0, arg1);
+    	// Currently the Assertion Consumer does not receive a GET
     }
 	
 

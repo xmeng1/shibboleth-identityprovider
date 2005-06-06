@@ -22,7 +22,6 @@
  */
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
-import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlException;
 import org.opensaml.SAMLException;
 import org.opensaml.artifact.Artifact;
@@ -48,7 +47,6 @@ class XMLMetadataImpl
 		PluggableConfigurationComponent
 	{
     
-    private static Logger log = Logger.getLogger(XMLMetadataImpl.class);
     
 	XMLMetadataProvider realObject = null;
 	

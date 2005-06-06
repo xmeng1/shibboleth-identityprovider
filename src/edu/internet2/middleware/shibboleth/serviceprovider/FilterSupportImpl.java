@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 
 import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
@@ -42,7 +43,8 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  */
 public class FilterSupportImpl implements FilterSupport {
     
-    public static ServiceProviderContext context = ServiceProviderContext.getInstance();
+    private static ServiceProviderContext context = ServiceProviderContext.getInstance();
+    private static Logger log = Logger.getLogger(ContextListener.SHIBBOLETH_SERVICE);
 
     /**
      * Given a Resource URL, go to the RequestMap logic to find an applicationId.

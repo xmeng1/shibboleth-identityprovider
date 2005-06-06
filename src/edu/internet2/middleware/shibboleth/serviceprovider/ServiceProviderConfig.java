@@ -150,6 +150,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.opensaml.SAMLAssertion;
@@ -178,6 +179,7 @@ import x0.maceShibbolethTargetConfig1.PathDocument.Path;
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.common.Credentials;
+import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
@@ -201,7 +203,7 @@ public class ServiceProviderConfig {
 	// Map key prefix for inline plugin configuration elements 
 	private static final String INLINEURN = "urn:inlineBS:ID";
     
-    private static Logger log = Logger.getLogger(ServiceProviderConfig.class);
+    private static Logger log = Logger.getLogger(ContextListener.SHIBBOLETH_INIT+".Config");
 
 	private SPConfigType  // The XMLBean from the main config file
 		config = null;    
@@ -429,6 +431,12 @@ public class ServiceProviderConfig {
 			throw new ShibbolethConfigurationException("Error while parsing shibboleth configuration");
 		}
 		
+		try {
+			String loggerUrl = config.getLogger();
+			PropertyConfigurator.configure(new URL(loggerUrl));
+		} catch (Exception e) {
+			log.error("Cannot process logger attribute of SP configuration file.",e);
+		}
 		
 		Applications apps = config.getApplications(); // <Applications>
 		

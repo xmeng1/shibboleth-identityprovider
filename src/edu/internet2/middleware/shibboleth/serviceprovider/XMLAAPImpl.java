@@ -30,7 +30,6 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 
 import edu.internet2.middleware.shibboleth.aap.provider.XMLAAPProvider;
@@ -58,7 +57,6 @@ public class XMLAAPImpl
 	implements AAP,
 	PluggableConfigurationComponent {
 	
-	private static Logger log = Logger.getLogger(XMLAAPImpl.class);
     XMLAAPProvider realObject = null;
 	
     public void initialize(Node dom) throws ShibbolethConfigurationException {
