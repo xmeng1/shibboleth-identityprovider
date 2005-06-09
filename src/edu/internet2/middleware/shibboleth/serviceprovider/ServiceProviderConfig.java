@@ -433,7 +433,9 @@ public class ServiceProviderConfig {
 		
 		try {
 			String loggerUrl = config.getLogger();
-			PropertyConfigurator.configure(new URL(loggerUrl));
+            if (loggerUrl!=null) {
+                PropertyConfigurator.configure(new URL(loggerUrl));
+            }
 		} catch (Exception e) {
 			log.error("Cannot process logger attribute of SP configuration file.",e);
 		}
