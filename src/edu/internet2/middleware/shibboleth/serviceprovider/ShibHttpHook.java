@@ -48,11 +48,12 @@ import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 
 /**
- * A callback object added to the SAML Binding by Shib. During
- * HTTP session establishment and Request/Response processing 
- * to the AA, SAML calls these exists. This code traps HTTPS
- * sessions and adds a JSSE TrustManager to process Certificates.
- * 
+ * During Attribute Query, SAML creates the HTTP(S) session with
+ * the AA. Objects of this class provide a callback for special
+ * processing of the Session that SAML has established before data
+ * is exchanged. This allows Shib to add its own Metadata and Trust
+ * processing to validate the AA identity.
+ 
  * @author Howard Gilbert
  *
  */
@@ -62,34 +63,40 @@ public class ShibHttpHook implements HTTPHook {
     
     ServiceProviderContext context = ServiceProviderContext.getInstance();
     ServiceProviderConfig config = context.getServiceProviderConfig();
+    
+    // If we present a ClientCert, it will be this one.
     Credentials credentials = config.getCredentials();
-    AttributeAuthorityDescriptor role;
-    Trust trust;
+    
+    // SAML Doesn't know the Shibboleth objects, so they have to be saved
+    // by the constructor so they can be used in callbacks without being
+    // passed as arguments
+    AttributeAuthorityDescriptor role; // The AA object from the Metadata
+    Trust trust; // A ShibbolethTrust object
     
     /**
      * @param role
      */
     public ShibHttpHook(AttributeAuthorityDescriptor role, Trust trust) {
         super();
-        this.role = role;
-        this.trust = trust;
+        this.role = role;  // Save the AA Role for the callback
+        this.trust = trust; // Save the ShibTrust for the callback
     }
 
     public boolean incoming(HttpServletRequest r, Object globalCtx,
             Object callCtx) throws SAMLException {
-        // Not used
+        log.error("ShibHttpHook method incoming-1 should not have been called.");
         return true;
     }
 
     public boolean outgoing(HttpServletResponse r, Object globalCtx,
             Object callCtx) throws SAMLException {
-        // Not used
+        log.error("ShibHttpHook method outgoing-1 should not have been called.");
         return true;
     }
 
     public boolean incoming(HttpURLConnection conn, Object globalCtx,
             Object callCtx) throws SAMLException {
-        // Not used
+        // Called with the AA response, but I have nothing to add here
         return true;
     }
 
@@ -104,25 +111,41 @@ public class ShibHttpHook implements HTTPHook {
     public boolean outgoing(HttpURLConnection conn, Object globalCtx,
             Object callCtx) throws SAMLException {
         if (!(conn instanceof HttpsURLConnection)) {
-            return true; // http: sessions need no processing
+            return true; // HTTP (non-SSL) sessions need no processing
         }
+        // Cast to subclass with extra info
         HttpsURLConnection sslconn = (HttpsURLConnection) conn;
+        
+        // To get your own Certificate Processing exits, you have 
+        // to create a custom SSLContext, configure it, and then
+        // obtain a SocketFactory
         SSLContext sslContext = null;
         try {
             sslContext = SSLContext.getInstance("SSL");
         } catch (NoSuchAlgorithmException e) {
+            // Cannot happen in code that is already doing SSL
             log.error("Cannot find required SSL support");
             return true;
         }
+        
+        // Arrays with one element (for init)
         TrustManager[] tms = new TrustManager[] {new ShibTrustManager()};
         KeyManager[] kms = new KeyManager[] {new ShibKeyManager()};
+        
         try {
+            // Attach the KeyManager and TrustManager to the Context
             sslContext.init(kms,tms,new java.security.SecureRandom());
         } catch (KeyManagementException e) {
             return false;
         }
+        
+        // Now we can get our own custom SocketFactory and replace
+        // the default factory in the caller's URLConnection
         SSLSocketFactory socketFactory = sslContext.getSocketFactory();
         sslconn.setSSLSocketFactory(socketFactory);
+        
+        // The KeyManager and TrustManager get callbacks from JSSE during
+        // the URLConnection.connect() call
         return true;
     }
     
@@ -159,13 +182,15 @@ public class ShibHttpHook implements HTTPHook {
         }
 
         public X509Certificate[] getCertificateChain(String arg0) {
+            // Obtain the Client Cert from the Credentials object
+            // in the configuration file. Ignore argument "fred".
             Credential credential = credentials.getCredential();
             X509Certificate[] certificateChain = credential.getX509CertificateChain();
             return certificateChain;
         }
 
         public PrivateKey getPrivateKey(String arg0) {
-            // TODO Get the SP Private Key from the Credentials object.
+            // Obtain the Private Key from the Credentials object.
             Credential credential = credentials.getCredential();
             PrivateKey privateKey = credential.getPrivateKey();
             return privateKey;
@@ -174,25 +199,36 @@ public class ShibHttpHook implements HTTPHook {
     }
     
     /**
-     * Called to approve or reject the Server Certificate of the AA.
+     * Called to approve or reject an SSL Server Certificate.
+     * In practice this is the Certificate of the AA.
+     * 
+     * <p>A TrustManager handles Certificate approval at either end
+     * of an SSL connection, but this code is in the SP and is only 
+     * inserted into the Attribute Query to the AA. When the AA is
+     * configured to use HTTPS and presents an SSL Server Certficate,
+     * call the commmon code to validate that this Certificate is in
+     * the Metadata.</p>
      */
     class ShibTrustManager  implements X509TrustManager {
 
         public X509Certificate[] getAcceptedIssuers() {
-            // Not needed, the Server has only one Certificate to send us.
+            log.error("ShibHttpHook method getAcceptedIssuers should not have been called.");
             return new X509Certificate[0]; 
         }
         
         public void checkClientTrusted(X509Certificate[] arg0, String arg1) 
             throws CertificateException {
-            // Not used, we are the client
+            log.error("ShibHttpHook method checkClientTrusted should not have been called.");
         }
 
         public void checkServerTrusted(X509Certificate[] certs, String arg1) 
             throws CertificateException {
-            if (trust.validate(certs[0],certs,role))
+            if (trust.validate(certs[0],certs,role)) {
+                log.debug("ShibHttpHook accepted AA Server Certificate.");
                 return;
-            //throw new CertificateException("Cannot validate AA Server Certificate in Metadata");
+            }
+            log.info("ShibHttpHook rejected AA Server Certificate.");
+            throw new CertificateException("Cannot validate AA Server Certificate in Metadata");
             
         }
         
