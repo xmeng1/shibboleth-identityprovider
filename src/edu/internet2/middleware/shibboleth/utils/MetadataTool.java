@@ -153,6 +153,10 @@ public class MetadataTool {
 
 		// Parse file and verify root element.
 		Document doc = Parser.loadDom(infile, true);
+		if (doc == null) {
+			System.out.println("error: unable to read in file (" + infile + ")");
+			System.exit(-1);
+		}
 		Element e = doc.getDocumentElement();
 		if (ns != null && name != null && !org.opensaml.XML.isElementNamed(e, ns, name)) {
 			System.err.println("error: root element did not match ns and name parameters");
