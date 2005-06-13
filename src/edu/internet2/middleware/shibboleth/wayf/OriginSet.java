@@ -54,8 +54,10 @@ public class OriginSet {
 
 	public void addOrigin(Origin origin) {
 
-		origins.add(origin);
-		log.debug("Adding origin site :" + origin.getName() + ":  to set.");
+		if (origin.getHandleService() != null) {
+			origins.add(origin);
+			log.debug("Adding origin site :" + origin.getName() + ":  to set.");
+		}
 	}
 
 }

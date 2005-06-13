@@ -33,7 +33,7 @@ public class Origin implements Comparable {
 
 	private String name = "";
 	private ArrayList aliases = new ArrayList();
-	private String handleService = "";
+	private String handleService;
 
 	/**
 	 * Gets the handleService for this origin.

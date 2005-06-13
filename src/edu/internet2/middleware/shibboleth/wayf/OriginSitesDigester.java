@@ -97,6 +97,26 @@ public class OriginSitesDigester extends ServletDigester {
 		addCallMethod("OriginSite", "setHandleService", 1);
 		addCallParam("OriginSite/HandleService", 0, "Location");
 
+		// Handle 1.3 Metadata
+        addObjectCreate("EntitiesDescriptor", originSetClass);
+		addSetNext("EntitiesDescriptor", "addOriginSet", originSetClass);
+		addCallMethod("EntitiesDescriptor", "setName", 1);
+		addCallParam("EntitiesDescriptor", 0, "Name");
+
+		addObjectCreate("EntitiesDescriptor/EntityDescriptor", originClass);
+		addSetNext("EntitiesDescriptor/EntityDescriptor", "addOrigin", originClass);
+
+		addCallMethod("EntitiesDescriptor/EntityDescriptor", "setName", 1);
+		addCallParam("EntitiesDescriptor/EntityDescriptor", 0, "entityID");
+
+		addCallMethod("EntitiesDescriptor/EntityDescriptor/Organization/OrganizationName", "addAlias", 0);
+		addCallMethod("EntitiesDescriptor/EntityDescriptor/Organization/OrganizationDisplayName", "addAlias", 0);
+                
+		addCallMethod("EntitiesDescriptor/EntityDescriptor/IDPSSODescriptor/SingleSignOnService", "setHandleService", 1);
+		addCallParam("EntitiesDescriptor/EntityDescriptor/IDPSSODescriptor/SingleSignOnService", 0, "Location");
+                                
+		
+		
 		configured = true;
 
 	}
