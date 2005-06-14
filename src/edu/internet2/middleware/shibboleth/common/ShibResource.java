@@ -39,11 +39,20 @@ public class ShibResource {
 	public ShibResource(String name, Class requester) throws ResourceNotAvailableException {
 
 		try {
-			resource = new URL(new URL("file:"), name);
+			resource = new URL(name);
 		} catch (MalformedURLException e) {
 			resource = requester.getResource(name);
 		}
 		if (resource == null) {
+			// Try as a local file.
+			File f = new File(name);
+			if (f.canRead()) {
+				try {
+					resource = f.toURL();
+				}
+				catch (MalformedURLException e) {
+				}
+			}
 			throw new ResourceNotAvailableException(
 				"ShibResource could not be found at the specified location: " + name);
 		}
