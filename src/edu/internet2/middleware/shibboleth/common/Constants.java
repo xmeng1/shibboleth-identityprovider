@@ -21,6 +21,8 @@ package edu.internet2.middleware.shibboleth.common;
  * 
  */
 public class Constants {
+	
+	public static final String SHIB_VERSION = "1.3";
 
 	/** Shibboleth "transient" NameIdentifier Format */
 	public static final String SHIB_NAMEID_FORMAT_URI = "urn:mace:shibboleth:1.0:nameIdentifier";
