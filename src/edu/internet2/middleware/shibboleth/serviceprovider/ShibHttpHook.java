@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLSOAPHTTPBinding.HTTPHook;
 
+import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.Trust;
@@ -110,8 +111,11 @@ public class ShibHttpHook implements HTTPHook {
      */
     public boolean outgoing(HttpURLConnection conn, Object globalCtx,
             Object callCtx) throws SAMLException {
+    	
+    	conn.setRequestProperty("Shibboleth", Constants.SHIB_VERSION);
+    	
         if (!(conn instanceof HttpsURLConnection)) {
-            return true; // HTTP (non-SSL) sessions need no processing
+            return true; // HTTP (non-SSL) sessions need no additional processing
         }
         // Cast to subclass with extra info
         HttpsURLConnection sslconn = (HttpsURLConnection) conn;
