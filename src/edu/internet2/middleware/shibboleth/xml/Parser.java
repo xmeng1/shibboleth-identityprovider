@@ -41,6 +41,7 @@ package edu.internet2.middleware.shibboleth.xml;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -269,8 +270,7 @@ public class Parser {
      */
     public static Document loadDom(String configFilePath,boolean validate) throws SAMLException, SAXException, IOException 
     {
-        InputSource insrc;
-        String schemaCannonicalFilePath;
+       InputSource insrc;
        try {
             InputStream resourceAsStream = 
  //               Parser.class.getResourceAsStream(configFilePath);
@@ -279,6 +279,29 @@ public class Parser {
             insrc.setSystemId(configFilePath);
         } catch (Exception e1) {
             log.error("Configuration file "+configFilePath+" could not be located.");
+            return null;
+        }
+        
+        return loadDom(insrc,validate); // Now pass on to the main routine
+        
+    }
+
+    /**
+     * Version of loadDom where the file is specified as a URL.
+     * 
+     * @param configURL input resource
+     * @param validate if true, use Schema
+     * @return DOM tree
+     */
+    public static Document loadDom(URL configURL, boolean validate) throws SAMLException, SAXException, IOException 
+    {
+       InputSource insrc;
+       try {
+            InputStream resourceAsStream = configURL.openStream();
+            insrc = new InputSource(resourceAsStream);
+            insrc.setSystemId(configURL.toString());
+        } catch (Exception e1) {
+            log.error("Configuration URL "+configURL+" could not be accessed.");
             return null;
         }
         

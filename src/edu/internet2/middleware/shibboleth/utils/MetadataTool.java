@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.utils;
 import jargs.gnu.CmdLineParser;
 
 import java.io.*;
+import java.net.URL;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.*;
@@ -152,7 +153,7 @@ public class MetadataTool {
 		}
 
 		// Parse file and verify root element.
-		Document doc = Parser.loadDom(infile, true);
+		Document doc = Parser.loadDom(new URL(new URL("file:"),infile), true);
 		if (doc == null) {
 			System.out.println("error: unable to read in file (" + infile + ")");
 			System.exit(-1);
