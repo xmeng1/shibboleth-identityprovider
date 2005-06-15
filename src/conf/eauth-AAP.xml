@@ -9,7 +9,7 @@
 
 	<!-- According to the spec, these three attributes are required. -->
 
-	<AttributeRule Name="CSid" Namespace="http://eauthentication.gsa.gov/federated/attribute">
+	<AttributeRule Name="csid" Namespace="http://eauthentication.gsa.gov/federated/attribute">
 		<AnySite>
 			<AnyValue/>
 		</AnySite>
