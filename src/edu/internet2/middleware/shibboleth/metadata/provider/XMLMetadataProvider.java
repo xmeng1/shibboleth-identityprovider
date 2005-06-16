@@ -724,6 +724,7 @@ public class XMLMetadataProvider implements Metadata {
                 }
             }
             else {
+            	protocolEnum.add(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS);
                 attrprofs.add(Constants.SHIB_ATTRIBUTE_NAMESPACE_URI);
                 int i;
                 domains = e.getElementsByTagNameNS(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,"Domain");
