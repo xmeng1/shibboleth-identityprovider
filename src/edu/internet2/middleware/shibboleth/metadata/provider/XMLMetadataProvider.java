@@ -337,13 +337,11 @@ public class XMLMetadataProvider implements Metadata {
     }
         
     class XMLOrganization implements Organization {
-        private Element root = null;
         private HashMap /* <String,String> */ names = new HashMap();
         private HashMap /* <String,String> */ displays = new HashMap();
         private HashMap /* <String,URL> */ urls = new HashMap();
 
         public XMLOrganization(Element e) throws MetadataException {
-            root = e;
             e=XML.getFirstChildElement(e);
             while (e != null) {
                 if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"OrganizationName")) {
@@ -423,7 +421,6 @@ public class XMLMetadataProvider implements Metadata {
             }
             else {
                 rawType = root.getAttributeNS(null,"contactType");
-                Node n=null;
                 e=XML.getFirstChildElement(root);
                 while (e != null) {
                     if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"Company")) {
@@ -522,7 +519,7 @@ public class XMLMetadataProvider implements Metadata {
                         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
                     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
                     try {
-                        validUntil=Math.min(validUntil,formatter.parse(dateTime).getTime());
+                        this.validUntil=Math.min(validUntil,formatter.parse(dateTime).getTime());
                     }
                     catch (ParseException e1) {
                         log.warn("Role descriptor contains invalid expiration time");
@@ -1093,7 +1090,7 @@ public class XMLMetadataProvider implements Metadata {
                         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
                     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
                     try {
-                        validUntil=Math.min(validUntil,formatter.parse(dateTime).getTime());
+                        this.validUntil=Math.min(validUntil,formatter.parse(dateTime).getTime());
                     }
                     catch (ParseException e1) {
                         log.warn("Entity descriptor contains invalid expiration time");
@@ -1351,7 +1348,7 @@ public class XMLMetadataProvider implements Metadata {
                         formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
                     formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
                     try {
-                        validUntil=Math.min(validUntil,formatter.parse(dateTime).getTime());
+                        this.validUntil=Math.min(validUntil,formatter.parse(dateTime).getTime());
                     }
                     catch (ParseException e1) {
                         log.warn("Entities descriptor contains invalid expiration time");
