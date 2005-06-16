@@ -72,6 +72,10 @@ import edu.internet2.middleware.shibboleth.common.ShibResource;
  * @author Howard Gilbert
  */
 public class Parser {
+    
+    // This class is used by both the Idp and SP, so it must use
+    // a conventionally declared logger. The SP has a special logger
+    // setup so this package also logs to the init log.
     private static Logger log = Logger.getLogger(Parser.class);
     
     
@@ -176,7 +180,7 @@ public class Parser {
     public static Document loadDom(InputSource ins, boolean validate) throws SAMLException, SAXException, IOException {
 
 		Document doc = null;
-		log.debug("Loading XML from (" + ins.getSystemId() + ")" + (validate ? " with Schema validation" : ""));
+		log.info("Loading XML from (" + ins.getSystemId() + ")" + (validate ? " with Schema validation" : ""));
 		if (validate) {
 			doc = org.opensaml.XML.parserPool.parse(ins, schema);
 		} else {
@@ -214,8 +218,6 @@ public class Parser {
      * @return A string containing the XML in character form.
      */
     public static String jaxpSerialize(Node dom) {
-        String ret = null;
-        
         TransformerFactory factory = TransformerFactory.newInstance();
         Transformer transformer = null;
         DOMSource source = new DOMSource(dom);
@@ -251,10 +253,12 @@ public class Parser {
         }
         catch (InvalidCanonicalizerException e)
         {
+            log.error("Error obtaining an XML canonicalizer ",e);
             return null;
         }
         catch (CanonicalizationException e)
         {
+            log.error("Error canonicalizing XML ",e);
             return null;
         }
         return new String(bs);
@@ -273,7 +277,6 @@ public class Parser {
        InputSource insrc;
        try {
             InputStream resourceAsStream = 
- //               Parser.class.getResourceAsStream(configFilePath);
                 new ShibResource(configFilePath).getInputStream();
             insrc = new InputSource(resourceAsStream);
             insrc.setSystemId(configFilePath);

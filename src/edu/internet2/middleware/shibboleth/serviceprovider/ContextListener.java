@@ -47,9 +47,11 @@ import edu.internet2.middleware.commons.log4j.ThreadLocalAppender;
  * that you can move logic around as needed.
  */
 public class ContextListener implements ServletContextListener {
-	
-
-	// Initialization, parsing files, and setting up
+    
+    //TODO: Change before release
+	private static final Level defaultLogLevel = Level.DEBUG;
+    
+    // Initialization, parsing files, and setting up
 	public static final String SHIBBOLETH_INIT = "shibboleth.init";
 	private static  Logger initLogger = Logger.getLogger(SHIBBOLETH_INIT);
 	private static  Logger initLogger2 = Logger.getLogger("edu.internet2.middleware.shibboleth.xml");
@@ -82,12 +84,12 @@ public class ContextListener implements ServletContextListener {
 		
 		clientLogger.addAppender(threadAppender);
 		clientLogger.addAppender(consoleAppender);
-		clientLogger.setLevel(Level.DEBUG);
+		clientLogger.setLevel(defaultLogLevel);
 		
 		initLogger.addAppender(consoleAppender);
-		initLogger.setLevel(Level.DEBUG);
+		initLogger.setLevel(defaultLogLevel);
 		
-		initLogger2.setLevel(Level.DEBUG);
+		initLogger2.setLevel(defaultLogLevel);
 		
 		// The init log location is represented as a URL in the web.xml
 		// We have to change this int a fully qualified path name
@@ -110,10 +112,10 @@ public class ContextListener implements ServletContextListener {
 		
 		samlLogger.addAppender(threadAppender);
 		samlLogger.addAppender(consoleAppender);
-		samlLogger.setLevel(Level.DEBUG);
+		samlLogger.setLevel(defaultLogLevel);
 
 		serviceLogger.addAppender(consoleAppender);
-		serviceLogger.setLevel(Level.DEBUG);
+		serviceLogger.setLevel(defaultLogLevel);
 		
 		
 		try {

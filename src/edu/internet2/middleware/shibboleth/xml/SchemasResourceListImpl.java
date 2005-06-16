@@ -36,6 +36,9 @@ import org.xml.sax.InputSource;
  */
 public class SchemasResourceListImpl extends SchemaStore {
     
+    // This class is used by both the Idp and SP, so it must use
+    // a conventionally declared logger. The SP has a special logger
+    // setup so this package also logs to the init log.
     private static Logger log = Logger.getLogger(SchemasDirectoryImpl.class);
     
     private String resourceprefix = "/schemas/";
@@ -52,8 +55,6 @@ public class SchemasResourceListImpl extends SchemaStore {
     
    
     private void loadBucket() {
-		// for each .xsd file in the directory
-		int nextsource=0;
 		for (int i=0;i<resourceNames.length;i++) {
             String filename = resourceNames[i];
             if (!filename.endsWith(".xsd")) {
@@ -94,9 +95,9 @@ public class SchemasResourceListImpl extends SchemaStore {
             
             // Put the DOM in the Bucket keyed by namespace
             if (bucket.containsKey(targetNamespace)) {
-                log.debug("Replacing XSD for namespace: "+targetNamespace+" "+filename);
+                log.info("Replacing XSD for namespace: "+targetNamespace+" "+filename);
             } else {
-                log.debug("Defining XSD for namespace:  "+targetNamespace+" "+filename);
+                log.info("Defining XSD for namespace:  "+targetNamespace+" "+filename);
             }
             bucket.put(targetNamespace,xsddom);
         }
