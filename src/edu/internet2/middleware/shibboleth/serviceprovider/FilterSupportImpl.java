@@ -168,8 +168,10 @@ public class FilterSupportImpl implements FilterSupport {
             sessionid = AssertionConsumerServlet.createSessionFromPost(
                     ipaddr, request, applicationId, shireURL, providerId,emptySessionId);
         } catch (SAMLException e) {
+        	log.error("Invalid POST data submitted by RM "+e);
             return null;
         }
+        log.info("Session created from POST submitted by RM: "+sessionid);
         return sessionid;
     }
 
@@ -189,7 +191,9 @@ public class FilterSupportImpl implements FilterSupport {
      * @return SessionId of empty session
      */
     public String createSession(String applicationId) {
-        return context.getSessionManager().newSession(
+        String id = context.getSessionManager().newSession(
                 applicationId, null, null, null, null, null);
+        log.info("Session ID reserved for RM: "+id);
+        return id;
     }
 }

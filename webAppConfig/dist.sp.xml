@@ -19,7 +19,7 @@
 	</context-param>
 	<context-param>
 		<param-name>InitializationLog</param-name>
-		<param-value>$SHIB_HOME$/etc/sp-init.logger</param-value>
+		<param-value>$SHIB_HOME$/logs/sp-init.log</param-value>
 	</context-param>
 	
 	<filter>

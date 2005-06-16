@@ -179,7 +179,6 @@ import x0.maceShibbolethTargetConfig1.PathDocument.Path;
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.common.Credentials;
-import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
@@ -203,7 +202,8 @@ public class ServiceProviderConfig {
 	// Map key prefix for inline plugin configuration elements 
 	private static final String INLINEURN = "urn:inlineBS:ID";
     
-    private static Logger log = Logger.getLogger(ContextListener.SHIBBOLETH_INIT+".Config");
+    private static Logger initlog = Logger.getLogger(ContextListener.SHIBBOLETH_INIT+".Config");
+    private static Logger reqlog = Logger.getLogger(ServiceProviderConfig.class);
 
 	private SPConfigType  // The XMLBean from the main config file
 		config = null;    
@@ -223,6 +223,7 @@ public class ServiceProviderConfig {
 		new TreeMap/*<String, Metadata>*/();
 	
 	public void addOrReplaceMetadataImplementor(String uri, Metadata m) {
+		initlog.info("addOrReplaceMetadataImplementor " + uri+ " as "+m.getClass());
 	    entityLocators.put(uri, m);
 	}
 	
@@ -234,6 +235,7 @@ public class ServiceProviderConfig {
 		new TreeMap/*<String, AAP>*/();
 	
 	public void addOrReplaceAAPImplementor(String uri, AAP a) {
+		initlog.info("addOrReplaceAAPImplementor " + uri+ " as "+a.getClass());
 	    attributePolicies.put(uri,a);
 	}
 	
@@ -245,6 +247,7 @@ public class ServiceProviderConfig {
 		new TreeMap/*<String, Trust>*/();
 	
 	public void addOrReplaceTrustImplementor(String uri, Trust t) {
+		initlog.info("addOrReplaceTrustImplementor " + uri+ " as "+t.getClass());
 	    certificateValidators.put(uri,t);
 	}
 	
@@ -322,14 +325,17 @@ public class ServiceProviderConfig {
 			throws ShibbolethConfigurationException {
 	    
 	    if (config!=null) {
-			log.error("ServiceProviderConfig.loadConfigObjects may not be called twice for the same object.");
+			initlog.error("ServiceProviderConfig.loadConfigObjects may not be called twice for the same object.");
 			throw new ShibbolethConfigurationException("Cannot reload configuration into same object.");
 		}
+	    
+	    initlog.info("Loading SP configuration from "+configFilePath);
 
 		Document configDoc;
         try {
 			configDoc = Parser.loadDom(configFilePath, true);
 		} catch (Exception e) {
+			initlog.error("XML Parser error "+e.toString());
             throw new ShibbolethConfigurationException("XML error in "+configFilePath);
         }
         loadConfigBean(configDoc);
@@ -392,6 +398,7 @@ public class ServiceProviderConfig {
             }
         }
 	    
+        reqlog.debug("mapRequest mapped "+urlreq+" into "+applicationId);
 	    return applicationId;
 	}
 
@@ -410,34 +417,39 @@ public class ServiceProviderConfig {
 		Element documentElement = configDoc.getDocumentElement();
 		// reprocess the already validated DOM to create a bean with typed fields
 		// dump the trash (comments, processing instructions, extra whitespace)
-		
 		try {
 			if (documentElement.getLocalName().equals("ShibbolethTargetConfig")) {
+				initlog.debug("SP Configuration file is in 1.2 syntax.");
 				ShibbolethTargetConfigDocument configBeanDoc;
 				configBeanDoc = ShibbolethTargetConfigDocument.Factory.parse(configDoc,
 						new XmlOptions().setLoadStripComments().setLoadStripProcinsts().setLoadStripWhitespace());
 				config = configBeanDoc.getShibbolethTargetConfig();
 			} else if (documentElement.getLocalName().equals("SPConfig")) {
+				initlog.debug("SP Configuration file is in 1.3 syntax.");
 				SPConfigDocument configBeanDoc;
 				configBeanDoc = SPConfigDocument.Factory.parse(configDoc,
 						new XmlOptions().setLoadStripComments().setLoadStripProcinsts().setLoadStripWhitespace());
 				config = configBeanDoc.getSPConfig();
 			} else {
+				initlog.error("Root element not ShibbolethTargetConfig or SPConfig");
 				throw new XmlException("Root element not ShibbolethTargetConfig or SPConfig");
 			}
 		} catch (XmlException e) {
 			// Since the DOM was already validated against the schema, errors will not typically occur here
-			log.error("Error while parsing shibboleth configuration");
+			initlog.error("Error while parsing shibboleth configuration");
 			throw new ShibbolethConfigurationException("Error while parsing shibboleth configuration");
 		}
 		
-		try {
-			String loggerUrl = config.getLogger();
-            if (loggerUrl!=null) {
-                PropertyConfigurator.configure(new URL(loggerUrl));
-            }
-		} catch (Exception e) {
-			log.error("Cannot process logger attribute of SP configuration file.",e);
+		String loggerUrlString = config.getLogger();
+		if (loggerUrlString!=null) {
+			try {
+				URL loggerURL = new URL(loggerUrlString);
+				initlog.warn("logging is being reconfigured by "+ loggerUrlString);
+				PropertyConfigurator.configure(loggerURL);
+			} catch (MalformedURLException e) {
+				// This error is not serious enough to prevent initialization
+				initlog.error("Ignoring invalid value for logger attribute "+loggerUrlString );
+			}
 		}
 		
 		Applications apps = config.getApplications(); // <Applications>
@@ -484,8 +496,10 @@ public class ServiceProviderConfig {
 		anyError |= processCredentials();
 		anyError |= processPluggableRequestMapProvider();
 		
-		if (anyError)
+		if (anyError) {
+			initlog.error("SP Initialization terminated due to configuration errors");
 		    throw new ShibbolethConfigurationException("Errors processing configuration file, see log");
+		}
 	}
 
 	
@@ -505,7 +519,7 @@ public class ServiceProviderConfig {
 			String pluggabletype = pluggable[i].getType();
 	        if (!pluggabletype.equals(
 	        	"edu.internet2.middleware.shibboleth.common.Credentials")) {
-				log.error("Unsupported CredentialsProvider type "+pluggabletype);
+				initlog.error("Unsupported CredentialsProvider type "+pluggabletype);
 				anyError=true;
 				continue;
 	        }
@@ -517,8 +531,7 @@ public class ServiceProviderConfig {
                 Node credentialsNode=credentialsProviderNode.getFirstChild();
                 credentials = new Credentials((Element)credentialsNode);
             } catch(Exception e) {
-                log.error("Cannot process Credentials element of Shibboleth configuration");
-                log.error(e);
+                initlog.error("Cannot process Credentials element of Shibboleth configuration",e);
                 anyError=true;
                 continue;
             }
@@ -603,15 +616,16 @@ public class ServiceProviderConfig {
     	
     	if (!pluggabletype.equals(builtinName)) {
     	    // Not the builtin type, try to load user class by name
+    		initlog.info("loading user-specified pluggable class "+pluggabletype);
     	    try {
                 implclass = Class.forName(pluggabletype);
             } catch (ClassNotFoundException e) {
-    			log.error("Type value "+pluggabletype+" not found as supplied Java class");
+    			initlog.error("Type value "+pluggabletype+" not found as supplied Java class");
     		    return null;
             }
     	    if (!interfaceClass.isAssignableFrom(implclass)||
                 !PluggableConfigurationComponent.class.isAssignableFrom(implclass)) {
-	    		log.error(pluggabletype+" class does not support required interfaces.");
+	    		initlog.error(pluggabletype+" class does not support required interfaces.");
 	    	    return null;
     	    }
     	}
@@ -620,7 +634,7 @@ public class ServiceProviderConfig {
         try {
             impl = (PluggableConfigurationComponent) implclass.newInstance();
         } catch (Exception e) {
-            log.error("Unable to instantiate "+pluggabletype);
+            initlog.error("Unable to instantiate "+pluggabletype);
             return null;
         }
     	
@@ -634,7 +648,7 @@ public class ServiceProviderConfig {
     			Node contentNode=pluggableNode.getFirstChild();// root element
     			impl.initialize(contentNode);
     		} catch (Exception e) {
-    			log.error("XML error " + e);
+    			initlog.error("XML error " + e);
     			return null;
     		}
     		
@@ -650,7 +664,7 @@ public class ServiceProviderConfig {
     			    return null;
     			impl.initialize(extdoc);
     		} catch (Exception e) {
-    			log.error("XML error " + e);
+    			initlog.error("XML error " + e);
     			return null;
     		}
     	}
@@ -714,8 +728,8 @@ public class ServiceProviderConfig {
 			impl.initialize(sitedoc);
 			addOrReplaceMetadataImplementor(uri,impl);
 		} catch (Exception e) {
-			log.error("Error while parsing Metadata file "+uri);
-			log.error("XML error " + e);
+			initlog.error("Error while parsing Metadata file "+uri);
+			initlog.error("XML error " + e);
 			return false;
 		}
 	    return true;
@@ -762,8 +776,8 @@ public class ServiceProviderConfig {
 			impl.initialize(aapdoc);
 			addOrReplaceAAPImplementor(uri,impl);
 		} catch (Exception e) {
-			log.error("Error while parsing AAP file "+uri);
-			log.error("XML error " + e);
+			initlog.error("Error while parsing AAP file "+uri);
+			initlog.error("XML error " + e);
 			return false;
 		}
 	    return true;
@@ -807,14 +821,14 @@ public class ServiceProviderConfig {
         if (shire==null)
             shire = config.getLocal();
         if (shire==null) {
-            log.error("No Local element.");
+            initlog.error("No SHIRE or Local element.");
             return true;
         }
 	    PluggableType mapProvider = shire.getRequestMapProvider();
 	    
 	    String pluggabletype = mapProvider.getType();
 	    if (!pluggabletype.equals(XMLREQUESTMAPPROVIDERTYPE)) {
-	        log.error("Unsupported RequestMapProvider type "+pluggabletype);
+	        initlog.error("Unsupported RequestMapProvider type "+pluggabletype);
 	        return true;
 	    }
 	    
@@ -833,8 +847,8 @@ public class ServiceProviderConfig {
 	            
 	            requestMapDoc = RequestMapDocument.Factory.parse(contentNode);
 	        } catch (Exception e) {
-	            log.error("Error while parsing inline RequestMap");
-	            log.error("XML error " + e);
+	            initlog.error("Error while parsing inline RequestMap");
+	            initlog.error("XML error " + e);
 	            return true;
 	        }
 	        
@@ -845,8 +859,8 @@ public class ServiceProviderConfig {
 	                return true;
 	            requestMapDoc = RequestMapDocument.Factory.parse(mapdoc);
 	        } catch (Exception e) {
-	            log.error("Error while parsing RequestMap file "+uri);
-	            log.error("XML error " + e);
+	            initlog.error("Error while parsing RequestMap file "+uri);
+	            initlog.error("XML error " + e);
 	            return true;
 	        }
 	    }
@@ -955,9 +969,12 @@ public class ServiceProviderConfig {
 				String uri =(String) iuris.next();
 				Metadata locator=getMetadataImplementor(uri);
 				EntityDescriptor entity = locator.lookup(id);
-				if (entity!=null)
+				if (entity!=null) {
+					reqlog.debug("Metadata.lookup resolved Entity "+ id);
 					return entity;
+				}
 			}
+			reqlog.warn("Metadata.lookup failed to resolve Entity "+ id);
 			return null;
 		}
 
@@ -967,9 +984,12 @@ public class ServiceProviderConfig {
                 String uri =(String) iuris.next();
                 Metadata locator=getMetadataImplementor(uri);
                 EntityDescriptor entity = locator.lookup(artifact);
-                if (entity!=null)
+                if (entity!=null) {
+					reqlog.debug("Metadata.lookup resolved Artifact "+ artifact);
                     return entity;
+                }
             }
+			reqlog.warn("Metadata.lookup failed to resolve Artifact "+ artifact);
             return null;
         }
         
@@ -1024,13 +1044,13 @@ public class ServiceProviderConfig {
 		    // Foreach AAP in the collection
 			AAP[] providers = getAAPProviders();
             if (providers.length == 0) {
-                log.info("no filters specified, accepting entire assertion");
+                reqlog.info("no filters specified, accepting entire assertion");
                 return;
             }
 			for (int i=0;i<providers.length;i++) {
 				AAP aap = providers[i];
 				if (aap.anyAttribute()) {
-                    log.info("any attribute enabled, accepting entire assertion");
+                    reqlog.info("any attribute enabled, accepting entire assertion");
 					continue;
                 }
             }
@@ -1057,14 +1077,14 @@ public class ServiceProviderConfig {
                                     rule.apply(attribute,role);
                                 }
                                 catch (SAMLException ex) {
-                                    log.info("no values remain, removing attribute");
+                                    reqlog.info("no values remain, removing attribute");
         							attributeStatement.removeAttribute(iattribute--);
                                     break;
                                 }
                             }
                         }
                         if (!ruleFound) {
-                            log.warn("no rule found for attribute (" + attribute.getName() + "), filtering it out");
+                            reqlog.warn("no rule found for attribute (" + attribute.getName() + "), filtering it out");
                             attributeStatement.removeAttribute(iattribute--);
                         }
                         iattribute++;
@@ -1076,7 +1096,7 @@ public class ServiceProviderConfig {
 					}
                     catch (SAMLException ex) {
                         // The statement is now defunct.
-                        log.info("no attributes remain, removing statement");
+                        reqlog.info("no attributes remain, removing statement");
 						assertion.removeStatement(istatement);
 					}
 				}
@@ -1120,6 +1140,7 @@ public class ServiceProviderConfig {
 				if (trust.validate(token,role))
 					return true;
 			}
+			reqlog.warn("SAML object failed Trust validation.");
 			return false;
 		}
 		
@@ -1145,6 +1166,7 @@ public class ServiceProviderConfig {
 				if (trust.validate(certificateEE,certificateChain,descriptor))
 					return true;
 			}
+			reqlog.warn("X.509 Certificate failed Trust validate");
 			return false;
 		}
 
@@ -1155,6 +1177,7 @@ public class ServiceProviderConfig {
 				if (trust.validate(certificateEE,certificateChain,descriptor,checkName))
 					return true;
 			}
+			reqlog.warn("X.509 Certificate failed Trust validate");
 			return false;
 		}
         

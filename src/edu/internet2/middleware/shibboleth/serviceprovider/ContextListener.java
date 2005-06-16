@@ -25,6 +25,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.UnavailableException;
 
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
@@ -50,28 +51,43 @@ public class ContextListener implements ServletContextListener {
 
 	// Initialization, parsing files, and setting up
 	public static final String SHIBBOLETH_INIT = "shibboleth.init";
-	private Logger initLogger = Logger.getLogger(SHIBBOLETH_INIT);
+	private static  Logger initLogger = Logger.getLogger(SHIBBOLETH_INIT);
+	private static  Logger initLogger2 = Logger.getLogger("edu.internet2.middleware.shibboleth.xml");
 	
 	// Authentication and Attribute processing, including SAML, Trust, 
 	// Metadata, etc. Because the SP doesn't control all the code, it is
 	// based on real classnames
-	private Logger clientLogger = Logger.getLogger("edu.internet2.middleware");
-	private Logger samlLogger = Logger.getLogger("org.opensaml");
+	private static Logger clientLogger = Logger.getLogger("edu.internet2.middleware");
+	private static Logger samlLogger = Logger.getLogger("org.opensaml");
 	
 	// Requests from the Resource Manager only touch the RequestMapper
 	// and Session Cache
 	public static final String SHIBBOLETH_SERVICE = "shibboleth.service";
-	private Logger serviceLogger = Logger.getLogger(SHIBBOLETH_SERVICE);
+	private static Logger serviceLogger = Logger.getLogger(SHIBBOLETH_SERVICE);
 
 
 	public void contextInitialized(ServletContextEvent servletContextEvent) {
 		ServletContext servletContext = servletContextEvent.getServletContext();
 		Init.init(); // Let XML Security go first
 		
+		
 		Layout initLayout = new PatternLayout("%d{HH:mm} %-5p %m%n");
+		
 		ThreadLocalAppender threadAppender = new ThreadLocalAppender();
 		threadAppender.setLayout(initLayout);
+		threadAppender.setName("ThreadAppender");
+		
+		ConsoleAppender consoleAppender= new ConsoleAppender(initLayout,ConsoleAppender.SYSTEM_OUT);
+		consoleAppender.setName("SPConsoleAppender");
+		
 		clientLogger.addAppender(threadAppender);
+		clientLogger.addAppender(consoleAppender);
+		clientLogger.setLevel(Level.DEBUG);
+		
+		initLogger.addAppender(consoleAppender);
+		initLogger.setLevel(Level.DEBUG);
+		
+		initLogger2.setLevel(Level.DEBUG);
 		
 		// The init log location is represented as a URL in the web.xml
 		// We have to change this int a fully qualified path name
@@ -82,8 +98,9 @@ public class ContextListener implements ServletContextListener {
 				File initLogFile = new File(initLogURI);
 				String logname = initLogFile.getAbsolutePath();
 				FileAppender initLogAppender = new FileAppender(initLayout,logname);
+				initLogAppender.setName("SPInitLogFileAppender");
 				initLogger.addAppender(initLogAppender);
-				initLogger.setLevel(Level.DEBUG);
+				initLogger2.addAppender(initLogAppender);
 			} catch (URISyntaxException e1) {
 				servletContext.log("InitializationLog context parameter is not a valid URL", e1);
 			} catch (IOException e1) {
@@ -92,7 +109,12 @@ public class ContextListener implements ServletContextListener {
 			
 		
 		samlLogger.addAppender(threadAppender);
+		samlLogger.addAppender(consoleAppender);
 		samlLogger.setLevel(Level.DEBUG);
+
+		serviceLogger.addAppender(consoleAppender);
+		serviceLogger.setLevel(Level.DEBUG);
+		
 		
 		try {
 			ServletContextInitializer.initServiceProvider(servletContext);

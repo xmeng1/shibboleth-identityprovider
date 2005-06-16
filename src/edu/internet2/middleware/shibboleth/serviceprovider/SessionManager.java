@@ -94,38 +94,51 @@ public class SessionManager {
 	
 	public synchronized Session findSession(String sessionId, String applicationId ) {
 		Session s = (Session) sessions.get(sessionId);
-		if (s==null)
+		if (s==null) {
+			log.warn("Session not found with ID "+sessionId);
 			return null;
-		if (null==s.getAuthenticationAssertion())
+		}
+		if (null==s.getAuthenticationAssertion()) {
+			log.warn("Uninitialized (reserved) Session has ID "+sessionId);
 		    return null;
-		if (!applicationId.equals(s.getApplicationId()))
+		}
+		if (!applicationId.equals(s.getApplicationId())) {
+			log.error("Session ID "+sessionId+" doesn't match application "+applicationId);
 			return null;
+		}
 		return s;
 	}
 
 	private synchronized Session findEmptySession(String sessionId) {
 		Session s = (Session) sessions.get(sessionId);
-		if (s==null)
+		if (s==null) {
+			log.warn("Session not found with ID "+sessionId);
 			return null;
-		if (null!=s.getAuthenticationAssertion())
+		}
+		if (null!=s.getAuthenticationAssertion()){
+			log.error("Active Session found when looking for reserved ID:"+sessionId);
 		    return null;
+		}
 		return s;
 	}
 	
 	
 	protected synchronized void add(Session s) {
+		log.debug("Session added: "+s.getKey());
 		sessions.put(s.getKey(), s);
 		if (cache!=null)
 			cache.add(s);
 	}
 	
 	protected synchronized void update(Session s) {
+		log.debug("Session updated: "+s.getKey());
 		sessions.put(s.getKey(), s);
 		if (cache!=null)
 			cache.update(s);
 	}
 	
 	protected synchronized void remove(Session s) {
+		log.debug("Session removed: "+s.getKey());
 		sessions.remove(s.getKey());
 		if (cache!=null)
 			cache.remove(s);

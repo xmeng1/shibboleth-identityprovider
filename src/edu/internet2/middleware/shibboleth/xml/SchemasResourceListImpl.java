@@ -69,6 +69,7 @@ public class SchemasResourceListImpl extends SchemaStore {
                 continue;
             }
             InputSource insrc = new InputSource(inputStream);
+            insrc.setSystemId(resourceName);
            
             // Non-validating parse to DOM
             Document xsddom;
