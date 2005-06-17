@@ -49,6 +49,7 @@
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -59,14 +60,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLBrowserProfile;
+import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
-import org.w3c.dom.Element;
-
 import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
-import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.resource.AuthenticationFilter;
@@ -82,9 +82,6 @@ public class AssertionConsumerServlet extends HttpServlet {
 	private static Logger log = Logger.getLogger(AssertionConsumerServlet.class.getName());
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
-	
-	private Element			configuration = null;
-	private Credentials		credentials = null;
 	
 	public static final String SESSIONPARM =
 	    "ShibbolethSessionId";
@@ -213,8 +210,6 @@ public class AssertionConsumerServlet extends HttpServlet {
         String sessionid=null;
         StringBuffer pproviderId = // Get back IdP Entity name from SAML
             new StringBuffer();
-        String[] audiences = new String[1];
-        audiences[0]=providerId;
         
         ShibBrowserProfile profile = new ShibBrowserProfile(applicationId);
         BrowserProfileResponse samldata = profile.receive(
@@ -227,7 +222,30 @@ public class AssertionConsumerServlet extends HttpServlet {
                 1
         );
         
-        // TODO: Audience/condition checking is now the profile caller's job.
+        Iterator conditions = samldata.assertion.getConditions();
+        while (conditions.hasNext()) {
+            SAMLCondition cond =
+                (SAMLCondition)conditions.next();
+            
+            if (cond instanceof SAMLAudienceRestrictionCondition) {
+                SAMLAudienceRestrictionCondition audienceCondition =
+                    (SAMLAudienceRestrictionCondition) cond;
+                Iterator audiences = audienceCondition.getAudiences();
+                if (audiences==null)
+                    continue; // probably invalid
+                boolean matched = false;
+                while (audiences.hasNext()) {
+                    String audienceString = (String) audiences.next();
+                    if (audienceString.equals(providerId)) {
+                        matched=true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    throw new SAMLException("Assertion restricted to other audiences.");
+                }
+            }
+        }
         
         // The Authentication Assertion gets placed in a newly created
         // Session object. Later, someone will get an Attribute Assertion
