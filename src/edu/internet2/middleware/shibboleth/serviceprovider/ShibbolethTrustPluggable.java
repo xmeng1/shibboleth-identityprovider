@@ -13,8 +13,4 @@ public class ShibbolethTrustPluggable extends ShibbolethTrust implements
             ShibbolethConfigurationException {
     }
 
-    public String getSchemaPathname() {
-       return null;
-    }
-
 }

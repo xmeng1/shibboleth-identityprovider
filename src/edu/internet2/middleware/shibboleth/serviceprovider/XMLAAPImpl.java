@@ -89,7 +89,4 @@ public class XMLAAPImpl
 		return realObject.getAttributeRules();
 	}
 	
-    public String getSchemaPathname() {
-       return null;
-    }
 }

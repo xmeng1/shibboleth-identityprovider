@@ -36,10 +36,13 @@ import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataProvider
 
 
 /**
- * Shibboleth 1.2 XML Metadata support
+ * Wrap the metadata.provider.XMLMetadataProvider with a class that implements
+ * the SP PluggableConfigurationComponent interface. Delegate all processing 
+ * calls to the wrapped object.
  * 
- * TODO: This needs to be ripped out, but for now, I'll try and
- * just wrap the real metadata plugin with this thing.
+ * <p>XMLMetadataProvider takes Node as a Constructor argument, but in the SP
+ * a Pluggable has to be a Bean that can be created with a default constructor
+ * and then be passed a Node to complete initialization.<p>
  */
 class XMLMetadataImpl 
 	implements 
@@ -54,11 +57,13 @@ class XMLMetadataImpl
 	public void initialize(Node dom) 
 		throws XmlException, ShibbolethConfigurationException {
 	    try {
-            // Assuming this just gets a DOM tree containing the metadata,
-            // hopefully this will "just work".
-            realObject =
+             realObject =
                 new edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataProvider(
-                        (dom instanceof Element) ? (Element)dom : ((dom instanceof Document) ? ((Document)dom).getDocumentElement() : null)
+                        (dom instanceof Element) ? 
+                                (Element)dom : 
+                                ((dom instanceof Document) ? 
+                                        ((Document)dom).getDocumentElement() : 
+                                          null)
                     );
         }
         catch (SAMLException e) {
@@ -66,10 +71,6 @@ class XMLMetadataImpl
         }
 	}
 	
-    public String getSchemaPathname() {
-        return null;
-    }
-
     public EntityDescriptor lookup(String id) {
         return realObject.lookup(id);
     }

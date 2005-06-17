@@ -25,9 +25,6 @@
  * by verifying that the loaded class implements this interface.
  * This ensures that it really is a Plugin.
  * 
- * The getSchemaPathname() method returns the resource name
- * of the schema file used to parse the XML configuration data.
- * 
  * The initialize() method is then called, passing a DOM
  * node that represents the configuration information for
  * the plugin, either as opaque inline XML or from a 
@@ -61,5 +58,4 @@ interface PluggableConfigurationComponent {
     	XmlException, // If there is a problem in the configuration data
     	ShibbolethConfigurationException; // for other problems
     
-    public String getSchemaPathname();
 }
