@@ -53,11 +53,12 @@ import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.metadata.*;
+import edu.internet2.middleware.shibboleth.serviceprovider.PluggableConfigurationComponent;
 
 /**
  * @author Scott Cantor
  */
-public class XMLMetadataProvider implements Metadata {
+public class XMLMetadataProvider implements Metadata, PluggableConfigurationComponent {
 
 	private static Logger log = Logger.getLogger(XMLMetadataProvider.class.getName());
 	private Map	/* <String,ArrayList<EntityDescriptor> > */ sites = new HashMap();
@@ -66,7 +67,13 @@ public class XMLMetadataProvider implements Metadata {
     private XMLEntitiesDescriptor rootGroup = null;
 
 	public XMLMetadataProvider(Element e) throws SAMLException {
-        if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"EntitiesDescriptor"))
+        initialize(e);
+	}
+	
+	public XMLMetadataProvider() {} // Must call initialize
+
+	public void initialize(Element e) throws SAMLException {
+		if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"EntitiesDescriptor"))
             rootGroup=new XMLEntitiesDescriptor(e,this, Long.MAX_VALUE, null);
         else if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"EntityDescriptor"))
             rootProvider=new XMLEntityDescriptor(e,this, Long.MAX_VALUE, null);

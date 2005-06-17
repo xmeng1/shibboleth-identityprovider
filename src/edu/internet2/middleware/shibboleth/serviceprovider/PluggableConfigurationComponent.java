@@ -46,15 +46,16 @@
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import org.apache.xmlbeans.XmlException;
-import org.w3c.dom.Node;
-
+import org.opensaml.SAMLException;
+import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
-interface PluggableConfigurationComponent {
+public interface PluggableConfigurationComponent {
     
     public abstract void 
-    initialize(Node dom) 
+    initialize(Element dom) 
     	throws 
+    	SAMLException,
     	XmlException, // If there is a problem in the configuration data
     	ShibbolethConfigurationException; // for other problems
     

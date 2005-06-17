@@ -41,8 +41,9 @@ import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.ScopedRoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.ScopedRoleDescriptor.Scope;
+import edu.internet2.middleware.shibboleth.serviceprovider.PluggableConfigurationComponent;
 
-public class XMLAAPProvider implements AAP {
+public class XMLAAPProvider implements AAP, PluggableConfigurationComponent {
 
     private static Logger log = Logger.getLogger(XMLAAPProvider.class.getName());
     private SortedMap /* <String,AttributeRule> */ attrmap = new TreeMap();
@@ -50,7 +51,13 @@ public class XMLAAPProvider implements AAP {
     private boolean anyAttribute = false;
     
     public XMLAAPProvider(Element e) throws MalformedException {
-        if (!XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,"AttributeAcceptancePolicy")) {
+        initialize(e);
+    }
+    
+    public XMLAAPProvider() {} // must call initialize
+
+	public void initialize(Element e) throws MalformedException {
+		if (!XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,"AttributeAcceptancePolicy")) {
             log.error("Construction requires a valid AAP file: (shib:AttributeAcceptancePolicy as root element)");
             throw new MalformedException("Construction requires a valid AAP file: (shib:AttributeAcceptancePolicy as root element)");
         }
@@ -71,7 +78,7 @@ public class XMLAAPProvider implements AAP {
             if (rule.getAlias() != null)
                 aliasmap.put(rule.getAlias(),rule);
         }
-    }
+	}
     
     class XMLAttributeRule implements AttributeRule {
 

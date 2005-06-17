@@ -178,6 +178,7 @@ import x0.maceShibbolethTargetConfig1.HostDocument.Host.Scheme.Enum;
 import x0.maceShibbolethTargetConfig1.PathDocument.Path;
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
+import edu.internet2.middleware.shibboleth.aap.provider.XMLAAPProvider;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
@@ -185,6 +186,7 @@ import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataProvider;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -645,7 +647,7 @@ public class ServiceProviderConfig {
     		try {
     			Node fragment = pluggable.newDomNode();        // XML-Fragment node
     			Node pluggableNode = fragment.getFirstChild(); // PluggableType 
-    			Node contentNode=pluggableNode.getFirstChild();// root element
+    			Element contentNode=(Element) pluggableNode.getFirstChild();// root element
     			impl.initialize(contentNode);
     		} catch (Exception e) {
     			initlog.error("XML error " + e);
@@ -662,7 +664,7 @@ public class ServiceProviderConfig {
     			Document extdoc = Parser.loadDom(uri,true);
     			if (extdoc==null)
     			    return null;
-    			impl.initialize(extdoc);
+    			impl.initialize(extdoc.getDocumentElement());
     		} catch (Exception e) {
     			initlog.error("XML error " + e);
     			return null;
@@ -698,7 +700,7 @@ public class ServiceProviderConfig {
 		}
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
-		            XMLMetadataImpl.class,
+		            XMLMetadataProvider.class,
 		            Metadata.class,
 		            XMLFEDERATIONPROVIDERTYPE,
 		            entityLocators);
@@ -724,8 +726,8 @@ public class ServiceProviderConfig {
 			Document sitedoc = Parser.loadDom(uri,true);
 			if (sitedoc==null)
 			    return false;
-			XMLMetadataImpl impl = new XMLMetadataImpl();
-			impl.initialize(sitedoc);
+			XMLMetadataProvider impl = new XMLMetadataProvider();
+			impl.initialize(sitedoc.getDocumentElement());
 			addOrReplaceMetadataImplementor(uri,impl);
 		} catch (Exception e) {
 			initlog.error("Error while parsing Metadata file "+uri);
@@ -745,7 +747,7 @@ public class ServiceProviderConfig {
 		PluggableType[] pluggable = appinfo.getApplicationConfig().getAAPProviderArray();
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
-		            XMLAAPImpl.class,
+		    		XMLAAPProvider.class,
 		            AAP.class,
 		            XMLAAPPROVIDERTYPE,
 		            attributePolicies);
@@ -772,8 +774,8 @@ public class ServiceProviderConfig {
 			if (aapdoc==null)
 			    return false;
 			AttributeAcceptancePolicyDocument aap = AttributeAcceptancePolicyDocument.Factory.parse(aapdoc);
-			XMLAAPImpl impl = new XMLAAPImpl();
-			impl.initialize(aapdoc);
+			XMLAAPProvider impl = new XMLAAPProvider();
+			impl.initialize(aapdoc.getDocumentElement());
 			addOrReplaceAAPImplementor(uri,impl);
 		} catch (Exception e) {
 			initlog.error("Error while parsing AAP file "+uri);
@@ -801,7 +803,7 @@ public class ServiceProviderConfig {
 		PluggableType[] pluggable = appinfo.getApplicationConfig().getTrustProviderArray();
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
-		            ShibbolethTrustPluggable.class,
+		            ShibbolethTrust.class,
 		            Trust.class,
 		            XMLTRUSTPROVIDERTYPE,
 		            certificateValidators);

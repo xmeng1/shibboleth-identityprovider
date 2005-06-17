@@ -50,6 +50,7 @@ import org.apache.xml.security.keys.content.KeyName;
 import org.apache.xml.security.keys.content.X509Data;
 import org.apache.xml.security.keys.content.x509.XMLX509CRL;
 import org.apache.xml.security.keys.content.x509.XMLX509Certificate;
+import org.apache.xmlbeans.XmlException;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
@@ -58,7 +59,10 @@ import org.bouncycastle.asn1.DERSet;
 import org.bouncycastle.asn1.DERString;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLSignedObject;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
@@ -67,6 +71,7 @@ import edu.internet2.middleware.shibboleth.metadata.ExtendedEntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.KeyAuthority;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
+import edu.internet2.middleware.shibboleth.serviceprovider.PluggableConfigurationComponent;
 
 /**
  * <code>Trust</code> implementation that does PKIX validation against key authorities included in shibboleth-specific
@@ -74,7 +79,7 @@ import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
  * 
  * @author Walter Hoehn
  */
-public class ShibbolethTrust extends BasicTrust implements Trust {
+public class ShibbolethTrust extends BasicTrust implements Trust, PluggableConfigurationComponent {
 
 	private static Logger log = Logger.getLogger(ShibbolethTrust.class.getName());
 	private static final String CN_OID = "2.5.4.3";
@@ -440,6 +445,14 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 			log.error("Unable to extract host name name from certificate subject DN: ASN.1 parsing failed: " + e);
 			return null;
 		}
+	}
+
+	public void initialize(Node dom) throws XmlException, ShibbolethConfigurationException {
+		
+	}
+
+	public void initialize(Element dom) throws SAMLException, XmlException, ShibbolethConfigurationException {
+		
 	}
 
 }
