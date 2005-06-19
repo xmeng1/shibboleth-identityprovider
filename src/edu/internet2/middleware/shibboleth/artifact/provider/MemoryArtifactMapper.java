@@ -116,7 +116,7 @@ public class MemoryArtifactMapper extends BaseArtifactMapper implements Artifact
 						log.debug("Stopping Memory-based artifact mapper cleanup thread.");
 						return;
 					}
-					log.debug("Memory cartifact mapper cleanup thread searching for stale entries.");
+					log.debug("Memory-based artifact mapper cleanup thread searching for stale entries.");
 					Set needsDeleting = new HashSet();
 					synchronized (mappings) {
 						Iterator iterator = mappings.entrySet().iterator();
