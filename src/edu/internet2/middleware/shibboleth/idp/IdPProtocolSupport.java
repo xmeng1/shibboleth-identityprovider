@@ -47,6 +47,7 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.common.Trust;
+import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -183,7 +184,7 @@ public class IdPProtocolSupport implements Metadata {
 		return metadata.size();
 	}
 
-	public EntityDescriptor lookup(String providerId) {
+	public EntityDescriptor lookup(String providerId, boolean strict) {
 
 		Iterator iterator = metadata.iterator();
 		while (iterator.hasNext()) {
@@ -193,7 +194,7 @@ public class IdPProtocolSupport implements Metadata {
 		return null;
 	}
 
-	public EntityDescriptor lookup(Artifact artifact) {
+	public EntityDescriptor lookup(Artifact artifact, boolean strict) {
 
 		Iterator iterator = metadata.iterator();
 		while (iterator.hasNext()) {
@@ -203,6 +204,22 @@ public class IdPProtocolSupport implements Metadata {
 		return null;
 	}
 
+	public EntityDescriptor lookup(String id) {
+		return lookup(id,true);
+	}
+
+	public EntityDescriptor lookup(Artifact artifact) {
+		return lookup(artifact,true);
+	}
+
+	public EntityDescriptor getRootEntity() {
+		return null;
+	}
+
+	public EntitiesDescriptor getRootEntities() {
+		return null;
+	}
+	
 	public SAMLAttribute[] getReleaseAttributes(Principal principal, RelyingParty relyingParty, String requester,
 			URL resource) throws AAException {
 

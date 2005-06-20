@@ -184,6 +184,7 @@ import edu.internet2.middleware.shibboleth.common.PluggableConfigurationComponen
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
+import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
@@ -966,12 +967,12 @@ public class ServiceProviderConfig {
 		 * @param id ID of the IdP entity
 		 * @return EntityDescriptor metadata object for that site.
 		 */
-        public EntityDescriptor lookup(String id) {
+        public EntityDescriptor lookup(String id, boolean strict) {
 			Iterator iuris = groupUris.iterator();
 			while (iuris.hasNext()) {
 				String uri =(String) iuris.next();
 				Metadata locator=getMetadataImplementor(uri);
-				EntityDescriptor entity = locator.lookup(id);
+				EntityDescriptor entity = locator.lookup(id, strict);
 				if (entity!=null) {
 					reqlog.debug("Metadata.lookup resolved Entity "+ id);
 					return entity;
@@ -981,12 +982,12 @@ public class ServiceProviderConfig {
 			return null;
 		}
 
-        public EntityDescriptor lookup(Artifact artifact) {
+        public EntityDescriptor lookup(Artifact artifact, boolean strict) {
             Iterator iuris = groupUris.iterator();
             while (iuris.hasNext()) {
                 String uri =(String) iuris.next();
                 Metadata locator=getMetadataImplementor(uri);
-                EntityDescriptor entity = locator.lookup(artifact);
+                EntityDescriptor entity = locator.lookup(artifact, strict);
                 if (entity!=null) {
 					reqlog.debug("Metadata.lookup resolved Artifact "+ artifact);
                     return entity;
@@ -995,6 +996,22 @@ public class ServiceProviderConfig {
 			reqlog.warn("Metadata.lookup failed to resolve Artifact "+ artifact);
             return null;
         }
+
+		public EntityDescriptor lookup(String id) {
+			return lookup(id,true);
+		}
+
+		public EntityDescriptor lookup(Artifact artifact) {
+			return lookup(artifact,true);
+		}
+
+		public EntityDescriptor getRootEntity() {
+			return null;
+		}
+
+		public EntitiesDescriptor getRootEntities() {
+			return null;
+		}
         
 		/**
 		 * Return the current array of objects that implement the Trust interface
