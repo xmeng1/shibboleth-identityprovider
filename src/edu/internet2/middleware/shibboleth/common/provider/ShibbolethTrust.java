@@ -388,7 +388,7 @@ public class ShibbolethTrust extends BasicTrust implements Trust, PluggableConfi
 					+ "Name from supplied certificate: " + e1);
 		}
 		names.add(getHostNameFromDN(certificate.getSubjectX500Principal()));
-		return (String[]) names.toArray();
+		return (String[]) names.toArray(new String[1]);
 	}
 	
 	private static boolean matchProviderId(X509Certificate certificate, String id) {
