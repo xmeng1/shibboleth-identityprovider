@@ -28,6 +28,26 @@ public interface Metadata {
 	/**
 	 * Find an entity descriptor by its unique identifier.
 	 * 
+	 * @param id	The unique identifier of the site of interest
+	 * @param strict Honor metadata validity information?
+	 *             
+	 * @return The corresponding entity
+	 */
+	EntityDescriptor lookup(String id, boolean strict);
+
+	/**
+	 * Find an entity descriptor that issued a SAML artifact.
+	 * 
+	 * @param artifact	The artifact whose source site is of interest
+	 * @param strict Honor metadata validity information?
+
+	 * @return The issuing entity
+	 */
+	EntityDescriptor lookup(Artifact artifact, boolean strict);
+
+	/**
+	 * Find an entity descriptor by its unique identifier.
+	 * 
 	 * @param id
 	 *            The unique identifier of the site of interest
 	 * @return The corresponding entity
@@ -42,4 +62,20 @@ public interface Metadata {
 	 * @return The issuing entity
 	 */
 	EntityDescriptor lookup(Artifact artifact);
+
+	/**
+	 * 	Get access to the root entity in the metadata instance,
+	 * 	or null if the root is a group.
+	 * 
+	 * @return	The root entity, if any
+	 */
+	EntityDescriptor getRootEntity();
+
+	/**
+	 * 	Get access to the root entity group in the metadata instance,
+	 * 	or null if the root is a single entity.
+	 * 
+	 * @return	The root group, if any
+	 */
+	EntitiesDescriptor getRootEntities();
 }

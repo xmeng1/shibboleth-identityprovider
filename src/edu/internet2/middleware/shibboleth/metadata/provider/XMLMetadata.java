@@ -32,6 +32,7 @@ import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
+import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -120,23 +121,40 @@ public class XMLMetadata extends ResourceWatchdog implements Metadata {
 	}
 
 	public EntityDescriptor lookup(String providerId) {
-
-		synchronized (currentMeta) {
-			return currentMeta.lookup(providerId);
-		}
+		return lookup(providerId, true);
 	}
 
 	public EntityDescriptor lookup(Artifact artifact) {
+		return lookup(artifact, true);
+	}
 
+	public EntityDescriptor lookup(String id, boolean strict) {
 		synchronized (currentMeta) {
-			return currentMeta.lookup(artifact);
+			return currentMeta.lookup(id, strict);
+		}
+	}
+
+	public EntityDescriptor lookup(Artifact artifact, boolean strict) {
+		synchronized (currentMeta) {
+			return currentMeta.lookup(artifact, strict);
+		}
+	}
+
+	public EntityDescriptor getRootEntity() {
+		synchronized (currentMeta) {
+			return currentMeta.getRootEntity();
+		}
+	}
+
+	public EntitiesDescriptor getRootEntities() {
+		synchronized (currentMeta) {
+			return currentMeta.getRootEntities();
 		}
 	}
 
 	protected void doOnChange() throws ResourceWatchdogExecutionException {
 
 		Metadata newMeta = null;
-		Document newDoc = null;
 
 		try {
 			log.info("Detected a change in the metadata. Reloading from (" + resource.getURL().toString() + ").");

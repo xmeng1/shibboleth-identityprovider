@@ -89,7 +89,7 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
         }
 	}
 
-	public EntityDescriptor lookup(String id) {
+	public EntityDescriptor lookup(String id, boolean strict) {
 		ArrayList list = (ArrayList)sites.get(id);
 		if (list != null) {
 		    long now = System.currentTimeMillis();
@@ -97,11 +97,13 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                 if (now < ((XMLEntityDescriptor)list.get(i)).getValidUntil())
                     return (EntityDescriptor)list.get(i);
             }
+            if (!strict && list.size() > 0)
+            	return (EntityDescriptor)list.get(0);
         }
 		return null;
 	}
 
-    public EntityDescriptor lookup(Artifact artifact) {
+    public EntityDescriptor lookup(Artifact artifact, boolean strict) {
         ArrayList list = null;
         
         if (artifact instanceof SAMLArtifactType0001) {
@@ -120,9 +122,27 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                 if (now < ((XMLEntityDescriptor)list.get(i)).getValidUntil())
                     return (EntityDescriptor)list.get(i);
             }
+            if (!strict && list.size() > 0)
+            	return (EntityDescriptor)list.get(0);
         }
         return null;
     }
+
+	public EntityDescriptor lookup(String id) {
+		return lookup(id, true);
+	}
+
+	public EntityDescriptor lookup(Artifact artifact) {
+		return lookup(artifact, true);
+	}
+
+	public EntityDescriptor getRootEntity() {
+		return rootProvider;
+	}
+
+	public EntitiesDescriptor getRootEntities() {
+		return rootGroup;
+	}
 
     class XMLEndpoint implements Endpoint {
         private Element root = null;
