@@ -367,6 +367,30 @@ public class ShibbolethTrust extends BasicTrust implements Trust, PluggableConfi
 		return false;
 	}
 
+	public static String[] getCredentialNames(X509Certificate certificate) {
+		ArrayList names = new ArrayList();
+		names.add(certificate.getSubjectX500Principal().getName(X500Principal.RFC2253));
+		try {
+			Collection altNames = certificate.getSubjectAlternativeNames();
+			if (altNames != null) {
+				for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
+					List altName = (List) nameIterator.next();
+					if (altName.get(0).equals(new Integer(2))) { // 2 is DNS
+						names.add(altName.get(1));
+					}
+					else if (altName.get(0).equals(new Integer(6))) { // 6 is URI
+						names.add(altName.get(1));
+					}
+				}
+			}
+		} catch (CertificateParsingException e1) {
+			log.error("Encountered an problem trying to extract Subject Alternate "
+					+ "Name from supplied certificate: " + e1);
+		}
+		names.add(getHostNameFromDN(certificate.getSubjectX500Principal()));
+		return (String[]) names.toArray();
+	}
+	
 	private static boolean matchProviderId(X509Certificate certificate, String id) {
 
 		// Try matching against URI Subject Alt Names
@@ -376,7 +400,7 @@ public class ShibbolethTrust extends BasicTrust implements Trust, PluggableConfi
 				for (Iterator nameIterator = altNames.iterator(); nameIterator.hasNext();) {
 					List altName = (List) nameIterator.next();
 					if (altName.get(0).equals(new Integer(6))) { // 6 is URI
-						if (altName.get(0).equals(id)) {
+						if (altName.get(1).equals(id)) {
 							log.debug("Entity ID matched against SubjectAltName.");
 							return true;
 						}
