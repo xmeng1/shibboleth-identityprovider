@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.idp.provider;
 
+import java.security.cert.X509Certificate;
 import java.util.HashSet;
 
 import javax.security.auth.x500.X500Principal;
@@ -86,4 +87,7 @@ public abstract class BaseHandler implements IdPProtocolHandler {
 		return ShibbolethTrust.getHostNameFromDN(dn);
 	}
 
+	protected static String[] getCredentialNames(X509Certificate cert) {
+		return ShibbolethTrust.getCredentialNames(cert);
+	}
 }

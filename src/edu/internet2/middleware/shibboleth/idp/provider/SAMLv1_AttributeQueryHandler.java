@@ -17,10 +17,8 @@
 package edu.internet2.middleware.shibboleth.idp.provider;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -48,6 +46,7 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
+import org.opensaml.XML;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
@@ -86,64 +85,35 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		return "SAML v1.1 Attribute Query";
 	}
 
-	private String getEffectiveName(HttpServletRequest req, RelyingParty relyingParty, IdPProtocolSupport support)
+	private String authenticateAs(String assertedId, X509Certificate[] chain, IdPProtocolSupport support)
 			throws InvalidProviderCredentialException {
-
-		X509Certificate credential = getCredentialFromProvider(req);
-
-		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
-			log.info("Request is from an unauthenticated service provider.");
+		// See if we have metadata for this provider
+		EntityDescriptor provider = support.lookup(assertedId);
+		if (provider == null) {
+			log.info("No metadata found for providerId: (" + assertedId + ").");
 			return null;
+		}
+		else {
+			log.info("Metadata found for providerId: (" + assertedId + ").");
+		}
+		RoleDescriptor ar_role = provider.getAttributeRequesterDescriptor(XML.SAML11_PROTOCOL_ENUM);
+		RoleDescriptor sp_role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
+		if (ar_role == null && sp_role == null) {
+			log.info("SPSSO and Stand-Alone Requester roles not found in metadata for provider: ("
+					+ assertedId + ").");
+			return null;
+		}
 
+		// Make sure that the supplied credential is valid for the selected provider role.
+		if ((ar_role != null &&	support.getTrust().validate(chain[0], chain, ar_role)) ||
+			(sp_role != null &&	support.getTrust().validate(chain[0], chain, sp_role))) {
+			log.info("Supplied credentials validated for this provider.");
+			return assertedId;
 		} else {
-			log.info("Request contains credential: ("
-					+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
-			// Mockup old requester name for requests from < 1.2 SPs
-			if (fromLegacyProvider(req)) {
-				String legacyName = getHostNameFromDN(credential.getSubjectX500Principal());
-				if (legacyName == null) {
-					log.error("Unable to extract legacy requester name from certificate subject.");
-				}
-
-				log.info("Request from legacy service provider: (" + legacyName + ").");
-				return legacyName;
-
-			} else {
-
-				// See if we have metadata for this provider
-				EntityDescriptor provider = support.lookup(relyingParty.getProviderId());
-				if (provider == null) {
-					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-					log.info("Treating remote provider as unauthenticated.");
-					return null;
-				}
-				RoleDescriptor ar_role = provider
-						.getAttributeRequesterDescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
-				RoleDescriptor sp_role = provider.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
-				if (ar_role == null && sp_role == null) {
-					log.info("SPSSO and Stand-Alone Requester roles not found in metadata for provider: ("
-							+ relyingParty.getProviderId() + ").");
-					log.info("Treating remote provider as unauthenticated.");
-					return null;
-				}
-
-				// Make sure that the suppplied credential is valid for the
-				// selected relying party
-				X509Certificate[] chain = (X509Certificate[]) req.getAttribute("javax.servlet.request.X509Certificate");
-				if (support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, ar_role)
-						|| support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain,
-								sp_role)) {
-					log.info("Supplied credential validated for this provider.");
-					log.info("Request from service provider: (" + relyingParty.getProviderId() + ").");
-					return relyingParty.getProviderId();
-
-				} else {
-					log.error("Supplied credential ("
-							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
-							+ ") is NOT valid for provider (" + relyingParty.getProviderId() + ").");
-					throw new InvalidProviderCredentialException("Invalid credential.");
-				}
-			}
+			log.error("Supplied credentials ("
+					+ chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
+					+ ") are NOT valid for provider (" + assertedId + ").");
+			throw new InvalidProviderCredentialException("Invalid credentials.");
 		}
 	}
 
@@ -157,49 +127,73 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 		if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
 			log.error("Protocol Handler can only respond to SAML Attribute Queries.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+			throw new SAMLException("General error processing request.");
 		}
 
 		RelyingParty relyingParty = null;
-
 		SAMLAttributeQuery attributeQuery = (SAMLAttributeQuery) samlRequest.getQuery();
-
-		if (!fromLegacyProvider(request)) {
-			log.info("Remote provider has identified itself as: (" + attributeQuery.getResource() + ").");
-		}
 
 		// This is the requester name that will be passed to subsystems
 		String effectiveName = null;
 
-		X509Certificate credential = getCredentialFromProvider(request);
-		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
-			log.info("Request is from an unauthenticated service provider.");
-		} else {
+		// Log the physical credential supplied, if any.
+		X509Certificate[] credentials = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
+		if (credentials == null || credentials.length == 0 ||
+				credentials[0].getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+			log.info("Request contained no credentials, treating as an unauthenticated service provider.");
+		}
+		else {
+			log.info("Request contains credentials: ("
+					+ credentials[0].getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
 
-			// Identify a Relying Party
-			relyingParty = support.getServiceProviderMapper().getRelyingParty(attributeQuery.getResource());
-
+			// Try and authenticate the requester as any of the potentially relevant identifiers we know.			
 			try {
-				effectiveName = getEffectiveName(request, relyingParty, support);
+				if (attributeQuery.getResource() != null) {
+					log.info("Remote provider has identified itself as: (" + attributeQuery.getResource() + ").");
+					effectiveName = authenticateAs(attributeQuery.getResource(), credentials, support);
+				}
+
+				if (effectiveName == null) {
+					log.info("Remote provider not yet identified, attempting to derive requesting provider from credentials.");
+
+					// Try the additional candidates.
+					String[] candidateNames = getCredentialNames(credentials[0]);
+					for (int c = 0; effectiveName == null && c < candidateNames.length; c++) {
+						effectiveName = authenticateAs(candidateNames[c], credentials, support);
+					}
+				}
 			} catch (InvalidProviderCredentialException ipc) {
 				throw new SAMLException(SAMLException.REQUESTER, "Invalid credentials for request.");
 			}
 		}
-
+		
 		if (effectiveName == null) {
+			log.info("Unable to locate metadata about provider, treating as an unauthenticated service provider.");
 			log.debug("Using default Relying Party for unauthenticated provider.");
 			relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
 		}
+		else {
+			// Identify a Relying Party
+			log.debug("Mapping authenticated provider (" + effectiveName + ") to Relying Party.");
+			relyingParty = support.getServiceProviderMapper().getRelyingParty(effectiveName);
+		}
 
-		// Fail if we can't honor SAML Subject Confirmation
-		if (!fromLegacyProvider(request)) {
-			Iterator iterator = attributeQuery.getSubject().getConfirmationMethods();
-			boolean hasConfirmationMethod = false;
-			while (iterator.hasNext()) {
-				log.info("Request contains SAML Subject Confirmation method: (" + (String) iterator.next() + ").");
-			}
-			if (hasConfirmationMethod) { throw new SAMLException(SAMLException.REQUESTER,
-					"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method."); }
+		// Fail if we can't honor SAML Subject Confirmation unless the only one supplied is
+		// bearer, in which case this is probably a Shib 1.1 query, and we'll let it slide for now.
+		// TODO: remove the compatibility with 1.1 and be strict about this?
+		boolean hasConfirmationMethod = false;
+		boolean hasOnlyBearer = true;
+		Iterator iterator = attributeQuery.getSubject().getConfirmationMethods();
+		while (iterator.hasNext()) {
+			String method = (String) iterator.next();
+			log.info("Request contains SAML Subject Confirmation method: (" + method + ").");
+			hasConfirmationMethod = true;
+			if (!method.equals(SAMLSubject.CONF_BEARER))
+				hasOnlyBearer = false;
+		}
+		if (hasConfirmationMethod && !hasOnlyBearer) {
+			throw new SAMLException(SAMLException.REQUESTER,
+				"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method(s).");
 		}
 
 		// Map Subject to local principal
@@ -223,16 +217,6 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			principal = mapping.getPrincipal(nameId, relyingParty, relyingParty.getIdentityProvider());
 			log.info("Request is for principal (" + principal.getName() + ").");
 
-			URL resource = null;
-			if (fromLegacyProvider(request)) {
-				try {
-					resource = new URL(attributeQuery.getResource());
-				} catch (MalformedURLException mue) {
-					log.error("Request from legacy provider contained an improperly formatted resource "
-							+ "identifier.  Attempting to handle request without one.");
-				}
-			}
-
 			// Get attributes from resolver
 			SAMLAttribute[] attrs;
 			Iterator requestedAttrsIterator = attributeQuery.getDesignators();
@@ -250,11 +234,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					}
 				}
 
-				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, resource,
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null,
 						(URI[]) requestedAttrs.toArray(new URI[0]));
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
-				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, resource);
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null);
 			}
 
 			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
@@ -288,11 +272,6 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				}
 				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
 					audiences.add(relyingParty.getName());
-				}
-				// String remoteProviderId = request.getParameter("providerId");
-				if (attributeQuery.getResource() != null && !attributeQuery.getResource().equals("")
-						&& !audiences.contains(attributeQuery.getResource())) {
-					audiences.add(attributeQuery.getResource());
 				}
 
 				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
@@ -349,34 +328,22 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			log.info("Successfully created response for principal (" + principal.getName() + ").");
 
 			if (effectiveName == null) {
-				if (fromLegacyProvider(request)) {
-					support.getTransactionLog().info(
-							"Attribute assertion issued to anonymous legacy provider at (" + request.getRemoteAddr()
-									+ ") on behalf of principal (" + principal.getName() + ").");
-				} else {
-					support.getTransactionLog().info(
-							"Attribute assertion issued to anonymous provider at (" + request.getRemoteAddr()
-									+ ") on behalf of principal (" + principal.getName() + ").");
-				}
+				support.getTransactionLog().info(
+						"Attribute assertion issued to anonymous provider at (" + request.getRemoteAddr()
+								+ ") on behalf of principal (" + principal.getName() + ").");
 			} else {
-				if (fromLegacyProvider(request)) {
-					support.getTransactionLog().info(
-							"Attribute assertion issued to legacy provider (" + effectiveName
-									+ ") on behalf of principal (" + principal.getName() + ").");
-				} else {
-					support.getTransactionLog().info(
-							"Attribute assertion issued to provider (" + effectiveName + ") on behalf of principal ("
-									+ principal.getName() + ").");
-				}
+				support.getTransactionLog().info(
+						"Attribute assertion issued to provider (" + effectiveName + ") on behalf of principal ("
+								+ principal.getName() + ").");
 			}
 
 			return samlResponse;
 
 		} catch (SAMLException e) {
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+				throw new SAMLException("General error processing request.", e);
 			} else {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+				throw new SAMLException("General error processing request.");
 			}
 
 		} catch (InvalidNameIdentifierException e) {
@@ -391,38 +358,26 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		} catch (NameIdentifierMappingException e) {
 			log.error("Encountered an error while mapping the name identifier from the request: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+				throw new SAMLException("General error processing request.", e);
 			} else {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+				throw new SAMLException("General error processing request.");
 			}
 
 		} catch (AAException e) {
 			log.error("Encountered an error while resolving resolving attributes: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+				throw new SAMLException("General error processing request.", e);
 			} else {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+				throw new SAMLException("General error processing request.");
 			}
 
 		} catch (CloneNotSupportedException e) {
 			log.error("Encountered an error while cloning request subject for use in response: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.", e);
+				throw new SAMLException("General error processing request.", e);
 			} else {
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
+				throw new SAMLException("General error processing request.");
 			}
 		}
 	}
-
-	private static boolean fromLegacyProvider(HttpServletRequest request) {
-
-		String version = request.getHeader("Shibboleth");
-		if (version != null) {
-			log.debug("Request from Shibboleth version: " + version);
-			return false;
-		}
-		log.debug("No version header found.");
-		return true;
-	}
-
 }
