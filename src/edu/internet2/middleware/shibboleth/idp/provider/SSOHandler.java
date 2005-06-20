@@ -102,7 +102,7 @@ public abstract class SSOHandler extends BaseHandler implements IdPProtocolHandl
 		// for this relying party
 		SPSSODescriptor role;
 		if (descriptor != null
-				&& (role = descriptor.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol")) != null) {
+				&& (role = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM)) != null) {
 			Iterator spPreferredFormats = role.getNameIDFormats();
 			while (spPreferredFormats.hasNext()) {
 
