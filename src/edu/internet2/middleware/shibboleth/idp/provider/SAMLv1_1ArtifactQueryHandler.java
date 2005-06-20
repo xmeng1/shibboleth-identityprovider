@@ -31,6 +31,7 @@ import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
+import org.opensaml.XML;
 import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Element;
 
@@ -114,7 +115,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 					log.info("No metadata found for provider: (" + mapping.getServiceProviderId() + ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider.");
 				}
-				RoleDescriptor role = provider.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+				RoleDescriptor role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
 				if (role == null) {
 					log
 							.info("SPSSO role not found in metadata for provider: (" + mapping.getServiceProviderId()
