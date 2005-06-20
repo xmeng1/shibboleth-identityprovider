@@ -84,7 +84,7 @@ public abstract class BaseArtifactMapper implements ArtifactMapper {
 
 		// If the relying party prefers type 2 and we have the proper data, use it
 		if (relyingParty.getPreferredArtifactType() == 2 && type2SourceLocation != null) {
-			artifact = new SAMLArtifactType0002(type2SourceLocation);
+			artifact = new SAMLArtifactType0002(new org.opensaml.artifact.URI(type2SourceLocation.toString()));
 			// Else, use type 1
 		} else {
 			if (relyingParty.getPreferredArtifactType() == 2) {
