@@ -394,8 +394,6 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			EntityDescriptor descriptor, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime,
 			SAMLSubject subject) throws SAMLException, IOException {
 
-		Document doc = org.opensaml.XML.parserPool.newDocument();
-
 		// Determine the correct audiences
 		ArrayList audiences = new ArrayList();
 		if (relyingParty.getProviderId() != null) {
