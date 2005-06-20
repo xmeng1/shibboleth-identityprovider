@@ -316,8 +316,7 @@ public class MetadataTool {
 			Logger.getRootLogger().setLevel(Level.DEBUG);
 			rootAppender.setLayout(new PatternLayout("%-5p %-41X{serviceId} %d{ISO8601} (%c:%L) - %m%n"));
 		} else {
-			Logger.getRootLogger().setLevel(Level.INFO);
-			Logger.getLogger("edu.internet2.middleware.shibboleth.aa.attrresolv").setLevel(Level.WARN);
+			Logger.getRootLogger().setLevel(Level.WARN);
 			rootAppender.setLayout(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN));
 		}
 		Logger.getLogger("org.apache.xml.security").setLevel(Level.OFF);
