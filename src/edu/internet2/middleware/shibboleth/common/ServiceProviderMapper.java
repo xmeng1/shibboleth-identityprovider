@@ -134,12 +134,15 @@ public class ServiceProviderMapper {
 		if (provider != null) {
 			EntitiesDescriptor parent = provider.getEntitiesDescriptor();
 			while (parent != null) {
-				if (relyingParties.containsKey(parent.getName())) {
-					log.info("Found matching Relying Party for group (" + parent.getName() + ").");
-					return (RelyingParty) relyingParties.get(parent.getName());
-				} else {
-					log.debug("Provider is a member of group (" + parent.getName()
-							+ "), but no matching Relying Party was found.");
+				if (parent.getName() != null) {
+					if (relyingParties.containsKey(parent.getName())) {
+						log.info("Found matching Relying Party for group (" + parent.getName() + ").");
+						return (RelyingParty) relyingParties.get(parent.getName());
+					}
+					else {
+						log.debug("Provider is a member of group (" + parent.getName()
+								+ "), but no matching Relying Party was found.");
+					}
 				}
 				parent = parent.getEntitiesDescriptor();
 			}
