@@ -104,10 +104,8 @@ public class FilterSupportImpl implements FilterSupport {
 	 * @return     true if Shibboleth is required
 	 */
 	public boolean isProtected(String url) {
-	    // TODO Add some real logic. This is just a placeholder
-	    if (url.endsWith("test.txt"))
-	        return true;
-	    return false;
+		//TODO: get info from requestmap
+	    return true;
 	}
 
 	/**
@@ -191,9 +189,7 @@ public class FilterSupportImpl implements FilterSupport {
      * @return SessionId of empty session
      */
     public String createSession(String applicationId) {
-        String id = context.getSessionManager().newSession(
-                applicationId, null, null, null, null, null);
-        log.info("Session ID reserved for RM: "+id);
+        String id = context.getSessionManager().reserveSession(applicationId);
         return id;
     }
 }

@@ -27,6 +27,9 @@ import org.opensaml.SAMLBrowserProfile;
 import org.opensaml.SAMLBrowserProfileFactory;
 import org.opensaml.SAMLException;
 import org.opensaml.TrustException;
+import org.opensaml.SAMLBrowserProfile.ArtifactMapper;
+import org.opensaml.SAMLBrowserProfile.BrowserProfileRequest;
+import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
 
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.IDPSSODescriptor;
@@ -40,7 +43,7 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  * 
  * @author Scott Cantor @created April 11, 2002
  */
-public class ShibBrowserProfile implements SAMLBrowserProfile {
+public class ShibBrowserProfile  {
 
 	private static Logger	log			= Logger.getLogger(ShibBrowserProfile.class.getName());
 
@@ -68,7 +71,6 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
             StringBuffer issuer,
             HttpServletRequest reqContext,
             String recipient,
-            int supportedProfiles,
             ReplayCache replayCache,
             ArtifactMapper artifactMapper,
             int minorVersion
@@ -78,7 +80,8 @@ public class ShibBrowserProfile implements SAMLBrowserProfile {
         issuer.setLength(0);
         
         // Let SAML do all the decoding and parsing
-        BrowserProfileResponse bpr = profile.receive(issuer, reqContext, recipient, supportedProfiles, replayCache, artifactMapper, minorVersion);
+        BrowserProfileRequest bpRequest = profile.receive(reqContext);
+        BrowserProfileResponse bpr = profile.receive(issuer, bpRequest, recipient, replayCache, artifactMapper, minorVersion);
         
         /*
          * Now find the Metadata for the Entity that send this assertion.

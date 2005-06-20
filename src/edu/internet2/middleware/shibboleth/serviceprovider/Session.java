@@ -42,9 +42,24 @@ import org.opensaml.SAMLResponse;
  */
 public class Session implements Serializable {
 	
+	// Default values from Shibboleth documentation
+	private static final int DEFAULTTIMEOUT = 1800000;
+	public static final int DEFAULTLIFETIME = 3600000;
+	
 	Session(String key) {
 		// Should only be created by SessionManager
+		if (key==null)
+			throw new IllegalArgumentException();
 	    this.key=key;
+	    this.timestamp = System.currentTimeMillis();
+	}
+	
+	/**
+	 * For testing, create a Session that may already be timed out.
+	 */
+	Session(String key, long timestamp) {
+	    this.key=key;
+	    this.timestamp = timestamp;
 	}
 	
 	// Properties
@@ -71,14 +86,14 @@ public class Session implements Serializable {
 	}
 	
 	private String entityId = null; // a.k.a providerId
-	
 	public String getEntityId() {
 		return entityId;
 	}
 	public void setEntityId(String entityId) {
 		this.entityId = entityId;
 	}
-	private long lifetime;
+	
+	private long lifetime = DEFAULTLIFETIME;
 	public long getLifetime() {
 		return lifetime;
 	}
@@ -86,7 +101,7 @@ public class Session implements Serializable {
 		this.lifetime = lifetime;
 	}
 	
-	private long timeout;
+	private long timeout=DEFAULTTIMEOUT;
 	public long getTimeout() {
 		return timeout;
 	}
@@ -95,7 +110,16 @@ public class Session implements Serializable {
 	}
 	
     // private persisted variable
-	private long timestamp = System.currentTimeMillis();
+	private long timestamp = 0;
+	
+	public boolean isExpired() {
+		long now = System.currentTimeMillis();
+		if (lifetime>0 && lifetime<now)
+			return true;
+		if (timeout>0 && timestamp+timeout<now)
+			return true;
+		return false;
+	}
 	
 	
 	// Stuff saved from the POST

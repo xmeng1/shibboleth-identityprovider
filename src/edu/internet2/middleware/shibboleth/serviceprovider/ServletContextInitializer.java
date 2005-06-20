@@ -109,8 +109,10 @@ public class ServletContextInitializer {
 	 * 
 	 * @param ServletContext or null 
 	 * @return String filename
+	 * @throws ShibbolethConfigurationException 
 	 */
-	private static String getServiceProviderConfigFile(ServletContext scontext) {
+	private static String getServiceProviderConfigFile(ServletContext scontext) 
+		throws ShibbolethConfigurationException {
 	    
 		if (scontext!=null) {
 			String servletparm = scontext.getInitParameter("ServiceProviderConfigFile");
@@ -118,8 +120,8 @@ public class ServletContextInitializer {
 				return servletparm;
 			}
 		}
-
-		return "/conf/shibboleth.xml";
+		log.error("ServiceProviderConfigFile parameter missing in WEB-INF/web.xml");
+		throw new ShibbolethConfigurationException("ServiceProviderConfigFile parameter missing");
 		
 	}
 

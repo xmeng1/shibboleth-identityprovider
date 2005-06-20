@@ -61,7 +61,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLAudienceRestrictionCondition;
-import org.opensaml.SAMLBrowserProfile;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
@@ -73,11 +72,13 @@ import edu.internet2.middleware.shibboleth.resource.AuthenticationFilter;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
 /**
- * AuthenticatonAssertionConsumerServlet
+ * Process the Authentication Assertion POST data to create a Session.
  * 
  * @author Howard Gilbert
  */
 public class AssertionConsumerServlet extends HttpServlet {
+
+	private static final String SESSIONCOOKIE = "ShibbolethSPSession";
 
 	private static Logger log = Logger.getLogger(AssertionConsumerServlet.class.getName());
 	
@@ -105,13 +106,10 @@ public class AssertionConsumerServlet extends HttpServlet {
 	 * 
 	 * @param request the request send by the client to the server
 	 * @param response the response send by the server to the client
-	 * @throws ServletException if an error occurred
-	 * @throws IOException if an error occurred
 	 */
 	public void doPost(
 		HttpServletRequest request,
 		HttpServletResponse response)
-		// throws ServletException, IOException 
 		{
 	    ServletContextInitializer.beginService(request,response);
 		try {
@@ -135,9 +133,9 @@ public class AssertionConsumerServlet extends HttpServlet {
            
             if (appSessionValues.getShireSSL()&& // Requires SSL
             		!request.isSecure()) {       // isn't SSL
-            	log.error("Authentication Assersion not posted over SSL.");
+            	log.error("Authentication Assertion not posted over SSL.");
             	try {
-                    response.sendRedirect("/shibboleth/shireError.html");
+                    response.sendRedirect("shireError.html");
                 } catch (IOException e1) {
                 }
             	return;
@@ -148,9 +146,14 @@ public class AssertionConsumerServlet extends HttpServlet {
 
             String sessionId = createSessionFromPost(ipaddr, request, applicationId, shireURL, providerId, null);
             
-            Cookie cookie = new Cookie("ShibbolethSPSession",sessionId);
+            Cookie cookie = new Cookie(SESSIONCOOKIE,sessionId);
             response.addCookie(cookie);
             
+            /**
+             * This is included as a diagnostic, although it was suggested by a user
+             * as a future API for someone holding an Authentication and wishing to
+             * know what it means.
+             */
             try {
 				if (target.equals("SendAttributesBackToMe")) {
 					ServletOutputStream outputStream = response.getOutputStream();
@@ -168,7 +171,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         catch (MetadataException e) {
             log.error("Authentication Assertion source not found in Metadata.");
             try {
-                response.sendRedirect("/shibboleth/shireError.html");
+                response.sendRedirect("shireError.html");
             }
             catch (IOException e1) {
             }
@@ -176,7 +179,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         catch (SAMLException e) {
             log.error("Authentication Assertion had invalid format.");
             try {
-                response.sendRedirect("/shibboleth/shireError.html");
+                response.sendRedirect("shireError.html");
             }
             catch (IOException e1) {
             }
@@ -188,6 +191,10 @@ public class AssertionConsumerServlet extends HttpServlet {
 	
     /**
      * Create a Session object from SHIRE POST data
+     * 
+     * <p>Used within this class to handle POSTs to the SP itself, but
+     * also by the FilterSupport logic when the POST is to the RM 
+     * context.</p>
      * 
      * @param ipaddr IP Address of Browser
      * @param bin64Assertion Authentication assertion from POST
@@ -216,7 +223,6 @@ public class AssertionConsumerServlet extends HttpServlet {
                 pproviderId,
                 req,
                 shireURL,   // My URL (Why??) To prevent attackers from redirecting messages. 
-                SAMLBrowserProfile.PROFILE_POST,    // TODO: support both profiles 
                 context.getReplayCache(),
                 null,
                 1

@@ -37,6 +37,7 @@ import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAuthorityBinding;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBindingFactory;
+import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
@@ -83,7 +84,7 @@ public class ShibBinding {
 	 */
 	public 
 	ShibBinding(
-			String applicationId) throws NoSuchProviderException {
+			String applicationId)  {
 		this.applicationId=applicationId;
 	}
 
@@ -197,7 +198,11 @@ public class ShibBinding {
 		while (assertions.hasNext()) {
 			SAMLAssertion assertion = (SAMLAssertion) assertions.next();
 			
-			// TODO Dropped some logic validating conditions
+			Iterator conditions = assertion.getConditions();
+			while (conditions.hasNext()) {
+				SAMLCondition condition = (SAMLCondition) conditions.next();
+				// TODO C++ only seems to validate that the audience string is present
+			}
 			
 			if (assertion.isSigned() && 
 				!appinfo.validate(assertion,role)) {

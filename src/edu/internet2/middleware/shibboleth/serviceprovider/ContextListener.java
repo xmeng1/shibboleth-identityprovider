@@ -49,7 +49,7 @@ import edu.internet2.middleware.commons.log4j.ThreadLocalAppender;
 public class ContextListener implements ServletContextListener {
     
     //TODO: Change before release
-	private static final Level defaultLogLevel = Level.DEBUG;
+	private static final Level defaultLogLevel = Level.INFO;
     
     // Initialization, parsing files, and setting up
 	public static final String SHIBBOLETH_INIT = "shibboleth.init";

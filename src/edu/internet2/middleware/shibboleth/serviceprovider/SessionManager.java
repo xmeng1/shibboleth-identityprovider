@@ -93,6 +93,8 @@ public class SessionManager {
 	
 	
 	public synchronized Session findSession(String sessionId, String applicationId ) {
+		if (sessionId==null || applicationId==null)
+			throw new IllegalArgumentException();
 		Session s = (Session) sessions.get(sessionId);
 		if (s==null) {
 			log.warn("Session not found with ID "+sessionId);
@@ -106,10 +108,17 @@ public class SessionManager {
 			log.error("Session ID "+sessionId+" doesn't match application "+applicationId);
 			return null;
 		}
+		if (s.isExpired()) {
+			log.error("Session ID "+sessionId+" has expired.");
+			// return null;
+		}
+		s.renew();
 		return s;
 	}
 
 	private synchronized Session findEmptySession(String sessionId) {
+		if (sessionId==null)
+			throw new IllegalArgumentException();
 		Session s = (Session) sessions.get(sessionId);
 		if (s==null) {
 			log.warn("Session not found with ID "+sessionId);
@@ -119,11 +128,14 @@ public class SessionManager {
 			log.error("Active Session found when looking for reserved ID:"+sessionId);
 		    return null;
 		}
+		s.renew();
 		return s;
 	}
 	
 	
 	protected synchronized void add(Session s) {
+		if (s==null)
+			throw new IllegalArgumentException();
 		log.debug("Session added: "+s.getKey());
 		sessions.put(s.getKey(), s);
 		if (cache!=null)
@@ -131,6 +143,9 @@ public class SessionManager {
 	}
 	
 	protected synchronized void update(Session s) {
+		if (s==null)
+			throw new IllegalArgumentException();
+		s.renew();
 		log.debug("Session updated: "+s.getKey());
 		sessions.put(s.getKey(), s);
 		if (cache!=null)
@@ -138,40 +153,56 @@ public class SessionManager {
 	}
 	
 	protected synchronized void remove(Session s) {
+		if (s==null)
+			throw new IllegalArgumentException();
 		log.debug("Session removed: "+s.getKey());
 		sessions.remove(s.getKey());
 		if (cache!=null)
 			cache.remove(s);
 	}
 	
-
-	/**
-	 * Test for valid Session
-	 * 
-	 * @param sessionId      typically, the cookie value from client browser
-	 * @param applicationId  id of target application asking about session
-	 * @param ipaddr         null, or IP address of client
-	 * @return
-	 */
-	public 
-			boolean 
-	isValid(
-			String sessionId,   
-			String applicationId, 
-			String ipaddr         
-			){
-		Session session = findSession(sessionId,applicationId);
-		ServiceProviderConfig.ApplicationInfo application = context.getServiceProviderConfig().getApplication(applicationId);
-		if (session==null)
-			return false; // Cookie value did not match cached session
-		if (application == null)
-			return false; // ApplicationConfig ID invalid
-		if (ipaddr!=null && !ipaddr.equals(session.getIpaddr()))
-			return false; // Client coming from a different machine
-		// check for timeout
-		// Note: RPC prefetches attributes here
-		return true;
+	protected synchronized void expireSessions() {
+		Iterator iterator = sessions.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Map.Entry entry = (Map.Entry) iterator.next();
+			Session session = (Session) entry.getValue();
+			if (session.isExpired()) {
+				log.info("Session " + session.getKey() + " has expired.");
+				iterator.remove();
+			}
+		}
 	}
+	
+//  This was generated from a C++ routine, but it doesn't seem to be needed
+//	/**
+//	 * Test for valid Session
+//	 * 
+//	 * @param sessionId      typically, the cookie value from client browser
+//	 * @param applicationId  id of target application asking about session
+//	 * @param ipaddr         null, or IP address of client
+//	 * @return
+//	 */
+//	public 
+//			boolean 
+//	isValid(
+//			String sessionId,   
+//			String applicationId, 
+//			String ipaddr         
+//			){
+//		if (sessionId==null || applicationId==null)
+//			throw new IllegalArgumentException();
+//		Session session = findSession(sessionId,applicationId);
+//		ServiceProviderConfig.ApplicationInfo application = context.getServiceProviderConfig().getApplication(applicationId);
+//		if (session==null)
+//			return false; // Cookie value did not match cached session
+//		if (application == null)
+//			return false; // ApplicationConfig ID invalid
+//		if (ipaddr!=null && !ipaddr.equals(session.getIpaddr()))
+//			return false; // Client coming from a different machine
+//		// check for timeout
+//		// Note: RPC prefetches attributes here
+//		return true;
+//	}
 
 	
 	/**
@@ -201,6 +232,7 @@ public class SessionManager {
 		Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
 		
 		String sessionId = null;
+		boolean isUpdate = false;
 		
 		Session session;
 		if (emptySessionId==null) {
@@ -209,6 +241,8 @@ public class SessionManager {
 		    session = findEmptySession(emptySessionId);
 		    if (session==null) {
 			    session = new Session(generateKey());
+		    } else {
+		    	isUpdate=true;
 		    }
 		}
 		session.setApplicationId(applicationId);
@@ -218,17 +252,45 @@ public class SessionManager {
 		session.setAuthenticationAssertion(assertion);
 		session.setAuthenticationStatement(authenticationStatement);
 		
-		session.setLifetime(appSessionValues.getLifetime());
-		session.setTimeout(appSessionValues.getTimeout());
+		// Get lifetime and timeout from Applications/Sessions in config file 
+		session.setLifetime(appSessionValues.getLifetime()*1000);
+		session.setTimeout(appSessionValues.getTimeout()*1000);
 		
 		sessionId = session.getKey();
 
-		// This static method finds its unique instance variable
-		add(session);
+		if (isUpdate)
+			update(session);
+		else
+			add(session);
+		
 	    log.debug("New Session created "+sessionId);
 
 		return sessionId;
 	}
+	public 
+	String 
+reserveSession(
+	String applicationId 
+	){
+
+ServiceProviderConfig config = context.getServiceProviderConfig();
+ApplicationInfo appinfo = config.getApplication(applicationId);
+Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
+
+String sessionId = null;
+boolean isUpdate = false;
+
+Session session= new Session(generateKey());
+session.setApplicationId(applicationId);
+
+sessionId = session.getKey();
+
+add(session);
+
+log.debug("SessionId reserved "+sessionId);
+
+return sessionId;
+}
 	/**
 	 * <p>IOC wiring point to plug in an external SessionCache implementation.
 	 * </p>
@@ -239,6 +301,8 @@ public class SessionManager {
 	setCache(
 			SessionCache cache) {
 		
+		if (cache==null)
+			throw new IllegalArgumentException();
 	    log.info("Enabling Session Cache");
 		/*
 		 * The following code supports dynamic switching from
@@ -351,6 +415,5 @@ public class SessionManager {
 	    
 	    return attributeMap;
 	}
-	
 	
 }
