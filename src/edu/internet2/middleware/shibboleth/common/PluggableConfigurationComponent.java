@@ -43,12 +43,10 @@
  * For examples of use, see one of the builtin implementation
  * classes (XMLMetadataImpl, ...).
  */
-package edu.internet2.middleware.shibboleth.serviceprovider;
+package edu.internet2.middleware.shibboleth.common;
 
-import org.apache.xmlbeans.XmlException;
 import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
-import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
 public interface PluggableConfigurationComponent {
     
@@ -56,7 +54,6 @@ public interface PluggableConfigurationComponent {
     initialize(Element dom) 
     	throws 
     	SAMLException,
-    	XmlException, // If there is a problem in the configuration data
     	ShibbolethConfigurationException; // for other problems
     
 }

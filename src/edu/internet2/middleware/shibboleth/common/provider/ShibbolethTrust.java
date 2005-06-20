@@ -62,6 +62,7 @@ import org.opensaml.SAMLSignedObject;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import edu.internet2.middleware.shibboleth.common.PluggableConfigurationComponent;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
@@ -71,7 +72,6 @@ import edu.internet2.middleware.shibboleth.metadata.ExtendedEntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.KeyAuthority;
 import edu.internet2.middleware.shibboleth.metadata.KeyDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
-import edu.internet2.middleware.shibboleth.serviceprovider.PluggableConfigurationComponent;
 
 /**
  * <code>Trust</code> implementation that does PKIX validation against key authorities included in shibboleth-specific
@@ -475,7 +475,7 @@ public class ShibbolethTrust extends BasicTrust implements Trust, PluggableConfi
 		
 	}
 
-	public void initialize(Element dom) throws SAMLException, XmlException, ShibbolethConfigurationException {
+	public void initialize(Element dom) throws SAMLException, ShibbolethConfigurationException {
 		
 	}
 

@@ -180,6 +180,7 @@ import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.aap.provider.XMLAAPProvider;
 import edu.internet2.middleware.shibboleth.common.Credentials;
+import edu.internet2.middleware.shibboleth.common.PluggableConfigurationComponent;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;

@@ -37,11 +37,11 @@ import org.w3c.dom.NodeList;
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.common.Constants;
+import edu.internet2.middleware.shibboleth.common.PluggableConfigurationComponent;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.ScopedRoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.ScopedRoleDescriptor.Scope;
-import edu.internet2.middleware.shibboleth.serviceprovider.PluggableConfigurationComponent;
 
 public class XMLAAPProvider implements AAP, PluggableConfigurationComponent {
 
