@@ -252,7 +252,37 @@
 		/>
 	</target>
 
+    
+	<!-- Package Shibboleth -->
+    <target name="package-idp" depends="compile" description="Creates the IdP war file and moves it to ${dist}">
+    	<!-- copy values to deployment descriptor -->
+        <copy file="${configroot}/dist.idp.xml" tofile="${configroot}/idp.xml" overwrite="true" />
+        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home.url}" />
+    	
+    	<!-- create the war -->
+        <war warfile="${dist}/${shib.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
+    	
+    	<!-- clean up generated descriptor -->
+        <delete file="${configroot}/idp.xml"/>
+    </target>
+	
+    <target name="package-wayf" depends="compile" description="Creates the WAYF war and moves it to ${dist}">
+        <war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
+    </target>
+	
+    <target name="package-sp" depends="compile" description="Creates the Java SP war and moves it to ${dist}">
+    	<!-- copy values to deployment descriptor -->
+        <copy file="${configroot}/dist.sp.xml" tofile="${configroot}/sp.xml" overwrite="true" />
+        <replace file="${configroot}/sp.xml" token="$SHIB_HOME$" value="${shibsp.home.url}" />
+    	
+    	<!-- create the war -->
+        <war warfile="${dist}/${shibsp.webapp.name}.war" webxml="${configroot}/sp.xml" basedir="${approot}" update="no" />
+    	
+    	<!-- clean up generated descriptor -->
+        <delete file="${configroot}/sp.xml"/>
+	</target>
 
+	
     <!-- Install Shibboleth -->
     <target name="install.init">
         <taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}" />
@@ -313,14 +343,10 @@
     </target>
 
     <!-- Install Shibboleth IdP to filesystem using the properties in build.properties -->
-    <target name="install.idp.filesystem" depends="init, install.init, build-util, install.url" 
+    <target name="install.idp.filesystem" depends="init, install.init, build-util, install.url, package-idp" 
         description="Install Shibboleth IdP to filesystem using the properties in build.properties">
 
-        <!-- copy values to deployment descriptor and create war -->
-        <copy file="${configroot}/dist.idp.xml" tofile="${configroot}/idp.xml" overwrite="true" />
-        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home.url}" />
-        <war warfile="${dist}/${shib.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
-		<delete file="${configroot}/idp.xml"/>
+        <!-- Move IdP war to Tomcat deployment directory -->
         <copy file="${dist}/${shib.webapp.name}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
 
         <!-- copy IdP jars and utilities -->
@@ -349,14 +375,10 @@
     </target>
 
     <!-- Install Shibboleth SP to filesystem using the properties in build.properties -->
-    <target name="install.sp.filesystem" depends="init, install.init, build-util, install.url" 
+    <target name="install.sp.filesystem" depends="init, install.init, build-util, install.url, package-sp" 
         description="Install Shibboleth SP to filesystem using the properties in build.properties">
 
-        <!-- copy values to deployment descriptor and create war -->
-        <copy file="${configroot}/dist.sp.xml" tofile="${configroot}/sp.xml" overwrite="true" />
-        <replace file="${configroot}/sp.xml" token="$SHIB_HOME$" value="${shibsp.home.url}" />
-        <war warfile="${dist}/${shibsp.webapp.name}.war" webxml="${configroot}/sp.xml" basedir="${approot}" update="no" />
-		<delete file="${configroot}/sp.xml"/>
+    	<!-- Move SP war to Tomcat deployment directory -->
         <copy file="${dist}/${shibsp.webapp.name}.war" tofile="${tomcat.home}/webapps/${shibsp.webapp.name}.war" />
 
         <!-- copy sp jars and utilities -->
@@ -439,10 +461,4 @@
             <entry key="tomcat.password" value="${tomcat.password}" />
         </propertyfile>
     </target>
-
-    <!-- Create WAYF and move it to ${dist} -->
-    <target name="package-wayf" depends="compile">
-        <war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
-    </target>
-    
 </project>
