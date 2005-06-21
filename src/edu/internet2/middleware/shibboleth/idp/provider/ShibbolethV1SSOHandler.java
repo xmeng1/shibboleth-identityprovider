@@ -211,7 +211,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		log.debug("Responding with Artifact profile.");
 
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
-		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
+		// Add authn assertion to the front of the list so it's the first artifact generated.
+		assertions.add(0,generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
 				getAuthNTime(request), authNSubject));
 
 		// Sign the assertions, if necessary
