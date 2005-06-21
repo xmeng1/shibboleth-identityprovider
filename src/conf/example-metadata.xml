@@ -132,7 +132,7 @@ AtThLg==
 			
 			<!-- This tells SPs how and where to request authentication. -->
 			<SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"
-			    Location="https://idp.example.org:8443/shibboleth-idp/SSO"/>
+			    Location="https://idp.example.org/shibboleth-idp/SSO"/>
 
 			<!-- This enables testing against Internet2's test site. -->
 			<SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"
@@ -278,15 +278,29 @@ gmYsTmak+kxO93JprrOd9xp8aZPMEprL7VCdrhbZEfyYER0=
 			This tells IdPs where and how to send authentication assertions. Mostly
 			the SP will tell the IdP what location to use in its request, but this
 			is how the IdP validates the location and also figures out which
-			SAML profile to use.
+			SAML profile to use. There are six listed to accomodate common testing
+			scenarios used by C++ and Java SP installations. At deployment time,
+			only the actual endpoints to be used are needed. 
 			-->
-		    <AssertionConsumerService index="1" isDefault="true"
+			<AssertionConsumerService index="1" isDefault="true"
+				Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post"
+				Location="https://sp.example.org/Shibboleth.sso/SAML/POST"/>
+			<AssertionConsumerService index="2"
+				Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01"
+				Location="https://sp.example.org/Shibboleth.sso/SAML/Artifact"/>
+			<AssertionConsumerService index="3"
 		        Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post"
-		        Location="https://sp.example.org:9443/shibboleth-sp/Shibboleth.sso/SAML/POST"/>
-		    <AssertionConsumerService index="2"
+		        Location="https://sp.example.org/shibboleth-sp/Shibboleth.sso/SAML/POST"/>
+		    <AssertionConsumerService index="4"
 		        Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01"
-		        Location="https://sp.example.org:9443/shibboleth-sp/Shibboleth.sso/SAML/Artifact"/>
-
+		        Location="https://sp.example.org/shibboleth-sp/Shibboleth.sso/SAML/Artifact"/>
+			<AssertionConsumerService index="5"
+				Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post"
+				Location="https://sp.example.org:9443/shibboleth-sp/Shibboleth.sso/SAML/POST"/>
+			<AssertionConsumerService index="6"
+				Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01"
+				Location="https://sp.example.org:9443/shibboleth-sp/Shibboleth.sso/SAML/Artifact"/>
+			
 		</SPSSODescriptor>
 
 		<!-- This is just information about the entity in human terms. -->
