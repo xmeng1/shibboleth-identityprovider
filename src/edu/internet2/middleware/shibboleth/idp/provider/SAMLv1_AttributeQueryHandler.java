@@ -125,7 +125,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
-		if (samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+		if (samlRequest == null || samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
 			log.error("Protocol Handler can only respond to SAML Attribute Queries.");
 			throw new SAMLException("General error processing request.");
 		}
