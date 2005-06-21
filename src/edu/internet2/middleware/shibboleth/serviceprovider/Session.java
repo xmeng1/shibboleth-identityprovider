@@ -114,7 +114,7 @@ public class Session implements Serializable {
 	
 	public boolean isExpired() {
 		long now = System.currentTimeMillis();
-		if (lifetime>0 && lifetime<now)
+		if (lifetime>0 && timestamp+lifetime<now)
 			return true;
 		if (timeout>0 && timestamp+timeout<now)
 			return true;
