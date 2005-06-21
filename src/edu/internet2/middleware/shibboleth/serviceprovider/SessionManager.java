@@ -75,6 +75,11 @@ public class SessionManager {
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
 		"abcdefgjikjlmnopqrstuvwxyz"+
 		"$@";
+    
+    /**
+     * Generate a 16 byte random ASCII string.
+     * @return generated string
+     */
 	public String generateKey() {
 	    byte[] trash = new byte[16];
 	    char[] ctrash = new char[16];
@@ -91,7 +96,15 @@ public class SessionManager {
 	}
 	
 	
-	
+	/**
+     * Find a Session object given its sessionID key. 
+     * 
+     * <p>Will not match uninitialized Sessions.</p>
+     * 
+     * @param sessionId ID and key of session
+     * @param applicationId Sanity check, must match session contents
+     * @return null if not found, else Session
+	 */
 	public synchronized Session findSession(String sessionId, String applicationId ) {
 		if (sessionId==null || applicationId==null)
 			throw new IllegalArgumentException();
@@ -110,12 +123,19 @@ public class SessionManager {
 		}
 		if (s.isExpired()) {
 			log.error("Session ID "+sessionId+" has expired.");
-			// return null;
+			return null;
 		}
 		s.renew();
 		return s;
 	}
 
+    /**
+     * Locate an empty Session block reserved by a call from the RM.
+     * This is a test on the validity of a claimed reserved SessionID.
+     * 
+     * @param sessionId
+     * @return Session block (uninitialized).
+     */
 	private synchronized Session findEmptySession(String sessionId) {
 		if (sessionId==null)
 			throw new IllegalArgumentException();
@@ -133,6 +153,10 @@ public class SessionManager {
 	}
 	
 	
+    /**
+     * Called internally to add a Session block to the cache.
+     * @param s Session
+     */
 	protected synchronized void add(Session s) {
 		if (s==null)
 			throw new IllegalArgumentException();
@@ -142,6 +166,13 @@ public class SessionManager {
 			cache.add(s);
 	}
 	
+    /**
+     * Called internally to replace a Session block in the cache, 
+     * or more commonly to replace a block with itself and then just
+     * notify the cache that it has been refreshed.
+     * 
+     * @param s Session
+     */
 	protected synchronized void update(Session s) {
 		if (s==null)
 			throw new IllegalArgumentException();
@@ -152,6 +183,12 @@ public class SessionManager {
 			cache.update(s);
 	}
 	
+    /**
+     * Called internally to remove a Session from the cache. Since
+     * there is no logout, this is called when a Session expires.
+     * 
+     * @param s Session
+     */
 	protected synchronized void remove(Session s) {
 		if (s==null)
 			throw new IllegalArgumentException();
@@ -161,6 +198,11 @@ public class SessionManager {
 			cache.remove(s);
 	}
 	
+    /**
+     * Called by a timer driven process to check for expired
+     * Sessions.
+     *
+     */
 	protected synchronized void expireSessions() {
 		Iterator iterator = sessions.entrySet().iterator();
 		while (iterator.hasNext()) {
@@ -173,36 +215,6 @@ public class SessionManager {
 		}
 	}
 	
-//  This was generated from a C++ routine, but it doesn't seem to be needed
-//	/**
-//	 * Test for valid Session
-//	 * 
-//	 * @param sessionId      typically, the cookie value from client browser
-//	 * @param applicationId  id of target application asking about session
-//	 * @param ipaddr         null, or IP address of client
-//	 * @return
-//	 */
-//	public 
-//			boolean 
-//	isValid(
-//			String sessionId,   
-//			String applicationId, 
-//			String ipaddr         
-//			){
-//		if (sessionId==null || applicationId==null)
-//			throw new IllegalArgumentException();
-//		Session session = findSession(sessionId,applicationId);
-//		ServiceProviderConfig.ApplicationInfo application = context.getServiceProviderConfig().getApplication(applicationId);
-//		if (session==null)
-//			return false; // Cookie value did not match cached session
-//		if (application == null)
-//			return false; // ApplicationConfig ID invalid
-//		if (ipaddr!=null && !ipaddr.equals(session.getIpaddr()))
-//			return false; // Client coming from a different machine
-//		// check for timeout
-//		// Note: RPC prefetches attributes here
-//		return true;
-//	}
 
 	
 	/**
@@ -267,29 +279,31 @@ public class SessionManager {
 
 		return sessionId;
 	}
+    
+    /**
+     * Create an empty Session object. Reserves a SessionId for the RM
+     * that can later be filled in with data from the SSO Assertion.
+     * 
+     * @param applicationId The <Application> associated with the Session.
+     * @return
+     */
 	public 
 	String 
 reserveSession(
 	String applicationId 
 	){
 
-ServiceProviderConfig config = context.getServiceProviderConfig();
-ApplicationInfo appinfo = config.getApplication(applicationId);
-Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
-
-String sessionId = null;
-boolean isUpdate = false;
-
-Session session= new Session(generateKey());
-session.setApplicationId(applicationId);
-
-sessionId = session.getKey();
-
-add(session);
-
-log.debug("SessionId reserved "+sessionId);
-
-return sessionId;
+	    String sessionId = null;
+	    Session session= new Session(generateKey());
+	    session.setApplicationId(applicationId);
+	    
+	    sessionId = session.getKey();
+	    
+	    add(session);
+	    
+	    log.debug("SessionId reserved "+sessionId);
+	    
+	    return sessionId;
 }
 	/**
 	 * <p>IOC wiring point to plug in an external SessionCache implementation.
@@ -340,6 +354,12 @@ return sessionId;
 		cache.reload(sessions);
 	}
 	
+    /**
+     * Diagnostic routine not used during normal processing.
+     * 
+     * @param session
+     * @return
+     */
 	public static StringBuffer dumpAttributes(Session session) {
 	    StringBuffer sb = new StringBuffer();
         SAMLResponse attributeResponse = session.getAttributeResponse();
@@ -373,11 +393,17 @@ return sessionId;
 	    return sb;
 	}
 
+    /**
+     * Extract all attributes from the Session in a simpler format than
+     * the complete SAML structure.
+     * 
+     * @param session
+     * @return
+     */
 	public static Map /*<String,String>*/
 	mapAttributes(Session session) {
 	    Map /*<String,String>*/attributeMap = new HashMap/*<String,String>*/();
-	    StringBuffer sb = new StringBuffer();
-        SAMLResponse attributeResponse = session.getAttributeResponse();
+	    SAMLResponse attributeResponse = session.getAttributeResponse();
 		if (attributeResponse==null)
 			return attributeMap;
         Iterator assertions = attributeResponse.getAssertions();
