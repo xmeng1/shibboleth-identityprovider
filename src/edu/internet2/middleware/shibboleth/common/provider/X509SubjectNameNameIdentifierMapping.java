@@ -117,8 +117,10 @@ public class X509SubjectNameNameIdentifierMapping extends BaseNameIdentifierMapp
 			throws NameIdentifierMappingException {
 
 		try {
-			return new SAMLNameIdentifier(internalNameContext.replaceAll("%PRINCIPAL%", principal.getName()),
-					qualifier, getNameIdentifierFormat().toString());
+			SAMLNameIdentifier nameid = SAMLNameIdentifier.getInstance(getNameIdentifierFormat().toString());
+			nameid.setName(internalNameContext.replaceAll("%PRINCIPAL%", principal.getName()));
+			nameid.setNameQualifier(qualifier);
+			return nameid;
 		} catch (SAMLException e) {
 			throw new NameIdentifierMappingException("Unable to generate X509 SubjectName: " + e);
 		}

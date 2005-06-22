@@ -75,7 +75,11 @@ public class SharedMemoryShibHandle extends AQHNameIdentifierMapping implements 
 				cache.handleEntries.put(handle, createHandleEntry(principal));
 			}
 
-			return new SAMLNameIdentifier(handle, idProv.getProviderId(), getNameIdentifierFormat().toString());
+			SAMLNameIdentifier nameid = SAMLNameIdentifier.getInstance(getNameIdentifierFormat().toString());
+			nameid.setName(handle);
+			nameid.setNameQualifier(idProv.getProviderId());
+			return nameid;
+
 		} catch (SAMLException e) {
 			throw new NameIdentifierMappingException("Unable to generate Attribute Query Handle: " + e);
 		}

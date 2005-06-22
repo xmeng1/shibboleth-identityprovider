@@ -61,8 +61,10 @@ public class PrincipalNameIdentifier extends BaseNameIdentifierMapping {
 		}
 
 		try {
-			return new SAMLNameIdentifier(principal.getName(), idProv.getProviderId(), getNameIdentifierFormat()
-					.toString());
+			SAMLNameIdentifier nameid = SAMLNameIdentifier.getInstance(getNameIdentifierFormat().toString());
+			nameid.setName(principal.getName());
+			nameid.setNameQualifier(idProv.getProviderId());
+			return nameid;
 		} catch (SAMLException e) {
 			throw new NameIdentifierMappingException("Unable to generate Name Identifier: " + e);
 		}

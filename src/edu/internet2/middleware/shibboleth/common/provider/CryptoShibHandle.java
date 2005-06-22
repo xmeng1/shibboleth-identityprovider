@@ -284,8 +284,10 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 			String handle = Base32.encode(handleBytes);
 
 			try {
-				return new SAMLNameIdentifier(handle.replaceAll(System.getProperty("line.separator"), ""), idProv
-						.getProviderId(), getNameIdentifierFormat().toString());
+				SAMLNameIdentifier nameid = SAMLNameIdentifier.getInstance(getNameIdentifierFormat().toString());
+				nameid.setName(handle.replaceAll(System.getProperty("line.separator"), ""));
+				nameid.setNameQualifier(idProv.getProviderId());
+				return nameid;
 			} catch (SAMLException e) {
 				throw new NameIdentifierMappingException("Unable to generate Attribute Query Handle: " + e);
 			}
