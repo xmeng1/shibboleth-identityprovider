@@ -19,7 +19,6 @@ package edu.internet2.middleware.shibboleth.log;
 import java.io.IOException;
 
 import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.DailyRollingFileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -50,6 +49,11 @@ import edu.internet2.middleware.shibboleth.idp.IdPConfig;
  */
 public class LoggingInitializer {
 
+    /**
+     * The log file extension
+     */
+    private static String logFileExtension = ".log";
+    
 	/**
 	 * Log message layout pattern for the transaction log
 	 */
@@ -155,12 +159,12 @@ public class LoggingInitializer {
 		if (location == null) { throw new ShibbolethConfigurationException(
 				"No log file location attribute specified in TransactionLog element"); }
 
-		DailyRollingFileAppender appender = null;
+		RollingFileAppender appender = null;
 		try {
 			String logPath = new ShibResource(location, LoggingInitializer.class).getFile().getCanonicalPath();
 			PatternLayout messageLayout = new PatternLayout(txLogLayoutPattern);
 
-			appender = new DailyRollingFileAppender(messageLayout, logPath, txLogAppenderDatePattern);
+			appender = new RollingFileAppender(messageLayout, logPath, txLogAppenderDatePattern, logFileExtension);
 			appender.setName("shibboleth-transaction");
 		} catch (Exception e) {
 			throw new ShibbolethConfigurationException("<TransactionLog location=\"" + location
@@ -211,12 +215,12 @@ public class LoggingInitializer {
 		if (location == null) { throw new ShibbolethConfigurationException(
 				"No log file location attribute specified in ErrorLog element"); }
 
-		DailyRollingFileAppender appender = null;
+		RollingFileAppender appender = null;
 		try {
 			String logPath = new ShibResource(location, LoggingInitializer.class).getFile().getCanonicalPath();
 			PatternLayout messageLayout = new PatternLayout(sysLogLayoutPattern);
 
-			appender = new DailyRollingFileAppender(messageLayout, logPath, sysLogAppenderDatePattern);
+			appender = new RollingFileAppender(messageLayout, logPath, sysLogAppenderDatePattern, logFileExtension);
 			appender.setName("shibboleth-error");
 		} catch (Exception e) { // catch any exception
 			throw new ShibbolethConfigurationException("<ErrorLog location=\"" + location
