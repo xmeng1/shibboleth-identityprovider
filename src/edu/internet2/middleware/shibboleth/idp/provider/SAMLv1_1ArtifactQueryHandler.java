@@ -72,16 +72,23 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 		log.info("Recieved a request to dereference assertion artifacts.");
 
 		// Pull credential from request
-		X509Certificate credential = getCredentialFromProvider(request);
-		if (credential == null || credential.getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+		X509Certificate[] chain = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
+		if (chain == null || chain.length == 0 || chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
 			// The spec says that mutual authentication is required for the
 			// artifact profile
-			log.info("Request is from an unauthenticated serviceprovider.");
-			throw new SAMLException(SAMLException.REQUESTER,
-					"SAML Artifacts cannot be dereferenced for unauthenticated requesters.");
+			if (samlRequest.isSigned()) {
+				log.info("Request is signed, will authenticate it later.");
+			}
+			else {
+				log.info("Request is from an unauthenticated serviceprovider.");
+				throw new SAMLException(SAMLException.REQUESTER,
+						"SAML Artifacts cannot be dereferenced for unauthenticated requesters.");
+			}
 		}
-		log.info("Request contains credential: (" + credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
+		else {
+			log.info("Request contains TLS credential: (" + chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
 				+ ").");
+		}
 		ArrayList assertions = new ArrayList();
 		Iterator artifacts = samlRequest.getArtifacts();
 
@@ -117,23 +124,39 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 				}
 				RoleDescriptor role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
 				if (role == null) {
-					log
-							.info("SPSSO role not found in metadata for provider: (" + mapping.getServiceProviderId()
-									+ ").");
+					log.info("SPSSO role not found in metadata for provider: (" + mapping.getServiceProviderId()
+								+ ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider role.");
 				}
 
+				boolean authenticated = false;
+				
 				// Make sure that the suppplied credential is valid for the provider to which the artifact was issued
-				X509Certificate[] chain = (X509Certificate[]) request
-						.getAttribute("javax.servlet.request.X509Certificate");
-				if (!support.getTrust().validate((chain != null && chain.length > 0) ? chain[0] : null, chain, role)) {
-					log.error("Supplied credential ("
-							+ credential.getSubjectX500Principal().getName(X500Principal.RFC2253)
-							+ ") is NOT valid for provider (" + mapping.getServiceProviderId()
-							+ "), to whom this artifact was issued.");
-					throw new SAMLException(SAMLException.REQUESTER, "Invalid credential.");
+				if (chain != null && chain.length > 0) {
+					if (!support.getTrust().validate(chain[0], chain, role)) {
+						log.error("Supplied TLS credential ("
+								+ chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
+								+ ") is NOT valid for provider (" + mapping.getServiceProviderId()
+								+ "), to whom this artifact was issued.");
+						throw new SAMLException(SAMLException.REQUESTER, "Invalid credential.");
+					}
+					authenticated = true;
 				}
-				log.debug("Supplied credential validated for the provider to which this artifact was issued.");
+				if (samlRequest.isSigned()) {
+					if (!support.getTrust().validate(samlRequest, role)) {
+						log.error("Signed SAML request message did NOT contain a valid signature from provider ("
+								+ mapping.getServiceProviderId()
+								+ "), to whom this artifact was issued.");
+						throw new SAMLException(SAMLException.REQUESTER, "Invalid signature.");
+					}
+					authenticated = true;
+				}
+				if (!authenticated) {
+					log.info("Request could not be authenticated.");
+					throw new SAMLException(SAMLException.REQUESTER,
+							"SAML Artifacts cannot be dereferenced for unauthenticated requesters.");
+				}
+				log.debug("Supplied credentials validated for the provider to which this artifact was issued.");
 				assertions.add(assertion);
 				dereferencedArtifacts.append("(" + artifact.encode() + ")");
 			}
