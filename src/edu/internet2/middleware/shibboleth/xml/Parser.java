@@ -270,7 +270,7 @@ public class Parser {
      * 
      * @param configFilePath input resource
      * @param validate if true, use Schema
-     * @return DOM tree
+     * @return DOM tree or null if file cannot be loaded or parsed
      */
     public static Document loadDom(String configFilePath,boolean validate) throws SAMLException, SAXException, IOException 
     {
