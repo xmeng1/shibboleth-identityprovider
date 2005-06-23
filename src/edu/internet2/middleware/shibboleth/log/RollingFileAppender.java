@@ -1,3 +1,8 @@
+/*
+ * This class borrows extensively from the Log4J DailyRollingFileAppender 
+ * written by Eirik Lygre and Ceki Gulcu and copyrighted to the Apache Foundation
+ * under the Apache 2 License (http://apache.org/licenses/LICENSE-2.0).
+ */
 
 package edu.internet2.middleware.shibboleth.log;
 
@@ -26,9 +31,6 @@ import org.apache.log4j.spi.LoggingEvent;
  * 
  * @author Chad La Joie
  */
-/*
- * This class borrows extensively from the Log4J DailyRollingFileAppender written by Eirik Lygre and Ceki Gulcu.
- */
 public class RollingFileAppender
         extends FileAppender {
 
@@ -51,7 +53,7 @@ public class RollingFileAppender
     /**
      * The date pattern. By default, the pattern is set to "'.'yyyy-MM-dd" meaning daily rollover.
      */
-    private String datePattern = "'.'yyyy-MM-dd";
+    private String datePattern = "'-'yyyy-MM-dd";
 
     /**
      * The log file will be renamed to the value of the scheduledFilename variable when the next interval is entered.
@@ -307,6 +309,11 @@ public class RollingFileAppender
 class RollingCalendar
         extends GregorianCalendar {
 
+    /**
+     * Serial Number
+     */
+    private static final long serialVersionUID = -1818276930015758128L;
+    
     int type = RollingFileAppender.TOP_OF_TROUBLE;
 
     RollingCalendar() {
