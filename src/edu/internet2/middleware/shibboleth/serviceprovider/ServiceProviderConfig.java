@@ -140,6 +140,7 @@
 
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.cert.X509Certificate;
@@ -162,6 +163,7 @@ import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 import x0.maceShibboleth1.AttributeAcceptancePolicyDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument;
@@ -336,12 +338,19 @@ public class ServiceProviderConfig {
 	    initlog.info("Loading SP configuration from "+configFilePath);
 
 		Document configDoc;
-        try {
+		try {
 			configDoc = Parser.loadDom(configFilePath, true);
-		} catch (Exception e) {
-			initlog.error("XML Parser error "+e.toString());
-            throw new ShibbolethConfigurationException("XML error in "+configFilePath);
-        }
+			if (configDoc==null) {
+				initlog.error("Cannot load configuration file from "+configFilePath);
+				throw new ShibbolethConfigurationException("Cannot load configuration file from "+configFilePath);
+			}
+		} catch (SAMLException e) {
+			throw new ShibbolethConfigurationException("Problem obtaining XML parser from SAML "+e.toString());
+		} catch (IOException e) {
+			throw new ShibbolethConfigurationException("Problem reading file parsing "+configFilePath, e);
+		} catch (SAXException e) {
+			throw new ShibbolethConfigurationException("Problem parsing XML in "+configFilePath, e);
+		}
         loadConfigBean(configDoc);
 
 		return;

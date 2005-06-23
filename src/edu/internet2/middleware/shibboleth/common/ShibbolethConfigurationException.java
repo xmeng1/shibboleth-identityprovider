@@ -24,7 +24,10 @@ package edu.internet2.middleware.shibboleth.common;
 public class ShibbolethConfigurationException extends Exception {
 
 	public ShibbolethConfigurationException(String message) {
-
 		super(message);
+	}
+	
+	public ShibbolethConfigurationException(String message, Throwable t) {
+		super(message,t);
 	}
 }
