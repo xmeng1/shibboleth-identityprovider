@@ -65,6 +65,8 @@ import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
+
+import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
 import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
@@ -228,6 +230,12 @@ public class AssertionConsumerServlet extends HttpServlet {
                 1
         );
         
+        ServiceProviderConfig config = context.getServiceProviderConfig();
+        ApplicationInfo application = config.getApplication(applicationId);
+        Application applicationConfig = application.getApplicationConfig();
+        String[] audienceArray = applicationConfig.getAudienceArray();
+        
+        
         Iterator conditions = samldata.assertion.getConditions();
         while (conditions.hasNext()) {
             SAMLCondition cond =
@@ -240,15 +248,36 @@ public class AssertionConsumerServlet extends HttpServlet {
                 if (audiences==null)
                     continue; // probably invalid
                 boolean matched = false;
-                while (audiences.hasNext()) {
+                StringBuffer audienceTests = new StringBuffer();
+                while (!matched && audiences.hasNext()) {
                     String audienceString = (String) audiences.next();
+                    audienceTests.append(audienceString);
+                    audienceTests.append(' ');
                     if (audienceString.equals(providerId)) {
                         matched=true;
-                        break;
+                    }
+                    if (audienceArray!=null) {
+                        for (int i=0;i<audienceArray.length;i++) {
+                            if (audienceString.equals(audienceArray[i])) {
+                                matched=true;
+                                break;
+                            }
+                        }
                     }
                 }
                 if (!matched) {
-                    throw new SAMLException("Assertion restricted to other audiences.");
+                    log.error("Assertion restricted to "+audienceTests.toString());
+                    StringBuffer audienceBuffer = new StringBuffer("Did not match ");
+                    audienceBuffer.append(providerId);
+                    if (audienceArray!=null && audienceArray.length>0) {
+                        audienceBuffer.append(" or ");
+                        for (int i=0;i<audienceArray.length;i++) {
+                            audienceBuffer.append(audienceArray[i]);
+                            audienceBuffer.append(' ');
+                        }
+                    }
+                    log.error(audienceBuffer.toString());
+                    throw new SAMLException("Assertion failed audience restriction test.");
                 }
             }
         }
