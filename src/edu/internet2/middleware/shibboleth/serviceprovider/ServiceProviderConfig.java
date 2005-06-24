@@ -784,7 +784,6 @@ public class ServiceProviderConfig {
 			Document aapdoc = Parser.loadDom(uri,true);
 			if (aapdoc==null)
 			    return false;
-			AttributeAcceptancePolicyDocument aap = AttributeAcceptancePolicyDocument.Factory.parse(aapdoc);
 			XMLAAPProvider impl = new XMLAAPProvider();
 			impl.initialize(aapdoc.getDocumentElement());
 			addOrReplaceAAPImplementor(uri,impl);
@@ -847,7 +846,6 @@ public class ServiceProviderConfig {
 	    
 	    RequestMapDocument requestMapDoc = null;
 	    Document mapdoc = null;
-	    Element maproot = null;
 	    String uri = mapProvider.getUri();
 	    
 	    if (uri==null) { // inline

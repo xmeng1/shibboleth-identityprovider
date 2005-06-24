@@ -73,8 +73,6 @@ import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLSubject;
 import org.opensaml.XML;
 
-import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
-
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
@@ -117,8 +115,6 @@ public class AttributeRequestor {
 			log.error("Entity(Site) deleted from Metadata since authentication POST received: "+session.getEntityId());
 			return false;
 		}
-		Application applicationConfig = appinfo.getApplicationConfig();
-		
 		SAMLRequest request = null;
 		
 		AttributeAuthorityDescriptor aa = 
