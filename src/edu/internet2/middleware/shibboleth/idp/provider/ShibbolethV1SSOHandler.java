@@ -498,6 +498,17 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 			if (sp != null) {
 
+				// See if this is the default endpoint location.
+				Endpoint defaultEndpoint = sp.getAssertionConsumerServiceManager().getDefaultEndpoint();
+				if (defaultEndpoint.getLocation().equals(acceptanceURL)) {
+					
+					// If we recognize the default binding, this is the one to use.
+					if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_POST_URI))
+						return false;
+					else if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_ARTIFACT_URI))
+						return true;
+				}
+				
 				Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
 				while (endpoints.hasNext()) {
 					Endpoint ep = (Endpoint) endpoints.next();
