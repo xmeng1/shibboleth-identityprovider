@@ -119,7 +119,7 @@
 			<!-- This default example directs users to a specific IdP's SSO service. -->
 			<SessionInitiator isDefault="true" id="example" Location="/WAYF/idp.example.org"
 				Binding="urn:mace:shibboleth:sp:1.3:SessionInit"
-				wayfURL="https://idp.example.org:8443/shibboleth-idp/SSO"
+				wayfURL="https://idp.example.org:443/shibboleth-idp/SSO"
 				wayfBinding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"/>
 				
 			<!-- This example directs users to a specific federation's WAYF service. -->
