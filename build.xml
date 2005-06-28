@@ -139,10 +139,10 @@
 		 recreating and reinstalling everything. -->
 	<target name="clean-install" depends="init" 
 		description="Delete old configuration and Tomcat webapp directories.">
-		<delete dir="${shib.home}" />
-		<delete dir="${shibsp.home}" />
-		<delete dir="${tomcat.home}/webapps/${shib.webapp.name}" />
-		<delete dir="${tomcat.home}/webapps/${shibsp.webapp.name}" />
+		<delete dir="${idp.home}" />
+		<delete dir="${sp.home}" />
+		<delete dir="${tomcat.home}/webapps/${idp.webapp.name}" />
+		<delete dir="${tomcat.home}/webapps/${sp.webapp.name}" />
 	</target>
 
 
@@ -200,20 +200,20 @@
 	</target>
     
     <target name="tomcat.start" depends="setupTomcatTasks" description="Start a deployed webapp using Tomcat manager">
-        <tomcatStart url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"/>
+        <tomcatStart url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"/>
     </target>
 
     <target name="tomcat.stop" depends="setupTomcatTasks" description="Stop a deployed webapp using Tomcat manager">
-        <tomcatStop url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"/>
+        <tomcatStop url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"/>
     </target>
 
     <target name="tomcat.deploy" depends="setupTomcatTasks" description="Upload and deploy using Tomcat manager">
-        <tomcatDeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"
-        	war="file:${basedir}/${dist}/${shib.webapp.name}.war"/>
+        <tomcatDeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"
+        	war="file:${basedir}/${dist}/${idp.webapp.name}.war"/>
     </target>
 
     <target name="tomcat.undeploy" depends="setupTomcatTasks" description="Undeploy using Tomcat manager">
-        <tomcatUndeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${shib.webapp.name}"/>
+        <tomcatUndeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"/>
     </target>
 	
     
@@ -256,11 +256,11 @@
 	<!-- Package Shibboleth -->
     <target name="package-idp" depends="compile" description="Creates the IdP war file and moves it to ${dist}">
     	<!-- copy values to deployment descriptor -->
-        <copy file="${configroot}/dist.idp.xml" tofile="${configroot}/idp.xml" overwrite="true" />
-        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${shib.home.url}" />
+        <copy file="${configroot}/${idp.deployment.descriptor}" tofile="${configroot}/idp.xml" overwrite="true" />
+        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${idp.home.url}" />
     	
     	<!-- create the war -->
-        <war warfile="${dist}/${shib.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
+        <war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
     	
     	<!-- clean up generated descriptor -->
         <delete file="${configroot}/idp.xml"/>
@@ -272,11 +272,11 @@
 	
     <target name="package-sp" depends="compile" description="Creates the Java SP war and moves it to ${dist}">
     	<!-- copy values to deployment descriptor -->
-        <copy file="${configroot}/dist.sp.xml" tofile="${configroot}/sp.xml" overwrite="true" />
-        <replace file="${configroot}/sp.xml" token="$SHIB_HOME$" value="${shibsp.home.url}" />
+        <copy file="${configroot}/${sp.deployment.descriptor}" tofile="${configroot}/sp.xml" overwrite="true" />
+        <replace file="${configroot}/sp.xml" token="$SHIB_HOME$" value="${sp.home.url}" />
     	
     	<!-- create the war -->
-        <war warfile="${dist}/${shibsp.webapp.name}.war" webxml="${configroot}/sp.xml" basedir="${approot}" update="no" />
+        <war warfile="${dist}/${sp.webapp.name}.war" webxml="${configroot}/sp.xml" basedir="${approot}" update="no" />
     	
     	<!-- clean up generated descriptor -->
         <delete file="${configroot}/sp.xml"/>
@@ -291,17 +291,17 @@
 
     <target name="install.url">
 		<taskdef name="urlconvert" classname="edu.internet2.middleware.shibboleth.utils.ant.URLConvert" classpath="${build}"/>
-		<urlconvert path="${shib.home}" addProperty="shib.home.url"/>
-		<urlconvert path="${shibsp.home}" addProperty="shibsp.home.url"/>
+		<urlconvert path="${idp.home}" addProperty="idp.home.url"/>
+		<urlconvert path="${sp.home}" addProperty="sp.home.url"/>
     </target>
 
     <target name="install" depends="init, install.init" description="Install Shibboleth">
         <if>
             <xinput type="confirm" defaultvalue="y">Do you want to install the Shibboleth Identity Provider?</xinput>
             <then>
-                <input message="What name do you want to use for the Identity Provider web application? [default: ${shib.webapp.name}]" 
-                    addproperty="shib.webapp.name.input" defaultValue="${shib.webapp.name}" />
-                <var name="shib.webapp.name" value="${shib.webapp.name.input}" />
+                <input message="What name do you want to use for the Identity Provider web application? [default: ${idp.webapp.name}]" 
+                    addproperty="idp.webapp.name.input" defaultValue="${idp.webapp.name}" />
+                <var name="idp.webapp.name" value="${idp.webapp.name.input}" />
 
                 <antcall target="install.idp" />
             </then>
@@ -321,17 +321,17 @@
 
     <!-- Prompt user for filesystem installation options and save them to build.properties -->
     <target name="install.idp.filesystem.prompt" depends="init, install.init">
-        <input message="Select an installation base for the Shibboleth Identity Provider [default: ${shib.home}]"
-            addproperty="shib.home.input" defaultvalue="${shib.home}" />
-        <var name="shib.home" value="${shib.home.input}" />
+        <input message="Select an installation base for the Shibboleth Identity Provider [default: ${idp.home}]"
+            addproperty="idp.home.input" defaultvalue="${idp.home}" />
+        <var name="idp.home" value="${idp.home.input}" />
         <input message="Enter tomcat home directory [default: ${tomcat.home}]"
             addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
         <var name="tomcat.home" value="${tomcat.home.input}" />
         
         <if>
-			<available file="${shib.home}/etc" />
+			<available file="${idp.home}/etc" />
             <then>
-                <xinput type="confirm" addproperty="copy-idp-conf">WARNING!! The directory `${shib.home}/etc` already exists.  Do you want to overwrite the existing configuration?</xinput>
+                <xinput type="confirm" addproperty="copy-idp-conf">WARNING!! The directory `${idp.home}${file.separator}etc` already exists.  Do you want to overwrite the existing configuration?</xinput>
             </then>
             <else>
                 <property name="copy-idp-conf" value="y" />
@@ -347,28 +347,28 @@
         description="Install Shibboleth IdP to filesystem using the properties in build.properties">
 
         <!-- Move IdP war to Tomcat deployment directory -->
-        <copy file="${dist}/${shib.webapp.name}.war" tofile="${tomcat.home}/webapps/${shib.webapp.name}.war" />
+        <copy file="${dist}/${idp.webapp.name}.war" tofile="${tomcat.home}/webapps/${idp.webapp.name}.war" />
 
         <!-- copy IdP jars and utilities -->
-        <copy todir="${shib.home}/lib">
+        <copy todir="${idp.home}/lib">
             <fileset dir="lib" includesfile="conf/idp-lib.include" />
         </copy>
 
-        <copy todir="${shib.home}/bin">
+        <copy todir="${idp.home}/bin">
             <fileset dir="bin"/>
         </copy>
-		<chmod dir="${shib.home}/bin" perm="ug+rx" includes="**/*"/>
+		<chmod dir="${idp.home}/bin" perm="ug+rx" includes="**/*"/>
 
-        <mkdir dir="${shib.home}/logs" />
+        <mkdir dir="${idp.home}/logs" />
 
         <!-- copy IdP configuration -->
         <if>
             <or>
                 <equals arg1="${copy-idp-conf}" arg2="y" />
-                <not> <available file="${shib.home}/etc" /> </not>
+                <not> <available file="${idp.home}/etc" /> </not>
             </or>
             <then>
-                <delete dir="${shib.home}/etc" />
+                <delete dir="${idp.home}/etc" />
                 <antcall target="install.idp.filesystem.config" />
             </then>
         </if>
@@ -379,28 +379,28 @@
         description="Install Shibboleth SP to filesystem using the properties in build.properties">
 
     	<!-- Move SP war to Tomcat deployment directory -->
-        <copy file="${dist}/${shibsp.webapp.name}.war" tofile="${tomcat.home}/webapps/${shibsp.webapp.name}.war" />
+        <copy file="${dist}/${sp.webapp.name}.war" tofile="${tomcat.home}/webapps/${sp.webapp.name}.war" />
 
         <!-- copy sp jars and utilities -->
-        <copy todir="${shibsp.home}/lib">
+        <copy todir="${sp.home}/lib">
             <fileset dir="lib" includesfile="conf/idp-lib.include" />
         </copy>
 
-        <copy todir="${shibsp.home}/bin">
+        <copy todir="${sp.home}/bin">
             <fileset dir="bin"/>
         </copy>
-		<chmod dir="${shibsp.home}/bin" perm="ug+rx" includes="**/*"/>
+		<chmod dir="${sp.home}/bin" perm="ug+rx" includes="**/*"/>
 
-        <mkdir dir="${shibsp.home}/logs" />
+        <mkdir dir="${sp.home}/logs" />
 
         <!-- copy sp configuration -->
         <if>
             <or>
                 <equals arg1="${copy-sp-conf}" arg2="y" />
-                <not> <available file="${shibsp.home}/etc" /> </not>
+                <not> <available file="${sp.home}/etc" /> </not>
             </or>
             <then>
-                <delete dir="${shibsp.home}/etc" />
+                <delete dir="${sp.home}/etc" />
                 <antcall target="install.sp.filesystem.config" />
             </then>
         </if>
@@ -409,22 +409,22 @@
 	
     <!-- copy shibboleth configuration to $SHIB_HOME/etc, overwriting any existing configuration -->
 	<target name="install.idp.filesystem.config" depends="init, install.init, install.url">
-        <mkdir dir="${shib.home}/etc" />
-        <copy todir="${shib.home}/etc" overwrite="true">
+        <mkdir dir="${idp.home}/etc" />
+        <copy todir="${idp.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
         </copy>
-		<move file="${shib.home}/etc/dist.idp.xml" tofile="${shib.home}/etc/idp.xml" overwrite="true" />
-        <replace file="${shib.home}/etc/idp.xml" token="$SHIB_HOME$" value="${shib.home.url}" />
+		<move file="${idp.home}/etc/dist.idp.xml" tofile="${idp.home}/etc/idp.xml" overwrite="true" />
+        <replace file="${idp.home}/etc/idp.xml" token="$SHIB_HOME$" value="${idp.home.url}" />
     </target>
 	
     <!-- copy SP configuration to $SHIB_HOME$/etc, overwriting any existing configuration -->
 	<target name="install.sp.filesystem.config" depends="init, install.init">
-        <mkdir dir="${shibsp.home}/etc" />
-        <copy todir="${shibsp.home}/etc" overwrite="true">
+        <mkdir dir="${sp.home}/etc" />
+        <copy todir="${sp.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" includesfile="conf/sp-conf.include"/>
         </copy>
-		<move file="${shibsp.home}/etc/dist.sp.xml" tofile="${shibsp.home}/etc/sp.xml" overwrite="true" />
-        <replace file="${shibsp.home}/etc/sp.xml" token="$SHIB_HOME$" value="${shibsp.home.url}" />
+		<move file="${sp.home}/etc/dist.sp.xml" tofile="${sp.home}/etc/sp.xml" overwrite="true" />
+        <replace file="${sp.home}/etc/sp.xml" token="$SHIB_HOME$" value="${sp.home.url}" />
     </target>
 
     <!-- install Shibboleth-IdP war using tomcat's manager app -->
@@ -450,10 +450,10 @@
     <!-- save configuration to build.properties -->
     <target name="savePropertyFile">
         <propertyfile file="build.properties">
-            <entry key="shib.home" value="${shib.home}" />
-            <entry key="shibsp.home" value="${shibsp.home}" />
-            <entry key="shib.webapp.name" value="${shib.webapp.name}" />
-            <entry key="shibsp.webapp.name" value="${shibsp.webapp.name}" />
+            <entry key="idp.home" value="${idp.home}" />
+            <entry key="sp.home" value="${sp.home}" />
+            <entry key="idp.webapp.name" value="${idp.webapp.name}" />
+            <entry key="sp.webapp.name" value="${sp.webapp.name}" />
             <entry key="idp.install-type" value="${idp.install-type}" />
             <entry key="tomcat.home" value="${tomcat.home}" />
             <entry key="tomcat.url" value="${tomcat.url}" />
