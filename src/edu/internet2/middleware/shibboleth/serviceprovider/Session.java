@@ -33,7 +33,7 @@ import org.opensaml.SAMLResponse;
 /**
  * Session object holds Authentication and Attribute Assertions for one
  * remote Browser/User.<br>
- * Each session generates its own UUID key.<br>
+ * Each session generates its own random key.<br>
  * The collection of Session objects may be checkpointed to disk using
  * any attractive persistence framework, Object Relational mapping, 
  * or, hell, just serialize the objects to a flat file if you like.
@@ -41,25 +41,30 @@ import org.opensaml.SAMLResponse;
  *  @author Howard Gilbert
  */
 public class Session implements Serializable {
+    private long maxSessionLife;
+    private long unusedSessionTimeout;
+    private long defaultAttributeLifetime;
 	
-	// Default values from Shibboleth documentation
-	private static final int DEFAULTTIMEOUT = 1800000;
-	public static final int DEFAULTLIFETIME = 3600000;
-	
-	Session(String key) {
-		// Should only be created by SessionManager
+    /**
+     * Create a Session object. Only used by the Session Manager, so it has package scope.
+     * 
+     * @param key Random generated sessionId string
+     * @param maxSessionLife Maximum time this Session can remain valid
+     * @param unusedSessionTimeout Discard an unused Session
+     * @param defaultAttributeLifetime Default attribute validity time
+     */
+	Session(String key, 
+            long maxSessionLife, 
+            long unusedSessionTimeout, 
+            long defaultAttributeLifetime) {
 		if (key==null)
 			throw new IllegalArgumentException();
 	    this.key=key;
-	    this.timestamp = System.currentTimeMillis();
-	}
-	
-	/**
-	 * For testing, create a Session that may already be timed out.
-	 */
-	Session(String key, long timestamp) {
-	    this.key=key;
-	    this.timestamp = timestamp;
+	    this.lastused = System.currentTimeMillis();
+        this.created = this.lastused;
+        this.maxSessionLife=maxSessionLife;
+        this.unusedSessionTimeout=unusedSessionTimeout;
+        this.defaultAttributeLifetime=defaultAttributeLifetime;
 	}
 	
 	// Properties
@@ -93,30 +98,16 @@ public class Session implements Serializable {
 		this.entityId = entityId;
 	}
 	
-	private long lifetime = DEFAULTLIFETIME;
-	public long getLifetime() {
-		return lifetime;
-	}
-	public void setLifetime(long lifetime) {
-		this.lifetime = lifetime;
-	}
-	
-	private long timeout=DEFAULTTIMEOUT;
-	public long getTimeout() {
-		return timeout;
-	}
-	public void setTimeout(long timeout) {
-		this.timeout = timeout;
-	}
-	
-    // private persisted variable
-	private long timestamp = 0;
+	private long lastused = 0;
+    private long created = 0;
 	
 	public boolean isExpired() {
 		long now = System.currentTimeMillis();
-		if (lifetime>0 && timestamp+lifetime<now)
+		if (maxSessionLife>0 && 
+                created+maxSessionLife<now)
 			return true;
-		if (timeout>0 && timestamp+timeout<now)
+		if (unusedSessionTimeout>0 && 
+                lastused+unusedSessionTimeout<now)
 			return true;
 		return false;
 	}
@@ -149,10 +140,37 @@ public class Session implements Serializable {
 		this.attributeResponse = attributeResponse;
 	}
 
-	
-	public void renew(){
-		timestamp = System.currentTimeMillis();
+	/**
+     * Called by Session Manager when the Session is used. Reset the 
+     * unused timer.
+	 */
+	void renew(){
+		lastused = System.currentTimeMillis();
 	}
+    
+    public long getDefaultAttributeLifetime() {
+        return defaultAttributeLifetime;
+    }
+
+    public void setDefaultAttributeLifetime(long defaultAttributeLifetime) {
+        this.defaultAttributeLifetime = defaultAttributeLifetime;
+    }
+
+    public long getMaxSessionLife() {
+        return maxSessionLife;
+    }
+
+    public void setMaxSessionLife(long maxSessionLife) {
+        this.maxSessionLife = maxSessionLife;
+    }
+
+    public long getUnusedSessionTimeout() {
+        return unusedSessionTimeout;
+    }
+
+    public void setUnusedSessionTimeout(long unusedSessionTimeout) {
+        this.unusedSessionTimeout = unusedSessionTimeout;
+    }
 	
 
 }

@@ -167,6 +167,7 @@ import org.xml.sax.SAXException;
 
 import x0.maceShibboleth1.AttributeAcceptancePolicyDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument;
+import x0.maceShibbolethTargetConfig1.GlobalConfigurationType;
 import x0.maceShibbolethTargetConfig1.LocalConfigurationType;
 import x0.maceShibbolethTargetConfig1.PluggableType;
 import x0.maceShibbolethTargetConfig1.RequestMapDocument;
@@ -178,6 +179,7 @@ import x0.maceShibbolethTargetConfig1.ApplicationsDocument.Applications;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host.Scheme.Enum;
 import x0.maceShibbolethTargetConfig1.PathDocument.Path;
+import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
 import edu.internet2.middleware.shibboleth.aap.provider.XMLAAPProvider;
@@ -352,10 +354,22 @@ public class ServiceProviderConfig {
 			throw new ShibbolethConfigurationException("Problem parsing XML in "+configFilePath, e);
 		}
         loadConfigBean(configDoc);
-
+        
 		return;
 	}
-	
+    
+    public long getDefaultAttributeLifetime() {
+        return config.getGlobal().getMemorySessionCache().getDefaultLifetime();
+    }
+
+    public long getAAConnectTimeout() {
+        return config.getGlobal().getMemorySessionCache().getAAConnectTimeout();
+    }
+    public long getAATimeout() {
+        return config.getGlobal().getMemorySessionCache().getAATimeout();
+    }
+    
+    
 	/*
 	 * Given a URL, determine its ApplicationId from the RequestMap config.
 	 * 
@@ -941,7 +955,16 @@ public class ServiceProviderConfig {
 		void addAapUri(String uri) {
 			aapUris.add(uri);
 		}
-		
+        
+        long getMaxSessionLife() {
+            Sessions sessions = applicationConfig.getSessions();
+            return sessions.getLifetime();
+        }
+        long getUnusedSessionTimeout() {
+            Sessions sessions = applicationConfig.getSessions();
+            return sessions.getTimeout();
+        }
+        
 		/**
 		 * Return the current array of objects that implement the
 		 * ...metadata.Metadata interface

@@ -14,7 +14,9 @@ public class TestContextInitializer extends SPTestCase {
      * @param configFileName URL format string pointing to configuration file
      * @throws ShibbolethConfigurationException
      */
-	public void initServiceProvider(String configFileName) throws ShibbolethConfigurationException{
+	public void initServiceProvider(String configFileName) 
+        throws ShibbolethConfigurationException{
+            context.initialize();
 			ServiceProviderConfig config = new ServiceProviderConfig();
 			context.setServiceProviderConfig(config);
 			config.loadConfigObjects(configFileName);

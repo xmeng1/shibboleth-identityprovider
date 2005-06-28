@@ -79,7 +79,7 @@ public class ServletContextInitializer {
 		
 		try {
 			log.info("Initializing Service Provider.");
-			
+			context.initialize();
 			ServiceProviderConfig config = new ServiceProviderConfig();
 			context.setServiceProviderConfig(config);
 			
@@ -90,8 +90,6 @@ public class ServletContextInitializer {
 			
 			// could config.addOrReplaceXXXImplementor()
 			
-			context.setServiceProviderConfig(config);
-
 			log.info("Service Provider initialization complete.");
 
 		} catch (ShibbolethConfigurationException ex) {

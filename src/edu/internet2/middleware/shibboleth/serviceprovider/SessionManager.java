@@ -43,8 +43,6 @@ import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 
-import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
-
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
 /**
@@ -69,15 +67,13 @@ public class SessionManager {
 	private TreeMap sessions = new TreeMap(); // The memory cache of Sessions
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
-
-	private static SecureRandom rand = new SecureRandom();
-	private static final String table = "0123456789" +
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
-		"abcdefgjikjlmnopqrstuvwxyz"+
-		"$@";
+    
+    
     
     /**
-     * Generate a 16 byte random ASCII string.
+     * Generate a 16 byte random ASCII string using 
+     * cryptgraphically strong Java random generator.
+     * 
      * @return generated string
      */
 	public String generateKey() {
@@ -94,12 +90,17 @@ public class SessionManager {
 	    } while (null!=sessions.get(key));
 	    return key;
 	}
+    private static SecureRandom rand = new SecureRandom();
+    private static final String table = "0123456789" +
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
+        "abcdefgjikjlmnopqrstuvwxyz"+
+        "$@";
 	
 	
 	/**
      * Find a Session object given its sessionID key. 
      * 
-     * <p>Will not match uninitialized Sessions.</p>
+     * <p>Will not match uninitialized (reserved) Sessions.</p>
      * 
      * @param sessionId ID and key of session
      * @param applicationId Sanity check, must match session contents
@@ -231,47 +232,53 @@ public class SessionManager {
 	public 
 			String 
 	newSession(
-			String applicationId, 
-			String ipaddr,
-			String entityId,
-			SAMLAssertion assertion,
-			SAMLAuthenticationStatement authenticationStatement,
+			String applicationId, // not null
+			String ipaddr,        // may be null
+			String entityId,      // not null
+			SAMLAssertion assertion, //not null
+			SAMLAuthenticationStatement authenticationStatement, // may be null
 			String emptySessionId // may be null
 			){
 		
+        if (applicationId==null)
+            throw new IllegalArgumentException("applicationId null");
+        if (entityId==null)
+            throw new IllegalArgumentException("entityId null");
+        if (assertion==null)
+            throw new IllegalArgumentException("assertion null");
+        
 		ServiceProviderConfig config = context.getServiceProviderConfig();
 		ApplicationInfo appinfo = config.getApplication(applicationId);
-		Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
-		
 		String sessionId = null;
-		boolean isUpdate = false;
+		boolean isUpdate = false; // Assume new object
 		
-		Session session;
-		if (emptySessionId==null) {
-		    session = new Session(generateKey());
-		} else {
+        /*
+         * If the Id of a reserved, empty session is provided, then find
+         * that object and fill it in. Otherwise, create a new object.
+         */
+		Session session = null;
+		if (emptySessionId!=null) {
 		    session = findEmptySession(emptySessionId);
-		    if (session==null) {
-			    session = new Session(generateKey());
-		    } else {
-		    	isUpdate=true;
-		    }
+		}
+		if (session==null) {
+		    session = new Session(generateKey(),
+		            appinfo.getMaxSessionLife(), 
+		            appinfo.getUnusedSessionTimeout(), 
+		            config.getDefaultAttributeLifetime());
+		} else {
+		    isUpdate=true; // mark so object is updated, not added
 		}
 		session.setApplicationId(applicationId);
-		session.setIpaddr(ipaddr);
+		session.setIpaddr(ipaddr); // may be null
 		session.setEntityId(entityId);
 		
 		session.setAuthenticationAssertion(assertion);
-		session.setAuthenticationStatement(authenticationStatement);
-		
-		// Get lifetime and timeout from Applications/Sessions in config file 
-		session.setLifetime(appSessionValues.getLifetime()*1000);
-		session.setTimeout(appSessionValues.getTimeout()*1000);
+		session.setAuthenticationStatement(authenticationStatement); // may be null
 		
 		sessionId = session.getKey();
 
 		if (isUpdate)
-			update(session);
+			update(session);  
 		else
 			add(session);
 		
@@ -292,9 +299,16 @@ public class SessionManager {
 reserveSession(
 	String applicationId 
 	){
-
+        if (applicationId==null)
+            throw new IllegalArgumentException("applicationId null");
+            
+        ServiceProviderConfig config = context.getServiceProviderConfig();
+        ApplicationInfo appinfo = config.getApplication(applicationId);
 	    String sessionId = null;
-	    Session session= new Session(generateKey());
+	    Session session= new Session(generateKey(),
+                appinfo.getMaxSessionLife(), 
+                appinfo.getUnusedSessionTimeout(), 
+                config.getDefaultAttributeLifetime());
 	    session.setApplicationId(applicationId);
 	    
 	    sessionId = session.getKey();
@@ -316,7 +330,7 @@ reserveSession(
 			SessionCache cache) {
 		
 		if (cache==null)
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("Session cache is null");
 	    log.info("Enabling Session Cache");
 		/*
 		 * The following code supports dynamic switching from

@@ -126,16 +126,18 @@ public class ServiceProviderContext {
 	 */
 	private ServiceProviderContext() {
 	}
+    
+    public void initialize() {
+        // Post-construction initialization of elements that require
+        // a reference back to the context.
+        sessionManager = new SessionManager();
+    }
 	
 	
 	
 	// property accessor methods
 
-	public synchronized SessionManager getSessionManager() {
-	    // deferred allocation, since sessionManger needs a reference
-	    // back to context.
-	    if (sessionManager==null)
-		    sessionManager = new SessionManager();
+	public SessionManager getSessionManager() {
 		return sessionManager;
 	}
 
