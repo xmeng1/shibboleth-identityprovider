@@ -20,7 +20,7 @@
 <h1>Shibboleth Identity Provider Failure</h1>
 </div>
 
-<p>The inter-institutional access system experienced a technical failure.</p>
+<p>The Shibboleth authentication system experienced a technical failure.</p>
 
 <p>Please email <a href="mailto:root@localhost">root@localhost</a> and include the following error message:</p>
 

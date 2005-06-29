@@ -18,7 +18,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
     <link rel="stylesheet" type="text/css" href="main.css" />
-    <title>Shibboleth Handle Request Processed</title>
+    <title>Shibboleth Authentication Request Processed</title>
 </head>
 
 <body onload="document.forms[0].submit()">
@@ -37,7 +37,7 @@
 	}
 %>
 
-<h1>Shibboleth Handle Request Processed</h1>
+<h1>Shibboleth Authentication Request Processed</h1>
 
 <script type="text/javascript">
 <!--	
