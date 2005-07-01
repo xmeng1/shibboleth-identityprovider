@@ -287,6 +287,16 @@ public class ServiceProviderMapper {
 				log.debug("Relying party defaults to Artifact profile.");
 			}
 
+			attribute = ((Element) partyConfig).getAttribute("singleAssertion");
+			if (attribute != null && !attribute.equals("")) {
+				singleAssertion = Boolean.valueOf(attribute).booleanValue();
+			}
+			if (singleAssertion) {
+				log.debug("Relying party defaults to a single assertion when pushing attributes.");
+			} else {
+				log.debug("Relying party defaults to multiple assertions when pushing attributes.");
+			}
+			
 			// Relying Party wants assertions signed?
 			attribute = ((Element) partyConfig).getAttribute("signAssertions");
 			if (attribute != null && !attribute.equals("")) {
