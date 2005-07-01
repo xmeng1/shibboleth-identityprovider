@@ -20,9 +20,10 @@
 		<NameID nameMapping="shm"/> <!-- (nameMapping) must correspond to a <NameMapping/> element below -->
 	</RelyingParty>
 
-	<!-- InQueue example -->
+	<!-- InQueue example (the schemaHack is needed for 1.1/1.2 SPs)-->
 	<!--
-	<RelyingParty name="urn:mace:inqueue" signingCredential="inqueue_cred"> 
+	<RelyingParty name="urn:mace:inqueue" signingCredential="inqueue_cred"
+			schemaHack="true"> 
 		<NameID nameMapping="shm"/>
 	</RelyingParty> -->
 	
