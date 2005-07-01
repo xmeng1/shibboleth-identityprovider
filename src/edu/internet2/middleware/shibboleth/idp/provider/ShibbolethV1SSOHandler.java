@@ -50,6 +50,7 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
+import org.opensaml.SAMLSubjectStatement;
 import org.opensaml.artifact.Artifact;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -169,33 +170,19 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			}
 
 			SAMLSubject authNSubject = new SAMLSubject(nameId, null, null, null);
-			ArrayList assertions = new ArrayList();
 
 			// Is this artifact or POST?
 			boolean artifactProfile = useArtifactProfile(descriptor, acceptanceURL, relyingParty);
 
-			// Package attributes for push, if necessary - don't attempt this for legacy providers (they don't support
-			// it)
-			if (!relyingParty.isLegacyProvider() && pushAttributes(artifactProfile, relyingParty)) {
-				log.info("Resolving attributes for push.");
-				SAMLAssertion attrAssertion = generateAttributeAssertion(support, principal, relyingParty,
-						authNSubject, request);
-				if (attrAssertion != null) {
-					assertions.add(attrAssertion);
-				} else {
-					log.info("No attributes resolved.");
-				}
-			}
-
 			// SAML Artifact profile - don't even attempt this for legacy providers (they don't support it)
 			if (!relyingParty.isLegacyProvider() && artifactProfile) {
 				respondWithArtifact(request, response, support, principal, relyingParty, descriptor, acceptanceURL,
-						nameId, authenticationMethod, authNSubject, assertions);
+						nameId, authenticationMethod, authNSubject);
 
 				// SAML POST profile
 			} else {
 				respondWithPOST(request, response, support, principal, relyingParty, descriptor, acceptanceURL, nameId,
-						authenticationMethod, authNSubject, assertions);
+						authenticationMethod, authNSubject);
 			}
 		} catch (InvalidClientDataException e) {
 			throw new SAMLException(SAMLException.RESPONDER, e.getMessage());
@@ -206,15 +193,21 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 	private void respondWithArtifact(HttpServletRequest request, HttpServletResponse response,
 			IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
 			EntityDescriptor descriptor, String acceptanceURL, SAMLNameIdentifier nameId, String authenticationMethod,
-			SAMLSubject authNSubject, List assertions) throws SAMLException, IOException, UnsupportedEncodingException {
+			SAMLSubject authNSubject) throws SAMLException, IOException, UnsupportedEncodingException {
 
 		log.debug("Responding with Artifact profile.");
+		ArrayList assertions = new ArrayList();
 
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
-		// Add authn assertion to the front of the list so it's the first artifact generated.
-		assertions.add(0,generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
+		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
 				getAuthNTime(request), authNSubject));
 
+		// Package attributes for push, if necessary.
+		if (!relyingParty.isLegacyProvider() && pushAttributes(true, relyingParty)) {
+			log.info("Resolving attributes for push.");
+			generateAttributes(support, principal, relyingParty, assertions, request);
+		}
+		
 		// Sign the assertions, if necessary
 		boolean metaDataIndicatesSignAssertions = false;
 		if (descriptor != null) {
@@ -282,14 +275,21 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
 			LocalPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
-			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject, List assertions)
+			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject)
 			throws SAMLException, IOException, ServletException {
 
 		log.debug("Responding with POST profile.");
+		ArrayList assertions = new ArrayList();
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
 		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
 				getAuthNTime(request), authNSubject));
-
+		
+		// Package attributes for push, if necessary.
+		if (!relyingParty.isLegacyProvider() && pushAttributes(false, relyingParty)) {
+			log.info("Resolving attributes for push.");
+			generateAttributes(support, principal, relyingParty, assertions, request);
+		}
+		
 		// Sign the assertions, if necessary
 		boolean metaDataIndicatesSignAssertions = false;
 		if (descriptor != null) {
@@ -330,8 +330,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 	}
 
-	private SAMLAssertion generateAttributeAssertion(IdPProtocolSupport support, LocalPrincipal principal,
-			RelyingParty relyingParty, SAMLSubject authNSubject, HttpServletRequest request) throws SAMLException {
+	private void generateAttributes(IdPProtocolSupport support, LocalPrincipal principal,
+			RelyingParty relyingParty, ArrayList assertions, HttpServletRequest request) throws SAMLException {
 
 		try {
 			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty, relyingParty
@@ -340,12 +340,26 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 			// Bail if we didn't get any attributes
 			if (attributes == null || attributes.length < 1) {
-				return null;
+				log.info("No attributes resolved.");
+				return;
+			}
+			
+			// Reference requested subject
+			SAMLSubject attrSubject =
+				(SAMLSubject)((SAMLSubjectStatement)((SAMLAssertion)assertions.get(0)).getStatements().next()).getSubject().clone();
 
-			} else {
-				// Reference requested subject
-				SAMLSubject attrSubject = (SAMLSubject) authNSubject.clone();
+			// May be one assertion or two.
+			if (relyingParty.singleAssertion()) {
+				log.debug("merging attributes into existing authn assertion");
+				// Put all attributes into an assertion
+				((SAMLAssertion)assertions.get(0)).addStatement(new SAMLAttributeStatement(attrSubject, Arrays.asList(attributes)));
 
+				if (log.isDebugEnabled()) {
+					log.debug("Dumping combined Assertion:" + System.getProperty("line.separator")
+							+ assertions.get(0).toString());
+				}
+			}
+			else {
 				ArrayList audiences = new ArrayList();
 				if (relyingParty.getProviderId() != null) {
 					audiences.add(relyingParty.getProviderId());
@@ -375,12 +389,12 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 				SAMLAssertion attrAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(),
 						now, then, Collections.singleton(condition), null, Collections.singleton(statement));
-
+				assertions.add(attrAssertion);
+				
 				if (log.isDebugEnabled()) {
 					log.debug("Dumping generated Attribute Assertion:" + System.getProperty("line.separator")
 							+ attrAssertion.toString());
 				}
-				return attrAssertion;
 			}
 		} catch (AAException e) {
 			log.error("An error was encountered while generating assertion for attribute push: " + e);
