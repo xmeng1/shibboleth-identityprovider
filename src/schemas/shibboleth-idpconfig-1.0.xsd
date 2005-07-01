@@ -55,6 +55,7 @@
 								<xs:attribute name="forceAttributePush" type="xs:boolean" use="optional"/>
 								<xs:attribute name="signAssertions" type="xs:boolean" use="optional"/>
 								<xs:attribute name="forceAttributeNoPush" type="xs:boolean" use="optional"/>
+								<xs:attribute name="singleAssertion" type="xs:boolean" use="optional"/>
 								<xs:attribute name="defaultToPOSTProfile" type="xs:boolean" use="optional"/>
 								<xs:attribute name="schemaHack" type="xs:boolean" use="optional"/>
 								<xs:attribute name="defaultAuthMethod" type="xs:string" use="optional"/>

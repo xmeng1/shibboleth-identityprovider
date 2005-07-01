@@ -97,10 +97,16 @@ public interface RelyingParty extends ServiceProvider {
 	public boolean defaultToPOSTProfile();
 
 	/**
-	 * A boolean indication of whether assertions issued to this Relying Party should be digitall signed (This is in
+	 * A boolean indication of whether assertions issued to this Relying Party should be digitally signed (This is in
 	 * addition to profile-specific signing).
 	 */
 	public boolean wantsAssertionsSigned();
+
+	/**
+	 * A boolean indication of whether attributes sent with an authentication response should be included in the same
+	 * assertion or left in a second assertion for compatibility with broken SAML products.
+	 */
+	public boolean singleAssertion();
 
 	/**
 	 * Returns the type of SAML Artifact that this appropriate for use with this Relying Party.

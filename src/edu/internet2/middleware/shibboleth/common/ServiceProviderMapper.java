@@ -220,6 +220,7 @@ public class ServiceProviderMapper {
 		private boolean passThruIsOverriden = false;
 		private boolean forceAttributePush = false;
 		private boolean forceAttributeNoPush = false;
+		private boolean singleAssertion = false;
 		private boolean defaultToPOST = true;
 		private boolean wantsAssertionsSigned = false;
 		private int preferredArtifactType = 1;
@@ -454,6 +455,10 @@ public class ServiceProviderMapper {
 			return forceAttributeNoPush;
 		}
 
+		public boolean singleAssertion() {
+			return singleAssertion;
+		}
+		
 		public boolean defaultToPOSTProfile() {
 
 			return defaultToPOST;
@@ -511,7 +516,6 @@ public class ServiceProviderMapper {
 				return credential;
 			}
 		}
-
 	}
 
 	/**
@@ -580,6 +584,11 @@ public class ServiceProviderMapper {
 			return wrapped.forceAttributeNoPush();
 		}
 
+		public boolean singleAssertion() {
+			
+			return wrapped.singleAssertion();
+		}
+		
 		public boolean defaultToPOSTProfile() {
 
 			return wrapped.defaultToPOSTProfile();
@@ -672,6 +681,11 @@ public class ServiceProviderMapper {
 			return false;
 		}
 
+		public boolean singleAssertion() {
+			
+			return false;
+		}
+		
 		public boolean defaultToPOSTProfile() {
 
 			return true;
