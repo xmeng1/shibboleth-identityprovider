@@ -62,9 +62,9 @@ public class Session implements Serializable {
 	    this.key=key;
 	    this.lastused = System.currentTimeMillis();
         this.created = this.lastused;
-        this.maxSessionLife=maxSessionLife;
-        this.unusedSessionTimeout=unusedSessionTimeout;
-        this.defaultAttributeLifetime=defaultAttributeLifetime;
+        this.maxSessionLife=maxSessionLife*1000;
+        this.unusedSessionTimeout=unusedSessionTimeout*1000;
+        this.defaultAttributeLifetime=defaultAttributeLifetime*1000;
 	}
 	
 	// Properties
@@ -153,7 +153,7 @@ public class Session implements Serializable {
     }
 
     public void setDefaultAttributeLifetime(long defaultAttributeLifetime) {
-        this.defaultAttributeLifetime = defaultAttributeLifetime;
+        this.defaultAttributeLifetime = defaultAttributeLifetime*1000;
     }
 
     public long getMaxSessionLife() {
@@ -161,7 +161,7 @@ public class Session implements Serializable {
     }
 
     public void setMaxSessionLife(long maxSessionLife) {
-        this.maxSessionLife = maxSessionLife;
+        this.maxSessionLife = maxSessionLife*1000;
     }
 
     public long getUnusedSessionTimeout() {
@@ -169,7 +169,7 @@ public class Session implements Serializable {
     }
 
     public void setUnusedSessionTimeout(long unusedSessionTimeout) {
-        this.unusedSessionTimeout = unusedSessionTimeout;
+        this.unusedSessionTimeout = unusedSessionTimeout*1000;
     }
 	
 
