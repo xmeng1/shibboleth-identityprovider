@@ -50,7 +50,7 @@
 
         <!-- Put the webpages where the IdP and SP packaging can pick them up -->
         <copy todir="${exts.dir}/web">
-            <fileset dir="${ext.web}" includes="*" />
+            <fileset dir="${ext.webpages}" includes="*" />
         </copy>
         <echo message="--- Extension ${ext.name} built" />
     </target>
