@@ -30,6 +30,9 @@
         <!-- Compile the source -->
         <antcall target="compile-ext" />
 
+        <!-- Copy over non-source files -->
+        <antcall target="copy-etc" />
+
         <!-- Generate the java docs if we're supposed to -->
         <antcall target="gen-ext-docs" />
 
@@ -37,7 +40,6 @@
         <antcall target="test-ext" />
 
         <!-- Package everything up -->
-        <echo message="Packaging extension" />
         <antcall target="package-ext" />
 
         <!-- Put the libraries where the IdP and SP packaging can pick them up -->
@@ -75,19 +77,28 @@
 
     <!-- Compiles the extension -->
     <target name="compile-ext" depends="ext-build-init" description="Compiles an extension">
-        <echo message="Compiling extension source" />
-        <javac srcdir="${ext.src}" destdir="${ext.classes}" includes="**/*.java" debug="on" source="1.4">
-            <!-- Shibboleth Classpath -->
-            <classpath refid="build.path" />
+        <!-- Compile any source that might be out there -->
+        <if>
+            <available file="${ext.src}" />
+            <then>
+                <echo message="Compiling extension source" />
+                <javac srcdir="${ext.src}" destdir="${ext.classes}" includes="**/*.java" debug="on" source="1.4">
+                    <!-- Shibboleth Classpath -->
+                    <classpath refid="build.path" />
 
-            <!-- Extension libraries -->
-            <classpath>
-                <fileset dir="${ext.lib}">
-                    <include name="**/*.jar" />
-                </fileset>
-            </classpath>
-        </javac>
+                    <!-- Extension libraries -->
+                    <classpath>
+                        <fileset dir="${ext.lib}">
+                            <include name="**/*.jar" />
+                        </fileset>
+                    </classpath>
+                </javac>
+            </then>
+        </if>
+    </target>
 
+    <!-- Copies files from etc directory to dist directory to be bundled with extension jar -->
+    <target name="copy-etc" depends="ext-build-init" description="Copys non-source files to place where they will be added to jar">
         <!-- Copy any extra stuff that needs to be on the classpath -->
         <if>
             <available file="${ext.etc}" />
@@ -130,8 +141,13 @@
         <if>
             <equals arg1="${gen.ext.docs}" arg2="true" />
             <then>
-                <echo message="Generating javadocs for extension ${ext.name}" />
-                <javadoc sourcepath="${ext.src}" destdir="${ext.docs}" />
+                <if>
+                    <available file="${ext.etc}" />
+                    <then>
+                        <echo message="Generating javadocs for extension ${ext.name}" />
+                        <javadoc sourcepath="${ext.src}" destdir="${ext.docs}" />
+                    </then>
+                </if>
             </then>
         </if>
     </target>

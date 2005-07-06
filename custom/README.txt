@@ -25,7 +25,7 @@ the following directories
        etc/ - [Optional] This directory contains anything that isn't java source but still needs 
               to be on the classpath.  This can include subdirectories, and can be excluded.
        lib/ - [Optional] any third party jars your extension needs
-       src/ - [REQUIRED] your extension's source
+       src/ - [Optional] your extension's source
        tests/ - [Optional] Your extension's JUnit test case source.
        web/ - [Optional] Any web pages, images, JSPs, etc. that should be included with the war
        build.properties - [REQUIRED] build properties for your extension 
