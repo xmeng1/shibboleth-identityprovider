@@ -254,7 +254,7 @@
 
     
 	<!-- Package Shibboleth -->
-    <target name="package-idp" depends="compile" description="Creates the IdP war file and moves it to ${dist}">
+    <target name="package-idp" depends="compile, install.url" description="Creates the IdP war file and moves it to ${dist}">
     	<!-- copy values to deployment descriptor -->
         <copy file="${configroot}/${idp.deployment.descriptor}" tofile="${configroot}/idp.xml" overwrite="true" />
         <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${idp.home.url}" />
@@ -270,7 +270,7 @@
         <war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
     </target>
 	
-    <target name="package-sp" depends="compile" description="Creates the Java SP war and moves it to ${dist}">
+    <target name="package-sp" depends="compile, install.url" description="Creates the Java SP war and moves it to ${dist}">
     	<!-- copy values to deployment descriptor -->
         <copy file="${configroot}/${sp.deployment.descriptor}" tofile="${configroot}/sp.xml" overwrite="true" />
         <replace file="${configroot}/sp.xml" token="$SHIB_HOME$" value="${sp.home.url}" />
