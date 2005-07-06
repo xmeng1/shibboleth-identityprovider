@@ -15,11 +15,11 @@
 	
 	<context-param>
 		<param-name>ServiceProviderConfigFile</param-name>
-		<param-value>$SHIB_HOME$/etc/sp.xml</param-value>
+		<param-value>$SP_HOME$/etc/sp.xml</param-value>
 	</context-param>
 	<context-param>
 		<param-name>InitializationLog</param-name>
-		<param-value>$SHIB_HOME$/logs/sp-init.log</param-value>
+		<param-value>$SP_HOME$/logs/sp-init.log</param-value>
 	</context-param>
 	
 	<filter>

@@ -257,7 +257,7 @@
     <target name="package-idp" depends="compile, install.url" description="Creates the IdP war file and moves it to ${dist}">
     	<!-- copy values to deployment descriptor -->
         <copy file="${configroot}/${idp.deployment.descriptor}" tofile="${configroot}/idp.xml" overwrite="true" />
-        <replace file="${configroot}/idp.xml" token="$SHIB_HOME$" value="${idp.home.url}" />
+        <replace file="${configroot}/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
     	
     	<!-- create the war -->
         <war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" />
@@ -273,7 +273,7 @@
     <target name="package-sp" depends="compile, install.url" description="Creates the Java SP war and moves it to ${dist}">
     	<!-- copy values to deployment descriptor -->
         <copy file="${configroot}/${sp.deployment.descriptor}" tofile="${configroot}/sp.xml" overwrite="true" />
-        <replace file="${configroot}/sp.xml" token="$SHIB_HOME$" value="${sp.home.url}" />
+        <replace file="${configroot}/sp.xml" token="$SP_HOME$" value="${sp.home.url}" />
     	
     	<!-- create the war -->
         <war warfile="${dist}/${sp.webapp.name}.war" webxml="${configroot}/sp.xml" basedir="${approot}" update="no" />
@@ -407,24 +407,24 @@
     </target>
 	
 	
-    <!-- copy shibboleth configuration to $SHIB_HOME/etc, overwriting any existing configuration -->
+    <!-- copy shibboleth configuration to $IDP_HOME/etc, overwriting any existing configuration -->
 	<target name="install.idp.filesystem.config" depends="init, install.init, install.url">
         <mkdir dir="${idp.home}/etc" />
         <copy todir="${idp.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
         </copy>
 		<move file="${idp.home}/etc/dist.idp.xml" tofile="${idp.home}/etc/idp.xml" overwrite="true" />
-        <replace file="${idp.home}/etc/idp.xml" token="$SHIB_HOME$" value="${idp.home.url}" />
+        <replace file="${idp.home}/etc/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
     </target>
 	
-    <!-- copy SP configuration to $SHIB_HOME$/etc, overwriting any existing configuration -->
+    <!-- copy SP configuration to $SP_HOME$/etc, overwriting any existing configuration -->
 	<target name="install.sp.filesystem.config" depends="init, install.init">
         <mkdir dir="${sp.home}/etc" />
         <copy todir="${sp.home}/etc" overwrite="true">
             <fileset dir="${src}/conf" includesfile="conf/sp-conf.include"/>
         </copy>
 		<move file="${sp.home}/etc/dist.sp.xml" tofile="${sp.home}/etc/sp.xml" overwrite="true" />
-        <replace file="${sp.home}/etc/sp.xml" token="$SHIB_HOME$" value="${sp.home.url}" />
+        <replace file="${sp.home}/etc/sp.xml" token="$SP_HOME$" value="${sp.home.url}" />
     </target>
 
     <!-- install Shibboleth-IdP war using tomcat's manager app -->

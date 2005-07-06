@@ -26,7 +26,7 @@
 
 	<context-param>
         <param-name>IdPConfigFile</param-name>
-        <param-value>$SHIB_HOME$/etc/idp.xml</param-value>
+        <param-value>$IDP_HOME$/etc/idp.xml</param-value>
     </context-param>
 
     <servlet>
