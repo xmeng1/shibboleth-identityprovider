@@ -1,0 +1,169 @@
+<!-- 
+  This file is imported in to the main Shibboleth build.xml file and 
+  contains all targets used for building IdP and SP extensions.
+  
+  Chad La Joie
+  July 6, 2005
+-->
+<project name="Shibboleth-Extensions" default="build-exts" basedir=".">
+
+    <!-- Builds the extensions; loops through all the extension directories and builds them -->
+    <target name="build-exts" description="Compiles IdP and/or SP extensions">
+        <for keepgoing="true" param="module-path">
+            <dirset dir="${exts.dir}">
+                <include name="*" />
+                <exclude name="lib" />
+                <exclude name="web" />
+            </dirset>
+            <sequential>
+                <antcall target="standard-ext-build">
+                    <param name="ext.root" value="@{module-path}" />
+                </antcall>
+            </sequential>
+        </for>
+    </target>
+
+    <!-- Builds a single extension, called multiple times by build-exts -->
+    <target name="standard-ext-build" depends="ext-build-init" description="Builds the extension">
+        <echo message="--- Starting to build module ${ext.name} in ${ext.root}" />
+
+        <!-- Compile the source -->
+        <antcall target="compile-ext" />
+
+        <!-- Generate the java docs if we're supposed to -->
+        <antcall target="gen-ext-docs" />
+
+        <!-- Run unit tests if we're supposed to -->
+        <antcall target="test-ext" />
+
+        <!-- Package everything up -->
+        <echo message="Packaging extension" />
+        <antcall target="package-ext" />
+
+        <!-- Put the libraries where the IdP and SP packaging can pick them up -->
+        <copy todir="${exts.dir}/lib">
+            <fileset dir="${ext.lib}" includes="*.jar" />
+            <fileset dir="${ext.dist}" includes="*.jar" />
+        </copy>
+
+        <!-- Put the webpages where the IdP and SP packaging can pick them up -->
+        <copy todir="${exts.dir}/web">
+            <fileset dir="${ext.web}" includes="*" />
+        </copy>
+        <echo message="--- Extension ${ext.name} built" />
+    </target>
+
+    <!-- Initialize everything we need. -->
+    <!-- The properties loaded here are scoped to this particular extension build -->
+    <target name="ext-build-init" description="Sets up everything to prepare for the build">
+        <echo message="Loading build property files" />
+        <!-- 
+          Load extension specific properties if available. We can not set the extension's build.properties 
+          file name in the extension-build.properties file because if we read that file first the extension 
+          build properties won't be able to override properties in it as properties are immutable once set.
+        -->
+        <property file="${ext.root}/build.properties" />
+
+        <!-- Load default properties -->
+        <echo message="Loading build property defaults ${exts-dir}/default-build.properties" />
+        <property file="${exts.dir}/extension-build.properties" />
+
+        <!-- Create needed directories -->
+        <mkdir dir="${ext.dist}" />
+        <mkdir dir="${ext.classes}" />
+    </target>
+
+    <!-- Compiles the extension -->
+    <target name="compile-ext" depends="ext-build-init" description="Compiles an extension">
+        <echo message="Compiling extension source" />
+        <javac srcdir="${ext.src}" destdir="${ext.classes}" includes="**/*.java" debug="on" source="1.4">
+            <!-- Shibboleth Classpath -->
+            <classpath refid="build.path" />
+
+            <!-- Extension libraries -->
+            <classpath>
+                <fileset dir="${ext.lib}">
+                    <include name="**/*.jar" />
+                </fileset>
+            </classpath>
+        </javac>
+
+        <!-- Copy any extra stuff that needs to be on the classpath -->
+        <if>
+            <available file="${ext.etc}" />
+            <then>
+                <echo message="Detected files in the extensions 'etc' directory, ensuring they are bundled with the extension's jar." />
+                <copy todir="${ext.classes}">
+                    <fileset dir="${ext.etc}">
+                        <include name="**" />
+                    </fileset>
+                </copy>
+            </then>
+        </if>
+    </target>
+
+    <!-- Run any unit tests for the extension -->
+    <target name="test-ext" depends="compile-ext" description="Runs extension unit test">
+        <if>
+            <equals arg1="${test.ext}" arg2="true" />
+            <then>
+                <if>
+                    <available file="${ext.test.src}" />
+                    <then>
+                        <echo message="Running tests cases for extension ${ext.name}" />
+                        <junit printsummary="no" fork="yes" haltonerror="true" haltonfailure="true" jvm="${ext.root}">
+                            <jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
+                            <formatter type="plain" />
+                            <batchtest>
+                                <fileset dir="${ext.test.src}" />
+                            </batchtest>
+                        </junit>
+                    </then>
+                </if>
+            </then>
+        </if>
+
+    </target>
+
+    <!-- Generates the Javadocs for the extension -->
+    <target name="gen-ext-docs" description="Generates Javadocs for extension">
+        <if>
+            <equals arg1="${gen.ext.docs}" arg2="true" />
+            <then>
+                <echo message="Generating javadocs for extension ${ext.name}" />
+                <javadoc sourcepath="${ext.src}" destdir="${ext.docs}" />
+            </then>
+        </if>
+    </target>
+
+    <!-- Jars up the extension -->
+    <target name="package-ext" depends="compile-ext" description="Packages up the extension">
+        <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.dist}" excludes="${ext.name}.jar" />
+    </target>
+
+    <!-- Cleans up build generated resources -->
+    <target name="clean-ext" description="Cleans up any build created resources">
+        <!-- Clean up all the modules -->
+        <for keepgoing="true" param="module-path">
+            <dirset dir="${exts.dir}">
+                <include name="*" />
+                <exclude name="lib" />
+                <exclude name="web" />
+            </dirset>
+            <sequential>
+                <delete dir="${ext.dist}" />
+            </sequential>
+        </for>
+
+        <!-- Clean out all the staged libraries from the modules -->
+        <delete dir="${exts.dir}/lib" includeemptydirs="true">
+            <fileset dir="${exts.dir}/lib" includes="**/*" />
+        </delete>
+
+        <!-- Clean out all the staged web pages from the modules -->
+        <delete dir="${exts.dir}/web" includeemptydirs="true">
+            <fileset dir="${exts.dir}/web" includes="**/*" />
+        </delete>
+    </target>
+
+</project>
