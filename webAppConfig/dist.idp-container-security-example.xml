@@ -50,4 +50,8 @@
 		<realm-name>Shibboleth SSO Service</realm-name>
 	</login-config>
 
+	<security-role>
+       	<description>default tomcat user</description>
+       	<role-name>tomcat</role-name>
+    </security-role>
 </web-app>
