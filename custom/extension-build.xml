@@ -16,7 +16,7 @@
                 <exclude name="web" />
             </dirset>
             <sequential>
-                <antcall target="standard-ext-build">
+                <antcall target="ext-build">
                     <param name="ext.root" value="@{module-path}" />
                 </antcall>
             </sequential>
@@ -24,34 +24,30 @@
     </target>
 
     <!-- Builds a single extension, called multiple times by build-exts -->
-    <target name="standard-ext-build" depends="ext-build-init" description="Builds the extension">
+    <target name="ext-build" depends="ext-build-init" description="Builds the extension">
         <echo message="--- Starting to build module ${ext.name} in ${ext.root}" />
 
         <!-- Compile the source -->
-        <antcall target="compile-ext" />
+        <antcall target="ext-compile" />
 
         <!-- Copy over non-source files -->
-        <antcall target="copy-etc" />
+        <antcall target="ext-copy-etc" />
 
         <!-- Generate the java docs if we're supposed to -->
-        <antcall target="gen-ext-docs" />
+        <antcall target="ext-gen-docs" />
 
         <!-- Run unit tests if we're supposed to -->
-        <antcall target="test-ext" />
+        <antcall target="ext-test" />
 
         <!-- Package everything up -->
-        <antcall target="package-ext" />
+        <antcall target="ext-package" />
 
         <!-- Put the libraries where the IdP and SP packaging can pick them up -->
-        <copy todir="${exts.dir}/lib">
-            <fileset dir="${ext.lib}" includes="*.jar" />
-            <fileset dir="${ext.dist}" includes="*.jar" />
-        </copy>
+        <antcall target="ext-copy-libs"/>
 
         <!-- Put the webpages where the IdP and SP packaging can pick them up -->
-        <copy todir="${exts.dir}/web">
-            <fileset dir="${ext.webpages}" includes="*" />
-        </copy>
+        <antcall target="ext-copy-webpages"/>
+        
         <echo message="--- Extension ${ext.name} built" />
     </target>
 
@@ -67,7 +63,7 @@
         <property file="${ext.root}/build.properties" />
 
         <!-- Load default properties -->
-        <echo message="Loading build property defaults ${exts-dir}/default-build.properties" />
+        <echo message="Loading build property defaults ${exts.dir}/default-build.properties" />
         <property file="${exts.dir}/extension-build.properties" />
 
         <!-- Create needed directories -->
@@ -76,7 +72,7 @@
     </target>
 
     <!-- Compiles the extension -->
-    <target name="compile-ext" depends="ext-build-init" description="Compiles an extension">
+    <target name="ext-compile" description="Compiles an extension">
         <!-- Compile any source that might be out there -->
         <if>
             <available file="${ext.src}" />
@@ -98,7 +94,7 @@
     </target>
 
     <!-- Copies files from etc directory to dist directory to be bundled with extension jar -->
-    <target name="copy-etc" depends="ext-build-init" description="Copys non-source files to place where they will be added to jar">
+    <target name="ext-copy-etc" depends="ext-build-init" description="Copys non-source files to place where they will be added to jar">
         <!-- Copy any extra stuff that needs to be on the classpath -->
         <if>
             <available file="${ext.etc}" />
@@ -112,9 +108,35 @@
             </then>
         </if>
     </target>
+    
+    <!-- Move third party libraries to be picked up by the war -->
+    <target name="ext-copy-libs" depends="ext-compile" description="Moves third party libraries to be picked up by the war">
+        <if>
+            <available file="${ext.lib}" />
+            <then>
+                <copy todir="${exts.dir}/lib">
+                    <fileset dir="${ext.lib}" includes="*.jar" />
+                    <fileset dir="${ext.dist}" includes="*.jar" />
+                </copy>
+            </then>
+        </if>
+    </target>
 
+    <!-- Move web resources to be picked up by the war -->
+    <target name="ext-copy-webpages" depends="ext-compile" description="Moves web resources to be picked up by the war">
+        <if>
+            <available file="${ext.webpages}" />
+            <then>
+                <copy todir="${exts.dir}/web">
+                    <fileset dir="${ext.webpages}"/>    
+                </copy>
+            </then>
+        </if>
+    </target>
+
+    
     <!-- Run any unit tests for the extension -->
-    <target name="test-ext" depends="compile-ext" description="Runs extension unit test">
+    <target name="ext-test" depends="ext-compile" description="Runs extension unit test">
         <if>
             <equals arg1="${test.ext}" arg2="true" />
             <then>
@@ -137,12 +159,12 @@
     </target>
 
     <!-- Generates the Javadocs for the extension -->
-    <target name="gen-ext-docs" description="Generates Javadocs for extension">
+    <target name="ext-gen-docs" description="Generates Javadocs for extension">
         <if>
             <equals arg1="${gen.ext.docs}" arg2="true" />
             <then>
                 <if>
-                    <available file="${ext.etc}" />
+                    <available file="${ext.src}" />
                     <then>
                         <echo message="Generating javadocs for extension ${ext.name}" />
                         <javadoc sourcepath="${ext.src}" destdir="${ext.docs}" />
@@ -153,8 +175,8 @@
     </target>
 
     <!-- Jars up the extension -->
-    <target name="package-ext" depends="compile-ext" description="Packages up the extension">
-        <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.dist}" excludes="${ext.name}.jar" />
+    <target name="ext-package" depends="ext-compile" description="Packages up the extension">
+        <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" excludes="${ext.name}.jar" />
     </target>
 
     <!-- Cleans up build generated resources -->
