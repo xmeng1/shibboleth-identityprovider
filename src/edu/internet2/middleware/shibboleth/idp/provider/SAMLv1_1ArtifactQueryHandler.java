@@ -69,7 +69,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
-		log.info("Recieved a request to dereference assertion artifacts.");
+		log.info("Received a request to dereference assertion artifacts.");
 
 		// Pull credential from request
 		X509Certificate[] chain = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");

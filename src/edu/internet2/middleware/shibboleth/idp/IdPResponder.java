@@ -250,7 +250,7 @@ public class IdPResponder extends HttpServlet {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
-		log.debug("Recieved a request via GET for location (" + request.getRequestURL() + ").");
+		log.debug("Received a request via GET for location (" + request.getRequestURL() + ").");
 
 		try {
 			IdPProtocolHandler activeHandler = lookupProtocolHandler(request);
