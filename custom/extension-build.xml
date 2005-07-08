@@ -60,6 +60,14 @@
           file name in the extension-build.properties file because if we read that file first the extension 
           build properties won't be able to override properties in it as properties are immutable once set.
         -->
+        <if>
+        	<not>
+        		<available file="${ext.root}/build.properties"/>
+        	</not>
+            <then>
+                <fail message="No build.properties file found for extension in ${ext.root}; this file is required."/>
+            </then>
+        </if>
         <property file="${ext.root}/build.properties" />
 
         <!-- Load default properties -->
@@ -79,9 +87,14 @@
             <then>
                 <echo message="Compiling extension source" />
                 <javac srcdir="${ext.src}" destdir="${ext.classes}" includes="**/*.java" debug="on" source="1.4">
-                    <!-- Shibboleth Classpath -->
+                    <!-- Shibboleth Libraries -->
                     <classpath refid="build.path" />
 
+                    <!-- Shibboleth Classes -->
+                    <classpath>
+                    	<pathelement location="${build}"/>
+                    </classpath>
+                    
                     <!-- Extension libraries -->
                     <classpath>
                         <fileset dir="${ext.lib}">
@@ -167,7 +180,16 @@
                     <available file="${ext.src}" />
                     <then>
                         <echo message="Generating javadocs for extension ${ext.name}" />
-                        <javadoc sourcepath="${ext.src}" destdir="${ext.docs}" />
+                        <javadoc sourcepath="${ext.src}" 
+                                 destdir="${ext.docs}" 
+                                 packagenames="*"
+                                 author="true"
+                                 version="true"
+                                 windowtitle="${ext.name} Shibboleth Extension Java API"
+                                 doctitle="${ext.name} Shibboleth Extension Java API"
+                                 failonerror="false">
+                            <classpath refid="build.path" />
+                    	</javadoc>
                     </then>
                 </if>
             </then>
@@ -180,7 +202,7 @@
     </target>
 
     <!-- Cleans up build generated resources -->
-    <target name="clean-ext" description="Cleans up any build created resources">
+    <target name="ext-clean" description="Cleans up any build created resources">
         <!-- Clean up all the modules -->
         <for keepgoing="true" param="module-path">
             <dirset dir="${exts.dir}">
@@ -192,16 +214,6 @@
                 <delete dir="${ext.dist}" />
             </sequential>
         </for>
-
-        <!-- Clean out all the staged libraries from the modules -->
-        <delete dir="${exts.dir}/lib" includeemptydirs="true">
-            <fileset dir="${exts.dir}/lib" includes="**/*" />
-        </delete>
-
-        <!-- Clean out all the staged web pages from the modules -->
-        <delete dir="${exts.dir}/web" includeemptydirs="true">
-            <fileset dir="${exts.dir}/web" includes="**/*" />
-        </delete>
     </target>
 
 </project>

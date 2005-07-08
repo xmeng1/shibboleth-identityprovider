@@ -113,11 +113,14 @@
 
 	<!-- Cleanup after the build, test, and distribution processes -->
 	<target name="clean" depends="clean-all" />
-	<target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util, clean-ext" />
+	<target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util" />
 	<target name="clean-build">
 		<delete dir="${build}" />
 		<delete dir="${custom.libs}"/>
 		<delete dir="${custom.webapges}"/>
+	    <antcall target="ext-clean">
+	    	<param name="exts.dir" value="${custom}"/>
+	    </antcall>
 	</target>
 	<target name="clean-test">
 		<delete>

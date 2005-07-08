@@ -24,7 +24,7 @@ the following directories
     your-extension-directory/
        etc/ - [Optional] This directory contains anything that isn't java source but still needs 
               to be on the classpath.  This can include subdirectories, and can be excluded.
-       lib/ - [Optional] any third party jars your extension needs
+       lib/ - [REQUIRED if 'src' is present] any third party jars your extension needs
        src/ - [Optional] your extension's source
        tests/ - [Optional] Your extension's JUnit test case source.
        web/ - [Optional] Any web pages, images, JSPs, etc. that should be included with the war
@@ -56,3 +56,9 @@ III. Compile and deploy Shibboleth as normal.
 DO NOT include libraries, with your extension, that are included with the Shibboleth
 IdP or SP.  If you do, and there are version mismatches between the two jars, you will get 
 unexpected exceptions during runtime as class versions conflict.
+
+4. Common Errors
+4.1 /path/to/extension/lib not found
+  This error occurs because Ant is unable to ignore references to directories of jars that don't
+  exist.  Simply create a 'lib' directory in your extension directory structure, you do not have 
+  to place anything in it.
