@@ -96,7 +96,7 @@
 	<!-- Protocol handlers specify what type of requests the IdP can respond to.  The default set listed here should work 
 		for most configurations.  Modifications to this section may require modifications to the deployment descriptor -->
 	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.ShibbolethV1SSOHandler">
-		<Location>https?://[^:]+(:443|:80|)/shibboleth-idp/SSO</Location> <!-- regex works when using default protocol ports -->
+		<Location>https?://[^:/]+(:(443|80))?/shibboleth-idp/SSO</Location> <!-- regex works when using default protocol ports -->
 	</ProtocolHandler>
 	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_AttributeQueryHandler">
 		<Location>.+:8443/shibboleth-idp/AA</Location>
