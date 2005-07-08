@@ -86,11 +86,9 @@
 		</copy>
 
 		<!-- Build extensions -->
-		<!--
 		<antcall target="build-exts">
 			<param name="exts.dir" value="${custom}"/>
 		</antcall>
-		-->
 	</target>
 
 
