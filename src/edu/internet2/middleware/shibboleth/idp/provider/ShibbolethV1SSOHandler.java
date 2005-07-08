@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.RequestDispatcher;
@@ -52,7 +51,6 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.opensaml.SAMLSubjectStatement;
 import org.opensaml.artifact.Artifact;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
@@ -207,7 +205,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			log.info("Resolving attributes for push.");
 			generateAttributes(support, principal, relyingParty, assertions, request);
 		}
-		
+
 		// Sign the assertions, if necessary
 		boolean metaDataIndicatesSignAssertions = false;
 		if (descriptor != null) {
@@ -275,21 +273,21 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
 			LocalPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
-			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject)
-			throws SAMLException, IOException, ServletException {
+			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject) throws SAMLException,
+			IOException, ServletException {
 
 		log.debug("Responding with POST profile.");
 		ArrayList assertions = new ArrayList();
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
 		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
 				getAuthNTime(request), authNSubject));
-		
+
 		// Package attributes for push, if necessary.
 		if (!relyingParty.isLegacyProvider() && pushAttributes(false, relyingParty)) {
 			log.info("Resolving attributes for push.");
 			generateAttributes(support, principal, relyingParty, assertions, request);
 		}
-		
+
 		// Sign the assertions, if necessary
 		boolean metaDataIndicatesSignAssertions = false;
 		if (descriptor != null) {
@@ -330,8 +328,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 	}
 
-	private void generateAttributes(IdPProtocolSupport support, LocalPrincipal principal,
-			RelyingParty relyingParty, ArrayList assertions, HttpServletRequest request) throws SAMLException {
+	private void generateAttributes(IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
+			ArrayList assertions, HttpServletRequest request) throws SAMLException {
 
 		try {
 			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty, relyingParty
@@ -343,23 +341,23 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				log.info("No attributes resolved.");
 				return;
 			}
-			
+
 			// Reference requested subject
-			SAMLSubject attrSubject =
-				(SAMLSubject)((SAMLSubjectStatement)((SAMLAssertion)assertions.get(0)).getStatements().next()).getSubject().clone();
+			SAMLSubject attrSubject = (SAMLSubject) ((SAMLSubjectStatement) ((SAMLAssertion) assertions.get(0))
+					.getStatements().next()).getSubject().clone();
 
 			// May be one assertion or two.
 			if (relyingParty.singleAssertion()) {
 				log.debug("merging attributes into existing authn assertion");
 				// Put all attributes into an assertion
-				((SAMLAssertion)assertions.get(0)).addStatement(new SAMLAttributeStatement(attrSubject, Arrays.asList(attributes)));
+				((SAMLAssertion) assertions.get(0)).addStatement(new SAMLAttributeStatement(attrSubject, Arrays
+						.asList(attributes)));
 
 				if (log.isDebugEnabled()) {
 					log.debug("Dumping combined Assertion:" + System.getProperty("line.separator")
 							+ assertions.get(0).toString());
 				}
-			}
-			else {
+			} else {
 				ArrayList audiences = new ArrayList();
 				if (relyingParty.getProviderId() != null) {
 					audiences.add(relyingParty.getProviderId());
@@ -390,7 +388,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				SAMLAssertion attrAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(),
 						now, then, Collections.singleton(condition), null, Collections.singleton(statement));
 				assertions.add(attrAssertion);
-				
+
 				if (log.isDebugEnabled()) {
 					log.debug("Dumping generated Attribute Assertion:" + System.getProperty("line.separator")
 							+ attrAssertion.toString());
@@ -515,14 +513,12 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				// See if this is the default endpoint location.
 				Endpoint defaultEndpoint = sp.getAssertionConsumerServiceManager().getDefaultEndpoint();
 				if (defaultEndpoint.getLocation().equals(acceptanceURL)) {
-					
+
 					// If we recognize the default binding, this is the one to use.
-					if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_POST_URI))
-						return false;
-					else if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_ARTIFACT_URI))
-						return true;
+					if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_POST_URI)) return false;
+					else if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_ARTIFACT_URI)) return true;
 				}
-				
+
 				Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
 				while (endpoints.hasNext()) {
 					Endpoint ep = (Endpoint) endpoints.next();
