@@ -252,14 +252,13 @@ class FileCredentialResolver implements CredentialResolver {
 		String keyPath = getKeyPath(credentialConfigElement);
 		String password = getKeyPassword(credentialConfigElement);
 
-		PrivateKey key = null;
 		InputStream keyStream = null;
 		try {
 			if (log.isDebugEnabled()) {
 				log.debug("Attempting to load private key from file " + keyPath);
 			}
 			keyStream = new ShibResource(keyPath, this.getClass()).getInputStream();
-			int encoding = getEncodingFormat(keyStream);
+			int encoding = getKeyEncodingFormat(credentialConfigElement, keyStream);
 			EncodedKey encodedKey;
 
 			switch (encoding) {
@@ -292,40 +291,6 @@ class FileCredentialResolver implements CredentialResolver {
 					// ignore
 				}
 			}
-		}
-	}
-
-	/**
-	 * Determines whether the given stream is, which may be either a key is DER or PEM encoded. The input stream is
-	 * reset to the last mark point after the determination is complete.
-	 * 
-	 * @param encodedStream
-	 *            the key input stream
-	 * @return -1 if the format can not be determined, PEM_ENCODING for a PEM encoded key, DER_ENCODING for a DER
-	 *         encoded key
-	 */
-	private int getEncodingFormat(InputStream encodedStream) throws CredentialFactoryException {
-
-		try {
-			// Need to mark the stream and then reset it, after getting the
-			// first byte so that the private key decoder starts reading at
-			// the correct position
-			encodedStream.mark(2);
-			int firstByte = encodedStream.read();
-			encodedStream.reset();
-
-			// PEM encoded keys must start with a "-", a decimal value of 45
-			if (firstByte == 45) { return EncodedKey.PEM_ENCODING; }
-
-			// DER encoded keys must start with a decimal value of 48
-			if (firstByte == 48) { return EncodedKey.DER_ENCODING; }
-
-			// Can not determine type
-			return -1;
-
-		} catch (IOException e) {
-			log.error("Recieved error attempting to read private key file:" + e);
-			return -1;
 		}
 	}
 
@@ -475,6 +440,64 @@ class FileCredentialResolver implements CredentialResolver {
 
 		return certChain;
 	}
+    
+    /**
+     * Determines whether the key is PEM or DER encoded.
+     * 
+     * @param e the file credential resolver configuration element
+     * @param keyStream an input stream reading the private key
+     * 
+     * @return the encoding format of the key
+     * 
+     * @throws CredentialFactoryException thrown if the key format can not be determined or the key can not be read
+     */
+    private int getKeyEncodingFormat(Element e, InputStream keyStream) throws CredentialFactoryException {
+        NodeList keyElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Key");
+        if (keyElements.getLength() < 1) {
+            log.error("No private key specified in file credential resolver");
+            throw new CredentialFactoryException("File Credential Resolver requires a <Key> specification.");
+        }
+
+        if (keyElements.getLength() > 1) {
+            log.error("Multiple Key path specifications, using first.");
+        }
+
+        String formatStr = ((Element) keyElements.item(0)).getAttribute("format");
+        
+        if(formatStr != null && formatStr.length() > 0) {
+            if(formatStr.equals("PEM")) {
+                return EncodedKey.PEM_ENCODING;
+            }else if(formatStr.equals("DER")) {
+                return EncodedKey.DER_ENCODING;
+            }else if(formatStr.equals("PKCS12")) {
+                log.error("PKCS12 private keys are not yet supported");
+                return -1;
+            }
+        }
+        
+        if(log.isInfoEnabled()) {
+            log.info("Private key format was not specified in file credential resolver configuration, attempting to auto-detect it.");
+        }
+        try {
+            // Need to mark the stream and then reset it, after getting the
+            // first byte so that the private key decoder starts reading at
+            // the correct position
+            keyStream.mark(2);
+            int firstByte = keyStream.read();
+            keyStream.reset();
+
+            // PEM encoded keys must start with a "-", a decimal value of 45
+            if (firstByte == 45) { return EncodedKey.PEM_ENCODING; }
+
+            // DER encoded keys must start with a decimal value of 48
+            if (firstByte == 48) { return EncodedKey.DER_ENCODING; }
+
+            // Can not determine type
+            return -1;
+        }catch (IOException ioe) {
+            throw new CredentialFactoryException("Could not determine the type of private key for file credential resolver.");
+        }
+    }
 
 	/**
 	 * Gets the private key password from the Credentials configuration element if one exists.
