@@ -176,6 +176,8 @@ import x0.maceShibbolethTargetConfig1.SPConfigType;
 import x0.maceShibbolethTargetConfig1.ShibbolethTargetConfigDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
 import x0.maceShibbolethTargetConfig1.ApplicationsDocument.Applications;
+import x0.maceShibbolethTargetConfig1.CredentialUseDocument.CredentialUse;
+import x0.maceShibbolethTargetConfig1.CredentialUseDocument.CredentialUse.RelyingParty;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host.Scheme.Enum;
 import x0.maceShibbolethTargetConfig1.PathDocument.Path;
@@ -963,6 +965,61 @@ public class ServiceProviderConfig {
         long getUnusedSessionTimeout() {
             Sessions sessions = applicationConfig.getSessions();
             return sessions.getTimeout();
+        }
+        
+        /**
+         * Given the EntityDescriptor of an IdP, find the RelyingParty
+         * element of the CredentialsUse section that matches the 
+         * Entity name or one of its parent group names and return
+         * the signing credential that should be used with it. If
+         * no specific match occurs, return the default siging
+         * credential. 
+         * 
+         * @param entity
+         * @return
+         */
+        String getCredentialIdForEntity(EntityDescriptor entity) {
+            
+            // Get the ID URI of the Entity and all its parent groups
+            EntitiesDescriptor entitiesDescriptor = entity.getEntitiesDescriptor();
+            ArrayList idlist = new ArrayList();
+            idlist.add(entity.getId());
+            // An EntityDescriptor must have a name, while groups may have names
+            while (entitiesDescriptor!=null) {
+                String edname = entitiesDescriptor.getName();
+                if (edname!=null)
+                    idlist.add(edname);
+                // Chain up to parent Element, until none left
+                entitiesDescriptor=entitiesDescriptor.getEntitiesDescriptor();
+            }
+            
+            // Get the default signing Credential ID and the RelyingParty overrides
+            CredentialUse credentialUse = applicationConfig.getCredentialUse();
+            if (credentialUse==null) {
+                // An <Application> may not have one, so look to the enclosing <Applications>
+                credentialUse = defaultApplicationInfo.applicationConfig.getCredentialUse();
+            }
+            if (credentialUse == null)
+                return null;  // If there is no CredentialsUse there is no signing
+            String defaultCredentialId = credentialUse.getSigning();
+            // If no signing= attribute (null), then don't sign
+            RelyingParty[] relyingPartyArray = credentialUse.getRelyingPartyArray();
+
+            // Search for a match of Entity/Group ID against an overriding RelyingParty
+            Iterator iterator = idlist.iterator();
+            while (iterator.hasNext()) {
+                String id = (String) iterator.next();
+                for (int i =0;i<relyingPartyArray.length;i++) {
+                    if (relyingPartyArray[i].getName().equals(id)) {
+                        // We have matched a RelyingParty override 
+                        String signingCredName = relyingPartyArray[i].getSigning();
+                        // If no signing= attribute (null), then don't sign
+                        return signingCredName;
+                    }
+                }
+            }
+            // No RelyingParty match, so use the default
+            return defaultCredentialId;
         }
         
 		/**

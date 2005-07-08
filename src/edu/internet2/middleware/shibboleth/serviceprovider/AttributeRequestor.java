@@ -60,10 +60,14 @@
  */
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
+import java.security.Key;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
+import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttributeQuery;
 import org.opensaml.SAMLAuthenticationStatement;
@@ -73,6 +77,8 @@ import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLSubject;
 import org.opensaml.XML;
 
+import edu.internet2.middleware.shibboleth.common.Credential;
+import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
@@ -160,6 +166,9 @@ public class AttributeRequestor {
             return false;
         }
 		
+        String credentialId = appinfo.getCredentialIdForEntity(entity);
+        if (credentialId!=null)
+            possiblySignRequest(config.getCredentials(), request, credentialId);
 		
 		// ShibBinding will extract URLs from the Metadata and build
 		// parameters so SAML can create the session. It also interfaces
@@ -200,6 +209,40 @@ public class AttributeRequestor {
 		
 		session.setAttributeResponse(response); // Save response in Session object
 		return true;
+	}
+
+    /**
+     * Given a credentialId from the CredentialUse/RelyingParty stuff,
+     * find a corresponding Credential element and use its Key/Cert to 
+     * sign the Request. 
+     * 
+     * @oaran credentials Credentials object from config file
+     * @param request SAML AA Query request
+     * @param credentialId Siging Id from CredentialUse
+     */
+	private static void possiblySignRequest(
+            Credentials credentials, 
+	        SAMLRequest request,
+	        String credentialId) {
+        
+        
+	    if (credentials==null) {
+            log.error("No Credentials Element in SP Config file.");
+	        return;
+        }
+	    Credential credential = credentials.getCredential(credentialId);
+	    if (credential==null) {
+            log.error("No credential found for id "+credentialId);
+	        return;
+        }
+	    Key key = credential.getPrivateKey();
+	    X509Certificate[] certificateChain = credential.getX509CertificateChain();
+	    try {
+	        request.sign(XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,key,Arrays.asList(certificateChain));
+	        log.debug("Attribute Request signed with "+credentialId);
+	    } catch (SAMLException e) {
+	        log.error("Unable to sign Attribute Request", e);
+	    }
 	}
 
 }
