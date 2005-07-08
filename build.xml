@@ -432,6 +432,7 @@
         </copy>
 		<move file="${idp.home}/etc/dist.idp.xml" tofile="${idp.home}/etc/idp.xml" overwrite="true" />
         <replace file="${idp.home}/etc/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
+		<replace file="${idp.home}/etc/idp.xml" token="$IDP_WEBAPP_NAME$" value="${idp.webapp.name}" />
     </target>
 	
     <!-- copy SP configuration to $SP_HOME$/etc, overwriting any existing configuration -->
