@@ -74,14 +74,7 @@
 		<echo message="Loading build property defaults ${exts.dir}/default-build.properties" />
 		<property file="${exts.dir}/extension-build.properties" />
 
-		<if>
-			<not>
-				<isset property="ext.name" />
-			</not>
-			<then>
-				<fail message="The extension ${ext.root} does not contain the required (ext.name) property in its build.properties file."/>
-			</then>
-		</if>
+	    <fail unless="ext.name" message="The extension ${ext.root} does not contain the required (ext.name) property in its build.properties file."/>
 
 		<!-- Create needed directories -->
 		<mkdir dir="${ext.dist}" />
@@ -220,7 +213,7 @@
                 <exclude name="web" />
             </dirset>
             <sequential>
-                <delete dir="${ext.dist}" />
+                <delete dir="@{module-path}/dist" failonerror="false"/>
             </sequential>
         </for>
     </target>
