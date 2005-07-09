@@ -173,7 +173,12 @@
 	<target name="test-IdP" depends="compile-tests">
 		<junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
-			<classpath refid="test.path" />
+			<classpath>
+			    <fileset dir="${custom.libs}">
+			    	<include name="*.jar"/>
+			    </fileset>
+			    <filelist refid="test.path"/>
+			</classpath>
 			<formatter type="plain" />
 			<test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
 			<test name="edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverTests" />
@@ -188,7 +193,12 @@
 	<target name="test-SP" depends="compile-tests">
 		<junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
-			<classpath refid="test.path" />
+		    <classpath>
+				<fileset dir="${custom.libs}">
+					<include name="*.jar"/>
+				</fileset>
+				<filelist refid="test.path"/>
+			</classpath>
 			<formatter type="plain" />
 			<test name="edu.internet2.middleware.shibboleth.aap.AAPTests" />
 		</junit>
@@ -268,7 +278,7 @@
 		<replace file="${configroot}/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
 
 		<!-- create the war -->
-		<war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no">
+		<war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" duplicate="preserve">
 			<!-- Grab any custom extension libraries -->
 			<lib dir="${custom.libs}"/>
 
