@@ -1,6 +1,6 @@
 The custom directory contains the information necessary to build 
 extension for the Shibboleth IdP and SP at the same time they are built, and
-have these extensions bundled with their respective war filee.
+have these extensions bundled with their respective war file.
 
 1. Directory Structure
     custom
@@ -22,7 +22,7 @@ structure, so that the extension build file knows where to find everything.  The
 root directory of you extension can be named anything you with, but it must contain
 the following directories
     your-extension-directory/
-       etc/ - [Optional] This directory contains anything that isn't java source but still needs 
+       etc/ - [Optional] This directory contains anything that isn't Java source but still needs 
               to be on the classpath.  This can include subdirectories, and can be excluded.
        lib/ - [REQUIRED if 'src' is present] any third party jars your extension needs
        src/ - [Optional] your extension's source
@@ -43,13 +43,13 @@ III. Compile and deploy Shibboleth as normal.
 2.2 Build File Properties
   The build file supports the following properties on a per-extension basis.
     ext.name - [REQUIRED] The name of your resulting extension jar file (.jar will be appended to the name)
-    gen.ext.docs - [Optional] This controls whether java docs will be generated for your
+    gen.ext.docs - [Optional] This controls whether Java docs will be generated for your
                    extension.  A value of "true" will result in them being generated, any other 
                    value will result in them not being generated, if this property is missing 
-                   the defualt value of "true" is used.
+                   the default value of "true" is used.
     test.ext - [Optional] This controls whether the JUnit tests for your extension are run.
                    A value of "true" will result in them being run, any other value will result 
-                   in them not being skipped, if this property is missing the defualt value of 
+                   in them not being skipped, if this property is missing the default value of 
                    "true" is used.
 
 3. Cautionary Note
@@ -62,3 +62,11 @@ unexpected exceptions during runtime as class versions conflict.
   This error occurs because Ant is unable to ignore references to directories of jars that don't
   exist.  Simply create a 'lib' directory in your extension directory structure, you do not have 
   to place anything in it.
+  
+4.2 Duplicate web resources
+  If Ant encounters more than one web resource, like a JSP page, with the same name in the same 
+  destination in the war it will place N copies of that file in the war (per the zip spec), one 
+  for each time it encounters the file.  The contents of ALL files will be the contents of the 
+  last file with that name that it encountered.  So, if you attempt to override the login.jsp file
+  in your extension, for example, your war will have two login.jsp files and both will contain the 
+  contents of your extension's log in jsp (because it's encountered after the main shib one).
