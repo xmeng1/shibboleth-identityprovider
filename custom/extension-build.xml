@@ -53,31 +53,40 @@
 
     <!-- Initialize everything we need. -->
     <!-- The properties loaded here are scoped to this particular extension build -->
-    <target name="ext-build-init" description="Sets up everything to prepare for the build">
-        <echo message="Loading build property files" />
-        <!-- 
-          Load extension specific properties if available. We can not set the extension's build.properties 
-          file name in the extension-build.properties file because if we read that file first the extension 
-          build properties won't be able to override properties in it as properties are immutable once set.
-        -->
-        <if>
-        	<not>
-        		<available file="${ext.root}/build.properties"/>
-        	</not>
-            <then>
-                <fail message="No build.properties file found for extension in ${ext.root}; this file is required."/>
-            </then>
-        </if>
-        <property file="${ext.root}/build.properties" />
+	<target name="ext-build-init" description="Sets up everything to prepare for the build">
+		<echo message="Loading build property files" />
+		<!-- 
+		Load extension specific properties if available. We can not set the extension's build.properties 
+		file name in the extension-build.properties file because if we read that file first the extension 
+		build properties won't be able to override properties in it as properties are immutable once set.
+		-->
+		<if>
+			<not>
+				<available file="${ext.root}/build.properties"/>
+			</not>
+			<then>
+				<fail message="No build.properties file found for extension in ${ext.root}; this file is required."/>
+			</then>
+		</if>
+		<property file="${ext.root}/build.properties" />
 
-        <!-- Load default properties -->
-        <echo message="Loading build property defaults ${exts.dir}/default-build.properties" />
-        <property file="${exts.dir}/extension-build.properties" />
+		<!-- Load default properties -->
+		<echo message="Loading build property defaults ${exts.dir}/default-build.properties" />
+		<property file="${exts.dir}/extension-build.properties" />
 
-        <!-- Create needed directories -->
-        <mkdir dir="${ext.dist}" />
-        <mkdir dir="${ext.classes}" />
-    </target>
+		<if>
+			<not>
+				<isset property="ext.name" />
+			</not>
+			<then>
+				<fail message="The extension ${ext.root} does not contain the required (ext.name) property in its build.properties file."/>
+			</then>
+		</if>
+
+		<!-- Create needed directories -->
+		<mkdir dir="${ext.dist}" />
+		<mkdir dir="${ext.classes}" />
+	</target>
 
     <!-- Compiles the extension -->
     <target name="ext-compile" description="Compiles an extension">
