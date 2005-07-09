@@ -46,7 +46,7 @@ import edu.internet2.middleware.shibboleth.common.Constants;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.Trust;
-import edu.internet2.middleware.shibboleth.metadata.AttributeAuthorityDescriptor;
+import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
  * During Attribute Query, SAML creates the HTTP(S) session with
@@ -71,13 +71,13 @@ public class ShibHttpHook implements HTTPHook {
     // SAML Doesn't know the Shibboleth objects, so they have to be saved
     // by the constructor so they can be used in callbacks without being
     // passed as arguments
-    AttributeAuthorityDescriptor role; // The AA object from the Metadata
+    RoleDescriptor role; // The AA object from the Metadata
     Trust trust; // A ShibbolethTrust object
     
     /**
      * @param role
      */
-    public ShibHttpHook(AttributeAuthorityDescriptor role, Trust trust) {
+    public ShibHttpHook(RoleDescriptor role, Trust trust) {
         super();
         this.role = role;  // Save the AA Role for the callback
         this.trust = trust; // Save the ShibTrust for the callback

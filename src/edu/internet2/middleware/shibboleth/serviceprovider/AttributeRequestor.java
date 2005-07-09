@@ -220,7 +220,7 @@ public class AttributeRequestor {
      * @param request SAML AA Query request
      * @param credentialId Siging Id from CredentialUse
      */
-	private static void possiblySignRequest(
+	static void possiblySignRequest(
             Credentials credentials, 
 	        SAMLRequest request,
 	        String credentialId) {
