@@ -617,6 +617,23 @@ class DefaultAE implements JDBCAttributeExtractor {
 class DefaultStatementCreator implements JDBCStatementCreator {
 
 	private static Logger log = Logger.getLogger(DefaultStatementCreator.class.getName());
+	private int numberOfParams = 1;
+
+	public DefaultStatementCreator(Element conf) throws JDBCStatementCreatorException {
+
+		if (conf.getAttribute("numberOfParams") != null && !(conf.getAttribute("numberOfParams").equals(""))) {
+			try {
+				numberOfParams = Integer.parseInt(conf.getAttribute("numberOfParams"));
+				if (numberOfParams < 0) { throw new NumberFormatException(
+						"The number of parameters cannot be less than 0."); }
+			} catch (NumberFormatException nfe) {
+				log.error("Statement Creator () attribute must be a positive integer: " + nfe);
+				throw new JDBCStatementCreatorException("Statement Creator () attribute must be a positive integer.");
+			}
+		}
+
+		log.debug("Parameters configured: " + numberOfParams);
+	}
 
 	public void create(PreparedStatement preparedStatement, Principal principal, String requester, String responder,
 			Dependencies depends) throws JDBCStatementCreatorException {
@@ -624,14 +641,12 @@ class DefaultStatementCreator implements JDBCStatementCreator {
 		log.debug("Creating prepared statement.  Substituting principal: (" + principal.getName() + ")");
 		// Tried using ParameterMetaData to determine param count, but it fails, so...
 		try {
-			int i = 1;
-			while (true) {
+			for (int i = 1; i <= numberOfParams; i++) {
 				preparedStatement.setString(i++, principal.getName());
 			}
 		} catch (SQLException e) {
 			// Ignore any additional exceptions, assume parameters simply don't exist.
 		}
-
 	}
 }
 
