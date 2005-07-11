@@ -5,10 +5,17 @@
   Chad La Joie
   July 6, 2005
 -->
-<project name="Shibboleth-Extensions" default="build-exts" basedir=".">
+<project name="Shibboleth-Extensions" default="ext-invoke" basedir=".">
 
-    <!-- Builds the extensions; loops through all the extension directories and builds them -->
-    <target name="build-exts" description="Compiles IdP and/or SP extensions">
+    <!-- Loops through all the extension directories and executes a particular operation on them -->
+    <!-- 
+        Required parameters
+            exts.dir - the root directory of the extensions (contains all the individual extension directories)
+            ext.build.function - the particular extension build function to invoke, acceptable values
+                   ext-invoke, ext-clean, ext-install-filesystem 
+               (some functions may require additional paramters, see documentation for each function)
+    -->
+    <target name="ext-invoke" description="Invoke operation extensions">
         <for keepgoing="true" param="module-path">
             <dirset dir="${exts.dir}">
                 <include name="*" />
@@ -16,7 +23,7 @@
                 <exclude name="web" />
             </dirset>
             <sequential>
-                <antcall target="ext-build">
+                <antcall target="${ext.build.function}">
                     <param name="ext.root" value="@{module-path}" />
                 </antcall>
             </sequential>
@@ -31,7 +38,7 @@
         <antcall target="ext-compile" />
 
         <!-- Copy over non-source files -->
-        <antcall target="ext-copy-etc" />
+        <antcall target="ext-copy-src-conf" />
 
         <!-- Generate the java docs if we're supposed to -->
         <antcall target="ext-gen-docs" />
@@ -43,43 +50,43 @@
         <antcall target="ext-package" />
 
         <!-- Put the libraries where the IdP and SP packaging can pick them up -->
-        <antcall target="ext-copy-libs"/>
+        <antcall target="ext-copy-libs" />
 
         <!-- Put the webpages where the IdP and SP packaging can pick them up -->
-        <antcall target="ext-copy-webpages"/>
-        
+        <antcall target="ext-copy-webpages" />
+
         <echo message="--- Extension ${ext.name} built" />
     </target>
 
     <!-- Initialize everything we need. -->
     <!-- The properties loaded here are scoped to this particular extension build -->
-	<target name="ext-build-init" description="Sets up everything to prepare for the build">
-		<echo message="Loading build property files" />
-		<!-- 
+    <target name="ext-build-init" description="Sets up everything to prepare for the build">
+        <echo message="Loading build property files" />
+        <!-- 
 		Load extension specific properties if available. We can not set the extension's build.properties 
 		file name in the extension-build.properties file because if we read that file first the extension 
 		build properties won't be able to override properties in it as properties are immutable once set.
 		-->
-		<if>
-			<not>
-				<available file="${ext.root}/build.properties"/>
-			</not>
-			<then>
-				<fail message="No build.properties file found for extension in ${ext.root}; this file is required."/>
-			</then>
-		</if>
-		<property file="${ext.root}/build.properties" />
+        <if>
+            <not>
+                <available file="${ext.root}/build.properties" />
+            </not>
+            <then>
+                <fail message="No build.properties file found for extension in ${ext.root}; this file is required." />
+            </then>
+        </if>
+        <property file="${ext.root}/build.properties" />
 
-		<!-- Load default properties -->
-		<echo message="Loading build property defaults ${exts.dir}/default-build.properties" />
-		<property file="${exts.dir}/extension-build.properties" />
+        <!-- Load default properties -->
+        <echo message="Loading build property defaults ${exts.dir}/default-build.properties" />
+        <property file="${exts.dir}/extension-build.properties" />
 
-	    <fail unless="ext.name" message="The extension ${ext.root} does not contain the required (ext.name) property in its build.properties file."/>
+        <fail unless="ext.name" message="The extension ${ext.root} does not contain the required (ext.name) property in its build.properties file." />
 
-		<!-- Create needed directories -->
-		<mkdir dir="${ext.dist}" />
-		<mkdir dir="${ext.classes}" />
-	</target>
+        <!-- Create needed directories -->
+        <mkdir dir="${ext.dist}" />
+        <mkdir dir="${ext.classes}" />
+    </target>
 
     <!-- Compiles the extension -->
     <target name="ext-compile" description="Compiles an extension">
@@ -94,9 +101,9 @@
 
                     <!-- Shibboleth Classes -->
                     <classpath>
-                    	<pathelement location="${build}"/>
+                        <pathelement location="${build}" />
                     </classpath>
-                    
+
                     <!-- Extension libraries -->
                     <classpath>
                         <fileset dir="${ext.lib}">
@@ -109,21 +116,21 @@
     </target>
 
     <!-- Copies files from etc directory to dist directory to be bundled with extension jar -->
-    <target name="ext-copy-etc" depends="ext-build-init" description="Copys non-source files to place where they will be added to jar">
+    <target name="ext-copy-src-conf" depends="ext-build-init" description="Copys non-source files to place where they will be added to jar">
         <!-- Copy any extra stuff that needs to be on the classpath -->
         <if>
-            <available file="${ext.etc}" />
+            <available file="${ext.src.conf}" />
             <then>
                 <echo message="Detected files in the extensions 'etc' directory, ensuring they are bundled with the extension's jar." />
                 <copy todir="${ext.classes}">
-                    <fileset dir="${ext.etc}">
+                    <fileset dir="${ext.src.conf}">
                         <include name="**" />
                     </fileset>
                 </copy>
             </then>
         </if>
     </target>
-    
+
     <!-- Move third party libraries to be picked up by the war -->
     <target name="ext-copy-libs" depends="ext-compile" description="Moves third party libraries to be picked up by the war">
         <if>
@@ -143,13 +150,13 @@
             <available file="${ext.webpages}" />
             <then>
                 <copy todir="${exts.dir}/web">
-                    <fileset dir="${ext.webpages}"/>    
+                    <fileset dir="${ext.webpages}" />
                 </copy>
             </then>
         </if>
     </target>
 
-    
+
     <!-- Run any unit tests for the extension -->
     <target name="ext-test" depends="ext-compile" description="Runs extension unit test">
         <if>
@@ -182,16 +189,9 @@
                     <available file="${ext.src}" />
                     <then>
                         <echo message="Generating javadocs for extension ${ext.name}" />
-                        <javadoc sourcepath="${ext.src}" 
-                                 destdir="${ext.docs}" 
-                                 packagenames="*"
-                                 author="true"
-                                 version="true"
-                                 windowtitle="${ext.name} Shibboleth Extension Java API"
-                                 doctitle="${ext.name} Shibboleth Extension Java API"
-                                 failonerror="false">
+                        <javadoc sourcepath="${ext.src}" destdir="${ext.docs}" packagenames="*" author="true" version="true" windowtitle="${ext.name} Shibboleth Extension Java API" doctitle="${ext.name} Shibboleth Extension Java API" failonerror="false">
                             <classpath refid="build.path" />
-                    	</javadoc>
+                        </javadoc>
                     </then>
                 </if>
             </then>
@@ -203,19 +203,76 @@
         <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" excludes="${ext.name}.jar" />
     </target>
 
-    <!-- Cleans up build generated resources -->
-    <target name="ext-clean" description="Cleans up any build created resources">
-        <!-- Clean up all the modules -->
-        <for keepgoing="true" param="module-path">
-            <dirset dir="${exts.dir}">
-                <include name="*" />
-                <exclude name="lib" />
-                <exclude name="web" />
-            </dirset>
-            <sequential>
-                <delete dir="@{module-path}/dist" failonerror="false"/>
-            </sequential>
-        </for>
+    <!-- Install extension files (configuration, scripts, etc) on to the filesystem -->
+    <!--
+        Required Paramter
+            ext.filesystem.home - the path on the filesystem that the extension will be installed
+                expected subdirectories are 'bin, 'etc', and 'lib'
+            ext.home.token - the token that represents the extensions installation point within
+                the various configuration files (those in the extensions 'etc' and 'src-conf' directories)
+    -->
+    <target name="ext-install-filesystem" depends="ext-build-init" description="Installs extension files on to the filesystem">
+        <echo message="Installing extension ${ext.name} to ${ext.filesystem.home}"/>
+        
+        <!-- Copy anything in the etc directory to the extension's installation point etc directory -->
+        <if>
+            <and>
+                <available file="${ext.etc}" />
+                <or>
+                    <equals arg1="${ext.install.etc}" arg2="true" />
+                    <not>
+                        <available file="${ext.filesystem.home}/etc"/>
+                    </not>
+                </or>
+            </and>
+            <then>
+                <copy todir="${ext.filesystem.home}/etc">
+                    <fileset dir="${ext.etc}">
+                        <include name="*" />
+                    </fileset>
+                </copy>
+                <replace dir="${ext.filesystem.home}/etc" 
+                         token="${ext.home.token}" 
+                         value="${ext.filesystem.home}"/>
+            </then>
+        </if>
+
+        <!-- Copy anything in the bin directory to the extension's installation point bin directory -->
+        <if>
+            <available file="${ext.bin}" />
+            <then>
+                <copy todir="${ext.filesystem.home}/bin">
+                    <fileset dir="${ext.bin}">
+                        <include name="*" />
+                    </fileset>
+                </copy>
+                <chmod dir="${ext.filesystem.home}/bin" perm="ug+rx" includes="**/*"/>
+            </then>
+        </if>
+
+        <!-- Copy anything in the lib directory to the extension's installation point lib directory -->
+        <if>
+            <available file="${ext.lib}" />
+            <then>
+                <copy todir="${ext.filesystem.home}/lib">
+                    <fileset dir="${ext.lib}">
+                        <include name="*" />
+                    </fileset>
+                </copy>
+            </then>
+        </if>
+        
+        <!-- Copy the extension jar to the extension's installation point lib directory -->
+        <if>
+            <available file="${ext.dist}/${ext.name}.jar"/>
+            <then>
+                <copy file="${ext.dist}/${ext.name}.jar" todir="${ext.filesystem.home}/lib"/>
+            </then>
+        </if>
     </target>
 
+    <!-- Cleans up build generated resources -->
+    <target name="ext-clean" description="Cleans up any build created resources">
+        <delete dir="${ext.root}/dist" failonerror="false" />
+    </target>
 </project>
