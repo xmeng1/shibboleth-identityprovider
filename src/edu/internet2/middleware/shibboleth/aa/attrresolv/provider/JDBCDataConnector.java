@@ -621,7 +621,8 @@ class DefaultStatementCreator implements JDBCStatementCreator {
 
 	public DefaultStatementCreator(Element conf) throws JDBCStatementCreatorException {
 
-		if (conf.getAttribute("numberOfParams") != null && !(conf.getAttribute("numberOfParams").equals(""))) {
+		if (conf != null && conf.getAttribute("numberOfParams") != null
+				&& !(conf.getAttribute("numberOfParams").equals(""))) {
 			try {
 				numberOfParams = Integer.parseInt(conf.getAttribute("numberOfParams"));
 				if (numberOfParams < 0) { throw new NumberFormatException(
