@@ -215,27 +215,35 @@
         <echo message="Installing extension ${ext.name} to ${ext.filesystem.home}"/>
         
         <!-- Copy anything in the etc directory to the extension's installation point etc directory -->
-        <if>
-            <and>
-                <available file="${ext.etc}" />
-                <or>
-                    <equals arg1="${ext.install.etc}" arg2="true" />
-                    <not>
-                        <available file="${ext.filesystem.home}/etc"/>
-                    </not>
-                </or>
-            </and>
-            <then>
-                <copy todir="${ext.filesystem.home}/etc">
-                    <fileset dir="${ext.etc}">
-                        <include name="*" />
-                    </fileset>
-                </copy>
-                <replace dir="${ext.filesystem.home}/etc" 
-                         token="${ext.home.token}" 
-                         value="${ext.filesystem.home}"/>
-            </then>
-        </if>
+		<if>
+			<available file="${ext.etc}" />
+			<then>
+				<if>
+					<available file="${ext.filesystem.home}/etc/${ext.name}" />
+					<then>
+						<echo>-----------------------------------------------------------------------------------------------------------------------------</echo>
+						<echo>---</echo>
+						<echo>---   NOTE:  Existing Shibboleth extension module configuration at ${ext.filesystem.home}/etc/${ext.name} will not be overwritten.</echo>
+						<echo>---</echo>
+						<echo>-----------------------------------------------------------------------------------------------------------------------------</echo>
+					</then>
+					<else>
+						<mkdir dir="${ext.filesystem.home}/etc/${ext.name}" />
+						<copy todir="${ext.filesystem.home}/etc/${ext.name}">
+							<fileset dir="${ext.etc}">
+								<include name="*" />
+							</fileset>
+						</copy>
+						<replace dir="${ext.filesystem.home}/etc/${ext.name}" 
+							token="${ext.home.token}" 
+							value="${ext.filesystem.home}"/>
+						<replace dir="${ext.filesystem.home}/etc/${ext.name}" 
+							token="$EXTENSION_NAME$" 
+							value="${ext.name}"/>
+					</else>
+				</if>
+			</then>
+		</if>
 
         <!-- Copy anything in the bin directory to the extension's installation point bin directory -->
         <if>
