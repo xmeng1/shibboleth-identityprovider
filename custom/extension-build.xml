@@ -221,11 +221,11 @@
 				<if>
 					<available file="${ext.filesystem.home}/etc/${ext.name}" />
 					<then>
-						<echo>-----------------------------------------------------------------------------------------------------------------------------</echo>
+						<echo>--------------------------------------------------------------------------------------</echo>
 						<echo>---</echo>
-						<echo>---   NOTE:  Existing Shibboleth extension module configuration at ${ext.filesystem.home}/etc/${ext.name} will not be overwritten.</echo>
+						<echo>---   NOTE:  Existing Shibboleth extension module configuration at ${line.separator}---   ${ext.filesystem.home}/etc/${ext.name} will not be overwritten.</echo>
 						<echo>---</echo>
-						<echo>-----------------------------------------------------------------------------------------------------------------------------</echo>
+						<echo>--------------------------------------------------------------------------------------</echo>
 					</then>
 					<else>
 						<mkdir dir="${ext.filesystem.home}/etc/${ext.name}" />

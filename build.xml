@@ -363,11 +363,11 @@
 		<if>
 			<available file="${idp.home}/etc" />
 			<then>
-				<echo>-----------------------------------------------------------------------------------------------------------</echo>
+				<echo>--------------------------------------------------------------------------------------</echo>
 				<echo>---</echo>
-				<echo>---   NOTE:  Existing Identiity Provider configuration at ${idp.home}/etc will not be overwritten.</echo>
+				<echo>---   NOTE:  Existing Identiity Provider configuration at ${idp.home}/etc ${line.separator}---   will not be overwritten.</echo>
 				<echo>---</echo>
-				<echo>-----------------------------------------------------------------------------------------------------------</echo>
+				<echo>--------------------------------------------------------------------------------------</echo>
 				<property name="copy-idp-conf" value="n" />
 			</then>
 			<else>
