@@ -353,7 +353,7 @@
 
 	<!-- Prompt user for filesystem installation options and save them to build.properties -->
 	<target name="install.idp.filesystem.prompt" depends="init, install.init">
-		<input message="Select an installation base for the Shibboleth Identity Provider [default: ${idp.home}]"
+		<input message="Select a home directory for the Shibboleth Identity Provider [default: ${idp.home}]"
 			addproperty="idp.home.input" defaultvalue="${idp.home}" />
 		<var name="idp.home" value="${idp.home.input}" />
 		<input message="Enter tomcat home directory [default: ${tomcat.home}]"
@@ -363,13 +363,12 @@
 		<if>
 			<available file="${idp.home}/etc" />
 			<then>
-				<xinput type="confirm" addproperty="copy-idp-conf1">The directory `${idp.home}${file.separator}etc` already exists.  Do you want to overwrite the existing configuration?</xinput>
-				<if>
-					<equals arg1="${copy-idp-conf1}" arg2="y" />
-					<then>
-						<xinput type="confirm" addproperty="copy-idp-conf">WARNING!!! You are about to delete your Shibboleth IdP configuration.  Are you certain you certain this is what you want?</xinput>
-					</then>
-				</if>
+				<echo>-----------------------------------------------------------------------------------------------------------</echo>
+				<echo>---</echo>
+				<echo>---   NOTE:  Existing Identiity Provider configuration at ${idp.home}/etc will not be overwritten.</echo>
+				<echo>---</echo>
+				<echo>-----------------------------------------------------------------------------------------------------------</echo>
+				<property name="copy-idp-conf" value="n" />
 			</then>
 			<else>
 				<property name="copy-idp-conf" value="y" />
