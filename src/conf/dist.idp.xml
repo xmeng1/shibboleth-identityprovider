@@ -9,7 +9,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 ../schemas/shibboleth-idpconfig-1.0.xsd" 
 	AAUrl="https://idp.example.org:8443/shibboleth-idp/AA" 
-	resolverConfig="$SHIB_HOME$/etc/resolver.xml"
+	resolverConfig="$IDP_HOME$/etc/resolver.xml"
 	defaultRelyingParty="urn:mace:shibboleth:examples" 
 	providerId="https://idp.example.org/shibboleth">
 
@@ -32,7 +32,7 @@
 		For most configurations this won't need adjustment -->
 	<ReleasePolicyEngine>
 		<ArpRepository implementation="edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository">
-			<Path>$SHIB_HOME$/etc/arps/</Path>
+			<Path>$IDP_HOME$/etc/arps/</Path>
 		</ArpRepository>
 	</ReleasePolicyEngine>
 
@@ -41,8 +41,8 @@
 		The defaults work fine in this section, but it is sometimes helpful to use "DEBUG" as the level for 
 		the <ErrorLog/> when trying to diagnose problems -->
 	<Logging>
-		<ErrorLog level="WARN" location="$SHIB_HOME$/logs/shib-error.log" />
-		<TransactionLog level="INFO" location="$SHIB_HOME$/logs/shib-access.log" />
+		<ErrorLog level="WARN" location="$IDP_HOME$/logs/shib-error.log" />
+		<TransactionLog level="INFO" location="$IDP_HOME$/logs/shib-access.log" />
 	</Logging>
 	<!-- Uncomment the configuration section below and comment out the one above if you would like to manually configure log4j -->
     <!--
@@ -72,10 +72,10 @@
 	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
 		<FileResolver Id="example_cred">
 			<Key>
-				<Path>$SHIB_HOME$/etc/idp-example.key</Path>
+				<Path>$IDP_HOME$/etc/idp-example.key</Path>
 			</Key>
 			<Certificate>
-				<Path>$SHIB_HOME$/etc/idp-example.crt</Path>
+				<Path>$IDP_HOME$/etc/idp-example.crt</Path>
 			</Certificate>
 		</FileResolver>
 	
@@ -83,10 +83,10 @@
 		<!--
 		<FileResolver Id="inqueue_cred">
 			<Key>
-				<Path>$SHIB_HOME$/etc/idp-inqueue.key</Path>
+				<Path>$IDP_HOME$/etc/idp-inqueue.key</Path>
 			</Key>
 			<Certificate>
-				<Path>$SHIB_HOME$/etc/idp-inqueue.crt</Path>
+				<Path>$IDP_HOME$/etc/idp-inqueue.crt</Path>
 			</Certificate>
 		</FileResolver>
 		 -->
@@ -110,12 +110,12 @@
 		how to authenticate them.  The metadatatool utility can be used to keep federation metadata files in synch.
 		Metadata can also be placed directly within this these elements. -->
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-                uri="$SHIB_HOME$/etc/example-metadata.xml"/>
+                uri="$IDP_HOME$/etc/example-metadata.xml"/>
 	
 	
 	<!-- InQueue example (Deployments would need to get updated InQueue metadata) -->
 	<!--
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-                uri="$SHIB_HOME$/etc/IQ-metadata.xml"/> -->
+                uri="$IDP_HOME$/etc/IQ-metadata.xml"/> -->
 </IdPConfig>
 
