@@ -180,7 +180,7 @@ public class Parser {
     public static Document loadDom(InputSource ins, boolean validate) throws SAMLException, SAXException, IOException {
 
 		Document doc = null;
-		log.info("Loading XML from (" + ins.getSystemId() + ")" + (validate ? " with Schema validation" : ""));
+		log.debug("Loading XML from (" + ins.getSystemId() + ")" + (validate ? " with Schema validation" : ""));
 		if (validate) {
 			doc = org.opensaml.XML.parserPool.parse(ins, schema);
 		} else {

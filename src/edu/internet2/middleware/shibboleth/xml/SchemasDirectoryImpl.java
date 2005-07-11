@@ -95,9 +95,9 @@ public class SchemasDirectoryImpl extends SchemaStore {
             
             // Put the DOM in the Bucket keyed by namespace
             if (bucket.containsKey(targetNamespace)) {
-                log.info("Replacing XSD for namespace: "+targetNamespace+" "+filename);
+                log.debug("Replacing XSD for namespace: "+targetNamespace+" "+filename);
             } else {
-                log.info("Defining XSD for namespace:  "+targetNamespace+" "+filename);
+                log.debug("Defining XSD for namespace:  "+targetNamespace+" "+filename);
             }
             bucket.put(targetNamespace,xsddom);
         }
