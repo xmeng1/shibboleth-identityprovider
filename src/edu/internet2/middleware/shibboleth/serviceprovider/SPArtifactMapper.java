@@ -28,6 +28,7 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
+import org.opensaml.NoSuchProviderException;
 import org.opensaml.ProfileException;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBindingFactory;
@@ -125,34 +126,30 @@ public class SPArtifactMapper implements ArtifactMapper {
         if (credentialId!=null)
             AttributeRequestor.possiblySignRequest(config.getCredentials(), request, credentialId);
         
-        boolean authenticated=false;
+        //TODO: C++ code determines if the IdP is authenticated
+        //boolean authenticated=false; 
         
         if (artifact instanceof SAMLArtifactType0001) {
         	// A Type1 Artifact takes any usable SOAP Endpoint
-        	SAMLArtifactType0001 type1 = (SAMLArtifactType0001) artifact;
             EndpointManager endpointManager = idp.getArtifactResolutionServiceManager();
             Iterator endpoints = endpointManager.getEndpoints();
             while (endpoints.hasNext()) {
+                //  Search for an Endpoint with a SOAP Binding
             	Endpoint endpoint = (Endpoint)endpoints.next();
             	String binding = endpoint.getBinding();
             	if (!binding.equals(SAMLBinding.SOAP))
             		continue; // The C++ code is more elaborate here
-            	SAMLBinding sbinding = SAMLBindingFactory.getInstance(endpoint.getBinding());            	
-                if (sbinding instanceof SAMLSOAPHTTPBinding) { // I shure hope so
-                    SAMLSOAPHTTPBinding httpbind = (SAMLSOAPHTTPBinding)sbinding;
-                    httpbind.addHook(new ShibHttpHook(idp,(Trust)appinfo));
-                }
-                response=sbinding.send(endpoint.getLocation(),request);
-             	if (!response.getAssertions().hasNext()) {
-             		throw new ProfileException("No SAML assertions returned in response to artifact profile request.");
-             	}
-             	break;
+                
+            	response = resolveArtifact(request, idp, endpoint);
+                break; // Got response, stop scanning endpoints
             }
         } else if (artifact instanceof SAMLArtifactType0002) {
+            // A Type2 Artifact carries an Endpoint location
         	SAMLArtifactType0002 type2 = (SAMLArtifactType0002) artifact;
             EndpointManager endpointManager = idp.getArtifactResolutionServiceManager();
             Iterator endpoints = endpointManager.getEndpoints();
             while (endpoints.hasNext()) {
+                // Search for an Endpoint matching the Artifact
             	Endpoint endpoint = (Endpoint)endpoints.next();
             	String binding = endpoint.getBinding();
             	if (!binding.equals(SAMLBinding.SOAP))
@@ -160,26 +157,42 @@ public class SPArtifactMapper implements ArtifactMapper {
             	String location = endpoint.getLocation();
             	if (!location.equals(type2.getSourceLocation()))
             		continue;
-            	SAMLBinding sbinding = SAMLBindingFactory.getInstance(endpoint.getBinding());            	
-                if (sbinding instanceof SAMLSOAPHTTPBinding) { // I shure hope so
-                    SAMLSOAPHTTPBinding httpbind = (SAMLSOAPHTTPBinding)sbinding;
-                    httpbind.addHook(new ShibHttpHook(idp,(Trust)appinfo));
-                }
-                response=sbinding.send(endpoint.getLocation(),request);
-             	if (!response.getAssertions().hasNext()) {
-             		throw new ProfileException("No SAML assertions returned in response to artifact profile request.");
-             	}
-             	break;
+                
+            	response = resolveArtifact(request, idp, endpoint);
+                break; // Got response, stop scanning endpoints
             }
-            if (response==null)	{
-            	throw new MetadataException("Unable to locate acceptable binding/endpoint to resolve artifact.");
-            }
-         	
         } else {
         	throw new UnsupportedExtensionException("Unrecognized Artifact type.");
         }
-		
-		return response;
+        if (response == null) {
+            throw new MetadataException("Unable to locate acceptable binding/endpoint to resolve artifact.");
+        }
+        return response;
 	}
+
+	/**
+     * Call back into SAML to transmit the Request to the IdP Enpoint
+     * and get back the Response represented by the Artifact.
+     * @param request A SAMLRequest containing the Artifact
+     * @param idp The IdP entity
+     * @param endpoint The IdP Endpoint
+     * @return The SAMLResponse returned by the IdP
+     * @throws NoSuchProviderException
+     * @throws SAMLException
+     * @throws ProfileException if the response has no assertions
+	 */
+    private SAMLResponse resolveArtifact(SAMLRequest request, IDPSSODescriptor idp, Endpoint endpoint) throws NoSuchProviderException, SAMLException, ProfileException {
+        SAMLResponse response;
+        SAMLBinding sbinding = SAMLBindingFactory.getInstance(endpoint.getBinding());            	
+        if (sbinding instanceof SAMLSOAPHTTPBinding) { // I shure hope so
+            SAMLSOAPHTTPBinding httpbind = (SAMLSOAPHTTPBinding)sbinding;
+            httpbind.addHook(new ShibHttpHook(idp,(Trust)appinfo));
+        }
+        response=sbinding.send(endpoint.getLocation(),request);
+        if (!response.getAssertions().hasNext()) {
+        	throw new ProfileException("No SAML assertions returned in response to artifact profile request.");
+        }
+        return response;
+    }
 
 }

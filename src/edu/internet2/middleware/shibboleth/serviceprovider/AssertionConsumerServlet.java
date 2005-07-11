@@ -219,20 +219,21 @@ public class AssertionConsumerServlet extends HttpServlet {
         String sessionid=null;
         StringBuffer pproviderId = // Get back IdP Entity name from SAML
             new StringBuffer();
+        ServiceProviderConfig config = context.getServiceProviderConfig();
+        ApplicationInfo application = config.getApplication(applicationId);
+        Application applicationConfig = application.getApplicationConfig();
         
         ShibBrowserProfile profile = new ShibBrowserProfile(applicationId);
+        SPArtifactMapper mapper = new SPArtifactMapper(application,config);
         BrowserProfileResponse samldata = profile.receive(
                 pproviderId,
                 req,
                 shireURL,   // My URL (Why??) To prevent attackers from redirecting messages. 
                 context.getReplayCache(),
-                null,
+                mapper,
                 1
         );
         
-        ServiceProviderConfig config = context.getServiceProviderConfig();
-        ApplicationInfo application = config.getApplication(applicationId);
-        Application applicationConfig = application.getApplicationConfig();
         String[] audienceArray = applicationConfig.getAudienceArray();
         
         
