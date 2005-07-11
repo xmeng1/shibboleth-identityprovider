@@ -28,10 +28,10 @@ the following directories
                exapanded to the system path that the IdP or SP is installed (depending on 
                which you're installing).
        etc/ - [Optional] This directory contains any configuration files that need to 
-               be installed on the filesystem in the IdP or SP home etc directory.  This 
-               can include subdirectories.  The string's $IDP_HOME$ and $SP_HOME$ will be 
-               exapanded to the system path that the IdP or SP is installed (depending on 
-               which you're installing).
+               be installed on the filesystem under the IdP or SP home etc directory.  This 
+			   can include subdirectories.  All files will be installed into a subdirectory 
+			   named after the extension module.  The strings $IDP_HOME$, $SP_HOME$, and 
+			   $EXTENSION_NAME$ will be exapanded for all files in this directory.
        lib/ - [REQUIRED if 'src' is present] any third party jars your extension needs
        src/ - [Optional] your extension's source
        src-conf/ - [Optional] This directory contains any files which are not java source
@@ -54,8 +54,6 @@ III. Compile and deploy Shibboleth as normal.
 2.2 Build File Properties
   The build file supports the following properties on a per-extension basis.
     ext.name - [REQUIRED] The name of your resulting extension jar file (.jar will be appended to the name)
-    ext.install.etc - [Optional] Set to 'true' if you want the files in the 'etc' directory copied
-                   to the IDP_HOME/etc or SP_HOME/etc directory.  This will overwrite existing files.
     gen.ext.docs - [Optional] This controls whether Java docs will be generated for your
                    extension.  A value of "true" will result in them being generated, any other 
                    value will result in them not being generated, if this property is missing 
@@ -83,9 +81,4 @@ unexpected exceptions during runtime as class versions conflict.
   last file with that name that it encountered.  So, if you attempt to override the login.jsp file
   in your extension, for example, your war will have two login.jsp files and both will contain the 
   contents of your extension's log in jsp (because it's encountered after the main shib one).
-  
-4.3 The files in the etc directory are not being copied to IDP_HOME/etc or SP_HOME etc
-  The default behavior is NOT to copy these files so as to not overwrite existing configuration
-  files.  To enable this function set the build property ext.install.etc, however be sure to set 
-  it back to false afterwords so that you don't overwrite your configuration files during subsequent
-  builds.
+
