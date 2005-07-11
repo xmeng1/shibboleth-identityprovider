@@ -12,7 +12,7 @@
 	clockSkew="180">
 
 	<!-- The Global section pertains to shared Shibboleth processes like the shibd daemon. -->
-	<Global logger="$SHIB_HOME$/etc/shibd.logger">
+	<Global logger="$SP_HOME$/etc/shibd.logger">
 		
     
 		<!-- A listener (TCP or Unix) is required by the syntax
@@ -41,22 +41,7 @@
 			strictValidity="false" 
 			propagateErrors="false"
 			/>
-		<!--
-		<MySQLSessionCache cleanupInterval="300" cacheTimeout="3600" AATimeout="30" AAConnectTimeout="15"
-			defaultLifetime="1800" retryInterval="300" strictValidity="false" propagateErrors="false"
-			mysqlTimeout="14400" storeAttributes="false">
-			<Argument>&#x2D;&#x2D;language=@-PREFIX-@/share/english</Argument>
-			<Argument>&#x2D;&#x2D;datadir=@-PREFIX-@/data</Argument>
-		</MySQLSessionCache>
-		-->
         
-		<!-- Default replay cache is in-memory. -->
-		<!--
-		<MySQLReplayCache>
-			<Argument>&#x2D;&#x2D;language=@-PREFIX-@/share/english</Argument>
-			<Argument>&#x2D;&#x2D;datadir=@-PREFIX-@/data</Argument>
-		</MySQLReplayCache>
-		-->
 	</Global>
     
 	<!-- The Local section pertains to resource-serving processes (often process pools) like web servers. -->
@@ -154,20 +139,17 @@
 		standard 403 Forbidden error code if authorization fails, and then customize that condition
 		using your web server.
 		-->
-		<Errors session="$SHIB_HOME$/etc/sessionError.html"
-			metadata="$SHIB_HOME$/etc/metadataError.html"
-			rm="$SHIB_HOME$/etc/rmError.html"
-			access="$SHIB_HOME$/etc/accessError.html"
+		<Errors session="$SP_HOME$/etc/sessionError.html"
+			metadata="$SP_HOME$/etc/metadataError.html"
+			rm="$SP_HOME$/etc/rmError.html"
+			access="$SP_HOME$/etc/accessError.html"
 			supportContact="root@localhost"
 			logoLocation="/shibtarget/logo.jpg"
 			styleSheet="/shibtarget/main.css"/>
 
 		<!-- Indicates what credentials to use when communicating -->
 		<CredentialUse TLS="defcreds" Signing="defcreds">
-			<!-- RelyingParty elements can customize credentials for specific IdPs/sets. -->
-			<!--
-			<RelyingParty Name="urn:mace:inqueue" TLS="inqueuecreds" Signing="inqueuecreds"/>
-			-->
+			<RelyingParty Name="urn:mace:shibboleth:examples" TLS="defcreds" Signing="defcreds" />
 		</CredentialUse>
 			
 		<!-- Use designators to request specific attributes or none to ask for all -->
@@ -179,17 +161,17 @@
 		-->
 
 		<!-- AAP can be inline or in a separate file -->
-		<AAPProvider type="edu.internet2.middleware.shibboleth.aap.provider.XMLAAP" uri="$SHIB_HOME$/etc/AAP.xml"/>
+		<AAPProvider type="edu.internet2.middleware.shibboleth.aap.provider.XMLAAP" uri="$SP_HOME$/etc/AAP.xml"/>
 		
 		<!-- Operational config consists of metadata and trust providers. Can be external or inline. -->
 
 		<!-- Dummy metadata for private testing, delete for production deployments. -->
 		<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-			uri="$SHIB_HOME$/etc/example-metadata.xml"/>
+			uri="$SP_HOME$/etc/example-metadata.xml"/>
 
 		<!-- InQueue pilot federation, delete for production deployments. -->
 		<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-			uri="$SHIB_HOME$/etc/IQ-metadata.xml"/>
+			uri="$SP_HOME$/etc/IQ-metadata.xml"/>
 		
 		<!-- The standard trust provider supports SAMLv2 metadata with path validation extensions. -->
 		<TrustProvider type="edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust"/>
@@ -236,10 +218,10 @@
 		<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
 			<FileResolver Id="defcreds">
 				<Key format="PEM">
-					<Path>$SHIB_HOME$/etc/sp-example.key</Path>
+					<Path>$SP_HOME$/etc/sp-example.key</Path>
 				</Key>
 				<Certificate format="PEM">
-					<Path>$SHIB_HOME$/etc/sp-example.crt</Path>
+					<Path>$SP_HOME$/etc/sp-example.crt</Path>
 				</Certificate>
 			</FileResolver>
 			
@@ -251,10 +233,10 @@
 			<!--
 			<FileResolver Id="inqueuecreds">
 				<Key format="PEM" password="handsoff">
-					<Path>$SHIB_HOME$/etc/inqueue.key</Path>
+					<Path>$SP_HOME$/etc/inqueue.key</Path>
 				</Key>
 				<Certificate format="PEM">
-					<Path>$SHIB_HOME$/etc/inqueue.crt</Path>
+					<Path>$SP_HOME$/etc/inqueue.crt</Path>
 				</Certificate>
 			</FileResolver>
 			-->
