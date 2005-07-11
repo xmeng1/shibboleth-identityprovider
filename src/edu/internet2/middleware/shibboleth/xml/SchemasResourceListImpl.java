@@ -39,7 +39,7 @@ public class SchemasResourceListImpl extends SchemaStore {
     // This class is used by both the Idp and SP, so it must use
     // a conventionally declared logger. The SP has a special logger
     // setup so this package also logs to the init log.
-    private static Logger log = Logger.getLogger(SchemasDirectoryImpl.class);
+    private static Logger log = Logger.getLogger(SchemasResourceListImpl.class);
     
     private String resourceprefix = "/schemas/";
     private String[] resourceNames = null;
@@ -95,9 +95,9 @@ public class SchemasResourceListImpl extends SchemaStore {
             
             // Put the DOM in the Bucket keyed by namespace
             if (bucket.containsKey(targetNamespace)) {
-                log.info("Replacing XSD for namespace: "+targetNamespace+" "+filename);
+                log.debug("Replacing XSD for namespace: "+targetNamespace+" "+filename);
             } else {
-                log.info("Defining XSD for namespace:  "+targetNamespace+" "+filename);
+                log.debug("Defining XSD for namespace:  "+targetNamespace+" "+filename);
             }
             bucket.put(targetNamespace,xsddom);
         }
