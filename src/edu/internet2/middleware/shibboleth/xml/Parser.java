@@ -177,11 +177,14 @@ public class Parser {
      * @param validate If true, use Schema. Otherwise, its raw XML.
      * @return A DOM 3 tree
      */
-    public static Document loadDom(InputSource ins, boolean validate) throws SAMLException, SAXException, IOException {
+    public static Document loadDom(InputSource ins, boolean validate) 
+        throws SAMLException, SAXException, IOException {
 
 		Document doc = null;
 		log.debug("Loading XML from (" + ins.getSystemId() + ")" + (validate ? " with Schema validation" : ""));
 		if (validate) {
+            if (schema==null) 
+                throw new SAXException("Cannot validate XML because of invalid Schemas");
 			doc = org.opensaml.XML.parserPool.parse(ins, schema);
 		} else {
 			doc = org.opensaml.XML.parserPool.parse(ins, null);
