@@ -640,10 +640,9 @@ class DefaultStatementCreator implements JDBCStatementCreator {
 			Dependencies depends) throws JDBCStatementCreatorException {
 
 		log.debug("Creating prepared statement.  Substituting principal: (" + principal.getName() + ")");
-		// Tried using ParameterMetaData to determine param count, but it fails, so...
 		try {
 			for (int i = 1; i <= numberOfParams; i++) {
-				preparedStatement.setString(i++, principal.getName());
+				preparedStatement.setString(i, principal.getName());
 			}
 		} catch (SQLException e) {
 			// Ignore any additional exceptions, assume parameters simply don't exist.
