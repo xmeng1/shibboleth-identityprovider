@@ -369,31 +369,40 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
         private HashMap /* <String,URL> */ urls = new HashMap();
 
         public XMLOrganization(Element e) throws MetadataException {
-            e=XML.getFirstChildElement(e);
-            while (e != null) {
-                if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"OrganizationName")) {
-                    if (e.hasChildNodes()) {
-                        names.put(e.getAttributeNS(XML.XML_NS,"lang"),XML.assign(e.getFirstChild().getNodeValue()));
-                    }
-                }
-                else if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"OrganizationDisplayName")) {
-                    if (e.hasChildNodes()) {
-                        displays.put(e.getAttributeNS(XML.XML_NS,"lang"),XML.assign(e.getFirstChild().getNodeValue()));
-                    }
-                }
-                else if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"OrganizationURL")) {
-                    if (e.hasChildNodes()) {
-                        URL u;
-                        try {
-                            u = new URL(e.getFirstChild().getNodeValue());
-                        }
-                        catch (MalformedURLException e1) {
-                            throw new MetadataException("OrganizationURL was invalid: " + e1);
-                        }
-                        urls.put(e.getAttributeNS(XML.XML_NS,"lang"),u);
-                    }
-                }
-                e=XML.getNextSiblingElement(e);
+            // Old metadata or new?
+            if (XML.isElementNamed(e, edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,"Alias")) {
+            	if (e.hasChildNodes()) {
+            		names.put("en",XML.assign(e.getFirstChild().getNodeValue()));
+            		displays.put("en",XML.assign(e.getFirstChild().getNodeValue()));
+            	}
+            }
+            else {
+            	e=XML.getFirstChildElement(e);
+	            while (e != null) {
+	                if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"OrganizationName")) {
+	                    if (e.hasChildNodes()) {
+	                        names.put(e.getAttributeNS(XML.XML_NS,"lang"),XML.assign(e.getFirstChild().getNodeValue()));
+	                    }
+	                }
+	                else if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"OrganizationDisplayName")) {
+	                    if (e.hasChildNodes()) {
+	                        displays.put(e.getAttributeNS(XML.XML_NS,"lang"),XML.assign(e.getFirstChild().getNodeValue()));
+	                    }
+	                }
+	                else if (XML.isElementNamed(e,edu.internet2.middleware.shibboleth.common.XML.SAML2META_NS,"OrganizationURL")) {
+	                    if (e.hasChildNodes()) {
+	                        URL u;
+	                        try {
+	                            u = new URL(e.getFirstChild().getNodeValue());
+	                        }
+	                        catch (MalformedURLException e1) {
+	                            throw new MetadataException("OrganizationURL was invalid: " + e1);
+	                        }
+	                        urls.put(e.getAttributeNS(XML.XML_NS,"lang"),u);
+	                    }
+	                }
+	                e=XML.getNextSiblingElement(e);
+	            }
             }
         }
         
@@ -1200,6 +1209,10 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                         // Create the SP role if needed.
                         roles.add(new SPRole(this, validUntil, e));
                         sp=true;
+                    }
+                    else if (XML.isElementNamed(child,edu.internet2.middleware.shibboleth.common.XML.SHIB_NS,"Alias") && (org == null)) {
+                    	// Create the Organization. 
+                    	org = new XMLOrganization(child);
                     }
                     child = XML.getNextSiblingElement(child);
                 }
