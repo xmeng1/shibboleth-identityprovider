@@ -278,6 +278,14 @@
 		<!-- copy values to deployment descriptor -->
 		<copy file="${configroot}/${idp.deployment.descriptor}" tofile="${configroot}/idp.xml" overwrite="true" />
 		<replace file="${configroot}/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
+     
+        <!-- package extensions -->
+        <antcall target="ext-invoke">
+            <param name="exts.dir" value="${custom}"/>
+            <param name="ext.build.function" value="ext-package"/>
+            <param name="ext.filesystem.home" value="${idp.home}"/>
+            <param name="ext.home.token" value="$IDP_HOME$"/>
+        </antcall>
 
 		<!-- create the war -->
 		<war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" duplicate="preserve">
@@ -301,6 +309,14 @@
 		<copy file="${configroot}/${sp.deployment.descriptor}" tofile="${configroot}/sp.xml" overwrite="true" />
 		<replace file="${configroot}/sp.xml" token="$SP_HOME$" value="${sp.home.url}" />
 
+        <!-- package extensions -->
+        <antcall target="ext-invoke">
+            <param name="exts.dir" value="${custom}"/>
+            <param name="ext.build.function" value="ext-package"/>
+            <param name="ext.filesystem.home" value="${sp.home}"/>
+            <param name="ext.home.token" value="$SP_HOME$"/>
+        </antcall>
+        
 		<!-- create the war -->
 		<war warfile="${dist}/${sp.webapp.name}.war" webxml="${configroot}/sp.xml" basedir="${approot}" update="no">
 			<!-- Grab any custom extension libraries -->

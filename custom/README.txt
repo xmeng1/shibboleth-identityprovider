@@ -36,7 +36,9 @@ the following directories
        src/ - [Optional] your extension's source
        src-conf/ - [Optional] This directory contains any files which are not java source
                files but still need to be included in the extension jar (and hence be 
-               available on the classpath).  This can include subdirectories.
+               available on the classpath).  This can include subdirectories.  The strings 
+               $IDP_HOME$, $SP_HOME$, and $EXTENSION_NAME$ will be exapanded for all files 
+               in this directory.
        tests/ - [Optional] Your extension's JUnit test case source.
        web/ - [Optional] Any web pages, images, JSPs, etc. that should be included with the war
        build.properties - [REQUIRED] build properties for your extension 

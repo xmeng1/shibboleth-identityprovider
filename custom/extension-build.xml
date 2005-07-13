@@ -8,13 +8,6 @@
 <project name="Shibboleth-Extensions" default="ext-invoke" basedir=".">
 
     <!-- Loops through all the extension directories and executes a particular operation on them -->
-    <!-- 
-        Required parameters
-            exts.dir - the root directory of the extensions (contains all the individual extension directories)
-            ext.build.function - the particular extension build function to invoke, acceptable values
-                   ext-invoke, ext-clean, ext-install-filesystem 
-               (some functions may require additional paramters, see documentation for each function)
-    -->
     <target name="ext-invoke" description="Invoke operation extensions">
         <for keepgoing="true" param="module-path">
             <dirset dir="${exts.dir}">
@@ -31,6 +24,11 @@
     </target>
 
     <!-- Builds a single extension, called multiple times by build-exts -->
+    <!--
+           Required Paramter
+               ext.filesystem.home - the path on the filesystem that the extension will be installed
+               ext.home.token - the token that represents the extensions installation point
+       -->
     <target name="ext-build" depends="ext-build-init" description="Builds the extension">
         <echo message="--- Starting to build module ${ext.name} in ${ext.root}" />
 
@@ -199,8 +197,22 @@
     </target>
 
     <!-- Jars up the extension -->
-    <target name="ext-package" depends="ext-compile" description="Packages up the extension">
-        <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" excludes="${ext.name}.jar" />
+    <!-- 
+        Required parameters
+            exts.dir - the root directory of the extensions (contains all the individual extension directories)
+            ext.build.function - the particular extension build function to invoke, acceptable values
+                   ext-invoke, ext-clean, ext-install-filesystem 
+               (some functions may require additional paramters, see documentation for each function)
+    -->
+    <target name="ext-package" depends="ext-build-init" description="Packages up the extension">
+        <if>
+            <available file="${ext.classes}"/>
+            <then>
+                <replace dir="${ext.classes}" token="${ext.home.token}" value="${ext.filesystem.home}" excludes="*.class"/>
+                <replace dir="${ext.classes}" token="$EXTENSION_NAME$" value="${ext.name}" excludes="*.class"/>
+                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" excludes="${ext.name}.jar" />
+            </then>
+        </if>
     </target>
 
     <!-- Install extension files (configuration, scripts, etc) on to the filesystem -->
@@ -212,38 +224,34 @@
                 the various configuration files (those in the extensions 'etc' and 'src-conf' directories)
     -->
     <target name="ext-install-filesystem" depends="ext-build-init" description="Installs extension files on to the filesystem">
-        <echo message="Installing extension ${ext.name} to ${ext.filesystem.home}"/>
-        
+        <echo message="Installing extension ${ext.name} to ${ext.filesystem.home}" />
+
         <!-- Copy anything in the etc directory to the extension's installation point etc directory -->
-		<if>
-			<available file="${ext.etc}" />
-			<then>
-				<if>
-					<available file="${ext.filesystem.home}/etc/${ext.name}" />
-					<then>
-						<echo>--------------------------------------------------------------------------------------</echo>
-						<echo>---</echo>
-						<echo>---   NOTE:  Existing Shibboleth extension module configuration at ${line.separator}---   ${ext.filesystem.home}/etc/${ext.name} will not be overwritten.</echo>
-						<echo>---</echo>
-						<echo>--------------------------------------------------------------------------------------</echo>
-					</then>
-					<else>
-						<mkdir dir="${ext.filesystem.home}/etc/${ext.name}" />
-						<copy todir="${ext.filesystem.home}/etc/${ext.name}">
-							<fileset dir="${ext.etc}">
-								<include name="*" />
-							</fileset>
-						</copy>
-						<replace dir="${ext.filesystem.home}/etc/${ext.name}" 
-							token="${ext.home.token}" 
-							value="${ext.filesystem.home}"/>
-						<replace dir="${ext.filesystem.home}/etc/${ext.name}" 
-							token="$EXTENSION_NAME$" 
-							value="${ext.name}"/>
-					</else>
-				</if>
-			</then>
-		</if>
+        <if>
+            <available file="${ext.etc}" />
+            <then>
+                <if>
+                    <available file="${ext.filesystem.home}/etc/${ext.name}" />
+                    <then>
+                        <echo>--------------------------------------------------------------------------------------</echo>
+                        <echo>---</echo>
+                        <echo>---   NOTE:  Existing Shibboleth extension module configuration at ${line.separator}---   ${ext.filesystem.home}/etc/${ext.name} will not be overwritten.</echo>
+                        <echo>---</echo>
+                        <echo>--------------------------------------------------------------------------------------</echo>
+                    </then>
+                    <else>
+                        <mkdir dir="${ext.filesystem.home}/etc/${ext.name}" />
+                        <copy todir="${ext.filesystem.home}/etc/${ext.name}">
+                            <fileset dir="${ext.etc}">
+                                <include name="*" />
+                            </fileset>
+                        </copy>
+                        <replace dir="${ext.filesystem.home}/etc/${ext.name}" token="${ext.home.token}" value="${ext.filesystem.home}" />
+                        <replace dir="${ext.filesystem.home}/etc/${ext.name}" token="$EXTENSION_NAME$" value="${ext.name}" />
+                    </else>
+                </if>
+            </then>
+        </if>
 
         <!-- Copy anything in the bin directory to the extension's installation point bin directory -->
         <if>
@@ -254,7 +262,7 @@
                         <include name="*" />
                     </fileset>
                 </copy>
-                <chmod dir="${ext.filesystem.home}/bin" perm="ug+rx" includes="**/*"/>
+                <chmod dir="${ext.filesystem.home}/bin" perm="ug+rx" includes="**/*" />
             </then>
         </if>
 
@@ -269,12 +277,12 @@
                 </copy>
             </then>
         </if>
-        
+
         <!-- Copy the extension jar to the extension's installation point lib directory -->
         <if>
-            <available file="${ext.dist}/${ext.name}.jar"/>
+            <available file="${ext.dist}/${ext.name}.jar" />
             <then>
-                <copy file="${ext.dist}/${ext.name}.jar" todir="${ext.filesystem.home}/lib"/>
+                <copy file="${ext.dist}/${ext.name}.jar" todir="${ext.filesystem.home}/lib" />
             </then>
         </if>
     </target>
