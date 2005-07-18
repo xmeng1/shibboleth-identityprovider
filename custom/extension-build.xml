@@ -24,11 +24,6 @@
     </target>
 
     <!-- Builds a single extension, called multiple times by build-exts -->
-    <!--
-           Required Paramter
-               ext.filesystem.home - the path on the filesystem that the extension will be installed
-               ext.home.token - the token that represents the extensions installation point
-       -->
     <target name="ext-build" depends="ext-build-init" description="Builds the extension">
         <echo message="--- Starting to build module ${ext.name} in ${ext.root}" />
 
@@ -136,7 +131,6 @@
             <then>
                 <copy todir="${exts.dir}/lib">
                     <fileset dir="${ext.lib}" includes="*.jar" />
-                    <fileset dir="${ext.dist}" includes="*.jar" />
                 </copy>
             </then>
         </if>
@@ -203,6 +197,9 @@
             ext.build.function - the particular extension build function to invoke, acceptable values
                    ext-invoke, ext-clean, ext-install-filesystem 
                (some functions may require additional paramters, see documentation for each function)
+            ext.filesystem.home - the path on the filesystem that the extension will be installed
+                expected subdirectories are 'bin, 'etc', and 'lib'
+            ext.home.token - the token, in config files, to replace with the path to the IdP/SP home
     -->
     <target name="ext-package" depends="ext-build-init" description="Packages up the extension">
         <if>
@@ -210,7 +207,8 @@
             <then>
                 <replace dir="${ext.classes}" token="${ext.home.token}" value="${ext.filesystem.home}" excludes="*.class"/>
                 <replace dir="${ext.classes}" token="$EXTENSION_NAME$" value="${ext.name}" excludes="*.class"/>
-                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" excludes="${ext.name}.jar" />
+                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}"/>
+                <copy file="${ext.dist}/${ext.name}.jar" todir="${exts.dir}/lib"/>
             </then>
         </if>
     </target>
