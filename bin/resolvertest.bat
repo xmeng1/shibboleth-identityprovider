@@ -37,10 +37,10 @@ if defined CLASSPATH (
 
 REM add in the dependency .jar files
 for %%i in (%SHIB_HOME%\lib\*.jar) do (
-	call %SHIB_HOME%\cpappend.bat %%i
+	call %SHIB_HOME%\bin\cpappend.bat %%i
 )
 for %%i in (%SHIB_HOME%\webApplication\WEB-INF\lib\*.jar) do (
-	call %SHIB_HOME%\cpappend.bat %%i
+	call %SHIB_HOME%\bin\cpappend.bat %%i
 )
 
 REM Here we go
