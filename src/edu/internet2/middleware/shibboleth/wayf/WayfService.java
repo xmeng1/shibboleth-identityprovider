@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.wayf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.util.Collection;
 import java.util.Date;
 
 import javax.servlet.RequestDispatcher;
@@ -31,10 +32,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
-import edu.internet2.middleware.shibboleth.common.ResourceWatchdog;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
-import edu.internet2.middleware.shibboleth.common.ResourceWatchdogExecutionException;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
+import edu.internet2.middleware.shibboleth.metadata.Metadata;
+import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata;
+import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
 /**
  * A servlet implementation of the Shibboleth WAYF service. Allows a browser user to select from among a group of origin
@@ -48,11 +50,11 @@ public class WayfService extends HttpServlet {
 	private String wayfConfigFileLocation;
 	private String siteConfigFileLocation;
 	private WayfConfig config;
-	private WayfOrigins originConfig;
-	private WayfCacheOptions wOptions = new WayfCacheOptions();
+	private Metadata metadata;
+	private WayfCacheOptions wSessionOptions = new WayfCacheOptions();
+	private WayfCacheOptions wPermOptions = new WayfCacheOptions();
 	private static Logger log = Logger.getLogger(WayfService.class.getName());
-	ResourceWatchdog watchdog;
-
+	
 	/**
 	 * @see GenericServlet#init()
 	 */
@@ -64,24 +66,28 @@ public class WayfService extends HttpServlet {
 		log.info("Loading configuration from file.");
 		configure();
 
-		log.info("Initailizing site metadata watchdog.");
+		log.info("Initializing site metadata & watchdog");
 		try {
-			watchdog = new SitesFileWatchdog(siteConfigFileLocation, this);
-			watchdog.start();
+			metadata = new XMLMetadata(siteConfigFileLocation);
 		} catch (ResourceNotAvailableException e) {
 			log.error("Sites file watchdog could not be initialized: " + e);
+			throw new ServletException(e);
+		} catch (MetadataException e) {
+			log.error("Sites files could not be parsed" + e);
+			throw new ServletException(e);
 		}
 
 		// Setup Cacheing options
-		wOptions.setDomain(config.getCacheDomain());
-		wOptions.setExpiration(config.getCacheExpiration());
+		wSessionOptions.setDomain(config.getCacheDomain());
+		wPermOptions.setDomain(config.getCacheDomain());
+		wPermOptions.setExpiration(config.getCacheExpiration());
 
 		initViewConfig();
 		log.info("WAYF initialization completed.");
 	}
 
 	/**
-	 * Populates WayfConfig and WayfOrigins objects from file contents.
+	 * Populates WayfConfig from file contents.
 	 */
 	private void configure() throws UnavailableException {
 
@@ -98,26 +104,6 @@ public class WayfService extends HttpServlet {
 			log.fatal("Error reading WAYF configuration file.", ioe);
 			throw new UnavailableException("Error reading WAYF configuration file.");
 		}
-
-		loadSiteConfig();
-	}
-
-	private void loadSiteConfig() throws UnavailableException {
-
-		try {
-
-			InputStream siteIs = new ShibResource(siteConfigFileLocation, this.getClass()).getInputStream();
-			OriginSitesDigester siteDigester = new OriginSitesDigester();
-			siteDigester.setValidating(true);
-			originConfig = (WayfOrigins) siteDigester.parse(siteIs);
-
-		} catch (SAXException se) {
-			log.fatal("Error parsing site file.", se);
-			throw new UnavailableException("Error parsing site file.");
-		} catch (IOException ioe) {
-			log.fatal("Error reading site file.", ioe);
-			throw new UnavailableException("Error reading site file.");
-		}
 	}
 
 	/**
@@ -125,7 +111,6 @@ public class WayfService extends HttpServlet {
 	 */
 	private void initViewConfig() {
 
-		getServletContext().setAttribute("originsets", getOrigins().getOriginSets());
 		getServletContext().setAttribute("supportContact", config.getSupportContact());
 		getServletContext().setAttribute("helpText", config.getHelpText());
 		getServletContext().setAttribute("searchResultEmptyText", config.getSearchResultEmptyText());
@@ -145,7 +130,7 @@ public class WayfService extends HttpServlet {
 		siteConfigFileLocation = getServletConfig().getInitParameter("SiteConfigFileLocation");
 		if (siteConfigFileLocation == null) {
 			log.warn("No SiteonfigFileLocation parameter found... using default location.");
-			siteConfigFileLocation = "/sites.xml";
+			siteConfigFileLocation = "/conf/metadata.xml";
 		}
 
 	}
@@ -169,7 +154,7 @@ public class WayfService extends HttpServlet {
 		try {
 			if (requestType.equals("deleteFromCache")) {
 				log.debug("Deleting saved HS from cache");
-				WayfCacheFactory.getInstance(config.getCacheType(), wOptions).deleteHsFromCache(req, res);
+				WayfCacheFactory.getInstance(config.getCacheType(), wPermOptions).deleteHsFromCache(req, res);
 				handleLookup(req, res);
 			} else if (WayfCacheFactory.getInstance(config.getCacheType()).hasCachedHS(req)) {
 				forwardToHS(req, res, WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
@@ -185,13 +170,6 @@ public class WayfService extends HttpServlet {
 		}
 	}
 
-	public void destroy() {
-
-		if (watchdog != null && watchdog.isAlive()) {
-			watchdog.interrupt();
-		}
-	}
-
 	/**
 	 * Displays a WAYF selection page.
 	 */
@@ -199,13 +177,17 @@ public class WayfService extends HttpServlet {
 
 		try {
 			if ((getSHIRE(req) == null) || (getTarget(req) == null)) { throw new WayfException(
-					"Invalid or missing data from SHIRE"); }
+					"Invalid or missing data from SHIRE"); 
+			}
+
+			req.setAttribute("sites", IdPSite.getIdPSites(metadata));
 			req.setAttribute("shire", getSHIRE(req));
 			req.setAttribute("target", getTarget(req));
 			String providerId = getProviderId(req);
 			if (providerId != null) {
 				req.setAttribute("providerId", providerId);
 			}
+			
 			req.setAttribute("time", new Long(new Date().getTime() / 1000).toString()); // Unix Time
 			req.setAttribute("requestURL", req.getRequestURI().toString());
 
@@ -225,10 +207,11 @@ public class WayfService extends HttpServlet {
 	 */
 	private void handleSearch(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
-		if (req.getParameter("string") != null) {
-			Origin[] origins = getOrigins().seachForMatchingOrigins(req.getParameter("string"), config);
-			if (origins.length != 0) {
-				req.setAttribute("searchresults", origins);
+		String parameter = req.getParameter("string"); 
+		if (parameter != null) {
+			Collection sites = IdPSite.seachForMatchingOrigins(metadata, parameter, config);
+			if (sites.size() != 0) {
+				req.setAttribute("searchresults", sites);
 			} else {
 				req.setAttribute("searchResultsEmpty", "true");
 			}
@@ -242,12 +225,28 @@ public class WayfService extends HttpServlet {
 	private void handleSelection(HttpServletRequest req, HttpServletResponse res) throws WayfException {
 
 		log.debug("Processing handle selection: " + req.getParameter("origin"));
-		String handleService = getOrigins().lookupHSbyName(req.getParameter("origin"));
+		String handleService = null;
+		try {
+			//
+			// If we have had a refresh between then and now the following will fail
+			//
+			handleService = metadata.lookup(req.getParameter("origin")).getIDPSSODescriptor(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS).getSingleSignOnServiceManager().getDefaultEndpoint().getLocation(); 
+		} 
+		catch (Exception ex) {
+			log.error("Error dispatching to IdP", ex);
+		}
+		
+		
 		if (handleService == null) {
 			handleLookup(req, res);
 		} else {
-			if ((req.getParameter("cache") != null) && req.getParameter("cache").equalsIgnoreCase("TRUE")) {
-				WayfCacheFactory.getInstance(config.getCacheType(), wOptions).addHsToCache(handleService, req, res);
+			if ((req.getParameter("cache") != null)) {
+				if (req.getParameter("cache").equalsIgnoreCase("session")) {
+					WayfCacheFactory.getInstance(config.getCacheType(), wSessionOptions).addHsToCache(handleService, req, res);
+				}
+				else if (req.getParameter("cache").equalsIgnoreCase("perm")) {
+					WayfCacheFactory.getInstance(config.getCacheType(), wPermOptions).addHsToCache(handleService, req, res);
+				}
 			}
 			forwardToHS(req, res, handleService);
 		}
@@ -347,60 +346,5 @@ public class WayfService extends HttpServlet {
 			if (attr == null || attr.length() == 0) { return null; }
 			return attr;
 		}
-	}
-
-	private WayfOrigins getOrigins() {
-
-		synchronized (originConfig) {
-			return originConfig;
-		}
-	}
-
-	private void reloadOriginMetadata() throws UnavailableException {
-
-		WayfOrigins safetyCache = getOrigins();
-		try {
-			synchronized (originConfig) {
-				loadSiteConfig();
-				getServletContext().setAttribute("originsets", getOrigins().getOriginSets());
-			}
-
-		} catch (UnavailableException e) {
-			log.error("Failed to load updated origin site metadata: " + e);
-			synchronized (originConfig) {
-				originConfig = safetyCache;
-			}
-			throw e;
-		}
-	}
-
-	private class SitesFileWatchdog extends ResourceWatchdog {
-
-		private WayfService wayfService;
-
-		private SitesFileWatchdog(String sitesFileLocation, WayfService wayfService)
-				throws ResourceNotAvailableException {
-
-			super(new ShibResource(sitesFileLocation, wayfService.getClass()));
-			this.wayfService = wayfService;
-		}
-
-		/**
-		 * @see edu.internet2.middleware.shibboleth.common.ResourceWatchdog#doOnChange()
-		 */
-		protected void doOnChange() throws ResourceWatchdogExecutionException {
-
-			try {
-				wayfService.reloadOriginMetadata();
-			} catch (UnavailableException e) {
-				try {
-					log.error("Sites file at (" + resource.getURL().toString() + ") could not be loaded: " + e);
-				} catch (IOException ioe) {
-					log.error("Sites file could not be loaded.");
-				} finally {
-					throw new ResourceWatchdogExecutionException("Watchdog reload failed.");
-				}
-			}
-		}
-	}
+	}	
 }

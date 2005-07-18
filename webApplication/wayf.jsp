@@ -13,103 +13,112 @@
 	<jsp:useBean id="time" scope="request" class="java.lang.String"/>
 	<jsp:useBean id="searchResultEmptyText" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="logoLocation" scope="application" class="java.lang.String"/>
-	<logic:present name="searchresults" scope="request">
-		<jsp:useBean id="searchresults" scope="request" type="edu.internet2.middleware.shibboleth.wayf.Origin[]"/>
-	</logic:present>
 <head>
-		<link rel="stylesheet" title="normal" type="text/css" href="wayf.css" /><title>InQueue: Identity Provider Selection</title></head>
-	<body>
+	<link rel="stylesheet" title="normal" type="text/css" href="wayf.css" />
+	<title>InQueue: Identity Provider Selection</title>
+</head>
 
-		<div class="head">
-			<h1>Select an identity provider</h1>
-		</div>
+<body>
+    <div class="head">
+	<h1>Select an identity provider</h1>
+    </div>
 
-		<div class="selector">
-			<p class="text"><bean:write name="helpText" /></p>
+    <div class="selector">
+	<p class="text"><bean:write name="helpText" /></p>
+  	<div class="list">
 
-			<div class="list">
+	    <h2>Choose from a list:</h2>
 
-				<h2>Choose from a list:</h2>
-				<logic:iterate id="originset" name="originsets">
-				<form method="get" action="<bean:write name="requestURL" />">
-					<p>
-					<input type="hidden" name="shire" value="<bean:write name="shire" />" />
-					<input type="hidden" name="target" value="<bean:write name="target" />" />
-					<logic:present name="providerId" scope="request">
-						<input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
-					</logic:present>
-					<logic:present name="time" scope="request">
-						<input type="hidden" name="time" value="<bean:write name="time" />" />
-					</logic:present>
-					<input type="hidden" name="action" value="selection" />
-					<select name="origin">	
-						<logic:iterate id="origin" name="originset" property="origins">
-							<option value="<jsp:getProperty name="origin" property="name" />">
-								<jsp:getProperty name="origin" property="displayName" />
-							</option>
-						</logic:iterate>
-					</select>
-						<input type="submit" value="Select" />
-						<input type="checkbox" checked="checked" name="cache" value="TRUE" /><span class="warning">Remember my selection on this computer.</span>
-						</p>
-					</form>
-					</logic:iterate>
+	    <form method="get" action="<bean:write name="requestURL" />">
+		<p>
+		    <input type="hidden" name="shire" value="<bean:write name="shire" />" />
+		    <input type="hidden" name="target" value="<bean:write name="target" />" />
+		    <logic:present name="providerId" scope="request">
+			    <input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
+		    </logic:present>
+		    <logic:present name="time" scope="request">
+				<input type="hidden" name="time" value="<bean:write name="time" />" />
+		    </logic:present>
+		    <input type="hidden" name="action" value="selection" />
+		    <select name="origin">	
+			<logic:iterate id="site" name="sites">
+			    <option value="<jsp:getProperty name="site" property="name" />">
+					<jsp:getProperty name="site" property="displayName" />
+			    </option>
+			</logic:iterate>
+		    </select>
+		    <input type="submit" value="Select" />
+		    <select name="cache">
+		    	<option value="false"> Do not remember
+		    	<option value="session" selected> Remember for session
+		    	<option value="perm"> Remember for a week
+		    </select>
+		</p>
+	    </form>
 
-				</div>
-				<div class="search">
-				<span class="option">or</span>
-				<h2>Search by keyword:</h2>
+	    <div class="search">
+		<span class="option">or</span>
 
-					<form method="get" action="<bean:write name="requestURL" />">
-						<p>
-							<input type="hidden" name="shire" value="<bean:write name="shire" />" />
-							<input type="hidden" name="target" value="<bean:write name="target" />" />
-							<logic:present name="providerId" scope="request">
-								<input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
-							</logic:present>
-							<logic:present name="time" scope="request">
-								<input type="hidden" name="time" value="<bean:write name="time" />" />
-							</logic:present>
-							<input type="hidden" name="action" value="search" />
-							<input type="text" name="string" />
-							<input type="submit" value="Search" />
-						</p>
-					</form>
-					<logic:present name="searchResultsEmpty" scope="request">
-						<p class="error"><bean:write name="searchResultEmptyText" /></p>
-					</logic:present>
-					<logic:present name="searchresults" scope="request">
-						<h3>Search results:</h3>
-						<form method="get" action="<bean:write name="requestURL" />">
-							<ul>
-							<logic:iterate id="currResult" name="searchresults">
-								<li>
-								<input type="radio" name="origin" value="<jsp:getProperty name="currResult" property="name" />" /><jsp:getProperty name="currResult" property="displayName" />
-								</li>
-							</logic:iterate>
-							</ul>
-							<p>
-								<input type="hidden" name="shire" value="<bean:write name="shire" />" />
-								<input type="hidden" name="target" value="<bean:write name="target" />" />
-								<logic:present name="providerId" scope="request">
-									<input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
-								</logic:present>
-								<logic:present name="time" scope="request">
-									<input type="hidden" name="time" value="<bean:write name="time" />" />
-								</logic:present>
-								<input type="hidden" name="action" value="selection" />
-								<input type="submit" value="Select" />
-								<input type="checkbox" checked="checked" name="cache" value="TRUE" /><span class="warning">Remember my selection on this computer.</span>
-							</p>
-						</form>	
-					</logic:present>
+		<h2>Search by keyword:</h2>
 
-				</div>
-			</div>
-			<div class="footer">
+		<form method="get" action="<bean:write name="requestURL" />">
+		    <p>
+			<input type="hidden" name="shire" value="<bean:write name="shire" />" />
+			<input type="hidden" name="target" value="<bean:write name="target" />" />
+			<logic:present name="providerId" scope="request">
+			    <input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
+			</logic:present>
+			<logic:present name="time" scope="request">
+			    <input type="hidden" name="time" value="<bean:write name="time" />" />
+			</logic:present>
+			<input type="hidden" name="action" value="search" />
+			<input type="text" name="string" />
+			<input type="submit" value="Search" />
+		    </p>
+		</form>
 
-				<p class="text">Need assistance? Send mail to <a href="mailto:inqueue-support@internet2.edu">inqueue-support@internet2.edu</a> with description.</p>
-				<div class="logo"><img src="./images/internet2.gif" alt="InQueue" /></div>
-			</div>
+		<logic:present name="searchResultsEmpty" scope="request">
+		    <p class="error"><bean:write name="searchResultEmptyText" /></p>
+		</logic:present>
+
+		<logic:present name="searchresults" scope="request">
+		    <h3>Search results:</h3>
+		    <form method="get" action="<bean:write name="requestURL" />">
+			<ul>
+			    <logic:iterate id="currResult" name="searchresults">
+				<li>
+				    <input type="radio" name="origin" value="<jsp:getProperty name="currResult" property="name" />" />
+				    <jsp:getProperty name="currResult" property="displayName" />
+				</li>
+			    </logic:iterate>
+			</ul>
+			<p>
+			    <input type="hidden" name="shire" value="<bean:write name="shire" />" />
+			    <input type="hidden" name="target" value="<bean:write name="target" />" />
+			    <logic:present name="providerId" scope="request">
+					<input type="hidden" name="providerId" value="<bean:write name="providerId" />" />
+			    </logic:present>
+			    <logic:present name="time" scope="request">
+					<input type="hidden" name="time" value="<bean:write name="time" />" />
+			    </logic:present>
+			    <input type="hidden" name="action" value="selection" />
+			    <input type="submit" value="Select" />
+			    <select name="cache">
+			    	<option value="false"> Do not remember
+			    	<option value="session" selected> Remember for session
+			    	<option value="perm"> Remember for a week
+			    </select>
+			</p>
+		    </form>	
+		</logic:present>
+
+	    </div>
+	</div>
+
+	<div class="footer">
+	    <p class="text">Need assistance? Send mail to <a href="mailto:inqueue-support@internet2.edu">inqueue-support@internet2.edu</a> with description.</p>
+	    <div class="logo"><img src="./images/internet2.gif" alt="InQueue" /></div>
+	</div>
 			
-	</body></html>
+</body>
+</html>
