@@ -110,7 +110,7 @@ public class RollingFileAppender
     public RollingFileAppender() {
 
     }
-
+    
     /**
      * Constructor.
      * 
@@ -219,7 +219,6 @@ public class RollingFileAppender
 
     int computeCheckPeriod() {
         RollingCalendar rollingCalendar = new RollingCalendar(gmtTimeZone, Locale.ENGLISH);
-        // set sate to 1970-01-01 00:00:00 GMT
         Date epoch = new Date(0);
         if (datePattern != null) {
             for (int i = TOP_OF_MINUTE; i <= TOP_OF_MONTH; i++) {
@@ -229,7 +228,6 @@ public class RollingFileAppender
                 rollingCalendar.setType(i);
                 Date next = new Date(rollingCalendar.getNextCheckMillis(epoch));
                 String r1 = simpleDateFormat.format(next);
-                // System.out.println("Type = "+i+", r0 = "+r0+", r1 = "+r1);
                 if (r0 != null && r1 != null && !r0.equals(r1)) {
                     return i;
                 }

@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.log;
 import java.io.IOException;
 
 import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -159,12 +160,10 @@ public class LoggingInitializer {
 		if (location == null) { throw new ShibbolethConfigurationException(
 				"No log file location attribute specified in TransactionLog element"); }
 
-		RollingFileAppender appender = null;
+		FileAppender appender = null;
 		try {
 			String logPath = new ShibResource(location, LoggingInitializer.class).getFile().getCanonicalPath();
-			PatternLayout messageLayout = new PatternLayout(txLogLayoutPattern);
-
-			appender = new RollingFileAppender(messageLayout, logPath, txLogAppenderDatePattern, logFileExtension);
+			appender = createRollingFileAppender(txLogLayoutPattern, logPath, txLogAppenderDatePattern);
 			appender.setName("shibboleth-transaction");
 		} catch (Exception e) {
 			throw new ShibbolethConfigurationException("<TransactionLog location=\"" + location
@@ -215,12 +214,10 @@ public class LoggingInitializer {
 		if (location == null) { throw new ShibbolethConfigurationException(
 				"No log file location attribute specified in ErrorLog element"); }
 
-		RollingFileAppender appender = null;
+		FileAppender appender = null;
 		try {
 			String logPath = new ShibResource(location, LoggingInitializer.class).getFile().getCanonicalPath();
-			PatternLayout messageLayout = new PatternLayout(sysLogLayoutPattern);
-
-			appender = new RollingFileAppender(messageLayout, logPath, sysLogAppenderDatePattern, logFileExtension);
+			appender = createRollingFileAppender(sysLogLayoutPattern, logPath, sysLogAppenderDatePattern);
 			appender.setName("shibboleth-error");
 		} catch (Exception e) { // catch any exception
 			throw new ShibbolethConfigurationException("<ErrorLog location=\"" + location
@@ -240,6 +237,33 @@ public class LoggingInitializer {
 		openSAMLLog.setLevel(level);
 		openSAMLLog.addAppender(appender);
 	}
+    
+    /**
+     * Creates a rolling file appender.  If the given log file ends with .* the characters after the . 
+     * will be treated as the logs extension.  If there is no . in the log file path a default extension 
+     * of "log" will be used.  When the log file is rolled the resulting file name is "logfile"."date"."extension".
+     * 
+     * @param messagePattern patterns for the log messages
+     * @param logFile the log file
+     * @param datePattern the date pattern to roll the file one
+     * 
+     * @return a rolling file appender
+     * 
+     * @throws IOException thrown if the appender can not create the initial log file
+     */
+    private static FileAppender createRollingFileAppender(String messagePattern, String logFile, String datePattern) throws IOException {
+        PatternLayout messageLayout = new PatternLayout(messagePattern);
+        
+        int fileExtDelimIndex = logFile.lastIndexOf(".");
+        if(fileExtDelimIndex <= 0) {
+            return new RollingFileAppender(messageLayout, logFile, datePattern, ".log");
+        }else {
+            String filePath = logFile.substring(0, fileExtDelimIndex);
+            String fileExtension = logFile.substring(fileExtDelimIndex);
+            
+            return new RollingFileAppender(messageLayout, filePath, datePattern, fileExtension);
+        }
+    }
 
 	/**
 	 * Configures Log4J by way of a Log4J specific configuration file.
