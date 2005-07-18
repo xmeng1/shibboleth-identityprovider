@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <WayfConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../schemas/wayfconfig.xsd" 
 	cacheType="COOKIES" 
+	cacheExpiration="604800"	
 	supportContact="mailto:root@localhost" 
 	logoLocation="images/logo.jpg">
 	<HelpText>In order to fulfill the request for a web resource you have just attempted to access, information must be obtained from your identify provider. Please select the provider with which you are affiliated.</HelpText>
