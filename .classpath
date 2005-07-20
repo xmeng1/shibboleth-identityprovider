@@ -21,14 +21,15 @@
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmltypes.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean_xpath.jar"/>
-	<classpathentry kind="lib" path="endorsed/sax.jar"/>
-	<classpathentry kind="lib" path="endorsed/jaxp-api.jar"/>
-	<classpathentry kind="lib" path="endorsed/dom.jar"/>
 	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bc-asn1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/ant-launcher-1.6.3.jar"/>
 	<classpathentry kind="lib" path="lib/ant-contrib.jar"/>
 	<classpathentry kind="lib" path="lib/ant-1.6.3.jar"/>
+	<classpathentry kind="lib" path="endorsed/resolver.jar"/>
+	<classpathentry kind="lib" path="endorsed/xalan.jar"/>
+	<classpathentry kind="lib" path="endorsed/xercesImpl.jar"/>
+	<classpathentry kind="lib" path="endorsed/xml-apis.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
