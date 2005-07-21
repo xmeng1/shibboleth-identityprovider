@@ -1164,6 +1164,15 @@ public class ServiceProviderConfig {
             
 			// Foreach Statement in the Assertion
 			Iterator statements = assertion.getStatements();
+            
+            // Statements can be deleted out of the assertion 
+            // which renders the interator invalid unless it is
+            // based on a derived collection.
+            ArrayList statementList = new ArrayList();
+            while (statements.hasNext()) {
+                statementList.add(statements.next());
+            }
+            statements=statementList.iterator();
 			int istatement=0;
 			while (statements.hasNext()) {
 				Object statement = statements.next();
@@ -1172,6 +1181,14 @@ public class ServiceProviderConfig {
 					
                     // Check each attribute, applying any matching rules.
 					Iterator attributes = attributeStatement.getAttributes();
+                    
+                    // Same trick for attributes
+                    ArrayList attributeList = new ArrayList();
+                    while (attributes.hasNext()) {
+                        attributeList.add(attributes.next());
+                    }
+                    attributes = attributeList.iterator();
+                    
 					int iattribute=0;
 					while (attributes.hasNext()) {
 						SAMLAttribute attribute = (SAMLAttribute) attributes.next();
