@@ -104,6 +104,9 @@
 	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_1ArtifactQueryHandler">
 		<Location>.+:8443/$IDP_WEBAPP_NAME$/Artifact</Location>
 	</ProtocolHandler>
+	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.Shibboleth_StatusHandler">
+		<Location>https://[^:/]+(:443)?/$IDP_WEBAPP_NAME$/Status</Location>
+	</ProtocolHandler>
 
 	
 	<!-- This section configures the loading of SAML2 metadata, which contains information about system entities and 
