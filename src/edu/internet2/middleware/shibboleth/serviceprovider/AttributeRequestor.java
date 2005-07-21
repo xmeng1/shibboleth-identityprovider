@@ -115,14 +115,19 @@ public class AttributeRequestor {
 		ServiceProviderConfig config = context.getServiceProviderConfig();
 		ApplicationInfo appinfo = config.getApplication(session.getApplicationId());
 		
-		// The Entity name was fed by by ShibPOSTProfile.accept(). Look it up now.
+        SAMLResponse response = session.getAttributeResponse();
+
+        // The Entity name was fed by by ShibPOSTProfile.accept(). Look it up in the
+        // Metadata now and return the Entity object.
 		EntityDescriptor entity = appinfo.lookup(session.getEntityId());
 		if (entity==null) {
 			log.error("Entity(Site) deleted from Metadata since authentication POST received: "+session.getEntityId());
 			return false;
 		}
+        
 		SAMLRequest request = null;
 		
+        // Find the Shibboleth protocol AA Role configured in the Metadat for this Entity. 
 		AttributeAuthorityDescriptor aa = 
 		    entity.getAttributeAuthorityDescriptor(XML.SAML11_PROTOCOL_ENUM); // throws MetadataException
 		if (aa==null) {
@@ -130,59 +135,64 @@ public class AttributeRequestor {
 		    return false;
 		}
 		
-		// Build the Attribute Query 
-		SAMLAttributeQuery query = null;
-		SAMLSubject subject;
-		try {
-			SAMLAuthenticationStatement authenticationStatement = session.getAuthenticationStatement();
-			if (authenticationStatement==null) {
-			    log.error("Session contains no Authentication Statement." );
-			    return false;
-			}
-			SAMLSubject subject2 = authenticationStatement.getSubject();
-			if (subject2==null) {
-			    log.error("Session Authentication Statement contains no Subject." );
-			    return false;
-			}
-			subject = (SAMLSubject) subject2.clone();
-		} catch (Exception e) {
-		    log.error("Unable to generate the query SAMLSubject from the Authenticaiton." );
-		    return false;
-		}
-		log.debug("Subject (Handle) is "+subject.getNameIdentifier());
-		Collection attributeDesignators = appinfo.getAttributeDesignators();
-		try {
-            query = 
-                new SAMLAttributeQuery(
-            		subject,     		 // Subject (i.e. Handle) from authentication
-            		appinfo.getProviderId(),  // SP Entity name
-            		attributeDesignators // Attributes to request, null for everything
-            		);
-
-            // Wrap the Query in a request
-            request = new SAMLRequest(query);
-        } catch (SAMLException e) {
-            log.error("AttributeRequestor unable to build SAML Query for Session "+session.getKey());
-            return false;
-        }
-		
-        String credentialId = appinfo.getCredentialIdForEntity(entity);
-        if (credentialId!=null)
-            possiblySignRequest(config.getCredentials(), request, credentialId);
-		
-		// ShibBinding will extract URLs from the Metadata and build
-		// parameters so SAML can create the session. It also interfaces
-		// to Trust to verify that any signed objects have trusted signatures.
-		SAMLResponse response = null;
-		try {
-            ShibBinding binding = new ShibBinding(session.getApplicationId());
-			response = binding.send(request,aa,null,null,appinfo);
-		} catch (SAMLException e) {;} // response will be null
 		if (response==null) {
-			log.error("AttributeRequestor Query to remote AA returned no response from "+session.getEntityId());
-			return false;
+		    // Build the Attribute Query 
+		    SAMLAttributeQuery query = null;
+		    SAMLSubject subject;
+		    try {
+		        // Get the POST data from the Session. It has the Subject and its source.
+		        SAMLAuthenticationStatement authenticationStatement = session.getAuthenticationStatement();
+		        if (authenticationStatement==null) {
+		            log.error("Session contains no Authentication Statement." );
+		            return false;
+		        }
+		        SAMLSubject subject2 = authenticationStatement.getSubject();
+		        if (subject2==null) {
+		            log.error("Session Authentication Statement contains no Subject." );
+		            return false;
+		        }
+		        subject = (SAMLSubject) subject2.clone();
+		    } catch (Exception e) {
+		        log.error("Unable to generate the query SAMLSubject from the Authenticaiton." );
+		        return false;
+		    }
+		    log.debug("Subject (Handle) is "+subject.getNameIdentifier());
+		    
+		    
+		    
+		    
+		    Collection attributeDesignators = appinfo.getAttributeDesignators();
+		    try {
+		        query = 
+		            new SAMLAttributeQuery(
+		                    subject,     		 // Subject (i.e. Handle) from authentication
+		                    appinfo.getProviderId(),  // SP Entity name
+		                    attributeDesignators // Attributes to request, null for everything
+		            );
+		        
+		        // Wrap the Query in a request
+		        request = new SAMLRequest(query);
+		    } catch (SAMLException e) {
+		        log.error("AttributeRequestor unable to build SAML Query for Session "+session.getKey());
+		        return false;
+		    }
+		    
+		    String credentialId = appinfo.getCredentialIdForEntity(entity);
+		    if (credentialId!=null)
+		        possiblySignRequest(config.getCredentials(), request, credentialId);
+		    
+		    // ShibBinding will extract URLs from the Metadata and build
+		    // parameters so SAML can create the session. It also interfaces
+		    // to Trust to verify that any signed objects have trusted signatures.
+		    try {
+		        ShibBinding binding = new ShibBinding(session.getApplicationId());
+		        response = binding.send(request,aa,null,null,appinfo);
+		    } catch (SAMLException e) {;} // response will be null
+		    if (response==null) {
+		        log.error("AttributeRequestor Query to remote AA returned no response from "+session.getEntityId());
+		        return false;
+		    }
 		}
-		
 		
 		// Check each assertion in the response.
         int acount = 0;

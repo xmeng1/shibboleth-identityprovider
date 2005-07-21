@@ -176,24 +176,29 @@ public class ShibBinding {
 	}
 
 	/**
-	 * Validate signatures in response against the Trust configuration.
+	 * Given a SAMLResponse, check the Response itself and every Assertion it 
+     * contains for a digital signature. If signed, call Trust to verify the
+     * signature against the configured Certificates for this Role in the Metadata.
 	 * 
 	 * @param role     OriginSite
 	 * @param appinfo  Application data
 	 * @param resp     SAML response
 	 * @throws TrustException on failure
 	 */
-	private void 
+	public static void 
 	validateResponseSignatures(
 			AttributeAuthorityDescriptor role, 
 			ApplicationInfo appinfo, 
 			SAMLResponse resp) 
 	throws TrustException {
 		
-		if (resp.isSigned()&& !appinfo.validate(resp,role)) {
+        // If the entire Response is signed, check it
+		if (resp.isSigned()&& 
+            !appinfo.validate(resp,role)) {
 			throw new TrustException("Unable to validate signature of response");
 		}
 		
+        // Now check each Assertion in the Response for a signature
 		Iterator assertions = resp.getAssertions();
 		while (assertions.hasNext()) {
 			SAMLAssertion assertion = (SAMLAssertion) assertions.next();

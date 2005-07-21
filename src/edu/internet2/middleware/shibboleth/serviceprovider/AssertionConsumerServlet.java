@@ -60,10 +60,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
+import org.opensaml.SAMLAssertion;
+import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
+import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
 
 import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
@@ -299,9 +302,39 @@ public class AssertionConsumerServlet extends HttpServlet {
         // Very agressive attribute fetch rule 
         // Get the Attributes immediately! [good for debugging]
         Session session = sessionManager.findSession(sessionid, applicationId);
+        
+        checkForAttributePush(samldata, session);
+        
         AttributeRequestor.fetchAttributes(session);
 
         return sessionid;
+    }
+
+
+    /**
+     * Scan the POST data for Attribute Assertions. If any are found,
+     * then attributes have been pushed and we don't need to go to 
+     * the AA to get them. 
+     * @param samldata The BrowserProfileResponse containing the SAMLResponse
+     * @param session The Session just created
+     */
+    private static void checkForAttributePush(BrowserProfileResponse samldata, Session session) {
+        SAMLResponse samlresponse = samldata.response;
+        Iterator assertions = samlresponse.getAssertions();
+        while (assertions.hasNext()) {
+            SAMLAssertion assertion = (SAMLAssertion) assertions.next();
+            Iterator statements = assertion.getStatements();
+            while (statements.hasNext()) {
+                SAMLStatement statement = (SAMLStatement) statements.next();
+                if (statement instanceof SAMLAttributeStatement) {
+                    session.setAttributeResponse(samlresponse);
+                    // Note, the Attribute Statements have not been checked for 
+                    // AAP or Signatures. AttributeRequestor will bypass calling
+                    // the AA and will reprocess the POST Response for Attributes.
+                    return;
+                }
+            }
+        }
     }
 
 
