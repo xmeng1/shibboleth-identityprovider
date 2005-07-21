@@ -63,7 +63,7 @@ public class SchemasResourceListImpl extends SchemaStore {
             }
             String resourceName = resourceprefix+filename;
             InputStream inputStream =
-                    Parser.class.getResourceAsStream(
+                SchemasResourceListImpl.class.getResourceAsStream(
                             resourceName);
             if (inputStream == null) {
                 log.error("Resource "+resourceName+" not found, ignoring it.");
