@@ -27,9 +27,10 @@
 	<classpathentry kind="lib" path="lib/ant-launcher-1.6.3.jar"/>
 	<classpathentry kind="lib" path="lib/ant-contrib.jar"/>
 	<classpathentry kind="lib" path="lib/ant-1.6.3.jar"/>
-	<classpathentry kind="lib" path="endorsed/resolver.jar"/>
 	<classpathentry kind="lib" path="endorsed/xalan.jar"/>
 	<classpathentry kind="lib" path="endorsed/xercesImpl.jar"/>
-	<classpathentry kind="lib" path="endorsed/xml-apis.jar"/>
+	<classpathentry kind="lib" path="endorsed/sax.jar"/>
+	<classpathentry kind="lib" path="endorsed/jaxp-api.jar"/>
+	<classpathentry kind="lib" path="endorsed/dom.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>
