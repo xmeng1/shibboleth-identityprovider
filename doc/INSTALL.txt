@@ -1,30 +1,19 @@
-4/27/04
-Version 1.2
+7/22/2005
+Version 1.3
 
-Binary distributions of the Shibboleth code are available.
-Information on obtaining and installing binaries can be found at
-http://shibboleth.internet2.edu/ and in the deploy guide in this
-directory.
+Binary distributions of the Shibboleth code are available.  Information 
+on obtaining and installing binaries can be found at
+http://shibboleth.internet2.edu/ .
 
-This document provides details for those wishing to build from source.
+Shibboleth Identity Provider Installation
 
-JAVA / ORIGIN
+The following commands should be issued to install the Shibboleth Identity 
+Provider.  You will be prompted for configuration information, including the 
+desired name of the IdP web aplication and the locations in which the IdP 
+components should be installed.
 
-There are a fairly large number of dependent Java class libraries required
-to build Shibboleth, but all the needed jars are currently included.
-The binary distribution for the origin site components includes the Java
-source. The binaries can also be built easily using Ant, which is also included.
+$ export JAVA_HOME=(the path to your java installation)
+$ cd shibboleth-idp-install
+$ ./ant install
 
-The following commands will build this release of Shibboleth
-
-$ cd shibboleth/java
-$ ./ant build-util
-$ ./ant
-
-The JavaDocs can be generated with the following command:
-
-$ ./ant javadocs
-
-The origin code is largely contained in a Java webapp (shibboleth.war) that
-you would deploy with a J2EE engine like Tomcat. From this point, refer to
-the deploy guide for more details.
+From this point forward, refer to the deploy guide for configuration details.
