@@ -1,4 +1,4 @@
-6/15/04
+7/22/2005
 Version 1.3
 
 Welcome to Internet2's Shibboleth
