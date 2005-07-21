@@ -27,7 +27,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -179,8 +178,6 @@ public class NameMapper {
 	 */
 	public NameIdentifierMapping getNameIdentifierMapping(URI format) {
 
-		if (format.toString().equals("urn:mace:shibboleth:test:nameIdentifier")) { return new TestNameIdentifierMapping(); }
-
 		if (!initialized) { return defaultMapping; }
 
 		return (NameIdentifierMapping) byFormat.get(format);
@@ -283,92 +280,6 @@ public class NameMapper {
 
 		if (mapping == null) { throw new NameIdentifierMappingException("Name Identifier id not registered."); }
 		return mapping.getNameIdentifier(principal, sProv, idProv);
-	}
-
-	/**
-	 * <code>NameIdentifierMapping</code> implement that always maps to the same principal name. Used for testing.
-	 */
-	public class TestNameIdentifierMapping implements NameIdentifierMapping {
-
-		private TestNameIdentifierMapping() {
-
-		// Constructor to prevent others from creating this class
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifierFormat()
-		 */
-		public URI getNameIdentifierFormat() {
-
-			try {
-				return new URI("urn:mace:shibboleth:test:nameIdentifier");
-			} catch (URISyntaxException e) {
-				log.error("Name Mapping \"format\" is not a valid URI: " + e);
-				throw new RuntimeException("Internal error: Encountered an error generating a standard URI.");
-			}
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getPrincipal(org.opensaml.SAMLNameIdentifier,
-		 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
-		 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
-		 */
-		public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
-				throws NameIdentifierMappingException, InvalidNameIdentifierException {
-
-			log.info("Request references built-in test principal.");
-
-			if (idProv.getProviderId() == null || !idProv.getProviderId().equals(nameId.getNameQualifier())) {
-				log.error("The name qualifier (" + nameId.getNameQualifier()
-						+ ") for the referenced subject is not valid for this identity provider.");
-				throw new NameIdentifierMappingException("The name qualifier (" + nameId.getNameQualifier()
-						+ ") for the referenced subject is not valid for this identity provider.");
-			}
-
-			return new LocalPrincipal("test-handle");
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#destroy()
-		 */
-		public void destroy() {
-
-		// Nothing to do
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getId()
-		 */
-		public String getId() {
-
-			return null;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see edu.internet2.middleware.shibboleth.common.NameIdentifierMapping#getNameIdentifierName(edu.internet2.middleware.shibboleth.common.LocalPrincipal,
-		 *      edu.internet2.middleware.shibboleth.common.ServiceProvider,
-		 *      edu.internet2.middleware.shibboleth.common.IdentityProvider)
-		 */
-		public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv,
-				IdentityProvider idProv) throws NameIdentifierMappingException {
-
-			try {
-				return new SAMLNameIdentifier("test-handle", idProv.getProviderId(), getNameIdentifierFormat()
-						.toString());
-			} catch (SAMLException e) {
-				throw new NameIdentifierMappingException("Unable to generate Name Identifier: " + e);
-			}
-		}
 	}
 
 	/**
