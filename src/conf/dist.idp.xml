@@ -59,7 +59,7 @@
 		id="shm" 
 		format="urn:mace:shibboleth:1.0:nameIdentifier" 
 		type="SharedMemoryShibHandle" 
-		handleTTL="1800"/>
+		handleTTL="28800"/>
 
 
 	<!-- Determines how SAML artifacts are stored and retrieved
