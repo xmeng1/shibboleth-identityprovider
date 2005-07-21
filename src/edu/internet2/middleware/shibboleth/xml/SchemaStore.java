@@ -35,7 +35,9 @@ import javax.xml.validation.SchemaFactory;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 /**
  * Compile a Schema object from a Map of DOM objects representing XSD files keyed by the Namespace that the XSD defines.
@@ -45,7 +47,7 @@ import org.xml.sax.SAXException;
  * 
  * @author Howard Gilbert
  */
-public class SchemaStore {
+public class SchemaStore implements ErrorHandler {
 
 	private static Logger log = Logger.getLogger(SchemaStore.class);
 
@@ -108,11 +110,27 @@ public class SchemaStore {
 		// Now compile all the XSD files into a single composite Schema object
 		SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 		try {
+			factory.setErrorHandler(this);
 			schema = factory.newSchema((Source[]) sources.toArray(new Source[0]));
 		} catch (SAXException e) {
 			log.error("Schemas failed to compile, dependencies may be corrupt: " + e);
 		}
 		return schema;
+	}
+
+	public void warning(SAXParseException exception) throws SAXException {
+		log.warn(exception);
+		
+	}
+
+	public void error(SAXParseException exception) throws SAXException {
+		log.error(exception);
+		throw exception;
+	}
+
+	public void fatalError(SAXParseException exception) throws SAXException {
+		log.error(exception);
+		throw exception;
 	}
 
 }
