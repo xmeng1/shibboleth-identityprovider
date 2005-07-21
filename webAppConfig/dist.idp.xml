@@ -28,6 +28,10 @@
         <servlet-name>IdP</servlet-name>
         <url-pattern>/Artifact</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>IdP</servlet-name>
+        <url-pattern>/Status</url-pattern>
+    </servlet-mapping>
 
     <mime-mapping>
         <extension>css</extension>
