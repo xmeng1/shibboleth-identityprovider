@@ -327,6 +327,7 @@ public class AssertionConsumerServlet extends HttpServlet {
             while (statements.hasNext()) {
                 SAMLStatement statement = (SAMLStatement) statements.next();
                 if (statement instanceof SAMLAttributeStatement) {
+                    log.info("Found Attributes with Authenticaiton data (Attribute Push).");
                     session.setAttributeResponse(samlresponse);
                     // Note, the Attribute Statements have not been checked for 
                     // AAP or Signatures. AttributeRequestor will bypass calling
@@ -338,10 +339,13 @@ public class AssertionConsumerServlet extends HttpServlet {
     }
 
 
-
+    /**
+     * Artifact comes as a GET
+     */
     protected void doGet(HttpServletRequest arg0, HttpServletResponse arg1)
     	throws ServletException, IOException {
-    	// Currently the Assertion Consumer does not receive a GET
+        log.debug("Received GET: "+ arg0.getQueryString());
+    	doPost(arg0,arg1);
     }
 	
 
