@@ -241,7 +241,7 @@
                         <mkdir dir="${ext.filesystem.home}/etc/${ext.name}" />
                         <copy todir="${ext.filesystem.home}/etc/${ext.name}">
                             <fileset dir="${ext.etc}">
-                                <include name="*" />
+                                <include name="**" />
                             </fileset>
                         </copy>
                         <replace dir="${ext.filesystem.home}/etc/${ext.name}" token="${ext.home.token}" value="${ext.filesystem.home}" />
