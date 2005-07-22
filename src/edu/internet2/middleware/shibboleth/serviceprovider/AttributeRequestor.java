@@ -62,6 +62,7 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.security.Key;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -192,11 +193,18 @@ public class AttributeRequestor {
 		        log.error("AttributeRequestor Query to remote AA returned no response from "+session.getEntityId());
 		        return false;
 		    }
-		}
+		} else {
+		    log.info("Bypassing Attribute Query because Attributes already Pushed.");
+        }
 		
 		// Check each assertion in the response.
         int acount = 0;
 		Iterator assertions = response.getAssertions();
+        ArrayList assertionList = new ArrayList();
+        while (assertions.hasNext()) {
+            assertionList.add(assertions.next());
+        }
+        assertions=assertionList.iterator();
 		while (assertions.hasNext()) {
 			SAMLAssertion assertion = (SAMLAssertion) assertions.next();
 //			if (signedAssertions && !assertion.isSigned()) {
