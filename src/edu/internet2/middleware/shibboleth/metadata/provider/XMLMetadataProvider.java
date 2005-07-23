@@ -44,6 +44,7 @@ import org.opensaml.XML;
 import org.opensaml.artifact.Artifact;
 import org.opensaml.artifact.SAMLArtifactType0001;
 import org.opensaml.artifact.SAMLArtifactType0002;
+import org.opensaml.artifact.URI;
 import org.opensaml.artifact.Util;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -107,10 +108,14 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
         ArrayList list = null;
         
         if (artifact instanceof SAMLArtifactType0001) {
-            list = (ArrayList)sources.get(((SAMLArtifactType0001)artifact).getSourceId());
+        	byte[] sourceId = ((SAMLArtifactType0001)artifact).getSourceId();
+        	String sourceString = new String(Hex.encode(sourceId));
+            list = (ArrayList)sources.get(sourceString);
         }
         else if (artifact instanceof SAMLArtifactType0002) {
-            list = (ArrayList)sources.get(((SAMLArtifactType0002)artifact).getSourceLocation().toString());
+        	URI sourceLocation = ((SAMLArtifactType0002)artifact).getSourceLocation();
+        	String sourceLocationString = sourceLocation.toString();
+            list = (ArrayList)sources.get(sourceLocationString);
         }
         else {
             log.error("unsupported artifact type (" + artifact.getTypeCode().toString() + ")");
