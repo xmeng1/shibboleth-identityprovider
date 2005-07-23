@@ -103,8 +103,14 @@ public class SPArtifactMapper implements ArtifactMapper {
 		Iterator artifacts = request.getArtifacts();
 		if (!artifacts.hasNext())
 			throw new SAMLException("SPArtifactMapper was passed no artifact.");
-		SAMLArtifact artifact = (SAMLArtifact)artifacts.next();
-		EntityDescriptor entity = ((Metadata)appinfo).lookup(artifact);
+		EntityDescriptor entity = null;
+		SAMLArtifact artifact = null;
+		while (artifacts.hasNext()) {
+			artifact = (SAMLArtifact)artifacts.next();
+			entity = ((Metadata)appinfo).lookup(artifact);
+			if (entity!=null)
+				break;
+		}
 		if (entity==null) {
 			throw new MetadataException("Unable to find Artifact issuer in Metadata.");
 		}
