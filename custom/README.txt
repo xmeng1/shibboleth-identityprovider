@@ -43,6 +43,10 @@ the following directories
        web/ - [Optional] Any web pages, images, JSPs, etc. that should be included with the war
        build.properties - [REQUIRED] build properties for your extension 
                             (see below for required and optional properties)
+
+The following directories are created, and destroyed, by the extension build process and as
+such developers should never rely on them: build, dist, doc/api.  Any other directory may be
+created and bundled with the extension, the build process will simply ignore them.
   
 2.1 Steps for Using the Extensions Build Process
 I.  Create a directory under the custom directory with the structure mentioned above.  Any 

@@ -1,9 +1,11 @@
 <!-- 
   This file is imported in to the main Shibboleth build.xml file and 
-  contains all targets used for building IdP and SP extensions.
+  contains all targets used for building IdP and SP extensions.  These
+  targets are not designed to be called by anything other than the main
+  Shibboleth build file.
   
   Chad La Joie
-  July 6, 2005
+  July 25, 2005
 -->
 <project name="Shibboleth-Extensions" default="ext-invoke" basedir=".">
 
@@ -23,24 +25,21 @@
         </for>
     </target>
 
-    <!-- Builds a single extension, called multiple times by build-exts -->
+    <!-- Builds a single extension -->
     <target name="ext-build" depends="ext-build-init" description="Builds the extension">
         <echo message="--- Starting to build module ${ext.name} in ${ext.root}" />
 
         <!-- Compile the source -->
         <antcall target="ext-compile" />
+        
+        <!-- Generate Javadocs -->
+        <antcall target="ext-gen-docs" />
 
         <!-- Copy over non-source files -->
         <antcall target="ext-copy-src-conf" />
 
-        <!-- Generate the java docs if we're supposed to -->
-        <antcall target="ext-gen-docs" />
-
         <!-- Run unit tests if we're supposed to -->
         <antcall target="ext-test" />
-
-        <!-- Package everything up -->
-        <antcall target="ext-package" />
 
         <!-- Put the libraries where the IdP and SP packaging can pick them up -->
         <antcall target="ext-copy-libs" />
@@ -51,15 +50,8 @@
         <echo message="--- Extension ${ext.name} built" />
     </target>
 
-    <!-- Initialize everything we need. -->
-    <!-- The properties loaded here are scoped to this particular extension build -->
-    <target name="ext-build-init" description="Sets up everything to prepare for the build">
-        <echo message="Loading build property files" />
-        <!-- 
-		Load extension specific properties if available. We can not set the extension's build.properties 
-		file name in the extension-build.properties file because if we read that file first the extension 
-		build properties won't be able to override properties in it as properties are immutable once set.
-		-->
+    <target name="ext-load-properties" description="Loads property files needed by build process">
+        <!-- Load extension specific properties. -->
         <if>
             <not>
                 <available file="${ext.root}/build.properties" />
@@ -71,14 +63,20 @@
         <property file="${ext.root}/build.properties" />
 
         <!-- Load default properties -->
-        <echo message="Loading build property defaults ${exts.dir}/default-build.properties" />
         <property file="${exts.dir}/extension-build.properties" />
 
         <fail unless="ext.name" message="The extension ${ext.root} does not contain the required (ext.name) property in its build.properties file." />
+    </target>
+
+    <!-- Initialize everything we need. -->
+    <!-- The properties loaded here are scoped to this particular extension build -->
+    <target name="ext-build-init"  depends="ext-load-properties" description="Sets up everything to prepare for the build">
 
         <!-- Create needed directories -->
         <mkdir dir="${ext.dist}" />
+        <mkdir dir="${ext.build}" />
         <mkdir dir="${ext.classes}" />
+        <mkdir dir="${ext.docs}" />
     </target>
 
     <!-- Compiles the extension -->
@@ -88,7 +86,7 @@
             <available file="${ext.src}" />
             <then>
                 <echo message="Compiling extension source" />
-                <javac srcdir="${ext.src}" destdir="${ext.classes}" includes="**/*.java" debug="on" source="1.4">
+                <javac srcdir="${ext.src}" destdir="${ext.classes}" includes="**/*.java" debug="on" source="1.4" deprecation="true">
                     <!-- Shibboleth Libraries -->
                     <classpath refid="build.path" />
 
@@ -109,12 +107,12 @@
     </target>
 
     <!-- Copies files from etc directory to dist directory to be bundled with extension jar -->
-    <target name="ext-copy-src-conf" depends="ext-build-init" description="Copys non-source files to place where they will be added to jar">
+    <target name="ext-copy-src-conf" description="Copys non-source files to place where they will be added to jar">
         <!-- Copy any extra stuff that needs to be on the classpath -->
         <if>
             <available file="${ext.src.conf}" />
             <then>
-                <echo message="Detected files in the extensions 'etc' directory, ensuring they are bundled with the extension's jar." />
+                <echo message="Detected files in the extensions 'src-conf' directory, ensuring they are bundled with the extension's jar." />
                 <copy todir="${ext.classes}">
                     <fileset dir="${ext.src.conf}">
                         <include name="**" />
@@ -125,7 +123,7 @@
     </target>
 
     <!-- Move third party libraries to be picked up by the war -->
-    <target name="ext-copy-libs" depends="ext-compile" description="Moves third party libraries to be picked up by the war">
+    <target name="ext-copy-libs" description="Moves third party libraries to be picked up by the war">
         <if>
             <available file="${ext.lib}" />
             <then>
@@ -137,7 +135,7 @@
     </target>
 
     <!-- Move web resources to be picked up by the war -->
-    <target name="ext-copy-webpages" depends="ext-compile" description="Moves web resources to be picked up by the war">
+    <target name="ext-copy-webpages" description="Moves web resources to be picked up by the war">
         <if>
             <available file="${ext.webpages}" />
             <then>
@@ -150,7 +148,7 @@
 
 
     <!-- Run any unit tests for the extension -->
-    <target name="ext-test" depends="ext-compile" description="Runs extension unit test">
+    <target name="ext-test" description="Runs extension unit test">
         <if>
             <equals arg1="${test.ext}" arg2="true" />
             <then>
@@ -183,6 +181,7 @@
                         <echo message="Generating javadocs for extension ${ext.name}" />
                         <javadoc sourcepath="${ext.src}" destdir="${ext.docs}" packagenames="*" author="true" version="true" windowtitle="${ext.name} Shibboleth Extension Java API" doctitle="${ext.name} Shibboleth Extension Java API" failonerror="false">
                             <classpath refid="build.path" />
+                            <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
                         </javadoc>
                     </then>
                 </if>
@@ -194,21 +193,18 @@
     <!-- 
         Required parameters
             exts.dir - the root directory of the extensions (contains all the individual extension directories)
-            ext.build.function - the particular extension build function to invoke, acceptable values
-                   ext-invoke, ext-clean, ext-install-filesystem 
-               (some functions may require additional paramters, see documentation for each function)
             ext.filesystem.home - the path on the filesystem that the extension will be installed
                 expected subdirectories are 'bin, 'etc', and 'lib'
             ext.home.token - the token, in config files, to replace with the path to the IdP/SP home
     -->
-    <target name="ext-package" depends="ext-build-init" description="Packages up the extension">
+    <target name="ext-package" depends="ext-load-properties" description="Packages up the extension">
         <if>
-            <available file="${ext.classes}"/>
+            <available file="${ext.classes}" />
             <then>
-                <replace dir="${ext.classes}" token="${ext.home.token}" value="${ext.filesystem.home}" excludes="*.class"/>
-                <replace dir="${ext.classes}" token="$EXTENSION_NAME$" value="${ext.name}" excludes="*.class"/>
-                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}"/>
-                <copy file="${ext.dist}/${ext.name}.jar" todir="${exts.dir}/lib"/>
+                <replace dir="${ext.classes}" token="${ext.home.token}" value="${ext.filesystem.home}" excludes="*.class" />
+                <replace dir="${ext.classes}" token="$EXTENSION_NAME$" value="${ext.name}" excludes="*.class" />
+                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" />
+                <copy file="${ext.dist}/${ext.name}.jar" todir="${exts.dir}/lib" />
             </then>
         </if>
     </target>
@@ -285,8 +281,18 @@
         </if>
     </target>
 
-    <!-- Cleans up build generated resources -->
-    <target name="ext-clean" description="Cleans up any build created resources">
-        <delete dir="${ext.root}/dist" failonerror="false" />
+    <!-- Cleans up classes files -->
+    <target name="ext-clean-build" depends="ext-load-properties" description="Cleans up any build created resources">
+        <delete dir="${ext.build}" failonerror="false" />
+    </target>
+
+    <!-- Cleans up java docs -->
+    <target name="ext-clean-javadocs" depends="ext-load-properties" description="Deletes generated javadocs">
+        <delete dir="${ext.docs}" failonerror="false" />
+    </target>
+
+    <!-- Cleans up distribution files -->
+    <target name="ext-clean-dist" depends="ext-load-properties" description="Deletes distribution generated files">
+        <delete dir="${ext.dist}" failonerror="false" />
     </target>
 </project>
