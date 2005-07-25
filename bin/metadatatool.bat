@@ -17,6 +17,7 @@ if not exist %JAVACMD% (
   exit /b
 )
 
+set SHIB_HOME=
 if defined IDP_HOME (
   set SHIB_HOME=%IDP_HOME%
 )

@@ -18,6 +18,7 @@ fi
 
 
 ##Find the shibboleth components
+SHIB_HOME=
 if [ -n "$IDP_HOME" ] ; then
 	SHIB_HOME=$IDP_HOME
 fi
