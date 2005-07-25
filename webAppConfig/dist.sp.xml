@@ -85,7 +85,11 @@
 		<servlet-name>AssertionConsumer</servlet-name>
 		<url-pattern>/Shibboleth.sso/SAML/POST</url-pattern>
 	</servlet-mapping>
-
+	<servlet-mapping>
+		<servlet-name>AssertionConsumer</servlet-name>
+		<url-pattern>/Shibboleth.sso/SAML/Artifact</url-pattern>
+	</servlet-mapping>
+	
 	<!-- Mapping for administrative functions -->
 	<servlet-mapping>
 		<servlet-name>ShowLog</servlet-name>
