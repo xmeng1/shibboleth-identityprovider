@@ -18,25 +18,25 @@ fi
 
 
 ##Find the shibboleth components
-if [ ! -n "$SHIB_HOME" ] ; then
-  echo "Error: SHIB_HOME is not defined."
+if [ ! -n "$IDP_HOME" ] ; then
+  echo "Error: IDP_HOME is not defined."
   exit
 fi
 
-if [ ! \( -f "$SHIB_HOME/lib/shib-util.jar" -a -r "$SHIB_HOME/lib/shib-util.jar" \) ] ; then
+if [ ! \( -f "$IDP_HOME/lib/shib-util.jar" -a -r "$IDP_HOME/lib/shib-util.jar" \) ] ; then
   echo "Error: Cannot find the shibboleth jar (shib-util.jar)."
   echo "       If you downloaded the shibboleth source, you need to run \"ant build-util\""
   exit
 fi
 
-ENDORSED=$SHIB_HOME/endorsed/
+ENDORSED=$IDP_HOME/endorsed/
 
 ##Grab all the dependencies
 if [ -n "$CLASSPATH" ] ; then
   SHIB_UTIL_CLASSPATH=$CLASSPATH
 fi
 
-DIRLIBS=${SHIB_HOME}/lib/*.jar
+DIRLIBS=${IDP_HOME}/lib/*.jar
 for i in ${DIRLIBS}
 do
     # if the directory is empty, then it will return the input string
@@ -50,7 +50,7 @@ do
     fi
 done
 
-DIRLIBS=${SHIB_HOME}/webApplication/WEB-INF/lib/*.jar
+DIRLIBS=${IDP_HOME}/webApplication/WEB-INF/lib/*.jar
 for i in ${DIRLIBS}
 do
     # if the directory is empty, then it will return the input string
@@ -64,7 +64,7 @@ do
     fi
 done
 
-SHIB_UTIL_CLASSPATH=$SHIB_UTIL_CLASSPATH:"$SHIB_HOME"
+SHIB_UTIL_CLASSPATH=$SHIB_UTIL_CLASSPATH:"$IDP_HOME"
 
 ##Here we go
 $JAVACMD -Djava.endorsed.dirs="$ENDORSED" -cp $SHIB_UTIL_CLASSPATH  edu.internet2.middleware.shibboleth.utils.ResolverTest "$@"

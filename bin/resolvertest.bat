@@ -18,13 +18,14 @@ if not exist %JAVACMD% (
 )
 
 REM The root of the Shibboleth package tree, relative to the run directory
-if not defined SHIB_HOME (
-  set SHIB_HOME=.
+if not defined IDP_HOME (
+  echo Error: IDP_HOME is not defined.
+  exit /b
 )
 
-set ENDORSED=%SHIB_HOME%\endorsed
+set ENDORSED=%IDP_HOME%\endorsed
 
-if not exist %SHIB_HOME%\lib\shib-util.jar (
+if not exist %IDP_HOME%\lib\shib-util.jar (
   echo Error: Cannot find shib-util.jar
   echo 		If you downloaded the shibboleth source, you need to run "ant build-util"
   exit /b
@@ -36,11 +37,11 @@ if defined CLASSPATH (
 )
 
 REM add in the dependency .jar files
-for %%i in (%SHIB_HOME%\lib\*.jar) do (
-	call %SHIB_HOME%\bin\cpappend.bat %%i
+for %%i in (%IDP_HOME%\lib\*.jar) do (
+	call %IDP_HOME%\bin\cpappend.bat %%i
 )
-for %%i in (%SHIB_HOME%\webApplication\WEB-INF\lib\*.jar) do (
-	call %SHIB_HOME%\bin\cpappend.bat %%i
+for %%i in (%IDP_HOME%\webApplication\WEB-INF\lib\*.jar) do (
+	call %IDP_HOME%\bin\cpappend.bat %%i
 )
 
 REM Here we go

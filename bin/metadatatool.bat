@@ -17,8 +17,15 @@ if not exist %JAVACMD% (
   exit /b
 )
 
-REM The root of the Shibboleth package tree, relative to the run directory
+if defined IDP_HOME (
+  set SHIB_HOME=%IDP_HOME%
+)
+if defined SP_HOME (
+  set SHIB_HOME=%SP_HOME%
+)
 if not defined SHIB_HOME (
+  echo Error: Neither IDP_HOME nor SP_HOME is defined.
+  exit /b
   set SHIB_HOME=.
 )
 

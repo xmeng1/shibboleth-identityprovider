@@ -18,9 +18,17 @@ fi
 
 
 ##Find the shibboleth components
-if [ ! -n "$SHIB_HOME" ] ; then
-  SHIB_HOME=.
+if [ -n "$IDP_HOME" ] ; then
+	SHIB_HOME=$IDP_HOME
 fi
+if [ -n "$SP_HOME" ] ; then
+	SHIB_HOME=$SP_HOME
+fi
+if [ ! -n "$SHIB_HOME" ] ; then
+	echo "Error: Neither IDP_HOME nor SP_HOME is defined."
+	exit
+fi
+
 ENDORSED=$SHIB_HOME/endorsed
 
 if [ ! \( -f "$SHIB_HOME/lib/shib-util.jar" -a -r "$SHIB_HOME/lib/shib-util.jar" \) ] ; then
