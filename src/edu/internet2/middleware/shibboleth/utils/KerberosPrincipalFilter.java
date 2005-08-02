@@ -63,10 +63,15 @@ public class KerberosPrincipalFilter implements Filter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 
 		String name = httpRequest.getRemoteUser();
-		int split = name.indexOf('@');
-		if (split > -1) name = name.substring(0, split);
-
-		chain.doFilter(new KerberosPrincipalWrapper(httpRequest, new PrincipalImpl(name)), response);
+		if (name != null) {
+			int split = name.indexOf('@');
+			if (split > -1) {
+				name = name.substring(0, split);
+				chain.doFilter(new KerberosPrincipalWrapper(httpRequest, new PrincipalImpl(name)), response);
+				return;
+			}
+		}
+		chain.doFilter(request, response);
 	}
 
 	/**
