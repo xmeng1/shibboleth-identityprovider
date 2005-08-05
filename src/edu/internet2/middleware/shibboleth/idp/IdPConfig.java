@@ -36,7 +36,7 @@ public class IdPConfig {
 	public static final String configNameSpace = "urn:mace:shibboleth:idp:config:1.0";
 	private String resolverConfig = "/conf/resolver.xml";
 	private boolean passThruErrors = false;
-	private int maxThreads = 5;
+	private int maxThreads = 30;
 	private String authHeaderName = "REMOTE_USER";
 	private URI defaultAuthMethod;
 	private URL AAUrl;
