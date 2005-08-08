@@ -149,15 +149,22 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 	}
 
 	/**
-	 * Decode an encrypted handle back into a principal
+	 * Decode an encrypted handle inside a SAMLNameIdentifier back into a principal
 	 */
-	public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+    public Principal getPrincipal(SAMLNameIdentifier nameId, ServiceProvider sProv, IdentityProvider idProv)
+        throws NameIdentifierMappingException, InvalidNameIdentifierException {
+		verifyQualifier(nameId, idProv);
+		return getPrincipal(nameId.getName());
+    }
+
+	/**
+	 * Decode an encrypted handle string back into a principal
+	 */
+	public Principal getPrincipal(String name)
 			throws NameIdentifierMappingException, InvalidNameIdentifierException {
 
-		verifyQualifier(nameId, idProv);
-
 		try {
-			byte[] in = Base32.decode(nameId.getName());
+			byte[] in = Base32.decode(name);
 
 			Cipher cipher = Cipher.getInstance(cipherAlgorithm);
 			int ivSize = cipher.getBlockSize();
@@ -235,6 +242,22 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 	}
 
 	/**
+	 * Encodes a principal into a cryptographic handle per the following method below, and then constructs
+	 * a SAMLNameIdentifier out of it.
+	 */
+	public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv,
+			IdentityProvider idProv) throws NameIdentifierMappingException {
+		try {
+			SAMLNameIdentifier nameid = SAMLNameIdentifier.getInstance(getNameIdentifierFormat().toString());
+			nameid.setName(getName(principal).replaceAll(System.getProperty("line.separator"), ""));
+			nameid.setNameQualifier(idProv.getProviderId());
+			return nameid;
+		} catch (SAMLException e) {
+			throw new NameIdentifierMappingException("Unable to generate Attribute Query Handle: " + e);
+		}
+	}
+
+	/**
 	 * Encodes a principal into a cryptographic handle Format of encoded handle: [IV][HMAC][TTL][principal] where: [IV] =
 	 * the Initialization Vector; byte-array [HMAC] = the HMAC; byte array [exprTime] = expiration time of the handle; 8
 	 * bytes; Big-endian [principal] = the principal; a UTF-8-encoded string The [HMAC][exprTime][princLen][principal]
@@ -242,7 +265,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 	 * to encode the IV or MAC's lengths. They can be obtained from Cipher.getBlockSize() and Mac.getMacLength(),
 	 * respectively.
 	 */
-	public SAMLNameIdentifier getNameIdentifier(LocalPrincipal principal, ServiceProvider sProv, IdentityProvider idProv)
+	public String getName(LocalPrincipal principal)
 			throws NameIdentifierMappingException {
 
 		if (principal == null) {
@@ -281,16 +304,7 @@ public class CryptoShibHandle extends AQHNameIdentifierMapping implements NameId
 			System.arraycopy(iv, 0, handleBytes, 0, iv.length);
 			System.arraycopy(encryptedData, 0, handleBytes, iv.length, encryptedData.length);
 
-			String handle = Base32.encode(handleBytes);
-
-			try {
-				SAMLNameIdentifier nameid = SAMLNameIdentifier.getInstance(getNameIdentifierFormat().toString());
-				nameid.setName(handle.replaceAll(System.getProperty("line.separator"), ""));
-				nameid.setNameQualifier(idProv.getProviderId());
-				return nameid;
-			} catch (SAMLException e) {
-				throw new NameIdentifierMappingException("Unable to generate Attribute Query Handle: " + e);
-			}
+			return Base32.encode(handleBytes);
 
 		} catch (KeyException e) {
 			log.error("Could not use the supplied secret key: " + e);
