@@ -131,7 +131,8 @@ public class Parser {
        };
     private static String[] oldResources = new String[]{
             "cs-sstc-schema-assertion-01.xsd",
-            "cs-sstc-schema-protocol-01.xsd"
+            "cs-sstc-schema-protocol-01.xsd",
+            "xmldsig-core-schema.xsd"
        };
     
     // If there were a real Framework here (like Spring) then
