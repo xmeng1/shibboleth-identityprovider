@@ -162,7 +162,7 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 		Iterator resultsIt = results.iterator();
 		while (resultsIt.hasNext()) {
 			Object value = resultsIt.next();
-			if (!allowEmpty && value.equals("")) {
+			if (!allowEmpty && ((value == null || value.equals(""))) {
 				log.debug("Skipping empty string value.");
 				continue;
 			}
