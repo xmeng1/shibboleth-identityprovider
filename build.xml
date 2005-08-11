@@ -211,7 +211,7 @@
 
 
 	<!-- Tomcat Management -->
-	<target name="setupTomcatTasks">
+	<target name="setupTomcatTasks" depends="init">
 		<path id="tomcat.classpath">
 			<fileset dir="${tomcat.home}/server/lib" includes="catalina-ant.jar"/>
 		</path>
@@ -410,6 +410,10 @@
 			<fileset dir="lib" includesfile="conf/idp-lib.include" />
 		</copy>
 
+		<copy todir="${idp.home}/endorsed">
+			<fileset dir="endorsed" />
+		</copy>
+
 		<copy todir="${idp.home}/bin">
 			<fileset dir="bin"/>
 		</copy>
@@ -514,6 +518,7 @@
 		<input message="Enter tomcat password [default: ${tomcat.password}]" addproperty="tomcat.password.input" defaultValue="${tomcat.password}" />
 		<var name="tomcat.password" value="${tomcat.password.input}" />
 
+        <antcall target="package-idp" />
 		<antcall target="tomcat.deploy" />
 		<antcall target="savePropertyFile" />
 	</target>
