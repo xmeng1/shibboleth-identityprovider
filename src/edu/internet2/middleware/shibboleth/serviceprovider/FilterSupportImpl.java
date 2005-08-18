@@ -22,14 +22,16 @@
  */
 package edu.internet2.middleware.shibboleth.serviceprovider;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 
+import x0.maceShibbolethTargetConfig1.SessionInitiatorDocument.SessionInitiator;
 import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
+import x0Metadata.oasisNamesTcSAML2.IndexedEndpointType;
 
 import edu.internet2.middleware.shibboleth.aap.AAP;
 import edu.internet2.middleware.shibboleth.aap.AttributeRule;
@@ -37,7 +39,9 @@ import edu.internet2.middleware.shibboleth.resource.FilterSupport;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
 /**
- * Provide access from the Filter to the /shibboleth configuration and Sessions.
+ * This class provides the FilterSupport interface for Resource Managers.
+ * It can be directly connected to RMs in the same JVM, or it can be
+ * wrapped in a Remote or Web Service interface.
  * 
  * @author Howard Gilbert
  */
@@ -45,71 +49,99 @@ public class FilterSupportImpl implements FilterSupport {
     
     private static ServiceProviderContext context = ServiceProviderContext.getInstance();
     private static Logger log = Logger.getLogger(ContextListener.SHIBBOLETH_SERVICE);
-
-    /**
-     * Given a Resource URL, go to the RequestMap logic to find an applicationId.
-     * 
-     * @param url The URL of the Resource presented by the browser
-     * @return applicationId string
-     */
-    public String getApplicationId(String url) {
-        ServiceProviderConfig config = context.getServiceProviderConfig();
-        String applicationId = config.mapRequest(url);
-        return applicationId;
-    }
     
     /**
-     * Get the "providerId" (site name) of the ServiceProvider
+     * The Resource has been mapped to an ApplicationId. This routine
+     * builds a struct (public data field only serializable class)
+     * that contains a subset of parameters extracted from the 
+     * Application(s) element, which has been turned into an
+     * ApplicationInfo object in the config.  
      * 
-     * @param applicationId 
-     * @return providerId string
+     * @param applicationId select the SPConfig Application element
+     * @return RMAppInfo structure 
      */
-    public String getProviderId(String applicationId) {
+    public RMAppInfo getRMAppInfo(String applicationId) {
+        RMAppInfo rmdata = new RMAppInfo();
+        
         ServiceProviderConfig config = context.getServiceProviderConfig();
-        ApplicationInfo application = config.getApplication(applicationId);
-        String providerId = application.getApplicationConfig().getProviderId();
-        return providerId;
-    }
-    
-    /**
-     * Get the URL of the local AssertionConsumerServlet.
-     * 
-     * @param applicationId
-     * @return URL string
-     */
-    public String getShireUrl(String applicationId) {
-        ServiceProviderConfig config = context.getServiceProviderConfig();
-        ApplicationInfo application = config.getApplication(applicationId);
-        String shireUrl = application.getApplicationConfig().getSessions().getShireURL();
-        return shireUrl;
-    }
-    
-    /**
-     * Get the URL to which the Browser should be initially redirected.
-     * 
-     * @param applicationId
-     * @return URL string
-     */
-    public String getWayfUrl(String applicationId) {
-        ServiceProviderConfig config = context.getServiceProviderConfig();
-        ApplicationInfo application = config.getApplication(applicationId);
-        String wayfUrl = application.getApplicationConfig().getSessions().getWayfURL();
-        return wayfUrl;
+        
+        ApplicationInfo appinfo = config.getApplication(applicationId);
+        Sessions appSessionValues = appinfo.getSessionsConfig();
+        
+        rmdata.applicationId = applicationId;
+        rmdata.providerId = appinfo.getProviderId();
+        
+        // The deprecated ShireURL has a fully qualified URL
+        // The new preferred syntax uses a prefix from HandlerURL 
+        // and a suffix from an AssertionConsumerService
+        rmdata.handlerUrl = appSessionValues.getShireURL();
+        if (rmdata.handlerUrl==null) {
+            String handler = appSessionValues.getHandlerURL();
+            if (handler!=null) {
+                IndexedEndpointType[] assertionConsumerServiceArray = 
+                    appSessionValues.getAssertionConsumerServiceArray();
+                IndexedEndpointType assertionConsumerService = null;
+                if (assertionConsumerServiceArray.length>0) 
+                    assertionConsumerService = assertionConsumerServiceArray[0];
+                for (int i=0;i<assertionConsumerServiceArray.length;i++) {
+                    if (assertionConsumerServiceArray[i].getIsDefault()) {
+                        assertionConsumerService = assertionConsumerServiceArray[i];
+                    }
+                }
+                String suffix = assertionConsumerService.getLocation();
+                if (suffix!=null)
+                    rmdata.handlerUrl= handler+suffix;
+                // Ideally, we should now check the generated URL against the
+                // Metadata, but current practice doesn't guarantee that the
+                // SP has a copy of its own Metadata declaration.
+            }
+            
+        }
+        
+        // Again there is a deprecated attribute and some new structure
+        rmdata.wayfUrl = appSessionValues.getWayfURL(); // deprecated
+        SessionInitiator[] sessionInitiatorArray = appSessionValues.getSessionInitiatorArray();
+        if (sessionInitiatorArray.length>0) {
+            String temp = sessionInitiatorArray[0].getWayfURL();
+            if (temp!=null)
+                rmdata.wayfUrl = temp;
+        }
+        
+        rmdata.cookieName = appSessionValues.getCookieName();
+        rmdata.cookieProperties = appSessionValues.getCookieProps();
+        
+        /*
+         * The mapping of long globally unique Attribute names
+         * to shorter alias names and even dummy HTTP headers is done
+         * in the AAP part of the configuration. Run through the AAP
+         * blocks and turn this into a more usable pair of Maps keyed
+         * by attributeid and returning the nickname or header name.
+         */
+        rmdata.attributeToHeader = new HashMap();
+        rmdata.attributeToAlias = new HashMap();
+        AAP[] providers = appinfo.getAAPProviders();
+        for (int i=0;i<providers.length;i++) {
+            AAP aap = providers[i];
+            Iterator attributeRules = aap.getAttributeRules();
+            while (attributeRules.hasNext()) {
+                AttributeRule rule = (AttributeRule) attributeRules.next();
+                String name = rule.getName();
+                String alias = rule.getAlias();
+                String header = rule.getHeader();
+                if (header!=null && header.length()!=0)
+                    rmdata.attributeToHeader.put(name,header);
+                if (alias!=null && alias.length()!=0)
+                    rmdata.attributeToAlias.put(name,alias);
+           }
+         }
+        
+        
+        return rmdata;
     }
     
 	/**
-	 * Does the requested resource require Shibboleth authentication?
-	 * 
-	 * @param url  request url
-	 * @return     true if Shibboleth is required
-	 */
-	public boolean isProtected(String url) {
-		//TODO: get info from requestmap
-	    return true;
-	}
-
-	/**
-	 * Get attributes for this Session 
+	 * From the Session object, return a simple Map of Attributes
+     * and values.
 	 * 
 	 * @param sessionId
 	 * @param applicationId
@@ -126,70 +158,54 @@ public class FilterSupportImpl implements FilterSupport {
         return attributes;
     }
 
-    /**
-     * Map attribute name to pseudo-HTTP-Headers
-     * 
-     * @param attributeName
-     * @param applicationId
-     * @return null or Header name string
-     */
-    public String getHeader(String attributeName, String applicationId) {
-        ServiceProviderConfig config = context.getServiceProviderConfig();
-        ApplicationInfo application = config.getApplication(applicationId);
-        AAP[] providers = application.getAAPProviders();
-        for (int i=0;i<providers.length;i++) {
-            AAP aap = providers[i];
-            AttributeRule rule = aap.lookup(attributeName, null);
-            if (rule!=null)
-                return rule.getHeader();
-        }
-        return null;
-    }
 
     /**
-     * @param ipaddr
-     * @param request
-     * @param applicationId
-     * @param shireURL
-     * @param providerId
-     * @return
+     * Process a POST or Artifact Assertion presented to the RM and
+     * create a Session object from it.
+     * 
+     * @param sessionData Assertion data
+     * @return sessionId string
      */
-    public String createSessionFromPost(
-            String ipaddr, 
-            HttpServletRequest request, 
-            String applicationId, 
-            String shireURL, 
-            String providerId,
-            String emptySessionId) {
+    public String createSessionFromData(NewSessionData sessionData) {
         String sessionid;
         try {
-            sessionid = AssertionConsumerServlet.createSessionFromPost(
-                    ipaddr, request, applicationId, shireURL, providerId,emptySessionId);
+            sessionid = AssertionConsumerServlet.createSessionFromData(sessionData);
         } catch (SAMLException e) {
-        	log.error("Invalid POST data submitted by RM "+e);
+        	log.error("Invalid data submitted by RM "+e);
             return null;
         }
-        log.info("Session created from POST submitted by RM: "+sessionid);
+        log.info("Session created from data submitted by RM: "+sessionid);
         return sessionid;
     }
 
 
-    public boolean getShireSSL(String applicationId) {
-        ServiceProviderConfig config = context.getServiceProviderConfig();
-        ApplicationInfo appinfo = config.getApplication(applicationId);
-        Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
-        return appSessionValues.getShireSSL();
-    }
-
-    /**
+     /**
      * Create empty Session so SessionID can be written as a Cookie
      * before redirecting the Browser to the IDP.
      * 
      * @param applicationId
+     * @param url The real resource (Target) URL
      * @return SessionId of empty session
      */
-    public String createSession(String applicationId) {
-        String id = context.getSessionManager().reserveSession(applicationId);
+    public String createEmptySession(String applicationId, String url) {
+        SessionManager sessionManager = context.getSessionManager();
+        String id = sessionManager.reserveSession(applicationId,url);
         return id;
     }
+
+    /**
+     * The RM presents its context which is then processed through
+     * the RequestMap logic. A transformed verion of RequestMap that
+     * contains only the subset of the data applicable to this RM
+     * is returned in a format that is easy to serialize. 
+     */
+    public RMConfigData getResourceManagerConfig(String contextRM) {
+        ServiceProviderConfig config = context.getServiceProviderConfig();
+        
+        RMConfigData rmconfig = new RMConfigData();
+        
+        rmconfig.hostResolutions = config.contextResolutions(contextRM);
+        return rmconfig;
+    }
+
 }
