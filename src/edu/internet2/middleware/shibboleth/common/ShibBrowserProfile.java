@@ -18,8 +18,6 @@ package edu.internet2.middleware.shibboleth.common;
 
 import java.util.ArrayList;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.log4j.Logger;
 import org.opensaml.NoSuchProviderException;
 import org.opensaml.ReplayCache;
@@ -69,7 +67,7 @@ public class ShibBrowserProfile  {
      */
     public BrowserProfileResponse receive(
             StringBuffer issuer,
-            HttpServletRequest reqContext,
+            BrowserProfileRequest bpRequest,
             String recipient,
             ReplayCache replayCache,
             ArtifactMapper artifactMapper,
@@ -80,7 +78,6 @@ public class ShibBrowserProfile  {
         issuer.setLength(0);
         
         // Let SAML do all the decoding and parsing
-        BrowserProfileRequest bpRequest = profile.receive(reqContext);
         BrowserProfileResponse bpr = profile.receive(issuer, bpRequest, recipient, replayCache, artifactMapper, minorVersion);
         
         /*
