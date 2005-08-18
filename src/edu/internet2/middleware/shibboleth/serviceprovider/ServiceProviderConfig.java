@@ -147,6 +147,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -165,9 +166,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import x0.maceShibboleth1.AttributeAcceptancePolicyDocument;
 import x0.maceShibbolethTargetConfig1.ApplicationDocument;
-import x0.maceShibbolethTargetConfig1.GlobalConfigurationType;
 import x0.maceShibbolethTargetConfig1.LocalConfigurationType;
 import x0.maceShibbolethTargetConfig1.PluggableType;
 import x0.maceShibbolethTargetConfig1.RequestMapDocument;
@@ -178,6 +177,7 @@ import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
 import x0.maceShibbolethTargetConfig1.ApplicationsDocument.Applications;
 import x0.maceShibbolethTargetConfig1.CredentialUseDocument.CredentialUse;
 import x0.maceShibbolethTargetConfig1.CredentialUseDocument.CredentialUse.RelyingParty;
+import x0.maceShibbolethTargetConfig1.ErrorsDocument.Errors;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host;
 import x0.maceShibbolethTargetConfig1.HostDocument.Host.Scheme.Enum;
 import x0.maceShibbolethTargetConfig1.PathDocument.Path;
@@ -196,6 +196,8 @@ import edu.internet2.middleware.shibboleth.metadata.Metadata;
 import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataProvider;
 import edu.internet2.middleware.shibboleth.xml.Parser;
+import edu.internet2.middleware.shibboleth.resource.FilterSupport;
+import edu.internet2.middleware.shibboleth.resource.FilterSupport.RequestResolution;
 
 /**
  * Load the configuration files into objects, index them, and return them on request.
@@ -305,13 +307,8 @@ public class ServiceProviderConfig {
 		"edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata";
 	private static final String XMLREQUESTMAPPROVIDERTYPE = 
 	    "edu.internet2.middleware.shibboleth.sp.provider.NativeRequestMapProvider";
-	private static final String XMLCREDENTIALSPROVIDERTYPE = 
-	    "edu.internet2.middleware.shibboleth.common.Credentials";
-	
-	
-	
-	
-	/**
+
+    /**
 	 * The constructor prepares for, but does not parse the configuration.
 	 * 
 	 * @throws ShibbolethConfigurationException
@@ -369,6 +366,164 @@ public class ServiceProviderConfig {
     }
     public long getAATimeout() {
         return config.getGlobal().getMemorySessionCache().getAATimeout();
+    }
+
+    
+    /**
+     * The RequestMap in the SPConfig potentially contains data for many 
+     * contexts. Create a simpler to parse table with just elements for
+     * one WebApp context. A HostResolution entry is provided for every 
+     * Host element (scheme,host,port) above the context, and a table
+     * of subdirectory exceptions then provides overrides.
+     * 
+     * @param context A simple context name such as "secure"
+     * @return A collection of HostResolution structures
+     */
+    public List /*<HostResolutions*/ contextResolutions(String context) {
+        List /*<HostResolutions*/ hostResolutions = new ArrayList();
+        
+        // Process each <Host> entry in the <RequestMap>
+        Host[] hostArray = requestMap.getHostArray();
+        for (int ihost=0;ihost<hostArray.length;ihost++) {
+            Host host = hostArray[ihost];
+            
+            // Start with an empty subdirectory map
+            TreeMap pathOverrides = new TreeMap();
+            
+            // Scheme must be http or https. If omitted, use both
+            Enum scheme = host.getScheme();
+            String schemeName = "http";
+            if (scheme!=null) {
+                // First do http, then later https will be added
+                schemeName = scheme.toString();
+                if (!schemeName.startsWith("http"))
+                    continue; // Don't deal with ftp, etc.
+            }
+            
+            String hostName = host.getName();
+            int hostport = host.isSetPort()?(int) host.getPort():-1;
+            URL hosturl = null;
+            try {
+                hosturl = new URL(
+                        schemeName, 
+                        hostName, 
+                        hostport,
+                        "/"+context);
+            } catch (MalformedURLException e) {
+                continue;
+            }
+            
+            // The <Host> element applicationId and other attributes
+            // establish the default Resolution structure
+            String hostElementAppid = host.getApplicationId();
+            if (hostElementAppid==null)
+                hostElementAppid="default";
+            RequestResolution requestResolution = new RequestResolution(hostElementAppid);
+            requestResolution.requiresSession = host.getRequireSession();
+            
+            // Unless, of course, the <Path> for the context overrides
+            // the Host values
+            Path[] pathArray = host.getPathArray();
+            Path[] subdirectories = null;
+            for (int i=0;i<pathArray.length;i++) {
+                Path contextPath = pathArray[i];
+                if (context.equals(contextPath.getName())) {
+                    // This list may be extended with other attributes
+                    if (contextPath.isSetApplicationId())
+                        requestResolution.applicationId = contextPath.getApplicationId();
+                    if (contextPath.isSetRequireSession())
+                        requestResolution.requiresSession = contextPath.getRequireSession();
+                    break;
+                }
+            }
+            
+            // Note, the Context does not have to be explicitly specified
+            // in a Path. If omitted, then then the Host defaults apply
+            // and there are no overrides.
+            
+            // Add the HostResolution struct to the table. Note that at
+            // this time the pathOverrides table is empty and if one 
+            // <Host> generates both an http and https element then they
+            // share the same pathOverrides table.
+            hostResolutions.add(new FilterSupport.HostResolution(requestResolution,hosturl,pathOverrides) );
+            if (scheme==null) {
+                // If no scheme was specified, then create a second https URL
+                URL cloneurl = null;
+                try {
+                    cloneurl = new URL(
+                            "https", 
+                            hostName, 
+                            hostport,
+                            context);
+                } catch (MalformedURLException e) {
+                    continue;
+                }
+                hostResolutions.add(new FilterSupport.HostResolution(requestResolution,cloneurl,pathOverrides) );
+            } 
+            
+            // Now if any <Path> elements are under the context <Path>
+            // fill in the pathOverrides table.
+            if (subdirectories!=null && subdirectories.length>0) {
+                String prefix = "";
+                buildPathExceptions(prefix, subdirectories, pathOverrides, requestResolution);
+            }
+            
+        } // foreach host
+        
+        return hostResolutions;
+    }
+    
+    /**
+     * Recursive Method to drill down through the Path elements in the RequestMap
+     * to create a mapping table of subdirectory paths to RequestResolutions
+     * @param prefix starts out "" and then adds subdirectory levels
+     * @param subdirectories Path elements from current scan depth in RequestMap XML
+     * @param pathToResolution Accumulating the map
+     * @param defaultResolution RequestResolution from parent element
+     */
+    private void buildPathExceptions(
+            String prefix, 
+            Path[] subdirectories, 
+            TreeMap pathToResolution, 
+            RequestResolution defaultResolution) {
+        
+        // Run down the list of subdirectory elements
+        for (int i = 0; i<subdirectories.length;i++) {
+            Path subdirectory = subdirectories[i];
+            // Generate the path prefix up to this point
+            String fullpath = 
+                prefix.length()==0?
+                        subdirectory.getName():
+                        prefix+"/"+subdirectory.getName();
+            
+            // Now build the RequestResolution from parent plus any overrides            
+            RequestResolution newResolution = 
+                new RequestResolution(defaultResolution.applicationId);
+            newResolution.requiresSession = defaultResolution.requiresSession;
+            boolean nondefault = false;
+            
+            // Note that this list may be extended with additional attributes
+            if (subdirectory.isSetApplicationId()) {
+                newResolution.applicationId = subdirectory.getApplicationId();
+                nondefault=true;
+            }
+            if (subdirectory.isSetRequireSession()) {
+                newResolution.requiresSession = subdirectory.getRequireSession();
+                nondefault=true;
+            }
+            
+            // If there was an override, add a resolution element to the table.
+            if (nondefault) {
+                pathToResolution.put(fullpath,newResolution);
+            }
+            
+            // Now see if there are any nested Path elements to process recursively
+            Path[] pathArray = subdirectory.getPathArray();
+            if (pathArray!=null && pathArray.length!=0) {
+                buildPathExceptions(fullpath,pathArray,pathToResolution,newResolution);
+            }
+            
+        }
     }
     
     
@@ -705,26 +860,16 @@ public class ServiceProviderConfig {
 	
 
 	/**
-	 * Handle a FederationProvider 
+	 * Handle the pluggable element that was called FederationProvider in 1.2 but
+     * is called MetadataProvider in 1.3.  
 	 */
 	private boolean processPluggableMetadata(ApplicationInfo appinfo) {
 	    boolean anyError = false;
-		PluggableType[] pluggable1 = appinfo.getApplicationConfig().getFederationProviderArray();
-		PluggableType[] pluggable2 = appinfo.getApplicationConfig().getMetadataProviderArray();
-		PluggableType[] pluggable;
-		if (pluggable1.length==0) {
-			pluggable=pluggable2;
-		} else if (pluggable2.length==0) {
-			pluggable=pluggable1;
-		} else {
-			pluggable = new PluggableType[pluggable1.length+pluggable2.length];
-			for (int i=0;i<pluggable2.length;i++) {
-				pluggable[i]=pluggable2[i];
-			}
-			for (int i=0;i<pluggable1.length;i++) {
-				pluggable[i+pluggable2.length]=pluggable1[i];
-			}
-		}
+        PluggableType[] pluggable = appinfo.applicationConfig.getMetadataProviderArray();
+        if (pluggable.length==0) {
+            // If no entries under the new name, try the old name
+            pluggable = appinfo.applicationConfig.getFederationProviderArray();
+        }
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
 		            XMLMetadataProvider.class,
@@ -771,7 +916,7 @@ public class ServiceProviderConfig {
 	 */
 	private boolean processPluggableAAPs(ApplicationInfo appinfo){
 	    boolean anyError=false;
-		PluggableType[] pluggable = appinfo.getApplicationConfig().getAAPProviderArray();
+		PluggableType[] pluggable = appinfo.applicationConfig.getAAPProviderArray();
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
 		    		XMLAAPProvider.class,
@@ -826,7 +971,7 @@ public class ServiceProviderConfig {
 	 */
 	private boolean processPluggableTrusts(ApplicationInfo appinfo){
 	    boolean anyError=false;
-		PluggableType[] pluggable = appinfo.getApplicationConfig().getTrustProviderArray();
+		PluggableType[] pluggable = appinfo.applicationConfig.getTrustProviderArray();
 		for (int i = 0;i<pluggable.length;i++) {
 		    String uri = processPluggable(pluggable[i],
 		            ShibbolethTrust.class,
@@ -925,10 +1070,29 @@ public class ServiceProviderConfig {
 		implements Metadata, Trust {
 		
 		private Application applicationConfig;
-        public Application getApplicationConfig() {
-            return applicationConfig;
+        
+        public Sessions getSessionsConfig() {
+            Sessions sessions = applicationConfig.getSessions();
+            if (sessions==null) {
+                sessions = defaultApplicationInfo.applicationConfig.getSessions();
+            }
+            return sessions;
         }
-		
+        
+
+        public Errors getErrorsConfig() {
+            Errors errors = applicationConfig.getErrors();
+            if (errors==null) {
+                errors = defaultApplicationInfo.applicationConfig.getErrors();
+            }
+            return errors;
+        }
+        
+        public String[] getAudienceArray() {
+            return applicationConfig.getAudienceArray();
+        }
+        
+        
 		/**
 		 * Construct this object from the XML Bean.
 		 * @param application XMLBean for Application element
@@ -944,9 +1108,9 @@ public class ServiceProviderConfig {
 		 * but must look them up on every call through their URI keys.
 		 * So we keep collections of URI strings instead.
 		 */
-		ArrayList groupUris = new ArrayList();
-		ArrayList trustUris = new ArrayList();
-		ArrayList aapUris   =   new ArrayList();
+		private ArrayList groupUris = new ArrayList();
+		private ArrayList trustUris = new ArrayList();
+		private ArrayList aapUris   =   new ArrayList();
 		
         void addGroupUri(String uri) {
 			groupUris.add(uri);
@@ -959,12 +1123,16 @@ public class ServiceProviderConfig {
 		}
         
         long getMaxSessionLife() {
-            Sessions sessions = applicationConfig.getSessions();
-            return sessions.getLifetime();
+            Sessions sessions = getSessionsConfig();
+            if (sessions!=null)
+                return sessions.getLifetime();
+            return 7200;
         }
         long getUnusedSessionTimeout() {
-            Sessions sessions = applicationConfig.getSessions();
-            return sessions.getTimeout();
+            Sessions sessions = getSessionsConfig();
+             if (sessions!=null)
+                return sessions.getTimeout();
+            return 3600;
         }
         
         /**
@@ -1029,7 +1197,10 @@ public class ServiceProviderConfig {
 		 * @return Metadata[]
 		 */
 		Metadata[] getMetadataProviders() {
-			Iterator iuris = groupUris.iterator();
+			Iterator iuris = (
+                groupUris.size()!=0?
+                    groupUris.iterator():
+                    defaultApplicationInfo.groupUris.iterator());
 			int count = groupUris.size();
 			Metadata[] metadatas = new Metadata[count];
 			for (int i=0;i<count;i++) {
@@ -1055,7 +1226,10 @@ public class ServiceProviderConfig {
 		 * @return EntityDescriptor metadata object for that site.
 		 */
         public EntityDescriptor lookup(String id, boolean strict) {
-			Iterator iuris = groupUris.iterator();
+            Iterator iuris = (
+                    groupUris.size()!=0?
+                        groupUris.iterator():
+                        defaultApplicationInfo.groupUris.iterator());
 			while (iuris.hasNext()) {
 				String uri =(String) iuris.next();
 				Metadata locator=getMetadataImplementor(uri);
@@ -1070,7 +1244,10 @@ public class ServiceProviderConfig {
 		}
 
         public EntityDescriptor lookup(Artifact artifact, boolean strict) {
-            Iterator iuris = groupUris.iterator();
+            Iterator iuris = (
+                    groupUris.size()!=0?
+                        groupUris.iterator():
+                        defaultApplicationInfo.groupUris.iterator());
             while (iuris.hasNext()) {
                 String uri =(String) iuris.next();
                 Metadata locator=getMetadataImplementor(uri);
@@ -1106,7 +1283,10 @@ public class ServiceProviderConfig {
 		 * @return Trust[]
 		 */
 		public Trust[] getTrustProviders() {
-			Iterator iuris = trustUris.iterator();
+            Iterator iuris = (
+                    trustUris.size()!=0?
+                        trustUris.iterator():
+                        defaultApplicationInfo.trustUris.iterator());
 			int count = trustUris.size();
 			if (count==0)
 				return defaultTrust;
@@ -1124,7 +1304,10 @@ public class ServiceProviderConfig {
 		 * @return AAP[]
 		 */
 		public AAP[] getAAPProviders() {
-			Iterator iuris = aapUris.iterator();
+            Iterator iuris = (
+                    aapUris.size()!=0?
+                        aapUris.iterator():
+                        defaultApplicationInfo.aapUris.iterator());
 			int count = aapUris.size();
 			AAP[] aaps = new AAP[count];
 			for (int i=0;i<count;i++) {
