@@ -54,7 +54,6 @@ import java.util.Iterator;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -67,13 +66,14 @@ import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
+import org.opensaml.SAMLBrowserProfile.BrowserProfileRequest;
 import org.opensaml.SAMLBrowserProfile.BrowserProfileResponse;
 
-import x0.maceShibbolethTargetConfig1.ApplicationDocument.Application;
-import x0.maceShibbolethTargetConfig1.SessionsDocument.Sessions;
 import edu.internet2.middleware.shibboleth.common.ShibBrowserProfile;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.resource.AuthenticationFilter;
+import edu.internet2.middleware.shibboleth.resource.FilterUtil;
+import edu.internet2.middleware.shibboleth.resource.FilterSupport.NewSessionData;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
 /**
@@ -83,12 +83,14 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
  */
 public class AssertionConsumerServlet extends HttpServlet {
 
-	private static final String SESSIONCOOKIE = "ShibbolethSPSession";
+    // There is currently no reason for a Cookie from the SP
+	// private static final String COOKIEPREFIX = "edu.internet2.middleware.shibboleth.session.";
 
 	private static Logger log = Logger.getLogger(AssertionConsumerServlet.class.getName());
 	
 	private static ServiceProviderContext context = ServiceProviderContext.getInstance();
 	
+    // The query string parameter appended when Redirecting to the RM
 	public static final String SESSIONPARM =
 	    "ShibbolethSessionId";
 	
@@ -107,139 +109,165 @@ public class AssertionConsumerServlet extends HttpServlet {
 
 
 	/**
-	 * Accept the SAML Assertion post from the HS.
-	 * 
-	 * @param request the request send by the client to the server
-	 * @param response the response send by the server to the client
+	 * Process the POST (or Artifact GET) from the Browser after SSO
 	 */
 	public void doPost(
 		HttpServletRequest request,
 		HttpServletResponse response)
 		{
+        
+        // Initialize Request level (ThreadLocal) tracking
 	    ServletContextInitializer.beginService(request,response);
-		try {
-            ServiceProviderConfig config = context.getServiceProviderConfig();
-            
-            String ipaddr = request.getRemoteAddr();
-            
-            // URL of Resource that triggered authorization
-            // I added support to the profile for extracting TARGET, but
-            // it's not too critical in Java since you can grab it easily anyway.
-            // Might be better in the 2.0 future though, since the bindings get trickier.
-            String target = request.getParameter("TARGET");
-            
-            // Map the Resource URL into an <Application>
-            String applicationId = config.mapRequest(target);
-            ApplicationInfo appinfo = config.getApplication(applicationId);
-            Sessions appSessionValues = appinfo.getApplicationConfig().getSessions();
-            String shireURL = request.getRequestURL().toString();
-            String providerId = appinfo.getApplicationConfig().getProviderId();
-            
-           
-            if (appSessionValues.getShireSSL()&& // Requires SSL
-            		!request.isSecure()) {       // isn't SSL
-            	log.error("Authentication Assertion not posted over SSL.");
-            	try {
-                    response.sendRedirect("shireError.html");
-                } catch (IOException e1) {
-                }
-            	return;
-            }
-            
-            log.debug("Authentication received from "+ipaddr+" for "+target+
-                        "(application:"+applicationId+") (Provider:"+providerId+")");
+        
+        String contextPath = request.getContextPath();
+        ServiceProviderConfig config = context.getServiceProviderConfig();
+        
+        String ipaddr = request.getRemoteAddr();
+        String target = request.getParameter("TARGET");
+        
+        // Map the Resource URL into an <Application>
+        String applicationId = config.mapRequest(target);
+        ApplicationInfo appinfo = config.getApplication(applicationId);
+        String handlerURL = request.getRequestURL().toString();
+        String providerId = appinfo.getProviderId();
+        
+        log.debug("Authentication received from "+ipaddr+" for "+target+
+                "(application:"+applicationId+") (Provider:"+providerId+")");
 
-            String sessionId = createSessionFromPost(ipaddr, request, applicationId, shireURL, providerId, null);
+        try {
+            NewSessionData data = new NewSessionData();
+            FilterUtil.sessionDataFromRequest(data,request);
+            data.applicationId = applicationId;
+            data.handlerURL = handlerURL;
+            data.providerId = providerId;
             
-            Cookie cookie = new Cookie(SESSIONCOOKIE,sessionId);
-            response.addCookie(cookie);
+            String sessionId = createSessionFromData(data);
             
-            /**
-             * This is included as a diagnostic, although it was suggested by a user
-             * as a future API for someone holding an Authentication and wishing to
-             * know what it means.
+            // A cookie could be written here, but the browser
+            // never comes back to the SP except with an assertion
+            // and that produces a new session
+//            String cookiename = COOKIEPREFIX+applicationId;
+//            Cookie cookie = new Cookie(cookiename,sessionId);
+//            response.addCookie(cookie);
+            
+            /*
+             * Now Redirect the Browser
              */
             try {
 				if (target.equals("SendAttributesBackToMe")) {
+                    // A diagnostic and maybe an API feature. Return the Attributes back to their owner.
 					ServletOutputStream outputStream = response.getOutputStream();
 					response.setContentType("text/xml");
 					Session session = context.getSessionManager().findSession(sessionId,applicationId);
 					SAMLResponse attributeResponse = session.getAttributeResponse();
 					outputStream.print(attributeResponse.toString());
 				} else {
-					response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+                    if (target.contains(":")) {
+                        // Ordinary URL target
+                        response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+                    } else {
+                        // Assume Target is SessionID of 
+                        Session session =context.getSessionManager().findSession(sessionId, applicationId);
+                        if (session!=null) {
+                            String savedTarget = session.getSavedTargetURL();
+                            if (savedTarget!=null)
+                                target=savedTarget;
+                        }
+                        response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+                    }
 				}
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
+                // The Browser is gone
             }
         }
         catch (MetadataException e) {
             log.error("Authentication Assertion source not found in Metadata.");
             try {
-                response.sendRedirect("shireError.html");
-            }
-            catch (IOException e1) {
+                String msg = appinfo.getErrorsConfig().getMetadata();
+                if (msg==null)
+                    msg=appinfo.getErrorsConfig().getSession();
+                if (msg==null)
+                    msg=appinfo.getErrorsConfig().getShire();
+                if (msg==null)
+                    msg="sessionError.html";
+                if (msg.charAt(0)!='/')
+                    msg=contextPath+"/"+msg;
+                response.sendRedirect(msg);
+            } catch (IOException e1) {
+                // Browser is gone
             }
         }
         catch (SAMLException e) {
             log.error("Authentication Assertion had invalid format.");
             try {
-                response.sendRedirect("shireError.html");
-            }
-            catch (IOException e1) {
+                String msg = appinfo.getErrorsConfig().getSession();
+                if (msg==null)
+                    msg=appinfo.getErrorsConfig().getShire();
+                if (msg==null)
+                    msg="sessionError.html";
+                if (msg.charAt(0)!='/')
+                    msg=contextPath+"/"+msg;
+                response.sendRedirect(msg);
+            } catch (IOException e1) {
+                // Browser is gone
             }
         }
         finally {
+            // Detach ThreadLocal tracking block from the request thread
+            // before returning to Web Server.
             ServletContextInitializer.finishService(request,response);
         }
 	}
 	
     /**
-     * Create a Session object from SHIRE POST data
+     * NewSessionData is created from the HttpServletRequest and
+     * the SPConfig/Application. It can be POSTProfile or Artifact.
+     * Create a Session object from it.
      * 
-     * <p>Used within this class to handle POSTs to the SP itself, but
-     * also by the FilterSupport logic when the POST is to the RM 
-     * context.</p>
+     * <p>Note: This method can also be called from FilterSupport.</p>
      * 
-     * @param ipaddr IP Address of Browser
-     * @param bin64Assertion Authentication assertion from POST
-     * @param applicationId from RequestMap
-     * @param shireURL 
-     * @param providerId Our Entity name
      * @return random key of Session
      * @throws SAMLException
      */
     public static 
-    String createSessionFromPost(
-            String ipaddr, 
-            HttpServletRequest req, 
-            String applicationId, 
-            String shireURL, 
-            String providerId,
-            String emptySessionId
+    String createSessionFromData(
+            NewSessionData data 
             ) 
     throws SAMLException {
         String sessionid=null;
         StringBuffer pproviderId = // Get back IdP Entity name from SAML
             new StringBuffer();
         ServiceProviderConfig config = context.getServiceProviderConfig();
-        ApplicationInfo application = config.getApplication(applicationId);
-        Application applicationConfig = application.getApplicationConfig();
+        ApplicationInfo appinfo = config.getApplication(data.applicationId);
+        String[] audienceArray = appinfo.getAudienceArray();
+        String providerId = appinfo.getProviderId();
         
-        ShibBrowserProfile profile = new ShibBrowserProfile(applicationId);
-        SPArtifactMapper mapper = new SPArtifactMapper(application,config);
+        // Set up Shibboleth layer to support SAML BrowserProfile
+        ShibBrowserProfile profile = new ShibBrowserProfile(data.applicationId);
+        
+        // Create the Artifact processing Callback (that maps an Artifact
+        // to the IdP Artifact resolver endpoint) just in case it is needed
+        SPArtifactMapper mapper = new SPArtifactMapper(appinfo,config);
+        
+        // Build the SAML object that represents data extracted
+        // from the FORM or QueryString parameters on the request.
+        BrowserProfileRequest bpr = new BrowserProfileRequest();
+        bpr.SAMLArt = data.SAMLArt;
+        bpr.SAMLResponse = data.SAMLResponse;
+        bpr.TARGET = data.target;
+        
+        // Process the encoded SAMLResponse or, if Artifact, fetch
+        // a corresponding Response from the IdP.
         BrowserProfileResponse samldata = profile.receive(
                 pproviderId,
-                req,
-                shireURL,   // My URL (Why??) To prevent attackers from redirecting messages. 
+                bpr,
+                data.handlerURL,    
                 context.getReplayCache(),
                 mapper,
                 1
         );
         
-        String[] audienceArray = applicationConfig.getAudienceArray();
-        
-        
+        // Check Assertions for restrictions
         Iterator conditions = samldata.assertion.getConditions();
         while (conditions.hasNext()) {
             SAMLCondition cond =
@@ -285,26 +313,27 @@ public class AssertionConsumerServlet extends HttpServlet {
                 }
             }
         }
-        
-        // The Authentication Assertion gets placed in a newly created
-        // Session object. Later, someone will get an Attribute Assertion
-        // and add it to the Session. The SessionID key is returned to
-        // the Browser as a Cookie.
+
+        // Create a new Session object or fill in an existing emtpy
+        // Session object with the values from this Assertion.
         SessionManager sessionManager = context.getSessionManager();
+        String emptySessionId = null;
+        if (!data.target.contains(":")) {
+            // The Target can be a URL or an Empty SessionId
+            emptySessionId = data.target;
+        }
         sessionid = sessionManager.newSession(
-                applicationId, 
-                ipaddr, 
+                data.applicationId, 
+                data.ipaddr, 
                 pproviderId.toString(), 
                 samldata.assertion, 
                 samldata.authnStatement,
                 emptySessionId);
         
-        // Very agressive attribute fetch rule 
-        // Get the Attributes immediately! [good for debugging]
-        Session session = sessionManager.findSession(sessionid, applicationId);
+        Session session = sessionManager.findSession(sessionid, data.applicationId);
         
+        // Fetch attributes immediately (unless we already have them)
         checkForAttributePush(samldata, session);
-        
         AttributeRequestor.fetchAttributes(session);
 
         return sessionid;
@@ -340,7 +369,8 @@ public class AssertionConsumerServlet extends HttpServlet {
 
 
     /**
-     * Artifact comes as a GET
+     * The Artifact comes in a GET. However, the code for processing 
+     * the HttpServletRequest is the same for both methods.
      */
     protected void doGet(HttpServletRequest arg0, HttpServletResponse arg1)
     	throws ServletException, IOException {
