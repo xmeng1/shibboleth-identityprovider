@@ -97,9 +97,10 @@ public class AttributeRequestor {
 	private AttributeRequestor() {} // Prevent instantiation
 	
 	/**
-	 * Request SAML Attribute response from AA
+	 * Request SAML Attribute response from AA (or process
+     * Attributes previously presented through AttributePush).
 	 * 
-	 * @param session Session object (from authentication POST)
+	 * @param session Session object 
 	 * @return true if Attributes successfully stored in the Session
 	 * @throws MetadataException If IdP has no configured AA
 	 * @throws SAMLException If there is a problem with the reply
@@ -109,7 +110,7 @@ public class AttributeRequestor {
 	fetchAttributes(
 			Session session){
 		
-	    log.debug("Fetching attributes for session "+session.getKey()+
+	    log.debug("Fetching attributes for session "+session.getSessionId()+
 	            " from "+session.getEntityId());
 	    
 		// Get local references to configuration objects
@@ -136,8 +137,9 @@ public class AttributeRequestor {
 		    return false;
 		}
 		
+        // Were Attributes already Pushed?
 		if (response==null) {
-		    // Build the Attribute Query 
+		    // No, then build and issue the Attribute Query 
 		    SAMLAttributeQuery query = null;
 		    SAMLSubject subject;
 		    try {
@@ -174,7 +176,7 @@ public class AttributeRequestor {
 		        // Wrap the Query in a request
 		        request = new SAMLRequest(query);
 		    } catch (SAMLException e) {
-		        log.error("AttributeRequestor unable to build SAML Query for Session "+session.getKey());
+		        log.error("AttributeRequestor unable to build SAML Query for Session "+session.getSessionId());
 		        return false;
 		    }
 		    
@@ -194,8 +196,12 @@ public class AttributeRequestor {
 		        return false;
 		    }
 		} else {
+            // Attributes were already pushed (by POST or Artifact)
 		    log.info("Bypassing Attribute Query because Attributes already Pushed.");
         }
+        
+        // At this point we either have Attribute Assertions because
+        // they were already there or because we fetched them from the AA
 		
 		// Check each assertion in the response.
         int acount = 0;
