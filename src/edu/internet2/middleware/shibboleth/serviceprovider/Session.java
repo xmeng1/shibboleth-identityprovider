@@ -32,8 +32,7 @@ import org.opensaml.SAMLResponse;
 
 /**
  * Session object holds Authentication and Attribute Assertions for one
- * remote Browser/User.<br>
- * Each session generates its own random key.<br>
+ * remote Browser/User for one ApplicationId.<br>
  * The collection of Session objects may be checkpointed to disk using
  * any attractive persistence framework, Object Relational mapping, 
  * or, hell, just serialize the objects to a flat file if you like.
@@ -59,7 +58,7 @@ public class Session implements Serializable {
             long defaultAttributeLifetime) {
 		if (key==null)
 			throw new IllegalArgumentException();
-	    this.key=key;
+	    this.sessionId=key;
 	    this.lastused = System.currentTimeMillis();
         this.created = this.lastused;
         this.maxSessionLife=maxSessionLife*1000;
@@ -69,11 +68,22 @@ public class Session implements Serializable {
 	
 	// Properties
 	
-	private String key;
-	public String getKey() {
-		return key;
+    /*
+     * The large random SessionId string generated for this Session.
+     * It is used as the key of the SessionManager cache, so this 
+     * field is only actually needed if serialized/persisted Sessions
+     * need to be reloaded after a crash.
+     */
+	private String sessionId;
+	public String getSessionId() {
+		return sessionId;
 	}
 	
+    /*
+     * The ApplicationId associated with this Session. A remote User
+     * may have different Sessions with different ApplicationIds that
+     * associate to different IdPs or Attributre Release policies.
+     */
 	private String applicationId = null;
 	public String getApplicationId() {
 		return applicationId;
@@ -82,6 +92,9 @@ public class Session implements Serializable {
 		this.applicationId = applicationId;
 	}
 	
+    /*
+     * Remote IP address of Browser. Might be used as extra validity check.
+     */
 	private String ipaddr = null;
 	public String getIpaddr() {
 		return ipaddr;
@@ -90,7 +103,10 @@ public class Session implements Serializable {
 		this.ipaddr = ipaddr;
 	}
 	
-	private String entityId = null; // a.k.a providerId
+    /*
+     * IdP entity
+     */
+	private String entityId = null; 
 	public String getEntityId() {
 		return entityId;
 	}
@@ -101,6 +117,10 @@ public class Session implements Serializable {
 	private long lastused = 0;
     private long created = 0;
 	
+    /**
+     * Determines if the Session has timed out.
+     * @return true if timed out
+     */
 	public boolean isExpired() {
 		long now = System.currentTimeMillis();
 		if (maxSessionLife>0 && 
@@ -111,9 +131,22 @@ public class Session implements Serializable {
 			return true;
 		return false;
 	}
+    
+    /**
+     * Is this an empty Session object reserved by an RM that has not yet
+     * received Assertions.
+     * @return true or false
+     */
+    public boolean isInitialized() {
+        return (null!=getAuthenticationStatement());
+    }
 	
 	
 	// Stuff saved from the POST
+    
+    /*
+     * The SAML Authentication Assertion from the POST or Artifact
+     */
 	private SAMLAssertion authenticationAssertion = null;
 	public SAMLAssertion getAuthenticationAssertion() {
 		return authenticationAssertion;
@@ -122,6 +155,11 @@ public class Session implements Serializable {
 		this.authenticationAssertion = authentication;
 	}
 	
+    /*
+     * The saved Authentication Statement containing the Assertion 
+     * referenced above. There are extra fields at this level that
+     * are useful to build the Attribute Query.
+     */
 	private SAMLAuthenticationStatement authenticationStatement=null;
 	public SAMLAuthenticationStatement getAuthenticationStatement() {
 		return authenticationStatement;
@@ -131,7 +169,13 @@ public class Session implements Serializable {
 		this.authenticationStatement = authenticationStatement;
 	}
 	
-	// Stuff saved from the Attribute Query
+    /*
+     * The SAMLResponse containing the Attribute Assertions. Note that
+     * in Attribute Push or Artifact situations, this Response will
+     * also contain the Authentication elements separately referenced
+     * above. Otherwise, this Response will have been returned from
+     * a Query.
+     */
 	private SAMLResponse attributeResponse = null;
 	public SAMLResponse getAttributeResponse() {
 		return attributeResponse;
@@ -148,6 +192,10 @@ public class Session implements Serializable {
 		lastused = System.currentTimeMillis();
 	}
     
+    /**
+     * Return the default lifetime of an Attribute Assertion if the
+     * Assertion itself doesn't specify the limit.
+     */
     public long getDefaultAttributeLifetime() {
         return defaultAttributeLifetime;
     }
@@ -170,6 +218,34 @@ public class Session implements Serializable {
 
     public void setUnusedSessionTimeout(long unusedSessionTimeout) {
         this.unusedSessionTimeout = unusedSessionTimeout*1000;
+    }
+    
+    /*
+     * The FormalURL references the RM itself instead of any 
+     * individual resource.
+     */
+    private String formalURL;
+    public String getFormalURL() {
+        return formalURL;
+    }
+    public void setFormalURL(String formalURL) {
+        this.formalURL = formalURL;
+    }
+    
+    /*
+     * The SavedTarget URL is meaningful only in an uninitialized but
+     * preallocate Session object. It holds the original Resource
+     * URL to which the Browser will be redirected after the
+     * Session is actually established. This frees the TARGET=
+     * sent to the WAYF to be the key of this object rather than
+     * a real URL.
+     */
+    private String savedTargetURL;
+    public String getSavedTargetURL() {
+        return savedTargetURL;
+    }
+    public void setSavedTargetURL(String savedResourceURL) {
+        this.savedTargetURL = savedResourceURL;
     }
 	
 

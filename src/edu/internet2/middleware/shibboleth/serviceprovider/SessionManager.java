@@ -114,7 +114,7 @@ public class SessionManager {
 			log.warn("Session not found with ID "+sessionId);
 			return null;
 		}
-		if (null==s.getAuthenticationAssertion()) {
+		if (!s.isInitialized()) {
 			log.warn("Uninitialized (reserved) Session has ID "+sessionId);
 		    return null;
 		}
@@ -137,7 +137,7 @@ public class SessionManager {
      * @param sessionId
      * @return Session block (uninitialized).
      */
-	private synchronized Session findEmptySession(String sessionId) {
+	synchronized Session findEmptySession(String sessionId) {
 		if (sessionId==null)
 			throw new IllegalArgumentException();
 		Session s = (Session) sessions.get(sessionId);
@@ -145,7 +145,7 @@ public class SessionManager {
 			log.warn("Session not found with ID "+sessionId);
 			return null;
 		}
-		if (null!=s.getAuthenticationAssertion()){
+		if (s.isInitialized()){
 			log.error("Active Session found when looking for reserved ID:"+sessionId);
 		    return null;
 		}
@@ -161,8 +161,8 @@ public class SessionManager {
 	protected synchronized void add(Session s) {
 		if (s==null)
 			throw new IllegalArgumentException();
-		log.debug("Session added: "+s.getKey());
-		sessions.put(s.getKey(), s);
+		log.debug("Session added: "+s.getSessionId());
+		sessions.put(s.getSessionId(), s);
 		if (cache!=null)
 			cache.add(s);
 	}
@@ -178,8 +178,8 @@ public class SessionManager {
 		if (s==null)
 			throw new IllegalArgumentException();
 		s.renew();
-		log.debug("Session updated: "+s.getKey());
-		sessions.put(s.getKey(), s);
+		log.debug("Session updated: "+s.getSessionId());
+		sessions.put(s.getSessionId(), s);
 		if (cache!=null)
 			cache.update(s);
 	}
@@ -193,8 +193,8 @@ public class SessionManager {
 	protected synchronized void remove(Session s) {
 		if (s==null)
 			throw new IllegalArgumentException();
-		log.debug("Session removed: "+s.getKey());
-		sessions.remove(s.getKey());
+		log.debug("Session removed: "+s.getSessionId());
+		sessions.remove(s.getSessionId());
 		if (cache!=null)
 			cache.remove(s);
 	}
@@ -210,7 +210,7 @@ public class SessionManager {
 			Map.Entry entry = (Map.Entry) iterator.next();
 			Session session = (Session) entry.getValue();
 			if (session.isExpired()) {
-				log.info("Session " + session.getKey() + " has expired.");
+				log.info("Session " + session.getSessionId() + " has expired.");
 				iterator.remove();
 			}
 		}
@@ -275,7 +275,7 @@ public class SessionManager {
 		session.setAuthenticationAssertion(assertion);
 		session.setAuthenticationStatement(authenticationStatement); // may be null
 		
-		sessionId = session.getKey();
+		sessionId = session.getSessionId();
 
 		if (isUpdate)
 			update(session);  
@@ -297,7 +297,8 @@ public class SessionManager {
 	public 
 	String 
 reserveSession(
-	String applicationId 
+	String applicationId, 
+    String url 
 	){
         if (applicationId==null)
             throw new IllegalArgumentException("applicationId null");
@@ -310,8 +311,9 @@ reserveSession(
                 appinfo.getUnusedSessionTimeout(), 
                 config.getDefaultAttributeLifetime());
 	    session.setApplicationId(applicationId);
+        session.setSavedTargetURL(url);
 	    
-	    sessionId = session.getKey();
+	    sessionId = session.getSessionId();
 	    
 	    add(session);
 	    
@@ -436,7 +438,6 @@ reserveSession(
                         SAMLAttribute attribute = 
                             (SAMLAttribute) attributes.next();
                         String name = attribute.getName();
-                        String namespace = attribute.getNamespace();
                         ArrayList list = new ArrayList();
                         Iterator values = attribute.getValues();
                         String val="";
