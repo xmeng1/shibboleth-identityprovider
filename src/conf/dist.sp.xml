@@ -91,7 +91,8 @@
 		disabled.
 		-->
 		<Sessions lifetime="7200" timeout="3600" checkAddress="false"
-			handlerURL="/Shibboleth.sso" handlerSSL="false" idpHistory="true" idpHistoryDays="7">
+			handlerURL="https://sp.example.org:9443/shibboleth-sp/Shibboleth.sso" 
+			handlerSSL="false" idpHistory="true" idpHistoryDays="7">
 			
 			<!--
 			SessionInitiators handle session requests and relay them to a WAYF or directly
@@ -119,9 +120,13 @@
 			The isDefault and index attributes are used when sessions are initiated
 			to determine how to tell the IdP where and how to return the response.
 			-->
-			<md:AssertionConsumerService Location="/SAML/POST" isDefault="true" index="1"
+			<md:AssertionConsumerService 
+				Location="/SAML/POST" 
+				isDefault="true" index="1"
 				Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post"/>
-			<md:AssertionConsumerService Location="/SAML/Artifact" index="2"
+			<md:AssertionConsumerService 
+				Location="/SAML/Artifact" 
+				index="2"
 				Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01"/>
 			
 			<!--
@@ -139,13 +144,10 @@
 		standard 403 Forbidden error code if authorization fails, and then customize that condition
 		using your web server.
 		-->
-		<Errors session="$SP_HOME$/etc/sessionError.html"
-			metadata="$SP_HOME$/etc/metadataError.html"
-			rm="$SP_HOME$/etc/rmError.html"
-			access="$SP_HOME$/etc/accessError.html"
-			supportContact="root@localhost"
-			logoLocation="/shibtarget/logo.jpg"
-			styleSheet="/shibtarget/main.css"/>
+		<Errors session="sessionError.html"
+			metadata="metadataError.html"
+			rm="rmError.html"
+			access="accessError.html" />
 
 		<!-- Indicates what credentials to use when communicating -->
 		<CredentialUse TLS="defcreds" Signing="defcreds">
