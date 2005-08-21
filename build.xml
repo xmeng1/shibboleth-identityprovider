@@ -474,7 +474,7 @@
 
         <antcall target="ext-invoke">
             <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="${ext-install-filesystem}"/>
+            <param name="ext.build.function" value="ext-install-filesystem"/>
             <param name="ext.filesystem.home" value="${sp.home}"/>
             <param name="ext.home.token" value="$SP_HOME$"/>
         </antcall>      
