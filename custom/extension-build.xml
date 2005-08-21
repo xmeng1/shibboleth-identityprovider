@@ -203,8 +203,9 @@
             <then>
                 <replace dir="${ext.classes}" token="${ext.home.token}" value="${ext.filesystem.home}" excludes="*.class" />
                 <replace dir="${ext.classes}" token="$EXTENSION_NAME$" value="${ext.name}" excludes="*.class" />
-                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" />
+                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" update="false"/>
                 <copy file="${ext.dist}/${ext.name}.jar" todir="${exts.dir}/lib" />
+                <delete dir="${ext.classes}"/>
             </then>
         </if>
     </target>
