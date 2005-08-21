@@ -343,7 +343,17 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			// attribute
 			if (context.getEnvironment().get(Context.INITIAL_CONTEXT_FACTORY)
 					.equals("com.sun.jndi.ldap.LdapCtxFactory")) {
-				BasicAttribute dn = new BasicAttribute("dn", result.getName() + "," + context.getNameInNamespace());
+                
+                // Check to see if the context was built with an empty base DN, if so don't try to append it
+                // otherwise we'll end up with a malformed DN (it'll contain a trailing comma).
+                String dnStr;
+                if(context.getNameInNamespace() == null || context.getNameInNamespace().length() ==0) {
+                    dnStr = result.getName();
+                }else {
+                    dnStr =  result.getName() + "," + context.getNameInNamespace();
+                }
+                
+				BasicAttribute dn = new BasicAttribute("dn", dnStr);
 				attributes.put(dn);
 			}
 
