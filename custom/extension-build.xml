@@ -181,7 +181,7 @@
                             <classpath refid="ext.path"/>
                             <formatter type="plain" />
                             <batchtest todir="${ext.root}">
-                                <fileset dir="${ext.test.classes}" />
+                                <fileset dir="${ext.test.src}" />
                             </batchtest>
                         </junit>
                     </then>
