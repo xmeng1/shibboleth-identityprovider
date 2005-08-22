@@ -9,6 +9,25 @@
 -->
 <project name="Shibboleth-Extensions" default="ext-invoke" basedir=".">
 
+    <path id="ext.path">
+        <!-- Shibboleth Libraries -->
+        <path refid="build.path" />
+
+        <!-- Shibboleth Classes -->
+        <pathelement location="${build}" />
+
+        <!-- Extension libraries -->
+        <fileset dir="${ext.lib}">
+            <include name="**/*.jar" />
+        </fileset>
+
+        <!-- Extension classes -->
+        <pathelement location="${ext.classes}" />
+        
+        <!-- Extension test classes -->
+        <pathelement location="${ext.test.classes}" />
+    </path>
+
     <!-- Loops through all the extension directories and executes a particular operation on them -->
     <target name="ext-invoke" description="Invoke operation extensions">
         <for keepgoing="true" param="module-path">
@@ -31,7 +50,7 @@
 
         <!-- Compile the source -->
         <antcall target="ext-compile" />
-        
+
         <!-- Generate Javadocs -->
         <antcall target="ext-gen-docs" />
 
@@ -70,12 +89,13 @@
 
     <!-- Initialize everything we need. -->
     <!-- The properties loaded here are scoped to this particular extension build -->
-    <target name="ext-build-init"  depends="ext-load-properties" description="Sets up everything to prepare for the build">
+    <target name="ext-build-init" depends="ext-load-properties" description="Sets up everything to prepare for the build">
 
         <!-- Create needed directories -->
         <mkdir dir="${ext.dist}" />
         <mkdir dir="${ext.build}" />
         <mkdir dir="${ext.classes}" />
+        <mkdir dir="${ext.test.classes}" />
         <mkdir dir="${ext.docs}" />
     </target>
 
@@ -86,22 +106,13 @@
             <available file="${ext.src}" />
             <then>
                 <echo message="Compiling extension source" />
-                <javac srcdir="${ext.src}" destdir="${ext.classes}" includes="**/*.java" debug="on" source="1.4" deprecation="true">
-                    <!-- Shibboleth Libraries -->
-                    <classpath refid="build.path" />
-
-                    <!-- Shibboleth Classes -->
-                    <classpath>
-                        <pathelement location="${build}" />
-                    </classpath>
-
-                    <!-- Extension libraries -->
-                    <classpath>
-                        <fileset dir="${ext.lib}">
-                            <include name="**/*.jar" />
-                        </fileset>
-                    </classpath>
-                </javac>
+                <javac srcdir="${ext.src}"
+                       destdir="${ext.classes}"
+                       classpathref="ext.path"
+                       includes="**/*.java"
+                       debug="on"
+                       source="1.4"
+                       deprecation="true"/>
             </then>
         </if>
     </target>
@@ -155,19 +166,28 @@
                 <if>
                     <available file="${ext.test.src}" />
                     <then>
+                        <echo message="Compiling extension test source" />
+                        <javac srcdir="${ext.test.src}"
+                               destdir="${ext.test.classes}"
+                               classpathref="ext.path"
+                               includes="**/*.java"
+                               debug="on"
+                               source="1.4"
+                               deprecation="true"/>
+
                         <echo message="Running tests cases for extension ${ext.name}" />
-                        <junit printsummary="no" fork="yes" haltonerror="true" haltonfailure="true" jvm="${ext.root}">
+                        <junit printsummary="no" fork="yes" haltonerror="true" haltonfailure="true" dir="${ext.root}">
                             <jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
+                            <classpath refid="ext.path"/>
                             <formatter type="plain" />
-                            <batchtest>
-                                <fileset dir="${ext.test.src}" />
+                            <batchtest todir="${ext.root}">
+                                <fileset dir="${ext.test.classes}" />
                             </batchtest>
                         </junit>
                     </then>
                 </if>
             </then>
         </if>
-
     </target>
 
     <!-- Generates the Javadocs for the extension -->
@@ -203,9 +223,9 @@
             <then>
                 <replace dir="${ext.classes}" token="${ext.home.token}" value="${ext.filesystem.home}" excludes="*.class" />
                 <replace dir="${ext.classes}" token="$EXTENSION_NAME$" value="${ext.name}" excludes="*.class" />
-                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" update="false"/>
+                <jar jarfile="${ext.dist}/${ext.name}.jar" basedir="${ext.classes}" update="false" />
                 <copy file="${ext.dist}/${ext.name}.jar" todir="${exts.dir}/lib" />
-                <delete dir="${ext.classes}"/>
+                <delete dir="${ext.classes}" />
             </then>
         </if>
     </target>
