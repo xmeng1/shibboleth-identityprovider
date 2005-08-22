@@ -9,20 +9,24 @@
 -->
 <project name="Shibboleth-Extensions" default="ext-invoke" basedir=".">
 
-    <path id="ext.path">
+    <!-- Classpath for compiling an extension -->
+    <path id="ext-compile-path">
         <!-- Shibboleth Libraries -->
         <path refid="build.path" />
 
-        <!-- Shibboleth Classes -->
-        <pathelement location="${build}" />
-
-        <!-- Extension libraries -->
+        <!-- Extension's libraries -->
         <fileset dir="${ext.lib}">
             <include name="**/*.jar" />
         </fileset>
 
         <!-- Extension classes -->
         <pathelement location="${ext.classes}" />
+    </path>
+    
+    <!-- Classpath for testing an extension -->
+    <path id="ext-test-path">
+    	<!-- Extension Compilation Path -->
+        <path refid="ext-compile-path" />
         
         <!-- Extension test classes -->
         <pathelement location="${ext.test.classes}" />
@@ -108,7 +112,7 @@
                 <echo message="Compiling extension source" />
                 <javac srcdir="${ext.src}"
                        destdir="${ext.classes}"
-                       classpathref="ext.path"
+                       classpathref="ext-compile-path"
                        includes="**/*.java"
                        debug="on"
                        source="1.4"
@@ -169,7 +173,7 @@
                         <echo message="Compiling extension test source" />
                         <javac srcdir="${ext.test.src}"
                                destdir="${ext.test.classes}"
-                               classpathref="ext.path"
+                               classpathref="ext-compile-path"
                                includes="**/*.java"
                                debug="on"
                                source="1.4"
@@ -178,7 +182,7 @@
                         <echo message="Running tests cases for extension ${ext.name}" />
                         <junit printsummary="no" fork="yes" haltonerror="true" haltonfailure="true" dir="${ext.root}">
                             <jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
-                            <classpath refid="ext.path"/>
+                            <classpath refid="ext-test-path"/>
                             <formatter type="plain" />
                             <batchtest todir="${ext.root}">
                                 <fileset dir="${ext.test.src}" />
