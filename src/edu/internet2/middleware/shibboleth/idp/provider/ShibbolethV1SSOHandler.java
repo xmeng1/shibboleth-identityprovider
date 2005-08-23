@@ -271,6 +271,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 						+ nameId.getFormat() + ").");
 	}
 
+    public static boolean pushAttributeDefault = false;
+    
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
 			LocalPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
 			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject) throws SAMLException,
@@ -283,7 +285,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				getAuthNTime(request), authNSubject));
 
 		// Package attributes for push, if necessary.
-		if (!relyingParty.isLegacyProvider() && pushAttributes(false, relyingParty)) {
+		if (!relyingParty.isLegacyProvider() && pushAttributes(pushAttributeDefault, relyingParty)) {
 			log.info("Resolving attributes for push.");
 			generateAttributes(support, principal, relyingParty, assertions, request);
 		}
