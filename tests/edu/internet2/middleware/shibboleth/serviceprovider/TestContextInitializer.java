@@ -7,20 +7,6 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig.ApplicationInfo;
 
 public class TestContextInitializer extends SPTestCase {
-	private static ServiceProviderContext context   = ServiceProviderContext.getInstance();
-    
-    /**
-     * Load an SP configuration file.
-     * @param configFileName URL format string pointing to configuration file
-     * @throws ShibbolethConfigurationException
-     */
-	public void initServiceProvider(String configFileName) 
-        throws ShibbolethConfigurationException{
-            context.initialize();
-			ServiceProviderConfig config = new ServiceProviderConfig();
-			context.setServiceProviderConfig(config);
-			config.loadConfigObjects(configFileName);
-	}
 	
     /**
      * Load the typical sample configuration file from the usual place.
