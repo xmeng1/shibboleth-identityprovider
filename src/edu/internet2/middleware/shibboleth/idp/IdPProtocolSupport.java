@@ -1,16 +1,9 @@
 /*
- * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.] Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in
+ * writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -45,8 +38,8 @@ import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.common.Trust;
+import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
@@ -205,21 +198,25 @@ public class IdPProtocolSupport implements Metadata {
 	}
 
 	public EntityDescriptor lookup(String id) {
-		return lookup(id,true);
+
+		return lookup(id, true);
 	}
 
 	public EntityDescriptor lookup(Artifact artifact) {
-		return lookup(artifact,true);
+
+		return lookup(artifact, true);
 	}
 
 	public EntityDescriptor getRootEntity() {
+
 		return null;
 	}
 
 	public EntitiesDescriptor getRootEntities() {
+
 		return null;
 	}
-	
+
 	public SAMLAttribute[] getReleaseAttributes(Principal principal, RelyingParty relyingParty, String requester,
 			URL resource) throws AAException {
 
@@ -266,8 +263,16 @@ public class IdPProtocolSupport implements Metadata {
 		}
 	}
 
-	private SAMLAttribute[] resolveAttributes(Principal principal, String requester, String responder, URL resource,
+	public SAMLAttribute[] resolveAttributes(Principal principal, String requester, String responder, URL resource,
 			AAAttributeSet attributeSet) throws ArpProcessingException {
+
+		resolver.resolveAttributes(principal, requester, responder, attributeSet);
+		arpEngine.filterAttributes(attributeSet, principal, requester, resource);
+		return attributeSet.getAttributes();
+	}
+
+	public SAMLAttribute[] resolveAttributesNoPolicies(Principal principal, String requester, String responder,
+			URL resource, AAAttributeSet attributeSet) throws ArpProcessingException {
 
 		resolver.resolveAttributes(principal, requester, responder, attributeSet);
 		arpEngine.filterAttributes(attributeSet, principal, requester, resource);
