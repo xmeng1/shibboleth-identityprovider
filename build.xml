@@ -34,11 +34,7 @@
 
 	<!-- Construct the CLASSPATH -->
 	<path id="build.path">
-		<pathelement path="${classpath}" />
 		<pathelement location="${build}" />
-		<fileset dir="${custom}">
-			<include name="**/*.jar" />
-		</fileset>
 		<fileset dir="${endorsed}">
 			<include name="**/*.jar" />
 		</fileset>
