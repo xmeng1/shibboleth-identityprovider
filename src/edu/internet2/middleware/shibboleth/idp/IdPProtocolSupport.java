@@ -272,7 +272,7 @@ public class IdPProtocolSupport implements Metadata {
 	}
 
 	public SAMLAttribute[] resolveAttributesNoPolicies(Principal principal, String requester, String responder,
-			URL resource, AAAttributeSet attributeSet) {
+			AAAttributeSet attributeSet) {
 
 		resolver.resolveAttributes(principal, requester, responder, attributeSet);
 		return attributeSet.getAttributes();
