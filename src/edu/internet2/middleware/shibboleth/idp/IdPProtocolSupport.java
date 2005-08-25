@@ -275,7 +275,6 @@ public class IdPProtocolSupport implements Metadata {
 			URL resource, AAAttributeSet attributeSet) throws ArpProcessingException {
 
 		resolver.resolveAttributes(principal, requester, responder, attributeSet);
-		arpEngine.filterAttributes(attributeSet, principal, requester, resource);
 		return attributeSet.getAttributes();
 	}
 
