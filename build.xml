@@ -178,7 +178,7 @@
 			    <fileset dir="${custom.libs}">
 			    	<include name="*.jar"/>
 			    </fileset>
-			    <filelist refid="test.path"/>
+			    <path refid="test.path"/>
 			</classpath>
 			<formatter type="plain" />
 			<test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
@@ -198,7 +198,7 @@
 				<fileset dir="${custom.libs}">
 					<include name="*.jar"/>
 				</fileset>
-				<filelist refid="test.path"/>
+		        <path refid="test.path"/>
 			</classpath>
 			<formatter type="plain" />
 			<test name="edu.internet2.middleware.shibboleth.aap.AAPTests" />
