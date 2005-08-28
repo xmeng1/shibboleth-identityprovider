@@ -178,6 +178,14 @@
                                debug="on"
                                source="1.4"
                                deprecation="true"/>
+                        
+                        <!-- Copy any conf files over so that they end up on the classpathh -->
+                        <copy todir="${ext.test.classes}">
+							<fileset dir="${ext.test.src}">
+                            	<include name="**" />
+							    <exclude name="**/*.java"/>
+                            </fileset>
+                        </copy>
 
                         <echo message="Running tests cases for extension ${ext.name}" />
                         <junit printsummary="no" fork="yes" haltonerror="true" haltonfailure="true" dir="${ext.root}">
@@ -185,7 +193,9 @@
                             <classpath refid="ext-test-path"/>
                             <formatter type="plain" />
                             <batchtest todir="${ext.root}">
-                                <fileset dir="${ext.test.src}" />
+                                <fileset dir="${ext.test.classes}">
+                                    <include name="**/Test.java"/>
+                                </fileset>
                             </batchtest>
                         </junit>
                     </then>
@@ -278,7 +288,7 @@
             <then>
                 <copy todir="${ext.filesystem.home}/bin">
                     <fileset dir="${ext.bin}">
-                        <include name="*" />
+                        <include name="**" />
                     </fileset>
                 </copy>
                 <chmod dir="${ext.filesystem.home}/bin" perm="ug+rx" includes="**/*" />
