@@ -39,7 +39,12 @@ the following directories
                available on the classpath).  This can include subdirectories.  The strings 
                $IDP_HOME$, $SP_HOME$, and $EXTENSION_NAME$ will be exapanded for all files 
                in this directory.
-       tests/ - [Optional] Your extension's JUnit test case source.
+       tests/ - [Optional] Your extension's JUnit test case source. Test case files MUST 
+                end with "Test.java" (i.e. the name must match *Test.java).  Resources other 
+                than Java source files placed in this directory are added to the unit testing 
+                classpath (e.g. if you have "conf/foo.xml" in the tests directory it will appear
+                on the classpath under /conf/foo.xml").
+                
        web/ - [Optional] Any web pages, images, JSPs, etc. that should be included with the war
        build.properties - [REQUIRED] build properties for your extension 
                             (see below for required and optional properties)
