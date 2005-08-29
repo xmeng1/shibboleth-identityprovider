@@ -778,7 +778,7 @@ public class Rule {
 				this.matchFunctionIdentifier = matchFunctionIdentifier;
 			} else {
 				try {
-					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch");
+					this.matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch");
 				} catch (URISyntaxException e) {
 					throw new ArpMarshallingException(
 							"ARP Engine internal error: could not set default matching function for attribute value.");
