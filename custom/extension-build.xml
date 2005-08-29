@@ -194,7 +194,7 @@
                             <formatter type="plain" />
                             <batchtest todir="${ext.root}">
                                 <fileset dir="${ext.test.classes}">
-                                    <include name="**/Test.java"/>
+                                    <include name="**/*Test.class"/>
                                 </fileset>
                             </batchtest>
                         </junit>
