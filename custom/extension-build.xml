@@ -291,6 +291,8 @@
                         <include name="**" />
                     </fileset>
                 </copy>
+                <replace dir="${ext.filesystem.home}/bin" token="${ext.home.token}" value="${ext.filesystem.home}" />
+                <replace dir="${ext.filesystem.home}/bin" token="$EXTENSION_NAME$" value="${ext.name}" />
                 <chmod dir="${ext.filesystem.home}/bin" perm="ug+rx" includes="**/*" />
             </then>
         </if>

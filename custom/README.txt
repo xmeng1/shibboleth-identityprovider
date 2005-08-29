@@ -24,9 +24,8 @@ the following directories
     your-extension-directory/
        bin/ - [Optional] This directory contains any binary or script files that need to 
                be installed on the filesystem in the IdP or SP home bin directory.  This 
-               can include subdirectories.  The string's $IDP_HOME$ and $SP_HOME$ will be 
-               exapanded to the system path that the IdP or SP is installed (depending on 
-               which you're installing).
+               can include subdirectories.  The strings $IDP_HOME$, $SP_HOME$, and 
+			   $EXTENSION_NAME$ will be exapanded for all files in this directory.
        etc/ - [Optional] This directory contains any configuration files that need to 
                be installed on the filesystem under the IdP or SP home etc directory.  This 
 			   can include subdirectories.  All files will be installed into a subdirectory 
