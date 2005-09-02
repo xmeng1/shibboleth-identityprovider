@@ -449,10 +449,9 @@ public class AttributeResolver {
 		// Check to see if we have already resolved the attribute during this request
 		// (this checks attributes that were submitted to the AR for resolution)
 		ResolverAttribute requestedAttribute = requestedAttributes.getByName(currentDefinition.getId());
-		if (requestedAttribute != null) {
-			if (requestedAttribute.resolved()) {
+		if (requestedAttribute != null && requestedAttribute.resolved()) {
 				attribute.resolveFromCached(requestedAttribute);
-			}
+				return;
 		}
 
 		// Check to see if we have a cached resolution for this attribute
