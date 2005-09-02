@@ -1,16 +1,9 @@
 /*
- * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.] Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in
+ * writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -108,7 +101,7 @@ public class MetadataTests extends TestCase {
 	public void testBasicSAMLXML() {
 
 		try {
-			Metadata metadata = new XMLMetadata(new File("src/conf/IQ-sites.xml").toURL().toString());
+			Metadata metadata = new XMLMetadata(new File("src/conf/IQ-metadata.xml").toURL().toString());
 
 			EntityDescriptor entity = metadata.lookup("urn:mace:inqueue:example.edu");
 
@@ -125,7 +118,7 @@ public class MetadataTests extends TestCase {
 
 			assertEquals("Incorrect assertion consumer service location.", ((Endpoint) sp
 					.getAssertionConsumerServiceManager().getEndpoints().next()).getLocation(),
-					"https://wayf.internet2.edu/Shibboleth.shire");
+					"https://wayf.internet2.edu/Shibboleth.sso/SAML/POST");
 
 			Iterator keys = sp.getKeyDescriptors();
 			KeyDescriptor key = (KeyDescriptor) keys.next();
@@ -151,7 +144,7 @@ public class MetadataTests extends TestCase {
 
 			Element providerNode = placeHolder.createElementNS(IdPConfig.configNameSpace, "MetadataProvider");
 
-			Document xmlConfig = parser.parse(new InputSource(new FileInputStream("src/conf/IQ-sites.xml")));
+			Document xmlConfig = parser.parse(new InputSource(new FileInputStream("src/conf/IQ-metadata.xml")));
 			Node metadataNode = placeHolder.importNode(xmlConfig.getDocumentElement(), true);
 			providerNode.appendChild(metadataNode);
 
@@ -172,7 +165,7 @@ public class MetadataTests extends TestCase {
 
 			assertEquals("Incorrect assertion consumer service location.", ((Endpoint) sp
 					.getAssertionConsumerServiceManager().getEndpoints().next()).getLocation(),
-					"https://wayf.internet2.edu/Shibboleth.shire");
+					"https://wayf.internet2.edu/Shibboleth.sso/SAML/POST");
 
 			Iterator keys = sp.getKeyDescriptors();
 			KeyDescriptor key = (KeyDescriptor) keys.next();
