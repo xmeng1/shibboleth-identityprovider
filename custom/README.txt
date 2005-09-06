@@ -24,19 +24,19 @@ the following directories
     your-extension-directory/
        bin/ - [Optional] This directory contains any binary or script files that need to 
                be installed on the filesystem in the IdP or SP home bin directory.  This 
-               can include subdirectories.  The strings $IDP_HOME$, $SP_HOME$, and 
-			   $EXTENSION_NAME$ will be exapanded for all files in this directory.
+               can include subdirectories.  The macros $EXTENSION_NAME$ and $IDP_HOME$ or
+               $SP_HOME$ will be exapanded for all files in this directory.
        etc/ - [Optional] This directory contains any configuration files that need to 
                be installed on the filesystem under the IdP or SP home etc directory.  This 
 			   can include subdirectories.  All files will be installed into a subdirectory 
-			   named after the extension module.  The strings $IDP_HOME$, $SP_HOME$, and 
-			   $EXTENSION_NAME$ will be exapanded for all files in this directory.
+			   named after the extension module.  The macros $EXTENSION_NAME$ and $IDP_HOME$ or
+               $SP_HOME$ will be exapanded for all files in this directory.
        lib/ - [REQUIRED if 'src' is present] any third party jars your extension needs
        src/ - [Optional] your extension's source
        src-conf/ - [Optional] This directory contains any files which are not java source
                files but still need to be included in the extension jar (and hence be 
-               available on the classpath).  This can include subdirectories.  The strings 
-               $IDP_HOME$, $SP_HOME$, and $EXTENSION_NAME$ will be exapanded for all files 
+               available on the classpath).  This can include subdirectories.  The macros 
+               $EXTENSION_NAME$ and $IDP_HOME$ or $SP_HOME$ will be exapanded for all files 
                in this directory.
        tests/ - [Optional] Your extension's JUnit test case source. Test case files MUST 
                 end with "Test.java" (i.e. the name must match *Test.java).  Resources other 
@@ -51,6 +51,9 @@ the following directories
 The following directories are created, and destroyed, by the extension build process and as
 such developers should never rely on them: build, dist, doc/api.  Any other directory may be
 created and bundled with the extension, the build process will simply ignore them.
+
+The macro $IDP_HOME$ is only expanded during an IdP install and $SP_HOME$ is only
+expanded during an SP install.
   
 2.1 Steps for Using the Extensions Build Process
 I.  Create a directory under the custom directory with the structure mentioned above.  Any 
