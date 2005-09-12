@@ -15,6 +15,8 @@ import junit.framework.TestCase;
  */
 public class SPTestCase extends TestCase {
     
+    public static String defaultConfigFileName = "/basicSpHome/spconfig.xml";
+    
     public SPTestCase() {
         Logger root = Logger.getRootLogger();
         Layout initLayout = new PatternLayout("%d{HH:mm} %-5p %m%n");
@@ -32,10 +34,16 @@ public class SPTestCase extends TestCase {
      */
     public void initServiceProvider(String configFileName) 
         throws ShibbolethConfigurationException{
-            context.initialize();
-            ServiceProviderConfig config = new ServiceProviderConfig();
-            context.setServiceProviderConfig(config);
-            config.loadConfigObjects(configFileName);
+            
+        context.initialize();
+        ServiceProviderConfig config = new ServiceProviderConfig();
+        context.setServiceProviderConfig(config);
+        config.loadConfigObjects(configFileName);
+    }
+    
+    public void initServiceProvider() 
+        throws ShibbolethConfigurationException {
+        initServiceProvider(defaultConfigFileName);
     }
 
 }
