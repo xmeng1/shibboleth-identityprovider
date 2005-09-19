@@ -552,7 +552,7 @@
 		<copy todir="${sp.home}/etc" overwrite="true">
 			<fileset dir="${src}/conf" includesfile="conf/sp-conf.include"/>
 		</copy>
-		<move file="${sp.home}/etc/dist.sp.xml" tofile="${sp.home}/etc/sp.xml" overwrite="true" />
+		<move file="${sp.home}/etc/dist.sp-iqidp.xml" tofile="${sp.home}/etc/sp.xml" overwrite="true" />
 		<replace file="${sp.home}/etc/sp.xml" token="$SP_HOME$" value="${sp.home.url}" />
 	</target>
 

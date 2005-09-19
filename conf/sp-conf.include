@@ -1,6 +1,7 @@
 example-metadata.xml
 IQ-metadata.xml
-dist.sp.xml
+dist.sp-iqidp.xml
+dist.sp-localidp.xml
 sp-example.crt
 sp-example.key
 AAP.xml
