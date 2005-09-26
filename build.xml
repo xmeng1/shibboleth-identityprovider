@@ -300,7 +300,10 @@
 	</target>
 
 	<target name="package-wayf" depends="compile" description="Creates the WAYF war and moves it to ${dist}">
-		<war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no" />
+        <copy file="${appconfig}/schemas.properties" todir="${approot}/WEB-INF/classes/conf"/>
+        <copy file="${appconfig}/wayfconfig.xml" todir="${approot}/WEB-INF/classes/conf"/>
+            
+		<war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no"/>
 	</target>
 
 	<target name="package-sp" depends="compile, install.url" description="Creates the Java SP war and moves it to ${dist}">
