@@ -97,6 +97,7 @@ public class Parser {
             "urn:oasis:names:tc:SAML:1.0:protocol",
             "urn:mace:shibboleth:namemapper:1.0",
             "urn:mace:shibboleth:idp:config:1.0",
+            "urn:mace:shibboleth:wayf:config:1.0",
             "urn:mace:shibboleth:arp:1.0",
             "urn:mace:shibboleth:resolver:1.0",
             "urn:oasis:names:tc:SAML:2.0:metadata",

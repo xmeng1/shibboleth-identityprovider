@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
-<WayfConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../schemas/wayfconfig.xsd" 
-	cacheType="COOKIES" 
+<WayfConfig 
+	xmlns="urn:mace:shibboleth:wayf:config:1.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	cacheExpiration="604800"	
 	supportContact="mailto:root@localhost" 
 	logoLocation="images/logo.jpg">

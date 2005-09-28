@@ -17,11 +17,12 @@
 package edu.internet2.middleware.shibboleth.wayf;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 
+import javax.servlet.GenericServlet;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
@@ -30,13 +31,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
-import org.xml.sax.SAXException;
+import org.w3c.dom.Document;
 
-import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
-import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
+import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata;
+import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * A servlet implementation of the Shibboleth WAYF service. Allows a browser
@@ -55,10 +56,6 @@ public class WayfService extends HttpServlet {
     private WayfConfig config;
 
     private Metadata metadata;
-
-    private WayfCacheOptions wSessionOptions = new WayfCacheOptions();
-
-    private WayfCacheOptions wPermOptions = new WayfCacheOptions();
 
     private static Logger log = Logger.getLogger(WayfService.class.getName());
 
@@ -85,11 +82,6 @@ public class WayfService extends HttpServlet {
             throw new ServletException(e);
         }
 
-        // Setup Cacheing options
-        wSessionOptions.setDomain(config.getCacheDomain());
-        wPermOptions.setDomain(config.getCacheDomain());
-        wPermOptions.setExpiration(config.getCacheExpiration());
-
         initViewConfig();
         log.info("WAYF initialization completed.");
     }
@@ -98,19 +90,16 @@ public class WayfService extends HttpServlet {
      * Populates WayfConfig from file contents.
      */
     private void configure() throws UnavailableException {
-
         try {
-            InputStream is = new ShibResource(wayfConfigFileLocation, this.getClass()).getInputStream();
-            WayfConfigDigester digester = new WayfConfigDigester();
-            digester.setValidating(true);
-            config = (WayfConfig) digester.parse(is);
-
-        } catch (SAXException se) {
-            log.fatal("Error parsing WAYF configuration file.", se);
+            Document doc = Parser.loadDom(wayfConfigFileLocation, true);
+            config = new WayfConfig(doc.getDocumentElement());
+        } catch (IOException e) {
+            log.fatal("Error Loading WAYF configuration file.", e);
             throw new UnavailableException("Error parsing WAYF configuration file.");
-        } catch (IOException ioe) {
-            log.fatal("Error reading WAYF configuration file.", ioe);
-            throw new UnavailableException("Error reading WAYF configuration file.");
+        } catch (Exception e) {
+            // All other exceptions are from the parsing
+            log.fatal("Error parsing WAYF configuration file.", e);
+            throw new UnavailableException("Error parsing WAYF configuration file.");
         }
     }
 
@@ -170,16 +159,63 @@ public class WayfService extends HttpServlet {
         try {
             if (requestType.equals("deleteFromCache")) {
                 log.debug("Deleting saved HS from cache");
-                WayfCacheFactory.getInstance(config.getCacheType(), wPermOptions).deleteHsFromCache(req, res);
+                SamlIdPCookie.deleteCookie(req, res);
                 handleLookup(req, res);
-            } else if (WayfCacheFactory.getInstance(config.getCacheType()).hasCachedHS(req)) {
-                forwardToHS(req, res, WayfCacheFactory.getInstance(config.getCacheType()).getCachedHS(req));
-            } else if (requestType.equals("search")) {
+                return;
+            }
+
+            SamlIdPCookie cookie;
+            if (req.getParameter("nolookup") == null) {
+                cookie = SamlIdPCookie.getIdPCookie(req, res, config.getCacheDomain());
+            } else {
+                // For the test case, do not do a cache lookup, start as empty
+                cookie = new SamlIdPCookie(req, res, config.getCacheDomain());
+            }
+
+            if (requestType.equals("search")) {
                 handleSearch(req, res);
             } else if (requestType.equals("selection")) {
-                handleSelection(req, res);
+                String origin = req.getParameter("origin");
+                log.debug("Processing handle selection: " + origin);
+                if (origin == null) {
+                    handleLookup(req, res);
+                } else {
+                    if ((req.getParameter("cache") != null)) {
+                        if (req.getParameter("cache").equalsIgnoreCase("session")) {
+                            cookie.addIdPName(origin, 0);
+                        } else if (req.getParameter("cache").equalsIgnoreCase("perm")) {
+                            cookie.addIdPName(origin, config.getCacheExpiration());
+                        }
+                    }
+                    redirectToIdP(req, res, origin, cookie);
+                }
             } else {
-                handleLookup(req, res);
+                // Try for a cache hit
+                String idPName = null;
+                Iterator it = cookie.iterator();
+
+                //
+                // The cached data may contain several IdPs, some of which we do
+                // not know about
+                // so iterate down until we find one we do know about
+                //  
+                while (it.hasNext()) {
+                    idPName = (String) it.next();
+                    if (metadata.lookup(idPName) != null) {
+                        break;
+                    }
+                }
+
+                if (idPName != null) {
+                    //
+                    // move the name to the head of the list, preserving the
+                    // cache expiration
+                    //
+                    cookie.addIdPName(idPName, 0);
+                    redirectToIdP(req, res, idPName, cookie);
+                } else {
+                    handleLookup(req, res);
+                }
             }
         } catch (WayfException we) {
             handleError(req, res, we);
@@ -205,7 +241,7 @@ public class WayfService extends HttpServlet {
             }
 
             req.setAttribute("time", new Long(new Date().getTime() / 1000).toString()); // Unix
-                                                                                        // Time
+            // Time
             req.setAttribute("requestURL", req.getRequestURI().toString());
 
             log.debug("Displaying WAYF selection page.");
@@ -239,64 +275,51 @@ public class WayfService extends HttpServlet {
     /**
      * Registers a user's HS selection and forwards appropriately
      */
-    private void handleSelection(HttpServletRequest req, HttpServletResponse res) throws WayfException {
-
-        log.debug("Processing handle selection: " + req.getParameter("origin"));
-        String handleService = null;
+    private void redirectToIdP(HttpServletRequest req, HttpServletResponse res, String idPName, SamlIdPCookie cookie)
+            throws WayfException {
+        String idPSSOEndPoint = null;
         try {
             //
             // If we have had a refresh between then and now the following will
             // fail
             //
-            handleService = metadata.lookup(req.getParameter("origin")).getIDPSSODescriptor(
+            idPSSOEndPoint = metadata.lookup(idPName).getIDPSSODescriptor(
                     edu.internet2.middleware.shibboleth.common.XML.SHIB_NS).getSingleSignOnServiceManager()
                     .getDefaultEndpoint().getLocation();
         } catch (Exception ex) {
-            log.error("Error dispatching to IdP", ex);
+            //
+            // remove this entry (only) from the cache
+            //
+            cookie.deleteIdPName(idPName);
+            log.error("Error dispatching to IdP: ", ex);
         }
 
-        if (handleService == null) {
-            handleLookup(req, res);
-        } else {
-            if ((req.getParameter("cache") != null)) {
-                if (req.getParameter("cache").equalsIgnoreCase("session")) {
-                    WayfCacheFactory.getInstance(config.getCacheType(), wSessionOptions).addHsToCache(handleService,
-                            req, res);
-                } else if (req.getParameter("cache").equalsIgnoreCase("perm")) {
-                    WayfCacheFactory.getInstance(config.getCacheType(), wPermOptions).addHsToCache(handleService, req,
-                            res);
+        if (idPSSOEndPoint != null) {
+            log.info("Redirecting to SSO at selected IdP: " + idPSSOEndPoint);
+            try {
+                StringBuffer buffer = new StringBuffer(idPSSOEndPoint).append("?target=");
+                buffer.append(URLEncoder.encode(getTarget(req), "UTF-8")).append("&shire=");
+                buffer.append(URLEncoder.encode(getSHIRE(req), "UTF-8"));
+                String providerId = getProviderId(req);
+                log.debug("WALTER: (" + providerId + ").");
+                if (providerId != null) {
+                    buffer.append("&providerId=").append(URLEncoder.encode(getProviderId(req), "UTF-8"));
                 }
+                buffer.append("&time=").append(new Long(new Date().getTime() / 1000).toString()); // Unix
+                // Time
+                res.sendRedirect(buffer.toString());
+            } catch (IOException ioe) {
+                //
+                // remove this entry (only) from the cache
+                //
+                cookie.deleteIdPName(idPName);
+                throw new WayfException("Error forwarding to IdP SSO endpoint: " + ioe.toString());
             }
-            forwardToHS(req, res, handleService);
+        } else {
+            //
+            // We
+            handleLookup(req, res);
         }
-
-    }
-
-    /**
-     * Uses an HTTP Status 307 redirect to forward the user the HS.
-     * 
-     * @param handleService The URL of the Shiboleth HS.
-     */
-    private void forwardToHS(HttpServletRequest req, HttpServletResponse res, String handleService)
-            throws WayfException {
-
-        log.info("Redirecting to selected Handle Service");
-        try {
-            StringBuffer buffer = new StringBuffer(handleService + "?target="
-                    + URLEncoder.encode(getTarget(req), "UTF-8") + "&shire="
-                    + URLEncoder.encode(getSHIRE(req), "UTF-8"));
-            String providerId = getProviderId(req);
-            log.debug("WALTER: (" + providerId + ").");
-            if (providerId != null) {
-                buffer.append("&providerId=" + URLEncoder.encode(getProviderId(req), "UTF-8"));
-            }
-            buffer.append("&time=" + new Long(new Date().getTime() / 1000).toString()); // Unix
-                                                                                        // Time
-            res.sendRedirect(buffer.toString());
-        } catch (IOException ioe) {
-            throw new WayfException("Error forwarding to HS: " + ioe.toString());
-        }
-
     }
 
     /**

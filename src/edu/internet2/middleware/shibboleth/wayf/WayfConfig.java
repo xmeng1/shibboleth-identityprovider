@@ -19,6 +19,10 @@ package edu.internet2.middleware.shibboleth.wayf;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
 /**
  * Class used by the WAYF service to determine runtime options Most of the fields of this class should have reasonable
@@ -41,10 +45,97 @@ public class WayfConfig {
 	private HashSet ignoredForMatch = new HashSet();
 	private int cacheExpiration;
 	private String cacheDomain;
-	private String cacheType = "COOKIES";
 
-	public WayfConfig() {
+	private String getValue(Element element, String what) throws ShibbolethConfigurationException
+	{
+		NodeList list = element.getElementsByTagName(what);
+	    
+	    if (list.getLength() > 0) {
+	    	if (list.getLength() > 1) {
+	    		throw new ShibbolethConfigurationException("More than one <" + what + "/> element");
+	    	}
+	    		
+	    	return list.item(0).getTextContent();
+	    }
+	    return null;
+	}
+	
+	/**
+	 * 
+	 * Parse the Supplied XML element into a new WayfConfig Object
+	 * 
+	 */
+	
+	public WayfConfig(Element config) throws ShibbolethConfigurationException {
 
+	    if (!config.getTagName().equals("WayfConfig")) { 
+
+		throw new ShibbolethConfigurationException(
+		    "Unexpected configuration data.  <WayfConfig/> is needed."); 
+	    }
+
+	    log.debug("Loading global configuration properties.");
+
+	    String raw = config.getAttribute("cacheDomain");
+
+	    if ((raw != null) && (raw != "")) {
+	    	setCacheDomain(raw);
+	    }
+	    	
+	    raw = config.getAttribute("cacheExpiration");
+	    if ((raw != null) && (raw != "")) {
+	    	
+	    	try {
+
+	    		setCacheExpiration(Integer.parseInt(raw));
+	    	} catch (NumberFormatException ex) {
+	    		
+	    		throw new ShibbolethConfigurationException("Invalid CacheExpiration value - " + raw, ex);
+	    	}
+	    }
+
+	    raw = config.getAttribute("logoLocation");
+	    if ((raw != null) && (raw != "")) {
+	    	
+	    	setLogoLocation(raw);
+	    }
+	    
+	    raw = config.getAttribute("supportContact");
+	    if ((raw != null) && (raw != "")) {
+	    	
+	    	setSupportContact(raw);
+	    }
+	    
+	    raw = getValue(config, "HelpText");
+	    
+	    if ((raw != null) && (raw != "")) {
+	    	    	
+	    	setHelpText(raw);
+	    }
+
+	    raw = getValue(config, "SearchResultEmptyText");
+	    
+	    if ((raw != null) && (raw != "")) {
+	    	
+	    	setSearchResultEmptyText(raw);
+	    }
+	    
+	    NodeList list = config.getElementsByTagName("SearchIgnore");
+	    
+	    for (int i = 0; i < list.getLength(); i++ ) {
+	    	
+	    	NodeList inner = ((Element) list.item(i)).getElementsByTagName("IgnoreText");
+	    	
+	    	for(int j = 0; j < inner.getLength(); j++) {
+	    		
+	    		addIgnoredForMatch(inner.item(j).getTextContent());
+	    	}
+	    }
+
+	}
+	
+	public WayfConfig()
+	{
 		super();
 	}
 
@@ -112,21 +203,6 @@ public class WayfConfig {
 	public void addIgnoredForMatch(String s) {
 
 		ignoredForMatch.add(s.toLowerCase());
-	}
-
-	public String getCacheType() {
-
-		return cacheType;
-	}
-
-	public void setCacheType(String cache) {
-
-		if (cache.toUpperCase().equals("NONE") || cache.toUpperCase().equals("SESSION")
-				|| cache.toUpperCase().equals("COOKIES")) {
-			this.cacheType = cache.toUpperCase();
-		} else {
-			log.warn("Cache type :" + cache + ": not recognized, using default.");
-		}
 	}
 
 	/**
