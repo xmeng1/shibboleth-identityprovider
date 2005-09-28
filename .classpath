@@ -8,13 +8,8 @@
 	<classpathentry sourcepath="lib/log4j-1.2.5-src.jar" kind="lib" path="lib/log4j-1.2.5.jar"/>
 	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-beanutils.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-digester.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-logging-1.03.jar"/>
-	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/servlet-api.jar"/>
-	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jasper-runtime.jar"/>
-	<classpathentry kind="var" path="TOMCAT_HOME/common/lib/jsp-api.jar"/>
 	<classpathentry sourcepath="lib/commons-pool-1.2-src.jar" kind="lib" path="lib/commons-pool-1.2.jar"/>
 	<classpathentry sourcepath="lib/commons-dbcp-1.2.1-src.jar" kind="lib" path="lib/commons-dbcp-1.2.1.jar"/>
 	<classpathentry sourcepath="C:/cvs/xml-security/src" kind="lib" path="webApplication/WEB-INF/lib/xmlsec-20050514.jar"/>
