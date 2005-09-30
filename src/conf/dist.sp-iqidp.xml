@@ -57,7 +57,7 @@
 		-->
 		<RequestMapProvider type="edu.internet2.middleware.shibboleth.sp.provider.NativeRequestMapProvider">
 			<RequestMap applicationId="default">
-				<Host name="cyrk.cis.yale.edu">
+				<Host name="replace.with.your.computer.name">
 					<!-- Nominally require shibboleth authentication for all documents under /secure.
 						 Note that the sample /secure application distributed with the Filter overrides
 						 this to specify only specific file names/types. -->
@@ -75,8 +75,8 @@
 	points into to this section.
 	-->
 	<Applications id="default" 
-		providerId="https://cyrk.cis.yale.edu/shibboleth"
-		homeURL="https://cyrk.cis.yale.edu/index.html"
+		providerId="https://replace.with.your.computer.name/shibboleth"
+		homeURL="https://replace.with.your.computer.name/index.html"
 		xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion"
 		xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">
 
@@ -91,7 +91,7 @@
 		disabled.
 		-->
 		<Sessions lifetime="7200" timeout="3600" checkAddress="false"
-			handlerURL="https://cyrk.cis.yale.edu:9443/shibboleth-sp/Shibboleth.sso" 
+			handlerURL="https://replace.with.your.computer.name:9443/shibboleth-sp/Shibboleth.sso" 
 			handlerSSL="false" idpHistory="true" idpHistoryDays="7">
 			
 			<!--
