@@ -2,6 +2,8 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="tests"/>
+	<classpathentry kind="lib" path="endorsed/resolver.jar"/>
+	<classpathentry kind="lib" path="endorsed/xml-apis.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml-1.1.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
 	<classpathentry sourcepath="lib/junit-3.8.1-src.jar" kind="lib" path="lib/junit-3.8.1.jar"/>
