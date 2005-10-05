@@ -162,7 +162,7 @@ public class AssertionConsumerServlet extends HttpServlet {
 					SAMLResponse attributeResponse = session.getAttributeResponse();
 					outputStream.print(attributeResponse.toString());
 				} else {
-                    if (target.contains(":")) {
+                    if (target.indexOf(':')>0) {
                         // Ordinary URL target
                         response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
                     } else {
