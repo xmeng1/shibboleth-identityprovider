@@ -318,7 +318,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         // Session object with the values from this Assertion.
         SessionManager sessionManager = context.getSessionManager();
         String emptySessionId = null;
-        if (!data.target.contains(":")) {
+        if (data.target.indexOf(':')==-1) {
             // The Target can be a URL or an Empty SessionId
             emptySessionId = data.target;
         }
