@@ -50,20 +50,6 @@ do
     fi
 done
 
-DIRLIBS=${IDP_HOME}/webApplication/WEB-INF/lib/*.jar
-for i in ${DIRLIBS}
-do
-    # if the directory is empty, then it will return the input string
-    # this is stupid, so case for it
-    if [ "$i" != "${DIRLIBS}" ] ; then
-      if [ -z "$SHIB_UTIL_CLASSPATH" ] ; then
-        SHIB_UTIL_CLASSPATH=$i
-      else
-        SHIB_UTIL_CLASSPATH="$i":$SHIB_UTIL_CLASSPATH
-      fi
-    fi
-done
-
 SHIB_UTIL_CLASSPATH=$SHIB_UTIL_CLASSPATH:"$IDP_HOME"
 
 ##Here we go

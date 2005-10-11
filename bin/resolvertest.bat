@@ -40,9 +40,6 @@ REM add in the dependency .jar files
 for %%i in (%IDP_HOME%\lib\*.jar) do (
 	call %IDP_HOME%\bin\cpappend.bat %%i
 )
-for %%i in (%IDP_HOME%\webApplication\WEB-INF\lib\*.jar) do (
-	call %IDP_HOME%\bin\cpappend.bat %%i
-)
 
 REM Here we go
 %JAVACMD% -Djava.endorsed.dirs="%ENDORSED%" -cp "%LOCALCLASSPATH%" edu.internet2.middleware.shibboleth.utils.ResolverTest %*
