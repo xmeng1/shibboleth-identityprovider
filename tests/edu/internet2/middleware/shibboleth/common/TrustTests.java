@@ -1,16 +1,9 @@
 /*
- * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.] Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in
+ * writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -254,6 +247,43 @@ public class TrustTests extends TestCase {
 		}
 	}
 
+	public void testPkixX509CertFailBadNameMatch() {
+
+		try {
+			// Pull the role descriptor from example metadata
+			Metadata metadata = new XMLMetadata(new File("data/metadata11.xml").toURL().toString());
+			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
+					"urn:oasis:names:tc:SAML:1.1:protocol");
+
+			// Use a pre-defined cert
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new ShibResource(new File("data/trusttest.jks").toURL().toString()).getInputStream(),
+					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
+			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline3");
+
+			// Try to validate against the metadata
+			Trust validator = new ShibbolethTrust();
+			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			if (successful) {
+				fail("Validation should have failed.  DN in cert does not match the metadata.");
+			}
+
+		} catch (MetadataException e) {
+			fail("Error in test specification: " + e);
+		} catch (ResourceNotAvailableException e) {
+			fail("Error in test specification: " + e);
+		} catch (IOException e) {
+			fail("Error in test specification: " + e);
+		} catch (NoSuchAlgorithmException e) {
+			fail("Error in test specification: " + e);
+		} catch (CertificateException e) {
+			fail("Error in test specification: " + e);
+		} catch (KeyStoreException e) {
+			fail("Error in test specification: " + e);
+		}
+	}
+
 	public void testPkixX509CertFailValidateWithPathTooLong() {
 
 		try {
@@ -440,4 +470,5 @@ public class TrustTests extends TestCase {
 			fail("Error in test specification: " + e);
 		}
 	}
+
 }
