@@ -1,0 +1,57 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body>
+    <Response xmlns="urn:oasis:names:tc:SAML:1.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:samlp="urn:oasis:names:tc:SAML:1.0:protocol" InResponseTo="d206a5ba1d50c3afd855dea0b0106cb6" IssueInstant="[^"]+" MajorVersion="1" MinorVersion="1" ResponseID="[^"]+">
+        <Status>
+            <StatusCode Value="samlp:Success"></StatusCode>
+        </Status>
+        <Assertion xmlns="urn:oasis:names:tc:SAML:1.0:assertion" AssertionID="[^"]+" IssueInstant="[^"]+" Issuer="urn:x-shibtest:IdP" MajorVersion="1" MinorVersion="1">
+            <Conditions NotBefore="[^"]+" NotOnOrAfter="[^"]+">
+                <AudienceRestrictionCondition>
+                    <Audience>urn:x-shibtest:SP</Audience>
+                    <Audience>urn:x-shibtest:IdP:defaultRelyingParty</Audience>
+                </AudienceRestrictionCondition>
+            </Conditions>
+            <AttributeStatement>
+                <Subject>
+                    <NameIdentifier Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" NameQualifier="urn:x-shibtest:IdP">
+                        test-handle
+                    </NameIdentifier>
+                </Subject>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonEntitlement" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue>urn:mace:example.edu:exampleEntitlement</AttributeValue>
+                </Attribute>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue Scope="example.org">member</AttributeValue>
+                </Attribute>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonAffiliation" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue>member</AttributeValue>
+                </Attribute>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonPrincipalName" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue>test-handle</AttributeValue>
+                </Attribute>
+            </AttributeStatement>
+            <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:SignedInfo>
+                    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:CanonicalizationMethod>
+                    <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+                    <ds:Reference URI="[^"]+">
+                        <ds:Transforms>
+                            <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
+                            <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
+                                <ec:InclusiveNamespaces xmlns:ec="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="code ds kind rw saml samlp typens #default xsd xsi">
+                        </ec:InclusiveNamespaces>
+                            </ds:Transform>
+                        </ds:Transforms>
+                        <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                        <ds:DigestValue>[^<]+</ds:DigestValue>
+                    </ds:Reference>
+                </ds:SignedInfo>
+                <ds:SignatureValue>[^<]+</ds:SignatureValue>
+                <ds:KeyInfo>
+                <ds:X509Data>
+                <ds:X509Certificate>[^<]+</ds:X509Certificate>
+                </ds:X509Data>
+                </ds:KeyInfo>
+            </ds:Signature>
+        </Assertion>
+    </Response>
+</soap:Body></soap:Envelope>

@@ -110,4 +110,9 @@ public class IdPConfigLoader {
 		return getIdPConfig(getIdPConfigFile(context));
 
 	}
+    
+    protected static void reset() {
+        idpConfig = null;
+        idpConfigFile = null;
+    }
 }

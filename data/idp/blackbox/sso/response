@@ -1,0 +1,49 @@
+<Response xmlns="urn:oasis:names:tc:SAML:1.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:samlp="urn:oasis:names:tc:SAML:1.0:protocol" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" IssueInstant="[^"]+" MajorVersion="1" MinorVersion="1" Recipient="https://sp.example.org/Shibboleth.shire" ResponseID="[^"]+">
+  <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"></ds:CanonicalizationMethod>
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+      <ds:Reference URI="[^"]+">
+        <ds:Transforms>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>
+          <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
+            <ec:InclusiveNamespaces xmlns:ec="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="code ds kind rw saml samlp typens #default xsd xsi"></ec:InclusiveNamespaces>
+          </ds:Transform>
+        </ds:Transforms>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+        <ds:DigestValue>[^<]+</ds:DigestValue>
+      </ds:Reference>
+    </ds:SignedInfo>
+    <ds:SignatureValue>[^<]+</ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:X509Data>
+        <ds:X509Certificate>[^<]+</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+  </ds:Signature>
+  <Status>
+    <StatusCode Value="samlp:Success"></StatusCode>
+  </Status>
+  <Assertion xmlns="urn:oasis:names:tc:SAML:1.0:assertion" AssertionID="_18ff9b77e8a5feef1d1239af71df1b45" IssueInstant="2005-10-13T16:24:58.660Z" Issuer="idp.example.org" MajorVersion="1" MinorVersion="1">
+    <Conditions NotBefore="2005-10-13T16:24:58.642Z"
+    NotOnOrAfter="2005-10-13T16:29:58.642Z">
+      <AudienceRestrictionCondition>
+        <Audience>urn:x-shibtest:IdP:defaultRelyingParty</Audience>
+      </AudienceRestrictionCondition>
+    </Conditions>
+    <AuthenticationStatement AuthenticationInstant="2005-10-13T16:24:58.625Z"AuthenticationMethod="urn:oasis:names:tc:SAML:1.0:am:unspecified">
+
+      <Subject>
+        <NameIdentifier Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" NameQualifier="urn:x-shibtest:IdP">gpburdell</NameIdentifier>
+        <SubjectConfirmation>
+          <ConfirmationMethod>urn:oasis:names:tc:SAML:1.0:cm:bearer</ConfirmationMethod>
+        </SubjectConfirmation>
+      </Subject>
+      <SubjectLocality IPAddress="127.0.0.1"></SubjectLocality>
+      <AuthorityBinding AuthorityKind="samlp:AttributeQuery"
+      Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
+      Location="https://idp.example.org/shibboleth-idp/AA">
+      </AuthorityBinding>
+    </AuthenticationStatement>
+  </Assertion>
+</Response>

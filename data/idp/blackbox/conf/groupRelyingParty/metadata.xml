@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="urn:oasis:names:tc:SAML:2.0:metadata ../schemas/sstc-saml-schema-metadata-2.0.xsd urn:mace:shibboleth:metadata:1.0 ../schemas/shibboleth-metadata-1.0.xsd" 
+	Name="urn-x:testFed1" validUntil="3010-01-01T00:00:00Z">
+    <EntitiesDescriptor Name="urn:x-shibtest:federation" validUntil="3010-01-01T00:00:00Z">
+	    <Extensions>
+			<KeyAuthority xmlns="urn:mace:shibboleth:metadata:1.0">
+           		<!-- HEPKI Master Test CA -->
+				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                    <ds:X509Data>
+						<ds:X509Certificate>
+MIIC6zCCAlSgAwIBAgICAlQwDQYJKoZIhvcNAQEEBQAwgakxCzAJBgNVBAYTAlVT
+MRIwEAYDVQQIEwlXaXNjb25zaW4xEDAOBgNVBAcTB01hZGlzb24xIDAeBgNVBAoT
+F1VuaXZlcnNpdHkgb2YgV2lzY29uc2luMSswKQYDVQQLEyJEaXZpc2lvbiBvZiBJ
+bmZvcm1hdGlvbiBUZWNobm9sb2d5MSUwIwYDVQQDExxIRVBLSSBNYXN0ZXIgQ0Eg
+LS0gMjAwMjA3MDFBMB4XDTAyMDYzMDIyMTYzOVoXDTI5MTExNjIyMTYzOVowgakx
+CzAJBgNVBAYTAlVTMRIwEAYDVQQIEwlXaXNjb25zaW4xEDAOBgNVBAcTB01hZGlz
+b24xIDAeBgNVBAoTF1VuaXZlcnNpdHkgb2YgV2lzY29uc2luMSswKQYDVQQLEyJE
+aXZpc2lvbiBvZiBJbmZvcm1hdGlvbiBUZWNobm9sb2d5MSUwIwYDVQQDExxIRVBL
+SSBNYXN0ZXIgQ0EgLS0gMjAwMjA3MDFBMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
+iQKBgQDJ3FDZym9Ja94DP7TUZXf3Vu3CZwqZzYThgjUT2eBJBYVALISSJ+RjJ2j2
+CYpq3wesSgWHqfrpPnTgTBvn5ZZF9diX6ipAmC0H75nySDY8B5AN1RbmPsAZ51F9
+7Eo+6JZ59BFYgowGXyQpMfhBykBSySnvnOX5ygTCz20LwKkErQIDAQABoyAwHjAP
+BgNVHRMBAf8EBTADAQH/MAsGA1UdDwQEAwIBpjANBgkqhkiG9w0BAQQFAAOBgQB1
+8ZXB+KeXbDVkz+b2xVXYmJiWrp73IOvi3DuIuX1n88tbIH0ts7dJLEqr+c0owgtu
+QBqLb9DfPG2GkJ1uOK75wPY6XWusCKDJKMVY/N4ec9ew55MnDlFFvl4C+LkiS2YS
+Ysrh7fFJKKp7Pkc1fxsusK+MBXjVZtq0baXsU637qw==
+						</ds:X509Certificate>
+                    </ds:X509Data>
+			    </ds:KeyInfo>
+
+				<!-- HEPKI Server Test CA -->
+				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+					<ds:X509Data>
+						<ds:X509Certificate>
+MIIC6zCCAlSgAwIBAgICAlYwDQYJKoZIhvcNAQEEBQAwgakxCzAJBgNVBAYTAlVT
+MRIwEAYDVQQIEwlXaXNjb25zaW4xEDAOBgNVBAcTB01hZGlzb24xIDAeBgNVBAoT
+F1VuaXZlcnNpdHkgb2YgV2lzY29uc2luMSswKQYDVQQLEyJEaXZpc2lvbiBvZiBJ
+bmZvcm1hdGlvbiBUZWNobm9sb2d5MSUwIwYDVQQDExxIRVBLSSBNYXN0ZXIgQ0Eg
+LS0gMjAwMjA3MDFBMB4XDTAyMDYzMDIyMzIxNFoXDTI3MDIyMDIyMzIxNFowgakx
+CzAJBgNVBAYTAlVTMRIwEAYDVQQIEwlXaXNjb25zaW4xEDAOBgNVBAcTB01hZGlz
+b24xIDAeBgNVBAoTF1VuaXZlcnNpdHkgb2YgV2lzY29uc2luMSswKQYDVQQLEyJE
+aXZpc2lvbiBvZiBJbmZvcm1hdGlvbiBUZWNobm9sb2d5MSUwIwYDVQQDExxIRVBL
+SSBTZXJ2ZXIgQ0EgLS0gMjAwMjA3MDFBMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
+iQKBgQCvImusW7uaRS7xLsi2ZzZuUz6gbfATwxwvtQ+8cuyDpRlhvr1qnghC9Enj
+RH9qpq/Z5FVZ5bqyGziCy0kEPt+2WiZMGRiQEzloi5HNEtz1Nlc7FCJ0HATxtkEU
+hQ96v2DmoIEogPINqLICIqfiraPWFHOp6qDritrdj/fwLptQawIDAQABoyAwHjAP
+BgNVHRMBAf8EBTADAQH/MAsGA1UdDwQEAwIBpjANBgkqhkiG9w0BAQQFAAOBgQAt
+txlP3fTyIVMAIm8ddE8Bvk0/5Bhn5KvMAOMtnlCEArcFd4/m+pU4vEDwK6JSIoKf
+N/ySLXlu5ItApeJMWhcqvrczq5BF4/WQZukC1ha6FS2cAmjy35jYWMfVWcdBi9Yi
+M4SJ6gjGf83y9axPpuHcjwxQ5fLqZfnvrWH+1owJhQ==
+						</ds:X509Certificate>
+					</ds:X509Data>
+				</ds:KeyInfo>
+		    </KeyAuthority>
+	    </Extensions>
+		<EntityDescriptor entityID="urn:x-shibtest:SP">
+            <SPSSODescriptor 
+                protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
+                <KeyDescriptor>
+                    <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                        <ds:KeyName>sp.example.org</ds:KeyName>
+                    </ds:KeyInfo>
+                </KeyDescriptor>
+                <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+                <AssertionConsumerService index="1" 
+                    Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01" 
+					Location="https://sp.example.org/Shibboleth.sso/SAML/Artifact"/>
+            </SPSSODescriptor>
+        </EntityDescriptor>
+		<EntityDescriptor entityID="urn:x-shibtest:SP2">
+            <SPSSODescriptor 
+                protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
+                <KeyDescriptor>
+                    <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                        <ds:KeyName>sp.example.org</ds:KeyName>
+                    </ds:KeyInfo>
+                </KeyDescriptor>
+                <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+                <AssertionConsumerService index="1" 
+                    Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01" 
+					Location="https://sp.example.org/Shibboleth.sso/SAML/Artifact"/>
+            </SPSSODescriptor>
+        </EntityDescriptor>
+	</EntitiesDescriptor>
+
+</EntitiesDescriptor>

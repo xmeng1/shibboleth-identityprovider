@@ -1,0 +1,32 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body>
+    <Response xmlns="urn:oasis:names:tc:SAML:1.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:samlp="urn:oasis:names:tc:SAML:1.0:protocol" InResponseTo="d206a5ba1d50c3afd855dea0b0106cb6" IssueInstant="[^"]+" MajorVersion="1" MinorVersion="1" ResponseID="[^"]+">
+        <Status>
+            <StatusCode Value="samlp:Success"></StatusCode>
+        </Status>
+        <Assertion xmlns="urn:oasis:names:tc:SAML:1.0:assertion" AssertionID="[^"]+" IssueInstant="[^"]+" Issuer="urn:x-shibtest:IdP" MajorVersion="1" MinorVersion="1">
+            <Conditions NotBefore="[^"]+" NotOnOrAfter="[^"]+">
+                <AudienceRestrictionCondition>
+                    <Audience>urn:x-shibtest:SP</Audience>
+                    <Audience>urn:x-shibtest:IdP:defaultRelyingParty</Audience>
+                </AudienceRestrictionCondition>
+            </Conditions>
+            <AttributeStatement>
+                <Subject>
+                    <NameIdentifier Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" NameQualifier="urn:x-shibtest:IdP">test-handle</NameIdentifier>
+                </Subject>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonEntitlement" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue>urn:mace:example.edu:exampleEntitlement</AttributeValue>
+                </Attribute>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue Scope="example.org">member</AttributeValue>
+                </Attribute>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonAffiliation" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue>member</AttributeValue>
+                </Attribute>
+                <Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonPrincipalName" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+                    <AttributeValue>test-handle</AttributeValue>
+                </Attribute>
+            </AttributeStatement>
+        </Assertion>
+    </Response>
+</soap:Body></soap:Envelope>
