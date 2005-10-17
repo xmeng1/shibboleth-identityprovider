@@ -227,7 +227,7 @@ public class ShibHttpHook implements HTTPHook {
 
         public void checkServerTrusted(X509Certificate[] certs, String arg1) 
             throws CertificateException {
-            if (trust.validate(certs[0],certs,role)) {
+            if (trust.validate(certs[0],certs,role,false)) {
                 log.debug("ShibHttpHook accepted AA Server Certificate.");
                 return;
             }
