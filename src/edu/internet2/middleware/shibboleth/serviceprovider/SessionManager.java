@@ -447,7 +447,7 @@ reserveSession(
                         }
                         if (list.size()==1)
                             attributeMap.put(name,val);
-                        else
+                        else if (list.size()>1)
                             attributeMap.put(name,list);
                     }
                 }

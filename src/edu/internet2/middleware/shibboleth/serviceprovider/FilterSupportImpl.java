@@ -117,7 +117,7 @@ public class FilterSupportImpl implements FilterSupport {
          * blocks and turn this into a more usable pair of Maps keyed
          * by attributeid and returning the nickname or header name.
          */
-        rmdata.attributeToHeader = new HashMap();
+        rmdata.headerToAttribute = new HashMap();
         rmdata.attributeToAlias = new HashMap();
         AAP[] providers = appinfo.getAAPProviders();
         for (int i=0;i<providers.length;i++) {
@@ -129,7 +129,7 @@ public class FilterSupportImpl implements FilterSupport {
                 String alias = rule.getAlias();
                 String header = rule.getHeader();
                 if (header!=null && header.length()!=0)
-                    rmdata.attributeToHeader.put(name,header);
+                    rmdata.headerToAttribute.put(header,name);
                 if (alias!=null && alias.length()!=0)
                     rmdata.attributeToAlias.put(name,alias);
            }
