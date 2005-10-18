@@ -33,9 +33,12 @@ import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.content.X509Data;
 import org.apache.xml.security.signature.*;
 import org.apache.xml.security.transforms.*;
+import org.opensaml.SAMLException;
 import org.w3c.dom.*;
 
 import edu.internet2.middleware.shibboleth.common.XML;
+import edu.internet2.middleware.shibboleth.metadata.MetadataException;
+import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadataProvider;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
@@ -162,11 +165,26 @@ public class MetadataTool {
 		if (ns != null && name != null && !org.opensaml.XML.isElementNamed(e, ns, name)) {
 			System.err.println("error: root element did not match ns and name parameters");
 			System.exit(1);
-		} else if (!org.opensaml.XML.isElementNamed(e, XML.SHIB_NS, "SiteGroup")
-				&& !org.opensaml.XML.isElementNamed(e, XML.SHIB_NS, "Trust")
-				&& !org.opensaml.XML.isElementNamed(e, XML.TRUST_NS, "Trust")
-				&& !org.opensaml.XML.isElementNamed(e, XML.SAML2META_NS, "EntityDescriptor")
-				&& !org.opensaml.XML.isElementNamed(e, XML.SAML2META_NS, "EntitiesDescriptor")) {
+		} else if (org.opensaml.XML.isElementNamed(e, XML.SHIB_NS, "SiteGroup")
+				|| org.opensaml.XML.isElementNamed(e, XML.SAML2META_NS, "EntityDescriptor")
+				|| org.opensaml.XML.isElementNamed(e, XML.SAML2META_NS, "EntitiesDescriptor")) {
+			try {
+				// apply the same validity checks a running system would
+				new XMLMetadataProvider(e);
+			} catch (MetadataException me) {
+				System.err.println("error in metadata: " + me.getMessage());
+				System.exit(1);
+			} catch (SAMLException se) {
+				System.err.println("error in metadata: " + se);
+				System.exit(1);
+			}
+		} else if (org.opensaml.XML.isElementNamed(e, XML.SHIB_NS, "Trust")
+				|| org.opensaml.XML.isElementNamed(e, XML.TRUST_NS, "Trust")) {
+			/*
+			 * Additional validity checks for legacy trust files
+			 * could be added here.
+			 */
+		} else {
 			System.err.println("error: root element must be SiteGroup, Trust, EntitiesDescriptor, or EntityDescriptor");
 			System.exit(1);
 		}
