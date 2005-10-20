@@ -749,7 +749,6 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                     copy.setAttributeNS(null,"AttributeNamespace",src.getAttributeNS(null,"NameFormat"));
                     src=XML.getFirstChildElement(src,edu.internet2.middleware.shibboleth.common.XML.SAML2ASSERT_NS,"AttributeValue");
                     while (src != null) {
-                        src=XML.getNextSiblingElement(src,edu.internet2.middleware.shibboleth.common.XML.SAML2ASSERT_NS,"AttributeValue");
                         Element val=e.getOwnerDocument().createElementNS(XML.SAML_NS,"AttributeValue");
                         NamedNodeMap attrs = src.getAttributes();
                         for (int j=0; j<attrs.getLength(); j++)
@@ -757,6 +756,7 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                         while (src.hasChildNodes())
                             val.appendChild(src.getFirstChild());
                         copy.appendChild(val);
+                        src=XML.getNextSiblingElement(src,edu.internet2.middleware.shibboleth.common.XML.SAML2ASSERT_NS,"AttributeValue");
                     }
                     attrs.add(SAMLAttribute.getInstance(copy));
                 }
@@ -875,7 +875,6 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                     copy.setAttributeNS(null,"AttributeNamespace",src.getAttributeNS(null,"NameFormat"));
                     src=XML.getFirstChildElement(src,edu.internet2.middleware.shibboleth.common.XML.SAML2ASSERT_NS,"AttributeValue");
                     while (src != null) {
-                        src=XML.getNextSiblingElement(src,edu.internet2.middleware.shibboleth.common.XML.SAML2ASSERT_NS,"AttributeValue");
                         Element val=e.getOwnerDocument().createElementNS(XML.SAML_NS,"AttributeValue");
                         NamedNodeMap attrs = src.getAttributes();
                         for (int j=0; j<attrs.getLength(); j++)
@@ -883,6 +882,7 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                         while (src.hasChildNodes())
                             val.appendChild(src.getFirstChild());
                         copy.appendChild(val);
+                        src=XML.getNextSiblingElement(src,edu.internet2.middleware.shibboleth.common.XML.SAML2ASSERT_NS,"AttributeValue");
                     }
                     attrs.add(SAMLAttribute.getInstance(copy));
                 }
