@@ -135,8 +135,8 @@ public class XMLAAPProvider implements AAP, PluggableConfigurationComponent {
                     Element se=(Element)vlist.item(i);
                     Node valnode=se.getFirstChild();
                     if (valnode != null && valnode.getNodeType()==Node.TEXT_NODE) {
-                        String accept=se.getAttributeNS(null,"Accept");
-                        if (XML.isEmpty(accept) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
+                        flag=XML.assign(se.getAttributeNS(null,"Accept"));
+                        if (XML.isEmpty(flag) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
                             anySiteRule.scopeAccepts.add(new Rule(toValueType(se),valnode.getNodeValue()));
                         else
                             anySiteRule.scopeDenials.add(new Rule(toValueType(se),valnode.getNodeValue()));
@@ -155,8 +155,8 @@ public class XMLAAPProvider implements AAP, PluggableConfigurationComponent {
                         Element ve=(Element)vlist.item(j);
                         Node valnode=ve.getFirstChild();
                         if (valnode != null && valnode.getNodeType()==Node.TEXT_NODE) {
-                            String accept=ve.getAttributeNS(null,"Accept");
-                            if (XML.isEmpty(accept) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
+                        	flag=XML.assign(ve.getAttributeNS(null,"Accept"));
+                            if (XML.isEmpty(flag) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
                                 anySiteRule.valueAccepts.add(new Rule(toValueType(ve),valnode.getNodeValue()));
                             else
                                 anySiteRule.valueDenials.add(new Rule(toValueType(ve),valnode.getNodeValue()));
@@ -180,8 +180,8 @@ public class XMLAAPProvider implements AAP, PluggableConfigurationComponent {
                     Node valnode=se.getFirstChild();
                     if (valnode != null && valnode.getNodeType()==Node.TEXT_NODE)
                     {
-                        String accept=se.getAttributeNS(null,"Accept");
-                        if (XML.isEmpty(accept) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
+                    	flag=XML.assign(se.getAttributeNS(null,"Accept"));
+                        if (XML.isEmpty(flag) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
                             srule.scopeAccepts.add(new Rule(toValueType(se),valnode.getNodeValue()));
                         else
                             srule.scopeDenials.add(new Rule(toValueType(se),valnode.getNodeValue()));
@@ -200,8 +200,8 @@ public class XMLAAPProvider implements AAP, PluggableConfigurationComponent {
                         Element ve=(Element)vlist.item(j);
                         Node valnode=ve.getFirstChild();
                         if (valnode != null && valnode.getNodeType()==Node.TEXT_NODE) {
-                            String accept=ve.getAttributeNS(null,"Accept");
-                            if (XML.isEmpty(accept) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
+                        	flag=XML.assign(ve.getAttributeNS(null,"Accept"));
+                            if (XML.isEmpty(flag) || XML.safeCompare(flag,"1") || XML.safeCompare(flag,"true"))
                                 srule.valueAccepts.add(new Rule(toValueType(ve),valnode.getNodeValue()));
                             else
                                 srule.valueDenials.add(new Rule(toValueType(ve),valnode.getNodeValue()));
