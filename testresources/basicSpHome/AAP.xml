@@ -1,6 +1,6 @@
 <AttributeAcceptancePolicy xmlns="urn:mace:shibboleth:1.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="urn:mace:shibboleth:1.0 ../schemas/shibboleth.xsd">
+    xsi:schemaLocation="urn:mace:shibboleth:1.0 ../../src/schemas/shibboleth.xsd">
 
 	<!--
 	An AAP is a set of AttributeRule elements, each one
@@ -97,7 +97,6 @@
 	</AttributeRule>
 	
 	<!-- Some more eduPerson attributes, uncomment these to use them... -->
-	<!--
 	
 	<AttributeRule Name="urn:mace:dir:attribute-def:eduPersonNickname">
         <AnySite>
@@ -135,11 +134,9 @@
         </AnySite>
 	</AttributeRule>
 
-	-->
 
 
 	<!--Examples of common LDAP-based attributes, uncomment to use these... -->
-	<!--
 	
 	<AttributeRule Name="urn:mace:dir:attribute-def:cn" Header="Shib-Person-commonName">
 		<AnySite>
@@ -153,6 +150,12 @@
         </AnySite>
 	</AttributeRule>
 	
+	<AttributeRule Name="urn:mace:dir:attribute-def:surname" Header="Shib-Person-surname">
+		<AnySite>
+            <AnyValue/>
+        </AnySite>
+	</AttributeRule>
+		
 	<AttributeRule Name="urn:mace:dir:attribute-def:telephoneNumber" Header="Shib-Person-telephoneNumber">
 		<AnySite>
             <AnyValue/>
@@ -291,6 +294,5 @@
         </AnySite>
 	</AttributeRule>
 	
-	-->
 
 </AttributeAcceptancePolicy>

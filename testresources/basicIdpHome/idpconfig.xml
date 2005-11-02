@@ -40,10 +40,12 @@
     <!-- Logging Configuration
 		The defaults work fine in this section, but it is sometimes helpful to use "DEBUG" as the level for 
 		the <ErrorLog/> when trying to diagnose problems -->
+	<!--		
 	<Logging>
 		<ErrorLog level="WARN" location="file:/temp/shib-error.log" />
 		<TransactionLog level="INFO" location="file:/temp/shib-access.log" />
 	</Logging>
+	-->		
 	<!-- Uncomment the configuration section below and comment out the one above if you would like to manually configure log4j -->
     <!--
 	<Logging>

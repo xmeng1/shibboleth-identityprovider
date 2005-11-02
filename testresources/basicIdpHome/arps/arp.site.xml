@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<AttributeReleasePolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:arp:1.0" xsi:schemaLocation="urn:mace:shibboleth:arp:1.0 ../../schemas/shibboleth-arp-1.0.xsd" >
+<AttributeReleasePolicy 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns="urn:mace:shibboleth:arp:1.0" 
+	xsi:schemaLocation="urn:mace:shibboleth:arp:1.0 ../../../src/schemas/shibboleth-arp-1.0.xsd" >
 	<Description>Simplest possible ARP.</Description>
 	<Rule>
 		<Target>
@@ -18,6 +21,12 @@
 			<AnyValue release="permit"/>
 		</Attribute>
 		<Attribute name="urn:mace:dir:attribute-def:title">
+			<AnyValue release="permit"/>
+		</Attribute>
+		<Attribute name="urn:mace:dir:attribute-def:givenName">
+			<AnyValue release="permit"/>
+		</Attribute>
+		<Attribute name="urn:mace:dir:attribute-def:surname">
 			<AnyValue release="permit"/>
 		</Attribute>
 	</Rule>

@@ -3,43 +3,37 @@
 	xsi:schemaLocation="urn:mace:shibboleth:resolver:1.0 ../../src/schemas/shibboleth-resolver-1.0.xsd">
 	
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonEntitlement">
-		<DataConnectorDependency requires="echo"/>
+		<DataConnectorDependency requires="jutest"/>
+	</SimpleAttributeDefinition>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:title">
+		<DataConnectorDependency requires="jutest"/>
 	</SimpleAttributeDefinition>
 	
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonAffiliation">
-		<DataConnectorDependency requires="echo"/>
+		<DataConnectorDependency requires="jutest"/>
+	</SimpleAttributeDefinition>
+		
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonScopedAffiliation">
+		<DataConnectorDependency requires="jutest"/>
 	</SimpleAttributeDefinition>
 	
-	
-	<!-- To use these attributes, you should change the smartScope value to match your site's domain name. -->
-	<!--
-	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" smartScope="shibdev.edu">
-		<AttributeDependency requires="urn:mace:dir:attribute-def:eduPersonAffiliation"/>
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:telephoneNumber">
+		<DataConnectorDependency requires="jutest"/>
 	</SimpleAttributeDefinition>
-
-	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName" smartScope="shibdev.edu">
-    	<DataConnectorDependency requires="echo"/>
+	
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:cn">
+		<DataConnectorDependency requires="jutest"/>
 	</SimpleAttributeDefinition>
-	-->
 	
-	
-	<!-- Example persistent id attribute.  Since this configuration is permanent, some thought is required before 
-		deploying in production. Consider replacing this with a database-backed mechanism of some sort. -->	 
-	<!--
-	<SAML2PersistentID id="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" sourceName="guid">
-		<DataConnectorDependency requires="echo"/>
-		<Salt keyStorePath="file:///usr/local/shibboleth-idp/etc/persistent.jks" keyStoreKeyAlias="handleKey" keyStorePassword="shibhs" keyStoreKeyPassword="shibhs"/>
-	</SAML2PersistentID>
-	-->
-	<!--  Deprecated persistent id example, use only with SPs that are already relying on your values. -->
-	<!--
-	<PersistentIDAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonTargetedID" scope="shibdev.edu" sourceName="guid">
-		<DataConnectorDependency requires="echo"/>
-		<Salt keyStorePath="file:///usr/local/shibboleth-idp/etc/persistent.jks" keyStoreKeyAlias="handleKey" keyStorePassword="shibhs" keyStoreKeyPassword="shibhs"/>
-	</PersistentIDAttributeDefinition>
-	-->
-	
-	
-	<CustomDataConnector id="echo" class="edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SampleConnector"/>
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:givenName">
+		<DataConnectorDependency requires="jutest"/>
+	</SimpleAttributeDefinition>
+		
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:surname">
+		<DataConnectorDependency requires="jutest"/>
+	</SimpleAttributeDefinition>
+			
+	<CustomDataConnector id="jutest" class="edu.internet2.middleware.shibboleth.runner.AttributeSourceForTests"/>
 
 </AttributeResolver>
