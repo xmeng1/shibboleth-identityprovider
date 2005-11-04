@@ -188,6 +188,8 @@
 			<test name="edu.internet2.middleware.shibboleth.common.TrustTests" />
 			<test name="edu.internet2.middleware.shibboleth.idp.provider.DNHostNameExtractionTests" />
 			<test name="edu.internet2.middleware.shibboleth.metadata.MetadataTests" />
+			<test name="edu.internet2.middleware.shibboleth.idp.SSOTest" />      
+			<test name="edu.internet2.middleware.shibboleth.idp.AATest" />    
 		</junit>
 	</target>
 
