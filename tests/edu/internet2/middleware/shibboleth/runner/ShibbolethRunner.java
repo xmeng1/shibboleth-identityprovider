@@ -86,7 +86,7 @@ public class ShibbolethRunner {
      */
     public static Level loglevel = Level.INFO;
     
-    private static Logger clientLogger = Logger.getLogger("edu.internet2.middleware");
+    private static Logger clientLogger = Logger.getLogger("edu.internet2.middleware.shibboleth");
     private static Logger initLogger = Logger.getLogger("shibboleth.init");
     private static Logger samlLogger = Logger.getLogger("org.opensaml");
     private static boolean manageLogs = false;
@@ -105,10 +105,14 @@ public class ShibbolethRunner {
         Logger root = Logger.getRootLogger();
         Layout initLayout = new PatternLayout("%d{HH:mm} %-5p %m%n");
         ConsoleAppender consoleAppender= new ConsoleAppender(initLayout,ConsoleAppender.SYSTEM_OUT);
+        root.removeAllAppenders();
         root.addAppender(consoleAppender);
         root.setLevel(Level.ERROR);
+        clientLogger.removeAllAppenders();
         clientLogger.setLevel(loglevel);
+        initLogger.removeAllAppenders();
         initLogger.setLevel(loglevel);
+        samlLogger.removeAllAppenders();
         samlLogger.setLevel(loglevel);
     }
     
@@ -119,8 +123,11 @@ public class ShibbolethRunner {
      */
     public static void resetLoggingLevels() {
         if (!manageLogs) return;  // If setupLogging was never called.
+        clientLogger.removeAllAppenders();
         clientLogger.setLevel(loglevel);
+        initLogger.removeAllAppenders();
         initLogger.setLevel(loglevel);
+        samlLogger.removeAllAppenders();
         samlLogger.setLevel(loglevel);
         
     }
@@ -267,6 +274,7 @@ public class ShibbolethRunner {
             // NOTE: The IdP reads its configuration file and initializes
             // itself within this call.
             idpServlet = (IdPResponder) testModule.createServlet(IdPResponder.class);
+            resetLoggingLevels();
             
             // Unchanging properties of the HttpServletRequest
             request.setRemoteAddr("127.0.0.1");

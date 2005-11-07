@@ -53,7 +53,7 @@ public class IntegrationTest extends TestCase {
         super.setUp();
 
         // Static call to set Log4J appenders and levels
-        ShibbolethRunner.loglevel = Level.INFO;
+        ShibbolethRunner.loglevel = Level.DEBUG;
         ShibbolethRunner.setupLogging();
         
         // Create the overall testing framework
@@ -81,6 +81,7 @@ public class IntegrationTest extends TestCase {
         // is done before the SSO.
         Attributes attributes = runner.getAttributesCollection();
         attributes.put(new BasicAttribute("eduPersonAffiliation", "member"));
+        attributes.put(new BasicAttribute("eduPersonScopedAffiliation", "member"));
         attributes.put(new BasicAttribute("title", "clown"));
         attributes.put(new BasicAttribute("givenName", "bozo"));
         attributes.put(new BasicAttribute("surname", "Clown"));
@@ -123,6 +124,8 @@ public class IntegrationTest extends TestCase {
         // Build the parameter for Session creation
         NewSessionData data = new NewSessionData();
         FilterUtil.sessionDataFromRequest(data,idp.request);
+        data.SAMLResponse = bin64assertion; // test logic 
+        data.target=targetURL;
         data.applicationId="default";
         data.handlerURL=handlerURL;
         data.providerId="https://sp.example.org/shibboleth";
@@ -189,6 +192,8 @@ public class IntegrationTest extends TestCase {
         // Build the parameter for Session creation
         NewSessionData data = new NewSessionData();
         FilterUtil.sessionDataFromRequest(data,idp.request);
+        data.SAMLResponse = bin64assertion; // test logic 
+        data.target=targetURL;
         data.applicationId="default";
         data.handlerURL=handlerURL;
         data.providerId="https://sp.example.org/shibboleth";
