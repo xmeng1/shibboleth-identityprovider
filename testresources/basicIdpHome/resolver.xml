@@ -14,7 +14,8 @@
 		<DataConnectorDependency requires="jutest"/>
 	</SimpleAttributeDefinition>
 		
-	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonScopedAffiliation">
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"
+		smartScope="example.org">
 		<DataConnectorDependency requires="jutest"/>
 	</SimpleAttributeDefinition>
 	
