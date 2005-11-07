@@ -112,8 +112,10 @@ public class MockHTTPBindingProvider
                         + ") in the response.");
             }
             
+            String content = idp.response.getOutputStreamContent();
+            idp.response.resetBuffer(); // Make Response reusable for next test
             envelope=XML.parserPool.parse(
-                    new InputSource(new StringReader(idp.response.getOutputStreamContent())),
+                    new InputSource(new StringReader(content)),
                     (request.getMinorVersion()>0) ? XML.parserPool.getSchemaSAML11() : XML.parserPool.getSchemaSAML10()
                     ).getDocumentElement();
             
@@ -142,5 +144,10 @@ public class MockHTTPBindingProvider
         finally {
         }
     }
+    
+    public SAMLResponse send(String endpoint, SAMLRequest request) throws SAMLException {
+        return send(endpoint, request, null);
+    }
+    
 }
 
