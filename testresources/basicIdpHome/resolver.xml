@@ -34,7 +34,20 @@
 	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:surname">
 		<DataConnectorDependency requires="jutest"/>
 	</SimpleAttributeDefinition>
+		
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:unacceptable">
+		<DataConnectorDependency requires="jutest"/>
+	</SimpleAttributeDefinition>
 			
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:unreleasable">
+		<DataConnectorDependency requires="jutest"/>
+	</SimpleAttributeDefinition>
+			
+	<SimpleAttributeDefinition id="urn:mace:dir:attribute-def:eduPersonPrincipalName"
+		smartScope="example.org">
+		<DataConnectorDependency requires="jutest"/>
+	</SimpleAttributeDefinition>
+					
 	<CustomDataConnector id="jutest" class="edu.internet2.middleware.shibboleth.runner.AttributeSourceForTests"/>
 
 </AttributeResolver>

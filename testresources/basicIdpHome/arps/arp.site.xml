@@ -11,7 +11,10 @@
 		<Attribute name="urn:mace:dir:attribute-def:eduPersonAffiliation">
 			<AnyValue release="permit"/>
 		</Attribute>
-		<Attribute name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation">
+		<Attribute name="urn:mace:dir:attribute-def:eduPersonPrincipalName">
+			<AnyValue release="permit"/>
+		</Attribute>
+				<Attribute name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation">
 			<AnyValue release="permit"/>
 		</Attribute>
 		<Attribute name="urn:mace:dir:attribute-def:cn">
@@ -29,5 +32,8 @@
 		<Attribute name="urn:mace:dir:attribute-def:surname">
 			<AnyValue release="permit"/>
 		</Attribute>
-	</Rule>
+		<Attribute name="urn:mace:dir:attribute-def:unacceptable">
+			<AnyValue release="permit"/>
+		</Attribute>
+			</Rule>
 </AttributeReleasePolicy>

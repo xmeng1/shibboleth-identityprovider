@@ -56,7 +56,22 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContex
  */
 public class ShibbolethRunner {
     
+    
+    public static int SERVER_PORT = 443;
+    public static String SERVER_NAME = "idp.example.org";
+    public static String SCHEME = "https";
+    public static String PROTOCOL = "HTTP/1.1";
+    public static String CONTEXT_PATH = "/shibboleth-idp";
+    public static String REMOTE_ADDR = "127.0.0.1";
+    public static String RESOURCE_CONTEXT_PATH = "/secure";
+    public static int RESOURCE_SERVER_PORT = 9443;
+    public static String CONTEXT_URL = SCHEME+"://"+SERVER_NAME+CONTEXT_PATH+"/";
+    public static String RESOURCE_CONTEXT_URL = SCHEME+"://"+SERVER_NAME+":"+RESOURCE_SERVER_PORT+RESOURCE_CONTEXT_PATH+"/";
+    
+    
     private static SAMLConfig samlConfig; 
+
+    
     
     /**
      * Initialization logic goes here.
@@ -236,6 +251,7 @@ public class ShibbolethRunner {
     public class IdpTestContext {
         
         
+
         // The Factory creates the Request, Response, Session, etc.
         public WebMockObjectFactory factory = new WebMockObjectFactory();
         
@@ -277,12 +293,12 @@ public class ShibbolethRunner {
             resetLoggingLevels();
             
             // Unchanging properties of the HttpServletRequest
-            request.setRemoteAddr("127.0.0.1");
-            request.setContextPath("/shibboleth-idp");
-            request.setProtocol("HTTP/1.1");
-            request.setScheme("https");
-            request.setServerName("idp.example.org");
-            request.setServerPort(443);
+            request.setRemoteAddr(REMOTE_ADDR);
+            request.setContextPath(CONTEXT_PATH);
+            request.setProtocol(PROTOCOL);
+            request.setScheme(SCHEME);
+            request.setServerName(SERVER_NAME);
+            request.setServerPort(SERVER_PORT);
             
         }
         
@@ -291,10 +307,9 @@ public class ShibbolethRunner {
          * normally SSO, AA, or Artifact
          */
         public void setRequestUrls(String suffix) {
-            request.setRequestURI("https://idp.example.org/shibboleth-idp/"+suffix);
-            request.setRequestURL("https://idp.example.org/shibboleth-idp/"+suffix);
-            request.setServletPath("/shibboleth.idp/"+suffix);
-            
+            request.setRequestURI(CONTEXT_URL+suffix);
+            request.setRequestURL(CONTEXT_URL+suffix);
+            request.setServletPath(CONTEXT_PATH+"/"+suffix);
         }
         
     }
@@ -350,6 +365,7 @@ public class ShibbolethRunner {
      */
     public class AuthenticationFilterContext {
         
+
         // The Factory creates the Request, Response, Session, etc.
         public WebMockObjectFactory factory = new WebMockObjectFactory();
         
@@ -417,19 +433,19 @@ public class ShibbolethRunner {
             // Get our own copy of SP Config info for Assert statements
             rmAppInfo = service.getRMAppInfo("default");
 
-            request.setRemoteAddr("127.0.0.1");
-            request.setContextPath("/secure");
-            request.setProtocol("HTTP/1.1");
-            request.setScheme("https");
-            request.setServerName("sp.example.org");
-            request.setServerPort(9443);
+            request.setRemoteAddr(REMOTE_ADDR);
+            request.setContextPath(RESOURCE_CONTEXT_PATH);
+            request.setProtocol(PROTOCOL);
+            request.setScheme(SCHEME);
+            request.setServerName(SERVER_NAME);
+            request.setServerPort(RESOURCE_SERVER_PORT);
         }
         
         public void setRequestUrls(String suffix) {
             request.setMethod("GET");
-            request.setRequestURI("http://sp.example.org:9443/secure/"+suffix);
-            request.setRequestURL("http://sp.example.org:9443/secure/"+suffix);
-            request.setServletPath("/secure/"+suffix);
+            request.setRequestURI(RESOURCE_CONTEXT_URL+suffix);
+            request.setRequestURL(RESOURCE_CONTEXT_URL+suffix);
+            request.setServletPath(RESOURCE_CONTEXT_PATH+"/"+suffix);
             
         }
     }
