@@ -220,17 +220,6 @@ public class Session implements Serializable {
         this.unusedSessionTimeout = unusedSessionTimeout*1000;
     }
     
-    /*
-     * The FormalURL references the RM itself instead of any 
-     * individual resource.
-     */
-    private String formalURL;
-    public String getFormalURL() {
-        return formalURL;
-    }
-    public void setFormalURL(String formalURL) {
-        this.formalURL = formalURL;
-    }
     
     /*
      * The SavedTarget URL is meaningful only in an uninitialized but
