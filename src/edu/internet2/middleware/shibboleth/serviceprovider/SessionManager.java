@@ -399,7 +399,7 @@ reserveSession(
                         Iterator values = attribute.getValues();
                         while (values.hasNext()){
                             String val = (String) values.next();
-                            sb.append(name+" "+namespace+" "+val);
+                            sb.append(name+" - "+" "+val+"\n");
                         }
                     }
                 }

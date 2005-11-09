@@ -49,26 +49,30 @@ import edu.internet2.middleware.shibboleth.serviceprovider.Session;
  */
 public class IntegrationTest extends TestCase {
     
+    // Create some constants, both as parameters and to test responses
     private static final String GIVENNAME = "Bozo";
     public static final String SURNAME = "Clown";
     private static final String TITLE = "clown";
     public static final String AFFILIATION = "member";
     public static final String SP_ENTITY = "https://sp.example.org/shibboleth";
-    public static final String POST_SHIRE = "https://sp.example.org/Shibboleth.sso/SAML/POST";
-    public static final String ARTIFACT_SHIRE = "https://sp.example.org/Shibboleth.sso/SAML/Artifact";
+    public static final String POST_SHIRE = "https://sp.example.org/shibboleth-sp/Shibboleth.sso/SAML/POST";
+    public static final String ARTIFACT_SHIRE = "https://sp.example.org/shibboleth-sp/Shibboleth.sso/SAML/Artifact";
     public static final String TARGET = "https://nonsense";
     public static final String NETID = "BozoTClown";
     public static final String APPLICATIONID = "default";
     
     ShibbolethRunner runner;
     ShibbolethRunner.IdpTestContext idp;
+    ShibbolethRunner.SPTestContext consumer;
     ShibbolethRunner.AuthenticationFilterContext filter;
     private NewSessionData newSessionData = new NewSessionData();
     ServiceProviderContext context;
     ServiceProviderConfig config;
     
     
-    
+    /**
+     * TestCase setUp
+     */
     protected void setUp() throws Exception {
         super.setUp();
 
@@ -87,7 +91,13 @@ public class IntegrationTest extends TestCase {
         
         // Initialize the SP with the default config file.
         runner.setSpConfigFileName("/basicSpHome/spconfig.xml"); // default value
-        runner.initializeSP();
+        
+        // Use one of two forms to initialize the SP
+        // If only calling AssertionConsumerServlet.createSessionFromData directly
+            //runner.initializeSP(); 
+        // If calling AssertionConsumerServlet through MockRunner
+            consumer = ShibbolethRunner.consumer = runner.new SPTestContext();
+        
         context=ServiceProviderContext.getInstance();
         config = context.getServiceProviderConfig();
         
@@ -119,7 +129,10 @@ public class IntegrationTest extends TestCase {
         attributes.put(new BasicAttribute("unreleasable","foolishness"));
     }
     
-    
+    /**
+     * Test the Post Profile, Attribute Push
+     * <p>Run SSO, call AssertionConsumerServlet directly, then Run Filter</p>
+     */
     public void testAttributePush() throws SAMLException {
         
         // Set the URL suffix that triggers SSO processing
@@ -152,7 +165,7 @@ public class IntegrationTest extends TestCase {
         String handlerURL = (String) idp.request.getAttribute("shire");
         String targetURL = (String) idp.request.getAttribute("target");
         
-        
+        // Create the session directly without MockRunner
         FilterUtil.sessionDataFromRequest(newSessionData,idp.request);
             // there was no real redirect, so the next two fields are not
             // in the places that sessionDataFromRequest expects.
@@ -182,7 +195,11 @@ public class IntegrationTest extends TestCase {
         checkFilter();
     }
     
-    void checkFilter() {
+    /**
+     * Verify correct operation of Filter and wrapped Request object,
+     * including attributes and headers.
+     */
+    private void checkFilter() {
         // Get the Request Wrapper object created by the Filter
         HttpServletRequest filteredRequest = 
             (HttpServletRequest) filter.testModule.getFilteredRequest();
@@ -196,8 +213,6 @@ public class IntegrationTest extends TestCase {
         Map attributes = (Map) filteredRequest.getAttribute(AuthenticationFilter.SHIB_ATTRIBUTES_PREFIX);
         
         
-        
-        // Now do something that uses Filter supplied logic
         Enumeration headerNames = filteredRequest.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String name = (String) headerNames.nextElement();
@@ -206,7 +221,10 @@ public class IntegrationTest extends TestCase {
         }
     }
     
-    void checkSession(Session session) {
+    /**
+     * Add Session object checking here.
+     */
+    private void checkSession(Session session) {
         assertNotNull(session);
         assertEquals(APPLICATIONID,session.getApplicationId());
         
@@ -214,6 +232,10 @@ public class IntegrationTest extends TestCase {
         
     }
     
+    /**
+     * Test the Post Profile with Attribute Query
+     * <p>Run SSO, Run AssertionConsumerServlet, then Run Filter</p>
+     */
     public void testAttributeQuery() throws SAMLException {
         
         // Set the URL suffix that triggers SSO processing
@@ -237,19 +259,23 @@ public class IntegrationTest extends TestCase {
         String assertion = new String(Base64.decodeBase64(bin64assertion.getBytes()));
         String handlerURL = (String) idp.request.getAttribute("shire");
         String targetURL = (String) idp.request.getAttribute("target");
+
+        // Simulate the POST to the SP Context using MockRunner
+        consumer.testModule.addRequestParameter("SAMLResponse",bin64assertion);
+        consumer.testModule.addRequestParameter("TARGET",targetURL);
+        consumer.setRequestUrls("Shibboleth.sso/SAML/POST");
+        consumer.testModule.doPost();
         
+        // Now check up on what the AssertionConsumerServlet did with the POST
+        MockHttpServletResponse response = consumer.response;
+        assertTrue(response.wasRedirectSent());
+        String redirectURL = response.getHeader("Location");
         
-        // Build the parameter for Session creation
-        FilterUtil.sessionDataFromRequest(newSessionData,idp.request);
-        newSessionData.SAMLResponse = bin64assertion; // test logic 
-        newSessionData.target=targetURL;
-        newSessionData.handlerURL=handlerURL;
-        
-        // Create the Session
-        // Internally an AA Query will fetch the attributes through the 
-        // MockHTTPBindingProvider
-        String sessionId = AssertionConsumerServlet.createSessionFromData(newSessionData);
-        
+        // The SessionId is on the end of the redirected URL
+        int pos = redirectURL.indexOf(AssertionConsumerServlet.SESSIONPARM);
+        assertTrue(pos>0);
+        String sessionId = redirectURL.substring(
+                pos+AssertionConsumerServlet.SESSIONPARM.length()+1);
         
         // Now get what was created in case you want to test it.
         Session session = context.getSessionManager().findSession(sessionId, APPLICATIONID);
@@ -264,6 +290,10 @@ public class IntegrationTest extends TestCase {
         
     }
     
+    /**
+     * Test Artifact
+     * <p>Run SSO, call AssertionConsumerServlet directly, then Run Filter</p>
+     */
     public void testArtifact() throws SAMLException, UnsupportedEncodingException {
         
         // Set the URL suffix that triggers SSO processing
@@ -283,29 +313,27 @@ public class IntegrationTest extends TestCase {
         // Call the IdP 
         idp.testModule.doGet();
         
+        // Now check the response from the IdP
         MockHttpServletResponse response = idp.response;
-        // Get the redirection
         assertTrue(response.wasRedirectSent());
         String redirectURL = response.getHeader("Location");
         
+        // The artifacts were appended to the end of the Redirect URL
         String[] splits = redirectURL.split("\\&SAMLart=");
         assertTrue(splits.length>1);
-        String[] samlArt = new String[splits.length-1];
-        for (int i=0;i<samlArt.length;i++) {
-            samlArt[i]=URLDecoder.decode(splits[i+1],"UTF-8");
+        String[] artifactArray = new String[splits.length-1];
+        for (int i=0;i<artifactArray.length;i++) {
+            artifactArray[i]=URLDecoder.decode(splits[i+1],"UTF-8");
         }
-        
-        
         
         // Build the parameter for Session creation
         FilterUtil.sessionDataFromRequest(newSessionData,idp.request);
-        newSessionData.SAMLArt=samlArt;
+        newSessionData.SAMLArt=artifactArray;
         newSessionData.target=TARGET;
         newSessionData.handlerURL=ARTIFACT_SHIRE;
         
         // Create the Session
-        // Internally an AA Query will fetch the attributes through the 
-        // MockHTTPBindingProvider
+        // Under the covers, SAML will see the Artifact and fetch the Assertion
         String sessionId = AssertionConsumerServlet.createSessionFromData(newSessionData);
         
         

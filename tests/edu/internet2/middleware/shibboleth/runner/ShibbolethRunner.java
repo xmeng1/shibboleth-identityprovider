@@ -37,8 +37,7 @@ import com.mockrunner.servlet.ServletTestModule;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPResponder;
 import edu.internet2.middleware.shibboleth.resource.AuthenticationFilter;
-import edu.internet2.middleware.shibboleth.resource.FilterSupport;
-import edu.internet2.middleware.shibboleth.resource.FilterSupport.RMAppInfo;
+import edu.internet2.middleware.shibboleth.serviceprovider.AssertionConsumerServlet;
 import edu.internet2.middleware.shibboleth.serviceprovider.FilterSupportImpl;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContext;
@@ -58,15 +57,18 @@ public class ShibbolethRunner {
     
     
     public static int SERVER_PORT = 443;
-    public static String SERVER_NAME = "idp.example.org";
+    public static int RESOURCE_SERVER_PORT = 9443;
+    public static String IDP_SERVER_NAME = "idp.example.org";
+    public static String SP_SERVER_NAME = "sp.example.org";
     public static String SCHEME = "https";
     public static String PROTOCOL = "HTTP/1.1";
-    public static String CONTEXT_PATH = "/shibboleth-idp";
-    public static String REMOTE_ADDR = "127.0.0.1";
+    public static String IDP_CONTEXT_PATH = "/shibboleth-idp";
+    public static String SP_CONTEXT_PATH = "/shibboleth-sp";
     public static String RESOURCE_CONTEXT_PATH = "/secure";
-    public static int RESOURCE_SERVER_PORT = 9443;
-    public static String CONTEXT_URL = SCHEME+"://"+SERVER_NAME+CONTEXT_PATH+"/";
-    public static String RESOURCE_CONTEXT_URL = SCHEME+"://"+SERVER_NAME+":"+RESOURCE_SERVER_PORT+RESOURCE_CONTEXT_PATH+"/";
+    public static String REMOTE_ADDR = "127.0.0.1";
+    public static String IDP_CONTEXT_URL = SCHEME+"://"+IDP_SERVER_NAME+IDP_CONTEXT_PATH+"/";
+    public static String SP_CONTEXT_URL = SCHEME+"://"+SP_SERVER_NAME+SP_CONTEXT_PATH+"/";
+    public static String RESOURCE_CONTEXT_URL = SCHEME+"://"+SP_SERVER_NAME+":"+RESOURCE_SERVER_PORT+RESOURCE_CONTEXT_PATH+"/";
     
     
     private static SAMLConfig samlConfig; 
@@ -174,9 +176,15 @@ public class ShibbolethRunner {
     }
     
     private static boolean SPinitialized = false; // don't do it twice
+    public static SPTestContext consumer = null;
     
     /**
-     * Load an SP configuration file.
+     * Load an SP configuration file if you are not using SPTestContext.
+     * 
+     * <p>Calling this routine does not create a MockRunner context
+     * to call the AssertionConsumerServlet. However, you can still
+     * create sessions by directly calling SessionManager.</p>
+     * 
      * @throws ShibbolethConfigurationException  if bad config file
      */
     public void initializeSP() 
@@ -190,9 +198,77 @@ public class ShibbolethRunner {
         ServiceProviderConfig config = new ServiceProviderConfig();
         context.setServiceProviderConfig(config);
         config.loadConfigObjects(spConfigFileName);
+        
+        // Plug an instance of FilterSupportImpl into the Filter
+        FilterSupportImpl service = new FilterSupportImpl();
+        AuthenticationFilter.setFilterSupport(service);
+        
     }
     
+    
+    /**
+     * A MockRunner context for the AssertionConsumerServlet.
+     */
+    public class SPTestContext {
 
+        // The Factory creates the Request, Response, Session, etc.
+        public WebMockObjectFactory factory = new WebMockObjectFactory();
+        
+        // The TestModule runs the Servlet and Filter methods in the simulated container
+        public ServletTestModule testModule = new ServletTestModule(factory);
+        
+        // Now simulated Servlet API objects
+        public MockServletContext servletContext= factory.getMockServletContext();
+        public MockFilterConfig filterConfig= factory.getMockFilterConfig();
+        public MockHttpServletResponse response = factory.getMockResponse();
+        public MockHttpServletRequest request = factory.getMockRequest();
+        
+        
+        // The Servlet object is created by Mockrunner
+        public AssertionConsumerServlet spServlet;
+        
+        
+        /**
+         * Construct the related objects
+         */
+        public SPTestContext() {
+            
+            // ServletContext
+            servletContext.setServletContextName("dummy SP Context");
+            servletContext.setInitParameter("ServiceProviderConfigFile", spConfigFileName);
+            
+            
+            // Create instance of Filter class, add to chain, call its init()
+            // NOTE: The SP reads its configuration file and initializes
+            // itself within this call.
+            spServlet = (AssertionConsumerServlet) testModule.createServlet(AssertionConsumerServlet.class);
+            SPinitialized=true;
+            
+            // Unchanging properties of the HttpServletRequest
+            request.setRemoteAddr(REMOTE_ADDR);
+            request.setContextPath(SP_CONTEXT_PATH);
+            request.setProtocol(PROTOCOL);
+            request.setScheme(SCHEME);
+            request.setServerName(SP_SERVER_NAME);
+            request.setServerPort(SERVER_PORT);
+            
+        }
+        
+        /**
+         * Set the fields of the request that depend on a suffix,
+         */
+        public void setRequestUrls(String suffix) {
+            request.setRequestURI(SP_CONTEXT_URL+suffix);
+            request.setRequestURL(SP_CONTEXT_URL+suffix);
+            request.setServletPath(SP_CONTEXT_PATH+"/"+suffix);
+        }
+        
+    }
+
+    
+    
+    
+    
     
     /*
      * Setup the IdP interface object
@@ -294,10 +370,10 @@ public class ShibbolethRunner {
             
             // Unchanging properties of the HttpServletRequest
             request.setRemoteAddr(REMOTE_ADDR);
-            request.setContextPath(CONTEXT_PATH);
+            request.setContextPath(IDP_CONTEXT_PATH);
             request.setProtocol(PROTOCOL);
             request.setScheme(SCHEME);
-            request.setServerName(SERVER_NAME);
+            request.setServerName(IDP_SERVER_NAME);
             request.setServerPort(SERVER_PORT);
             
         }
@@ -307,9 +383,9 @@ public class ShibbolethRunner {
          * normally SSO, AA, or Artifact
          */
         public void setRequestUrls(String suffix) {
-            request.setRequestURI(CONTEXT_URL+suffix);
-            request.setRequestURL(CONTEXT_URL+suffix);
-            request.setServletPath(CONTEXT_PATH+"/"+suffix);
+            request.setRequestURI(IDP_CONTEXT_URL+suffix);
+            request.setRequestURL(IDP_CONTEXT_URL+suffix);
+            request.setServletPath(IDP_CONTEXT_PATH+"/"+suffix);
         }
         
     }
@@ -397,10 +473,6 @@ public class ShibbolethRunner {
         // Filter objects
         private AuthenticationFilter filter;
         
-        // SP configuration objects
-        private FilterSupport service;
-        private RMAppInfo rmAppInfo;
-
        public AuthenticationFilterContext() {
             
             // ServletContext (argument to Filters and Servlets)
@@ -426,18 +498,12 @@ public class ShibbolethRunner {
             // Note: if the SP is already initialized, this noops.
             initializeSP();
             
-            // Plug an instance of FilterSupportImpl into the Filter
-            service = new FilterSupportImpl();
-            AuthenticationFilter.setFilterSupport(service);
-
-            // Get our own copy of SP Config info for Assert statements
-            rmAppInfo = service.getRMAppInfo("default");
 
             request.setRemoteAddr(REMOTE_ADDR);
             request.setContextPath(RESOURCE_CONTEXT_PATH);
             request.setProtocol(PROTOCOL);
             request.setScheme(SCHEME);
-            request.setServerName(SERVER_NAME);
+            request.setServerName(SP_SERVER_NAME);
             request.setServerPort(RESOURCE_SERVER_PORT);
         }
         
