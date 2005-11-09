@@ -126,7 +126,7 @@ public abstract class SSOHandler extends BaseHandler implements IdPProtocolHandl
 		}
 		SAMLNameIdentifier nameId = mapper.getNameIdentifier(defaultNameMapping, principal, relyingParty, relyingParty
 				.getIdentityProvider());
-		log.debug("Using the default name identifier format for this relying party: (" + nameId.getFormat());
+		log.debug("Using the default name identifier format for this relying party: (" + nameId.getFormat() + ").");
 		return nameId;
 	}
 }
