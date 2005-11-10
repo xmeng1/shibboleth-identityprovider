@@ -400,8 +400,6 @@ class SecurityTokenResponse {
 		// Create root response element
 		Element root = response.createElementNS(WS_TRUST_SCHEMA, "RequestSecurityTokenResponse");
 		root.setAttributeNS(XML.XMLNS_NS, "xmlns", WS_TRUST_SCHEMA);
-		root.setAttributeNS(XML.XMLNS_NS, "xmlns:xsi", XML.XSI_NS);
-		root.setAttributeNS(XML.XMLNS_NS, "xmlns:xsd", XML.XSD_NS);
 		response.appendChild(root);
 
 		// Tie to remote endpoint
