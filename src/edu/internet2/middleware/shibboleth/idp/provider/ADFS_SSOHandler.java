@@ -95,10 +95,10 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 		// Set attributes that are needed by the jsp
 		// ADFS specs says always send (wa)
-		request.setAttribute("wa", request.getParameter(ADFS_SSOHandler.WA));
+		request.setAttribute("wa", ADFS_SSOHandler.WA);
 		// Passthru (wctx) if we get one
 		if (request.getParameter("wctx") != null && !request.getParameter("wctx").equals("")) {
-			request.setAttribute("wctx", request.getParameter("target"));
+			request.setAttribute("wctx", request.getParameter("wctx"));
 		}
 
 		try {
@@ -156,6 +156,8 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 				}
 				acceptanceURL = endpoint.getLocation();
 			}
+			// Needed for the form
+			request.setAttribute("wreply", acceptanceURL);
 
 			// Create SAML Name Identifier & Subject
 			SAMLNameIdentifier nameId;
@@ -314,7 +316,8 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 		// Create the assertion
 		// NOTE the ADFS spec says not to specify a locality
-		SAMLStatement[] statements = {new SAMLAuthenticationStatement(subject, authenticationMethod, authTime, null, null, null)};
+		SAMLStatement[] statements = {new SAMLAuthenticationStatement(subject, authenticationMethod, authTime, null,
+				null, null)};
 
 		// Package attributes
 		log.info("Resolving attributes.");
