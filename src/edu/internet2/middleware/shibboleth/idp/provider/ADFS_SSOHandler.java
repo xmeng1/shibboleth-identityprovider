@@ -213,7 +213,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 		support.signAssertions((SAMLAssertion[]) new SAMLAssertion[]{assertion}, relyingParty);
 
 		// Wrap assertion in security token response and create form
-		createPOSTForm(request, response, new SecurityTokenResponse(assertion, relyingParty.getProviderId()).toBase64());
+		createPOSTForm(request, response, new SecurityTokenResponse(assertion, relyingParty.getProviderId()));
 
 		// Make transaction log entry
 		support.getTransactionLog().info(
@@ -353,15 +353,14 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 				"Invalid data from Service Provider:missing or invalid (wtrealm) parameter."); }
 	}
 
-	private static void createPOSTForm(HttpServletRequest req, HttpServletResponse res, byte[] buf) throws IOException,
-			ServletException {
+	private static void createPOSTForm(HttpServletRequest req, HttpServletResponse res,
+			SecurityTokenResponse tokenResponse) throws IOException, ServletException, SecurityTokenResponseException {
 
-		// Hardcoded to ASCII to ensure Base64 encoding compatibility
-		req.setAttribute("wresult", new String(buf, "ASCII"));
+		req.setAttribute("wresult", tokenResponse.toXmlString());
 
 		if (log.isDebugEnabled()) {
 			log.debug("Dumping generated Security Token Response:" + System.getProperty("line.separator")
-					+ new String(Base64.decodeBase64(buf)));
+					+ tokenResponse.toXmlString());
 		}
 
 		RequestDispatcher rd = req.getRequestDispatcher("/adfs.jsp");
@@ -409,7 +408,7 @@ class SecurityTokenResponse {
 		Element appliesTo = response.createElementNS(WS_POLICY_SCHEMA, "AppliesTo");
 		appliesTo.setAttributeNS(XML.XMLNS_NS, "xmlns", WS_POLICY_SCHEMA);
 		root.appendChild(appliesTo);
-		Element endpointRef = response.createElementNS(WS_ADDRESSING_SCHEMA, "AppliesTo");
+		Element endpointRef = response.createElementNS(WS_ADDRESSING_SCHEMA, "EndpointReference");
 		endpointRef.setAttributeNS(XML.XMLNS_NS, "xmlns", WS_ADDRESSING_SCHEMA);
 		appliesTo.appendChild(endpointRef);
 		Element address = response.createElementNS(WS_ADDRESSING_SCHEMA, "Address");
@@ -432,6 +431,25 @@ class SecurityTokenResponse {
 					.getProperty("org.opensaml.inclusive-namespace-prefixes"));
 
 			return Base64.encodeBase64Chunked(canonicalized);
+		} catch (InvalidCanonicalizerException e) {
+			log.error("Error Canonicalizing Security Token Response: " + e);
+			throw new SecurityTokenResponseException(e.getMessage());
+		}
+
+		catch (CanonicalizationException e) {
+			log.error("Error Canonicalizing Security Token Response: " + e);
+			throw new SecurityTokenResponseException(e.getMessage());
+		}
+	}
+
+	public String toXmlString() throws SecurityTokenResponseException {
+
+		try {
+			Canonicalizer canonicalizier = Canonicalizer.getInstance(Canonicalizer.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+			byte[] canonicalized = canonicalizier.canonicalizeSubtree(response, config
+					.getProperty("org.opensaml.inclusive-namespace-prefixes"));
+			return new String(canonicalized);
+
 		} catch (InvalidCanonicalizerException e) {
 			log.error("Error Canonicalizing Security Token Response: " + e);
 			throw new SecurityTokenResponseException(e.getMessage());
