@@ -43,6 +43,7 @@ import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
 import edu.internet2.middleware.shibboleth.metadata.Metadata;
+import edu.internet2.middleware.shibboleth.metadata.MetadataProviderFactory;
 import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
 /**

@@ -16,13 +16,18 @@
 
 package edu.internet2.middleware.shibboleth.wayf;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Iterator;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Base64;
 
 /**
@@ -37,11 +42,12 @@ import org.bouncycastle.util.encoders.Base64;
 public class SamlIdPCookie  {
 
 	private static final String COOKIE_NAME = "_saml_idp";
-
+	private static final Logger log = Logger.getLogger(SamlIdPCookie.class.getName());
+	
 	private final HttpServletRequest req;
 	private final HttpServletResponse res;
 	private final String domain;
-	private final ArrayList /*<String>*/ idPList = new ArrayList/*<String>*/();
+	private final List /*<String>*/ idPList = new ArrayList/*<String>*/();
 	
 	/**
 	 * Constructs a <code>SamlIdPCookie</code> from the provided string (which is the raw data 
@@ -59,16 +65,25 @@ public class SamlIdPCookie  {
 		int start;
 		int end;
 		
-		if (codedData == null || codedData.equals("")) {
+		if (codedData == null || codedData.equals(""))
+		{
+			log.info("Empty cookie");
 			return;
 		}
 		//
-		// Because there are spaces in the data the cookie may be returned enclosed in quotes
+		// An earlier version saved the cookie without URL encoding it, hence there may be 
+		// speaces which in turn means we maybe quoted.  Strip any quotes.
 		//
 		if (codedData.charAt(0) == '"' && codedData.charAt(codedData.length()-1) == '"') {
 			codedData= codedData.substring(1,codedData.length()-1);
 		}
 		
+		try {
+			codedData = URLDecoder.decode(codedData, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			log.error("could not decode cookie");
+			return;
+		}
 		
 		start = 0;
 		end = codedData.indexOf(' ', start);
@@ -114,17 +129,6 @@ public class SamlIdPCookie  {
 
 		writeCookie(expiration);
 	}
-
-	/**
-	 * Return an iterator over the list of IdPNames 
-	 * @param which
-	 * @return
-	 */
-
-	public Iterator/*<String>*/ iterator() {
-
-		return idPList.iterator();
-	}
 	
 	/**
 	 * Delete the <b>entire<\b> cookie contents
@@ -136,6 +140,8 @@ public class SamlIdPCookie  {
 		if (cookie == null) { 
 			return; 
 		}
+		
+		cookie.setPath("/");
 		cookie.setMaxAge(0);
 		res.addCookie(cookie);
 	}
@@ -161,9 +167,9 @@ public class SamlIdPCookie  {
 	 * @param origin
 	 */
 	
-	public void deleteIdPName(String origin) {
+	public void deleteIdPName(String origin, int expiration) {
 		idPList.remove(origin);
-		writeCookie(0);
+		writeCookie(expiration);
 	}
 
 	private void writeCookie(int expiration)
@@ -174,6 +180,7 @@ public class SamlIdPCookie  {
 			//
 			// Nothing to write, so delete the cookie
 			//
+			cookie.setPath("/");
 			cookie.setMaxAge(0);
 			res.addCookie(cookie);
 			return;
@@ -192,7 +199,13 @@ public class SamlIdPCookie  {
 			buffer.append(what).append(' ');
 		}
 		
-		String value = buffer.toString();
+		String value;
+		try {
+			value = URLEncoder.encode(buffer.toString(), "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			log.error("Could not encode cookie");
+			return;
+		}
 		
 		if (cookie == null) { 
 			cookie = new Cookie(COOKIE_NAME, value);
@@ -202,15 +215,36 @@ public class SamlIdPCookie  {
 		cookie.setComment("Used to cache selection of a user's Shibboleth IdP");
 		cookie.setPath("/");
 
-		if (expiration > 0) {
-			cookie.setMaxAge(expiration);
-		}
+
+		cookie.setMaxAge(expiration);
+		
 		if (domain != null && domain != "") {
 			cookie.setDomain(domain);
 		}
 		res.addCookie(cookie);
 	
 	}
+
+	/**
+	 * Lookup to see whether there is an IdP for the given SP 
+	 */
+	
+	public List /*<IdPSite>*/ getIdPList(List /*<IdPSiteSet>*/ siteSets, String SPName)
+	{
+		
+		Iterator /*<String>*/ it = idPList.iterator();
+		List /*<IdPSite>*/ result = new ArrayList /*<IdPSite>*/(idPList.size());
+		
+		while (it.hasNext()) {
+			String idPName = (String) it.next();
+			IdPSite site = IdPSiteSet.IdPforSP(siteSets, idPName, SPName);
+			if (site != null){
+				result.add(site);
+			}
+		}
+		return result;
+	}
+
 
 	private static Cookie getCookie(HttpServletRequest req) {
 		

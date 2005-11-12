@@ -57,8 +57,6 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.log.LoggingInitializer;
-import edu.internet2.middleware.shibboleth.metadata.Metadata;
-import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 
 /**
  * Primary entry point for requests to the SAML IdP. Listens on multiple endpoints, routes requests to the appropriate
@@ -412,29 +410,3 @@ public class IdPResponder extends HttpServlet {
 
 }
 
-class MetadataProviderFactory {
-
-	private static Logger log = Logger.getLogger(MetadataProviderFactory.class.getName());
-
-	public static Metadata loadProvider(Element e) throws MetadataException {
-
-		String className = e.getAttribute("type");
-		if (className == null || className.equals("")) {
-			log.error("Metadata Provider requires specification of the attribute \"type\".");
-			throw new MetadataException("Failed to initialize Metadata Provider.");
-		} else {
-			try {
-				Class[] params = {Class.forName("org.w3c.dom.Element"),};
-				return (Metadata) Class.forName(className).getConstructor(params).newInstance(new Object[]{e});
-			} catch (Exception loaderException) {
-				log.error("Failed to load Metadata Provider implementation class: " + loaderException);
-				Throwable cause = loaderException.getCause();
-				while (cause != null) {
-					log.error("caused by: " + cause);
-					cause = cause.getCause();
-				}
-				throw new MetadataException("Failed to initialize Metadata Provider.");
-			}
-		}
-	}
-}

@@ -55,6 +55,11 @@ public class IdPSite implements Comparable {
 			return org.getDisplayName();
 		}
 	}
+	
+	public boolean equals(Object obj)
+	{
+		return ((obj instanceof IdPSite) && (((IdPSite)obj).getName().equals(getName())));
+	}
 
 	/**
 	 * Based on 1.2 Origin.isMatch.  There must have been a reason for it...
@@ -67,6 +72,9 @@ public class IdPSite implements Comparable {
 	 */
 	
 	public int compareTo(Object o) {
+		
+		if (equals(o)) return 0;
+		
 		int result = getDisplayName().toLowerCase().compareTo(((IdPSite) o).getDisplayName().toLowerCase());
 		if (result == 0) {
 			result = getDisplayName().compareTo(((IdPSite) o).getDisplayName());
@@ -74,7 +82,7 @@ public class IdPSite implements Comparable {
 		return result;
 	}
 
-	static private boolean isMatch(EntityDescriptor entity, String str, WayfConfig config) {
+	static private boolean isMatch(EntityDescriptor entity, String str, HandlerConfig config) {
 		
 		Enumeration input = new StringTokenizer(str);
 		while (input.hasMoreElements()) {
@@ -107,9 +115,9 @@ public class IdPSite implements Comparable {
 		return false;
 	}
 	
-	static public Collection seachForMatchingOrigins(Metadata metadata,
+	static public Collection /*<IdPSite>*/ seachForMatchingOrigins(Metadata metadata,
 													String searchString, 
-													WayfConfig config)
+													HandlerConfig config)
 	{
 		TreeSet /*<IdPSite>*/ result = new TreeSet /*<IdPSite>*/ ();
 		Iterator /*<EntityDescriptor>*/ entities = Entities(metadata);
@@ -128,7 +136,7 @@ public class IdPSite implements Comparable {
 		return result;
 	}
 	
-	static public Collection getIdPSites(Metadata metadata)
+	static public Collection /*<IdPSite>*/ getIdPSites(Metadata metadata)
 	{
 		TreeSet /*<IdPSite>*/ result = new TreeSet /*<IdPSite>*/ ();
 		Iterator /*<EntityDescriptor>*/ entities = Entities(metadata);
@@ -144,7 +152,13 @@ public class IdPSite implements Comparable {
 		} // iterate over all entities
 		return result;
 	}
-
+	
+	/**
+	 * Lookup
+	 */
+	public String getAddressFor() {
+		return entity.getIDPSSODescriptor(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS).getSingleSignOnServiceManager().getDefaultEndpoint().getLocation();
+	}
 	/**
 	 * entitiesIterator:
 	 * 

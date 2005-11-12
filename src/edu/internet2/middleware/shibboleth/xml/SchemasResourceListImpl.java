@@ -88,7 +88,7 @@ public class SchemasResourceListImpl extends SchemaStore {
                 continue;
             }
             String targetNamespace = ele.getAttribute("targetNamespace");
-            if (targetNamespace==null) {
+            if (targetNamespace==null || targetNamespace == "") {
                 log.error("Schema has no targetNamespace: "+resourceName);
                 continue;
             }

@@ -304,6 +304,7 @@
 	<target name="package-wayf" depends="compile" description="Creates the WAYF war and moves it to ${dist}">
         <copy file="${appconfig}/schemas.properties" todir="${approot}/WEB-INF/classes/conf"/>
         <copy file="${appconfig}/wayfconfig.xml" todir="${approot}/WEB-INF/classes/conf"/>
+    	<copy file="${appconfig}/log4j.properties" tofile="${build}/log4j.properties" failonerror="false"/>
             
 		<war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no"/>
 	</target>

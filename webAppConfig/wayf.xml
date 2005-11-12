@@ -11,14 +11,23 @@
 		<display-name>Shibboleth WAYF Service</display-name>
 		<servlet-class>edu.internet2.middleware.shibboleth.wayf.WayfService</servlet-class>
 		<init-param>
-			<param-name>SiteConfigFileLocation</param-name>
-			<param-value>/conf/sites.xml</param-value>
+			<param-name>WAYFConfigFileLocation</param-name>
+			<param-value>/conf/wayfconfig.xml</param-value>
 		</init-param>
 	</servlet>
+
+<!-- We specify two mappings - old style http:/host/shibboleth-wayf/WAYF/ and the new style
+     whereby the precise name influences the behavior.  See the configuration file for 
+     examples -->
 
 	<servlet-mapping>
 		<servlet-name>WAYF</servlet-name>
 		<url-pattern>/WAYF</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>WAYF</servlet-name>
+		<url-pattern>*.wayf</url-pattern>
 	</servlet-mapping>
 
 	<mime-mapping>

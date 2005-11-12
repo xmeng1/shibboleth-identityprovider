@@ -13,20 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package edu.internet2.middleware.shibboleth.wayf;
 
+import java.util.Collection;
 /**
- * Signals that an error has occurred while processing a Shibboleth WAYF request.
+ * @author Rod Widdowson
  * 
- * @author Walter Hoehn wassa&#064;columbia.edu
+ * This is just a container class for tieing together a set of IdPs to a name - this being what
+ * is sent to the JSP for display purposes.
  */
-
-public class WayfException extends Exception {
-
-	public WayfException(String message) {
-
-		super(message);
+public class IdPSiteSetEntry {
+	
+	private final String name;
+	private final Collection/*<IdPSite>*/ sites;
+	
+	public IdPSiteSetEntry(String name, Collection/*<IdPSite>*/ sites) {
+		this.name = name;
+		this.sites = sites;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public Collection/*<IdPSite>*/ getSites() {
+		return sites;
 	}
 
 }

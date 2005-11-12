@@ -1,26 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Schema for the Shibboleth WAYF Service configuration file - Walter Hoehn - 06/14/2002 -->
 <xs:schema 
-	targetNamespace="urn:mace:shibboleth:wayf:config:1.0"
-	xmlns:xs="http://www.w3.org/2001/XMLSchema" 
-	elementFormDefault="qualified">
-        <xs:element name="WayfConfig" >
-                <xs:complexType>             
-                	<xs:sequence>
-                                <xs:element name="HelpText" type="xs:string" minOccurs="0" maxOccurs="1"/>
-                                <xs:element name="SearchResultEmptyText" type="xs:string" minOccurs="0" maxOccurs="1"/>
-                                <xs:element name="SearchIgnore" minOccurs="0" maxOccurs="1">
-                                		<xs:complexType>
-											<xs:sequence>
-												<xs:element name="IgnoreText" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-											</xs:sequence>
-										</xs:complexType>
-                    			</xs:element>
+    targetNamespace="urn:mace:shibboleth:wayf:config:1.0"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:wc="urn:mace:shibboleth:wayf:config:1.0"
+    elementFormDefault="qualified">
+
+    <xs:simpleType name="handleCookieType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AlwaysFollow"/>
+            <xs:enumeration value="FollowSingle"/>
+            <xs:enumeration value="NeverFollow"/>
+            <xs:enumeration value="ClearCookie"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="configValues">
+        <xs:sequence>
+            <xs:element name="SearchIgnore" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="IgnoreText" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
                     </xs:sequence>
-                    <xs:attribute name="supportContact" type="xs:string" use="optional"/>
-                    <xs:attribute name="logoLocation" type="xs:string" use="optional"/>
-                    <xs:attribute name="cacheExpiration" type="xs:string" use="optional"/>
-                    <xs:attribute name="cacheDomain" type="xs:string" use="optional"/>
                 </xs:complexType>
-        </xs:element>
+            </xs:element>
+             <xs:element name="Federation" minOccurs="0" maxOccurs="unbounded">
+               <xs:complexType>
+                  <xs:attribute name="identifier" use="required"/>
+               </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="location" type="xs:string" use="optional" />
+        <xs:attribute name="default" type="xs:boolean" use="optional" />
+        <xs:attribute name="jspFile" type="xs:string" use="optional" />
+        <xs:attribute name="errorJspFile" type="xs:string" use="optional" />
+        <xs:attribute name="provideListOfList" type="xs:boolean" use="optional" />
+        <xs:attribute name="provideList" type="xs:boolean" use="optional" />
+        <xs:attribute name="handleCookie" type="wc:handleCookieType" use="optional" />
+        <xs:attribute name="showUnusableIdPs" type="xs:boolean" use="optional" />
+        <xs:attribute name="cacheDomain" type="xs:string" use="optional"/>
+        <xs:attribute name="cacheExpiration" type="xs:string" use="optional" />
+    </xs:complexType>
+
+    <xs:element name="WayfConfig" >
+        <xs:complexType>         
+            <xs:sequence>
+                <xs:element name="Default" type="wc:configValues" minOccurs="0" maxOccurs="1" /> 
+                            
+                <xs:element name="MetadataProvider"  minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+                        </xs:sequence>
+                        <xs:attribute name="type" type="xs:string" use="required" />
+                        <xs:attribute name="displayName" type="xs:string" use="required" />
+                        <xs:attribute name="identifier" type="xs:string" use="required" />
+                        <xs:attribute name="uri" type="xs:string" use="required" />
+                        <xs:anyAttribute namespace="##other" processContents="lax" />
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="DiscoveryServiceHandler" type="wc:configValues"  minOccurs="1" maxOccurs="unbounded" />
+
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>

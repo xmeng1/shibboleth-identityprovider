@@ -7,9 +7,7 @@
 	
 	<jsp:useBean id="requestURL" scope="application" class="java.lang.String"/>
 	<jsp:useBean id="errorText" scope="request" class="java.lang.String"/>
-	<jsp:useBean id="supportContact" scope="application" class="java.lang.String"/>
-	<jsp:useBean id="logoLocation" scope="application" class="java.lang.String"/>
-	
+
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 	<link rel="stylesheet" type="text/css" href="main.css" />
@@ -18,13 +16,13 @@
 
 <body>
 <div class="head">
-<img src="<bean:write name="logoLocation" />" alt="Logo" />
+<img src="images/logo.jpg" alt="Logo" />
 <h1>Inter-institutional Access System Failure</h1>
 </div>
 
 <p>The inter-institutional access system experienced a technical failure.</p>
 
-<p>Please email <a href="mailto:<bean:write name="supportContact" />"><bean:write name="supportContact" /></a> and include the following error message:</p>
+<p>Please email <a href="mailto:user@domain"> administrator's name</a> and include the following error message:</p>
 
 <p class="error">WAYF failure at (<bean:write name="requestURL" />)</p>
 
