@@ -114,13 +114,8 @@ public class SessionManager {
 			log.warn("Session not found with ID "+sessionId);
 			return null;
 		}
-		if (!s.isInitialized()) {
-			log.warn("Uninitialized (reserved) Session has ID "+sessionId);
-		    return null;
-		}
 		if (!applicationId.equals(s.getApplicationId())) {
 			log.error("Session ID "+sessionId+" doesn't match application "+applicationId);
-			return null;
 		}
 		if (s.isExpired()) {
 			log.error("Session ID "+sessionId+" has expired.");

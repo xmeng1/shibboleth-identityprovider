@@ -163,8 +163,11 @@ public class AssertionConsumerServlet extends HttpServlet {
 					outputStream.print(attributeResponse.toString());
 				} else {
                     if (target.indexOf(':')>0) {
-                        // Ordinary URL target
-                        response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+                        // Ordinary URL target. Should not occur any more
+                        if (target.indexOf('?')>0)
+                            response.sendRedirect(target+"&"+SESSIONPARM+"="+sessionId);
+                        else
+                            response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
                     } else {
                         // Assume Target is SessionID of 
                         Session session =context.getSessionManager().findSession(sessionId, applicationId);
@@ -173,7 +176,7 @@ public class AssertionConsumerServlet extends HttpServlet {
                             if (savedTarget!=null)
                                 target=savedTarget;
                         }
-                        response.sendRedirect(target+"?"+SESSIONPARM+"="+sessionId);
+                        response.sendRedirect(target);
                     }
 				}
             } catch (IOException e) {
@@ -254,6 +257,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         BrowserProfileRequest bpr = new BrowserProfileRequest();
         bpr.SAMLArt = data.SAMLArt;
         bpr.SAMLResponse = data.SAMLResponse;
+        
         bpr.TARGET = data.target;
         
         // Process the encoded SAMLResponse or, if Artifact, fetch

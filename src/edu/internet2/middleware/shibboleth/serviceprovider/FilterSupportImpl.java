@@ -24,8 +24,6 @@ package edu.internet2.middleware.shibboleth.serviceprovider;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 
@@ -147,15 +145,22 @@ public class FilterSupportImpl implements FilterSupport {
 	 * @param applicationId
 	 * @return Map of (attribute,value) pairs
 	 */
-    public Map /*<String,String>*/ 
-    getSessionAttributes(String sessionId, String applicationId) {
+    public SessionInfo 
+    getSessionInfo(String sessionId, String applicationId) {
+        SessionInfo sessionInfo = new SessionInfo();
         SessionManager sm = context.getSessionManager();
         Session session = 
             sm.findSession(sessionId, applicationId);
+        sessionInfo.savedTarget=session.getSavedTargetURL();
         if (session==null)
-            return null;
-        Map /*<String,String>*/ attributes = SessionManager.mapAttributes(session);
-        return attributes;
+            sessionInfo.sessionStatus = SessionInfo.SESSION_NOT_FOUND;
+        else if (!session.isInitialized())
+            sessionInfo.sessionStatus = SessionInfo.SESSION_NOT_INITIALIZED;
+        else if (!applicationId.equals(session.getApplicationId()))
+            sessionInfo.sessionStatus = SessionInfo.SESSION_BAD_APPLICATIONID;
+        else 
+            sessionInfo.attributes = SessionManager.mapAttributes(session);
+        return sessionInfo;
     }
 
 
