@@ -90,7 +90,7 @@ public class ShibbolethTrust extends BasicTrust implements Trust, PluggableConfi
 	 */
 	public boolean validate(X509Certificate certificateEE, X509Certificate[] certificateChain, RoleDescriptor descriptor) {
 
-		return validate(certificateEE, certificateChain, descriptor, false);
+		return validate(certificateEE, certificateChain, descriptor, true);
 	}
 
 	/*
