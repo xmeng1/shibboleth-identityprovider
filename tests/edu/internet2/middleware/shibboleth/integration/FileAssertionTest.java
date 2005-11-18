@@ -16,8 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.integration;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,14 +29,11 @@ import junit.framework.TestCase;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Level;
-import org.opensaml.SAMLException;
+import org.opensaml.SAMLResponse;
 
-import com.mockrunner.mock.web.MockHttpServletResponse;
-
-import edu.internet2.middleware.shibboleth.idp.provider.ShibbolethV1SSOHandler;
 import edu.internet2.middleware.shibboleth.resource.AuthenticationFilter;
-import edu.internet2.middleware.shibboleth.resource.FilterUtil;
 import edu.internet2.middleware.shibboleth.resource.FilterSupport.NewSessionData;
+import edu.internet2.middleware.shibboleth.runner.MadSignertest;
 import edu.internet2.middleware.shibboleth.runner.ShibbolethRunner;
 import edu.internet2.middleware.shibboleth.serviceprovider.AssertionConsumerServlet;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig;
@@ -48,7 +44,7 @@ import edu.internet2.middleware.shibboleth.serviceprovider.Session;
  * A JUnit test case that exercises the IdP, SP, and Filter
  * @author Howard Gilbert
  */
-public class IntegrationTest extends TestCase {
+public class FileAssertionTest extends TestCase {
     
     // Create some constants, both as parameters and to test responses
     private static final String GIVENNAME = "Bozo";
@@ -63,7 +59,6 @@ public class IntegrationTest extends TestCase {
     public static final String APPLICATIONID = "default";
     
     ShibbolethRunner runner;
-    ShibbolethRunner.IdpTestContext idp;
     ShibbolethRunner.SPTestContext consumer;
     ShibbolethRunner.AuthenticationFilterContext filter;
     private NewSessionData newSessionData = new NewSessionData();
@@ -84,11 +79,6 @@ public class IntegrationTest extends TestCase {
         // Create the overall testing framework
         runner = new ShibbolethRunner();
         
-        // Initialize the Idp, create the Mockrunner
-        // objects to do SSO, AA, and Artifact calls, and
-        // configure SAML to use the MockHTTPBindingProvider
-        runner.setIdpConfigFileName("/basicIdpHome/idpconfig.xml"); 
-        idp = runner.getIdp();
         
         // Initialize the SP with the default config file.
         runner.setSpConfigFileName("/basicSpHome/spconfig.xml"); 
@@ -134,45 +124,20 @@ public class IntegrationTest extends TestCase {
      * Test the Post Profile, Attribute Push
      * <p>Run SSO, call AssertionConsumerServlet directly, then Run Filter</p>
      */
-    public void testAttributePush() throws SAMLException {
+    public void testAttributePush() throws Exception {
         
-        // Set the URL suffix that triggers SSO processing
-        idp.resetRequest("SSO");
+        MadSignertest signer = new MadSignertest("src/conf/idp-example.jks","exampleorg");
+        SAMLResponse samlresponse = 
+            signer.signResponseFile("data/AttributePushAssertion.xml", 
+                    "tomcat", new Date());
         
-        // Add the WAYF/RM parameters
-        idp.testModule.addRequestParameter("target", TARGET);
-        idp.testModule.addRequestParameter("shire",POST_SHIRE);
-        idp.testModule.addRequestParameter("providerId", SP_ENTITY);
         
-        // Add a userid, as if provided by Basic Authentication or a Filter
-        idp.request.setRemoteUser(NETID);
-        
-        // Force Attribute Push
-        ShibbolethV1SSOHandler.pushAttributeDefault=true;
-        
-        // Call the IdP 
-        idp.testModule.doGet();
-        
-            /*
-             * Sanity check: The IdP normally ends by transferring control to a
-             * JSP page that generates the FORM. However, we have not set up
-             * Mockrunner to perform the transfer, because the form would just
-             * create parsing work. Rather, the following code extracts the
-             * information from the request attributes that the JSP would have
-             * used as its source.
-             */
-        String bin64assertion = (String) idp.request.getAttribute("assertion");
+        String bin64assertion = new String(samlresponse.toBase64());
         String assertion = new String(Base64.decodeBase64(bin64assertion.getBytes()));
-        String handlerURL = (String) idp.request.getAttribute("shire");
-        String targetURL = (String) idp.request.getAttribute("target");
         
-        // Create the session directly without MockRunner
-        FilterUtil.sessionDataFromRequest(newSessionData,idp.request);
-            // there was no real redirect, so the next two fields are not
-            // in the places that sessionDataFromRequest expects.
-            newSessionData.SAMLResponse = bin64assertion;  
-            newSessionData.target=targetURL;
-        newSessionData.handlerURL=handlerURL;
+        newSessionData.SAMLResponse = bin64assertion; 
+        newSessionData.target=TARGET;
+        newSessionData.handlerURL=POST_SHIRE;
         
         // Create the session, extract pushed Attributes 
         String sessionId = AssertionConsumerServlet.createSessionFromData(newSessionData);
@@ -240,125 +205,5 @@ public class IntegrationTest extends TestCase {
         
         
     }
-    
-    /**
-     * Test the Post Profile with Attribute Query
-     * <p>Run SSO, Run AssertionConsumerServlet, then Run Filter</p>
-     */
-    public void testAttributeQuery() throws SAMLException {
-        
-        // Set the URL suffix that triggers SSO processing
-        idp.resetRequest("SSO");
-        
-        // Add the WAYF/RM parameters
-        idp.testModule.addRequestParameter("target", TARGET);
-        idp.testModule.addRequestParameter("shire",POST_SHIRE);
-        idp.testModule.addRequestParameter("providerId", SP_ENTITY);
-        
-        // Add a userid, as if provided by Basic Authentication or a Filter
-        idp.request.setRemoteUser(NETID);
-        
-        // Block Attribute Push
-        ShibbolethV1SSOHandler.pushAttributeDefault=false;
-        
-        // Call the IdP 
-        idp.testModule.doGet();
-        
-        String bin64assertion = (String) idp.request.getAttribute("assertion");
-        String assertion = new String(Base64.decodeBase64(bin64assertion.getBytes()));
-        String handlerURL = (String) idp.request.getAttribute("shire");
-        String targetURL = (String) idp.request.getAttribute("target");
-
-        // Simulate the POST to the SP Context using MockRunner
-        consumer.resetRequest("Shibboleth.sso/SAML/POST");
-        consumer.testModule.addRequestParameter("SAMLResponse",bin64assertion);
-        consumer.testModule.addRequestParameter("TARGET",targetURL);
-        consumer.testModule.doPost();
-        
-        // Now check up on what the AssertionConsumerServlet did with the POST
-        MockHttpServletResponse response = consumer.response;
-        assertTrue(response.wasRedirectSent());
-        String redirectURL = response.getHeader("Location");
-        
-        // The SessionId is on the end of the redirected URL
-        int pos = redirectURL.indexOf(AssertionConsumerServlet.SESSIONPARM);
-        assertTrue(pos>0);
-        String sessionId = redirectURL.substring(
-                pos+AssertionConsumerServlet.SESSIONPARM.length()+1);
-        
-        // Now get what was created in case you want to test it.
-        Session session = context.getSessionManager().findSession(sessionId, APPLICATIONID);
-        checkSession(session);
-        
-        // Pass the SessionId to the Filter, let it fetch the attributes
-        filter.resetRequest("test.txt"); // need any URL
-        filter.testModule.addRequestParameter(AuthenticationFilter.SESSIONPARM, sessionId);
-        filter.request.setMethod("GET");
-        filter.testModule.doFilter();
-        
-        checkFilter();
-        
-    }
-    
-    /**
-     * Test Artifact
-     * <p>Run SSO, call AssertionConsumerServlet directly, then Run Filter</p>
-     */
-    public void testArtifact() throws SAMLException, UnsupportedEncodingException {
-        
-        // Set the URL suffix that triggers SSO processing
-        idp.resetRequest("SSO");
-        
-        // Add the WAYF/RM parameters
-        idp.testModule.addRequestParameter("target", TARGET);
-        idp.testModule.addRequestParameter("shire",ARTIFACT_SHIRE);
-        idp.testModule.addRequestParameter("providerId", SP_ENTITY);
-        
-        // Add a userid, as if provided by Basic Authentication or a Filter
-        idp.request.setRemoteUser(NETID);
-        
-        // Attribute Push is implied by Artifact
-        ShibbolethV1SSOHandler.pushAttributeDefault=false;
-        
-        // Call the IdP 
-        idp.testModule.doGet();
-        
-        // Now check the response from the IdP
-        MockHttpServletResponse response = idp.response;
-        assertTrue(response.wasRedirectSent());
-        String redirectURL = response.getHeader("Location");
-        
-        // The artifacts were appended to the end of the Redirect URL
-        String[] splits = redirectURL.split("\\&SAMLart=");
-        assertTrue(splits.length>1);
-        String[] artifactArray = new String[splits.length-1];
-        for (int i=0;i<artifactArray.length;i++) {
-            artifactArray[i]=URLDecoder.decode(splits[i+1],"UTF-8");
-        }
-        
-        // Build the parameter for Session creation
-        FilterUtil.sessionDataFromRequest(newSessionData,idp.request);
-        newSessionData.SAMLArt=artifactArray;
-        newSessionData.target=TARGET;
-        newSessionData.handlerURL=ARTIFACT_SHIRE;
-        
-        // Create the Session
-        // Under the covers, SAML will see the Artifact and fetch the Assertion
-        String sessionId = AssertionConsumerServlet.createSessionFromData(newSessionData);
-        
-        
-        // Now get what was created in case you want to test it.
-        Session session = context.getSessionManager().findSession(sessionId, APPLICATIONID);
-        checkSession(session);
-        
-        
-        // Pass the SessionId to the Filter, let it fetch the attributes
-        filter.resetRequest("test.txt"); // need any URL
-        filter.testModule.addRequestParameter(AuthenticationFilter.SESSIONPARM, sessionId);
-        filter.request.setMethod("GET");
-        filter.testModule.doFilter();
-
-        checkFilter();
-     }
     
 }

@@ -43,11 +43,13 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContext;
 
 /**
- * Initialize on request the IdP, SP, and Filter on behalf of a JUnit test.
+ * A JUnit Test support class for Shibboleth.
  * 
- * <p>An instance of this class is created by a JUnit test class, which
- * uses it to initialize and create MockRunner objects for testing the
- * Shibboleth components. This keeps the tests themselves simple.</p>
+ * <p>This class can create the Mockrunner control blocks to 
+ * interface to an instance of the SP and one or more instances
+ * of the IdP and Resource Filter. Each instance is initialized
+ * with its own set of configuration files. The test only needs
+ * to create the objects it needs.</p>
  * 
  * <p>Look at *.integration.IntegrationTest for an example of use.</p>
  * 
@@ -55,39 +57,34 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContex
  */
 public class ShibbolethRunner {
     
-    
-    public static int SERVER_PORT = 443;
-    public static int RESOURCE_SERVER_PORT = 9443;
-    public static String IDP_SERVER_NAME = "idp.example.org";
-    public static String SP_SERVER_NAME = "sp.example.org";
+    // Default values used to define each context
+    public static String REMOTE_ADDR = "192.168.0.99";
     public static String SCHEME = "https";
     public static String PROTOCOL = "HTTP/1.1";
+    public static int    SERVER_PORT = 443;
+    
+    // IdP
+    public static String IDP_SERVER_NAME = "idp.example.org";
     public static String IDP_CONTEXT_PATH = "/shibboleth-idp";
-    public static String SP_CONTEXT_PATH = "/shibboleth-sp";
-    public static String RESOURCE_CONTEXT_PATH = "/secure";
-    public static String REMOTE_ADDR = "127.0.0.1";
     public static String IDP_CONTEXT_URL = SCHEME+"://"+IDP_SERVER_NAME+IDP_CONTEXT_PATH+"/";
+    
+    // SP
+    public static String SP_SERVER_NAME = "sp.example.org";
+    public static String SP_CONTEXT_PATH = "/shibboleth-sp";
     public static String SP_CONTEXT_URL = SCHEME+"://"+SP_SERVER_NAME+SP_CONTEXT_PATH+"/";
+    
+    // Resource
+    public static int    RESOURCE_SERVER_PORT = 9443;
+    public static String RESOURCE_CONTEXT_PATH = "/secure";
     public static String RESOURCE_CONTEXT_URL = SCHEME+"://"+SP_SERVER_NAME+":"+RESOURCE_SERVER_PORT+RESOURCE_CONTEXT_PATH+"/";
     
     
-    private static SAMLConfig samlConfig; 
+    private static SAMLConfig samlConfig; // See constructor for use
 
     
     
-    /**
-     * Initialization logic goes here.
-     * <p>Reqires that Log4J already be configured.</p>
-     */
-    public ShibbolethRunner() {
-        
-        // Configure SAML to use the MockRunner interface to callback
-        // from the SP to the IdP instead of trying to use real HTTP.
-        samlConfig = SAMLConfig.instance();
-        samlConfig.setDefaultBindingProvider(SAMLBinding.SOAP,"edu.internet2.middleware.shibboleth.runner.MockHTTPBindingProvider" );
-    }
  
-    
+    /********************* Static Methods **********************/
     
     /*
      * Logging
@@ -151,23 +148,53 @@ public class ShibbolethRunner {
     
     
     
-    /*
+    
+    
+    /********************* Constructors ************************
+     * Initialization logic goes here.
+     * <p>Reqires that Log4J already be configured.</p>
+     */
+    public ShibbolethRunner() {
+        configureTestSAMLQueries();
+    }
+
+    /**
+     * SAML has a list of BindingProviders that access the IdP.
+     * Normally the SOAP HTTP BindingProvider is the default and
+     * it accesses the IdP by creating a URL socket. This code 
+     * replaces that default with a Mockrunner BindingProvider.
+     * So when the SP does an AA or Artifact Query, the IdP is
+     * called using its Mockrunner simulated Servlet context.
+     * 
+     * <p>Note: This method depends on a real IdP context created
+     * using the IdPTestContext. Use another method if you want
+     * to feed back pre-created test responses.</p>
+     */
+    private void configureTestSAMLQueries() {
+        samlConfig = SAMLConfig.instance();
+        samlConfig.setDefaultBindingProvider(SAMLBinding.SOAP,
+                "edu.internet2.middleware.shibboleth.runner.MockHTTPBindingProvider" );
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    /************************* Service Provider ********************
      * The SP is represented by an SPContext object and the objects
      * SessionManager, SPConfig, etc. chained off it. The context
      * is initialized and then the main configuration file is read
      * in to create the Config object.
-     * 
-     * The testing environment doesn't bother with MockRunner objects.
-     * The Servlet interface to the SP is a thin layer that only 
-     * translates between HTTP/HTML (the Request object) and method
-     * calls. So once initialized, it is just as easy to call the
-     * SessionManager and FilterSupportImpl directly.
      */
     
     private String spConfigFileName = "/basicSpHome/spconfig.xml";
     /**
      * If you are goint to change the SP Config File
-     * do it before calling initServiceProvider.
+     * do it before calling initServiceProvider or constructing
+     * an SPTestContext.
      * 
      * @param spConfigFileName
      */
@@ -179,11 +206,7 @@ public class ShibbolethRunner {
     public static SPTestContext consumer = null;
     
     /**
-     * Load an SP configuration file if you are not using SPTestContext.
-     * 
-     * <p>Calling this routine does not create a MockRunner context
-     * to call the AssertionConsumerServlet. However, you can still
-     * create sessions by directly calling SessionManager.</p>
+     * Initialize an instance of the SP context and configuration.
      * 
      * @throws ShibbolethConfigurationException  if bad config file
      */
@@ -207,7 +230,16 @@ public class ShibbolethRunner {
     
     
     /**
-     * A MockRunner context for the AssertionConsumerServlet.
+     * A MockRunner interface object for the AssertionConsumerServlet.
+     * 
+     * <p>The SP itself is a static set of objects initialized 
+     * under the ServiceProviderContext. There can be only one
+     * SP per ClassLoader, so there is no way to test multiple 
+     * SPs at the same time. However, SPs don't interact, so it
+     * doesn't matter.</p>
+     * 
+     * <p>If more than one SPTestContext object is created, they
+     * share the same SPContext objects.
      */
     public class SPTestContext {
 
@@ -223,26 +255,34 @@ public class ShibbolethRunner {
         public MockHttpServletResponse response = factory.getMockResponse();
         public MockHttpServletRequest request = factory.getMockRequest();
         
-        
-        // The Servlet object is created by Mockrunner
         public AssertionConsumerServlet spServlet;
         
         
         /**
          * Construct the related objects
+         * @throws ShibbolethConfigurationException 
          */
-        public SPTestContext() {
+        public SPTestContext() throws ShibbolethConfigurationException {
             
             // ServletContext
             servletContext.setServletContextName("dummy SP Context");
             servletContext.setInitParameter("ServiceProviderConfigFile", spConfigFileName);
             
+            // Create the Servlet object, but do not run its init()
+            // instead use the initializeSP() routine which does 
+            // the same initialize in the test environment
+            spServlet = new AssertionConsumerServlet();
+            testModule.setServlet(spServlet, false);
+            initializeSP();
             
-            // Create instance of Filter class, add to chain, call its init()
-            // NOTE: The SP reads its configuration file and initializes
-            // itself within this call.
-            spServlet = (AssertionConsumerServlet) testModule.createServlet(AssertionConsumerServlet.class);
-            SPinitialized=true;
+        }
+        
+        /**
+         * Set the fields of the request that depend on a suffix,
+         */
+        public void resetRequest(String suffix) {
+            request.resetAll();
+            response.resetAll();
             
             // Unchanging properties of the HttpServletRequest
             request.setRemoteAddr(REMOTE_ADDR);
@@ -252,12 +292,6 @@ public class ShibbolethRunner {
             request.setServerName(SP_SERVER_NAME);
             request.setServerPort(SERVER_PORT);
             
-        }
-        
-        /**
-         * Set the fields of the request that depend on a suffix,
-         */
-        public void setRequestUrls(String suffix) {
             request.setRequestURI(SP_CONTEXT_URL+suffix);
             request.setRequestURL(SP_CONTEXT_URL+suffix);
             request.setServletPath(SP_CONTEXT_PATH+"/"+suffix);
@@ -270,18 +304,16 @@ public class ShibbolethRunner {
     
     
     
-    /*
+    /************************ IdP ******************************
      * Setup the IdP interface object
      * 
-     * The IdP keeps its "context" of cached data and configured 
-     * objects internal rather than exposing it as a public object.
-     * The IdpTestContext object does the initialization and creates
-     * a set of MockRunner object through which the SSO, AA, and 
-     * Artifact requests can be generated.
-     * 
-     * The real IdP objects configure themselves when the Servlet
-     * init() method is called. The Configuration file name coded
-     * here is passed to the Servlet as a simulated context parameter.
+     * The IdP associates its "context" of cached data and configured 
+     * objects with the IdPResponder Servlet object. They are 
+     * initialized when the Servlet init() is called. It is 
+     * possible to create more than one IdpTestContext object
+     * representing different configuration files, or a new
+     * IdpTestContext can be created with fresh Mockrunner object
+     * on top of an existing initialized IdP.
      * 
      * To direct the AA and Artifact queries back to the Idp object,
      * a call to SAML sets up the MockHTTPBindingProvider to replace
@@ -294,11 +326,20 @@ public class ShibbolethRunner {
         this.idpConfigFileName = idpConfigFileName;
     } 
     
+    /**
+     * Although it is possible in theory to have more than one IdP 
+     * running in a TestCase, this one static IdpTestContext
+     * pointer tells the MockHTTPBindingProvider which IdP
+     * to use for AA and Artifact queries. If you have more
+     * that one IdP, the TestCase has to figure out how to swap this
+     * pointer between them.  
+     */
     public static IdpTestContext idp = null;
     
     /**
      * Initializes the IdP if necessary, then returns a 
      * pointer to the MockRunner interface object
+     * 
      * @return IdpTestContext with Mockrunner objects
      */
     public IdpTestContext getIdp() {
@@ -310,8 +351,14 @@ public class ShibbolethRunner {
     
     
     /**
-     * Establish initialized IdP and a set of MockRunner objects to
-     * process SSO, AA, and Artifact requests.
+     * A set of Mockrunner control blocks to call a newly initialized
+     * or previously created IdP. 
+     * 
+     * <p>By default, an IdpTestContext creates a new instance of the
+     * IdP using the current configuration file. However, if an 
+     * already intialized IdPResponder servlet is passed to the
+     * constructor, then new Mockrunner blocks are created but
+     * the existing IdP is reused.</p>
      * 
      * <p>The IdP is initialized when the IdpResponder servlet init() is 
      * called. This establishes the static context of tables that 
@@ -342,31 +389,48 @@ public class ShibbolethRunner {
         
         
         // The IdP Servlet that processes SSO, AA, and Artifact requests
-        // The object is created by Mockrunner
         public IdPResponder idpServlet;
         
         /**
-         * Construct with the default configuration file
+         * Construct new context and new IdP from the configuration file.
          */
         public IdpTestContext() {
-            this(idpConfigFileName);
+            this(null);
         }
         
         /**
-         * Construct using a specified IdP configuration file.
+         * Create a new Mockrunner context. If an previous
+         * IdP was initialized in a prior context, reuse it 
+         * and therefore only refresh the Mockrunner objects.
+         * Otherwise, initialize a new instance of the IdP.
          */
-        public IdpTestContext(String configFileName) {
+        public IdpTestContext(IdPResponder oldidp) {
             
             // ServletContext
             servletContext.setServletContextName("dummy IdP Context");
-            servletContext.setInitParameter("IdPConfigFile", configFileName);
+            servletContext.setInitParameter("IdPConfigFile", idpConfigFileName);
             
-            
-            // Create instance of Filter class, add to chain, call its init()
-            // NOTE: The IdP reads its configuration file and initializes
-            // itself within this call.
-            idpServlet = (IdPResponder) testModule.createServlet(IdPResponder.class);
+            if (oldidp==null) {
+                idpServlet = new IdPResponder();
+                // NOTE: The IdP reads its configuration file and initializes
+                // itself within this call.
+                testModule.setServlet(idpServlet,true);
             resetLoggingLevels();
+            } else {
+                // reuse an existing initialized servlet
+                idpServlet=oldidp;
+            }
+        }
+        
+        
+        /**
+         * Set the fields of the request that depend on a suffix,
+         * normally SSO, AA, or Artifact
+         */
+        public void resetRequest(String suffix) {
+            
+            request.resetAll();
+            response.resetAll();
             
             // Unchanging properties of the HttpServletRequest
             request.setRemoteAddr(REMOTE_ADDR);
@@ -376,13 +440,6 @@ public class ShibbolethRunner {
             request.setServerName(IDP_SERVER_NAME);
             request.setServerPort(SERVER_PORT);
             
-        }
-        
-        /**
-         * Set the fields of the request that depend on a suffix,
-         * normally SSO, AA, or Artifact
-         */
-        public void setRequestUrls(String suffix) {
             request.setRequestURI(IDP_CONTEXT_URL+suffix);
             request.setRequestURL(IDP_CONTEXT_URL+suffix);
             request.setServletPath(IDP_CONTEXT_PATH+"/"+suffix);
@@ -394,7 +451,7 @@ public class ShibbolethRunner {
     
     
     
-    /*
+    /********************** Attribute Source ***********************
      * Here we keep a static reference to a Collection of Attributes. 
      * 
      * The Test can clear the collection and add attributes. When
@@ -418,7 +475,9 @@ public class ShibbolethRunner {
     
     
     
-    /*
+    
+    
+    /*************************** Resource Manage Filter *****************
      * The Filter depends on a Servlet environment simulated by MockRunner.
      * We give it its own set of MockRunner blocks because in real life
      * it runs in a separate context from the SP or IdP.
@@ -436,7 +495,10 @@ public class ShibbolethRunner {
     /**
      * Create the MockRunning interface for running the ServletFilter.
      * 
-     * <p>The SP must be initialized to provide parameters.</p>
+     * <p>The AuthenticationFilter object itself contains no 
+     * meaningful state, so you can create multiple instances
+     * of this interface object to represent more than one
+     * Resource context being managed by the same SP.</p>
      *
      */
     public class AuthenticationFilterContext {
@@ -449,38 +511,23 @@ public class ShibbolethRunner {
         public ServletTestModule testModule = new ServletTestModule(factory);
         
         // Now simulated Servlet API objects
-        public MockServletContext servletContext= new MockServletContext();
+        public MockServletContext servletContext= factory.getMockServletContext();
         public MockFilterConfig filterConfig= factory.getMockFilterConfig();
         public MockHttpServletResponse response = factory.getMockResponse();
         public MockHttpServletRequest request = factory.getMockRequest();
-        
-        /*
-         * The Missing Manual: There are three types of init-params in
-         * the web.xml. One applies to the Context as a whole. The other
-         * two are nested inside a <servlet> or <filter> and provide
-         * parameters specific to that particular object. If you do
-         * a factory.getMockServletContext() you get an object that corresponds
-         * to the web.xml configuration itself. However, rather than adding
-         * init-param collections to the MockServletConfig and MockFilterConfig,
-         * Mockrunner seems to chain a user-created MockServletContext object
-         * to them and use its init-params as the parameters fed back to the
-         * Filter or Servlet object. So when you see "new MockServletContext()"
-         * there is a pretty good reason to expect this will not be used as a
-         * real ServletContext but rather as a secondary control block to a 
-         * MockFilterConfig or MockServletConfig.
-         */
         
         // Filter objects
         private AuthenticationFilter filter;
         
        public AuthenticationFilterContext() {
             
-            // ServletContext (argument to Filters and Servlets)
+            // Dummy web.xml for Resouce context
             servletContext.setServletContextName("dummy Servlet Context");
-            servletContext.setInitParameter("requireId", ".+/test.+");
             
-            // The FilterConfig (argument to Filter init)
-            filterConfig.setupServletContext(servletContext);
+            // Dummy <Filter> in dummy web.xml
+            MockServletContext filterParameters = new MockServletContext();
+            filterParameters.setInitParameter("requireId", ".+/test.+");
+            filterConfig.setupServletContext(filterParameters);
             filterConfig.setFilterName("Test Filter under JUnit");
        }
        
@@ -493,21 +540,24 @@ public class ShibbolethRunner {
        public void setUp() throws ShibbolethConfigurationException {
             
             // Create instance of Filter class, add to chain, call its init()
-            filter = (AuthenticationFilter) testModule.createFilter(AuthenticationFilter.class);
+            filter = new AuthenticationFilter();
+            testModule.addFilter(filter,true);
             
             // Note: if the SP is already initialized, this noops.
             initializeSP();
             
 
+        }
+        
+        public void resetRequest(String suffix) {
+            
             request.setRemoteAddr(REMOTE_ADDR);
             request.setContextPath(RESOURCE_CONTEXT_PATH);
             request.setProtocol(PROTOCOL);
             request.setScheme(SCHEME);
             request.setServerName(SP_SERVER_NAME);
             request.setServerPort(RESOURCE_SERVER_PORT);
-        }
-        
-        public void setRequestUrls(String suffix) {
+
             request.setMethod("GET");
             request.setRequestURI(RESOURCE_CONTEXT_URL+suffix);
             request.setRequestURL(RESOURCE_CONTEXT_URL+suffix);

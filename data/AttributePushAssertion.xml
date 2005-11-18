@@ -1,0 +1,63 @@
+<Response xmlns="urn:oasis:names:tc:SAML:1.0:protocol" 
+	xmlns:saml="urn:oasis:names:tc:SAML:1.0:assertion" 
+	xmlns:samlp="urn:oasis:names:tc:SAML:1.0:protocol" 
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	IssueInstant="2006-11-17T18:21:43.428Z" 
+	MajorVersion="1" MinorVersion="1" 
+	Recipient="https://sp.example.org/shibboleth-sp/Shibboleth.sso/SAML/POST" 
+	ResponseID="_87070ade79c83d58ff51a98535185d9c">
+	<Status><StatusCode Value="samlp:Success"></StatusCode></Status>
+	<Assertion xmlns="urn:oasis:names:tc:SAML:1.0:assertion" AssertionID="_9505a09e2cc9fa81dad54790204650b5" IssueInstant="2005-11-17T18:21:43.194Z" Issuer="https://idp.example.org/shibboleth" MajorVersion="1" MinorVersion="1">
+		<Conditions NotBefore="2005-11-17T18:21:43.194Z" NotOnOrAfter="2006-11-17T18:26:43.194Z">
+			<AudienceRestrictionCondition>
+				<Audience>https://sp.example.org/shibboleth</Audience>
+				<Audience>urn:mace:shibboleth:examples</Audience>
+			</AudienceRestrictionCondition>
+		</Conditions>
+		<AuthenticationStatement AuthenticationInstant="2005-11-17T18:21:43.178Z" AuthenticationMethod="urn:oasis:names:tc:SAML:1.0:am:unspecified">
+			<Subject>
+				<NameIdentifier Format="urn:mace:shibboleth:1.0:nameIdentifier" NameQualifier="https://idp.example.org/shibboleth">_2d83b26798d9315becc934817d93942b</NameIdentifier>
+				<SubjectConfirmation>
+					<ConfirmationMethod>urn:oasis:names:tc:SAML:1.0:cm:bearer</ConfirmationMethod>
+				</SubjectConfirmation>
+			</Subject>
+			<SubjectLocality IPAddress="127.0.0.1"></SubjectLocality>
+		</AuthenticationStatement>
+	</Assertion>
+	<Assertion xmlns="urn:oasis:names:tc:SAML:1.0:assertion" AssertionID="_234ed5c8b167c13a7eeebb0265dec432" IssueInstant="2005-11-17T18:21:43.428Z" Issuer="https://idp.example.org/shibboleth" MajorVersion="1" MinorVersion="1">
+		<Conditions NotBefore="2005-11-17T18:21:43.428Z" NotOnOrAfter="2006-11-17T18:51:43.428Z">
+			<AudienceRestrictionCondition>
+				<Audience>https://sp.example.org/shibboleth</Audience>
+				<Audience>urn:mace:shibboleth:examples</Audience>
+			</AudienceRestrictionCondition>
+		</Conditions>
+		<AttributeStatement>
+			<Subject>
+				<NameIdentifier Format="urn:mace:shibboleth:1.0:nameIdentifier" NameQualifier="https://idp.example.org/shibboleth">_2d83b26798d9315becc934817d93942b</NameIdentifier>
+				<SubjectConfirmation><ConfirmationMethod>urn:oasis:names:tc:SAML:1.0:cm:bearer</ConfirmationMethod></SubjectConfirmation>
+			</Subject>
+			<Attribute AttributeName="urn:mace:dir:attribute-def:title" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+				<AttributeValue>clown</AttributeValue>
+			</Attribute>
+			<Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+				<AttributeValue Scope="example.org">member</AttributeValue>
+			</Attribute>
+			<Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonAffiliation" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+				<AttributeValue>member</AttributeValue>
+			</Attribute>
+			<Attribute AttributeName="urn:mace:dir:attribute-def:unacceptable" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+				<AttributeValue>nonsense</AttributeValue>
+			</Attribute>
+			<Attribute AttributeName="urn:mace:dir:attribute-def:givenName" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+				<AttributeValue>Bozo</AttributeValue>
+			</Attribute>
+			<Attribute AttributeName="urn:mace:dir:attribute-def:surname" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+				<AttributeValue>Clown</AttributeValue>
+			</Attribute>
+			<Attribute AttributeName="urn:mace:dir:attribute-def:eduPersonPrincipalName" AttributeNamespace="urn:mace:shibboleth:1.0:attributeNamespace:uri">
+				<AttributeValue Scope="example.org">BozoTClown</AttributeValue>
+			</Attribute>
+		</AttributeStatement>
+	</Assertion>
+</Response>
