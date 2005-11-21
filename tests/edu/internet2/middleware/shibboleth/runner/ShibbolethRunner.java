@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.runner;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
+import javax.servlet.http.HttpServlet;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Layout;
@@ -79,7 +80,7 @@ public class ShibbolethRunner {
     public static String RESOURCE_CONTEXT_URL = SCHEME+"://"+SP_SERVER_NAME+":"+RESOURCE_SERVER_PORT+RESOURCE_CONTEXT_PATH+"/";
     
     
-    private static SAMLConfig samlConfig; // See constructor for use
+    public static SAMLConfig samlConfig; // See constructor for use
 
     
     
@@ -389,7 +390,7 @@ public class ShibbolethRunner {
         
         
         // The IdP Servlet that processes SSO, AA, and Artifact requests
-        public IdPResponder idpServlet;
+        public HttpServlet idpServlet;
         
         /**
          * Construct new context and new IdP from the configuration file.
@@ -404,7 +405,7 @@ public class ShibbolethRunner {
          * and therefore only refresh the Mockrunner objects.
          * Otherwise, initialize a new instance of the IdP.
          */
-        public IdpTestContext(IdPResponder oldidp) {
+        public IdpTestContext(HttpServlet oldidp) {
             
             // ServletContext
             servletContext.setServletContextName("dummy IdP Context");
@@ -419,6 +420,7 @@ public class ShibbolethRunner {
             } else {
                 // reuse an existing initialized servlet
                 idpServlet=oldidp;
+                testModule.setServlet(idpServlet,false);
             }
         }
         

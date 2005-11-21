@@ -16,6 +16,11 @@
 
 package edu.internet2.middleware.shibboleth.integration;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -29,12 +34,17 @@ import junit.framework.TestCase;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Level;
+import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
 
+import edu.internet2.middleware.shibboleth.idp.provider.ShibbolethV1SSOHandler;
 import edu.internet2.middleware.shibboleth.resource.AuthenticationFilter;
+import edu.internet2.middleware.shibboleth.resource.FilterUtil;
 import edu.internet2.middleware.shibboleth.resource.FilterSupport.NewSessionData;
 import edu.internet2.middleware.shibboleth.runner.MadSignertest;
 import edu.internet2.middleware.shibboleth.runner.ShibbolethRunner;
+import edu.internet2.middleware.shibboleth.runner.MadSignertest.MockIdp;
+import edu.internet2.middleware.shibboleth.runner.ShibbolethRunner.IdpTestContext;
 import edu.internet2.middleware.shibboleth.serviceprovider.AssertionConsumerServlet;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderConfig;
 import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContext;
@@ -68,6 +78,9 @@ public class FileAssertionTest extends TestCase {
     
     /**
      * TestCase setUp
+     * 
+     * <p>There is no IdP or SSO in this test. The IdP function
+     * is performed from assertion files.</p>
      */
     protected void setUp() throws Exception {
         super.setUp();
@@ -101,41 +114,32 @@ public class FileAssertionTest extends TestCase {
   
         newSessionData.applicationId=APPLICATIONID;
         newSessionData.providerId=SP_ENTITY;
-          
         
-        // Create the static collection of Attributes that are 
-        // returned by the IdP for every principal.
-        // This could be done in each test, just as long as it
-        // is done before the SSO.
-        Attributes attributes = runner.getAttributesCollection();
-        attributes.put(new BasicAttribute("eduPersonAffiliation", AFFILIATION));
-        // scoped
-        attributes.put(new BasicAttribute("eduPersonScopedAffiliation", AFFILIATION));
-        attributes.put(new BasicAttribute("title", TITLE));
-        attributes.put(new BasicAttribute("givenName", GIVENNAME));
-        attributes.put(new BasicAttribute("surname", SURNAME));
-        // not in AAP
-        attributes.put(new BasicAttribute("unacceptable","nonsense"));
-        // not in ARP
-        attributes.put(new BasicAttribute("unreleasable","foolishness"));
     }
     
     /**
-     * Test the Post Profile, Attribute Push
-     * <p>Run SSO, call AssertionConsumerServlet directly, then Run Filter</p>
+     * Test the Post Profile, Attribute Push from an XML Assertion file.
+     * 
+     * <p>Read an AttributePush assertion in from a file, resign it.
+     * Call AssertionConsumerServlet directly, then Run Filter</p>
      */
-    public void testAttributePush() throws Exception {
+    public void testFileAttributePush() throws Exception {
         
+        // Setup a signer with the Example.org keystore
         MadSignertest signer = new MadSignertest("src/conf/idp-example.jks","exampleorg");
+        
+        // Read in and resign a test SAML Response file.
         SAMLResponse samlresponse = 
             signer.signResponseFile("data/AttributePushAssertion.xml", 
-                    "tomcat", new Date());
+                    "tomcat");
         
-        
+        // Now feed the SAMLResponse into the AssertionConsumer
         String bin64assertion = new String(samlresponse.toBase64());
-        String assertion = new String(Base64.decodeBase64(bin64assertion.getBytes()));
-        
         newSessionData.SAMLResponse = bin64assertion; 
+        
+        // End of the Assertion-File part of the test, the rest is
+        // the same as with a real SSO.
+        
         newSessionData.target=TARGET;
         newSessionData.handlerURL=POST_SHIRE;
         
@@ -152,13 +156,6 @@ public class FileAssertionTest extends TestCase {
         filter.request.setMethod("GET");
         filter.testModule.doFilter();
         
-            /*
-             * Sanity Check: doFilter runs just the Filter itself. On 
-             * input there was a Request and Response. When done, there
-             * will be a replacement Request object created by the Filter
-             * wrapping the original request and adding features.
-             */
-
         checkFilter();
     }
     
@@ -201,9 +198,71 @@ public class FileAssertionTest extends TestCase {
     private void checkSession(Session session) {
         assertNotNull(session);
         assertEquals(APPLICATIONID,session.getApplicationId());
-        
-        
-        
     }
+    
+    /**
+     * Test Attribute Push using a Mock Idp
+     */
+    public void testMockIdp() throws SAMLException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
+        
+        
+        // Setup a signer with the Example.org keystore
+        MadSignertest signer = new MadSignertest("src/conf/idp-example.jks","exampleorg");
+        
+        // Now create a MockIdp from it
+        MockIdp mockIdp = signer.new MockIdp();
+        
+        // Tell the MockIdP how to respond to an SSO
+        mockIdp.ssoResponseFile = "data/AttributePushAssertion.xml";
+        
+        // Create an IdpTestContext using this MockIdp
+        IdpTestContext idp = runner.new IdpTestContext(mockIdp);
+        
+        // Set the URL suffix that triggers SSO processing
+        idp.resetRequest("SSO");
+        
+        // Add the WAYF/RM parameters
+        idp.testModule.addRequestParameter("target", TARGET);
+        idp.testModule.addRequestParameter("shire",POST_SHIRE);
+        idp.testModule.addRequestParameter("providerId", SP_ENTITY);
+        
+        // Add a userid, as if provided by Basic Authentication or a Filter
+        idp.request.setRemoteUser(NETID);
+        
+        // Force Attribute Push
+        ShibbolethV1SSOHandler.pushAttributeDefault=true;
+        
+        // Call the IdP 
+        idp.testModule.doGet();
+        
+        String bin64assertion = (String) idp.request.getAttribute("assertion");
+        String assertion = new String(Base64.decodeBase64(bin64assertion.getBytes()));
+        String handlerURL = (String) idp.request.getAttribute("shire");
+        String targetURL = (String) idp.request.getAttribute("target");
+        
+        // Create the session directly without MockRunner
+        FilterUtil.sessionDataFromRequest(newSessionData,idp.request);
+            // there was no real redirect, so the next two fields are not
+            // in the places that sessionDataFromRequest expects.
+            newSessionData.SAMLResponse = bin64assertion;  
+            newSessionData.target=targetURL;
+        newSessionData.handlerURL=handlerURL;
+        
+        // Create the session, extract pushed Attributes 
+        String sessionId = AssertionConsumerServlet.createSessionFromData(newSessionData);
+        
+        // Now get what was created in case you want to test it.
+        Session session = context.getSessionManager().findSession(sessionId, APPLICATIONID);
+        checkSession(session);
+        
+        // Pass the SessionId to the Filter, let it fetch the attributes
+        filter.resetRequest("test.txt");
+        filter.testModule.addRequestParameter(AuthenticationFilter.SESSIONPARM, sessionId);
+        filter.request.setMethod("GET");
+        filter.testModule.doFilter();
+        
+        checkFilter();
+    }
+    
     
 }

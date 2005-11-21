@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -28,9 +29,19 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.xml.security.signature.XMLSignature;
 import org.opensaml.SAMLAssertion;
+import org.opensaml.SAMLIdentifier;
 import org.opensaml.SAMLResponse;
+
+import com.mockrunner.mock.web.MockHttpServletRequest;
+import com.mockrunner.mock.web.MockHttpServletResponse;
 
 /**
  * Class that signs and resets the timestamps on SAML objects.
@@ -68,26 +79,47 @@ public class MadSignertest {
     
     /**
      * Sign the SAMLResponse in a test data xml file.
+     * 
+     * <p>SAML Assertions are good for 60 seconds, so
+     * if you want an assertion to be expired set the
+     * timestamp back at least a minute.</p>
+     * 
      * @param path Path to the input XML file.
      * @param alias Alias in the JKS of the signing key.
      * @param now Date to use for timestamps
+     * @param reidentify Option to change response/assertion IDs
+     * 
      * @return SAMLResponse now signed
      */
-    public SAMLResponse signResponseFile(String path, String alias, Date now) 
+    public SAMLResponse signResponseFile(
+            String path, 
+            String alias, 
+            Date now, 
+            boolean reidentify) 
         throws Exception {
+        
         InputStream in = new FileInputStream(path);
         
         if (now==null)
-            now = new Date();
+            now = new Date(); // default is current time
+        SAMLIdentifier defaultIDProvider = ShibbolethRunner.samlConfig.getDefaultIDProvider();
         
+        // Read in and parse the XML and turn it into a SAMLResponse
+        // [obviously it better be a SAML Response to begin with.]
         SAMLResponse r = new SAMLResponse(in);
         
+        if (reidentify)
+            r.setId(defaultIDProvider.getIdentifier());
+        
+        // Retimestamp and resign each assertions
         Iterator assertions = r.getAssertions();
         while (assertions.hasNext()) {
             SAMLAssertion assertion = (SAMLAssertion) assertions.next();
             assertion.setIssueInstant(now);
             assertion.setNotBefore(now);
             assertion.setNotOnOrAfter(new Date(now.getTime() + 60000));
+            if (reidentify)
+                assertion.setId(defaultIDProvider.getIdentifier());
             assertion.sign(
                     XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,
                     ks.getKey(alias,passwd),
@@ -95,6 +127,8 @@ public class MadSignertest {
                     );
             
         }
+        
+        // Now resign the Response
         r.sign(
                 XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1,
                 ks.getKey(alias,passwd),
@@ -102,6 +136,66 @@ public class MadSignertest {
                 );
         
         return r;
+    }
+    
+    public SAMLResponse signResponseFile(
+            String path, 
+            String alias) throws Exception{
+        return signResponseFile(path,alias,null,true);
+    }
+    
+    
+    
+    /**
+     * A dummy Idp that can be used to create a ShibbolethRunner
+     * IdPTestContext when the response is to come from a file.
+     */
+    public class MockIdp extends HttpServlet {
+        
+        public String ssoResponseFile = null;
+        public String artifactResponseFile = null;
+        public String attributeResponseFile = null;
+        public String alias = "tomcat";
+        
+        public void init() {}
+
+        public void doGet(HttpServletRequest arg1, 
+                HttpServletResponse arg2) 
+            throws ServletException, IOException {
+            
+            MockHttpServletRequest request = (MockHttpServletRequest) arg1;
+            MockHttpServletResponse response = (MockHttpServletResponse) arg2;
+            
+            String uri = request.getRequestURI();
+            SAMLResponse r = null;
+            
+            
+            // A very simple test for how to respond.
+            
+            try {
+                if (uri.endsWith("SSO")){
+                    r=signResponseFile(ssoResponseFile, alias);
+                    request.setAttribute("assertion",new String(r.toBase64()));
+                    request.setAttribute("shire",request.getParameter("shire"));
+                    request.setAttribute("target",request.getParameter("target"));
+                    return;
+                }
+                if (uri.endsWith("AA")) {
+                    r=signResponseFile(attributeResponseFile, alias);
+                }
+                if (uri.endsWith("Artifact")) {
+                    r=signResponseFile(artifactResponseFile, alias);
+                }
+            } catch (Exception e) {
+                throw new ServletException("test file problem");
+            }
+            
+            response.setContentType("text/xml");
+            PrintWriter writer = response.getWriter();
+            writer.write(r.toString());
+            writer.close();
+            
+        }
     }
     
 }
