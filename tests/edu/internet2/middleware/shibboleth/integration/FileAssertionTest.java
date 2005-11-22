@@ -21,13 +21,10 @@ import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttribute;
 import javax.servlet.http.HttpServletRequest;
 
 import junit.framework.TestCase;
@@ -51,7 +48,13 @@ import edu.internet2.middleware.shibboleth.serviceprovider.ServiceProviderContex
 import edu.internet2.middleware.shibboleth.serviceprovider.Session;
 
 /**
- * A JUnit test case that exercises the IdP, SP, and Filter
+ * JUnit tests that do not use an instance of the IdP.
+ * Files containing assertions are read from /data and are
+ * processed directly to the SP or else fed back from a 
+ * file driven MockIdp. Tests of this form can be used
+ * to generate non-standard input that the real IdP would
+ * not generate.
+ * 
  * @author Howard Gilbert
  */
 public class FileAssertionTest extends TestCase {
@@ -75,12 +78,18 @@ public class FileAssertionTest extends TestCase {
     ServiceProviderContext context;
     ServiceProviderConfig config;
     
+    /*********** Services to replace the IdP ****************************/
+    MadSignertest signer;
+    MockIdp mockIdp;
+    IdpTestContext idp;
+    
     
     /**
      * TestCase setUp
      * 
-     * <p>There is no IdP or SSO in this test. The IdP function
-     * is performed from assertion files.</p>
+     * <p>There is no IdP instance or configuration file.
+     * A MockSignertest object will modify static assertion files,
+     * and a MockIdP can be used to respond to SSO or other requests.</p>
      */
     protected void setUp() throws Exception {
         super.setUp();
@@ -92,6 +101,21 @@ public class FileAssertionTest extends TestCase {
         // Create the overall testing framework
         runner = new ShibbolethRunner();
         
+        /************** MockIdp Setup ***********************************/
+        
+        // Setup a signer with the Example.org keystore
+        signer = new MadSignertest("src/conf/idp-example.jks","exampleorg");
+        
+        // Now create a MockIdp from it
+        mockIdp = signer.new MockIdp();
+        
+        // Create an IdpTestContext using this MockIdp
+        idp = runner.new IdpTestContext(mockIdp);
+        
+        // Make sure it can be found by the MockHttpBindingProvider
+        ShibbolethRunner.idp = idp;
+        
+        /************** end MockIdp setup *******************************/
         
         // Initialize the SP with the default config file.
         runner.setSpConfigFileName("/basicSpHome/spconfig.xml"); 
@@ -120,14 +144,16 @@ public class FileAssertionTest extends TestCase {
     /**
      * Test the Post Profile, Attribute Push from an XML Assertion file.
      * 
-     * <p>Read an AttributePush assertion in from a file, resign it.
+     * <p>This test does not use the real IdP or the MockIdp. 
+     * It reads the assertion in directly from a file, and uses
+     * the MadSignertest class directly to change its XML Id fields,
+     * and timestamps and then resign it.
      * Call AssertionConsumerServlet directly, then Run Filter</p>
      */
     public void testFileAttributePush() throws Exception {
         
-        // Setup a signer with the Example.org keystore
-        MadSignertest signer = new MadSignertest("src/conf/idp-example.jks","exampleorg");
         
+        /**************** Replace IdP with File *************************/
         // Read in and resign a test SAML Response file.
         SAMLResponse samlresponse = 
             signer.signResponseFile("data/AttributePushAssertion.xml", 
@@ -136,9 +162,7 @@ public class FileAssertionTest extends TestCase {
         // Now feed the SAMLResponse into the AssertionConsumer
         String bin64assertion = new String(samlresponse.toBase64());
         newSessionData.SAMLResponse = bin64assertion; 
-        
-        // End of the Assertion-File part of the test, the rest is
-        // the same as with a real SSO.
+        /**************** end of IdP replacement ************************/
         
         newSessionData.target=TARGET;
         newSessionData.handlerURL=POST_SHIRE;
@@ -201,22 +225,20 @@ public class FileAssertionTest extends TestCase {
     }
     
     /**
-     * Test Attribute Push using a Mock Idp
+     * Test Attribute Push using a Mock Idp.
+     * 
+     * <p>The MockIdp responds to Mockrunner calls for SSO, AA, or
+     * Artifact, but you have to provide a path to a file with a
+     * response you want sent back.
      */
     public void testMockIdp() throws SAMLException, KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException {
         
-        
-        // Setup a signer with the Example.org keystore
-        MadSignertest signer = new MadSignertest("src/conf/idp-example.jks","exampleorg");
-        
-        // Now create a MockIdp from it
-        MockIdp mockIdp = signer.new MockIdp();
-        
+        /*********** Use MockIdp instead of real IdP ********************/
         // Tell the MockIdP how to respond to an SSO
         mockIdp.ssoResponseFile = "data/AttributePushAssertion.xml";
+        // In attribute push, there will not be an AA query.
+        /*********** That's it!, the rest is standard code **************/
         
-        // Create an IdpTestContext using this MockIdp
-        IdpTestContext idp = runner.new IdpTestContext(mockIdp);
         
         // Set the URL suffix that triggers SSO processing
         idp.resetRequest("SSO");
