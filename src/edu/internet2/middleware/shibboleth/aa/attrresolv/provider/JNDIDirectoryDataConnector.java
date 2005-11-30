@@ -1,16 +1,9 @@
 /*
- * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * Copyright [2005] [University Corporation for Advanced Internet Development, Inc.] Licensed under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in
+ * writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -76,6 +69,8 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 	protected boolean startTls = false;
 	boolean useExternalAuth = false;
 	private SSLSocketFactory sslsf;
+	private boolean startTlsProtectSimpleBind;
+	private Properties simpleBindCachedProperties;
 
 	/**
 	 * Constructs a DataConnector based on DOM configuration.
@@ -161,6 +156,26 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 				if ("EXTERNAL".equals(properties.getProperty(Context.SECURITY_AUTHENTICATION))) {
 					useExternalAuth = true;
 					properties.remove(Context.SECURITY_AUTHENTICATION);
+				}
+
+				// Also UGLY!
+				// If we are doing startTls in conjunction with a simple bind (why, you might ask...), we most likely
+				// want to send credentials AFTER the secure channel has been established
+				// So, we need to take this out of the environment and then stick it back in later
+				if (properties.getProperty(Context.SECURITY_CREDENTIALS) != null
+						&& !properties.getProperty(Context.SECURITY_CREDENTIALS).equals("")) {
+					log.debug("Using bind password in combination with startTLS: waiting to send credential until "
+							+ "secure channel has been established.");
+					startTlsProtectSimpleBind = true;
+
+					simpleBindCachedProperties = new Properties();
+					simpleBindCachedProperties.setProperty(Context.SECURITY_PRINCIPAL, properties
+							.getProperty(Context.SECURITY_PRINCIPAL));
+					simpleBindCachedProperties.setProperty(Context.SECURITY_CREDENTIALS, properties
+							.getProperty(Context.SECURITY_CREDENTIALS));
+
+					properties.remove(Context.SECURITY_PRINCIPAL);
+					properties.remove(Context.SECURITY_CREDENTIALS);
 				}
 
 				// If TLS credentials were supplied, load them and setup a KeyManager
@@ -343,16 +358,16 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			// attribute
 			if (context.getEnvironment().get(Context.INITIAL_CONTEXT_FACTORY)
 					.equals("com.sun.jndi.ldap.LdapCtxFactory")) {
-                
-                // Check to see if the context was built with an empty base DN, if so don't try to append it
-                // otherwise we'll end up with a malformed DN (it'll contain a trailing comma).
-                String dnStr;
-                if(context.getNameInNamespace() == null || context.getNameInNamespace().length() ==0) {
-                    dnStr = result.getName();
-                }else {
-                    dnStr =  result.getName() + "," + context.getNameInNamespace();
-                }
-                
+
+				// Check to see if the context was built with an empty base DN, if so don't try to append it
+				// otherwise we'll end up with a malformed DN (it'll contain a trailing comma).
+				String dnStr;
+				if (context.getNameInNamespace() == null || context.getNameInNamespace().length() == 0) {
+					dnStr = result.getName();
+				} else {
+					dnStr = result.getName() + "," + context.getNameInNamespace();
+				}
+
 				BasicAttribute dn = new BasicAttribute("dn", dnStr);
 				attributes.put(dn);
 			}
@@ -475,9 +490,22 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			}
 			StartTlsResponse tls = (StartTlsResponse) ((LdapContext) context).extendedOperation(new StartTlsRequest());
 			tls.negotiate(sslsf);
+
 			if (useExternalAuth) {
 				context.addToEnvironment(Context.SECURITY_AUTHENTICATION, "EXTERNAL");
+
+			} else if (startTlsProtectSimpleBind) {
+				if (simpleBindCachedProperties.getProperty(Context.SECURITY_PRINCIPAL) != null) {
+					context.addToEnvironment(Context.SECURITY_PRINCIPAL, simpleBindCachedProperties
+							.getProperty(Context.SECURITY_PRINCIPAL));
+				}
+				if (simpleBindCachedProperties.getProperty(Context.SECURITY_CREDENTIALS) != null) {
+					context.addToEnvironment(Context.SECURITY_CREDENTIALS, simpleBindCachedProperties
+							.getProperty(Context.SECURITY_CREDENTIALS));
+				}
+				((LdapContext) context).reconnect(null);
 			}
+
 		}
 		return context;
 	}
