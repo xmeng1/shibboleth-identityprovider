@@ -16,6 +16,7 @@ import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,7 +44,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509KeyManager;
 
 import org.apache.log4j.Logger;
+import org.w3c.dom.CharacterData;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
@@ -95,7 +98,7 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 		String mergeMultiResultsAttrib = e.getAttribute("mergeMultipleResults");
 		if (mergeMultiResultsAttrib != null && mergeMultiResultsAttrib.equalsIgnoreCase("TRUE")) {
 			mergeMultiResults = true;
-			log.debug("Multiple searcg result merging enabled for connector.");
+			log.debug("Multiple search result merging enabled for connector.");
 		}
 
 		// Determine the search filter and controls
@@ -293,6 +296,21 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 					log.error("Control spec included an invalid (countLimit) attribute value.");
 				}
 			}
+
+			// If specified, setup a control to govern which attributes are returned
+			ArrayList<String> returnAttributes = new ArrayList<String>();
+			NodeList returnAttributeNodes = ((Element) controlNodes.item(0)).getElementsByTagNameNS(
+					AttributeResolver.resolverNamespace, "ReturnAttribute");
+			for (int i = 0; returnAttributeNodes.getLength() > i; i++) {
+				if (returnAttributeNodes.item(i).hasChildNodes()
+						&& returnAttributeNodes.item(i).getFirstChild().getNodeType() == Node.TEXT_NODE) {
+					returnAttributes.add(((CharacterData) returnAttributeNodes.item(i).getFirstChild()).getData());
+				}
+			}
+			if (returnAttributes.size() > 0) {
+				controls.setReturningAttributes(returnAttributes.toArray(new String[0]));
+			}
+
 		}
 
 		if (log.isDebugEnabled()) {
@@ -301,6 +319,13 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 			log.debug("Search Control (returningObjects): " + controls.getReturningObjFlag());
 			log.debug("Search Control (linkDereferencing): " + controls.getDerefLinkFlag());
 			log.debug("Search Control (countLimit): " + controls.getCountLimit());
+			if (log.isDebugEnabled() && controls.getReturningAttributes() != null) {
+				StringBuffer returningAttrsBuff = new StringBuffer();
+				for (String attr : controls.getReturningAttributes()) {
+					returningAttrsBuff.append("(" + attr + ")");
+				}
+				log.debug("Search Control (returningAttributes): " + returningAttrsBuff);
+			}
 		}
 	}
 
@@ -371,7 +396,6 @@ public class JNDIDirectoryDataConnector extends BaseDataConnector implements Dat
 				BasicAttribute dn = new BasicAttribute("dn", dnStr);
 				attributes.put(dn);
 			}
-
 			return attributes;
 
 		} catch (NamingException e) {

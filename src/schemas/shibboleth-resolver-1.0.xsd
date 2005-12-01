@@ -172,6 +172,9 @@
 											<xs:sequence minOccurs="0">
 												<xs:element name="Controls">
 													<xs:complexType>
+														<xs:sequence minOccurs="0" maxOccurs="unbounded">
+															<xs:element name="ReturnAttribute" minOccurs="1" maxOccurs="1"/>
+														</xs:sequence>
 														<xs:attribute name="searchScope" type="xs:string" 
 															use="optional"/>
 														<xs:attribute name="timeLimit" type="xs:int" use="optional"/>
