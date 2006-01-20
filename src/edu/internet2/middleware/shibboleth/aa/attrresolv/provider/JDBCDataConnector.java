@@ -804,7 +804,7 @@ class DependencyStatementCreator implements JDBCStatementCreator {
 						}
 					} else if (attributeName.equalsIgnoreCase("%PRINCIPAL%")) {
 						try {
-							setSpecificParameter(preparedStatement, valueIndex, principal.toString());
+							setSpecificParameter(preparedStatement, valueIndex, principal.getName());
 							return;
 						} catch (Exception e) {
 							log.error("Statement Creator encountered an error while adding the parameter 'Requester': "
