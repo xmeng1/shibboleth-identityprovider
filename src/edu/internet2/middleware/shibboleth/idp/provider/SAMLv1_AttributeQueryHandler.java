@@ -169,8 +169,10 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		
 		if (effectiveName == null) {
 			log.info("Unable to locate metadata about provider, treating as an unauthenticated service provider.");
-			log.debug("Using default Relying Party for unauthenticated provider.");
 			relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
+            if(log.isDebugEnabled()) {
+                log.debug("Using default Relying Party, " + relyingParty.getName() + " for unauthenticated provider.");
+            }
 		}
 		else {
 			// Identify a Relying Party
