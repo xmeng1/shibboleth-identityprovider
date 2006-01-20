@@ -877,8 +877,10 @@ public class XMLMetadataProvider implements Metadata, PluggableConfigurationComp
                     while (src != null) {
                         Element val=e.getOwnerDocument().createElementNS(XML.SAML_NS,"AttributeValue");
                         NamedNodeMap attrs = src.getAttributes();
-                        for (int j=0; j<attrs.getLength(); j++)
-                            val.setAttributeNodeNS((Attr)(e.getOwnerDocument().importNode(attrs.item(j),true)));
+                        if(attrs != null) {
+                            for (int j=0; j<attrs.getLength(); j++)
+                                val.setAttributeNodeNS((Attr)(e.getOwnerDocument().importNode(attrs.item(j),true)));
+                        }
                         while (src.hasChildNodes())
                             val.appendChild(src.getFirstChild());
                         copy.appendChild(val);
