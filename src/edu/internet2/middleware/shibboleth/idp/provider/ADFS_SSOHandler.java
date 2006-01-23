@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Vector;
@@ -33,7 +32,6 @@ import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLAuthenticationStatement;
-import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLConfig;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
@@ -72,6 +70,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 	private static final Collection SUPPORTED_IDENTIFIER_FORMATS = Arrays.asList(new String[]{
 			"urn:oasis:names:tc:SAML:1.1nameid-format:emailAddress", "http://schemas.xmlsoap.org/claims/UPN",
 			"http://schemas.xmlsoap.org/claims/CommonName"});
+	private static final String CLAIMS_URI = "http://schemas.xmlsoap.org/claims";
 
 	/**
 	 * Required DOM-based constructor.
@@ -94,7 +93,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 		}
 
 		// Set attributes that are needed by the jsp
-		// ADFS specs says always send (wa)
+		// ADFS spec says always send (wa)
 		request.setAttribute("wa", ADFS_SSOHandler.WA);
 		// Passthru (wctx) if we get one
 		if (request.getParameter("wctx") != null && !request.getParameter("wctx").equals("")) {
@@ -209,6 +208,8 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 		SAMLAssertion assertion = generateAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
 				getAuthNTime(request), authNSubject);
 
+		generateAttributes(support, principal, relyingParty, assertion, request);
+
 		// ADFS spec says assertions should always be signed
 		support.signAssertions((SAMLAssertion[]) new SAMLAssertion[]{assertion}, relyingParty);
 
@@ -222,7 +223,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 	}
 
 	private void generateAttributes(IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
-			ArrayList assertions, HttpServletRequest request) throws SAMLException {
+			SAMLAssertion assertion, HttpServletRequest request) throws SAMLException {
 
 		try {
 			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty, relyingParty
@@ -235,58 +236,27 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 				return;
 			}
 
-			// Reference requested subject
-			SAMLSubject attrSubject = (SAMLSubject) ((SAMLSubjectStatement) ((SAMLAssertion) assertions.get(0))
-					.getStatements().next()).getSubject().clone();
-
-			// May be one assertion or two.
-			if (relyingParty.singleAssertion()) {
-				log.debug("merging attributes into existing authn assertion");
-				// Put all attributes into an assertion
-				((SAMLAssertion) assertions.get(0)).addStatement(new SAMLAttributeStatement(attrSubject, Arrays
-						.asList(attributes)));
-
-				if (log.isDebugEnabled()) {
-					log.debug("Dumping combined Assertion:" + System.getProperty("line.separator")
-							+ assertions.get(0).toString());
-				}
-			} else {
-				ArrayList audiences = new ArrayList();
-				if (relyingParty.getProviderId() != null) {
-					audiences.add(relyingParty.getProviderId());
-				}
-				if (relyingParty.getName() != null && !relyingParty.getName().equals(relyingParty.getProviderId())) {
-					audiences.add(relyingParty.getName());
-				}
-				String remoteProviderId = request.getParameter("providerId");
-				if (remoteProviderId != null && !remoteProviderId.equals("") && !audiences.contains(remoteProviderId)) {
-					audiences.add(remoteProviderId);
-				}
-
-				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
-
-				// Put all attributes into an assertion
-				SAMLStatement statement = new SAMLAttributeStatement(attrSubject, Arrays.asList(attributes));
-
-				// Set assertion expiration to longest attribute expiration
-				long max = 0;
-				for (int i = 0; i < attributes.length; i++) {
-					if (max < attributes[i].getLifetime()) {
-						max = attributes[i].getLifetime();
-					}
-				}
-				Date now = new Date();
-				Date then = new Date(now.getTime() + (max * 1000)); // max is in seconds
-
-				SAMLAssertion attrAssertion = new SAMLAssertion(relyingParty.getIdentityProvider().getProviderId(),
-						now, then, Collections.singleton(condition), null, Collections.singleton(statement));
-				assertions.add(attrAssertion);
-
-				if (log.isDebugEnabled()) {
-					log.debug("Dumping generated Attribute Assertion:" + System.getProperty("line.separator")
-							+ attrAssertion.toString());
+			// The ADFS spec recommends that all attributes have this URI, but it doesn't require it
+			for (int i = 0; i < attributes.length; i++) {
+				if (!attributes[i].getNamespace().equals(CLAIMS_URI)) {
+					log.warn("It is recommended that all attributes sent via the ADFS SSO handler "
+							+ "have a namespace of (" + CLAIMS_URI + ").  The attribute (" + attributes[i].getName()
+							+ ") has a namespace of (" + attributes[i].getNamespace() + ").");
 				}
 			}
+
+			// Reference requested subject
+			SAMLSubject attrSubject = (SAMLSubject) ((SAMLSubjectStatement) assertion.getStatements().next())
+					.getSubject().clone();
+
+			// ADFS spec says to include authN and attribute statements in the same assertion
+			log.debug("Merging attributes into existing authn assertion");
+			assertion.addStatement(new SAMLAttributeStatement(attrSubject, Arrays.asList(attributes)));
+
+			if (log.isDebugEnabled()) {
+				log.debug("Dumping combined Assertion:" + System.getProperty("line.separator") + assertion.toString());
+			}
+
 		} catch (AAException e) {
 			log.error("An error was encountered while generating assertion for attribute push: " + e);
 			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
@@ -321,8 +291,6 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 		// Package attributes
 		log.info("Resolving attributes.");
-		// TODO add back in attribute support
-		// generateAttributes(support, principal, relyingParty, assertions, request);
 
 		SAMLAssertion assertion = new SAMLAssertion(issuer, new Date(System.currentTimeMillis()), new Date(System
 				.currentTimeMillis() + 300000), conditions, null, Arrays.asList(statements));
