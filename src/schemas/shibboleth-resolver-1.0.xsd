@@ -161,6 +161,24 @@
 						</xs:complexContent>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="StaticDataConnector" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="resolver:BaseDataConnector">
+								<xs:sequence minOccurs="1" maxOccurs="unbounded">
+									<xs:element name="Attribute">
+										<xs:complexType>
+											<xs:sequence minOccurs="1" maxOccurs="unbounded">
+												<xs:element name="Value" type="xs:string" minOccurs="1" maxOccurs="unbounded"/>
+											</xs:sequence>
+											<xs:attribute name="name" type="xs:string" use="required"/>
+										</xs:complexType>
+									</xs:element>
+								</xs:sequence>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="JNDIDirectoryDataConnector" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:complexContent>
