@@ -474,7 +474,20 @@
 		<chmod dir="${idp.home}/bin" perm="ug+rx" includes="**/*"/>
 
 		<mkdir dir="${idp.home}/logs" />
-
+		
+		<!-- Copy necessary files to IDP_HOME -->
+		<antcall target="install.idp.buildHome" />
+		
+		<antcall target="ext-invoke">
+            <param name="exts.dir" value="${custom}"/>
+            <param name="ext.build.function" value="ext-install-filesystem"/>
+            <param name="ext.filesystem.home" value="${idp.home}"/>
+            <param name="ext.home.token" value="$IDP_HOME$"/>
+        </antcall>  
+	
+	</target>
+	
+	<target name="install.idp.buildHome" depends="init, install.init">
 		<!-- copy IdP configuration -->
 		<if>
 			<or>
@@ -486,13 +499,6 @@
 				<antcall target="install.idp.filesystem.config" />
 			</then>
 		</if>
-
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-install-filesystem"/>
-            <param name="ext.filesystem.home" value="${idp.home}"/>
-            <param name="ext.home.token" value="$IDP_HOME$"/>
-        </antcall>   
 	</target>
 
 	<!-- Install Shibboleth SP to filesystem using the properties in build.properties -->
@@ -578,8 +584,9 @@
 		<input message="Enter tomcat password [default: ${tomcat.password}]" addproperty="tomcat.password.input" defaultValue="${tomcat.password}" />
 		<var name="tomcat.password" value="${tomcat.password.input}" />
 
-        <antcall target="package-idp" />
+		<antcall target="package-idp" />
 		<antcall target="tomcat.deploy" />
+		<antcall target="install.idp.buildHome" />
 		<antcall target="savePropertyFile" />
 	</target>
 
