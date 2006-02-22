@@ -249,10 +249,10 @@ public class SAML2PersistentID extends BaseAttributeDefinition implements Attrib
 				docFactory.setNamespaceAware(true);
 				Document placeHolder = docFactory.newDocumentBuilder().newDocument();
 				Element nameIDNode = placeHolder.createElementNS(XML.SAML2ASSERT_NS, "NameID");
-				nameIDNode.setAttribute("xmlns", XML.SAML2ASSERT_NS);
-				nameIDNode.setAttribute("Format", "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
-				nameIDNode.setAttribute("NameQualifier", responder);
-				nameIDNode.setAttribute("SPNameQualifier", requester);
+				nameIDNode.setAttributeNS(org.opensaml.XML.XMLNS_NS, "xmlns", XML.SAML2ASSERT_NS);
+				nameIDNode.setAttributeNS(null, "Format", "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
+				nameIDNode.setAttributeNS(null, "NameQualifier", responder);
+				nameIDNode.setAttributeNS(null, "SPNameQualifier", requester);
 				nameIDNode.appendChild(placeHolder.createTextNode(result.replaceAll(System
 						.getProperty("line.separator"), "")));
 
