@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,7 +40,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet.ResolverAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
@@ -56,7 +56,7 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
 public class AttributeResolver {
 
 	private static Logger log = Logger.getLogger(AttributeResolver.class.getName());
-	private HashMap plugIns = new HashMap();
+	private HashMap<String, ResolutionPlugIn> plugIns = new HashMap<String, ResolutionPlugIn>();
 	private ResolverCache resolverCache = new ResolverCache();
 	public static final String resolverNamespace = "urn:mace:shibboleth:resolver:1.0";
 
@@ -135,13 +135,13 @@ public class AttributeResolver {
 	private void verifyPlugIns() throws AttributeResolverException {
 
 		log.info("Verifying PlugIn graph consitency.");
-		Set inconsistent = new HashSet();
+		Set<String> inconsistent = new HashSet<String>();
 		Iterator registered = plugIns.keySet().iterator();
 
 		while (registered.hasNext()) {
-			ResolutionPlugIn plugIn = lookupPlugIn((String) registered.next());
+			ResolutionPlugIn plugIn = plugIns.get((String) registered.next());
 			log.debug("Checking PlugIn (" + plugIn.getId() + ") for consistency.");
-			verifyPlugIn(plugIn, new HashSet(), inconsistent);
+			verifyPlugIn(plugIn, new HashSet<String>(), inconsistent);
 		}
 
 		if (!inconsistent.isEmpty()) {
@@ -159,7 +159,7 @@ public class AttributeResolver {
 
 	}
 
-	private void verifyPlugIn(ResolutionPlugIn plugIn, Set verifyChain, Set inconsistent) {
+	private void verifyPlugIn(ResolutionPlugIn plugIn, Set<String> verifyChain, Set<String> inconsistent) {
 
 		// Short-circuit if we have already found this PlugIn to be inconsistent
 		if (inconsistent.contains(plugIn.getId())) { return; }
@@ -173,11 +173,11 @@ public class AttributeResolver {
 		}
 
 		// Recursively go through all DataConnector dependencies and make sure all are registered and consistent.
-		List depends = new ArrayList();
+		List<String> depends = new ArrayList<String>();
 		depends.addAll(Arrays.asList(plugIn.getDataConnectorDependencyIds()));
-		Iterator dependsIt = depends.iterator();
+		Iterator<String> dependsIt = depends.iterator();
 		while (dependsIt.hasNext()) {
-			String key = (String) dependsIt.next();
+			String key = dependsIt.next();
 			if (!plugIns.containsKey(key)) {
 				log.error("The PlugIn (" + plugIn.getId() + ") is inconsistent.  It depends on a PlugIn (" + key
 						+ ") that is not registered.");
@@ -185,7 +185,7 @@ public class AttributeResolver {
 				return;
 			}
 
-			ResolutionPlugIn dependent = lookupPlugIn(key);
+			ResolutionPlugIn dependent = plugIns.get(key);
 			if (!(dependent instanceof DataConnectorPlugIn)) {
 				log.error("The PlugIn (" + plugIn.getId() + ") is inconsistent.  It depends on a PlugIn (" + key
 						+ ") that is mislabeled as an DataConnectorPlugIn.");
@@ -219,7 +219,7 @@ public class AttributeResolver {
 				return;
 			}
 
-			ResolutionPlugIn dependent = lookupPlugIn(key);
+			ResolutionPlugIn dependent = plugIns.get(key);
 			if (!(dependent instanceof AttributeDefinitionPlugIn)) {
 				log.error("The PlugIn (" + plugIn.getId() + ") is inconsistent.  It depends on a PlugIn (" + key
 						+ ") that is mislabeled as an AttributeDefinitionPlugIn.");
@@ -250,7 +250,7 @@ public class AttributeResolver {
 					return;
 				}
 
-				ResolutionPlugIn dependent = lookupPlugIn(key);
+				ResolutionPlugIn dependent = plugIns.get(key);
 				if (!(dependent instanceof DataConnectorPlugIn)) {
 					log.error("The PlugIn (" + plugIn.getId()
 							+ ") is inconsistent.  It depends on a fail-over PlugIn (" + key
@@ -284,11 +284,6 @@ public class AttributeResolver {
 
 	}
 
-	private ResolutionPlugIn lookupPlugIn(String id) {
-
-		return (ResolutionPlugIn) plugIns.get(id);
-	}
-
 	/**
 	 * Resolve a set of attributes for a particular principal and requester.
 	 * 
@@ -301,16 +296,15 @@ public class AttributeResolver {
 	 * @param attributes
 	 *            the set of attributes to be resolved
 	 */
-	public void resolveAttributes(Principal principal, String requester, String responder,
-			ResolverAttributeSet attributes) {
+	public void resolveAttributes(Principal principal, String requester, String responder, Map attributes) {
 
-		HashMap requestCache = new HashMap();
-		ResolverAttributeIterator iterator = attributes.resolverAttributeIterator();
+		HashMap requestCache = new HashMap<String, ResolverAttribute>();
+		Iterator<ResolverAttribute> iterator = attributes.values().iterator();
 
 		while (iterator.hasNext()) {
-			ResolverAttribute attribute = iterator.nextResolverAttribute();
+			ResolverAttribute attribute = iterator.next();
 			try {
-				if (lookupPlugIn(attribute.getName()) == null) {
+				if (plugIns.get(attribute.getName()) == null) {
 					log.warn("No PlugIn registered for attribute: (" + attribute.getName() + ")");
 					iterator.remove();
 				} else {
@@ -334,14 +328,14 @@ public class AttributeResolver {
 		}
 	}
 
-	public String[] listRegisteredAttributeDefinitionPlugIns() {
+	public Collection<String> listRegisteredAttributeDefinitionPlugIns() {
 
 		log.debug("Listing available Attribute Definition PlugIns.");
-		Set found = new HashSet();
+		Set<String> found = new HashSet<String>();
 		Iterator registered = plugIns.keySet().iterator();
 
 		while (registered.hasNext()) {
-			ResolutionPlugIn plugIn = lookupPlugIn((String) registered.next());
+			ResolutionPlugIn plugIn = plugIns.get((String) registered.next());
 			if (plugIn instanceof AttributeDefinitionPlugIn) {
 				found.add(((AttributeDefinitionPlugIn) plugIn).getId());
 			}
@@ -352,13 +346,13 @@ public class AttributeResolver {
 				log.debug("Found registered Attribute Definition: " + (String) iterator.next());
 			}
 		}
-		return (String[]) found.toArray(new String[0]);
+		return found;
 	}
 
 	private Attributes resolveConnector(String connector, Principal principal, String requester, String responder,
-			Map requestCache, ResolverAttributeSet requestedAttributes) throws ResolutionPlugInException {
+			Map requestCache, Map<String, ResolverAttribute> requestedAttributes) throws ResolutionPlugInException {
 
-		DataConnectorPlugIn currentDefinition = (DataConnectorPlugIn) lookupPlugIn(connector);
+		DataConnectorPlugIn currentDefinition = (DataConnectorPlugIn) plugIns.get(connector);
 
 		// Check to see if we have already resolved the connector during this request
 		if (requestCache.containsKey(currentDefinition.getId())) {
@@ -384,7 +378,7 @@ public class AttributeResolver {
 		for (int i = 0; attributeDependencies.length > i; i++) {
 			log.debug("Connector (" + currentDefinition.getId() + ") depends on attribute (" + attributeDependencies[i]
 					+ ").");
-			ResolverAttribute dependant = requestedAttributes.getByName(attributeDependencies[i]);
+			ResolverAttribute dependant = requestedAttributes.get(attributeDependencies[i]);
 			if (dependant == null) {
 				dependant = new DependentOnlyResolutionAttribute(attributeDependencies[i]);
 			}
@@ -433,9 +427,10 @@ public class AttributeResolver {
 	}
 
 	private void resolveAttribute(ResolverAttribute attribute, Principal principal, String requester, String responder,
-			Map requestCache, ResolverAttributeSet requestedAttributes) throws ResolutionPlugInException {
+			Map<String, ResolverAttribute> requestCache, Map<String, ResolverAttribute> requestedAttributes)
+			throws ResolutionPlugInException {
 
-		AttributeDefinitionPlugIn currentDefinition = (AttributeDefinitionPlugIn) lookupPlugIn(attribute.getName());
+		AttributeDefinitionPlugIn currentDefinition = (AttributeDefinitionPlugIn) plugIns.get(attribute.getName());
 
 		// Check to see if we have already resolved the attribute during this request
 		// (this checks dependency-only attributes and attributes resolved with no values
@@ -448,10 +443,10 @@ public class AttributeResolver {
 
 		// Check to see if we have already resolved the attribute during this request
 		// (this checks attributes that were submitted to the AR for resolution)
-		ResolverAttribute requestedAttribute = requestedAttributes.getByName(currentDefinition.getId());
+		ResolverAttribute requestedAttribute = requestedAttributes.get(currentDefinition.getId());
 		if (requestedAttribute != null && requestedAttribute.resolved()) {
-				attribute.resolveFromCached(requestedAttribute);
-				return;
+			attribute.resolveFromCached(requestedAttribute);
+			return;
 		}
 
 		// Check to see if we have a cached resolution for this attribute
@@ -474,7 +469,7 @@ public class AttributeResolver {
 		for (int i = 0; attributeDependencies.length > i; i++) {
 			log.debug("Attribute (" + attribute.getName() + ") depends on attribute (" + attributeDependencies[i]
 					+ ").");
-			ResolverAttribute dependant = requestedAttributes.getByName(attributeDependencies[i]);
+			ResolverAttribute dependant = requestedAttributes.get(attributeDependencies[i]);
 			if (dependant == null) {
 				dependancyOnly = true;
 				dependant = new DependentOnlyResolutionAttribute(attributeDependencies[i]);

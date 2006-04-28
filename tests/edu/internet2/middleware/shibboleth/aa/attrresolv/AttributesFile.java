@@ -23,6 +23,8 @@ package edu.internet2.middleware.shibboleth.aa.attrresolv;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
@@ -32,7 +34,6 @@ import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
-import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 
 /**
  * The AttributesFile reads attributes specified in a file as name-value pairs separated by an 'equals' sign (=)
@@ -116,21 +117,21 @@ public class AttributesFile {
 		}
 	}
 
-	public synchronized ResolverAttributeSet getResolverAttributes(boolean returnValues) throws IOException,
+	public synchronized Map<String, AAAttribute> getResolverAttributes(boolean returnValues) throws IOException,
 			SAMLException {
 
 		open();
 		try {
-			AAAttributeSet attributes = new AAAttributeSet();
+			Map<String, AAAttribute> attributes = new HashMap<String, AAAttribute>();
 			AVPair av = readAV();
 			while (av != null) {
-				AAAttribute attr = (AAAttribute) attributes.getByName(av.name);
+				AAAttribute attr = (AAAttribute) attributes.get(av.name);
 				if (attr == null) {
 					// The intern() is to work-around the bug in AAAttribute.equals() where the name of the
 					// attribute is compared
 					// using "==" rather than "equals" ...
 					attr = new AAAttribute(av.name.intern());
-					attributes.add(attr);
+					attributes.put(attr.getName(), attr);
 				}
 				if (returnValues) {
 					attr.addValue(av.value);

@@ -21,6 +21,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +38,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
-import edu.internet2.middleware.shibboleth.aa.arp.ArpAttributeSet.ArpAttributeIterator;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
@@ -51,7 +51,7 @@ public class ArpEngine {
 
 	private static Logger log = Logger.getLogger(ArpEngine.class.getName());
 	private ArpRepository repository;
-	private static Map matchFunctions = Collections.synchronizedMap(new HashMap());
+	private static Map<URI, String> matchFunctions = Collections.synchronizedMap(new HashMap<URI, String>());
 	static {
 		// Initialize built-in match functions
 		try {
@@ -217,11 +217,11 @@ public class ArpEngine {
 	 * 
 	 * @return an array of <code>URI</code> objects that name the possible attributes
 	 */
-	public URI[] listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
+	public Set<URI> listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
 			throws ArpProcessingException {
 
-		Set possibleReleaseSet = new HashSet();
-		Set anyValueDenies = new HashSet();
+		Set<URI> possibleReleaseSet = new HashSet<URI>();
+		Set<URI> anyValueDenies = new HashSet<URI>();
 		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
 		for (int i = 0; rules.length > i; i++) {
 			Rule.Attribute[] attributes = rules[i].getAttributes();
@@ -249,7 +249,7 @@ public class ArpEngine {
 				log.debug("Possible attribute: " + iterator.next().toString());
 			}
 		}
-		return (URI[]) possibleReleaseSet.toArray(new URI[0]);
+		return possibleReleaseSet;
 	}
 
 	/**
@@ -257,11 +257,10 @@ public class ArpEngine {
 	 * 
 	 * @return the attributes to be released
 	 */
-	public void filterAttributes(ArpAttributeSet attributes, Principal principal, String requester, URL resource)
-			throws ArpProcessingException {
+	public void filterAttributes(Collection<ArpAttribute> attributes, Principal principal, String requester,
+			URL resource) throws ArpProcessingException {
 
-		ArpAttributeIterator iterator = attributes.arpAttributeIterator();
-		if (!iterator.hasNext()) {
+		if (attributes.isEmpty()) {
 			log.debug("ARP Engine was asked to apply filter to empty attribute set.");
 			return;
 		}
@@ -269,18 +268,18 @@ public class ArpEngine {
 		log.info("Applying Attribute Release Policies.");
 		if (log.isDebugEnabled()) {
 			log.debug("Processing the following attributes:");
-			for (ArpAttributeIterator attrIterator = attributes.arpAttributeIterator(); attrIterator.hasNext();) {
-				log.debug("Attribute: (" + attrIterator.nextArpAttribute().getName() + ")");
+			for (Iterator<ArpAttribute> attrIterator = attributes.iterator(); attrIterator.hasNext();) {
+				log.debug("Attribute: (" + attrIterator.next().getName() + ")");
 			}
 		}
 
 		// Gather all applicable ARP attribute specifiers
-		Set attributeNames = new HashSet();
-		for (ArpAttributeIterator nameIterator = attributes.arpAttributeIterator(); nameIterator.hasNext();) {
-			attributeNames.add(nameIterator.nextArpAttribute().getName());
+		Set<String> attributeNames = new HashSet<String>();
+		for (Iterator<ArpAttribute> nameIterator = attributes.iterator(); nameIterator.hasNext();) {
+			attributeNames.add(nameIterator.next().getName());
 		}
 		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
-		Set applicableRuleAttributes = new HashSet();
+		Set<Rule.Attribute> applicableRuleAttributes = new HashSet<Rule.Attribute>();
 		for (int i = 0; rules.length > i; i++) {
 			Rule.Attribute[] ruleAttributes = rules[i].getAttributes();
 			for (int j = 0; ruleAttributes.length > j; j++) {
@@ -295,9 +294,9 @@ public class ArpEngine {
 				.toArray(new Rule.Attribute[0]));
 
 		// Filter
-		for (ArpAttributeIterator returnIterator = attributes.arpAttributeIterator(); returnIterator.hasNext();) {
+		for (Iterator<ArpAttribute> returnIterator = attributes.iterator(); returnIterator.hasNext();) {
 
-			ArpAttribute arpAttribute = returnIterator.nextArpAttribute();
+			ArpAttribute arpAttribute = returnIterator.next();
 			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(arpAttribute.getName());
 
 			// Handle no specifier
@@ -335,9 +334,9 @@ public class ArpEngine {
 		}
 	}
 
-	private Map createCanonicalAttributeSpec(Rule.Attribute[] attributes) {
+	private Map<String, Rule.Attribute> createCanonicalAttributeSpec(Rule.Attribute[] attributes) {
 
-		Map canonicalSpec = new HashMap();
+		Map<String, Rule.Attribute> canonicalSpec = new HashMap<String, Rule.Attribute>();
 		for (int i = 0; attributes.length > i; i++) {
 			if (!canonicalSpec.containsKey(attributes[i].getName().toString())) {
 				canonicalSpec.put(attributes[i].getName().toString(), attributes[i]);
