@@ -23,6 +23,7 @@ import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -87,31 +88,29 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 	private String authenticateAs(String assertedId, X509Certificate[] chain, IdPProtocolSupport support)
 			throws InvalidProviderCredentialException {
+
 		// See if we have metadata for this provider
 		EntityDescriptor provider = support.lookup(assertedId);
 		if (provider == null) {
 			log.info("No metadata found for providerId: (" + assertedId + ").");
 			return null;
-		}
-		else {
+		} else {
 			log.info("Metadata found for providerId: (" + assertedId + ").");
 		}
 		RoleDescriptor ar_role = provider.getAttributeRequesterDescriptor(XML.SAML11_PROTOCOL_ENUM);
 		RoleDescriptor sp_role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
 		if (ar_role == null && sp_role == null) {
-			log.info("SPSSO and Stand-Alone Requester roles not found in metadata for provider: ("
-					+ assertedId + ").");
+			log.info("SPSSO and Stand-Alone Requester roles not found in metadata for provider: (" + assertedId + ").");
 			return null;
 		}
 
 		// Make sure that the supplied credential is valid for the selected provider role.
-		if ((ar_role != null &&	support.getTrust().validate(chain[0], chain, ar_role)) ||
-			(sp_role != null &&	support.getTrust().validate(chain[0], chain, sp_role))) {
+		if ((ar_role != null && support.getTrust().validate(chain[0], chain, ar_role))
+				|| (sp_role != null && support.getTrust().validate(chain[0], chain, sp_role))) {
 			log.info("Supplied credentials validated for this provider.");
 			return assertedId;
 		} else {
-			log.error("Supplied credentials ("
-					+ chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
+			log.error("Supplied credentials (" + chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
 					+ ") are NOT valid for provider (" + assertedId + ").");
 			throw new InvalidProviderCredentialException("Invalid credentials.");
 		}
@@ -125,7 +124,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
 			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
 
-		if (samlRequest == null || samlRequest.getQuery() == null || !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
+		if (samlRequest == null || samlRequest.getQuery() == null
+				|| !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
 			log.error("Protocol Handler can only respond to SAML Attribute Queries.");
 			throw new SAMLException("General error processing request.");
 		}
@@ -137,16 +137,16 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		String effectiveName = null;
 
 		// Log the physical credential supplied, if any.
-		X509Certificate[] credentials = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
-		if (credentials == null || credentials.length == 0 ||
-				credentials[0].getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+		X509Certificate[] credentials = (X509Certificate[]) request
+				.getAttribute("javax.servlet.request.X509Certificate");
+		if (credentials == null || credentials.length == 0
+				|| credentials[0].getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
 			log.info("Request contained no credentials, treating as an unauthenticated service provider.");
-		}
-		else {
+		} else {
 			log.info("Request contains credentials: ("
 					+ credentials[0].getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
 
-			// Try and authenticate the requester as any of the potentially relevant identifiers we know.			
+			// Try and authenticate the requester as any of the potentially relevant identifiers we know.
 			try {
 				if (attributeQuery.getResource() != null) {
 					log.info("Remote provider has identified itself as: (" + attributeQuery.getResource() + ").");
@@ -154,7 +154,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				}
 
 				if (effectiveName == null) {
-					log.info("Remote provider not yet identified, attempting to derive requesting provider from credentials.");
+					log
+							.info("Remote provider not yet identified, attempting to derive requesting provider from credentials.");
 
 					// Try the additional candidates.
 					String[] candidateNames = getCredentialNames(credentials[0]);
@@ -166,15 +167,14 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				throw new SAMLException(SAMLException.REQUESTER, "Invalid credentials for request.");
 			}
 		}
-		
+
 		if (effectiveName == null) {
 			log.info("Unable to locate metadata about provider, treating as an unauthenticated service provider.");
 			relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
-            if(log.isDebugEnabled()) {
-                log.debug("Using default Relying Party, " + relyingParty.getName() + " for unauthenticated provider.");
-            }
-		}
-		else {
+			if (log.isDebugEnabled()) {
+				log.debug("Using default Relying Party, " + relyingParty.getName() + " for unauthenticated provider.");
+			}
+		} else {
 			// Identify a Relying Party
 			log.debug("Mapping authenticated provider (" + effectiveName + ") to Relying Party.");
 			relyingParty = support.getServiceProviderMapper().getRelyingParty(effectiveName);
@@ -190,13 +190,10 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			String method = (String) iterator.next();
 			log.info("Request contains SAML Subject Confirmation method: (" + method + ").");
 			hasConfirmationMethod = true;
-			if (!method.equals(SAMLSubject.CONF_BEARER))
-				hasOnlyBearer = false;
+			if (!method.equals(SAMLSubject.CONF_BEARER)) hasOnlyBearer = false;
 		}
-		if (hasConfirmationMethod && !hasOnlyBearer) {
-			throw new SAMLException(SAMLException.REQUESTER,
-				"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method(s).");
-		}
+		if (hasConfirmationMethod && !hasOnlyBearer) { throw new SAMLException(SAMLException.REQUESTER,
+				"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method(s)."); }
 
 		// Map Subject to local principal
 		Principal principal = null;
@@ -220,11 +217,11 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			log.info("Request is for principal (" + principal.getName() + ").");
 
 			// Get attributes from resolver
-			SAMLAttribute[] attrs;
+			Collection<? extends SAMLAttribute> attrs;
 			Iterator requestedAttrsIterator = attributeQuery.getDesignators();
 			if (requestedAttrsIterator.hasNext()) {
 				log.info("Request designates specific attributes, resolving this set.");
-				ArrayList requestedAttrs = new ArrayList();
+				ArrayList<URI> requestedAttrs = new ArrayList<URI>();
 				while (requestedAttrsIterator.hasNext()) {
 					SAMLAttributeDesignator attribute = (SAMLAttributeDesignator) requestedAttrsIterator.next();
 					try {
@@ -236,20 +233,19 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					}
 				}
 
-				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null,
-						(URI[]) requestedAttrs.toArray(new URI[0]));
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null, requestedAttrs);
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
 				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null);
 			}
 
-			log.info("Found " + attrs.length + " attribute(s) for " + principal.getName());
+			log.info("Found " + attrs.size() + " attribute(s) for " + principal.getName());
 
 			// Put attributes names in the transaction log when it is set to DEBUG
-			if (support.getTransactionLog().isDebugEnabled() && attrs.length > 0) {
+			if (support.getTransactionLog().isDebugEnabled() && attrs.size() > 0) {
 				StringBuffer attrNameBuffer = new StringBuffer();
-				for (int i = 0; i < attrs.length; i++) {
-					attrNameBuffer.append("(" + attrs[i].getName() + ")");
+				for (SAMLAttribute attr : attrs) {
+					attrNameBuffer.append("(" + attr.getName() + ")");
 				}
 				support.getTransactionLog()
 						.debug(
@@ -260,7 +256,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 			SAMLResponse samlResponse = null;
 
-			if (attrs == null || attrs.length == 0) {
+			if (attrs == null || attrs.size() == 0) {
 				// No attribute found
 				samlResponse = new SAMLResponse(samlRequest.getId(), null, null, null);
 
@@ -268,7 +264,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				// Reference requested subject
 				SAMLSubject rSubject = (SAMLSubject) attributeQuery.getSubject().clone();
 
-				ArrayList audiences = new ArrayList();
+				ArrayList<String> audiences = new ArrayList<String>();
 				if (relyingParty.getProviderId() != null) {
 					audiences.add(relyingParty.getProviderId());
 				}
@@ -283,9 +279,9 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 				// Set assertion expiration to longest attribute expiration
 				long max = 0;
-				for (int i = 0; i < attrs.length; i++) {
-					if (max < attrs[i].getLifetime()) {
-						max = attrs[i].getLifetime();
+				for (SAMLAttribute attr : attrs) {
+					if (max < attr.getLifetime()) {
+						max = attr.getLifetime();
 					}
 				}
 				Date now = new Date();

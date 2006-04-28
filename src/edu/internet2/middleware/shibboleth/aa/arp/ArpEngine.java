@@ -257,7 +257,7 @@ public class ArpEngine {
 	 * 
 	 * @return the attributes to be released
 	 */
-	public void filterAttributes(Collection<ArpAttribute> attributes, Principal principal, String requester,
+	public void filterAttributes(Collection<? extends ArpAttribute> attributes, Principal principal, String requester,
 			URL resource) throws ArpProcessingException {
 
 		if (attributes.isEmpty()) {
@@ -268,14 +268,14 @@ public class ArpEngine {
 		log.info("Applying Attribute Release Policies.");
 		if (log.isDebugEnabled()) {
 			log.debug("Processing the following attributes:");
-			for (Iterator<ArpAttribute> attrIterator = attributes.iterator(); attrIterator.hasNext();) {
+			for (Iterator<? extends ArpAttribute> attrIterator = attributes.iterator(); attrIterator.hasNext();) {
 				log.debug("Attribute: (" + attrIterator.next().getName() + ")");
 			}
 		}
 
 		// Gather all applicable ARP attribute specifiers
 		Set<String> attributeNames = new HashSet<String>();
-		for (Iterator<ArpAttribute> nameIterator = attributes.iterator(); nameIterator.hasNext();) {
+		for (Iterator<? extends ArpAttribute> nameIterator = attributes.iterator(); nameIterator.hasNext();) {
 			attributeNames.add(nameIterator.next().getName());
 		}
 		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
@@ -294,7 +294,7 @@ public class ArpEngine {
 				.toArray(new Rule.Attribute[0]));
 
 		// Filter
-		for (Iterator<ArpAttribute> returnIterator = attributes.iterator(); returnIterator.hasNext();) {
+		for (Iterator<? extends ArpAttribute> returnIterator = attributes.iterator(); returnIterator.hasNext();) {
 
 			ArpAttribute arpAttribute = returnIterator.next();
 			Rule.Attribute attribute = (Rule.Attribute) arpAttributeSpecs.get(arpAttribute.getName());

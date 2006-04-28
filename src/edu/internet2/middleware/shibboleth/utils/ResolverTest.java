@@ -18,12 +18,15 @@ package edu.internet2.middleware.shibboleth.utils;
 
 import jargs.gnu.CmdLineParser;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Principal;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -36,8 +39,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
-import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
-import edu.internet2.middleware.shibboleth.aa.AAAttributeSet.ShibAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpEngine;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpException;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
@@ -72,15 +73,15 @@ public class ResolverTest {
 
 		parseCommandLine(args);
 		initializeResolver();
-		AAAttributeSet attributeSet = createAttributeSet();
+		Map<String, AAAttribute> attributeSet = createAttributeSet();
 		resolveAttributes(attributeSet);
 
 		System.out.println("Received the following from the Attribute Resolver:");
 		System.out.println();
-		printAttributes(System.out, attributeSet);
+		printAttributes(System.out, attributeSet.values());
 	}
 
-	private static void resolveAttributes(AAAttributeSet attributeSet) {
+	private static void resolveAttributes(Map<String, AAAttribute> attributeSet) {
 
 		Principal principal = new LocalPrincipal(user);
 
@@ -88,7 +89,7 @@ public class ResolverTest {
 
 		try {
 			if (arpEngine != null) {
-				arpEngine.filterAttributes(attributeSet, principal, requester, resourceUrl);
+				arpEngine.filterAttributes(attributeSet.values(), principal, requester, resourceUrl);
 			}
 		} catch (ArpProcessingException e) {
 			System.err.println("Error applying Attribute Release Policy: " + e.getMessage());
@@ -165,16 +166,16 @@ public class ResolverTest {
 		}
 	}
 
-	private static AAAttributeSet createAttributeSet() {
+	private static Map<String, AAAttribute> createAttributeSet() {
 
-		String[] attributes = resolver.listRegisteredAttributeDefinitionPlugIns();
-		AAAttributeSet attributeSet = new AAAttributeSet();
+		Collection<String> attributes = resolver.listRegisteredAttributeDefinitionPlugIns();
+		Map<String, AAAttribute> attributeSet = new HashMap<String, AAAttribute>();
 
-		for (int i = 0; i < attributes.length; i++) {
+		for (String attrName : attributes) {
 			try {
-				attributeSet.add(new AAAttribute(attributes[i]));
+				attributeSet.put(attrName, new AAAttribute(attrName));
 			} catch (SAMLException e) {
-				System.err.println("Error creating AAAttribute (" + attributes[i] + "): " + e.getMessage());
+				System.err.println("Error creating AAAttribute (" + attrName + "): " + e.getMessage());
 				System.exit(1);
 			}
 		}
@@ -232,14 +233,13 @@ public class ResolverTest {
 		}
 	}
 
-	private static void printAttributes(PrintStream out, AAAttributeSet attributeSet) {
+	private static void printAttributes(PrintStream out, Collection<AAAttribute> attributeSet) {
 
 		try {
-			for (ShibAttributeIterator iterator = attributeSet.shibAttributeIterator(); iterator.hasNext();) {
-				AAAttribute attribute = iterator.nextShibAttribute();
+			for (Iterator<AAAttribute> iterator = attributeSet.iterator(); iterator.hasNext();) {
+				AAAttribute attribute = iterator.next();
 				Node node = attribute.toDOM();
 
-				ByteArrayOutputStream xml = new ByteArrayOutputStream();
 				if (!(node instanceof Element)) {
 					System.err.println("Received bad Element data from SAML library.");
 					System.exit(1);

@@ -32,6 +32,7 @@ import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLAuthenticationStatement;
+import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLConfig;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
@@ -226,22 +227,22 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 			SAMLAssertion assertion, HttpServletRequest request) throws SAMLException {
 
 		try {
-			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty, relyingParty
-					.getProviderId(), null);
-			log.info("Found " + attributes.length + " attribute(s) for " + principal.getName());
+			Collection<? extends SAMLAttribute> attributes = support.getReleaseAttributes(principal, relyingParty,
+					relyingParty.getProviderId(), null);
+			log.info("Found " + attributes.size() + " attribute(s) for " + principal.getName());
 
 			// Bail if we didn't get any attributes
-			if (attributes == null || attributes.length < 1) {
+			if (attributes == null || attributes.size() < 1) {
 				log.info("No attributes resolved.");
 				return;
 			}
 
 			// The ADFS spec recommends that all attributes have this URI, but it doesn't require it
-			for (int i = 0; i < attributes.length; i++) {
-				if (!attributes[i].getNamespace().equals(CLAIMS_URI)) {
+			for (SAMLAttribute attribute : attributes) {
+				if (!attribute.getNamespace().equals(CLAIMS_URI)) {
 					log.warn("It is recommended that all attributes sent via the ADFS SSO handler "
-							+ "have a namespace of (" + CLAIMS_URI + ").  The attribute (" + attributes[i].getName()
-							+ ") has a namespace of (" + attributes[i].getNamespace() + ").");
+							+ "have a namespace of (" + CLAIMS_URI + ").  The attribute (" + attribute.getName()
+							+ ") has a namespace of (" + attribute.getNamespace() + ").");
 				}
 			}
 
@@ -274,11 +275,11 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 		subject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
 
 		// ADFS spec requires a single audience of the SP
-		ArrayList audiences = new ArrayList();
+		ArrayList<String> audiences = new ArrayList<String>();
 		if (relyingParty.getProviderId() != null) {
 			audiences.add(relyingParty.getProviderId());
 		}
-		Vector conditions = new Vector(1);
+		Vector<SAMLCondition> conditions = new Vector<SAMLCondition>(1);
 		if (audiences != null && audiences.size() > 0) conditions.add(new SAMLAudienceRestrictionCondition(audiences));
 
 		// Determine the correct issuer

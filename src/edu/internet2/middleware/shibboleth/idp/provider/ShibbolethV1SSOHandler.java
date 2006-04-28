@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -194,7 +195,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			SAMLSubject authNSubject) throws SAMLException, IOException, UnsupportedEncodingException {
 
 		log.debug("Responding with Artifact profile.");
-		ArrayList assertions = new ArrayList();
+		ArrayList<SAMLAssertion> assertions = new ArrayList<SAMLAssertion>();
 
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_ARTIFACT);
 		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
@@ -221,7 +222,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 
 		// Create artifacts for each assertion
-		ArrayList artifacts = new ArrayList();
+		ArrayList<Artifact> artifacts = new ArrayList<Artifact>();
 		for (int i = 0; i < assertions.size(); i++) {
 			SAMLAssertion assertion = (SAMLAssertion) assertions.get(i);
 			Artifact artifact = support.getArtifactMapper().generateArtifact(assertion, relyingParty);
@@ -271,15 +272,15 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 						+ nameId.getFormat() + ").");
 	}
 
-    public static boolean pushAttributeDefault = false;
-    
+	public static boolean pushAttributeDefault = false;
+
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
 			LocalPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
 			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject) throws SAMLException,
 			IOException, ServletException {
 
 		log.debug("Responding with POST profile.");
-		ArrayList assertions = new ArrayList();
+		ArrayList<SAMLAssertion> assertions = new ArrayList<SAMLAssertion>();
 		authNSubject.addConfirmationMethod(SAMLSubject.CONF_BEARER);
 		assertions.add(generateAuthNAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
 				getAuthNTime(request), authNSubject));
@@ -331,15 +332,15 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 	}
 
 	private void generateAttributes(IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
-			ArrayList assertions, HttpServletRequest request) throws SAMLException {
+			ArrayList<SAMLAssertion> assertions, HttpServletRequest request) throws SAMLException {
 
 		try {
-			SAMLAttribute[] attributes = support.getReleaseAttributes(principal, relyingParty, relyingParty
-					.getProviderId(), null);
-			log.info("Found " + attributes.length + " attribute(s) for " + principal.getName());
+			Collection<? extends SAMLAttribute> attributes = support.getReleaseAttributes(principal, relyingParty,
+					relyingParty.getProviderId(), null);
+			log.info("Found " + attributes.size() + " attribute(s) for " + principal.getName());
 
 			// Bail if we didn't get any attributes
-			if (attributes == null || attributes.length < 1) {
+			if (attributes == null || attributes.size() < 1) {
 				log.info("No attributes resolved.");
 				return;
 			}
@@ -360,7 +361,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 							+ assertions.get(0).toString());
 				}
 			} else {
-				ArrayList audiences = new ArrayList();
+				ArrayList<String> audiences = new ArrayList<String>();
 				if (relyingParty.getProviderId() != null) {
 					audiences.add(relyingParty.getProviderId());
 				}
@@ -379,9 +380,9 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 				// Set assertion expiration to longest attribute expiration
 				long max = 0;
-				for (int i = 0; i < attributes.length; i++) {
-					if (max < attributes[i].getLifetime()) {
-						max = attributes[i].getLifetime();
+				for (SAMLAttribute attribute : attributes) {
+					if (max < attribute.getLifetime()) {
+						max = attribute.getLifetime();
 					}
 				}
 				Date now = new Date();
@@ -410,7 +411,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			SAMLSubject subject) throws SAMLException, IOException {
 
 		// Determine the correct audiences
-		ArrayList audiences = new ArrayList();
+		ArrayList<String> audiences = new ArrayList<String>();
 		if (relyingParty.getProviderId() != null) {
 			audiences.add(relyingParty.getProviderId());
 		}
@@ -440,7 +441,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 
 		// For compatibility with pre-1.2 shibboleth targets, include a pointer to the AA
-		ArrayList bindings = new ArrayList();
+		ArrayList<SAMLAuthorityBinding> bindings = new ArrayList<SAMLAuthorityBinding>();
 		if (relyingParty.isLegacyProvider()) {
 
 			SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SOAP, relyingParty.getAAUrl()
@@ -449,7 +450,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 
 		// Create the assertion
-		Vector conditions = new Vector(1);
+		Vector<SAMLCondition> conditions = new Vector<SAMLCondition>(1);
 		if (audiences != null && audiences.size() > 0) conditions.add(new SAMLAudienceRestrictionCondition(audiences));
 
 		SAMLStatement[] statements = {new SAMLAuthenticationStatement(subject, authenticationMethod, authTime, request
