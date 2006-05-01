@@ -25,8 +25,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,7 +45,6 @@ import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
-import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
 import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.xml.Parser;
@@ -462,10 +464,15 @@ public class ArpTests extends TestCase {
 		try {
 			Principal principal1 = new LocalPrincipal("TestPrincipal");
 			URL url1 = new URL("http://www.example.edu/");
-			URI[] list1 = {new URI("urn:mace:dir:attribute-def:eduPersonAffiliation")};
-			URI[] list2 = {new URI("urn:mace:dir:attribute-def:eduPersonAffiliation"),
-					new URI("urn:mace:dir:attribute-def:eduPersonPrincipalName")};
-			URI[] list3 = new URI[0];
+
+			Set<URI> list1 = new HashSet<URI>();
+			list1.add(new URI("urn:mace:dir:attribute-def:eduPersonAffiliation"));
+
+			Set<URI> list2 = new HashSet<URI>();
+			list2.add(new URI("urn:mace:dir:attribute-def:eduPersonAffiliation"));
+			list2.add(new URI("urn:mace:dir:attribute-def:eduPersonPrincipalName"));
+
+			Set<URI> list3 = new HashSet<URI>();
 
 			// Test with just a site ARP
 			InputStream inStream = new FileInputStream("data/arp1.xml");
@@ -474,9 +481,8 @@ public class ArpTests extends TestCase {
 			arp1.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp1);
 			ArpEngine engine = new ArpEngine(repository);
-			URI[] possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertEquals("Incorrectly computed possible release set (1).", new HashSet(Arrays
-					.asList(possibleAttributes)), new HashSet(Arrays.asList(list1)));
+			Set<URI> possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
+			assertEquals("Incorrectly computed possible release set (1).", possibleAttributes, list1);
 
 			// Test with site and user ARPs
 			inStream = new FileInputStream("data/arp7.xml");
@@ -486,8 +492,7 @@ public class ArpTests extends TestCase {
 			arp7.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp7);
 			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertEquals("Incorrectly computed possible release set (2).", new HashSet(Arrays
-					.asList(possibleAttributes)), new HashSet(Arrays.asList(list2)));
+			assertEquals("Incorrectly computed possible release set (2).", possibleAttributes, list2);
 
 			// Ensure that explicit denies on any value are not in the release set
 			inStream = new FileInputStream("data/arp6.xml");
@@ -497,8 +502,7 @@ public class ArpTests extends TestCase {
 			arp6.marshall(parser.getDocument().getDocumentElement());
 			repository.update(arp6);
 			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu", url1);
-			assertEquals("Incorrectly computed possible release set (3).", new HashSet(Arrays
-					.asList(possibleAttributes)), new HashSet(Arrays.asList(list3)));
+			assertEquals("Incorrectly computed possible release set (3).", possibleAttributes, list3);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -599,10 +603,11 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
 
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}));
 
@@ -634,13 +639,13 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute[]{
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute[]{
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}),
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
-						new Object[]{"mehoehn@example.edu"})});
+						new Object[]{"mehoehn@example.edu"})}));
 
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute[]{new AAAttribute(
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute[]{new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"})});
 
@@ -672,9 +677,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu"}));
 
 		// Setup the engine
@@ -705,9 +711,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu", "employee@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu", "employee@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"faculty@example.edu",
 						"employee@example.edu"}));
 
@@ -741,9 +748,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu", "employee@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu", "employee@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"faculty@example.edu",
 						"employee@example.edu"}));
 
@@ -779,9 +787,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu", "employee@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu", "employee@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"employee@example.edu"}));
 
 		// Setup the engine
@@ -813,9 +822,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu", "employee@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu", "employee@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}));
 
@@ -849,9 +859,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu", "employee@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu", "employee@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}));
 
@@ -883,8 +894,9 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
 
 		// Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -896,7 +908,7 @@ public class ArpTests extends TestCase {
 		// Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals("ARP application test 9: ARP not applied as expected.", inputSet, new AAAttributeSet());
+		assertEquals("ARP application test 9: ARP not applied as expected.", inputSet, new ArrayList<AAAttribute>());
 	}
 
 	/**
@@ -916,8 +928,9 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
 
 		// Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -929,7 +942,7 @@ public class ArpTests extends TestCase {
 		// Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals("ARP application test 10: ARP not applied as expected.", inputSet, new AAAttributeSet());
+		assertEquals("ARP application test 10: ARP not applied as expected.", inputSet, new ArrayList<AAAttribute>());
 	}
 
 	/**
@@ -947,8 +960,9 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
 
 		// Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -960,7 +974,7 @@ public class ArpTests extends TestCase {
 		// Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals("ARP application test 11: ARP not applied as expected.", inputSet, new AAAttributeSet());
+		assertEquals("ARP application test 11: ARP not applied as expected.", inputSet, new ArrayList<AAAttribute>());
 	}
 
 	/**
@@ -979,9 +993,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}));
 
@@ -1014,9 +1029,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("https://foo.com/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}));
 
@@ -1049,8 +1065,9 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
 
 		// Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1062,7 +1079,7 @@ public class ArpTests extends TestCase {
 		// Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "www.example.edu", url1);
 
-		assertEquals("ARP application test 14: ARP not applied as expected.", inputSet, new AAAttributeSet());
+		assertEquals("ARP application test 14: ARP not applied as expected.", inputSet, new ArrayList<AAAttribute>());
 	}
 
 	/**
@@ -1081,9 +1098,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/index.html");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}));
 
@@ -1116,8 +1134,9 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
 
 		// Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1129,7 +1148,7 @@ public class ArpTests extends TestCase {
 		// Apply the ARP
 		engine.filterAttributes(inputSet, principal1, "shar.example.edu", url1);
 
-		assertEquals("ARP application test 16: ARP not applied as expected.", inputSet, new AAAttributeSet());
+		assertEquals("ARP application test 16: ARP not applied as expected.", inputSet, new ArrayList<AAAttribute>());
 	}
 
 	/**
@@ -1167,19 +1186,19 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("https://www.example.edu/index.html");
-		AAAttributeSet inputSet = new AAAttributeSet(
-				new AAAttribute[]{
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays
+				.asList(new AAAttribute[]{
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{
 								"member@example.edu", "faculty@example.edu"}),
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
-								new Object[]{"wassa@columbia.edu"})});
+								new Object[]{"wassa@columbia.edu"})}));
 
-		AAAttributeSet releaseSet = new AAAttributeSet(
-				new AAAttribute[]{
-						new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
-								new Object[]{"wassa@columbia.edu"}),
+		Collection<AAAttribute> releaseSet = Arrays
+				.asList(new AAAttribute[]{
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-								new Object[]{"member@example.edu"})});
+								new Object[]{"member@example.edu"}),
+						new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
+								new Object[]{"wassa@columbia.edu"})});
 
 		// Setup the engine
 		parser.parse(new InputSource(new StringReader(rawArp)));
@@ -1211,13 +1230,13 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute[]{
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute[]{
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}),
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
-						new Object[]{"mehoehn@example.edu"})});
+						new Object[]{"mehoehn@example.edu"})}));
 
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute[]{
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute[]{
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}),
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
@@ -1251,9 +1270,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
-				new Object[]{"member@example.edu", "faculty@example.edu"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
+						"faculty@example.edu"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu",
 						"faculty@example.edu"}));
 
@@ -1331,8 +1351,8 @@ public class ArpTests extends TestCase {
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.example.edu/test/index.html");
 
-		AAAttributeSet inputSet = new AAAttributeSet(
-				new AAAttribute[]{
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays
+				.asList(new AAAttribute[]{
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{
 								"urn:example:lovesIceCream", "urn:example:poorlyDressed",
 								"urn:example:contract:113455", "urn:example:contract:4657483"}),
@@ -1340,10 +1360,10 @@ public class ArpTests extends TestCase {
 								"member@example.edu", "faculty@example.edu", "employee@example.edu"}),
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
 								new Object[]{"wassa@example.edu"}),
-						new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[]{"EO"})});
+						new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[]{"EO"})}));
 
-		AAAttributeSet releaseSet = new AAAttributeSet(
-				new AAAttribute[]{
+		Collection<AAAttribute> releaseSet = Arrays
+				.asList(new AAAttribute[]{
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{
 								"urn:example:lovesIceCream", "urn:example:contract:4657483"}),
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{
@@ -1434,8 +1454,8 @@ public class ArpTests extends TestCase {
 		Principal principal1 = new LocalPrincipal("TestPrincipal");
 		URL url1 = new URL("http://www.external.com/");
 
-		AAAttributeSet inputSet = new AAAttributeSet(
-				new AAAttribute[]{
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays
+				.asList(new AAAttribute[]{
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{
 								"urn:example:lovesIceCream", "urn:example:poorlyDressed",
 								"urn:example:contract:113455", "urn:example:contract:4657483"}),
@@ -1443,9 +1463,9 @@ public class ArpTests extends TestCase {
 								"member@example.edu", "faculty@example.edu", "employee@example.edu"}),
 						new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
 								new Object[]{"wassa@example.edu"}),
-						new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[]{"EO"})});
+						new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[]{"EO"})}));
 
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute[]{
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute[]{
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement",
 						new Object[]{"urn:example:contract:113455"}),
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu"}),
@@ -1491,9 +1511,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("Test2Principal");
 		URL url1 = new URL("http://www.example.edu/index.html");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement",
-				new Object[]{"urn:x:a", "urn:x:foo", "urn:x:bar", "urn:x:adagio", "urn:x:awol"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{"urn:x:a", "urn:x:foo", "urn:x:bar",
+						"urn:x:adagio", "urn:x:awol"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{"urn:x:adagio", "urn:x:awol"}));
 
 		// Setup the engine
@@ -1529,9 +1550,10 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("Test2Principal");
 		URL url1 = new URL("http://www.example.edu/index.html");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement",
-				new Object[]{"urn:x:a", "urn:x:foo", "urn:x:bar", "urn:x:adagio", "urn:x:awol"}));
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute(
+				"urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{"urn:x:a", "urn:x:foo", "urn:x:bar",
+						"urn:x:adagio", "urn:x:awol"})));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{"urn:x:a", "urn:x:foo", "urn:x:bar"}));
 
 		// Setup the engine
@@ -1566,11 +1588,11 @@ public class ArpTests extends TestCase {
 
 		Principal principal1 = new LocalPrincipal("Test2Principal");
 		URL url1 = new URL("http://www.example.edu/index.html");
-		AAAttributeSet inputSet = new AAAttributeSet(new AAAttribute[]{
+		Collection<AAAttribute> inputSet = new ArrayList<AAAttribute>(Arrays.asList(new AAAttribute[]{
 				new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{"urn:x:bar",
 						"urn:x:adagio"}),
-				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member"})});
-		AAAttributeSet releaseSet = new AAAttributeSet(new AAAttribute(
+				new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member"})}));
+		Collection<AAAttribute> releaseSet = Arrays.asList(new AAAttribute(
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member"}));
 
 		// Setup the engine
