@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -31,8 +33,6 @@ import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
-import edu.internet2.middleware.shibboleth.aa.AAAttributeSet;
-import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttributeSet.ResolverAttributeIterator;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ScopedStringValueHandler;
 import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 
@@ -45,7 +45,6 @@ import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 
 public class ResolverTests extends TestCase {
 
-	private static Logger log = Logger.getLogger(ResolverTests.class.getName());
 	// Simple explanatory booleans, which are helpful when passed in functions as compared to true/false
 	private static final boolean DO_SORT = true;
 	private static final boolean DO_NOT_SORT = false;
@@ -79,13 +78,16 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver1.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonNickName"),
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement")});
+			Map<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute one = new AAAttribute("urn:mace:dir:attribute-def:eduPersonNickName");
+			inputAttributes.put(one.getName(), one);
+			AAAttribute two = new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement");
+			inputAttributes.put(two.getName(), two);
 
-			AAAttributeSet outputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute(
-					"urn:mace:dir:attribute-def:eduPersonEntitlement",
-					new Object[]{"urn:mace:example.edu:exampleEntitlement"})});
+			Map<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute three = new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement",
+					new Object[]{"urn:mace:example.edu:exampleEntitlement"});
+			outputAttributes.put(three.getName(), three);
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
@@ -107,17 +109,21 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver2.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName"), new AAAttribute("foo")});
+			HashMap<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute one = new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName");
+			inputAttributes.put(one.getName(), one);
+			AAAttribute two = new AAAttribute("foo");
+			inputAttributes.put(two.getName(), two);
 
-			AAAttributeSet outputAttributes = new AAAttributeSet(
-					new AAAttribute[]{
-							// Attribute should have scope appended to connector output
-							new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
-									new Object[]{"mytestuser@example.edu"}, new ScopedStringValueHandler("example.edu")),
-							// Attribute should retain scope from connector output
-							new AAAttribute("foo", new Object[]{"bar@example.com"}, new ScopedStringValueHandler(
-									"example.edu"))});
+			HashMap<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
+			// Attribute should have scope appended to connector output
+			AAAttribute three = new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
+					new Object[]{"mytestuser@example.edu"}, new ScopedStringValueHandler("example.edu"));
+			outputAttributes.put(three.getName(), three);
+			// Attribute should retain scope from connector output
+			AAAttribute four = new AAAttribute("foo", new Object[]{"bar@example.com"}, new ScopedStringValueHandler(
+					"example.edu"));
+			outputAttributes.put(four.getName(), four);
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
@@ -190,10 +196,14 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver7.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute("myAffiliation")});
+			HashMap<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
 
-			AAAttributeSet outputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute("myAffiliation",
-					new Object[]{"member"})});
+			AAAttribute one = new AAAttribute("myAffiliation");
+			inputAttributes.put(one.getName(), one);
+
+			HashMap<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute two = new AAAttribute("myAffiliation", new Object[]{"member"});
+			outputAttributes.put(two.getName(), two);
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 			assertEquals("Attribute Resolver returned unexpected attribute set.", inputAttributes, outputAttributes);
@@ -213,17 +223,24 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver8.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName"),
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation"),
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement")});
+			HashMap<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute one = new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName");
+			inputAttributes.put(one.getName(), one);
+			AAAttribute two = new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation");
+			inputAttributes.put(two.getName(), two);
+			AAAttribute three = new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement");
+			inputAttributes.put(three.getName(), three);
 
-			AAAttributeSet outputAttributes = new AAAttributeSet(new AAAttribute[]{
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
-							new Object[]{"mytestuser@example.edu"}, new ScopedStringValueHandler("example.edu")),
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member"}),
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement",
-							new Object[]{"urn:mace:example.edu:exampleEntitlement"})});
+			HashMap<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute four = new AAAttribute("urn:mace:dir:attribute-def:eduPersonPrincipalName",
+					new Object[]{"mytestuser@example.edu"}, new ScopedStringValueHandler("example.edu"));
+			outputAttributes.put(four.getName(), four);
+			AAAttribute five = new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
+					new Object[]{"member"});
+			outputAttributes.put(five.getName(), five);
+			AAAttribute six = new AAAttribute("urn:mace:dir:attribute-def:eduPersonEntitlement",
+					new Object[]{"urn:mace:example.edu:exampleEntitlement"});
+			outputAttributes.put(six.getName(), six);
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
@@ -244,12 +261,14 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver9.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute(
-					"urn:mace:dir:attribute-def:eduPersonScopedAffiliation")});
+			HashMap<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute one = new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation");
+			inputAttributes.put(one.getName(), one);
 
-			AAAttributeSet outputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute(
-					"urn:mace:dir:attribute-def:eduPersonScopedAffiliation", new Object[]{"member@example.edu"},
-					new ScopedStringValueHandler("example.edu"))});
+			HashMap<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute two = new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation",
+					new Object[]{"member@example.edu"}, new ScopedStringValueHandler("example.edu"));
+			outputAttributes.put(two.getName(), two);
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
@@ -270,10 +289,11 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver11.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute(
-					"urn:mace:dir:attribute-def:eduPersonScopedAffiliation")});
+			HashMap<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute one = new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation");
+			inputAttributes.put(one.getName(), one);
 
-			AAAttributeSet outputAttributes = new AAAttributeSet();
+			HashMap<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
@@ -294,10 +314,11 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver10.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{new AAAttribute(
-					"urn:mace:dir:attribute-def:eduPersonScopedAffiliation")});
+			HashMap<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute one = new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation");
+			inputAttributes.put(one.getName(), one);
 
-			AAAttributeSet outputAttributes = new AAAttributeSet();
+			HashMap<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
@@ -319,16 +340,24 @@ public class ResolverTests extends TestCase {
 			File file = new File("data/resolver12.xml");
 			AttributeResolver ar = new AttributeResolver(file.toURL().toString());
 
-			AAAttributeSet inputAttributes = new AAAttributeSet(new AAAttribute[]{
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation"),
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation"),
-					new AAAttribute("urn:mace:shibboleth:test:eduPersonAffiliation")});
+			HashMap<String, ResolverAttribute> inputAttributes = new HashMap<String, ResolverAttribute>();
 
-			AAAttributeSet outputAttributes = new AAAttributeSet(new AAAttribute[]{
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation",
-							new Object[]{"member@example.edu"}, new ScopedStringValueHandler("example.edu")),
-					new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member"}),
-					new AAAttribute("urn:mace:shibboleth:test:eduPersonAffiliation", new Object[]{"member"})});
+			AAAttribute one = new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation");
+			inputAttributes.put(one.getName(), one);
+			AAAttribute two = new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation");
+			inputAttributes.put(two.getName(), two);
+			AAAttribute three = new AAAttribute("urn:mace:shibboleth:test:eduPersonAffiliation");
+			inputAttributes.put(three.getName(), three);
+
+			HashMap<String, ResolverAttribute> outputAttributes = new HashMap<String, ResolverAttribute>();
+			AAAttribute four = new AAAttribute("urn:mace:dir:attribute-def:eduPersonScopedAffiliation",
+					new Object[]{"member@example.edu"}, new ScopedStringValueHandler("example.edu"));
+			outputAttributes.put(four.getName(), four);
+			AAAttribute five = new AAAttribute("urn:mace:dir:attribute-def:eduPersonAffiliation",
+					new Object[]{"member"});
+			outputAttributes.put(five.getName(), five);
+			AAAttribute six = new AAAttribute("urn:mace:shibboleth:test:eduPersonAffiliation", new Object[]{"member"});
+			outputAttributes.put(six.getName(), six);
 
 			ar.resolveAttributes(new LocalPrincipal("mytestuser"), "shar.example.edu", null, inputAttributes);
 
@@ -356,6 +385,7 @@ public class ResolverTests extends TestCase {
 	 * @param requester
 	 *            the Shibboleth Target SHAR that is requesting the attribute resolution
 	 */
+
 	private void simpleAttributeResolution(String resolverFile, String attributeFile, String principal,
 			String requester, boolean sort) {
 
@@ -368,11 +398,11 @@ public class ResolverTests extends TestCase {
 			AttributesFile attrFile = new AttributesFile(attributeFile);
 
 			// Read only the attribute names from the output file. The values are set by the resolver
-			ResolverAttributeSet attrsToBeResolved = attrFile.getResolverAttributes(false);
+			Map<String, AAAttribute> attrsToBeResolved = attrFile.getResolverAttributes(false);
 			ar.resolveAttributes(new LocalPrincipal(principal), requester, null, attrsToBeResolved);
 
 			// Read the attribute names and values from the output file
-			ResolverAttributeSet expectedAttributes = attrFile.getResolverAttributes(true);
+			Map<String, AAAttribute> expectedAttributes = attrFile.getResolverAttributes(true);
 
 			if (sort) {
 				sort(attrsToBeResolved);
@@ -440,10 +470,11 @@ public class ResolverTests extends TestCase {
 	/**
 	 * Sort the attribute values in the AAAttribute so that equals comparison works as intended
 	 */
-	private void sort(ResolverAttributeSet attrSet) {
 
-		for (ResolverAttributeIterator iter = attrSet.resolverAttributeIterator(); iter.hasNext();) {
-			ResolverAttribute attr = iter.nextResolverAttribute();
+	private void sort(Map<String, AAAttribute> attrSet) {
+
+		for (Iterator<AAAttribute> iter = attrSet.values().iterator(); iter.hasNext();) {
+			ResolverAttribute attr = iter.next();
 			if (attr instanceof AAAttribute) {
 				ArrayList values = new ArrayList();
 				for (Iterator valuesIterator = attr.getValues(); valuesIterator.hasNext();) {
