@@ -10,7 +10,6 @@
 package edu.internet2.middleware.shibboleth.idp;
 
 import java.net.URI;
-import java.net.URL;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +58,7 @@ public class IdPProtocolSupport implements Metadata {
 	private static Logger log = Logger.getLogger(IdPProtocolSupport.class.getName());
 	private Logger transactionLog;
 	private IdPConfig config;
-	private ArrayList metadata = new ArrayList();
+	private ArrayList<Metadata> metadata = new ArrayList<Metadata>();
 	private NameMapper nameMapper;
 	private ServiceProviderMapper spMapper;
 	private ArpEngine arpEngine;
@@ -221,12 +220,11 @@ public class IdPProtocolSupport implements Metadata {
 	}
 
 	public Collection<? extends SAMLAttribute> getReleaseAttributes(Principal principal, RelyingParty relyingParty,
-			String requester, URL resource) throws AAException {
+			String requester) throws AAException {
 
 		try {
-			Collection<URI> potentialAttributes = arpEngine.listPossibleReleaseAttributes(principal, requester,
-					resource);
-			return getReleaseAttributes(principal, relyingParty, requester, resource, potentialAttributes);
+			Collection<URI> potentialAttributes = arpEngine.listPossibleReleaseAttributes(principal, requester);
+			return getReleaseAttributes(principal, relyingParty, requester, potentialAttributes);
 
 		} catch (ArpProcessingException e) {
 			log.error("An error occurred while processing the ARPs for principal (" + principal.getName() + ") :"
@@ -236,7 +234,7 @@ public class IdPProtocolSupport implements Metadata {
 	}
 
 	public Collection<? extends SAMLAttribute> getReleaseAttributes(Principal principal, RelyingParty relyingParty,
-			String requester, URL resource, Collection<URI> attributeNames) throws AAException {
+			String requester, Collection<URI> attributeNames) throws AAException {
 
 		try {
 			Map<String, AAAttribute> attributes = new HashMap<String, AAAttribute>();
@@ -252,7 +250,7 @@ public class IdPProtocolSupport implements Metadata {
 			}
 
 			return resolveAttributes(principal, requester, relyingParty.getIdentityProvider().getProviderId(),
-					resource, attributes);
+					attributes);
 
 		} catch (SAMLException e) {
 			log.error("An error occurred while creating attributes for principal (" + principal.getName() + ") :"
@@ -267,10 +265,10 @@ public class IdPProtocolSupport implements Metadata {
 	}
 
 	public Collection<? extends SAMLAttribute> resolveAttributes(Principal principal, String requester,
-			String responder, URL resource, Map<String, AAAttribute> attributeSet) throws ArpProcessingException {
+			String responder, Map<String, AAAttribute> attributeSet) throws ArpProcessingException {
 
 		resolver.resolveAttributes(principal, requester, responder, attributeSet);
-		arpEngine.filterAttributes(attributeSet.values(), principal, requester, resource);
+		arpEngine.filterAttributes(attributeSet.values(), principal, requester);
 		return attributeSet.values();
 	}
 

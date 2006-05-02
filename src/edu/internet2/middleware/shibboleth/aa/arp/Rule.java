@@ -18,8 +18,8 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -38,7 +38,7 @@ import org.w3c.dom.Text;
 /**
  * An Attribute Release Policy Rule.
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Walter Hoehn (wassa@memphis.edu)
  */
 
 public class Rule {
@@ -46,7 +46,7 @@ public class Rule {
 	private String description;
 	private Target target;
 	private static Logger log = Logger.getLogger(Rule.class.getName());
-	private ArrayList attributes = new ArrayList();
+	private ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 	private NodeList attributeReferences;
 
 	private URI identifier;
@@ -80,9 +80,9 @@ public class Rule {
 	 * @return the attributes
 	 */
 
-	public Attribute[] getAttributes() {
+	public Collection<Attribute> getAttributes() {
 
-		return (Attribute[]) attributes.toArray(new Attribute[0]);
+		return attributes;
 	}
 
 	/**
@@ -192,11 +192,9 @@ public class Rule {
 	 * 
 	 * @param requester
 	 *            the SHAR making the request
-	 * @param resource
-	 *            the resource on behalf of which the request is being made
 	 */
 
-	public boolean matchesRequest(String requester, URL resource) {
+	public boolean matchesRequest(String requester) {
 
 		if (target.matchesAny()) { return true; }
 
@@ -205,16 +203,11 @@ public class Rule {
 		try {
 			MatchFunction requesterFunction = ArpEngine.lookupMatchFunction(target.getRequester()
 					.getMatchFunctionIdentifier());
-			if (!requesterFunction.match(target.getRequester().getValue(), requester)) { return false; }
-
-			if (target.getResource().matchesAny()) { return true; }
-
-			if (resource == null) { return false; }
-
-			MatchFunction resourceFunction = ArpEngine.lookupMatchFunction(target.getResource()
-					.getMatchFunctionIdentifier());
-			if (resourceFunction.match(target.getResource().getValue(), resource)) { return true; }
-			return false;
+			if (requesterFunction.match(target.getRequester().getValue(), requester)) {
+				return true;
+			} else {
+				return false;
+			}
 		} catch (ArpException e) {
 			log.warn("Encountered a problem while trying to find matching ARP rules: " + e);
 			return false;
@@ -224,7 +217,6 @@ public class Rule {
 	class Target {
 
 		private Requester requester = null;
-		private Resource resource = null;
 		private boolean matchesAny = false;
 
 		/**
@@ -245,12 +237,6 @@ public class Rule {
 					return targetNode;
 				}
 				targetNode.appendChild(placeHolder.importNode(requester.unmarshall(), true));
-				if (target.resource.matchesAny()) {
-					Element anyResourceNode = placeHolder.createElementNS(Arp.arpNamespace, "AnyResource");
-					targetNode.appendChild(anyResourceNode);
-					return targetNode;
-				}
-				targetNode.appendChild(placeHolder.importNode(resource.unmarshall(), true));
 				return targetNode;
 			} catch (ParserConfigurationException e) {
 				log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
@@ -289,22 +275,6 @@ public class Rule {
 				throw new ArpMarshallingException(
 						"ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
 			}
-
-			// Handle <AnyResource/>
-			NodeList anyResourceNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "AnyResource");
-			if (anyResourceNodeList.getLength() == 1) {
-				resource = new Resource();
-				return;
-			}
-
-			// Create Resource
-			NodeList resourceNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "Resource");
-			if (resourceNodeList.getLength() == 1) {
-				resource = new Resource();
-				resource.marshall((Element) resourceNodeList.item(0));
-			} else {
-				resource = new Resource();
-			}
 		}
 
 		boolean matchesAny() {
@@ -315,102 +285,6 @@ public class Rule {
 		Requester getRequester() {
 
 			return requester;
-		}
-
-		Resource getResource() {
-
-			return resource;
-		}
-	}
-
-	class Resource {
-
-		private String value;
-		private URI matchFunctionIdentifier;
-		private boolean matchesAny;
-
-		Resource() {
-
-			matchesAny = true;
-		}
-
-		boolean matchesAny() {
-
-			return matchesAny;
-		}
-
-		URI getMatchFunctionIdentifier() {
-
-			return matchFunctionIdentifier;
-		}
-
-		String getValue() {
-
-			return value;
-		}
-
-		/**
-		 * Unmarshalls the <code>Rule.Resource</code> into an xml <code>Element</code>.
-		 * 
-		 * @return the xml <code>Element</code>
-		 */
-
-		Element unmarshall() throws ArpMarshallingException {
-
-			try {
-				Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-				Element resourceNode = placeHolder.createElementNS(Arp.arpNamespace, "Resource");
-				if (!matchFunctionIdentifier.equals(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"))) {
-					resourceNode.setAttributeNS(Arp.arpNamespace, "matchFunction", matchFunctionIdentifier.toString());
-				}
-				Text valueNode = placeHolder.createTextNode(value);
-				resourceNode.appendChild(valueNode);
-				return resourceNode;
-
-			} catch (URISyntaxException e) {
-				log.error("Encountered a problem unmarshalling an ARP Rule Resource: " + e);
-				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Resource.");
-			} catch (ParserConfigurationException e) {
-				log.error("Encountered a problem unmarshalling an ARP Rule Resource: " + e);
-				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Resource.");
-			}
-		}
-
-		/**
-		 * Creates an ARP Rule Target Resource from an xml representation.
-		 * 
-		 * @param element
-		 *            the xml <code>Element</code> containing the ARP Rule.
-		 */
-		void marshall(Element element) throws ArpMarshallingException {
-
-			matchesAny = false;
-
-			// Make sure we are deling with a Resource
-			if (!element.getTagName().equals("Resource")) {
-				log.error("Element data does not represent an ARP Rule Target.");
-				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
-			}
-
-			// Grab the value
-			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
-				value = ((CharacterData) element.getFirstChild()).getData();
-			} else {
-				log.error("Element data does not represent an ARP Rule Target.");
-				throw new ArpMarshallingException("Element data does not represent an ARP Rule target.");
-			}
-
-			// Grab the match function
-			try {
-				if (element.hasAttribute("matchFunction")) {
-					matchFunctionIdentifier = new URI(element.getAttribute("matchFunction"));
-				} else {
-					matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree");
-				}
-			} catch (URISyntaxException e) {
-				log.error("ARP match function not identified by a proper URI.");
-				throw new ArpMarshallingException("ARP match function not identified by a proper URI.");
-			}
 		}
 	}
 
@@ -497,7 +371,7 @@ public class Rule {
 		private URI name;
 		private boolean anyValue = false;
 		private String anyValueRelease = "permit";
-		private Set values = new HashSet();
+		private Set<AttributeValue> values = new HashSet<AttributeValue>();
 		private URI identifier;
 
 		boolean releaseAnyValue() {
@@ -531,7 +405,7 @@ public class Rule {
 			if (denyAnyValue()) { return false; }
 
 			// Handle Permit All with no specific values
-			if (releaseAnyValue() && getValues().length == 0) { return true; }
+			if (releaseAnyValue() && getValues().size() == 0) { return true; }
 
 			// Handle Deny Specific
 			Iterator iterator = values.iterator();
@@ -599,8 +473,8 @@ public class Rule {
 			if (b) {
 				anyValue = true;
 				anyValueRelease = "permit";
-				Iterator iterator = values.iterator();
-				HashSet permittedValues = new HashSet();
+				Iterator<AttributeValue> iterator = values.iterator();
+				Set<AttributeValue> permittedValues = new HashSet<AttributeValue>();
 				while (iterator.hasNext()) {
 					AttributeValue value = (AttributeValue) iterator.next();
 					if (value.getRelease().equals("permit")) {
@@ -620,9 +494,9 @@ public class Rule {
 			return name;
 		}
 
-		AttributeValue[] getValues() {
+		Collection<AttributeValue> getValues() {
 
-			return (AttributeValue[]) values.toArray(new AttributeValue[0]);
+			return values;
 		}
 
 		void addValue(AttributeValue value) {

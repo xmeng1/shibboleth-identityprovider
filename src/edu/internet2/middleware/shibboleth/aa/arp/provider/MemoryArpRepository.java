@@ -38,7 +38,7 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 
 public class MemoryArpRepository implements ArpRepository {
 
-	private Map userPolicies = Collections.synchronizedMap(new HashMap());
+	private Map<Principal, Arp> userPolicies = Collections.synchronizedMap(new HashMap<Principal, Arp>());
 	private Arp sitePolicy;
 	private static Logger log = Logger.getLogger(MemoryArpRepository.class.getName());
 
@@ -62,7 +62,7 @@ public class MemoryArpRepository implements ArpRepository {
 	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
 
 		log.debug("Received a query for all policies applicable to principal: (" + principal.getName() + ").");
-		Set allPolicies = new HashSet();
+		Set<Arp> allPolicies = new HashSet<Arp>();
 		if (getSitePolicy() != null) {
 			log.debug("Returning site policy.");
 			allPolicies.add(getSitePolicy());

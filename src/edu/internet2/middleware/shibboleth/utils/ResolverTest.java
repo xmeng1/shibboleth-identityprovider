@@ -20,8 +20,6 @@ import jargs.gnu.CmdLineParser;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.HashMap;
@@ -64,8 +62,6 @@ public class ResolverTest {
 	private static String requester = null;
 	private static String responder = null;
 	private static String user = null;
-	private static String resource = null;
-	private static URL resourceUrl = null;
 	private static AttributeResolver resolver = null;
 	private static ArpEngine arpEngine = null;
 
@@ -89,7 +85,7 @@ public class ResolverTest {
 
 		try {
 			if (arpEngine != null) {
-				arpEngine.filterAttributes(attributeSet.values(), principal, requester, resourceUrl);
+				arpEngine.filterAttributes(attributeSet.values(), principal, requester);
 			}
 		} catch (ArpProcessingException e) {
 			System.err.println("Error applying Attribute Release Policy: " + e.getMessage());
@@ -109,7 +105,6 @@ public class ResolverTest {
 		CmdLineParser.Option responderOption = parser.addStringOption('i', "responder");
 		CmdLineParser.Option resolverxmlOption = parser.addStringOption('\u0000', "resolverxml");
 		CmdLineParser.Option fileOption = parser.addStringOption('f', "file"); // deprecated
-		CmdLineParser.Option resourceOption = parser.addStringOption('\u0000', "resource");
 
 		try {
 			parser.parse(args);
@@ -141,7 +136,6 @@ public class ResolverTest {
 		user = (String) parser.getOptionValue(userOption);
 		requester = (String) parser.getOptionValue(requesterOption);
 		responder = (String) parser.getOptionValue(responderOption);
-		resource = (String) parser.getOptionValue(resourceOption);
 
 		configureLogging(debug);
 		checkRequired();
@@ -207,9 +201,6 @@ public class ResolverTest {
 					arpEngine = new ArpEngine((Element) itemElements.item(0));
 				}
 
-				if (resource != null) {
-					resourceUrl = new URL(resource);
-				}
 			} catch (ShibbolethConfigurationException e) {
 				System.err.println("Error loading IdP configuration file (" + idpXml + "): " + e.getMessage());
 				System.exit(1);
@@ -218,9 +209,6 @@ public class ResolverTest {
 				System.exit(1);
 			} catch (ArpException e) {
 				System.err.println("Error initializing the ARP Engine: " + e.getMessage());
-				System.exit(1);
-			} catch (MalformedURLException e) {
-				System.err.println("Specified resource URL is invalid: " + e.getMessage());
 				System.exit(1);
 			}
 		} else {

@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.aa.arp;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +43,7 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
 /**
  * Defines a processing engine for Attribute Release Policies.
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Walter Hoehn (wassa@memphis.edu)
  */
 
 public class ArpEngine {
@@ -65,14 +64,6 @@ public class ArpEngine {
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringNotMatch"),
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueNotMatchFunction");
-
-			// Legacy
-			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:exactShar"),
-					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
-			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:resourceTree"),
-					"edu.internet2.middleware.shibboleth.aa.arp.provider.ResourceTreeMatchFunction");
-			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringValue"),
-					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
 
 		} catch (URISyntaxException e) {
 			log.error("Error mapping standard match functions: " + e);
@@ -174,7 +165,7 @@ public class ArpEngine {
 		}
 	}
 
-	private Arp createEffectiveArp(Principal principal, String requester, URL resource) throws ArpProcessingException {
+	private Arp createEffectiveArp(Principal principal, String requester) throws ArpProcessingException {
 
 		try {
 			Arp effectiveArp = new Arp(principal);
@@ -196,10 +187,10 @@ public class ArpEngine {
 			}
 
 			for (int i = 0; userPolicies.length > i; i++) {
-				Rule[] rules = userPolicies[i].getMatchingRules(requester, resource);
+				Collection<Rule> rules = userPolicies[i].getMatchingRules(requester);
 
-				for (int j = 0; rules.length > j; j++) {
-					effectiveArp.addRule(rules[j]);
+				for (Rule rule : rules) {
+					effectiveArp.addRule(rule);
 				}
 			}
 			return effectiveArp;
@@ -217,24 +208,23 @@ public class ArpEngine {
 	 * 
 	 * @return an array of <code>URI</code> objects that name the possible attributes
 	 */
-	public Set<URI> listPossibleReleaseAttributes(Principal principal, String requester, URL resource)
-			throws ArpProcessingException {
+	public Set<URI> listPossibleReleaseAttributes(Principal principal, String requester) throws ArpProcessingException {
 
 		Set<URI> possibleReleaseSet = new HashSet<URI>();
 		Set<URI> anyValueDenies = new HashSet<URI>();
-		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
-		for (int i = 0; rules.length > i; i++) {
-			Rule.Attribute[] attributes = rules[i].getAttributes();
-			for (int j = 0; attributes.length > j; j++) {
-				if (attributes[j].releaseAnyValue()) {
-					possibleReleaseSet.add(attributes[j].getName());
-				} else if (attributes[j].denyAnyValue()) {
-					anyValueDenies.add(attributes[j].getName());
+		Collection<Rule> rules = createEffectiveArp(principal, requester).getAllRules();
+		for (Rule rule : rules) {
+			Collection<Rule.Attribute> attributes = rule.getAttributes();
+			for (Rule.Attribute attribute : attributes) {
+				if (attribute.releaseAnyValue()) {
+					possibleReleaseSet.add(attribute.getName());
+				} else if (attribute.denyAnyValue()) {
+					anyValueDenies.add(attribute.getName());
 				} else {
-					Rule.AttributeValue[] values = attributes[j].getValues();
-					for (int k = 0; values.length > k; k++) {
-						if (values[k].getRelease().equals("permit")) {
-							possibleReleaseSet.add(attributes[j].getName());
+					Collection<Rule.AttributeValue> values = attribute.getValues();
+					for (Rule.AttributeValue value : values) {
+						if (value.getRelease().equals("permit")) {
+							possibleReleaseSet.add(attribute.getName());
 							break;
 						}
 					}
@@ -257,8 +247,8 @@ public class ArpEngine {
 	 * 
 	 * @return the attributes to be released
 	 */
-	public void filterAttributes(Collection<? extends ArpAttribute> attributes, Principal principal, String requester,
-			URL resource) throws ArpProcessingException {
+	public void filterAttributes(Collection<? extends ArpAttribute> attributes, Principal principal, String requester)
+			throws ArpProcessingException {
 
 		if (attributes.isEmpty()) {
 			log.debug("ARP Engine was asked to apply filter to empty attribute set.");
@@ -278,13 +268,13 @@ public class ArpEngine {
 		for (Iterator<? extends ArpAttribute> nameIterator = attributes.iterator(); nameIterator.hasNext();) {
 			attributeNames.add(nameIterator.next().getName());
 		}
-		Rule[] rules = createEffectiveArp(principal, requester, resource).getAllRules();
+		Collection<Rule> rules = createEffectiveArp(principal, requester).getAllRules();
 		Set<Rule.Attribute> applicableRuleAttributes = new HashSet<Rule.Attribute>();
-		for (int i = 0; rules.length > i; i++) {
-			Rule.Attribute[] ruleAttributes = rules[i].getAttributes();
-			for (int j = 0; ruleAttributes.length > j; j++) {
-				if (attributeNames.contains(ruleAttributes[j].getName().toString())) {
-					applicableRuleAttributes.add(ruleAttributes[j]);
+		for (Rule rule : rules) {
+			Collection<Rule.Attribute> ruleAttributes = rule.getAttributes();
+			for (Rule.Attribute ruleAttribute : ruleAttributes) {
+				if (attributeNames.contains(ruleAttribute.getName().toString())) {
+					applicableRuleAttributes.add(ruleAttribute);
 				}
 			}
 		}
@@ -312,12 +302,12 @@ public class ArpEngine {
 			}
 
 			// Handle Permit All
-			if (attribute.releaseAnyValue() && attribute.getValues().length == 0) {
+			if (attribute.releaseAnyValue() && attribute.getValues().size() == 0) {
 				continue;
 			}
 
 			// Handle "Permit All-Except" and "Permit Specific"
-			ArrayList releaseValues = new ArrayList();
+			ArrayList<Object> releaseValues = new ArrayList<Object>();
 			for (Iterator valueIterator = arpAttribute.getValues(); valueIterator.hasNext();) {
 				Object value = valueIterator.next();
 				if (attribute.isValuePermitted(value)) {
@@ -351,9 +341,9 @@ public class ArpEngine {
 				if (attributes[i].releaseAnyValue()) {
 					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).setAnyValuePermit(true);
 				}
-				Rule.AttributeValue[] values = attributes[i].getValues();
-				for (int j = 0; values.length > j; j++) {
-					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).addValue(values[j]);
+				Collection<Rule.AttributeValue> values = attributes[i].getValues();
+				for (Rule.AttributeValue value : values) {
+					((Rule.Attribute) canonicalSpec.get(attributes[i].getName().toString())).addValue(value);
 				}
 			}
 		}

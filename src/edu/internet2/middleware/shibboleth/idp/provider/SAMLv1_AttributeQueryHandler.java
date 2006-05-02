@@ -233,7 +233,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					}
 				}
 
-				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null, requestedAttrs);
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, requestedAttrs);
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
 				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null);

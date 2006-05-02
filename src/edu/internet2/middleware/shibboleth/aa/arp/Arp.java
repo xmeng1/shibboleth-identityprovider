@@ -16,13 +16,11 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
-import java.net.URL;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,18 +35,18 @@ import org.w3c.dom.NodeList;
 /**
  * An Attribute Release Policy.
  * 
- * @author Walter Hoehn (wassa@columbia.edu)
+ * @author Walter Hoehn (wassa@memphis.edu)
  */
 
 public class Arp {
 
 	public static final String arpNamespace = "urn:mace:shibboleth:arp:1.0";
 	private Principal principal;
-	private List rules = new ArrayList();
+	private List<Rule> rules = new ArrayList<Rule>();
 	private String description;
 	private boolean sitePolicy = false;
 	private static Logger log = Logger.getLogger(Arp.class.getName());
-	private Set attributes = new HashSet();
+	private List<Node> attributes = new ArrayList<Node>();
 
 	private NodeList ruleReferences;
 
@@ -149,15 +147,15 @@ public class Arp {
 			ruleReferences = ruleReferenceNodes;
 		}
 
-		// Retain attributes declared outside the scop of a rule
+		// Retain attributes declared outside the scope of a rule
 		// Not enforced!
 		NodeList attributeNodes = xmlElement.getElementsByTagNameNS(Arp.arpNamespace, "Attribute");
 		if (attributeNodes.getLength() > 0) {
 			for (int i = 0; i < attributeNodes.getLength(); i++) {
 				if (attributeNodes.item(i).getParentNode() == xmlElement) {
-					log
-							.warn("Encountered an Attribute definition outside the scope of a Rule definition while marshalling an ARP.  "
-									+ "References are currently unsupported by the ARP Engine.  Ignoring...");
+					log.warn("Encountered an Attribute definition outside the scope of a Rule "
+							+ "definition while marshalling an ARP.  "
+							+ "References are currently unsupported by the ARP Engine.  Ignoring...");
 					attributes.add(attributeNodes.item(i));
 				}
 			}
@@ -189,9 +187,9 @@ public class Arp {
 				policyNode.appendChild(descriptionNode);
 			}
 
-			Rule[] rules = getAllRules();
-			for (int i = 0; rules.length > i; i++) {
-				policyNode.appendChild(placeHolder.importNode(rules[i].unmarshall(), true));
+			Collection<Rule> rules = getAllRules();
+			for (Rule rule : rules) {
+				policyNode.appendChild(placeHolder.importNode(rule.unmarshall(), true));
 			}
 
 			if (ruleReferences != null) {
@@ -220,9 +218,9 @@ public class Arp {
 	 * @return the rules
 	 */
 
-	public Rule[] getAllRules() {
+	public Collection<Rule> getAllRules() {
 
-		return (Rule[]) rules.toArray(new Rule[0]);
+		return rules;
 	}
 
 	/**
@@ -253,21 +251,19 @@ public class Arp {
 	 * 
 	 * @param requester
 	 *            the SHAR for this request
-	 * @param resource
-	 *            the resource that the requestis made on behalf of
 	 * @return the matching <code>Rule</code> objects
 	 */
-	public Rule[] getMatchingRules(String requester, URL resource) {
+	public Collection<Rule> getMatchingRules(String requester) {
 
-		Set effectiveSet = new HashSet();
+		List<Rule> effectiveSet = new ArrayList<Rule>();
 		Iterator iterator = rules.iterator();
 		while (iterator.hasNext()) {
 			Rule rule = (Rule) iterator.next();
-			if (rule.matchesRequest(requester, resource)) {
+			if (rule.matchesRequest(requester)) {
 				effectiveSet.add(rule);
 			}
 		}
-		return (Rule[]) effectiveSet.toArray(new Rule[0]);
+		return effectiveSet;
 	}
 
 	/**
