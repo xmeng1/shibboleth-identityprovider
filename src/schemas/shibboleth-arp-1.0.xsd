@@ -51,20 +51,6 @@
 														</xs:simpleContent>
 													</xs:complexType>
 												</xs:element>
-												<xs:choice minOccurs="0" maxOccurs="1">
-													<xs:element name="Resource">
-														<xs:complexType>
-															<xs:simpleContent>
-																<xs:extension base="xs:string">
-																	<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:resourceTree"/>
-																</xs:extension>
-															</xs:simpleContent>
-														</xs:complexType>
-													</xs:element>
-													<xs:element name="AnyResource">
-														<xs:complexType/>
-													</xs:element>
-												</xs:choice>
 											</xs:sequence>
 										</xs:choice>
 									</xs:complexType>
