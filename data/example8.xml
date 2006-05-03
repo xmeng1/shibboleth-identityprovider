@@ -4,7 +4,6 @@
 	<Rule>
 		<Target>
 			<Requester matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">shar[1-9]\.example\.edu</Requester>
-			<Resource matchFunction="urn:mace:shibboleth:arp:matchFunction:regexMatch">^https?://.+\.example\.edu/.*$</Resource>
 		</Target>
 		<Attribute name="urn:mace:dir:attribute-def:eduPersonPrincipalName">
 			<AnyValue release="permit"/>

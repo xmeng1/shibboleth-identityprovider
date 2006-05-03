@@ -4,7 +4,6 @@
 	<Rule>
 		<Target>
 			<Requester>shar.example.edu</Requester>
-			<Resource>http://www.example.edu/</Resource>
 		</Target>
 		<Attribute name="urn:mace:dir:attribute-def:eduPersonPrincipalName">
 			<AnyValue release="permit"/>
