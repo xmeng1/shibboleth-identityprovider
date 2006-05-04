@@ -41,7 +41,7 @@
 											<xs:element name="AnyTarget">
 												<xs:complexType/>
 											</xs:element>
-											<xs:sequence>
+											<xs:sequence minOccurs="1" maxOccurs="unbounded">
 												<xs:element name="Requester">
 													<xs:complexType>
 														<xs:simpleContent>

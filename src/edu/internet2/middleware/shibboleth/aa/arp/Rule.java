@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -200,23 +201,25 @@ public class Rule {
 
 		if (requester == null) { return false; }
 
-		try {
-			MatchFunction requesterFunction = ArpEngine.lookupMatchFunction(target.getRequester()
-					.getMatchFunctionIdentifier());
-			if (requesterFunction.match(target.getRequester().getValue(), requester)) {
-				return true;
-			} else {
-				return false;
+		for (Requester arpRequester : target.getRequesters()) {
+
+			try {
+				MatchFunction requesterFunction = ArpEngine.lookupMatchFunction(arpRequester
+						.getMatchFunctionIdentifier());
+				if (requesterFunction.match(arpRequester.getValue(), requester)) { return true; }
+
+			} catch (ArpException e) {
+				log.warn("Encountered a problem while trying to find matching ARP rules: " + e);
+				return false; // Always err on the side of caution
 			}
-		} catch (ArpException e) {
-			log.warn("Encountered a problem while trying to find matching ARP rules: " + e);
-			return false;
 		}
+
+		return false;
 	}
 
 	class Target {
 
-		private Requester requester = null;
+		private List<Requester> requesters = new ArrayList<Requester>();
 		private boolean matchesAny = false;
 
 		/**
@@ -236,7 +239,9 @@ public class Rule {
 					targetNode.appendChild(anyTargetNode);
 					return targetNode;
 				}
-				targetNode.appendChild(placeHolder.importNode(requester.unmarshall(), true));
+				for (Requester requester : requesters) {
+					targetNode.appendChild(placeHolder.importNode(requester.unmarshall(), true));
+				}
 				return targetNode;
 			} catch (ParserConfigurationException e) {
 				log.error("Encountered a problem unmarshalling an ARP Rule: " + e);
@@ -267,13 +272,16 @@ public class Rule {
 
 			// Create Requester
 			NodeList requesterNodeList = element.getElementsByTagNameNS(Arp.arpNamespace, "Requester");
-			if (requesterNodeList.getLength() == 1) {
-				requester = new Requester();
-				requester.marshall((Element) requesterNodeList.item(0));
-			} else {
-				log.error("ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
-				throw new ArpMarshallingException(
-						"ARP Rule Target contains invalid data: incorrectly specified <Requester>.");
+
+			if (requesterNodeList.getLength() < 1) {
+				log.error("ARP Rule Target contains invalid data: no specified <Requester/>.");
+				throw new ArpMarshallingException("ARP Rule Target contains invalid data: no specified <Requester/>.");
+			}
+
+			for (int i = 0; i < requesterNodeList.getLength(); i++) {
+				Requester requester = new Requester();
+				requester.marshall((Element) requesterNodeList.item(i));
+				requesters.add(requester);
 			}
 		}
 
@@ -282,9 +290,9 @@ public class Rule {
 			return matchesAny;
 		}
 
-		Requester getRequester() {
+		Collection<Requester> getRequesters() {
 
-			return requester;
+			return requesters;
 		}
 	}
 
