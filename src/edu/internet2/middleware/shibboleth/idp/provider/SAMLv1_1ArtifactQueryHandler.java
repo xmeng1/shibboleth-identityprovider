@@ -89,7 +89,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 			log.info("Request contains TLS credential: (" + chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
 				+ ").");
 		}
-		ArrayList assertions = new ArrayList();
+		ArrayList<SAMLAssertion> assertions = new ArrayList<SAMLAssertion>();
 		Iterator artifacts = samlRequest.getArtifacts();
 
 		if (!artifacts.hasNext()) {

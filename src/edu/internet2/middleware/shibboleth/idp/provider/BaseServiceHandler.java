@@ -20,7 +20,6 @@ import java.security.cert.X509Certificate;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -38,8 +37,6 @@ public abstract class BaseServiceHandler extends BaseHandler implements IdPProto
 
 		super(config);
 	}
-
-	private static Logger log = Logger.getLogger(BaseServiceHandler.class.getName());
 
 	protected static X509Certificate getCredentialFromProvider(HttpServletRequest req) {
 

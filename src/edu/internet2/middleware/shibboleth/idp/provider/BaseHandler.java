@@ -39,7 +39,7 @@ import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 public abstract class BaseHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(BaseHandler.class.getName());
-	private HashSet locations = new HashSet();
+	private HashSet<String> locations = new HashSet<String>();
 
 	/**
 	 * Required DOM-based constructor.

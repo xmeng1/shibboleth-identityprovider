@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.idp;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 import javax.servlet.RequestDispatcher;
@@ -73,7 +74,7 @@ public class IdPResponder extends HttpServlet {
 	private SAMLBinding binding;
 
 	private IdPConfig configuration;
-	private HashMap protocolHandlers = new HashMap();
+	private Map<String, IdPProtocolHandler> protocolHandlers = new HashMap<String, IdPProtocolHandler>();
 	private IdPProtocolSupport protocolSupport;
 
 	/*
