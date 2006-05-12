@@ -228,7 +228,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 		try {
 			Collection<? extends SAMLAttribute> attributes = support.getReleaseAttributes(principal, relyingParty,
-					relyingParty.getProviderId(), null);
+					relyingParty.getProviderId());
 			log.info("Found " + attributes.size() + " attribute(s) for " + principal.getName());
 
 			// Bail if we didn't get any attributes

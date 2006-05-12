@@ -336,7 +336,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 		try {
 			Collection<? extends SAMLAttribute> attributes = support.getReleaseAttributes(principal, relyingParty,
-					relyingParty.getProviderId(), null);
+					relyingParty.getProviderId());
 			log.info("Found " + attributes.size() + " attribute(s) for " + principal.getName());
 
 			// Bail if we didn't get any attributes
@@ -376,7 +376,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
 
 				// Put all attributes into an assertion
-				SAMLStatement statement = new SAMLAttributeStatement(attrSubject, Arrays.asList(attributes));
+				SAMLStatement statement = new SAMLAttributeStatement(attrSubject, attributes);
 
 				// Set assertion expiration to longest attribute expiration
 				long max = 0;

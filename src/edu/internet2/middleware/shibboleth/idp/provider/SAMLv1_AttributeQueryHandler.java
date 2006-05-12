@@ -236,7 +236,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, requestedAttrs);
 			} else {
 				log.info("Request does not designate specific attributes, resolving all available.");
-				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName, null);
+				attrs = support.getReleaseAttributes(principal, relyingParty, effectiveName);
 			}
 
 			log.info("Found " + attrs.size() + " attribute(s) for " + principal.getName());
@@ -275,7 +275,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				SAMLCondition condition = new SAMLAudienceRestrictionCondition(audiences);
 
 				// Put all attributes into an assertion
-				SAMLStatement statement = new SAMLAttributeStatement(rSubject, Arrays.asList(attrs));
+				SAMLStatement statement = new SAMLAttributeStatement(rSubject, attrs);
 
 				// Set assertion expiration to longest attribute expiration
 				long max = 0;
