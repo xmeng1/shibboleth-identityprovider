@@ -169,7 +169,7 @@
 	</target>
 
 	<!-- Run automated tests on compiled code -->
-	<target name="test-all" depends="test-IdP, test-SP" />
+	<target name="test-all" depends="test-IdP" />
 
 	<target name="test-IdP" depends="compile-tests">
 		<junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
