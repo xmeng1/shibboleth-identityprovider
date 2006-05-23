@@ -64,6 +64,8 @@ public class ArpEngine {
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueMatchFunction");
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringNotMatch"),
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueNotMatchFunction");
+			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:anyValueMatch"),
+			"edu.internet2.middleware.shibboleth.aa.arp.provider.AnyValueMatchFunction");
 
 		} catch (URISyntaxException e) {
 			log.error("Error mapping standard match functions: " + e);
