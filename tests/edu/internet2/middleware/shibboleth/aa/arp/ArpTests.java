@@ -1604,9 +1604,270 @@ public class ArpTests extends TestCase {
 	}
 
 
+	 /**
+	 * Use Case: must have an attribute
+	 * Example:  release uid only if user has any value for attribute "foo"
+	 */
+	void arpConstraintTest1(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
+		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "         <Rule>" 
+				+ "             <Constraint"
+				+ "					attributeName=\"urn:mace:dir:attribute-def:foo\""
+				+ "					matchFunction=\"urn:mace:shibboleth:arp:matchFunction:anyValueMatch\""
+				+ "					matches=\"any\"/>"
+				+ "             <Target>" 
+				+ "                 <AnyTarget/>" 
+				+ "             </Target>"
+				+ "             <Attribute name=\"urn:mace:dir:attribute-def:uid\">"
+				+ "                 <AnyValue release=\"permit\"/>" 
+				+ "             </Attribute>" 
+				+ "         </Rule>"
+				+ " </AttributeReleasePolicy>";
 
+		// Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository);
 
+		Principal principal = new LocalPrincipal("TestPrincipal");
+
+		// test user who meets constraint
+		Collection<AAAttribute> inputSet1 = new ArrayList<AAAttribute>();
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:foo", new Object[]{"bar"}));
+
+		Collection<AAAttribute> releaseSet1 = new ArrayList<AAAttribute>();
+		releaseSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		engine.filterAttributes(inputSet1, principal, "shar.example.edu");
+		assertEquals("ARP application test 1a: ARP not applied as expected.", releaseSet1, inputSet1);
+
+		// test user who does not meet constraint
+		Collection<AAAttribute> inputSet2 = new ArrayList<AAAttribute>();
+		inputSet2.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		Collection<AAAttribute> releaseSet2 = new ArrayList<AAAttribute>();
+
+		engine.filterAttributes(inputSet2, principal, "shar.example.edu");
+		assertEquals("ARP application test 1b: ARP not applied as expected.", releaseSet2, inputSet2);
+
+	}
 	
+	 /**
+	 * Use Case: must have an attribute value
+	 * Example:  release uid only if user has a specific value for attribute "foo"
+	 */
+	void arpConstraintTest2(ArpRepository repository, Parser.DOMParser parser) throws Exception {
 
+		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "         <Rule>" 
+				+ "             <Constraint"
+				+ "					attributeName=\"urn:mace:dir:attribute-def:foo\""
+				+ "					matchFunction=\"urn:mace:shibboleth:arp:matchFunction:stringValueMatch\""
+				+ "					matches=\"any\">bar</Constraint>"
+				+ "             <Target>" 
+				+ "                 <AnyTarget/>" 
+				+ "             </Target>"
+				+ "             <Attribute name=\"urn:mace:dir:attribute-def:uid\">"
+				+ "                 <AnyValue release=\"permit\"/>" 
+				+ "             </Attribute>" 
+				+ "         </Rule>"
+				+ " </AttributeReleasePolicy>";
+
+		// Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository);
+
+		Principal principal = new LocalPrincipal("TestPrincipal");
+
+		// test user who meets constraint
+		Collection<AAAttribute> inputSet1 = new ArrayList<AAAttribute>();
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:foo", new Object[]{"bar"}));
+
+		Collection<AAAttribute> releaseSet1 = new ArrayList<AAAttribute>();
+		releaseSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		engine.filterAttributes(inputSet1, principal, "shar.example.edu");
+		assertEquals("ARP application test 1a: ARP not applied as expected.", releaseSet1, inputSet1);
+
+		// test user who does not meet constraint
+		Collection<AAAttribute> inputSet2 = new ArrayList<AAAttribute>();
+		inputSet2.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		Collection<AAAttribute> releaseSet2 = new ArrayList<AAAttribute>();
+
+		engine.filterAttributes(inputSet2, principal, "shar.example.edu");
+		assertEquals("ARP application test 1b: ARP not applied as expected.", releaseSet2, inputSet2);
+
+	}
+	 /**
+	 * Use Case: must have only a specific attribute value
+	 * Example:  release uid only if user has a specific value for attribute "foo", but not if it has other values
+	 */
+	void arpConstraintTest3(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+
+		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "         <Rule>" 
+				+ "             <Constraint"
+				+ "					attributeName=\"urn:mace:dir:attribute-def:foo\""
+				+ "					matchFunction=\"urn:mace:shibboleth:arp:matchFunction:stringValueMatch\""
+				+ "					matches=\"all\">bar</Constraint>"
+				+ "             <Target>" 
+				+ "                 <AnyTarget/>" 
+				+ "             </Target>"
+				+ "             <Attribute name=\"urn:mace:dir:attribute-def:uid\">"
+				+ "                 <AnyValue release=\"permit\"/>" 
+				+ "             </Attribute>" 
+				+ "         </Rule>"
+				+ " </AttributeReleasePolicy>";
+
+		// Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository);
+
+		Principal principal = new LocalPrincipal("TestPrincipal");
+
+		// test user who meets constraint
+		Collection<AAAttribute> inputSet1 = new ArrayList<AAAttribute>();
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:foo", new Object[]{"bar"}));
+
+		Collection<AAAttribute> releaseSet1 = new ArrayList<AAAttribute>();
+		releaseSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		engine.filterAttributes(inputSet1, principal, "shar.example.edu");
+		assertEquals("ARP application test 1a: ARP not applied as expected.", releaseSet1, inputSet1);
+
+		// test user who does not meet constraint
+		Collection<AAAttribute> inputSet2 = new ArrayList<AAAttribute>();
+		inputSet2.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		Collection<AAAttribute> releaseSet2 = new ArrayList<AAAttribute>();
+
+		engine.filterAttributes(inputSet2, principal, "shar.example.edu");
+		assertEquals("ARP application test 1b: ARP not applied as expected.", releaseSet2, inputSet2);
+
+	}
+	 /**
+	 * Use Case: must have two  specific attribute values
+	 * Example:  release uid only if user has two specific value for attribute "foo", "bar" and "wee"
+	 */
+	void arpConstraintTest4(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+
+		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "         <Rule>" 
+				+ "             <Constraint"
+				+ "					attributeName=\"urn:mace:dir:attribute-def:foo\""
+				+ "					matchFunction=\"urn:mace:shibboleth:arp:matchFunction:stringValueMatch\""
+				+ "					matches=\"any\">bar</Constraint>"
+				+ "             <Constraint"
+				+ "					attributeName=\"urn:mace:dir:attribute-def:foo\""
+				+ "					matchFunction=\"urn:mace:shibboleth:arp:matchFunction:stringValueMatch\""
+				+ "					matches=\"any\">wee</Constraint>"
+				+ "             <Target>" 
+				+ "                 <AnyTarget/>" 
+				+ "             </Target>"
+				+ "             <Attribute name=\"urn:mace:dir:attribute-def:uid\">"
+				+ "                 <AnyValue release=\"permit\"/>" 
+				+ "             </Attribute>" 
+				+ "         </Rule>"
+				+ " </AttributeReleasePolicy>";
+
+		// Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository);
+
+		Principal principal = new LocalPrincipal("TestPrincipal");
+
+		// test user who meets constraint
+		Collection<AAAttribute> inputSet1 = new ArrayList<AAAttribute>();
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:foo", new Object[]{"bar"}));
+
+		Collection<AAAttribute> releaseSet1 = new ArrayList<AAAttribute>();
+		releaseSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		engine.filterAttributes(inputSet1, principal, "shar.example.edu");
+		assertEquals("ARP application test 1a: ARP not applied as expected.", releaseSet1, inputSet1);
+
+		// test user who does not meet constraint
+		Collection<AAAttribute> inputSet2 = new ArrayList<AAAttribute>();
+		inputSet2.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		Collection<AAAttribute> releaseSet2 = new ArrayList<AAAttribute>();
+
+		engine.filterAttributes(inputSet2, principal, "shar.example.edu");
+		assertEquals("ARP application test 1b: ARP not applied as expected.", releaseSet2, inputSet2);
+
+	}
+	
+	 /**
+	 * Use Case: must not have a specific attribute value
+	 * Example:  release uid only if user does not have a specific value for attribute "foo"
+	 */
+	void arpConstraintTest5(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+
+		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
+				+ "         <Rule>" 
+				+ "             <Constraint"
+				+ "					attributeName=\"urn:mace:dir:attribute-def:foo\""
+				+ "					matchFunction=\"urn:mace:shibboleth:arp:matchFunction:stringValueMatch\""
+				+ "					matches=\"none\">bar</Constraint>"
+				+ "             <Target>" 
+				+ "                 <AnyTarget/>" 
+				+ "             </Target>"
+				+ "             <Attribute name=\"urn:mace:dir:attribute-def:uid\">"
+				+ "                 <AnyValue release=\"permit\"/>" 
+				+ "             </Attribute>" 
+				+ "         </Rule>"
+				+ " </AttributeReleasePolicy>";
+
+		// Setup the engine
+		parser.parse(new InputSource(new StringReader(rawArp)));
+		Arp siteArp = new Arp();
+		siteArp.marshall(parser.getDocument().getDocumentElement());
+		repository.update(siteArp);
+		ArpEngine engine = new ArpEngine(repository);
+
+		Principal principal = new LocalPrincipal("TestPrincipal");
+
+		// test user who meets constraint
+		Collection<AAAttribute> inputSet1 = new ArrayList<AAAttribute>();
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+		inputSet1.add(new AAAttribute("urn:mace:dir:attribute-def:foo", new Object[]{"bar"}));
+
+		Collection<AAAttribute> releaseSet1 = new ArrayList<AAAttribute>();
+		releaseSet1.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		engine.filterAttributes(inputSet1, principal, "shar.example.edu");
+		assertEquals("ARP application test 1a: ARP not applied as expected.", releaseSet1, inputSet1);
+
+		// test user who does not meet constraint
+		Collection<AAAttribute> inputSet2 = new ArrayList<AAAttribute>();
+		inputSet2.add(new AAAttribute("urn:mace:dir:attribute-def:uid", new Object[]{"gpburdell"}));
+
+		Collection<AAAttribute> releaseSet2 = new ArrayList<AAAttribute>();
+
+		engine.filterAttributes(inputSet2, principal, "shar.example.edu");
+		assertEquals("ARP application test 1b: ARP not applied as expected.", releaseSet2, inputSet2);
+
+	}
 }
