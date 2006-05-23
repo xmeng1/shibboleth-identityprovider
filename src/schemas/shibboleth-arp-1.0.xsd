@@ -6,6 +6,13 @@
 			<xs:enumeration value="permit"/>
 		</xs:restriction>
 	</xs:simpleType>
+	<xs:simpleType name="MatchesType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="any"/>
+			<xs:enumeration value="all"/>
+			<xs:enumeration value="none"/>
+		</xs:restriction>
+	</xs:simpleType>
 	<xs:complexType name="AttributeType">
 		<xs:sequence>
 			<xs:element name="AnyValue" minOccurs="0">
@@ -35,6 +42,16 @@
 						<xs:complexType>
 							<xs:sequence>
 								<xs:element name="Description" type="xs:string" minOccurs="0"/>
+								<xs:element name="Constraint" minOccurs="0" maxOccurs="unbounded">
+									<xs:complexType mixed="true">
+										<xs:sequence minOccurs="0">
+											<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+										</xs:sequence>
+										<xs:attribute name="attributeName" type="xs:string" use="required"/>
+										<xs:attribute name="matchFunction" type="xs:anyURI" default="urn:mace:shibboleth:arp:matchFunction:stringMatch"/>
+										<xs:attribute name="matches" type="arp:MatchesType" default="any"/>
+									</xs:complexType>
+								</xs:element>
 								<xs:element name="Target">
 									<xs:complexType>
 										<xs:choice>
