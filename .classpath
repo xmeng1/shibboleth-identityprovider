@@ -32,5 +32,6 @@
 	<classpathentry kind="lib" path="testlib/nekohtml.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-1.1.jar"/>
+	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bsh-2.0b1.jar"/>
 	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
 </classpath>

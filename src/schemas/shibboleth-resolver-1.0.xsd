@@ -133,6 +133,19 @@
 						</xs:complexContent>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="ScriptletAttributeDefinition" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="resolver:BaseAttributeDefinition">
+								<xs:sequence>
+									<xs:element name="Scriptlet" type="xs:string" minOccurs="1" maxOccurs="1"/>
+								</xs:sequence>
+								<xs:attribute name="sourceName" type="xs:string" use="optional"/>
+								<xs:attribute name="valueHandler" type="xs:string" use="optional"/>
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="CustomAttributeDefinition" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:complexContent>

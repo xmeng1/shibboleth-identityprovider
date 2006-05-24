@@ -22,6 +22,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.MappedAttribut
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.PersistentIDAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.RegExAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SAML2PersistentID;
+import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ScriptletAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.SimpleAttributeDefinition;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.StaticDataConnector;
 
@@ -60,6 +61,8 @@ public class ResolutionPlugInFactory {
 		if (e.getTagName().equals("CompositeAttributeDefinition")) { return new CompositeAttributeDefinition(e); }
 
 		if (e.getTagName().equals("MappedAttributeDefinition")) { return new MappedAttributeDefinition(e); }
+		
+		if (e.getTagName().equals("ScriptletAttributeDefinition")) { return new ScriptletAttributeDefinition(e); }
 
 		log.error("Unrecognized PlugIn type: " + e.getTagName());
 		throw new AttributeResolverException("Failed to initialize PlugIn.");
