@@ -138,8 +138,7 @@ public class ServiceProviderMapper {
 					if (relyingParties.containsKey(parent.getName())) {
 						log.info("Found matching Relying Party for group (" + parent.getName() + ").");
 						return (RelyingParty) relyingParties.get(parent.getName());
-					}
-					else {
+					} else {
 						log.debug("Provider is a member of group (" + parent.getName()
 								+ "), but no matching Relying Party was found.");
 					}
@@ -160,17 +159,6 @@ public class ServiceProviderMapper {
 
 		// If we do have a default specified, use it...
 		return (RelyingParty) relyingParties.get(defaultParty);
-	}
-
-	/**
-	 * Returns the relying party for a legacy provider(the default)
-	 */
-	public RelyingParty getLegacyRelyingParty() {
-
-		RelyingParty relyingParty = getDefaultRelyingParty();
-		log.info("Request is from legacy shib SP.  Selecting default Relying Party: (" + relyingParty.getName() + ").");
-		return new LegacyWrapper((RelyingParty) relyingParty);
-
 	}
 
 	/**
@@ -296,7 +284,7 @@ public class ServiceProviderMapper {
 			} else {
 				log.debug("Relying party defaults to multiple assertions when pushing attributes.");
 			}
-			
+
 			// Relying Party wants assertions signed?
 			attribute = ((Element) partyConfig).getAttribute("signAssertions");
 			if (attribute != null && !attribute.equals("")) {
@@ -418,11 +406,6 @@ public class ServiceProviderMapper {
 			return identityProvider;
 		}
 
-		public boolean isLegacyProvider() {
-
-			return false;
-		}
-
 		public String[] getNameMapperIds() {
 
 			return (String[]) mappingIds.toArray(new String[0]);
@@ -466,9 +449,10 @@ public class ServiceProviderMapper {
 		}
 
 		public boolean singleAssertion() {
+
 			return singleAssertion;
 		}
-		
+
 		public boolean defaultToPOSTProfile() {
 
 			return defaultToPOST;
@@ -549,11 +533,6 @@ public class ServiceProviderMapper {
 			return wrapped.getName();
 		}
 
-		public boolean isLegacyProvider() {
-
-			return false;
-		}
-
 		public IdentityProvider getIdentityProvider() {
 
 			return wrapped.getIdentityProvider();
@@ -595,10 +574,10 @@ public class ServiceProviderMapper {
 		}
 
 		public boolean singleAssertion() {
-			
+
 			return wrapped.singleAssertion();
 		}
-		
+
 		public boolean defaultToPOSTProfile() {
 
 			return wrapped.defaultToPOSTProfile();
@@ -661,11 +640,6 @@ public class ServiceProviderMapper {
 			return wrapped.getNameMapperIds();
 		}
 
-		public boolean isLegacyProvider() {
-
-			return wrapped.isLegacyProvider();
-		}
-
 		public URL getAAUrl() {
 
 			return wrapped.getAAUrl();
@@ -692,10 +666,10 @@ public class ServiceProviderMapper {
 		}
 
 		public boolean singleAssertion() {
-			
+
 			return false;
 		}
-		
+
 		public boolean defaultToPOSTProfile() {
 
 			return true;
@@ -719,39 +693,6 @@ public class ServiceProviderMapper {
 		public boolean wantsSchemaHack() {
 
 			return wrapped.wantsSchemaHack();
-		}
-	}
-
-	/**
-	 * Relying party wrapper for Shibboleth &lt;=1.1 service providers.
-	 * 
-	 * @author Walter Hoehn
-	 */
-	class LegacyWrapper extends UnknownProviderWrapper implements RelyingParty {
-
-		LegacyWrapper(RelyingParty wrapped) {
-
-			super(wrapped, null);
-		}
-
-		public boolean isLegacyProvider() {
-
-			return true;
-		}
-
-		public String[] getNameMapperIds() {
-
-			return ((RelyingParty) wrapped).getNameMapperIds();
-		}
-
-		public URL getAAUrl() {
-
-			return ((RelyingParty) wrapped).getAAUrl();
-		}
-
-		public URI getDefaultAuthMethod() {
-
-			return ((RelyingParty) wrapped).getDefaultAuthMethod();
 		}
 	}
 

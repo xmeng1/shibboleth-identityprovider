@@ -52,12 +52,6 @@ public interface RelyingParty extends ServiceProvider {
 	public String[] getNameMapperIds();
 
 	/**
-	 * Returns a boolean indication of whether this {@link RelyingParty}is running &lt;= Shibboleth v1.1. Used to
-	 * ensure backward compatibility.
-	 */
-	public boolean isLegacyProvider();
-
-	/**
 	 * Returns the location of the Shibboleth Attribute Authority that should answer requests for this
 	 * {@link RelyingParty}.
 	 * 

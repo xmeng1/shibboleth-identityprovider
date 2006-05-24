@@ -31,7 +31,6 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Base64;
@@ -41,7 +40,6 @@ import org.opensaml.SAMLAttributeStatement;
 import org.opensaml.SAMLAudienceRestrictionCondition;
 import org.opensaml.SAMLAuthenticationStatement;
 import org.opensaml.SAMLAuthorityBinding;
-import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBrowserProfile;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
@@ -68,7 +66,7 @@ import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * <code>ProtocolHandler</code> implementation that responds to SSO flows as specified in "Shibboleth Architecture:
- * Protocols and Profiles". Includes a compatibility mode for dealing with Shibboleth v1.1 SPs.
+ * Protocols and Profiles".
  * 
  * @author Walter Hoehn
  */
@@ -118,10 +116,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			String remoteProviderId = request.getParameter("providerId");
 			// If the SP did not send a Provider Id, then assume it is a Shib
 			// 1.1 or older SP
-			if (remoteProviderId == null) {
-				relyingParty = support.getServiceProviderMapper().getLegacyRelyingParty();
-			} else if (remoteProviderId.equals("")) {
-				throw new InvalidClientDataException("Invalid service provider id.");
+			if (remoteProviderId == null || remoteProviderId.equals("")) {
+				throw new InvalidClientDataException("Invalid or missing service provider id.");
 			} else {
 				log.debug("Remote provider has identified itself as: (" + remoteProviderId + ").");
 				relyingParty = support.getServiceProviderMapper().getRelyingParty(remoteProviderId);
@@ -133,20 +129,18 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			// Make sure that the selected relying party configuration is appropriate for this
 			// acceptance URL
 			String acceptanceURL = request.getParameter("shire");
-			if (!relyingParty.isLegacyProvider()) {
 
-				if (descriptor == null) {
-					log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
-					relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
+			if (descriptor == null) {
+				log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
+				relyingParty = support.getServiceProviderMapper().getRelyingParty(null);
 
+			} else {
+				if (isValidAssertionConsumerURL(descriptor, acceptanceURL)) {
+					log.info("Supplied consumer URL validated for this provider.");
 				} else {
-					if (isValidAssertionConsumerURL(descriptor, acceptanceURL)) {
-						log.info("Supplied consumer URL validated for this provider.");
-					} else {
-						log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
-								+ relyingParty.getProviderId() + ").");
-						throw new InvalidClientDataException("Invalid assertion consumer service URL.");
-					}
+					log.error("Assertion consumer service URL (" + acceptanceURL + ") is NOT valid for provider ("
+							+ relyingParty.getProviderId() + ").");
+					throw new InvalidClientDataException("Invalid assertion consumer service URL.");
 				}
 			}
 
@@ -174,7 +168,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			boolean artifactProfile = useArtifactProfile(descriptor, acceptanceURL, relyingParty);
 
 			// SAML Artifact profile - don't even attempt this for legacy providers (they don't support it)
-			if (!relyingParty.isLegacyProvider() && artifactProfile) {
+			if (artifactProfile) {
 				respondWithArtifact(request, response, support, principal, relyingParty, descriptor, acceptanceURL,
 						nameId, authenticationMethod, authNSubject);
 
@@ -202,7 +196,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				getAuthNTime(request), authNSubject));
 
 		// Package attributes for push, if necessary.
-		if (!relyingParty.isLegacyProvider() && pushAttributes(true, relyingParty)) {
+		if (pushAttributes(true, relyingParty)) {
 			log.info("Resolving attributes for push.");
 			generateAttributes(support, principal, relyingParty, assertions, request);
 		}
@@ -286,7 +280,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 				getAuthNTime(request), authNSubject));
 
 		// Package attributes for push, if necessary.
-		if (!relyingParty.isLegacyProvider() && pushAttributes(pushAttributeDefault, relyingParty)) {
+		if (pushAttributes(pushAttributeDefault, relyingParty)) {
 			log.info("Resolving attributes for push.");
 			generateAttributes(support, principal, relyingParty, assertions, request);
 		}
@@ -316,19 +310,11 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		createPOSTForm(request, response, samlResponse.toBase64());
 
 		// Make transaction log entry
-		if (relyingParty.isLegacyProvider()) {
-			support.getTransactionLog().info(
-					"Authentication assertion issued to legacy provider (SHIRE: " + request.getParameter("shire")
-							+ ") on behalf of principal (" + principal.getName() + ") for resource ("
-							+ request.getParameter("target") + "). Name Identifier: (" + nameId.getName()
-							+ "). Name Identifier Format: (" + nameId.getFormat() + ").");
+		support.getTransactionLog().info(
+				"Authentication assertion issued to provider (" + relyingParty.getProviderId()
+						+ ") on behalf of principal (" + principal.getName() + "). Name Identifier: ("
+						+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
 
-		} else {
-			support.getTransactionLog().info(
-					"Authentication assertion issued to provider (" + relyingParty.getProviderId()
-							+ ") on behalf of principal (" + principal.getName() + "). Name Identifier: ("
-							+ nameId.getName() + "). Name Identifier Format: (" + nameId.getFormat() + ").");
-		}
 	}
 
 	private void generateAttributes(IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
@@ -424,30 +410,9 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		}
 
 		// Determine the correct issuer
-		String issuer = null;
-		if (relyingParty.isLegacyProvider()) {
+		String issuer = relyingParty.getIdentityProvider().getProviderId();
 
-			log.debug("Service Provider is running Shibboleth <= 1.1. Using old style issuer.");
-			if (relyingParty.getIdentityProvider().getSigningCredential() == null
-					|| relyingParty.getIdentityProvider().getSigningCredential().getX509Certificate() == null) { throw new SAMLException(
-					"Cannot serve legacy style assertions without an X509 certificate"); }
-			issuer = getHostNameFromDN(relyingParty.getIdentityProvider().getSigningCredential().getX509Certificate()
-					.getSubjectX500Principal());
-			if (issuer == null || issuer.equals("")) { throw new SAMLException(
-					"Error parsing certificate DN while determining legacy issuer name."); }
-
-		} else {
-			issuer = relyingParty.getIdentityProvider().getProviderId();
-		}
-
-		// For compatibility with pre-1.2 shibboleth targets, include a pointer to the AA
 		ArrayList<SAMLAuthorityBinding> bindings = new ArrayList<SAMLAuthorityBinding>();
-		if (relyingParty.isLegacyProvider()) {
-
-			SAMLAuthorityBinding binding = new SAMLAuthorityBinding(SAMLBinding.SOAP, relyingParty.getAAUrl()
-					.toString(), new QName(org.opensaml.XML.SAMLP_NS, "AttributeQuery"));
-			bindings.add(binding);
-		}
 
 		// Create the assertion
 		Vector<SAMLCondition> conditions = new Vector<SAMLCondition>(1);

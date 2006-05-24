@@ -182,17 +182,14 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 		// Fail if we can't honor SAML Subject Confirmation unless the only one supplied is
 		// bearer, in which case this is probably a Shib 1.1 query, and we'll let it slide for now.
-		// TODO: remove the compatibility with 1.1 and be strict about this?
 		boolean hasConfirmationMethod = false;
-		boolean hasOnlyBearer = true;
 		Iterator iterator = attributeQuery.getSubject().getConfirmationMethods();
 		while (iterator.hasNext()) {
 			String method = (String) iterator.next();
 			log.info("Request contains SAML Subject Confirmation method: (" + method + ").");
 			hasConfirmationMethod = true;
-			if (!method.equals(SAMLSubject.CONF_BEARER)) hasOnlyBearer = false;
 		}
-		if (hasConfirmationMethod && !hasOnlyBearer) { throw new SAMLException(SAMLException.REQUESTER,
+		if (hasConfirmationMethod) { throw new SAMLException(SAMLException.REQUESTER,
 				"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method(s)."); }
 
 		// Map Subject to local principal
