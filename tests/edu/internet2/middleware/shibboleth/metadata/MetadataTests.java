@@ -10,35 +10,41 @@
 package edu.internet2.middleware.shibboleth.metadata;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.util.Arrays;
 import java.util.Iterator;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.opensaml.XML;
+import org.opensaml.common.SAMLObjectTestCaseConfigInitializer;
+import org.opensaml.common.xml.ParserPoolManager;
+import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
+import org.opensaml.saml2.metadata.EntitiesDescriptor;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml2.metadata.KeyDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataCache;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.impl.CachingMetadataProvider;
+import org.opensaml.saml2.metadata.provider.impl.SoftReferenceMetadataCache;
+import org.opensaml.saml2.metadata.resolver.impl.URLResolver;
+import org.opensaml.xml.Configuration;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.InputSource;
 
-import edu.internet2.middleware.shibboleth.common.Constants;
-import edu.internet2.middleware.shibboleth.idp.IdPConfig;
-import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata;
 import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
- * Validation suite for the <code>Metadata</code> interface.
+ * Validation suite for the SAML Metadata engine.
  * 
  * @author Walter Hoehn
  */
 
 public class MetadataTests extends TestCase {
+
+	// TODO add back test for "inline" metadata
+	// TODO query for extension/shib-proprietary metadata
 
 	private Parser.DOMParser parser = new Parser.DOMParser(true);
 
@@ -61,140 +67,96 @@ public class MetadataTests extends TestCase {
 
 		super.setUp();
 
-	}
+		// TODO delete this stuff when the library can do default initialization
 
-	public void testBasicShibbolethXML() {
+		Class clazz = SAMLObjectTestCaseConfigInitializer.class;
+		ParserPoolManager ppMgr = ParserPoolManager.getInstance();
 
-		try {
-			Metadata metadata = new XMLMetadata(new File("data/sites1.xml").toURL().toString());
+		// Common Object Provider Configuration
+		Document commonConfig = ppMgr.parse(clazz.getResourceAsStream("/common-config.xml"));
+		Configuration.load(commonConfig);
 
-			assertNotNull("Unable to find test provider", metadata.lookup("bahsite"));
-			assertNotNull("Unable to find test provider", metadata.lookup("rootsite"));
+		// SAML 1.X Assertion Object Provider Configuration
+		Document saml1AssertionConfig = ppMgr.parse(clazz.getResourceAsStream("/saml1-assertion-config.xml"));
+		Configuration.load(saml1AssertionConfig);
 
-			// This should probably be made more robust at some point
-			assertNotNull("Incorrect provider role.", metadata.lookup("bahsite").getSPSSODescriptor(
-					XML.SAML11_PROTOCOL_ENUM));
+		// SAML 1.X Protocol Object Provider Configuration
+		Document saml1ProtocolConfig = ppMgr.parse(clazz.getResourceAsStream("/saml1-protocol-config.xml"));
+		Configuration.load(saml1ProtocolConfig);
 
-			assertEquals("Incorrect parsing of assertion consumer URL.", ((Endpoint) metadata.lookup("bahsite")
-					.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM).getAssertionConsumerServiceManager().getEndpoints()
-					.next()).getLocation(), "http://foo.com/SHIRE");
+		// SAML 2.0 Metadata Object Provider Configuration
+		Document saml2mdConfig = ppMgr.parse(clazz.getResourceAsStream("/saml2-metadata-config.xml"));
+		Configuration.load(saml2mdConfig);
 
-			Iterator keys = metadata.lookup("rootsite").getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM)
-					.getKeyDescriptors();
-			KeyDescriptor key1 = (KeyDescriptor) keys.next();
-			KeyDescriptor key2 = (KeyDescriptor) keys.next();
-			assertTrue("Incorrect attribute requester key parsing.", key1 != null && key2 != null);
+		// SAML 2.0 Assertion Object Provider Configuration
+		Document saml2assertionConfig = ppMgr.parse(clazz.getResourceAsStream("/saml2-assertion-config.xml"));
+		Configuration.load(saml2assertionConfig);
 
-			String[] control = new String[]{
-					"C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test2.memphis.edu",
-					"C=US, ST=Tennessee, L=Memphis, O=The University of Memphis, OU=Information Systems, CN=test1.memphis.edu"};
-			String[] meta = new String[]{key1.getKeyInfo().itemKeyName(0).getKeyName(),
-					key2.getKeyInfo().itemKeyName(0).getKeyName()};
-			Arrays.sort(meta);
-			Arrays.sort(control);
-			assertTrue("Encountered unexpected key names", Arrays.equals(control, meta));
-		} catch (Exception e) {
-			fail("Failed to correctly load metadata: " + e);
-		}
+		// SAML 2.0 Protocol Object Provider Configuration
+		Document saml2protocolConfig = ppMgr.parse(clazz.getResourceAsStream("/saml2-protocol-config.xml"));
+		Configuration.load(saml2protocolConfig);
+
 	}
 
 	public void testBasicSAMLXML() {
 
 		try {
-			Metadata metadata = new XMLMetadata(new File("src/conf/IQ-metadata.xml").toURL().toString());
+			// Load metadata
+			MetadataCache cache = new SoftReferenceMetadataCache(60L, (short) 5, 60L);
+			cache
+					.addMetadataResolver(new URLResolver("foobar", new File("src/conf/IQ-metadata.xml").toURL()
+							.toString()));
+			MetadataProvider metadata = new CachingMetadataProvider(cache);
 
-			EntityDescriptor entity = metadata.lookup("urn:mace:inqueue:example.edu");
-
+			// Basic Query
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn:mace:inqueue:example.edu");
 			assertNotNull("Unable to find test provider", entity);
-			assertEquals("Descriptor group is wrong.", entity.getEntitiesDescriptor().getName(), "urn:mace:inqueue");
 
-			IDPSSODescriptor idp = entity.getIDPSSODescriptor(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS);
-			AttributeAuthorityDescriptor aa = entity.getAttributeAuthorityDescriptor(XML.SAML11_PROTOCOL_ENUM);
-			SPSSODescriptor sp = entity.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
+			// Check the parent descriptor
+			assertNotNull("Entity parent access is broken: no parent", entity.getParent());
+			assertTrue("Entity parent access is broken: wrong parent type.",
+					entity.getParent() instanceof EntitiesDescriptor);
+			assertEquals("Descriptor group is wrong.", ((EntitiesDescriptor) entity.getParent()).getName(),
+					"urn:mace:inqueue");
 
+			// Check descriptor roles
+			IDPSSODescriptor idp = entity.getIDPSSODescriptor().get(0);
+			AttributeAuthorityDescriptor aa = entity.getAttributeAuthorityDescriptor().get(0);
+			SPSSODescriptor sp = entity.getSPSSODescriptor().get(0);
 			assertNotNull("Missing IdP provider role.", idp);
 			assertNotNull("Missing AA provider role.", aa);
 			assertNotNull("Missing SP provider role.", sp);
 
-			assertEquals("Incorrect assertion consumer service location.", ((Endpoint) sp
-					.getAssertionConsumerServiceManager().getEndpoints().next()).getLocation(),
-					"https://wayf.internet2.edu/Shibboleth.sso/SAML/POST");
+			// SP-specific checks
+			assertEquals("Incorrect assertion consumer service location.", sp.getAssertionConsumerServices().get(0)
+					.getLocation(), "https://wayf.internet2.edu/Shibboleth.sso/SAML/POST");
 
-			Iterator keys = sp.getKeyDescriptors();
-			KeyDescriptor key = (KeyDescriptor) keys.next();
-			assertNotNull("Incorrect attribute requester key parsing.", key);
-
-			String[] control = new String[]{"wayf.internet2.edu"};
-			String[] meta = new String[]{key.getKeyInfo().itemKeyName(0).getKeyName()};
-			Arrays.sort(meta);
-			Arrays.sort(control);
-			assertTrue("Encountered unexpected key names", Arrays.equals(control, meta));
 		} catch (Exception e) {
+			e.printStackTrace();
 			fail("Failed to correctly load metadata: " + e);
 		}
 	}
 
-	public void testInlineSAMLXML() {
+	public void testKeyDescriptorLookup() {
 
 		try {
+			// Load metadata
+			MetadataCache cache = new SoftReferenceMetadataCache(60L, (short) 5, 60L);
+			cache
+					.addMetadataResolver(new URLResolver("foobar", new File("src/conf/IQ-metadata.xml").toURL()
+							.toString()));
+			MetadataProvider metadata = new CachingMetadataProvider(cache);
 
-			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-			docFactory.setNamespaceAware(true);
-			Document placeHolder = docFactory.newDocumentBuilder().newDocument();
+			// Grab the Key Descriptors for an entity descriptor
+			Iterator<KeyDescriptor> keys = metadata.getEntityDescriptor("urn:mace:inqueue:example.edu")
+					.getSPSSODescriptor().get(0).getKeyDescriptors().iterator();
 
-			Element providerNode = placeHolder.createElementNS(IdPConfig.configNameSpace, "MetadataProvider");
+			KeyDescriptor key = keys.next();
 
-			Document xmlConfig = parser.parse(new InputSource(new FileInputStream("src/conf/IQ-metadata.xml")));
-			Node metadataNode = placeHolder.importNode(xmlConfig.getDocumentElement(), true);
-			providerNode.appendChild(metadataNode);
+			assertTrue("Encountered an unexpected number of key names", (key.getKeyInfo().getKeyNames().size() == 1));
+			assertEquals("Encountered unexpected key names", "wayf.internet2.edu", key.getKeyInfo().getKeyNames()
+					.get(0));
 
-			Metadata metadata = new XMLMetadata(providerNode);
-
-			EntityDescriptor entity = metadata.lookup("urn:mace:inqueue:example.edu");
-
-			assertNotNull("Unable to find test provider", entity);
-			assertEquals("Descriptor group is wrong.", entity.getEntitiesDescriptor().getName(), "urn:mace:inqueue");
-
-			IDPSSODescriptor idp = entity.getIDPSSODescriptor(edu.internet2.middleware.shibboleth.common.XML.SHIB_NS);
-			AttributeAuthorityDescriptor aa = entity.getAttributeAuthorityDescriptor(XML.SAML11_PROTOCOL_ENUM);
-			SPSSODescriptor sp = entity.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
-
-			assertNotNull("Missing IdP provider role.", idp);
-			assertNotNull("Missing AA provider role.", aa);
-			assertNotNull("Missing SP provider role.", sp);
-
-			assertEquals("Incorrect assertion consumer service location.", ((Endpoint) sp
-					.getAssertionConsumerServiceManager().getEndpoints().next()).getLocation(),
-					"https://wayf.internet2.edu/Shibboleth.sso/SAML/POST");
-
-			Iterator keys = sp.getKeyDescriptors();
-			KeyDescriptor key = (KeyDescriptor) keys.next();
-			assertNotNull("Incorrect attribute requester key parsing.", key);
-
-			String[] control = new String[]{"wayf.internet2.edu"};
-			String[] meta = new String[]{key.getKeyInfo().itemKeyName(0).getKeyName()};
-			Arrays.sort(meta);
-			Arrays.sort(control);
-			assertTrue("Encountered unexpected key names", Arrays.equals(control, meta));
-		} catch (Exception e) {
-			fail("Failed to correctly load metadata: " + e);
-		}
-	}
-
-	public void testExtensionSAMLXML() {
-
-		try {
-			Metadata metadata = new XMLMetadata(new File("data/metadata10.xml").toURL().toString());
-
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			assertNotNull("Unable to find test provider", entity);
-
-			AttributeRequesterDescriptor ar = entity.getAttributeRequesterDescriptor(XML.SAML11_PROTOCOL_ENUM);
-			assertNotNull("Missing AR provider role.", ar);
-
-			Iterator formats = ar.getNameIDFormats();
-			assertTrue("Encountered unexpected NameIDFormat", formats.hasNext()
-					&& Constants.SHIB_NAMEID_FORMAT_URI.equals(formats.next()));
 		} catch (Exception e) {
 			fail("Failed to correctly load metadata: " + e);
 		}
