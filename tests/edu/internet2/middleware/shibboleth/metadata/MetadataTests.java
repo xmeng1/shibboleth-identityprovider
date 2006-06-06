@@ -151,8 +151,9 @@ public class MetadataTests extends TestCase {
 			Iterator<KeyDescriptor> keys = metadata.getEntityDescriptor("urn:mace:inqueue:example.edu")
 					.getSPSSODescriptor().get(0).getKeyDescriptors().iterator();
 
+			// Make sure we have the expected key name
 			KeyDescriptor key = keys.next();
-
+			assertNotNull("No key descriptors found.", key);
 			assertTrue("Encountered an unexpected number of key names", (key.getKeyInfo().getKeyNames().size() == 1));
 			assertEquals("Encountered unexpected key names", "wayf.internet2.edu", key.getKeyInfo().getKeyNames()
 					.get(0));
