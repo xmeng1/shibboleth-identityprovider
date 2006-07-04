@@ -193,20 +193,6 @@
 		</junit>
 	</target>
 
-	<target name="test-SP" depends="compile-tests">
-		<junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
-			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
-		    <classpath>
-				<fileset dir="${custom.libs}">
-					<include name="*.jar"/>
-				</fileset>
-		        <path refid="test.path"/>
-			</classpath>
-			<formatter type="plain" />
-			<test name="edu.internet2.middleware.shibboleth.aap.AAPTests" />
-		</junit>
-	</target>
-
 
 	<!-- Tomcat Management -->
 	<target name="setupTomcatTasks" depends="init">
@@ -254,22 +240,17 @@
 	<target name="exampleCertificates">
 		<!--
 		This target provides an example of the generation of
-		self-signed Certificates for the IdP and SP. You may
+		self-signed Certificates for the IdP. You may
 		change the cn= and use it to generate new identities
 		when you want to replace "example.org" with your real
 		organization dns. However,the generated key and 
 		certificate also have to be defined to the Credentials
-		of the IdP and SP config files and added to the Metadata.
+		of the IdP config files and added to the Metadata.
 		-->
 		<genkey alias="tomcat" storepass="exampleorg"
 			keystore="${tomcat.home}/conf/idp-example.jks"
 			keyalg="RSA" validity="365"
 			dname="cn=idp.example.org, o=example.org, c=US"
-			/>
-		<genkey alias="tomcat" storepass="exampleorg"
-			keystore="${tomcat.home}/conf/sp-example.jks"
-			keyalg="RSA" validity="365"
-			dname="cn=sp.example.org, o=example.org, c=US"
 			/>
 	</target>
 
@@ -301,41 +282,6 @@
 		<delete file="${configroot}/idp.xml"/>
 	</target>
 
-	<target name="package-wayf" depends="compile" description="Creates the WAYF war and moves it to ${dist}">
-        <copy file="${appconfig}/schemas.properties" todir="${approot}/WEB-INF/classes/conf"/>
-        <copy file="${appconfig}/wayfconfig.xml" todir="${approot}/WEB-INF/classes/conf"/>
-    	<copy file="${appconfig}/log4j.properties" tofile="${build}/log4j.properties" failonerror="false"/>
-            
-		<war warfile="${dist}/${distnameWayf}.war" webxml="${configroot}/wayf.xml" basedir="${approot}" update="no"/>
-	</target>
-
-	<target name="package-sp" depends="compile, install.url" description="Creates the Java SP war and moves it to ${dist}">
-		<!-- copy values to deployment descriptor -->
-		<copy file="${configroot}/${sp.deployment.descriptor}" tofile="${configroot}/sp.xml" overwrite="true" />
-		<replace file="${configroot}/sp.xml" token="$SP_HOME$" value="${sp.home.url}" />
-
-        <!-- package extensions -->
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-package"/>
-            <param name="ext.filesystem.home" value="${sp.home}"/>
-            <param name="ext.home.token" value="$SP_HOME$"/>
-        </antcall>
-        
-		<!-- create the war -->
-		<war warfile="${dist}/${sp.webapp.name}.war" webxml="${configroot}/sp.xml" basedir="${approot}" update="no">
-			<!-- Grab any custom extension libraries -->
-			<lib dir="${custom.libs}"/>
-
-			<!-- Grab any web material from custom extensions -->
-			<fileset dir="${custom.webapges}"/>
-		</war>
-
-		<!-- clean up generated descriptor -->
-		<delete file="${configroot}/sp.xml"/>
-	</target>
-
-
 	<!-- Install Shibboleth -->
 	<target name="install.init">
 		<taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}" />
@@ -344,8 +290,6 @@
 
 	<target name="install.url">
 		<taskdef name="urlconvert" classname="edu.internet2.middleware.shibboleth.utils.ant.URLConvert" classpath="${build}"/>
-		<urlconvert path="${idp.home}" addProperty="idp.home.url"/>
-		<urlconvert path="${sp.home}" addProperty="sp.home.url"/>
 	</target>
 
 	<target name="install" depends="init, install.init" description="Install Shibboleth">
@@ -360,19 +304,6 @@
 			</then>
 		</if>
 	</target>
-	
-	<target name="installx" depends="init, install.init" description="Interactive SP Install">
-		<if>
-			<xinput type="confirm" defaultvalue="y">Do you want to install the Shibboleth Service Provider?</xinput>
-			<then>
-				<input message="What name do you want to use for the Service Provider web application? [default: ${sp.webapp.name}]" 
-					addproperty="sp.webapp.name.input" defaultValue="${sp.webapp.name}" />
-				<var name="sp.webapp.name" value="${sp.webapp.name.input}" />
-
-				<antcall target="install.sp" />
-			</then>
-		</if>
-	</target>
 
 	<target name="install.idp" depends="init, install.init">
 		<xinput message="Deploying the java web application.  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
@@ -383,17 +314,6 @@
 		<var name="idp.install-type" value="${idp.install-type.input}" />
 
 		<antcall target="install.idp.${idp.install-type}" />
-	</target>
-	
-	<target name="install.sp" depends="init, install.init">
-		<xinput message="Deploying the java web application.  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
-			addproperty="sp.install-type.input" type="menu" casesensitive="no" defaultValue="${sp.install-type}">
-			<xoption value="filesystem.prompt">filesystem</xoption>
-			<xoption>manager</xoption>
-		</xinput>
-		<var name="sp.install-type" value="${sp.install-type.input}" />
-
-		<antcall target="install.sp.${sp.install-type}" />
 	</target>
 
 	<!-- Prompt user for filesystem installation options and save them to build.properties -->
@@ -421,34 +341,6 @@
 		</if>
 
 		<antcall target="install.idp.filesystem" />
-		<antcall target="savePropertyFile" />
-	</target>
-	
-	<!-- Prompt user for filesystem installation options and save them to build.properties -->
-	<target name="install.sp.filesystem.prompt" depends="init, install.init">
-		<input message="Select a home directory for the Shibboleth Service Provider [default: ${sp.home}]"
-			addproperty="sp.home.input" defaultvalue="${sp.home}" />
-		<var name="sp.home" value="${sp.home.input}" />
-		<input message="Enter tomcat home directory [default: ${tomcat.home}]"
-			addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
-		<var name="tomcat.home" value="${tomcat.home.input}" />
-
-		<if>
-			<available file="${sp.home}/etc" />
-			<then>
-				<echo>--------------------------------------------------------------------------------------</echo>
-				<echo>---</echo>
-				<echo>---   NOTE:  Existing Service Provider configuration at ${sp.home}/etc ${line.separator}---   will not be overwritten.</echo>
-				<echo>---</echo>
-				<echo>--------------------------------------------------------------------------------------</echo>
-				<property name="copy-sp-conf" value="n" />
-			</then>
-			<else>
-				<property name="copy-sp-conf" value="y" />
-			</else>
-		</if>
-
-		<antcall target="install.sp.filesystem" />
 		<antcall target="savePropertyFile" />
 	</target>
 
@@ -501,52 +393,6 @@
 		</if>
 	</target>
 
-	<!-- Install Shibboleth SP to filesystem using the properties in build.properties -->
-	<target name="install.sp.filesystem" depends="init, install.init, build-util, install.url, package-sp" 
-		description="Install Shibboleth SP to filesystem using the properties in build.properties">
-
-		<!-- Move SP war to Tomcat deployment directory -->
-		<copy file="${dist}/${sp.webapp.name}.war" tofile="${tomcat.home}/webapps/${sp.webapp.name}.war" />
-		
-		<!-- Move Shib Filter jar to Tomcat shared directory -->
-		<copy file="${distlibs}/shib-filter.jar" tofile="${tomcat.home}/shared/lib/shib-filter.jar" />
-		
-		<!-- Copy test secure application to Tomcat -->
-		<copy file="${root}/data/secure.war" tofile="${tomcat.home}/webapps/secure.war" />
-
-		<!-- copy sp jars and utilities -->
-		<copy todir="${sp.home}/lib">
-			<fileset dir="lib" includesfile="conf/idp-lib.include" />
-		</copy>
-
-		<copy todir="${sp.home}/bin">
-			<fileset dir="bin"/>
-		</copy>
-		<chmod dir="${sp.home}/bin" perm="ug+rx" includes="**/*"/>
-
-		<mkdir dir="${sp.home}/logs" />
-
-		<!-- copy sp configuration -->
-		<if>
-			<or>
-				<equals arg1="${copy-sp-conf}" arg2="y" />
-				<not> <available file="${sp.home}/etc" /> </not>
-			</or>
-			<then>
-				<delete dir="${sp.home}/etc" />
-				<antcall target="install.sp.filesystem.config" />
-			</then>
-		</if>
-
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-install-filesystem"/>
-            <param name="ext.filesystem.home" value="${sp.home}"/>
-            <param name="ext.home.token" value="$SP_HOME$"/>
-        </antcall>      
-	</target>
-
-
 	<!-- copy shibboleth configuration to $IDP_HOME/etc, overwriting any existing configuration -->
 	<target name="install.idp.filesystem.config" depends="init, install.init, install.url">
 		<mkdir dir="${idp.home}/etc" />
@@ -556,16 +402,6 @@
 		<move file="${idp.home}/etc/dist.idp.xml" tofile="${idp.home}/etc/idp.xml" overwrite="true" />
 		<replace file="${idp.home}/etc/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
 		<replace file="${idp.home}/etc/idp.xml" token="$IDP_WEBAPP_NAME$" value="${idp.webapp.name}" />
-	</target>
-
-	<!-- copy SP configuration to $SP_HOME$/etc, overwriting any existing configuration -->
-	<target name="install.sp.filesystem.config" depends="init, install.init">
-		<mkdir dir="${sp.home}/etc" />
-		<copy todir="${sp.home}/etc" overwrite="true">
-			<fileset dir="${src}/conf" includesfile="conf/sp-conf.include"/>
-		</copy>
-		<move file="${sp.home}/etc/dist.sp-iqidp.xml" tofile="${sp.home}/etc/sp.xml" overwrite="true" />
-		<replace file="${sp.home}/etc/sp.xml" token="$SP_HOME$" value="${sp.home.url}" />
 	</target>
 
 	<!-- install Shibboleth-IdP war using tomcat's manager app -->
@@ -594,9 +430,7 @@
 	<target name="savePropertyFile">
 		<propertyfile file="build.properties">
 			<entry key="idp.home" value="${idp.home}" />
-			<entry key="sp.home" value="${sp.home}" />
 			<entry key="idp.webapp.name" value="${idp.webapp.name}" />
-			<entry key="sp.webapp.name" value="${sp.webapp.name}" />
 			<entry key="idp.install-type" value="${idp.install-type}" />
 			<entry key="tomcat.home" value="${tomcat.home}" />
 			<entry key="tomcat.url" value="${tomcat.url}" />
@@ -604,14 +438,13 @@
 			<entry key="tomcat.password" value="${tomcat.password}" />
 		</propertyfile>
 	</target>
+	
 	<!-- For IDE development, run this target first to delete all
 	directories generated by the install process before
 	recreating and reinstalling everything. -->
 	<target name="clean-install" depends="init" 
 		description="Delete old configuration and Tomcat webapp directories.">
 		<delete dir="${idp.home}" />
-		<delete dir="${sp.home}" />
 		<delete dir="${tomcat.home}/webapps/${idp.webapp.name}" />
-		<delete dir="${tomcat.home}/webapps/${sp.webapp.name}" />
 	</target>
 </project>
