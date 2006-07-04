@@ -25,25 +25,26 @@
 	<property name="year" value="2002-2005"/>
 	<property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
 
-
 	<!-- antcontrib tasks -->
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${buildlibs}/ant-contrib.jar"/>
 
 	<!-- Import the tasks for building custom extensions -->
 	<import file="${custom}/extension-build.xml"/>
 
+	
 	<!-- Construct the CLASSPATH -->
 	<path id="build.path">
 		<pathelement location="${build}" />
-		<fileset dir="${endorsed}">
-			<include name="**/*.jar" />
-		</fileset>
-		<fileset dir="${libdir}">
-			<include name="**/*.jar" />
-		</fileset>
-		<fileset dir="${buildlibs}">
-			<include name="**/*.jar" />
-		</fileset>
+		<fileset dir="${endorsed}" includes="**/*.jar" />
+		<fileset dir="${libdir}" includes="**/*.jar" />
+		<fileset dir="${buildlibs}" includes="**/*.jar" />
+	</path>
+	
+
+	<!-- Add to the classpath for unit tests -->
+	<path id="test.path">
+		<path refid="build.path"/>
+		<pathelement location="${tests}"/>
 	</path>
 
 
@@ -66,7 +67,7 @@
 
 
 	<!-- This target should be run before checking code into the repository -->
-	<target name="pre-checkin" depends="compile, test-all, clean-all" />
+	<target name="pre-checkin" depends="compile, test, clean-all" />
 
 
 	<!-- Compile classes and move them to ${build} -->
@@ -108,59 +109,7 @@
 		<jar jarfile="${distlibs}/shib-util.jar" basedir="${build}" />
 	</target>
 
-	<!-- Cleanup after the build, test, and distribution processes -->
-	<target name="clean" depends="clean-all" />
-
-    <target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util"/>
 	
-    <target name="clean-build">
-		<delete dir="${build}" />
-		<delete dir="${custom.libs}"/>
-		<delete dir="${custom.webapges}"/>
-	    <antcall target="ext-invoke">
-	    	<param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-clean-build"/>   
-	    </antcall>
-	</target>
-	
-    <target name="clean-test">
-		<delete>
-			<fileset dir="${root}">
-				<include name="**/TEST*.txt" />
-			</fileset>
-		</delete>
-	</target>
-	
-    <target name="clean-dist">
-		<delete dir="${dist}" />
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-clean-dist"/>   
-        </antcall>   
-	</target>
-	
-    <target name="clean-javadocs">
-		<delete dir="${javadocs}" />
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-clean-javadocs"/>   
-        </antcall>
-	</target>
-	
-    <target name="clean-util">
-		<delete>
-			<fileset dir="${buildlibs}">
-				<include name="shib-util.jar" />
-			</fileset>
-		</delete>
-	</target>
-
-	<!-- Add to the classpath for unit tests -->
-	<path id="test.path">
-		<path refid="build.path"/>
-		<pathelement location="${tests}"/>
-	</path>
-
 	<!-- Compile classes needed for unit testing -->
 	<target name="compile-tests" depends="compile">
 		<javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
@@ -168,10 +117,7 @@
 		</javac>
 	</target>
 
-	<!-- Run automated tests on compiled code -->
-	<target name="test-all" depends="test-IdP" />
-
-	<target name="test-IdP" depends="compile-tests">
+	<target name="test" depends="compile-tests">
 		<junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
 			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
 			<classpath>
@@ -284,12 +230,12 @@
 
 	<!-- Install Shibboleth -->
 	<target name="install.init">
-		<taskdef name="xinput" classname="edu.internet2.middleware.shibboleth.utils.ant.XInput" classpath="${build}" />
-		<typedef name="xoption" classname="edu.internet2.middleware.shibboleth.utils.ant.XInputOption" classpath="${build}" />
+		<taskdef name="xinput" classname="edu.internet2.middleware.ant.XInput" classpath="${build}" />
+		<typedef name="xoption" classname="edu.internet2.middleware.ant.XInputOption" classpath="${build}" />
 	</target>
 
 	<target name="install.url">
-		<taskdef name="urlconvert" classname="edu.internet2.middleware.shibboleth.utils.ant.URLConvert" classpath="${build}"/>
+		<taskdef name="urlconvert" classname="edu.internet2.middleware.ant.URLConvert" classpath="${build}"/>
 	</target>
 
 	<target name="install" depends="init, install.init" description="Install Shibboleth">
@@ -439,6 +385,54 @@
 		</propertyfile>
 	</target>
 	
+
+	<!-- Cleanup after the build, test, and distribution processes -->
+	<target name="clean" depends="clean-all" />
+
+    <target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util"/>
+	
+    <target name="clean-build">
+		<delete dir="${build}" />
+		<delete dir="${custom.libs}"/>
+		<delete dir="${custom.webapges}"/>
+	    <antcall target="ext-invoke">
+	    	<param name="exts.dir" value="${custom}"/>
+            <param name="ext.build.function" value="ext-clean-build"/>   
+	    </antcall>
+	</target>
+	
+    <target name="clean-test">
+		<delete>
+			<fileset dir="${root}">
+				<include name="**/TEST*.txt" />
+			</fileset>
+		</delete>
+	</target>
+	
+    <target name="clean-dist">
+		<delete dir="${dist}" />
+        <antcall target="ext-invoke">
+            <param name="exts.dir" value="${custom}"/>
+            <param name="ext.build.function" value="ext-clean-dist"/>   
+        </antcall>   
+	</target>
+	
+    <target name="clean-javadocs">
+		<delete dir="${javadocs}" />
+        <antcall target="ext-invoke">
+            <param name="exts.dir" value="${custom}"/>
+            <param name="ext.build.function" value="ext-clean-javadocs"/>   
+        </antcall>
+	</target>
+	
+    <target name="clean-util">
+		<delete>
+			<fileset dir="${buildlibs}">
+				<include name="shib-util.jar" />
+			</fileset>
+		</delete>
+	</target>
+	
 	<!-- For IDE development, run this target first to delete all
 	directories generated by the install process before
 	recreating and reinstalling everything. -->
@@ -447,4 +441,5 @@
 		<delete dir="${idp.home}" />
 		<delete dir="${tomcat.home}/webapps/${idp.webapp.name}" />
 	</target>
+	
 </project>
