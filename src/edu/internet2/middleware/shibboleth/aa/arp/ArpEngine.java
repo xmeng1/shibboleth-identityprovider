@@ -168,6 +168,10 @@ public class ArpEngine {
 	}
 
 	private Arp createEffectiveArp(Principal principal, String requester) throws ArpProcessingException {
+		return createEffectiveArp(principal, requester, null);
+	}
+	
+	private Arp createEffectiveArp(Principal principal, String requester, Collection<? extends ArpAttribute> attributes) throws ArpProcessingException {
 
 		try {
 			Arp effectiveArp = new Arp(principal);
@@ -189,7 +193,7 @@ public class ArpEngine {
 			}
 
 			for (int i = 0; userPolicies.length > i; i++) {
-				Collection<Rule> rules = userPolicies[i].getMatchingRules(requester);
+				Collection<Rule> rules = userPolicies[i].getMatchingRules(requester, attributes);
 
 				for (Rule rule : rules) {
 					effectiveArp.addRule(rule);
@@ -245,6 +249,35 @@ public class ArpEngine {
 	}
 
 	/**
+	 * Given an attribute request and a set of attributes that are planned to be 
+	 * resolved (either those specified in the request or the result of 
+	 * listPossibleReleaseAttributes()), determine what attributes may need to 
+	 * be resolved in order to properly evaluate any applicable constraints.
+	 */
+	public Set<URI> listRequiredConstraintAttributes(Principal principal, String requester, Collection<URI> attributeNames) throws ArpProcessingException {
+		HashSet<URI> constraintAttributes = new HashSet<URI>();
+		
+		Collection<Rule> rules = createEffectiveArp(principal, requester).getAllRules();
+		ArpRules: for (Rule rule : rules) {
+			for (Rule.Attribute attr : rule.getAttributes()) {
+				if (attributeNames.contains(attr.getName())) {
+					// this rule deals with an attribute we might care about, so add the constraint attributes
+					for (Rule.Constraint constraint : rule.getConstraints()) {
+						constraintAttributes.add(constraint.getAttributeName());
+					}
+					
+					// we have the constraint attributes, move on to the next rule
+					continue ArpRules;
+				}
+			}
+			
+		}
+		
+		return constraintAttributes;
+	}
+	
+	
+	/**
 	 * Applies all applicable ARPs to a set of attributes.
 	 * 
 	 * @return the attributes to be released
@@ -270,7 +303,7 @@ public class ArpEngine {
 		for (Iterator<? extends ArpAttribute> nameIterator = attributes.iterator(); nameIterator.hasNext();) {
 			attributeNames.add(nameIterator.next().getName());
 		}
-		Collection<Rule> rules = createEffectiveArp(principal, requester).getAllRules();
+		Collection<Rule> rules = createEffectiveArp(principal, requester, attributes).getAllRules();
 		Set<Rule.Attribute> applicableRuleAttributes = new HashSet<Rule.Attribute>();
 		for (Rule rule : rules) {
 			Collection<Rule.Attribute> ruleAttributes = rule.getAttributes();

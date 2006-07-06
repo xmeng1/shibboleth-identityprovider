@@ -251,15 +251,17 @@ public class Arp {
 	 * 
 	 * @param requester
 	 *            the SHAR for this request
+	 * @param attributes
+	 *            ARP attributes of the user
 	 * @return the matching <code>Rule</code> objects
 	 */
-	public Collection<Rule> getMatchingRules(String requester) {
+	public Collection<Rule> getMatchingRules(String requester, Collection<? extends ArpAttribute> attributes) {
 
 		List<Rule> effectiveSet = new ArrayList<Rule>();
 		Iterator iterator = rules.iterator();
 		while (iterator.hasNext()) {
 			Rule rule = (Rule) iterator.next();
-			if (rule.matchesRequest(requester)) {
+			if (rule.matchesRequest(requester, attributes)) {
 				effectiveSet.add(rule);
 			}
 		}

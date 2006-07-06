@@ -48,6 +48,7 @@ public class Rule {
 	private Target target;
 	private static Logger log = Logger.getLogger(Rule.class.getName());
 	private ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+	private ArrayList<Constraint> constraints = new ArrayList<Constraint>();
 	private NodeList attributeReferences;
 
 	private URI identifier;
@@ -85,6 +86,17 @@ public class Rule {
 
 		return attributes;
 	}
+	
+	/**
+	 * Returns all of the constraint specifications associated with this Rule.
+	 * 
+	 * @return the constraints
+	 */
+	
+	public Collection<Constraint> getConstraints() {
+		
+		return constraints;
+	}
 
 	/**
 	 * Unmarshalls the <code>Rule</code> into an xml <code>Element</code>.
@@ -107,6 +119,11 @@ public class Rule {
 				descriptionNode.appendChild(placeHolder.createTextNode(description));
 				ruleNode.appendChild(descriptionNode);
 			}
+			
+			for (Constraint constraint: constraints) {
+				ruleNode.appendChild(placeHolder.importNode(constraint.unmarshall(), true));
+			}
+			
 			ruleNode.appendChild(placeHolder.importNode(target.unmarshall(), true));
 			Iterator attrIterator = attributes.iterator();
 			while (attrIterator.hasNext()) {
@@ -159,6 +176,14 @@ public class Rule {
 			}
 		}
 
+		// Create the Constraints
+		NodeList constraintNodes = element.getElementsByTagNameNS(Arp.arpNamespace, "Constraint");
+		for (int i = 0; constraintNodes.getLength() > i; i++) {
+			Constraint constraint = new Constraint();
+			constraint.marshall((Element) constraintNodes.item(i));
+			constraints.add(constraint);
+		}
+		
 		// Create the Target
 		NodeList targetNodes = element.getElementsByTagNameNS(Arp.arpNamespace, "Target");
 		if (targetNodes.getLength() != 1) {
@@ -195,8 +220,17 @@ public class Rule {
 	 *            the SHAR making the request
 	 */
 
-	public boolean matchesRequest(String requester) {
+	public boolean matchesRequest(String requester, Collection<? extends ArpAttribute> attributes) {
 
+		// if we have attributes for the user, then verify all constraints are met.
+		// the only time we won't have attributes should be when listing possible attributes
+		// to be released -- ArpEngine.listPossibleReleaseAttributes()
+		if (attributes != null) {
+			for(Constraint constraint : constraints) {
+				if (!constraint.allowed(attributes)) { return false; }
+			}
+		}
+		
 		if (target.matchesAny()) { return true; }
 
 		if (requester == null) { return false; }
@@ -694,6 +728,167 @@ public class Rule {
 		void setValue(String value) {
 
 			this.value = value;
+		}
+	}
+	
+    /**
+     * ARP Rule Constraints define attribute-based limits on which user a given rule applies to.  
+     * 
+     * @author Will Norris (wnorris@usc.edu)
+     */
+	class Constraint {
+
+		private URI attributeName;
+		private URI matchFunctionIdentifier;
+		private String matches;
+		private String value;
+		
+		URI getAttributeName() {
+			return attributeName;
+		}
+
+		/**
+		 * Unmarshalls a <code>Constraint</code> into an xml <code>Element</code>.
+		 * 
+		 * @return the xml <code>Element</code>
+		 */
+		Element unmarshall() throws ArpMarshallingException {
+
+			try {
+				Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				Element constraintNode = placeHolder.createElementNS(Arp.arpNamespace, "Constraint");
+
+				constraintNode.setAttributeNS(Arp.arpNamespace, "attributeName", attributeName.toString());
+				constraintNode.setAttributeNS(Arp.arpNamespace, "matchFunction", matchFunctionIdentifier.toString());
+				constraintNode.setAttributeNS(Arp.arpNamespace, "matches", matches);
+
+				Text textNode = placeHolder.createTextNode(value);
+				constraintNode.appendChild(textNode);
+				
+				return constraintNode;
+
+			} catch (ParserConfigurationException e) {
+				log.error("Encountered a problem unmarshalling an ARP Rule Constraint: " + e);
+				throw new ArpMarshallingException("Encountered a problem unmarshalling an ARP Rule Constraint.");
+			}
+		}
+
+		/**
+		 * Creates an ARP Rule Constraint from an xml representation.
+		 * 
+		 * @param element
+		 *			the xml <code>Element</code> containing the ARP Rule Constraint.
+		 */
+		void marshall(Element element) throws ArpMarshallingException {
+
+			// Make sure we are dealing with a Constraint
+			if (!element.getTagName().equals("Constraint")) {
+				log.error("Element data does not represent an ARP Rule Constraint.");
+				throw new ArpMarshallingException("Element data does not represent an ARP Rule Constraint.");
+			}
+
+			// Get the attribute name
+			try {
+				if (element.hasAttribute("attributeName")) {
+					attributeName = new URI(element.getAttribute("attributeName"));
+				} else {
+					log.error("Constraint attribute name not specified.");
+					throw new ArpMarshallingException("Constraint attribute name not specified.");
+				}
+			} catch (URISyntaxException e) {
+				log.error("Constraint attribute name not identified by a proper URI: " + e);
+				throw new ArpMarshallingException("Constraint attribute name not identified by a proper URI.");
+			}
+
+			// Get the matchFunction identifier
+			try {
+				if (element.hasAttribute("matchFunction")) {
+					matchFunctionIdentifier = new URI(element.getAttribute("matchFunction"));
+				} else {
+					log.error("Constraint matchFunction identifier not specified.");
+					throw new ArpMarshallingException("Constraint matchFunction identifier not specified.");
+				}
+			} catch (URISyntaxException e) {
+				log.error("Constraint attribute name not identified by a proper URI: " + e);
+				throw new ArpMarshallingException("Constraint attribute name not identified by a proper URI.");
+			}
+			
+			// Get the matches value
+			if (element.hasAttribute("matches")) {
+				matches = element.getAttribute("matches");
+			} else {
+				log.error("Constraint matches value not specified.");
+				throw new ArpMarshallingException("Constraint matches value not specified.");
+			}
+			
+			// Get the element value
+			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
+				value = ((CharacterData) element.getFirstChild()).getData();
+			}
+			
+		}
+		
+		boolean allowed(Collection<? extends ArpAttribute> arpAttributes) {
+			boolean allowed;
+			
+			if (matches.equalsIgnoreCase("none")) {
+				allowed = true;
+			} else {
+				allowed = false;
+			}
+			
+			for (ArpAttribute attribute : arpAttributes) {
+				if (attribute.getName().equals(attributeName.toString())) {
+				
+					Iterator iterator = attribute.getValues();
+					while (iterator.hasNext()) {
+						Object attributeValue = iterator.next();
+	
+						MatchFunction resourceFunction;
+						try {
+							resourceFunction = ArpEngine.lookupMatchFunction(matchFunctionIdentifier);
+							// For safety, err on the side of caution
+							if (resourceFunction == null) {
+								log.warn("Could not locate matching function for ARP constraint. Function: "
+										+ matchFunctionIdentifier.toString());
+								return false;
+							}
+						} catch (ArpException e) {
+							log.error("Error while attempting to find referenced matching function for ARP constraint: " + e);
+							return false;
+						}
+		
+						try {
+							if (matches.equalsIgnoreCase("any")) {
+								if (resourceFunction.match(value, attributeValue)) {
+									return true;
+								} else {
+									continue;
+								}
+							} else if (matches.equalsIgnoreCase("all")) {
+								if (resourceFunction.match(value, attributeValue)) {
+									allowed = true;
+									continue;
+								} else {
+									return false;
+								}
+							} else if (matches.equalsIgnoreCase("none")) {
+								if (resourceFunction.match(value, attributeValue)) {
+									return false;
+								} else {
+									allowed = true;
+									continue;
+								}
+							}
+						} catch (MatchingException e) {
+							log.error("Could not apply referenced matching function to ARP value: " + e);
+							return false;
+						}
+					}
+				}
+			}
+			
+			return allowed;
 		}
 	}
 

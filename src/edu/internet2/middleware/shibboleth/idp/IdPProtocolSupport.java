@@ -248,7 +248,16 @@ public class IdPProtocolSupport implements Metadata {
 				}
 				attributes.put(attribute.getName(), attribute);
 			}
-
+			
+			Collection<URI> constraintAttributes = arpEngine.listRequiredConstraintAttributes(principal, requester, attributeNames);
+			for (URI name : constraintAttributes) {
+				if (!attributes.containsKey(name.toString())) {
+					// don't care about schema hack since these attributes won't be returned to SP
+					AAAttribute attribute = new AAAttribute(name.toString(), false);
+					attributes.put(attribute.getName(), attribute);
+				}
+			}
+			
 			return resolveAttributes(principal, requester, relyingParty.getIdentityProvider().getProviderId(),
 					attributes);
 
