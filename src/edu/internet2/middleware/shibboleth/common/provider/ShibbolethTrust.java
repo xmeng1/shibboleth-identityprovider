@@ -62,7 +62,6 @@ import org.opensaml.SAMLSignedObject;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import edu.internet2.middleware.shibboleth.common.PluggableConfigurationComponent;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
@@ -79,7 +78,7 @@ import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
  * 
  * @author Walter Hoehn
  */
-public class ShibbolethTrust extends BasicTrust implements Trust, PluggableConfigurationComponent {
+public class ShibbolethTrust extends BasicTrust implements Trust {
 
 	private static Logger log = Logger.getLogger(ShibbolethTrust.class.getName());
 	private static final String CN_OID = "2.5.4.3";

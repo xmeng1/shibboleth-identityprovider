@@ -53,13 +53,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.common.Constants;
-import edu.internet2.middleware.shibboleth.common.PluggableConfigurationComponent;
 import edu.internet2.middleware.shibboleth.metadata.*;
 
 /**
  * @author Scott Cantor
  */
-public class XMLMetadataProvider implements Metadata, PluggableConfigurationComponent {
+public class XMLMetadataProvider implements Metadata {
 
 	private static Logger log = Logger.getLogger(XMLMetadataProvider.class.getName());
 	private Map	/* <String,ArrayList<EntityDescriptor> > */ sites = new HashMap();
