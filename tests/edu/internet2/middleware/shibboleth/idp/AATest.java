@@ -247,4 +247,37 @@ public class AATest extends IdpTestCase {
 				"data/idp/blackbox/aa/response08.txt"), "utf-8"), response
 				.getOutputStreamContent()));
 	}
+	
+	/**
+	 * Attribute Query with ARP constraint
+	 * 
+	 * @throws Exception
+	 */
+	public void testAttrQueryWithConstraint() throws Exception {
+		resetServlet("data/idp/blackbox/conf/constraints");
+		initRequest("data/idp/blackbox/aa/request01.txt");
+
+		testModule.doPost();
+
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
+				"data/idp/blackbox/aa/response09.txt"), "utf-8"), response
+				.getOutputStreamContent()));
+	}
+	
+	/**
+	 * Attribute Query with attribute designators and ARP constraint
+	 * 
+	 * @throws Exception
+	 */
+	public void testAttrQueryWithDesignatorsAndConstraint() throws Exception {
+		resetServlet("data/idp/blackbox/conf/constraints");
+		initRequest("data/idp/blackbox/aa/request06.txt");
+
+		testModule.doPost();
+
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
+				"data/idp/blackbox/aa/response06.txt"), "utf-8"), response
+				.getOutputStreamContent()));
+	}
+	
 }
