@@ -50,7 +50,6 @@ import org.apache.xml.security.keys.content.KeyName;
 import org.apache.xml.security.keys.content.X509Data;
 import org.apache.xml.security.keys.content.x509.XMLX509CRL;
 import org.apache.xml.security.keys.content.x509.XMLX509Certificate;
-import org.apache.xmlbeans.XmlException;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DERObjectIdentifier;
@@ -468,10 +467,6 @@ public class ShibbolethTrust extends BasicTrust implements Trust {
 			log.error("Unable to extract host name name from certificate subject DN: ASN.1 parsing failed: " + e);
 			return null;
 		}
-	}
-
-	public void initialize(Node dom) throws XmlException, ShibbolethConfigurationException {
-		
 	}
 
 	public void initialize(Element dom) throws SAMLException, ShibbolethConfigurationException {

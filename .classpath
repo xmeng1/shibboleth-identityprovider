@@ -15,10 +15,6 @@
 	<classpathentry sourcepath="lib/commons-pool-1.2-src.jar" kind="lib" path="lib/commons-pool-1.2.jar"/>
 	<classpathentry sourcepath="lib/commons-dbcp-1.2.1-src.jar" kind="lib" path="lib/commons-dbcp-1.2.1.jar"/>
 	<classpathentry sourcepath="C:/cvs/xml-security/src" kind="lib" path="webApplication/WEB-INF/lib/xmlsec-20050514.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xmltypes.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/xbean_xpath.jar"/>
-	<classpathentry kind="lib" path="lib/shib-filter.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bc-asn1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/ant-launcher-1.6.3.jar"/>
@@ -29,7 +25,6 @@
 	<classpathentry kind="lib" path="testlib/jakarta-oro-2.0.8.jar"/>
 	<classpathentry kind="lib" path="testlib/jdom.jar"/>
 	<classpathentry kind="lib" path="testlib/mockrunner-servlet.jar"/>
-	<classpathentry kind="lib" path="testlib/nekohtml.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-1.1.jar"/>
 	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bsh-2.0b1.jar"/>
