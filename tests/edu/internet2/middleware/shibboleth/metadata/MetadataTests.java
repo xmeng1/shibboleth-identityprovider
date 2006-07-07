@@ -25,11 +25,8 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.KeyDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.opensaml.saml2.metadata.provider.MetadataCache;
+import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.saml2.metadata.provider.impl.CachingMetadataProvider;
-import org.opensaml.saml2.metadata.provider.impl.SoftReferenceMetadataCache;
-import org.opensaml.saml2.metadata.resolver.impl.URLResolver;
 import org.opensaml.xml.Configuration;
 import org.w3c.dom.Document;
 
@@ -102,11 +99,7 @@ public class MetadataTests extends TestCase {
 
 		try {
 			// Load metadata
-			MetadataCache cache = new SoftReferenceMetadataCache(60L, (short) 5, 60L);
-			cache
-					.addMetadataResolver(new URLResolver("foobar", new File("src/conf/IQ-metadata.xml").toURL()
-							.toString()));
-			MetadataProvider metadata = new CachingMetadataProvider(cache);
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("src/conf/IQ-metadata.xml"));
 
 			// Basic Query
 			EntityDescriptor entity = metadata.getEntityDescriptor("urn:mace:inqueue:example.edu");
@@ -141,11 +134,7 @@ public class MetadataTests extends TestCase {
 
 		try {
 			// Load metadata
-			MetadataCache cache = new SoftReferenceMetadataCache(60L, (short) 5, 60L);
-			cache
-					.addMetadataResolver(new URLResolver("foobar", new File("src/conf/IQ-metadata.xml").toURL()
-							.toString()));
-			MetadataProvider metadata = new CachingMetadataProvider(cache);
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("src/conf/IQ-metadata.xml"));
 
 			// Grab the Key Descriptors for an entity descriptor
 			Iterator<KeyDescriptor> keys = metadata.getEntityDescriptor("urn:mace:inqueue:example.edu")
