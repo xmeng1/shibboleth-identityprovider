@@ -410,4 +410,3 @@ public class IdPResponder extends HttpServlet {
 	}
 
 }
-

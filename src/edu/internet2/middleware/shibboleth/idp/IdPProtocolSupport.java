@@ -11,12 +11,13 @@ package edu.internet2.middleware.shibboleth.idp;
 
 import java.net.URI;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+
+import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.apache.xml.security.signature.XMLSignature;
@@ -25,7 +26,14 @@ import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLAttribute;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLResponse;
-import org.opensaml.artifact.Artifact;
+import org.opensaml.saml2.metadata.EntitiesDescriptor;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataFilter;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.xml.XMLObject;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
@@ -41,10 +49,6 @@ import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.Trust;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
-import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.Metadata;
-import edu.internet2.middleware.shibboleth.metadata.MetadataException;
 import edu.internet2.middleware.shibboleth.metadata.MetadataProviderFactory;
 
 /**
@@ -53,12 +57,11 @@ import edu.internet2.middleware.shibboleth.metadata.MetadataProviderFactory;
  * 
  * @author Walter Hoehn
  */
-public class IdPProtocolSupport implements Metadata {
+public class IdPProtocolSupport implements MetadataProvider {
 
 	private static Logger log = Logger.getLogger(IdPProtocolSupport.class.getName());
 	private Logger transactionLog;
 	private IdPConfig config;
-	private ArrayList<Metadata> metadata = new ArrayList<Metadata>();
 	private NameMapper nameMapper;
 	private ServiceProviderMapper spMapper;
 	private ArpEngine arpEngine;
@@ -66,6 +69,7 @@ public class IdPProtocolSupport implements Metadata {
 	private ArtifactMapper artifactMapper;
 	private Semaphore throttle;
 	private Trust trust = new ShibbolethTrust();
+	private ChainingMetadataProvider wrappedMetadataProvider = new ChainingMetadataProvider();
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
 			ArpEngine arpEngine, AttributeResolver resolver, ArtifactMapper artifactMapper)
@@ -168,55 +172,11 @@ public class IdPProtocolSupport implements Metadata {
 		}
 
 		try {
-			metadata.add(MetadataProviderFactory.loadProvider(element));
-		} catch (MetadataException e) {
+			wrappedMetadataProvider.addMetadataProvider(MetadataProviderFactory.loadProvider(element));
+		} catch (MetadataProviderException e) {
 			log.error("Unable to load Metadata Provider.  Skipping...");
 		}
-	}
 
-	public int providerCount() {
-
-		return metadata.size();
-	}
-
-	public EntityDescriptor lookup(String providerId, boolean strict) {
-
-		Iterator iterator = metadata.iterator();
-		while (iterator.hasNext()) {
-			EntityDescriptor provider = ((Metadata) iterator.next()).lookup(providerId);
-			if (provider != null) { return provider; }
-		}
-		return null;
-	}
-
-	public EntityDescriptor lookup(Artifact artifact, boolean strict) {
-
-		Iterator iterator = metadata.iterator();
-		while (iterator.hasNext()) {
-			EntityDescriptor provider = ((Metadata) iterator.next()).lookup(artifact);
-			if (provider != null) { return provider; }
-		}
-		return null;
-	}
-
-	public EntityDescriptor lookup(String id) {
-
-		return lookup(id, true);
-	}
-
-	public EntityDescriptor lookup(Artifact artifact) {
-
-		return lookup(artifact, true);
-	}
-
-	public EntityDescriptor getRootEntity() {
-
-		return null;
-	}
-
-	public EntitiesDescriptor getRootEntities() {
-
-		return null;
 	}
 
 	public Collection<? extends SAMLAttribute> getReleaseAttributes(Principal principal, RelyingParty relyingParty,
@@ -248,8 +208,9 @@ public class IdPProtocolSupport implements Metadata {
 				}
 				attributes.put(attribute.getName(), attribute);
 			}
-			
-			Collection<URI> constraintAttributes = arpEngine.listRequiredConstraintAttributes(principal, requester, attributeNames);
+
+			Collection<URI> constraintAttributes = arpEngine.listRequiredConstraintAttributes(principal, requester,
+					attributeNames);
 			for (URI name : constraintAttributes) {
 				if (!attributes.containsKey(name.toString())) {
 					// don't care about schema hack since these attributes won't be returned to SP
@@ -257,7 +218,7 @@ public class IdPProtocolSupport implements Metadata {
 					attributes.put(attribute.getName(), attribute);
 				}
 			}
-			
+
 			return resolveAttributes(principal, requester, relyingParty.getIdentityProvider().getProviderId(),
 					attributes);
 
@@ -305,6 +266,57 @@ public class IdPProtocolSupport implements Metadata {
 	public Trust getTrust() {
 
 		return trust;
+	}
+
+	public boolean requireValidMetadata() {
+
+		return wrappedMetadataProvider.requireValidMetadata();
+	}
+
+	public void setRequireValidMetadata(boolean requireValidMetadata) {
+
+		wrappedMetadataProvider.setRequireValidMetadata(requireValidMetadata);
+	}
+
+	public MetadataFilter getMetadataFilter() {
+
+		return wrappedMetadataProvider.getMetadataFilter();
+	}
+
+	public void setMetadataFilter(MetadataFilter newFilter) throws MetadataProviderException {
+
+		wrappedMetadataProvider.setMetadataFilter(newFilter);
+	}
+
+	public XMLObject getMetadata() throws MetadataProviderException {
+
+		return wrappedMetadataProvider.getMetadata();
+	}
+
+	public EntitiesDescriptor getEntitiesDescriptor(String name) throws MetadataProviderException {
+
+		return wrappedMetadataProvider.getEntitiesDescriptor(name);
+	}
+
+	public EntityDescriptor getEntityDescriptor(String entityID) throws MetadataProviderException {
+
+		return wrappedMetadataProvider.getEntityDescriptor(entityID);
+	}
+
+	public List<RoleDescriptor> getRole(String entityID, QName roleName) throws MetadataProviderException {
+
+		return wrappedMetadataProvider.getRole(entityID, roleName);
+	}
+
+	public List<RoleDescriptor> getRole(String entityID, QName roleName, String supportedProtocol)
+			throws MetadataProviderException {
+
+		return wrappedMetadataProvider.getRole(entityID, roleName, supportedProtocol);
+	}
+
+	public int providerCount() {
+
+		return wrappedMetadataProvider.getProviders().size();
 	}
 
 	private class Semaphore {
