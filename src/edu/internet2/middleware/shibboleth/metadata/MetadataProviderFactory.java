@@ -1,3 +1,4 @@
+
 package edu.internet2.middleware.shibboleth.metadata;
 
 /*
@@ -17,22 +18,24 @@ package edu.internet2.middleware.shibboleth.metadata;
  */
 
 import org.apache.log4j.Logger;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.w3c.dom.Element;
 
 public class MetadataProviderFactory {
 
 	private static Logger log = Logger.getLogger(MetadataProviderFactory.class.getName());
 
-	public static Metadata loadProvider(Element e) throws MetadataException {
+	public static MetadataProvider loadProvider(Element e) throws MetadataProviderException {
 
 		String className = e.getAttribute("type");
 		if (className == null || className.equals("")) {
 			log.error("Metadata Provider requires specification of the attribute \"type\".");
-			throw new MetadataException("Failed to initialize Metadata Provider.");
+			throw new MetadataProviderException("Failed to initialize Metadata Provider.");
 		} else {
 			try {
 				Class[] params = {Class.forName("org.w3c.dom.Element"),};
-				return (Metadata) Class.forName(className).getConstructor(params).newInstance(new Object[]{e});
+				return (MetadataProvider) Class.forName(className).getConstructor(params).newInstance(new Object[]{e});
 			} catch (Exception loaderException) {
 				log.error("Failed to load Metadata Provider implementation class: " + loaderException);
 				Throwable cause = loaderException.getCause();
@@ -40,7 +43,7 @@ public class MetadataProviderFactory {
 					log.error("caused by: " + cause);
 					cause = cause.getCause();
 				}
-				throw new MetadataException("Failed to initialize Metadata Provider.");
+				throw new MetadataProviderException("Failed to initialize Metadata Provider.");
 			}
 		}
 	}
