@@ -26,13 +26,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.opensaml.saml2.metadata.EntitiesDescriptor;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.xml.XMLObject;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
-import edu.internet2.middleware.shibboleth.metadata.EntitiesDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.Metadata;
 
 /**
  * Class for determining the effective relying party from the unique id of the service provider. Checks first for an
@@ -45,7 +47,7 @@ public class ServiceProviderMapper {
 
 	private static Logger log = Logger.getLogger(ServiceProviderMapper.class.getName());
 	protected Map relyingParties = new HashMap();
-	private Metadata metaData;
+	private MetadataProvider metaData;
 	private IdPConfig configuration;
 	private Credentials credentials;
 	private NameMapper nameMapper;
@@ -67,7 +69,7 @@ public class ServiceProviderMapper {
 
 	}
 
-	public void setMetadata(Metadata metadata) {
+	public void setMetadata(MetadataProvider metadata) {
 
 		this.metaData = metadata;
 	}
@@ -130,9 +132,18 @@ public class ServiceProviderMapper {
 
 		if (metaData == null) { return null; }
 
-		EntityDescriptor provider = metaData.lookup(providerIdFromSP);
+		// Attempt to lookup the entity in the metdata
+		EntityDescriptor provider = null;
+		try {
+			provider = metaData.getEntityDescriptor(providerIdFromSP);
+		} catch (MetadataProviderException e) {
+			log.error("Problem encountered during metadata lookup of entity (" + providerIdFromSP + "): " + e);
+		}
+
+		// OK, if we found it travel recurse down the tree of parent entities
 		if (provider != null) {
-			EntitiesDescriptor parent = provider.getEntitiesDescriptor();
+			EntitiesDescriptor parent = getParentEntitiesDescriptor(provider);
+
 			while (parent != null) {
 				if (parent.getName() != null) {
 					if (relyingParties.containsKey(parent.getName())) {
@@ -143,7 +154,7 @@ public class ServiceProviderMapper {
 								+ "), but no matching Relying Party was found.");
 					}
 				}
-				parent = parent.getEntitiesDescriptor();
+				parent = getParentEntitiesDescriptor(parent);
 			}
 		}
 		return null;
@@ -188,6 +199,15 @@ public class ServiceProviderMapper {
 			log.error("Encountered an error while attempting to load Relying Party configuration.  Skipping...");
 		}
 
+	}
+
+	private EntitiesDescriptor getParentEntitiesDescriptor(XMLObject entity) {
+
+		Object parent = entity.getParent();
+
+		if (parent instanceof EntitiesDescriptor) { return (EntitiesDescriptor) parent; }
+
+		return null;
 	}
 
 	/**
