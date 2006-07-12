@@ -308,7 +308,7 @@ public class IdPProtocolSupport implements MetadataProvider {
 		return wrappedMetadataProvider.getRole(entityID, roleName);
 	}
 
-	public List<RoleDescriptor> getRole(String entityID, QName roleName, String supportedProtocol)
+	public RoleDescriptor getRole(String entityID, QName roleName, String supportedProtocol)
 			throws MetadataProviderException {
 
 		return wrappedMetadataProvider.getRole(entityID, roleName, supportedProtocol);
@@ -346,4 +346,5 @@ public class IdPProtocolSupport implements MetadataProvider {
 			notify();
 		}
 	}
+
 }
