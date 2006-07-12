@@ -61,12 +61,6 @@ public abstract class ShibbolethConfigurableMetadataProvider implements Metadata
 		return provider.getRole(entityID, roleName);
 	}
 
-	public List<RoleDescriptor> getRole(String entityID, QName roleName, String supportedProtocol)
-			throws MetadataProviderException {
-
-		return provider.getRole(entityID, roleName, supportedProtocol);
-	}
-
 	public XMLObject getMetadata() throws MetadataProviderException {
 
 		return provider.getMetadata();
@@ -77,4 +71,9 @@ public abstract class ShibbolethConfigurableMetadataProvider implements Metadata
 		return provider.getEntitiesDescriptor(name);
 	}
 
+	public RoleDescriptor getRole(String entityID, QName roleName, String supportedProtocol)
+			throws MetadataProviderException {
+
+		return provider.getRole(entityID, roleName, supportedProtocol);
+	}
 }
