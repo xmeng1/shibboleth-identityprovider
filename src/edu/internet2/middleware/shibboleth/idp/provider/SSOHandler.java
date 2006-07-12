@@ -19,13 +19,16 @@ package edu.internet2.middleware.shibboleth.idp.provider;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Iterator;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.NameIDFormat;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
@@ -36,8 +39,6 @@ import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * @author Walter Hoehn
@@ -101,15 +102,13 @@ public abstract class SSOHandler extends BaseHandler implements IdPProtocolHandl
 		// If we have preferred Name Identifier formats from the metadata, see if the we can find one that is configured
 		// for this relying party
 		SPSSODescriptor role;
-		if (descriptor != null
-				&& (role = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM)) != null) {
-			Iterator spPreferredFormats = role.getNameIDFormats();
-			while (spPreferredFormats.hasNext()) {
-
-				String preferredFormat = (String) spPreferredFormats.next();
+		if (descriptor != null && (role = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM)) != null) {
+			List<NameIDFormat> spPreferredFormats = role.getNameIDFormats();
+			for (NameIDFormat preferredFormat : spPreferredFormats) {
 				for (int i = 0; availableMappings != null && i < availableMappings.length; i++) {
 					NameIdentifierMapping mapping = mapper.getNameIdentifierMappingById(availableMappings[i]);
-					if (mapping != null && preferredFormat.equals(mapping.getNameIdentifierFormat().toString())) {
+					if (mapping != null
+							&& preferredFormat.getFormat().equals(mapping.getNameIdentifierFormat().toString())) {
 						log.debug("Found a supported name identifier format that "
 								+ "matches the metadata for the relying party: ("
 								+ mapping.getNameIdentifierFormat().toString() + ").");

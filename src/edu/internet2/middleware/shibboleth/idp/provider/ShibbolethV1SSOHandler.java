@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.RequestDispatcher;
@@ -50,6 +51,10 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.opensaml.SAMLSubjectStatement;
 import org.opensaml.artifact.Artifact;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
@@ -60,9 +65,6 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
-import edu.internet2.middleware.shibboleth.metadata.Endpoint;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * <code>ProtocolHandler</code> implementation that responds to SSO flows as specified in "Shibboleth Architecture:
@@ -124,7 +126,13 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			}
 
 			// Grab the metadata for the provider
-			EntityDescriptor descriptor = support.lookup(relyingParty.getProviderId());
+			EntityDescriptor descriptor = null;
+			try {
+				descriptor = support.getEntityDescriptor(relyingParty.getProviderId());
+			} catch (MetadataProviderException e1) {
+				log.error("Metadata lookup for provider (" + relyingParty.getProviderId() + ") encountered an error: "
+						+ e1);
+			}
 
 			// Make sure that the selected relying party configuration is appropriate for this
 			// acceptance URL
@@ -206,7 +214,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		if (descriptor != null) {
 			SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 			if (sp != null) {
-				if (sp.getWantAssertionsSigned()) {
+				if (sp.wantAssertionsSigned().getValue()) {
 					metaDataIndicatesSignAssertions = true;
 				}
 			}
@@ -290,7 +298,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		if (descriptor != null) {
 			SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 			if (sp != null) {
-				if (sp.getWantAssertionsSigned()) {
+				if (sp.wantAssertionsSigned().getValue()) {
 					metaDataIndicatesSignAssertions = true;
 				}
 			}
@@ -479,17 +487,15 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			if (sp != null) {
 
 				// See if this is the default endpoint location.
-				Endpoint defaultEndpoint = sp.getAssertionConsumerServiceManager().getDefaultEndpoint();
-				if (defaultEndpoint.getLocation().equals(acceptanceURL)) {
-
+				AssertionConsumerService defaultEndpoint = sp.getDefaultAssertionConsumerService();
+				if (defaultEndpoint != null && defaultEndpoint.getLocation().equals(acceptanceURL)) {
 					// If we recognize the default binding, this is the one to use.
 					if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_POST_URI)) return false;
 					else if (defaultEndpoint.getBinding().equals(SAMLBrowserProfile.PROFILE_ARTIFACT_URI)) return true;
 				}
-
-				Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
-				while (endpoints.hasNext()) {
-					Endpoint ep = (Endpoint) endpoints.next();
+				// If not, look through everything we have
+				List<AssertionConsumerService> endpoints = sp.getAssertionConsumerServices();
+				for (AssertionConsumerService ep : endpoints) {
 					if (acceptanceURL.equals(ep.getLocation())
 							&& SAMLBrowserProfile.PROFILE_POST_URI.equals(ep.getBinding())) {
 						log.debug("Metadata indicates support for POST profile.");
@@ -497,9 +503,9 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 						continue;
 					}
 				}
-				endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
-				while (endpoints.hasNext()) {
-					Endpoint ep = (Endpoint) endpoints.next();
+
+				endpoints = sp.getAssertionConsumerServices();
+				for (AssertionConsumerService ep : endpoints) {
 					if (acceptanceURL.equals(ep.getLocation())
 							&& SAMLBrowserProfile.PROFILE_ARTIFACT_URI.equals(ep.getBinding())) {
 						log.debug("Metadata indicates support for Artifact profile.");
@@ -558,9 +564,9 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			return false;
 		}
 
-		Iterator endpoints = sp.getAssertionConsumerServiceManager().getEndpoints();
-		while (endpoints.hasNext()) {
-			if (shireURL.equals(((Endpoint) endpoints.next()).getLocation())) { return true; }
+		List<AssertionConsumerService> endpoints = sp.getAssertionConsumerServices();
+		for (AssertionConsumerService endpoint : endpoints) {
+			if (shireURL.equals(endpoint.getLocation())) { return true; }
 		}
 		log.info("Supplied consumer URL not found in metadata.");
 		return false;

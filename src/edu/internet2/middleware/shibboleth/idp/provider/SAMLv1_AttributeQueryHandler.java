@@ -48,6 +48,8 @@ import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.opensaml.XML;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
@@ -58,10 +60,6 @@ import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
-import edu.internet2.middleware.shibboleth.metadata.AttributeRequesterDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * @author Walter Hoehn
@@ -90,15 +88,16 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			throws InvalidProviderCredentialException {
 
 		// See if we have metadata for this provider
-		EntityDescriptor provider = support.lookup(assertedId);
+		EntityDescriptor provider = support.getEntityDescriptor(assertedId);
 		if (provider == null) {
 			log.info("No metadata found for providerId: (" + assertedId + ").");
 			return null;
 		} else {
 			log.info("Metadata found for providerId: (" + assertedId + ").");
 		}
+		//TODO this is a shib-specific thing... need to figure out what to do
 		RoleDescriptor ar_role = provider.getAttributeRequesterDescriptor(XML.SAML11_PROTOCOL_ENUM);
-		RoleDescriptor sp_role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
+		SPSSODescriptor sp_role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
 		if (ar_role == null && sp_role == null) {
 			log.info("SPSSO and Stand-Alone Requester roles not found in metadata for provider: (" + assertedId + ").");
 			return null;

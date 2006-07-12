@@ -33,14 +33,15 @@ import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.XML;
 import org.opensaml.artifact.Artifact;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
  * @author Walter Hoehn
@@ -73,21 +74,20 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 
 		// Pull credential from request
 		X509Certificate[] chain = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
-		if (chain == null || chain.length == 0 || chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
+		if (chain == null || chain.length == 0
+				|| chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253).equals("")) {
 			// The spec says that mutual authentication is required for the
 			// artifact profile
 			if (samlRequest.isSigned()) {
 				log.info("Request is signed, will authenticate it later.");
-			}
-			else {
+			} else {
 				log.info("Request is from an unauthenticated serviceprovider.");
 				throw new SAMLException(SAMLException.REQUESTER,
 						"SAML Artifacts cannot be dereferenced for unauthenticated requesters.");
 			}
-		}
-		else {
-			log.info("Request contains TLS credential: (" + chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
-				+ ").");
+		} else {
+			log.info("Request contains TLS credential: ("
+					+ chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253) + ").");
 		}
 		ArrayList<SAMLAssertion> assertions = new ArrayList<SAMLAssertion>();
 		Iterator artifacts = samlRequest.getArtifacts();
@@ -117,20 +117,27 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 			} else {
 				SAMLAssertion assertion = mapping.getAssertion();
 				// See if we have metadata for this provider
-				EntityDescriptor provider = support.lookup(mapping.getServiceProviderId());
+				EntityDescriptor provider = null;
+				try {
+					provider = support.getEntityDescriptor(mapping.getServiceProviderId());
+				} catch (MetadataProviderException e) {
+					log.error("Metadata lookup for provider (" + mapping.getServiceProviderId()
+							+ ") encountered an error: " + e);
+				}
 				if (provider == null) {
 					log.info("No metadata found for provider: (" + mapping.getServiceProviderId() + ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider.");
 				}
-				RoleDescriptor role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
+				SPSSODescriptor role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
 				if (role == null) {
-					log.info("SPSSO role not found in metadata for provider: (" + mapping.getServiceProviderId()
-								+ ").");
+					log
+							.info("SPSSO role not found in metadata for provider: (" + mapping.getServiceProviderId()
+									+ ").");
 					throw new SAMLException(SAMLException.REQUESTER, "Invalid service provider role.");
 				}
 
 				boolean authenticated = false;
-				
+
 				// Make sure that the suppplied credential is valid for the provider to which the artifact was issued
 				if (chain != null && chain.length > 0) {
 					if (!support.getTrust().validate(chain[0], chain, role)) {
@@ -145,8 +152,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 				if (samlRequest.isSigned()) {
 					if (!support.getTrust().validate(samlRequest, role)) {
 						log.error("Signed SAML request message did NOT contain a valid signature from provider ("
-								+ mapping.getServiceProviderId()
-								+ "), to whom this artifact was issued.");
+								+ mapping.getServiceProviderId() + "), to whom this artifact was issued.");
 						throw new SAMLException(SAMLException.REQUESTER, "Invalid signature.");
 					}
 					authenticated = true;

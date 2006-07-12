@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.RequestDispatcher;
@@ -42,6 +43,10 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.opensaml.SAMLSubjectStatement;
 import org.opensaml.XML;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -53,9 +58,6 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
-import edu.internet2.middleware.shibboleth.metadata.Endpoint;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
 
 /**
  * <code>ProtocolHandler</code> implementation that responds to ADFS SSO flows as specified in "WS-Federation: Passive
@@ -120,7 +122,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 			RelyingParty relyingParty = support.getServiceProviderMapper().getRelyingParty(remoteProviderId);
 
 			// Grab the metadata for the provider
-			EntityDescriptor descriptor = support.lookup(relyingParty.getProviderId());
+			EntityDescriptor descriptor = support.getEntityDescriptor(relyingParty.getProviderId());
 			if (descriptor == null) {
 				log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
 				throw new InvalidClientDataException(
@@ -149,6 +151,8 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 			} else {
 				Endpoint endpoint = sp.getAssertionConsumerServiceManager().getEndpointByBinding(
 						ADFS_SSOHandler.WS_FED_PROTOCOL_ENUM);
+				
+				
 				if (endpoint == null || endpoint.getLocation() == null) {
 					log.error("No Assertion consumer service URL is available for provider ("
 							+ relyingParty.getProviderId() + ") via request the SSO request or the metadata.");
@@ -342,10 +346,11 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 	private static boolean isValidAssertionConsumerURL(SPSSODescriptor descriptor, String shireURL)
 			throws InvalidClientDataException {
 
-		Iterator endpoints = descriptor.getAssertionConsumerServiceManager().getEndpoints();
-		while (endpoints.hasNext()) {
-			if (shireURL.equals(((Endpoint) endpoints.next()).getLocation())) { return true; }
+		List<AssertionConsumerService> endpoints = descriptor.getAssertionConsumerServices();
+		for (AssertionConsumerService acs : endpoints) {
+			if (shireURL.equals(acs.getLocation())) { return true; }
 		}
+
 		log.info("Supplied consumer URL not found in metadata.");
 		return false;
 	}
