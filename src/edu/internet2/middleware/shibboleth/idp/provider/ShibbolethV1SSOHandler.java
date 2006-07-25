@@ -214,7 +214,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		if (descriptor != null) {
 			SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 			if (sp != null) {
-				if (sp.wantAssertionsSigned().getValue()) {
+				if (sp.getWantAssertionsSigned()) {
 					metaDataIndicatesSignAssertions = true;
 				}
 			}
@@ -298,7 +298,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 		if (descriptor != null) {
 			SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 			if (sp != null) {
-				if (sp.wantAssertionsSigned().getValue()) {
+				if (sp.getWantAssertionsSigned()) {
 					metaDataIndicatesSignAssertions = true;
 				}
 			}
