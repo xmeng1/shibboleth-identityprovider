@@ -19,8 +19,8 @@ package edu.internet2.middleware.shibboleth.common;
 import java.security.cert.X509Certificate;
 
 import org.opensaml.SAMLSignedObject;
+import org.opensaml.saml2.metadata.RoleDescriptor;
 
-import edu.internet2.middleware.shibboleth.metadata.RoleDescriptor;
 
 /**
  * Defines methodology for determing whether or not a system entity should trust the messages issued by another.

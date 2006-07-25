@@ -45,9 +45,10 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
 public class NameMapper {
 
 	private static Logger log = Logger.getLogger(NameMapper.class.getName());
-	private Map byFormat = new HashMap();
-	private Map byId = new HashMap();
-	private static Map registeredMappingTypes = Collections.synchronizedMap(new HashMap());
+	private Map<URI, NameIdentifierMapping> byFormat = new HashMap<URI, NameIdentifierMapping>();
+	private Map<String, NameIdentifierMapping> byId = new HashMap<String, NameIdentifierMapping>();
+	private static Map<String, Class> registeredMappingTypes = Collections
+			.synchronizedMap(new HashMap<String, Class>());
 	/** true if mappings have been added */
 	protected boolean initialized = false;
 	/** Mapping to use if no other mappings have been added */
@@ -180,7 +181,7 @@ public class NameMapper {
 
 		if (!initialized) { return defaultMapping; }
 
-		return (NameIdentifierMapping) byFormat.get(format);
+		return byFormat.get(format);
 	}
 
 	/**
@@ -196,13 +197,13 @@ public class NameMapper {
 			if (!initialized) { return defaultMapping; }
 
 			if (byFormat.size() == 1) {
-				Iterator values = byFormat.values().iterator();
-				Object mapping = values.next();
-				return (NameIdentifierMapping) mapping;
+				Iterator<NameIdentifierMapping> values = byFormat.values().iterator();
+				NameIdentifierMapping mapping = values.next();
+				return mapping;
 			}
 		}
 
-		return (NameIdentifierMapping) byId.get(id);
+		return byId.get(id);
 	}
 
 	protected NameIdentifierMapping loadNameIdentifierMapping(Class implementation, Element config)

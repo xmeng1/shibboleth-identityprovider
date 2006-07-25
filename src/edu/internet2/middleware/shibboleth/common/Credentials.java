@@ -83,7 +83,7 @@ public class Credentials {
 	public static final String credentialsNamespace = "urn:mace:shibboleth:credentials:1.0";
 
 	private static Logger log = Logger.getLogger(Credentials.class.getName());
-	private Hashtable data = new Hashtable();
+	private Hashtable<String, Credential> data = new Hashtable<String, Credential>();
 	private boolean singleMode = false;
 
 	/**
@@ -144,12 +144,12 @@ public class Credentials {
 		if ((identifier == null || identifier.equals("")) && data.size() == 1) { return (Credential) data.values()
 				.iterator().next(); }
 
-		return (Credential) data.get(identifier);
+		return data.get(identifier);
 	}
 
 	public Credential getCredential() {
 
-		return (Credential) data.values().iterator().next();
+		return data.values().iterator().next();
 	}
 
 	static class CredentialFactory {
@@ -226,7 +226,7 @@ class FileCredentialResolver implements CredentialResolver {
 			throw new CredentialFactoryException("Failed to load private key.");
 		}
 
-		List certChain = getCertificateChain(e, key);
+		List<Certificate> certChain = getCertificateChain(e, key);
 
 		Credential credential = new Credential(((X509Certificate[]) certChain.toArray(new X509Certificate[0])), key);
 		if (log.isDebugEnabled()) {
@@ -307,9 +307,10 @@ class FileCredentialResolver implements CredentialResolver {
 	 *             thrown if the certificate files is not found, can not be parsed, or an IOException occurs whils
 	 *             reading the file
 	 */
-	private List getCertificateChain(Element credentialConfigElement, PrivateKey key) throws CredentialFactoryException {
+	private List<Certificate> getCertificateChain(Element credentialConfigElement, PrivateKey key)
+			throws CredentialFactoryException {
 
-		List certChain = new ArrayList();
+		List<Certificate> certChain = new ArrayList<Certificate>();
 		String certPath = getCertPath(credentialConfigElement);
 
 		if (certPath == null || certPath.equals("")) {
@@ -331,7 +332,7 @@ class FileCredentialResolver implements CredentialResolver {
 				throw new CredentialFactoryException("Only X.509 certificates are supported");
 			}
 
-			ArrayList allCerts = new ArrayList();
+			ArrayList<Certificate> allCerts = new ArrayList<Certificate>();
 
 			try {
 				Certificate[] certsFromPath = loadCertificates(new ShibResource(certPath, this.getClass())
@@ -440,64 +441,68 @@ class FileCredentialResolver implements CredentialResolver {
 
 		return certChain;
 	}
-    
-    /**
-     * Determines whether the key is PEM or DER encoded.
-     * 
-     * @param e the file credential resolver configuration element
-     * @param keyStream an input stream reading the private key
-     * 
-     * @return the encoding format of the key
-     * 
-     * @throws CredentialFactoryException thrown if the key format can not be determined or the key can not be read
-     */
-    private int getKeyEncodingFormat(Element e, InputStream keyStream) throws CredentialFactoryException {
-        NodeList keyElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Key");
-        if (keyElements.getLength() < 1) {
-            log.error("No private key specified in file credential resolver");
-            throw new CredentialFactoryException("File Credential Resolver requires a <Key> specification.");
-        }
 
-        if (keyElements.getLength() > 1) {
-            log.error("Multiple Key path specifications, using first.");
-        }
+	/**
+	 * Determines whether the key is PEM or DER encoded.
+	 * 
+	 * @param e
+	 *            the file credential resolver configuration element
+	 * @param keyStream
+	 *            an input stream reading the private key
+	 * @return the encoding format of the key
+	 * @throws CredentialFactoryException
+	 *             thrown if the key format can not be determined or the key can not be read
+	 */
+	private int getKeyEncodingFormat(Element e, InputStream keyStream) throws CredentialFactoryException {
 
-        String formatStr = ((Element) keyElements.item(0)).getAttribute("format");
-        
-        if(formatStr != null && formatStr.length() > 0) {
-            if(formatStr.equals("PEM")) {
-                return EncodedKey.PEM_ENCODING;
-            }else if(formatStr.equals("DER")) {
-                return EncodedKey.DER_ENCODING;
-            }else if(formatStr.equals("PKCS12")) {
-                log.error("PKCS12 private keys are not yet supported");
-                return -1;
-            }
-        }
-        
-        if(log.isInfoEnabled()) {
-            log.info("Private key format was not specified in file credential resolver configuration, attempting to auto-detect it.");
-        }
-        try {
-            // Need to mark the stream and then reset it, after getting the
-            // first byte so that the private key decoder starts reading at
-            // the correct position
-            keyStream.mark(2);
-            int firstByte = keyStream.read();
-            keyStream.reset();
+		NodeList keyElements = e.getElementsByTagNameNS(Credentials.credentialsNamespace, "Key");
+		if (keyElements.getLength() < 1) {
+			log.error("No private key specified in file credential resolver");
+			throw new CredentialFactoryException("File Credential Resolver requires a <Key> specification.");
+		}
 
-            // PEM encoded keys must start with a "-", a decimal value of 45
-            if (firstByte == 45) { return EncodedKey.PEM_ENCODING; }
+		if (keyElements.getLength() > 1) {
+			log.error("Multiple Key path specifications, using first.");
+		}
 
-            // DER encoded keys must start with a decimal value of 48
-            if (firstByte == 48) { return EncodedKey.DER_ENCODING; }
+		String formatStr = ((Element) keyElements.item(0)).getAttribute("format");
 
-            // Can not determine type
-            return -1;
-        }catch (IOException ioe) {
-            throw new CredentialFactoryException("Could not determine the type of private key for file credential resolver.");
-        }
-    }
+		if (formatStr != null && formatStr.length() > 0) {
+			if (formatStr.equals("PEM")) {
+				return EncodedKey.PEM_ENCODING;
+			} else if (formatStr.equals("DER")) {
+				return EncodedKey.DER_ENCODING;
+			} else if (formatStr.equals("PKCS12")) {
+				log.error("PKCS12 private keys are not yet supported");
+				return -1;
+			}
+		}
+
+		if (log.isInfoEnabled()) {
+			log
+					.info("Private key format was not specified in file credential resolver configuration, attempting to auto-detect it.");
+		}
+		try {
+			// Need to mark the stream and then reset it, after getting the
+			// first byte so that the private key decoder starts reading at
+			// the correct position
+			keyStream.mark(2);
+			int firstByte = keyStream.read();
+			keyStream.reset();
+
+			// PEM encoded keys must start with a "-", a decimal value of 45
+			if (firstByte == 45) { return EncodedKey.PEM_ENCODING; }
+
+			// DER encoded keys must start with a decimal value of 48
+			if (firstByte == 48) { return EncodedKey.DER_ENCODING; }
+
+			// Can not determine type
+			return -1;
+		} catch (IOException ioe) {
+			throw new CredentialFactoryException(
+					"Could not determine the type of private key for file credential resolver.");
+		}
+	}
 
 	/**
 	 * Gets the private key password from the Credentials configuration element if one exists.
@@ -602,7 +607,7 @@ class FileCredentialResolver implements CredentialResolver {
 			}
 			return null;
 		}
-		ArrayList paths = new ArrayList();
+		ArrayList<String> paths = new ArrayList<String>();
 		for (int i = 0; i < pathElements.getLength(); i++) {
 			Node tnode = pathElements.item(i).getFirstChild();
 			String path = null;
@@ -672,7 +677,7 @@ class FileCredentialResolver implements CredentialResolver {
 	 */
 	private Certificate[] loadCertificates(InputStream inStream, String certType) throws CredentialFactoryException {
 
-		ArrayList certificates = new ArrayList();
+		ArrayList<Certificate> certificates = new ArrayList<Certificate>();
 
 		try {
 			CertificateFactory certFactory = CertificateFactory.getInstance(certType);
@@ -733,7 +738,8 @@ class FileCredentialResolver implements CredentialResolver {
 	 * @throws InvalidCertificateChainException
 	 *             thrown if a chain cannot be constructed from the specified elements
 	 */
-	protected void walkChain(X509Certificate[] chainSource, List chainDest) throws CredentialFactoryException {
+	protected void walkChain(X509Certificate[] chainSource, List<Certificate> chainDest)
+			throws CredentialFactoryException {
 
 		X509Certificate currentCert = (X509Certificate) chainDest.get(chainDest.size() - 1);
 		if (currentCert.getSubjectDN().equals(currentCert.getIssuerDN())) {

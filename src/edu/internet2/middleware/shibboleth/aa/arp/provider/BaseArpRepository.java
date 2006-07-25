@@ -70,7 +70,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 	public Arp[] getAllPolicies(Principal principal) throws ArpRepositoryException {
 
 		log.debug("Received a query for all policies applicable to principal: (" + principal.getName() + ").");
-		Set allPolicies = new HashSet();
+		Set<Arp> allPolicies = new HashSet<Arp>();
 		Arp sitePolicy = getSitePolicy();
 		if (sitePolicy != null) {
 			log.debug("Returning site policy.");
@@ -188,7 +188,7 @@ class ArpCache {
 	private static ArpCache instance = null;
 	/** Time in seconds for which ARPs should be cached. */
 	private long cacheLength;
-	private Map cache = new HashMap();
+	private Map<Principal, CachedArp> cache = new HashMap<Principal, CachedArp>();
 	private static Logger log = Logger.getLogger(ArpCache.class.getName());
 	private ArpCacheCleaner cleaner = new ArpCacheCleaner();
 
@@ -343,11 +343,11 @@ class ArpCache {
 						return;
 					}
 					log.debug("ArpCache cleanup thread searching for stale entries.");
-					Set needsDeleting = new HashSet();
+					Set<CachedArp> needsDeleting = new HashSet<CachedArp>();
 					synchronized (cache) {
-						Iterator iterator = cache.values().iterator();
+						Iterator<CachedArp> iterator = cache.values().iterator();
 						while (iterator.hasNext()) {
-							CachedArp cachedArp = (CachedArp) iterator.next();
+							CachedArp cachedArp = iterator.next();
 							if ((System.currentTimeMillis() - cachedArp.creationTimeMillis) > (cacheLength * 1000)) {
 								needsDeleting.add(cachedArp);
 							}

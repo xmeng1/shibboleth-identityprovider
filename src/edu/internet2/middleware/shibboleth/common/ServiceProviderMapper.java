@@ -46,7 +46,7 @@ import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 public class ServiceProviderMapper {
 
 	private static Logger log = Logger.getLogger(ServiceProviderMapper.class.getName());
-	protected Map relyingParties = new HashMap();
+	protected Map<String, RelyingParty> relyingParties = new HashMap<String, RelyingParty>();
 	private MetadataProvider metaData;
 	private IdPConfig configuration;
 	private Credentials credentials;
@@ -222,7 +222,7 @@ public class ServiceProviderMapper {
 		private String overridenIdPProviderId;
 		private URL overridenAAUrl;
 		private URI overridenDefaultAuthMethod;
-		private List mappingIds = new ArrayList();
+		private List<String> mappingIds = new ArrayList<String>();
 		private IdPConfig configuration;
 		private boolean overridenPassThruErrors = false;
 		private boolean passThruIsOverriden = false;
