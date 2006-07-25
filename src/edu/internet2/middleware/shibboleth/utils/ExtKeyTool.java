@@ -38,6 +38,7 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -343,7 +344,7 @@ public class ExtKeyTool {
 		log.debug("Located " + untestedCerts.length + " cert(s) in input file");
 
 		log.info("Finding end cert in chain.");
-		ArrayList replyCerts = new ArrayList();
+		ArrayList<X509Certificate> replyCerts = new ArrayList<X509Certificate>();
 		for (int i = 0; untestedCerts.length > i; i++) {
 			if (isMatchingKey(keyAlgorithm, untestedCerts[i].getPublicKey(), privKey)) {
 				log.debug("Found matching end cert: " + untestedCerts[i].getSubjectDN());
@@ -390,7 +391,7 @@ public class ExtKeyTool {
 	 *             thrown if a chain cannot be constructed from the specified elements
 	 */
 
-	protected void walkChain(X509Certificate[] chainSource, ArrayList chainDest)
+	protected void walkChain(X509Certificate[] chainSource, ArrayList<X509Certificate> chainDest)
 			throws InvalidCertificateChainException {
 
 		X509Certificate currentCert = (X509Certificate) chainDest.get(chainDest.size() - 1);
@@ -484,7 +485,8 @@ public class ExtKeyTool {
 				log.info("Reading certificate chain.");
 
 				CertificateFactory certFactory = CertificateFactory.getInstance("X.509", provider);
-				Collection chain = certFactory.generateCertificates(new BufferedInputStream(chainStream));
+				Collection<? extends Certificate> chain = certFactory.generateCertificates(new BufferedInputStream(
+						chainStream));
 				if (chain.isEmpty()) {
 					log.error("Input did not contain any valid certificates.");
 					throw new ExtKeyToolException("Input did not contain any valid certificates.");

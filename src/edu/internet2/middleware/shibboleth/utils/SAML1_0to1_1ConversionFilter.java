@@ -133,7 +133,6 @@ public class SAML1_0to1_1ConversionFilter implements Filter {
 	private class ConversionResponseWrapper extends HttpServletResponseWrapper {
 
 		private ByteArrayOutputStream output = new ByteArrayOutputStream();
-		private boolean localFlush = false;
 		private String originalRequestId;
 
 		private ConversionResponseWrapper(HttpServletResponse response, String originalRequestId) {
