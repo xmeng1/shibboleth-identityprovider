@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.opensaml.XML;
 import org.opensaml.common.SAMLObjectTestCaseConfigInitializer;
 import org.opensaml.common.xml.ParserPoolManager;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
@@ -113,9 +114,9 @@ public class MetadataTests extends TestCase {
 					"urn:mace:inqueue");
 
 			// Check descriptor roles
-			IDPSSODescriptor idp = entity.getIDPSSODescriptor().get(0);
-			AttributeAuthorityDescriptor aa = entity.getAttributeAuthorityDescriptor().get(0);
-			SPSSODescriptor sp = entity.getSPSSODescriptor().get(0);
+			IDPSSODescriptor idp = entity.getIDPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
+			AttributeAuthorityDescriptor aa = entity.getAttributeAuthorityDescriptor(XML.SAML11_PROTOCOL_ENUM);
+			SPSSODescriptor sp = entity.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
 			assertNotNull("Missing IdP provider role.", idp);
 			assertNotNull("Missing AA provider role.", aa);
 			assertNotNull("Missing SP provider role.", sp);
@@ -138,7 +139,7 @@ public class MetadataTests extends TestCase {
 
 			// Grab the Key Descriptors for an entity descriptor
 			Iterator<KeyDescriptor> keys = metadata.getEntityDescriptor("urn:mace:inqueue:example.edu")
-					.getSPSSODescriptor().get(0).getKeyDescriptors().iterator();
+					.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM).getKeyDescriptors().iterator();
 
 			// Make sure we have the expected key name
 			KeyDescriptor key = keys.next();
