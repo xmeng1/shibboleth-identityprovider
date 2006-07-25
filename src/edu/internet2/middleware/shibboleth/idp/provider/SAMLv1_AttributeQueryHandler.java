@@ -49,7 +49,9 @@ import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.opensaml.XML;
 import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
@@ -88,15 +90,24 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			throws InvalidProviderCredentialException {
 
 		// See if we have metadata for this provider
-		EntityDescriptor provider = support.getEntityDescriptor(assertedId);
+		EntityDescriptor provider = null;
+		try {
+			provider = support.getEntityDescriptor(assertedId);
+		} catch (MetadataProviderException e) {
+			log.error("Encountered an error while looking up metadata: " + e);
+		}
 		if (provider == null) {
 			log.info("No metadata found for providerId: (" + assertedId + ").");
 			return null;
 		} else {
 			log.info("Metadata found for providerId: (" + assertedId + ").");
 		}
-		//TODO this is a shib-specific thing... need to figure out what to do
-		RoleDescriptor ar_role = provider.getAttributeRequesterDescriptor(XML.SAML11_PROTOCOL_ENUM);
+		// TODO pulled this code out for now because we don't have an extension interface to support it.
+		// Need to add it back with current draft profile as of release time.
+		/*
+		 * RoleDescriptor ar_role = provider.getAttributeRequesterDescriptor(XML.SAML11_PROTOCOL_ENUM);
+		 */
+		RoleDescriptor ar_role = null;
 		SPSSODescriptor sp_role = provider.getSPSSODescriptor(XML.SAML11_PROTOCOL_ENUM);
 		if (ar_role == null && sp_role == null) {
 			log.info("SPSSO and Stand-Alone Requester roles not found in metadata for provider: (" + assertedId + ").");
@@ -289,15 +300,15 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 
 				// Sign the assertions, if necessary
 				boolean metaDataIndicatesSignAssertions = false;
-				EntityDescriptor descriptor = support.lookup(relyingParty.getProviderId());
+				EntityDescriptor descriptor = support.getEntityDescriptor((relyingParty.getProviderId()));
 				if (descriptor != null) {
-					AttributeRequesterDescriptor ar = descriptor
-							.getAttributeRequesterDescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
-					if (ar != null) {
-						if (ar.getWantAssertionsSigned()) {
-							metaDataIndicatesSignAssertions = true;
-						}
-					}
+					// TODO pulled this code out for now because we don't have an extension interface to support it.
+					// Need to add it back with current draft profile as of release time.
+					/*
+					 * AttributeRequesterDescriptor ar = descriptor
+					 * .getAttributeRequesterDescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM); if (ar != null) { if
+					 * (ar.getWantAssertionsSigned()) { metaDataIndicatesSignAssertions = true; } }
+					 */
 					if (!metaDataIndicatesSignAssertions) {
 						SPSSODescriptor sp = descriptor.getSPSSODescriptor(org.opensaml.XML.SAML11_PROTOCOL_ENUM);
 						if (sp != null) {
@@ -334,6 +345,13 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			return samlResponse;
 
 		} catch (SAMLException e) {
+			if (relyingParty.passThruErrors()) {
+				throw new SAMLException("General error processing request.", e);
+			} else {
+				throw new SAMLException("General error processing request.");
+			}
+		} catch (MetadataProviderException e) {
+			log.error("Encountered an error while looking up metadata: " + e);
 			if (relyingParty.passThruErrors()) {
 				throw new SAMLException("General error processing request.", e);
 			} else {
