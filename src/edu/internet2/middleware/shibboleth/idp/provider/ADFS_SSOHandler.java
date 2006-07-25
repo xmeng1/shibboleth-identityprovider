@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
@@ -47,6 +46,7 @@ import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -122,7 +122,13 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 			RelyingParty relyingParty = support.getServiceProviderMapper().getRelyingParty(remoteProviderId);
 
 			// Grab the metadata for the provider
-			EntityDescriptor descriptor = support.getEntityDescriptor(relyingParty.getProviderId());
+			EntityDescriptor descriptor = null;
+			try {
+				descriptor = support.getEntityDescriptor(relyingParty.getProviderId());
+			} catch (MetadataProviderException e1) {
+				log.error("Encountered an error while looking up metadata: " + e1);
+			}
+
 			if (descriptor == null) {
 				log.info("No metadata found for provider: (" + relyingParty.getProviderId() + ").");
 				throw new InvalidClientDataException(
@@ -148,11 +154,9 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 					throw new InvalidClientDataException("Invalid assertion consumer service URL.");
 				}
 				// if none was supplied, pull one from the metadata
+
 			} else {
-				Endpoint endpoint = sp.getAssertionConsumerServiceManager().getEndpointByBinding(
-						ADFS_SSOHandler.WS_FED_PROTOCOL_ENUM);
-				
-				
+				Endpoint endpoint = lookupAssertionConsumerService(sp);
 				if (endpoint == null || endpoint.getLocation() == null) {
 					log.error("No Assertion consumer service URL is available for provider ("
 							+ relyingParty.getProviderId() + ") via request the SSO request or the metadata.");
@@ -201,6 +205,17 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 		} catch (SecurityTokenResponseException e) {
 			throw new SAMLException(SAMLException.RESPONDER, e.getMessage());
 		}
+		return null;
+	}
+
+	private Endpoint lookupAssertionConsumerService(SPSSODescriptor sp) {
+
+		// Grab the first endpoin we find with an ADFS protocol binding
+		List<AssertionConsumerService> acs = sp.getAssertionConsumerServices();
+		for (AssertionConsumerService service : acs) {
+			if (ADFS_SSOHandler.WS_FED_PROTOCOL_ENUM.equals(service.getBinding())) { return service; }
+		}
+
 		return null;
 	}
 
