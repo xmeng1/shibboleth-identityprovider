@@ -33,6 +33,8 @@ import org.opensaml.saml2.metadata.provider.ChainingMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataFilter;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.security.TrustEngine;
+import org.opensaml.security.X509EntityCredential;
 import org.opensaml.xml.XMLObject;
 import org.w3c.dom.Element;
 
@@ -47,8 +49,7 @@ import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.common.Trust;
-import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
+import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrustEngine;
 import edu.internet2.middleware.shibboleth.metadata.MetadataProviderFactory;
 
 /**
@@ -68,7 +69,7 @@ public class IdPProtocolSupport implements MetadataProvider {
 	private AttributeResolver resolver;
 	private ArtifactMapper artifactMapper;
 	private Semaphore throttle;
-	private Trust trust = new ShibbolethTrust();
+	private TrustEngine<X509EntityCredential> trust = new ShibbolethTrustEngine();
 	private ChainingMetadataProvider wrappedMetadataProvider = new ChainingMetadataProvider();
 
 	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
@@ -263,7 +264,7 @@ public class IdPProtocolSupport implements MetadataProvider {
 		return artifactMapper;
 	}
 
-	public Trust getTrust() {
+	public TrustEngine<X509EntityCredential> getTrust() {
 
 		return trust;
 	}
