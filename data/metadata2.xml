@@ -29,7 +29,7 @@ FQCVg3Ej3Sdb8FpJwUXoqO4J6FU/UQ==
 		</Extensions>
 		<SPSSODescriptor 
 			protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
-			<KeyDescriptor>
+			<KeyDescriptor use="signing">
 				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
 					<ds:KeyName>CN=Walter Hoehn, OU=Test, O=Test, L=Memphis, ST=TN, C=US</ds:KeyName>
 				</ds:KeyInfo>
