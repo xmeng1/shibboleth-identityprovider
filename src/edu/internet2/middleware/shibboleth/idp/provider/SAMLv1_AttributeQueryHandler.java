@@ -52,6 +52,8 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.security.X509EntityCredential;
+import org.opensaml.security.impl.HttpX509EntityCredential;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.aa.AAException;
@@ -86,7 +88,7 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		return "SAML v1.1 Attribute Query";
 	}
 
-	private String authenticateAs(String assertedId, X509Certificate[] chain, IdPProtocolSupport support)
+	private String authenticateAs(String assertedId, X509EntityCredential credential, IdPProtocolSupport support)
 			throws InvalidProviderCredentialException {
 
 		// See if we have metadata for this provider
@@ -115,12 +117,13 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 		}
 
 		// Make sure that the supplied credential is valid for the selected provider role.
-		if ((ar_role != null && support.getTrust().validate(chain[0], chain, ar_role))
-				|| (sp_role != null && support.getTrust().validate(chain[0], chain, sp_role))) {
+		if ((ar_role != null && support.getTrust().validate(credential, ar_role))
+				|| (sp_role != null && support.getTrust().validate(credential, sp_role))) {
 			log.info("Supplied credentials validated for this provider.");
 			return assertedId;
 		} else {
-			log.error("Supplied credentials (" + chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
+			log.error("Supplied credentials ("
+					+ credential.getEntityCertificate().getSubjectX500Principal().getName(X500Principal.RFC2253)
 					+ ") are NOT valid for provider (" + assertedId + ").");
 			throw new InvalidProviderCredentialException("Invalid credentials.");
 		}
@@ -160,7 +163,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			try {
 				if (attributeQuery.getResource() != null) {
 					log.info("Remote provider has identified itself as: (" + attributeQuery.getResource() + ").");
-					effectiveName = authenticateAs(attributeQuery.getResource(), credentials, support);
+					effectiveName = authenticateAs(attributeQuery.getResource(), new HttpX509EntityCredential(request),
+							support);
 				}
 
 				if (effectiveName == null) {
@@ -170,7 +174,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					// Try the additional candidates.
 					String[] candidateNames = getCredentialNames(credentials[0]);
 					for (int c = 0; effectiveName == null && c < candidateNames.length; c++) {
-						effectiveName = authenticateAs(candidateNames[c], credentials, support);
+						effectiveName = authenticateAs(candidateNames[c], new HttpX509EntityCredential(request),
+								support);
 					}
 				}
 			} catch (InvalidProviderCredentialException ipc) {

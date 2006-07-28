@@ -36,6 +36,7 @@ import org.opensaml.artifact.Artifact;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.security.impl.HttpX509EntityCredential;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
@@ -140,7 +141,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 
 				// Make sure that the suppplied credential is valid for the provider to which the artifact was issued
 				if (chain != null && chain.length > 0) {
-					if (!support.getTrust().validate(chain[0], chain, role)) {
+					if (!support.getTrust().validate(new HttpX509EntityCredential(request), role)) {
 						log.error("Supplied TLS credential ("
 								+ chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
 								+ ") is NOT valid for provider (" + mapping.getServiceProviderId()

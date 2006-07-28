@@ -16,22 +16,24 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 
 import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.security.TrustEngine;
+import org.opensaml.security.X509EntityCredential;
+import org.opensaml.security.impl.SimpleX509EntityCredential;
 
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
-import edu.internet2.middleware.shibboleth.common.provider.BasicTrust;
-import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrust;
-import edu.internet2.middleware.shibboleth.metadata.EntityDescriptor;
-import edu.internet2.middleware.shibboleth.metadata.Metadata;
-import edu.internet2.middleware.shibboleth.metadata.MetadataException;
-import edu.internet2.middleware.shibboleth.metadata.SPSSODescriptor;
-import edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata;
-import edu.internet2.middleware.shibboleth.xml.Parser;
+import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrustEngine;
 
 /**
  * Test suite for SAML/Shibboleth trust validation.
@@ -39,8 +41,6 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
  * @author Walter Hoehn
  */
 public class TrustTests extends TestCase {
-
-	private Parser.DOMParser parser = new Parser.DOMParser(true);
 
 	public TrustTests(String name) {
 
@@ -66,10 +66,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata1.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata1.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -78,13 +77,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inliine1");
 
 			// Try to validate against the metadata
-			Trust validator = new BasicTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -103,10 +103,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata1.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata1.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -115,13 +114,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline2");
 
 			// Try to validate against the metadata
-			Trust validator = new BasicTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (successful) {
 				fail("Validation should have failed.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -140,10 +140,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata2.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata2.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -152,13 +151,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inliine1");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -177,10 +177,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata3.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata3.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -189,13 +188,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inliine1");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -214,10 +214,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata4.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata4.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -226,13 +225,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline3");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -251,10 +251,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata11.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata11.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -263,13 +262,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline3");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (successful) {
 				fail("Validation should have failed.  DN in cert does not match the metadata.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -288,10 +288,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata6.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata6.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -301,13 +300,14 @@ public class TrustTests extends TestCase {
 			X509Certificate intermediate = (X509Certificate) keyStore.getCertificate("im");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(endEntity, new X509Certificate[]{endEntity, intermediate}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays.asList(new X509Certificate[]{
+					endEntity, intermediate})), role);
 			if (successful) {
 				fail("Validation should not have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -326,10 +326,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata5.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata5.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -339,13 +338,14 @@ public class TrustTests extends TestCase {
 			X509Certificate intermediate = (X509Certificate) keyStore.getCertificate("im");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(endEntity, new X509Certificate[]{endEntity, intermediate}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays.asList(new X509Certificate[]{
+					endEntity, intermediate})), role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -364,10 +364,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata7.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata7.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -376,13 +375,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline4");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (successful) {
 				fail("Validation should not have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -401,10 +401,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata8.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("urn-x:testSP1");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata8.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -413,13 +412,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline4");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
@@ -438,10 +438,9 @@ public class TrustTests extends TestCase {
 
 		try {
 			// Pull the role descriptor from example metadata
-			Metadata metadata = new XMLMetadata(new File("data/metadata9.xml").toURL().toString());
-			EntityDescriptor entity = metadata.lookup("Walter Hoehn");
-			SPSSODescriptor role = (SPSSODescriptor) entity.getRoleByType(SPSSODescriptor.class,
-					"urn:oasis:names:tc:SAML:1.1:protocol");
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata9.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("Walter Hoehn");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 
 			// Use a pre-defined cert
 			KeyStore keyStore = KeyStore.getInstance("JKS");
@@ -450,13 +449,14 @@ public class TrustTests extends TestCase {
 			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inliine1");
 
 			// Try to validate against the metadata
-			Trust validator = new ShibbolethTrust();
-			boolean successful = validator.validate(cert, new X509Certificate[]{cert}, role);
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
 			if (!successful) {
 				fail("Validation should have succeeded.");
 			}
 
-		} catch (MetadataException e) {
+		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e);
 		} catch (ResourceNotAvailableException e) {
 			fail("Error in test specification: " + e);
