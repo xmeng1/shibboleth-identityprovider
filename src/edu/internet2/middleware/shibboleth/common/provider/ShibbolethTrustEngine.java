@@ -1,7 +1,11 @@
 
 package edu.internet2.middleware.shibboleth.common.provider;
 
+import java.security.cert.X509CRL;
+import java.security.cert.X509Certificate;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.xml.namespace.QName;
 
@@ -13,8 +17,16 @@ import org.opensaml.security.TrustEngine;
 import org.opensaml.security.X509EntityCredential;
 import org.opensaml.security.impl.AbstractPKIXTrustEngine;
 import org.opensaml.security.impl.InlinePKIKeyTrustEngine;
+import org.opensaml.xml.ElementProxy;
 import org.opensaml.xml.XMLObject;
+import org.opensaml.xml.signature.KeyInfo;
 
+/**
+ * <code>TrustEngine</code> implementation that first attempts to do standard SAML2 inline key validation and then
+ * falls back on PKIX validation against key authorities included in shibboleth-specific extensions to SAML 2 metadata.
+ * 
+ * @author Walter Hoehn
+ */
 public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements TrustEngine<X509EntityCredential> {
 
 	private static Logger log = Logger.getLogger(ShibbolethTrustEngine.class.getName());
@@ -54,6 +66,11 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 		}
 	}
 
+	/**
+	 * Pulls <code>PKIXValidationInformation</code> out of Shibboleth-specific metadata extensions and runs the
+	 * results against OpenSAML's PKIX trust engine. Recurses backwards through the metadata tree, attempting PKIX
+	 * validation at each level that contains a <KeyAuthority/> element. Metadata is evaluated in a lazy fashion.
+	 */
 	private class ShibbolethPKIXEngine extends AbstractPKIXTrustEngine implements TrustEngine<X509EntityCredential> {
 
 		private ShibPKIXMetadata metadataIterator;
@@ -86,16 +103,43 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 				Extensions extensions = entity.getExtensions();
 				for (XMLObject extension : extensions.getUnknownXMLObjects()) {
 					if (extension.getElementQName().equals(KEY_AUTHORITY)) {
-			
-						log.debug("Found Shibboleth Key Authority Metadata.");
-						
-						
+
+						if (!(extension instanceof ElementProxy)) {
+							break;
+						}
+
+						// Find the verification depth for all anchors in this set
+						int verifyDepth = 1;
+						String rawVerifyDepth = ((ElementProxy) extension).getUnknownAttributes().get("VerifyDepth");
+						// TODO doesn't work, need to fix attribute map
+						if (rawVerifyDepth != null && !rawVerifyDepth.equals("")) {
+							try {
+								verifyDepth = Integer.parseInt(rawVerifyDepth);
+							} catch (NumberFormatException nfe) {
+								log.error("<KeyAuthority/> attribute (VerifyDepth) is not an "
+										+ "integer, skipping <KeyAuthority/>.");
+								break;
+							}
+						}
+
+						// Find all trust anchors and revocation lists in the KeyInfo
+						Set<X509Certificate> trustAnchors = new HashSet<X509Certificate>();
+						Set<X509CRL> revocationLists = new HashSet<X509CRL>();
+						for (XMLObject subExtension : ((ElementProxy) extension).getUnknownXMLObjects()) {
+							if (subExtension instanceof KeyInfo) {
+								trustAnchors.addAll(((KeyInfo) subExtension).getCertificates());
+								revocationLists.addAll(((KeyInfo) subExtension).getCRLs());
+							}
+						}
+
+						log.debug("Found Shibboleth Key Authority Metadata: Verification depth: " + verifyDepth
+								+ " Trust Anchors: " + trustAnchors.size() + " Revocation Lists: "
+								+ revocationLists.size() + ".");
+						return new PKIXValidationInformation(1, trustAnchors, revocationLists);
+
 					}
-					System.err.println(extension.getElementQName());
 				}
-
-				return new PKIXValidationInformation(1, null, null);
-
+				return null;
 			}
 
 			public void remove() {
