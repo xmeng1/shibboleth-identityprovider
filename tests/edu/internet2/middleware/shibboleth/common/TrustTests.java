@@ -51,7 +51,7 @@ public class TrustTests extends TestCase {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.OFF);
+		Logger.getRootLogger().setLevel(Level.DEBUG);
 	}
 
 	public static void main(String[] args) {
@@ -212,6 +212,79 @@ public class TrustTests extends TestCase {
 		try {
 			// Pull the role descriptor from example metadata
 			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata3.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+
+			// Use a pre-defined cert
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new ShibResource(new File("data/trusttest.jks").toURL().toString()).getInputStream(),
+					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
+			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inliine1");
+
+			// Try to validate against the metadata
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
+			if (!successful) {
+				fail("Validation should have succeeded.");
+			}
+
+		} catch (MetadataProviderException e) {
+			fail("Error in test specification: " + e);
+		} catch (ResourceNotAvailableException e) {
+			fail("Error in test specification: " + e);
+		} catch (IOException e) {
+			fail("Error in test specification: " + e);
+		} catch (NoSuchAlgorithmException e) {
+			fail("Error in test specification: " + e);
+		} catch (CertificateException e) {
+			fail("Error in test specification: " + e);
+		} catch (KeyStoreException e) {
+			fail("Error in test specification: " + e);
+		}
+	}
+
+	public void testPkixX509CertValidateRecurseEntitiesWBadFirst() {
+
+		try {
+			// Pull the role descriptor from example metadata
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata12.xml"));
+			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
+			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
+
+			// Use a pre-defined cert
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(new ShibResource(new File("data/trusttest.jks").toURL().toString()).getInputStream(),
+					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
+			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inliine1");
+
+			// Try to validate against the metadata
+			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
+			boolean successful = validator.validate(new SimpleX509EntityCredential(Arrays
+					.asList(new X509Certificate[]{cert})), role);
+			if (!successful) {
+				fail("Validation should have succeeded.");
+			}
+
+		} catch (MetadataProviderException e) {
+			fail("Error in test specification: " + e);
+		} catch (ResourceNotAvailableException e) {
+			fail("Error in test specification: " + e);
+		} catch (IOException e) {
+			fail("Error in test specification: " + e);
+		} catch (NoSuchAlgorithmException e) {
+			fail("Error in test specification: " + e);
+		} catch (CertificateException e) {
+			fail("Error in test specification: " + e);
+		} catch (KeyStoreException e) {
+			fail("Error in test specification: " + e);
+		}
+	}
+	public void testPkixX509CertValidateRecurseEntitiesWMultipleKeyAuthoritiesOnOneDescriptor() {
+
+		try {
+			// Pull the role descriptor from example metadata
+			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata13.xml"));
 			EntityDescriptor entity = metadata.getEntityDescriptor("urn-x:testSP1");
 			SPSSODescriptor role = (SPSSODescriptor) entity.getSPSSODescriptor("urn:oasis:names:tc:SAML:1.1:protocol");
 

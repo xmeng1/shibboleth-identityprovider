@@ -5,6 +5,7 @@ import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -90,72 +91,34 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 
 		private class ShibPKIXMetadata implements Iterator<PKIXValidationInformation> {
 
-			private EntityDescriptor root;
-			private EntitiesDescriptor currentParent;
+			private ExtensionPoint currentExtensionPointRoot;
 
 			private ShibPKIXMetadata(EntityDescriptor entity) {
 
-				this.root = entity;
-			}
-
-			private ElementProxy getNextKeyAuthority(boolean consume) {
-
-				Extensions extensions = null;
-System.err.println("entity part.");
-				// Look for an unconsumed key authority on the entity descriptor first
-				if (root != null) {
-					extensions = root.getExtensions();
-					if (consume) {
-						if (root.getParent() instanceof EntitiesDescriptor) {
-							currentParent = (EntitiesDescriptor) root.getParent();
-						}
-						root = null;
-					}
-				}
-
-				if (extensions != null) {
-					for (XMLObject extension : extensions.getUnknownXMLObjects()) {
-						if (extension.getElementQName().equals(KEY_AUTHORITY) && extension instanceof ElementProxy) {
-							log.debug("Using Key Authority from entity descriptor.");
-							return (ElementProxy) extension;
-						}
-					}
-				}
-System.err.println("entities part.");
-				// Alright, we didn't find one... try the parent
-				while (currentParent != null) {
-System.err.println("foobar");
-					extensions = currentParent.getExtensions();
-					if (consume) {
-						if (currentParent.getParent() instanceof EntitiesDescriptor) {
-							currentParent = (EntitiesDescriptor) currentParent.getParent();
-						}
-					}
-
-					if (extensions != null) {
-						for (XMLObject extension : extensions.getUnknownXMLObjects()) {
-							if (extension.getElementQName().equals(KEY_AUTHORITY) && extension instanceof ElementProxy) {
-								log.debug("Using Key Authority from entities descriptor.");
-								return (ElementProxy) extension;
-							}
-						}
-					}
-				}
-
-				return null;
+				currentExtensionPointRoot = new ExtensionPoint(entity);
 			}
 
 			public boolean hasNext() {
 
-				System.err.println("hasNext()");
-				return (getNextKeyAuthority(false) != null);
+				return (getNextKeyAuthority(currentExtensionPointRoot, false) != null);
 			}
 
 			public PKIXValidationInformation next() {
-System.err.println("next()");
+
 				// Construct PKIX validation information from Shib metadata
-				ElementProxy keyAuthority = getNextKeyAuthority(true);
+				ElementProxy keyAuthority = getNextKeyAuthority(currentExtensionPointRoot, true);
 				if (keyAuthority == null) { throw new NoSuchElementException(); }
+
+				return convertMetadatatoValidationInfo(keyAuthority);
+
+			}
+
+			public void remove() {
+
+				throw new UnsupportedOperationException();
+			}
+
+			private PKIXValidationInformation convertMetadatatoValidationInfo(ElementProxy keyAuthority) {
 
 				// Find the verification depth for all anchors in this set
 				int verifyDepth = 1;
@@ -185,12 +148,81 @@ System.err.println("next()");
 						+ " Trust Anchors: " + trustAnchors.size() + " Revocation Lists: " + revocationLists.size()
 						+ ".");
 				return new PKIXValidationInformation(1, trustAnchors, revocationLists);
-
 			}
 
-			public void remove() {
+			private ElementProxy getNextKeyAuthority(ExtensionPoint extensionPoint, boolean consume) {
 
-				throw new UnsupportedOperationException();
+				if (extensionPoint == null) { return null; } // Can't recurse further
+
+				Extensions extensions = extensionPoint.getExtensions();
+
+				// Check this descriptor for a key authority
+				// The complication is that a particular descriptor can have more than one key authority, which is why
+				// we need this "consumedIndex" business to keep track of which ones we've processed so far
+				if (extensions != null) {
+					List<XMLObject> xmlObjects = extensions.getUnknownXMLObjects();
+					for (int i = extensionPoint.consumedIndex; i < xmlObjects.size(); i++) {
+
+						if (xmlObjects.get(i).getElementQName().equals(KEY_AUTHORITY)
+								&& xmlObjects.get(i) instanceof ElementProxy) {
+							log.debug("Found Key Authority element in metadata.");
+							if (consume && extensionPoint.consumedIndex == xmlObjects.size()) {
+								currentExtensionPointRoot = new ExtensionPoint(extensionPoint.getParent());
+
+							} else if (consume) {
+								currentExtensionPointRoot = extensionPoint;
+								extensionPoint.consumedIndex = i + 1;
+							}
+							return (ElementProxy) xmlObjects.get(i);
+						}
+					}
+				}
+
+				// If we don't find anything, recurse back through the parentso
+				if (extensionPoint.getParent() != null) { return getNextKeyAuthority(new ExtensionPoint(extensionPoint
+						.getParent()), consume); }
+
+				return null;
+			}
+
+			class ExtensionPoint {
+
+				private EntityDescriptor entity;
+				private EntitiesDescriptor entities;
+				int consumedIndex = 0;
+
+				private ExtensionPoint(EntityDescriptor entity) {
+
+					this.entity = entity;
+				}
+
+				private ExtensionPoint(EntitiesDescriptor entities) {
+
+					this.entities = entities;
+				}
+
+				private Extensions getExtensions() {
+
+					if (entity != null) {
+						return entity.getExtensions();
+					} else if (entities != null) {
+						return entities.getExtensions();
+					} else {
+						return null;
+					}
+				}
+
+				private EntitiesDescriptor getParent() {
+
+					if (entity != null && entity.getParent() instanceof EntitiesDescriptor) {
+						return (EntitiesDescriptor) entity.getParent();
+					} else if (entities != null && entities.getParent() instanceof EntitiesDescriptor) {
+						return (EntitiesDescriptor) entities.getParent();
+					} else {
+						return null;
+					}
+				}
+
 			}
 
 		}
