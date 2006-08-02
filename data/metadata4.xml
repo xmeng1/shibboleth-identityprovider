@@ -52,7 +52,7 @@ M4SJ6gjGf83y9axPpuHcjwxQ5fLqZfnvrWH+1owJhQ==
 		</Extensions>
 		<SPSSODescriptor 
 			protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
-			<KeyDescriptor>
+			<KeyDescriptor use="signing">
 				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
 					<ds:KeyName>wraith.memphis.edu</ds:KeyName>
 				</ds:KeyInfo>
