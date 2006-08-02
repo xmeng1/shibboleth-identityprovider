@@ -5,12 +5,14 @@ import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.opensaml.saml2.common.Extensions;
+import org.opensaml.saml2.metadata.EntitiesDescriptor;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.security.TrustEngine;
@@ -73,7 +75,6 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 	 */
 	private class ShibbolethPKIXEngine extends AbstractPKIXTrustEngine implements TrustEngine<X509EntityCredential> {
 
-		private ShibPKIXMetadata metadataIterator;
 		EntityDescriptor entity;
 
 		private ShibbolethPKIXEngine(EntityDescriptor entity) {
@@ -84,80 +85,114 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 		@Override
 		protected Iterator<PKIXValidationInformation> getValidationInformation(RoleDescriptor descriptor) {
 
-			return new ShibPKIXMetadata();
+			return new ShibPKIXMetadata(entity);
 		}
 
-		private class ShibPKIXMetadata implements Iterator {
+		private class ShibPKIXMetadata implements Iterator<PKIXValidationInformation> {
 
-			private int iter = 0;
+			private EntityDescriptor root;
+			private EntitiesDescriptor currentParent;
+
+			private ShibPKIXMetadata(EntityDescriptor entity) {
+
+				this.root = entity;
+			}
+
+			private ElementProxy getNextKeyAuthority(boolean consume) {
+
+				Extensions extensions = null;
+System.err.println("entity part.");
+				// Look for an unconsumed key authority on the entity descriptor first
+				if (root != null) {
+					extensions = root.getExtensions();
+					if (consume) {
+						if (root.getParent() instanceof EntitiesDescriptor) {
+							currentParent = (EntitiesDescriptor) root.getParent();
+						}
+						root = null;
+					}
+				}
+
+				if (extensions != null) {
+					for (XMLObject extension : extensions.getUnknownXMLObjects()) {
+						if (extension.getElementQName().equals(KEY_AUTHORITY) && extension instanceof ElementProxy) {
+							log.debug("Using Key Authority from entity descriptor.");
+							return (ElementProxy) extension;
+						}
+					}
+				}
+System.err.println("entities part.");
+				// Alright, we didn't find one... try the parent
+				while (currentParent != null) {
+System.err.println("foobar");
+					extensions = currentParent.getExtensions();
+					if (consume) {
+						if (currentParent.getParent() instanceof EntitiesDescriptor) {
+							currentParent = (EntitiesDescriptor) currentParent.getParent();
+						}
+					}
+
+					if (extensions != null) {
+						for (XMLObject extension : extensions.getUnknownXMLObjects()) {
+							if (extension.getElementQName().equals(KEY_AUTHORITY) && extension instanceof ElementProxy) {
+								log.debug("Using Key Authority from entities descriptor.");
+								return (ElementProxy) extension;
+							}
+						}
+					}
+				}
+
+				return null;
+			}
 
 			public boolean hasNext() {
 
-				// TODO this needs to do more than one
-				return (iter < 1);
+				System.err.println("hasNext()");
+				return (getNextKeyAuthority(false) != null);
 			}
 
 			public PKIXValidationInformation next() {
+System.err.println("next()");
+				// Construct PKIX validation information from Shib metadata
+				ElementProxy keyAuthority = getNextKeyAuthority(true);
+				if (keyAuthority == null) { throw new NoSuchElementException(); }
 
-				iter++;
-				Extensions extensions = entity.getExtensions();
-				for (XMLObject extension : extensions.getUnknownXMLObjects()) {
-					if (extension.getElementQName().equals(KEY_AUTHORITY)) {
-
-						if (!(extension instanceof ElementProxy)) {
-							break;
-						}
-
-						// Find the verification depth for all anchors in this set
-						int verifyDepth = 1;
-						String rawVerifyDepth = ((ElementProxy) extension).getUnknownAttributes().get("VerifyDepth");
-						// TODO doesn't work, need to fix attribute map
-						if (rawVerifyDepth != null && !rawVerifyDepth.equals("")) {
-							try {
-								verifyDepth = Integer.parseInt(rawVerifyDepth);
-							} catch (NumberFormatException nfe) {
-								log.error("<KeyAuthority/> attribute (VerifyDepth) is not an "
-										+ "integer, skipping <KeyAuthority/>.");
-								break;
-							}
-						}
-
-						// Find all trust anchors and revocation lists in the KeyInfo
-						Set<X509Certificate> trustAnchors = new HashSet<X509Certificate>();
-						Set<X509CRL> revocationLists = new HashSet<X509CRL>();
-						for (XMLObject subExtension : ((ElementProxy) extension).getUnknownXMLObjects()) {
-							if (subExtension instanceof KeyInfo) {
-								trustAnchors.addAll(((KeyInfo) subExtension).getCertificates());
-								revocationLists.addAll(((KeyInfo) subExtension).getCRLs());
-							}
-						}
-
-						log.debug("Found Shibboleth Key Authority Metadata: Verification depth: " + verifyDepth
-								+ " Trust Anchors: " + trustAnchors.size() + " Revocation Lists: "
-								+ revocationLists.size() + ".");
-						return new PKIXValidationInformation(1, trustAnchors, revocationLists);
-
+				// Find the verification depth for all anchors in this set
+				int verifyDepth = 1;
+				String rawVerifyDepth = keyAuthority.getUnknownAttributes().get("VerifyDepth");
+				// TODO doesn't work, need to fix attribute map
+				if (rawVerifyDepth != null && !rawVerifyDepth.equals("")) {
+					try {
+						verifyDepth = Integer.parseInt(rawVerifyDepth);
+					} catch (NumberFormatException nfe) {
+						log.error("<KeyAuthority/> attribute (VerifyDepth) is not an "
+								+ "integer, defaulting to most strict depth of (1).");
+						verifyDepth = 1;
 					}
 				}
-				return null;
+
+				// Find all trust anchors and revocation lists in the KeyInfo
+				Set<X509Certificate> trustAnchors = new HashSet<X509Certificate>();
+				Set<X509CRL> revocationLists = new HashSet<X509CRL>();
+				for (XMLObject subExtension : keyAuthority.getUnknownXMLObjects()) {
+					if (subExtension instanceof KeyInfo) {
+						trustAnchors.addAll(((KeyInfo) subExtension).getCertificates());
+						revocationLists.addAll(((KeyInfo) subExtension).getCRLs());
+					}
+				}
+
+				log.debug("Found Shibboleth Key Authority Metadata: Verification depth: " + verifyDepth
+						+ " Trust Anchors: " + trustAnchors.size() + " Revocation Lists: " + revocationLists.size()
+						+ ".");
+				return new PKIXValidationInformation(1, trustAnchors, revocationLists);
+
 			}
 
 			public void remove() {
 
 				throw new UnsupportedOperationException();
-
 			}
 
 		}
-
-		/*
-		 * class XMLKeyAuthority implements KeyAuthority { private int depth = 1; private ArrayList keys = new
-		 * ArrayList(); XMLKeyAuthority(Element e) { if (e.hasAttributeNS(null, "VerifyDepth")) depth =
-		 * Integer.parseInt(e.getAttributeNS(null, "VerifyDepth")); e = XML.getFirstChildElement(e, XML.XMLSIG_NS,
-		 * "KeyInfo"); while (e != null) { try { keys.add(new KeyInfo(e, null)); } catch (XMLSecurityException e1) {
-		 * log.error("unable to process ds:KeyInfo element: " + e1.getMessage()); } e = XML.getNextSiblingElement(e,
-		 * XML.XMLSIG_NS, "KeyInfo"); } } public int getVerifyDepth() { return depth; } public Iterator getKeyInfos() {
-		 * return keys.iterator(); } }
-		 */
 	}
 }
