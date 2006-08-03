@@ -32,7 +32,7 @@ Ysrh7fFJKKp7Pkc1fxsusK+MBXjVZtq0baXsU637qw==
 		</Extensions>
 		<SPSSODescriptor 
 			protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
-			<KeyDescriptor>
+			<KeyDescriptor use="signing">
 				<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
 					<ds:KeyName>wraith.memphis.edu</ds:KeyName>
 				</ds:KeyInfo>
