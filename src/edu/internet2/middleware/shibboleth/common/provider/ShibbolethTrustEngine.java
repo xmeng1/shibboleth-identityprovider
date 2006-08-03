@@ -122,8 +122,7 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 
 				// Find the verification depth for all anchors in this set
 				int verifyDepth = 1;
-				String rawVerifyDepth = keyAuthority.getUnknownAttributes().get("VerifyDepth");
-				// TODO doesn't work, need to fix attribute map
+				String rawVerifyDepth = keyAuthority.getUnknownAttributes().get(new QName("VerifyDepth"));
 				if (rawVerifyDepth != null && !rawVerifyDepth.equals("")) {
 					try {
 						verifyDepth = Integer.parseInt(rawVerifyDepth);
@@ -145,7 +144,7 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 				}
 
 				log.debug("Found Shibboleth Key Authority Metadata: Verification depth: " + verifyDepth
-						+ " Trust Anchors: " + trustAnchors.size() + " Revocation Lists: " + revocationLists.size()
+						+ "   Trust Anchors: " + trustAnchors.size() + "   Revocation Lists: " + revocationLists.size()
 						+ ".");
 				return new PKIXValidationInformation(verifyDepth, trustAnchors, revocationLists);
 			}
