@@ -147,7 +147,7 @@ public class ShibbolethTrustEngine extends InlinePKIKeyTrustEngine implements Tr
 				log.debug("Found Shibboleth Key Authority Metadata: Verification depth: " + verifyDepth
 						+ " Trust Anchors: " + trustAnchors.size() + " Revocation Lists: " + revocationLists.size()
 						+ ".");
-				return new PKIXValidationInformation(1, trustAnchors, revocationLists);
+				return new PKIXValidationInformation(verifyDepth, trustAnchors, revocationLists);
 			}
 
 			private ElementProxy getNextKeyAuthority(ExtensionPoint extensionPoint, boolean consume) {
