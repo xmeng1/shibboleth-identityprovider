@@ -23,8 +23,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.opensaml.common.SAMLObjectTestCaseConfigInitializer;
-import org.opensaml.common.xml.ParserPoolManager;
+import org.opensaml.Configuration;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
@@ -33,8 +32,6 @@ import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.security.TrustEngine;
 import org.opensaml.security.X509EntityCredential;
 import org.opensaml.security.impl.SimpleX509EntityCredential;
-import org.opensaml.xml.Configuration;
-import org.w3c.dom.Document;
 
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrustEngine;
@@ -52,6 +49,8 @@ public class TrustTests extends TestCase {
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
 		Logger.getRootLogger().setLevel(Level.DEBUG);
+		
+		Configuration.init();
 	}
 
 	public static void main(String[] args) {
@@ -64,36 +63,6 @@ public class TrustTests extends TestCase {
 	protected void setUp() throws Exception {
 
 		super.setUp();
-
-		// TODO delete this stuff when the library can do default initialization
-
-		Class clazz = SAMLObjectTestCaseConfigInitializer.class;
-		ParserPoolManager ppMgr = ParserPoolManager.getInstance();
-
-		// Common Object Provider Configuration
-		Document commonConfig = ppMgr.parse(clazz.getResourceAsStream("/common-config.xml"));
-		Configuration.load(commonConfig);
-
-		// SAML 1.X Assertion Object Provider Configuration
-		Document saml1AssertionConfig = ppMgr.parse(clazz.getResourceAsStream("/saml1-assertion-config.xml"));
-		Configuration.load(saml1AssertionConfig);
-
-		// SAML 1.X Protocol Object Provider Configuration
-		Document saml1ProtocolConfig = ppMgr.parse(clazz.getResourceAsStream("/saml1-protocol-config.xml"));
-		Configuration.load(saml1ProtocolConfig);
-
-		// SAML 2.0 Metadata Object Provider Configuration
-		Document saml2mdConfig = ppMgr.parse(clazz.getResourceAsStream("/saml2-metadata-config.xml"));
-		Configuration.load(saml2mdConfig);
-
-		// SAML 2.0 Assertion Object Provider Configuration
-		Document saml2assertionConfig = ppMgr.parse(clazz.getResourceAsStream("/saml2-assertion-config.xml"));
-		Configuration.load(saml2assertionConfig);
-
-		// SAML 2.0 Protocol Object Provider Configuration
-		Document saml2protocolConfig = ppMgr.parse(clazz.getResourceAsStream("/saml2-protocol-config.xml"));
-		Configuration.load(saml2protocolConfig);
-
 	}
 
 	public void testInlineX509CertValidate() {
