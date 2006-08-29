@@ -59,7 +59,7 @@
         <Location>https://idp.example.org/shibboleth-idp/Artifact</Location>
     </ProtocolHandler>
     
-    <MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-        uri="$IDP_HOME$/etc/metadata.xml"/>
+    <MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.FilesystemMetadataProvider"
+        path="$IDP_HOME$/etc/metadata.xml"/>
 
 </IdPConfig>

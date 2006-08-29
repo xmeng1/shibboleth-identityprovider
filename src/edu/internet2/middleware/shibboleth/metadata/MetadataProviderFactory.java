@@ -36,6 +36,7 @@ public class MetadataProviderFactory {
 			try {
 				Class[] params = {Class.forName("org.w3c.dom.Element"),};
 				return (MetadataProvider) Class.forName(className).getConstructor(params).newInstance(new Object[]{e});
+
 			} catch (Exception loaderException) {
 				log.error("Failed to load Metadata Provider implementation class: " + loaderException);
 				Throwable cause = loaderException.getCause();

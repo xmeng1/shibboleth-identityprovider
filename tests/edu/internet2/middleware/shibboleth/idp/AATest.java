@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package edu.internet2.middleware.shibboleth.idp;
 
 import java.io.File;
@@ -35,6 +36,7 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	private void initRequest(String requestFilename) throws Exception {
+
 		initRequest(requestFilename, "data/idp/blackbox/sp.crt");
 	}
 
@@ -47,8 +49,8 @@ public class AATest extends IdpTestCase {
 	 *            path to file containing client SSL certificate
 	 * @throws Exception
 	 */
-	private void initRequest(String requestFilename, String certFilename)
-			throws Exception {
+	private void initRequest(String requestFilename, String certFilename) throws Exception {
+
 		File requestFile = new File(requestFilename);
 
 		request.setRemoteAddr("127.0.0.1");
@@ -62,13 +64,10 @@ public class AATest extends IdpTestCase {
 		request.setRequestURL("https://idp.example.org/shibboleth-idp/AA");
 		request.setRequestURI("https://idp.example.org/shibboleth-idp/AA");
 		request.setContentType("text/xml");
-		request.setHeader("SOAPAction",
-				"http://www.oasis-open.org/committees/security");
+		request.setHeader("SOAPAction", "http://www.oasis-open.org/committees/security");
 		request.setContentLength(new Long(requestFile.length()).intValue());
 
-		request
-				.setBodyContent(FileUtils
-						.readFileToString(requestFile, "utf-8"));
+		request.setBodyContent(FileUtils.readFileToString(requestFile, "utf-8"));
 		MockObjectUtils.setClientCert(request, certFilename);
 	}
 
@@ -78,30 +77,14 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testBasicAttrQuery() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/standard");
 		initRequest("data/idp/blackbox/aa/request01.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response01.txt"), "utf-8"), response
-				.getOutputStreamContent()));
-	}
-
-	/**
-	 * Basic Working 1.1 Attribute Query
-	 * 
-	 * @throws Exception
-	 */
-	public void testBasic11AttrQuery() throws Exception {
-		resetServlet("data/idp/blackbox/conf/standard");
-		initRequest("data/idp/blackbox/aa/request02.txt");
-
-		testModule.doPost();
-
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response02.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response01.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
 
 	/**
@@ -110,14 +93,13 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithInvalidCred() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/standard");
-		initRequest("data/idp/blackbox/aa/request01.txt",
-				"data/idp/blackbox/sp-bad.crt");
+		initRequest("data/idp/blackbox/aa/request01.txt", "data/idp/blackbox/sp-bad.crt");
 
 		testModule.doPost();
 
-		assertEquals("Invalid credentials for request.", MockObjectUtils
-				.getSamlStatusMessage(response));
+		assertEquals("Invalid credentials for request.", MockObjectUtils.getSamlStatusMessage(response));
 	}
 
 	/**
@@ -126,14 +108,14 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithDefaultRelyingParty() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/SPRelyingParty");
 		initRequest("data/idp/blackbox/aa/request01.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response01.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response01.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
 
 	/**
@@ -142,14 +124,14 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithSpMatchedRelyingParty() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/SPRelyingParty");
 		initRequest("data/idp/blackbox/aa/request03.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response03.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response03.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
 
 	/**
@@ -158,14 +140,14 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithGroupMatchedRelyingParty() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/groupRelyingParty");
 		initRequest("data/idp/blackbox/aa/request04.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response04.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response04.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
 
 	/**
@@ -174,32 +156,31 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithErrorPassThru() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/passThruErrors");
 		initRequest("data/idp/blackbox/aa/request05.txt");
 
 		testModule.doPost();
 
-		assertEquals(
-				"General error processing request. (wrapped: Name Identifier format not registered.)",
+		assertEquals("General error processing request. (wrapped: Name Identifier format not registered.)",
 				MockObjectUtils.getSamlStatusMessage(response));
 	}
 
 	/**
-	 * Attribute Query with attribute designators. Instead of the IdP returning
-	 * all attributes allowed for the requesting SP, the SP specifies
-	 * specifically which attributes it wants.
+	 * Attribute Query with attribute designators. Instead of the IdP returning all attributes allowed for the
+	 * requesting SP, the SP specifies specifically which attributes it wants.
 	 * 
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithAttrDesignators() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/standard");
 		initRequest("data/idp/blackbox/aa/request06.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response06.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response06.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
 
 	/**
@@ -208,13 +189,13 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithUnknownNameIdentifierType() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/standard");
 		initRequest("data/idp/blackbox/aa/request05.txt");
 
 		testModule.doPost();
 
-		assertEquals("General error processing request.", MockObjectUtils
-				.getSamlStatusMessage(response));
+		assertEquals("General error processing request.", MockObjectUtils.getSamlStatusMessage(response));
 	}
 
 	/**
@@ -223,13 +204,13 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithIncorrectNameIdentifier() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/groupRelyingParty");
 		initRequest("data/idp/blackbox/aa/request07.txt");
 
 		testModule.doPost();
 
-		assertEquals("General error processing request.", MockObjectUtils
-				.getSamlStatusMessage(response));
+		assertEquals("General error processing request.", MockObjectUtils.getSamlStatusMessage(response));
 	}
 
 	/**
@@ -238,46 +219,46 @@ public class AATest extends IdpTestCase {
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithSignedAssertions() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/signAssertions");
 		initRequest("data/idp/blackbox/aa/request01.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response08.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response08.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
-	
+
 	/**
 	 * Attribute Query with ARP constraint
 	 * 
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithConstraint() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/constraints");
 		initRequest("data/idp/blackbox/aa/request01.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response09.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response09.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
-	
+
 	/**
 	 * Attribute Query with attribute designators and ARP constraint
 	 * 
 	 * @throws Exception
 	 */
 	public void testAttrQueryWithDesignatorsAndConstraint() throws Exception {
+
 		resetServlet("data/idp/blackbox/conf/constraints");
 		initRequest("data/idp/blackbox/aa/request06.txt");
 
 		testModule.doPost();
 
-		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File(
-				"data/idp/blackbox/aa/response06.txt"), "utf-8"), response
-				.getOutputStreamContent()));
+		assertTrue(responsesAreEqual(FileUtils.readFileToString(new File("data/idp/blackbox/aa/response06.txt"),
+				"utf-8"), response.getOutputStreamContent()));
 	}
-	
+
 }

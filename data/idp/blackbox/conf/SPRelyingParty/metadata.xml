@@ -58,7 +58,7 @@ M4SJ6gjGf83y9axPpuHcjwxQ5fLqZfnvrWH+1owJhQ==
 		<EntityDescriptor entityID="urn:x-shibtest:SP">
             <SPSSODescriptor 
                 protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
-                <KeyDescriptor>
+                <KeyDescriptor use="signing">
                     <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
                         <ds:KeyName>sp.example.org</ds:KeyName>
                     </ds:KeyInfo>
@@ -72,7 +72,7 @@ M4SJ6gjGf83y9axPpuHcjwxQ5fLqZfnvrWH+1owJhQ==
 		<EntityDescriptor entityID="urn:x-shibtest:SP2">
             <SPSSODescriptor 
                 protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol">
-                <KeyDescriptor>
+                <KeyDescriptor use="signing">
                     <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
                         <ds:KeyName>sp.example.org</ds:KeyName>
                     </ds:KeyInfo>
