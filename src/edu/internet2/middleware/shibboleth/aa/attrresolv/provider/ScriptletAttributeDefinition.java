@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
+import java.io.ByteArrayInputStream;
 import java.security.Principal;
 
 import org.apache.log4j.Logger;
@@ -26,6 +27,7 @@ import org.w3c.dom.NodeList;
 import bsh.EvalError;
 import bsh.Interpreter;
 import bsh.ParseException;
+import bsh.Parser;
 import bsh.TargetError;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeDefinitionPlugIn;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.Dependencies;
@@ -70,7 +72,12 @@ public class ScriptletAttributeDefinition extends BaseAttributeDefinition implem
 			throw new ResolutionPlugInException("Unable to load Attribute Definition.");
 		}
 		try {
-			loadBshInterpreter().eval(script);
+			// Parse the script ahead of time to try and catch errors before it is actually run
+			Parser parser = new Parser(new ByteArrayInputStream(script.getBytes()));
+			parser.setRetainComments(true);
+			while (!parser.Line()/* eof */) {
+				parser.popNode();
+			}
 
 			// FUTURE It would be really nice if we could do a better job of checking for errors here
 		} catch (ParseException pe) {
