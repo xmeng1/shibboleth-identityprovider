@@ -34,6 +34,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.opensaml.Configuration;
 import org.opensaml.SAMLBinding;
 import org.opensaml.SAMLBindingFactory;
 import org.opensaml.SAMLException;
@@ -83,6 +84,9 @@ public class IdPResponder extends HttpServlet {
 	public void init(ServletConfig servletConfig) throws ServletException {
 
 		super.init(servletConfig);
+		
+		// Load OpenSAML2
+		Configuration.init();
 
 		try {
 			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
