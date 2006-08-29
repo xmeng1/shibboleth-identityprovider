@@ -48,7 +48,7 @@ public class TrustTests extends TestCase {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.OFF);
 		
 		Configuration.init();
 	}
@@ -474,7 +474,7 @@ public class TrustTests extends TestCase {
 	}
 
 	public void testCRLDoesntBreakValid() {
-
+		 
 		try {
 			// Pull the role descriptor from example metadata
 			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/metadata8.xml"));
@@ -485,7 +485,7 @@ public class TrustTests extends TestCase {
 			KeyStore keyStore = KeyStore.getInstance("JKS");
 			keyStore.load(new ShibResource(new File("data/trusttest.jks").toURL().toString()).getInputStream(),
 					new char[]{'t', 'e', 's', 't', '1', '2', '3'});
-			X509Certificate cert = (X509Certificate) keyStore.getCertificate("inline4");
+			X509Certificate cert = (X509Certificate) keyStore.getCertificate("pkix5");
 
 			// Try to validate against the metadata
 			TrustEngine<X509EntityCredential> validator = new ShibbolethTrustEngine();
