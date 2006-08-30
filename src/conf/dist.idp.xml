@@ -112,13 +112,13 @@
 	<!-- This section configures the loading of SAML2 metadata, which contains information about system entities and 
 		how to authenticate them.  The metadatatool utility can be used to keep federation metadata files in synch.
 		Metadata can also be placed directly within this these elements. -->
-	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-                uri="$IDP_HOME$/etc/example-metadata.xml"/>
+	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.FilesystemMetadataProvider"
+                path="$IDP_HOME$/etc/example-metadata.xml"/>
 	
 	
 	<!-- InQueue example (Deployments would need to get updated InQueue metadata) -->
 	<!--
-	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.provider.XMLMetadata"
-                uri="$IDP_HOME$/etc/IQ-metadata.xml"/> -->
+	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.FilesystemMetadataProvider"
+                path="$IDP_HOME$/etc/IQ-metadata.xml"/> -->
 </IdPConfig>
 
