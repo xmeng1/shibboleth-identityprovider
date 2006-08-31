@@ -161,6 +161,8 @@ public class SAML2PersistentID extends BaseAttributeDefinition implements Attrib
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
 			Dependencies depends) throws ResolutionPlugInException {
 
+		super.resolve(attribute, principal, requester, responder, depends);
+
 		log.debug("Resolving attribute: (" + getId() + ")");
 
 		if (requester == null || requester.equals("")) {
@@ -231,8 +233,6 @@ public class SAML2PersistentID extends BaseAttributeDefinition implements Attrib
 			attribute.setResolved();
 			return;
 		}
-
-		standardProcessing(attribute);
 
 		// Hash the data together to produce the persistent ID.
 		try {

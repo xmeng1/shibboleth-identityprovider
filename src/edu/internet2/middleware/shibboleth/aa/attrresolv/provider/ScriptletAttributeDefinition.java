@@ -94,9 +94,9 @@ public class ScriptletAttributeDefinition extends BaseAttributeDefinition implem
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
 			Dependencies depends) throws ResolutionPlugInException {
 
-		try {
+		super.resolve(attribute, principal, requester, responder, depends);
 
-			standardProcessing(attribute);
+		try {
 
 			Interpreter beanShellInterpreter = loadBshInterpreter();
 

@@ -17,7 +17,6 @@
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -36,12 +35,10 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
  * 
  * @author Walter Hoehn (wassa@columbia.edu)
  */
-public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition implements AttributeDefinitionPlugIn {
+public class SimpleAttributeDefinition extends BaseAttributeDefinition implements AttributeDefinitionPlugIn {
 
 	private static Logger log = Logger.getLogger(SimpleAttributeDefinition.class.getName());
-	private String connectorMapping;
 	private String smartScope;
-	private ValueHandler valueHandler;
 	private boolean allowEmpty = false;
 	private boolean downCase = false;
 
@@ -52,24 +49,6 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 	public SimpleAttributeDefinition(Element e) throws ResolutionPlugInException {
 
 		super(e);
-
-		// Parse source name
-		String sourceName = e.getAttribute("sourceName");
-		if (sourceName == null || sourceName.equals("")) {
-			int index = getId().lastIndexOf("#");
-			if (index < 0) {
-				index = getId().lastIndexOf(":");
-				int slashIndex = getId().lastIndexOf("/");
-				if (slashIndex > index) {
-					index = slashIndex;
-				}
-			}
-			connectorMapping = getId().substring(index + 1);
-		} else {
-			connectorMapping = sourceName;
-		}
-
-		log.debug("Mapping attribute to name (" + connectorMapping + ") in connector.");
 
 		// Configure smart scoping
 		String smartScopingSpec = e.getAttribute("smartScope");
@@ -82,33 +61,9 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 			log.debug("Smart Scoping disabled for attribute (" + getId() + ").");
 		}
 
-		// Load a value handler
-		String valueHandlerSpec = e.getAttribute("valueHandler");
-
-		if (valueHandlerSpec != null && !valueHandlerSpec.equals("")) {
-			if (smartScope == null) {
-				try {
-					Class handlerClass = Class.forName(valueHandlerSpec);
-					valueHandler = (ValueHandler) handlerClass.newInstance();
-				} catch (ClassNotFoundException cnfe) {
-					log.error("Value Handler implementation specified for attribute (" + getId()
-							+ ") cannot be found: " + cnfe);
-					throw new ResolutionPlugInException("Value Handler implementation specified for attribute ("
-							+ getId() + ") cannot be found.");
-				} catch (Exception oe) {
-					log.error("Value Handler implementation specified for attribute (" + getId()
-							+ ") coudl not be loaded: " + oe);
-					throw new ResolutionPlugInException("Value Handler implementation specified for attribute ("
-							+ getId() + ") could not be loaded.");
-				}
-			} else {
-				log.error("Specification of \"valueHandler\' cannot be used in combination with \"smartScope\". "
-						+ " Ignoring Value Handler for attribute (" + getId() + ").");
-			}
-		}
-
-		if (valueHandler != null) {
-			log.debug("Custom Value Handler enabled for attribute (" + getId() + ").");
+		if (smartScope != null && valueHandler != null) {
+			log.error("Specification of \"valueHandler\' cannot be used in combination with \"smartScope\". "
+					+ " Ignoring Value Handler for attribute (" + getId() + ").");
 		}
 
 		// Decide whether or not to allow empty string values
@@ -140,23 +95,20 @@ public class SimpleAttributeDefinition extends SimpleBaseAttributeDefinition imp
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
 			Dependencies depends) throws ResolutionPlugInException {
 
+		super.resolve(attribute, principal, requester, responder, depends);
+
 		log.debug("Resolving attribute: (" + getId() + ")");
-		Set results = new LinkedHashSet();
+		Set<Object> results = new LinkedHashSet<Object>();
 		if (!connectorDependencyIds.isEmpty()) {
-			results.addAll(Arrays.asList(getValuesFromConnectors(depends)));
+			results.addAll(getAllValuesFromConnectorDeps(depends));
 		}
 
 		if (!attributeDependencyIds.isEmpty()) {
-			results.addAll(Arrays.asList(getValuesFromAttributes(depends)));
+			results.addAll(getAllValuesFromAttributeDeps(depends));
 		}
-
-		standardProcessing(attribute);
 
 		if (smartScope != null) {
 			attribute.registerValueHandler(new ScopedStringValueHandler(smartScope));
-		}
-		if (smartScope == null && valueHandler != null) {
-			attribute.registerValueHandler(valueHandler);
 		}
 
 		Iterator resultsIt = results.iterator();

@@ -53,7 +53,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
  * expression substitution.
  */
 
-public class RegExAttributeDefinition extends SimpleBaseAttributeDefinition implements AttributeDefinitionPlugIn {
+public class RegExAttributeDefinition extends BaseAttributeDefinition implements AttributeDefinitionPlugIn {
 
 	private static Logger log = Logger.getLogger(RegExAttributeDefinition.class.getName());
 
@@ -110,15 +110,15 @@ public class RegExAttributeDefinition extends SimpleBaseAttributeDefinition impl
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
 			Dependencies depends) throws ResolutionPlugInException {
 
-		standardProcessing(attribute);
+		super.resolve(attribute, principal, requester, responder, depends);
 
 		// Resolve all dependencies to arrive at the source values (unformatted)
-		Collection results = resolveDependencies(attribute, principal, requester, depends);
+		Collection results = getValuesFromAllDeps(attribute, principal, requester, depends);
 
 		Iterator resultsIt = results.iterator();
 
 		while (resultsIt.hasNext()) {
-			String value = getString(resultsIt.next());
+			String value = convertToString(resultsIt.next());
 			Matcher m = pattern.matcher(value);
 			try {
 				if (partialMatch || m.matches()) attribute.addValue(m.replaceAll(replacement));

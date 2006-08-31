@@ -66,7 +66,7 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 /**
  * @author Walter Hoehn
  */
-public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition implements AttributeDefinitionPlugIn {
+public class CompositeAttributeDefinition extends BaseAttributeDefinition implements AttributeDefinitionPlugIn {
 
 	private static Logger log = Logger.getLogger(CompositeAttributeDefinition.class.getName());
 
@@ -77,7 +77,7 @@ public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition 
 	private String[] sourceNames;
 
 	// Names of source attributes in a Set for convenience of checking membership
-	private Set sourceNamesSet;
+	private Set<String> sourceNamesSet;
 
 	// Number of values that each source attribute has (must be same for all attributes)
 	private int valueCount = -1;
@@ -101,12 +101,12 @@ public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition 
 
 			// We assume space or comma as separators
 			StringTokenizer st = new StringTokenizer(orderedSourceNames, " ,");
-			ArrayList sourceNamesList = new ArrayList();
+			ArrayList<String> sourceNamesList = new ArrayList<String>();
 			while (st.hasMoreTokens()) {
 				String token = st.nextToken().trim();
 				if (token.length() > 0) sourceNamesList.add(token);
 			}
-			sourceNamesSet = new HashSet();
+			sourceNamesSet = new HashSet<String>();
 			sourceNamesSet.addAll(sourceNamesList);
 			sourceNames = (String[]) sourceNamesList.toArray(new String[0]);
 
@@ -212,6 +212,8 @@ public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition 
 	public void resolve(ResolverAttribute attribute, Principal principal, String requester, String responder,
 			Dependencies depends) throws ResolutionPlugInException {
 
+		super.resolve(attribute, principal, requester, responder, depends);
+
 		// Collect attribute values from dependencies
 		BasicAttributes attributes = new BasicAttributes();
 		addAttributesFromConnectors(depends, attributes);
@@ -250,11 +252,6 @@ public class CompositeAttributeDefinition extends SimpleBaseAttributeDefinition 
 			}
 		}
 
-		standardProcessing(attribute);
-
-		if (valueHandler != null) {
-			attribute.registerValueHandler(valueHandler);
-		}
 		attribute.setResolved();
 	}
 
