@@ -133,7 +133,7 @@ public class CompositeAttributeDefinition extends BaseAttributeDefinition implem
 	 * Get ordered attribute values for all source attributes from the dependent data connectors. The values of all
 	 * multi-valued attribute MUST be ordered and MUST be of same size or else the results can be unpredictable.
 	 */
-	private void addAttributesFromConnectors(Dependencies depends, Attributes sourceAttrs, int valueCount)
+	private int addAttributesFromConnectors(Dependencies depends, Attributes sourceAttrs, int valueCount)
 			throws ResolutionPlugInException {
 
 		Iterator connectorDependIt = connectorDependencyIds.iterator();
@@ -161,13 +161,14 @@ public class CompositeAttributeDefinition extends BaseAttributeDefinition implem
 				}
 			}
 		}
+		return valueCount;
 	}
 
 	/**
 	 * Get ordered attribute values for all source attributes from the dependent attributes. The values of all
 	 * multi-valued attribute MUST be ordered and MUST be of same size or else the results can be unpredictable.
 	 */
-	private void addAttributesFromAttributeDependencies(Dependencies depends, Attributes sourceAttrs, int valueCount)
+	private int addAttributesFromAttributeDependencies(Dependencies depends, Attributes sourceAttrs, int valueCount)
 			throws ResolutionPlugInException {
 
 		Iterator attrDependIt = attributeDependencyIds.iterator();
@@ -199,6 +200,7 @@ public class CompositeAttributeDefinition extends BaseAttributeDefinition implem
 				}
 			}
 		}
+		return valueCount;
 	}
 
 	/**
@@ -216,8 +218,8 @@ public class CompositeAttributeDefinition extends BaseAttributeDefinition implem
 
 		// Collect attribute values from dependencies
 		BasicAttributes attributes = new BasicAttributes();
-		addAttributesFromConnectors(depends, attributes, valueCount);
-		addAttributesFromAttributeDependencies(depends, attributes, valueCount);
+		valueCount = addAttributesFromConnectors(depends, attributes, valueCount);
+		valueCount = addAttributesFromAttributeDependencies(depends, attributes, valueCount);
 
 		// If we got this far, all attributes are ordered and have 'valueCount' number of values
 		for (int i = 0; i < valueCount; i++) {
