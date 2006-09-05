@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.idp;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,7 +42,7 @@ public interface IdPProtocolHandler {
 	 *             protocol-defined error message
 	 */
 	public void processRequest(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support)
-			throws RequestHandlingException;
+			throws RequestHandlingException, ServletException;
 
 	/**
 	 * Returns the locations for which this handler should process requests.

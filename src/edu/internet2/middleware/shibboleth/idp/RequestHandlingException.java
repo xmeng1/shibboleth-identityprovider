@@ -6,7 +6,7 @@ package edu.internet2.middleware.shibboleth.idp;
  */
 public class RequestHandlingException extends Exception {
 
-	RequestHandlingException(String message) {
+	public RequestHandlingException(String message) {
 
 		super(message);
 	}

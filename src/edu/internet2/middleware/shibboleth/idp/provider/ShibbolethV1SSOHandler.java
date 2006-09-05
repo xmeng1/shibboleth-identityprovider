@@ -45,7 +45,6 @@ import org.opensaml.SAMLBrowserProfile;
 import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
-import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
@@ -65,6 +64,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
+import edu.internet2.middleware.shibboleth.idp.RequestHandlingException;
 
 /**
  * <code>ProtocolHandler</code> implementation that responds to SSO flows as specified in "Shibboleth Architecture:
@@ -88,19 +88,15 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 	 * @see edu.internet2.middleware.shibboleth.idp.IdPResponder.ProtocolHandler#processRequest(javax.servlet.http.HttpServletRequest,
 	 *      javax.servlet.http.HttpServletResponse)
 	 */
-	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, ServletException, IOException {
-
-		if (request == null) {
-			log.error("Protocol Handler received a SAML Request, but is unable to handle it.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
-		}
-
-		// Set attributes that are needed by the jsp
-		request.setAttribute("shire", request.getParameter("shire"));
-		request.setAttribute("target", request.getParameter("target"));
+	public void processRequest(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support)
+			throws RequestHandlingException, ServletException {
 
 		try {
+
+			// Set attributes that are needed by the jsp
+			request.setAttribute("shire", request.getParameter("shire"));
+			request.setAttribute("target", request.getParameter("target"));
+
 			// Ensure that we have the required data from the servlet container
 			validateEngineData(request);
 			validateShibSpecificData(request);
@@ -154,12 +150,8 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 			// Create SAML Name Identifier & Subject
 			SAMLNameIdentifier nameId;
-			try {
-				nameId = getNameIdentifier(support.getNameMapper(), principal, relyingParty, descriptor);
-			} catch (NameIdentifierMappingException e) {
-				log.error("Error converting principal to SAML Name Identifier: " + e);
-				throw new SAMLException("Error converting principal to SAML Name Identifier.", e);
-			}
+
+			nameId = getNameIdentifier(support.getNameMapper(), principal, relyingParty, descriptor);
 
 			String authenticationMethod = request.getHeader("SAMLAuthenticationMethod");
 			if (authenticationMethod == null || authenticationMethod.equals("")) {
@@ -186,15 +178,20 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 						authenticationMethod, authNSubject);
 			}
 		} catch (InvalidClientDataException e) {
-			throw new SAMLException(SAMLException.RESPONDER, e.getMessage());
+			throw new RequestHandlingException("Unable to handle request.  Client data is invalid: " + e);
+		} catch (NameIdentifierMappingException e) {
+			log.error("Error converting principal to SAML Name Identifier: " + e);
+			throw new RequestHandlingException("Unable to handle request.  Error recognizing principal.");
+		} catch (SAMLException e) {
+			log.error("Error creating SAML Response: " + e);
+			throw new RequestHandlingException("Unalbe to handle request.  Error creating SAML Response.");
 		}
-		return null;
 	}
 
 	private void respondWithArtifact(HttpServletRequest request, HttpServletResponse response,
 			IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
 			EntityDescriptor descriptor, String acceptanceURL, SAMLNameIdentifier nameId, String authenticationMethod,
-			SAMLSubject authNSubject) throws SAMLException, IOException, UnsupportedEncodingException {
+			SAMLSubject authNSubject) throws SAMLException, ServletException, RequestHandlingException {
 
 		log.debug("Responding with Artifact profile.");
 		ArrayList<SAMLAssertion> assertions = new ArrayList<SAMLAssertion>();
@@ -250,28 +247,41 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 			}
 		}
 
-		// Assemble the query string
-		StringBuffer destination = new StringBuffer(acceptanceURL);
-		destination.append("?TARGET=");
-		destination.append(URLEncoder.encode(request.getParameter("target"), "UTF-8"));
-		Iterator iterator = artifacts.iterator();
-		StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
+		try {
+			// Assemble the query string
+			StringBuffer destination = new StringBuffer(acceptanceURL);
+			destination.append("?TARGET=");
 
-		// Construct the artifact query parameter
-		while (iterator.hasNext()) {
-			Artifact artifact = (Artifact) iterator.next();
-			artifactBuffer.append("(" + artifact.encode() + ")");
-			destination.append("&SAMLart=");
-			destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
+			destination.append(URLEncoder.encode(request.getParameter("target"), "UTF-8"));
+
+			Iterator iterator = artifacts.iterator();
+			StringBuffer artifactBuffer = new StringBuffer(); // Buffer for the transaction log
+
+			// Construct the artifact query parameter
+			while (iterator.hasNext()) {
+				Artifact artifact = (Artifact) iterator.next();
+				artifactBuffer.append("(" + artifact.encode() + ")");
+				destination.append("&SAMLart=");
+				destination.append(URLEncoder.encode(artifact.encode(), "UTF-8"));
+			}
+
+			log.debug("Redirecting to (" + destination.toString() + ").");
+
+			response.sendRedirect(destination.toString());
+
+			// Redirect to the artifact receiver
+			support.getTransactionLog().info(
+					"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
+							+ relyingParty.getProviderId() + ") on behalf of principal (" + principal.getName()
+							+ "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
+							+ nameId.getFormat() + ").");
+		} catch (UnsupportedEncodingException e) {
+			log.error("Error encoding URL: " + e);
+			throw new RequestHandlingException("Unable to handle request.  URL Encoder malfuntion.");
+		} catch (IOException e) {
+			log.error("Error issuing redirect: " + e);
+			throw new ServletException(e);
 		}
-
-		log.debug("Redirecting to (" + destination.toString() + ").");
-		response.sendRedirect(destination.toString()); // Redirect to the artifact receiver
-		support.getTransactionLog().info(
-				"Assertion artifact(s) (" + artifactBuffer.toString() + ") issued to provider ("
-						+ relyingParty.getProviderId() + ") on behalf of principal (" + principal.getName()
-						+ "). Name Identifier: (" + nameId.getName() + "). Name Identifier Format: ("
-						+ nameId.getFormat() + ").");
 	}
 
 	public static boolean pushAttributeDefault = false;
@@ -279,7 +289,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
 			LocalPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
 			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject) throws SAMLException,
-			IOException, ServletException {
+			ServletException {
 
 		log.debug("Responding with POST profile.");
 		ArrayList<SAMLAssertion> assertions = new ArrayList<SAMLAssertion>();
@@ -315,7 +325,12 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 		support.signResponse(samlResponse, relyingParty);
 
-		createPOSTForm(request, response, samlResponse.toBase64());
+		try {
+			createPOSTForm(request, response, samlResponse.toBase64());
+		} catch (IOException e) {
+			log.error("Error creating POST Form: " + e);
+			throw new ServletException(e);
+		}
 
 		// Make transaction log entry
 		support.getTransactionLog().info(
@@ -402,7 +417,7 @@ public class ShibbolethV1SSOHandler extends SSOHandler implements IdPProtocolHan
 
 	private SAMLAssertion generateAuthNAssertion(HttpServletRequest request, RelyingParty relyingParty,
 			EntityDescriptor descriptor, SAMLNameIdentifier nameId, String authenticationMethod, Date authTime,
-			SAMLSubject subject) throws SAMLException, IOException {
+			SAMLSubject subject) throws SAMLException {
 
 		// Determine the correct audiences
 		ArrayList<String> audiences = new ArrayList<String>();

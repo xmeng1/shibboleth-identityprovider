@@ -279,7 +279,7 @@ public class IdPResponder extends HttpServlet {
 	 * Refers the request to the appropriate protocol handler
 	 */
 	private void processRequest(HttpServletRequest request, HttpServletResponse response)
-			throws RequestHandlingException {
+			throws RequestHandlingException, ServletException {
 
 		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
 		MDC.put("remoteAddr", request.getRemoteAddr());
