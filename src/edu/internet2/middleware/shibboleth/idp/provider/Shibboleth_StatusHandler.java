@@ -22,14 +22,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.opensaml.SAMLException;
-import org.opensaml.SAMLRequest;
-import org.opensaml.SAMLResponse;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
+import edu.internet2.middleware.shibboleth.idp.RequestHandlingException;
 
 /**
  * Special handler that allows one to "ping" the IdP to make sure it is alive
@@ -56,12 +54,15 @@ public class Shibboleth_StatusHandler extends BaseHandler implements IdPProtocol
 	 *      javax.servlet.http.HttpServletResponse, org.opensaml.SAMLRequest,
 	 *      edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport)
 	 */
-	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
+	public void processRequest(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support)
+			throws RequestHandlingException, ServletException {
 
-		response.setContentType("text/plain");
-		response.getWriter().println("AVAILABLE");
-		return null;
+		try {
+			response.setContentType("text/plain");
+			response.getWriter().println("AVAILABLE");
+		} catch (IOException e) {
+			throw new ServletException(e);
+		}
 	}
 
 }
