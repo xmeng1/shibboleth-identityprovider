@@ -36,8 +36,6 @@ import org.opensaml.SAMLCondition;
 import org.opensaml.SAMLConfig;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLNameIdentifier;
-import org.opensaml.SAMLRequest;
-import org.opensaml.SAMLResponse;
 import org.opensaml.SAMLStatement;
 import org.opensaml.SAMLSubject;
 import org.opensaml.SAMLSubjectStatement;
@@ -58,6 +56,7 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
 import edu.internet2.middleware.shibboleth.idp.InvalidClientDataException;
+import edu.internet2.middleware.shibboleth.idp.RequestHandlingException;
 
 /**
  * <code>ProtocolHandler</code> implementation that responds to ADFS SSO flows as specified in "WS-Federation: Passive
@@ -87,13 +86,8 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 	 * @see edu.internet2.middleware.shibboleth.idp.IdPResponder.ProtocolHandler#processRequest(javax.servlet.http.HttpServletRequest,
 	 *      javax.servlet.http.HttpServletResponse)
 	 */
-	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, ServletException, IOException {
-
-		if (request == null) {
-			log.error("Protocol Handler received a SAML Request, but is unable to handle it.");
-			throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
-		}
+	public void processRequest(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support)
+			throws RequestHandlingException, ServletException {
 
 		// Set attributes that are needed by the jsp
 		// ADFS spec says always send (wa)
@@ -175,13 +169,13 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 				if (!ADFS_SSOHandler.SUPPORTED_IDENTIFIER_FORMATS.contains(nameId.getFormat())) {
 					log.error("SAML Name Identifier format (" + nameId.getFormat()
 							+ ") is inappropriate for use with ADFS provider.");
-					throw new SAMLException(
+					throw new InvalidClientDataException(
 							"Error converting principal to SAML Name Identifier: Invalid ADFS Name Identifier format.");
 				}
 
 			} catch (NameIdentifierMappingException e) {
 				log.error("Error converting principal to SAML Name Identifier: " + e);
-				throw new SAMLException("Error converting principal to SAML Name Identifier.", e);
+				throw new InvalidClientDataException("Error converting principal to SAML Name Identifier.");
 			}
 
 			// ADFS profile requires an authentication method
@@ -201,11 +195,14 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 					authenticationMethod, authNSubject);
 
 		} catch (InvalidClientDataException e) {
-			throw new SAMLException(SAMLException.RESPONDER, e.getMessage());
+			throw new RequestHandlingException("Unable to handle request.  Client data is invalid: " + e);
 		} catch (SecurityTokenResponseException e) {
-			throw new SAMLException(SAMLException.RESPONDER, e.getMessage());
+			log.error("Error creating security token response: " + e);
+			throw new RequestHandlingException("Unable to handle request.  Error creating security token response.");
+		} catch (SAMLException e) {
+			log.error("Error creating SAML security token: " + e);
+			throw new RequestHandlingException("Unable to handle request.  Error creating SAML security token.");
 		}
-		return null;
 	}
 
 	private Endpoint lookupAssertionConsumerService(SPSSODescriptor sp) {
@@ -222,24 +219,29 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 	private void respondWithPOST(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support,
 			LocalPrincipal principal, RelyingParty relyingParty, EntityDescriptor descriptor, String acceptanceURL,
 			SAMLNameIdentifier nameId, String authenticationMethod, SAMLSubject authNSubject) throws SAMLException,
-			IOException, ServletException, SecurityTokenResponseException {
+			ServletException, SecurityTokenResponseException {
 
-		// We should always send a single token (SAML assertion)
-		SAMLAssertion assertion = generateAssertion(request, relyingParty, descriptor, nameId, authenticationMethod,
-				getAuthNTime(request), authNSubject);
+		try {
+			// We should always send a single token (SAML assertion)
+			SAMLAssertion assertion = generateAssertion(request, relyingParty, descriptor, nameId,
+					authenticationMethod, getAuthNTime(request), authNSubject);
 
-		generateAttributes(support, principal, relyingParty, assertion, request);
+			generateAttributes(support, principal, relyingParty, assertion, request);
 
-		// ADFS spec says assertions should always be signed
-		support.signAssertions((SAMLAssertion[]) new SAMLAssertion[]{assertion}, relyingParty);
+			// ADFS spec says assertions should always be signed
+			support.signAssertions((SAMLAssertion[]) new SAMLAssertion[]{assertion}, relyingParty);
 
-		// Wrap assertion in security token response and create form
-		createPOSTForm(request, response, new SecurityTokenResponse(assertion, relyingParty.getProviderId()));
+			// Wrap assertion in security token response and create form
+			createPOSTForm(request, response, new SecurityTokenResponse(assertion, relyingParty.getProviderId()));
 
-		// Make transaction log entry
-		support.getTransactionLog().info(
-				"ADFS security token issued to provider (" + relyingParty.getProviderId()
-						+ ") on behalf of principal (" + principal.getName() + ").");
+			// Make transaction log entry
+			support.getTransactionLog().info(
+					"ADFS security token issued to provider (" + relyingParty.getProviderId()
+							+ ") on behalf of principal (" + principal.getName() + ").");
+
+		} catch (IOException e) {
+			throw new SAMLException(SAMLException.RESPONDER, e);
+		}
 	}
 
 	private void generateAttributes(IdPProtocolSupport support, LocalPrincipal principal, RelyingParty relyingParty,
@@ -271,7 +273,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 
 			// ADFS spec says to include authN and attribute statements in the same assertion
 			log.debug("Merging attributes into existing authn assertion");
-			assertion.addStatement(new SAMLAttributeStatement(attrSubject, Arrays.asList(attributes)));
+			assertion.addStatement(new SAMLAttributeStatement(attrSubject, attributes));
 
 			if (log.isDebugEnabled()) {
 				log.debug("Dumping combined Assertion:" + System.getProperty("line.separator") + assertion.toString());
@@ -342,7 +344,7 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 	}
 
 	private static void createPOSTForm(HttpServletRequest req, HttpServletResponse res,
-			SecurityTokenResponse tokenResponse) throws IOException, ServletException, SecurityTokenResponseException {
+			SecurityTokenResponse tokenResponse) throws ServletException, SecurityTokenResponseException {
 
 		req.setAttribute("wresult", tokenResponse.toXmlString());
 
@@ -352,7 +354,12 @@ public class ADFS_SSOHandler extends SSOHandler implements IdPProtocolHandler {
 		}
 
 		RequestDispatcher rd = req.getRequestDispatcher("/adfs.jsp");
-		rd.forward(req, res);
+		try {
+			rd.forward(req, res);
+		} catch (IOException e) {
+			log.error("Error sending redirect: " + e);
+			throw new ServletException();
+		}
 	}
 
 	/**
