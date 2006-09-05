@@ -16,15 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.idp;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.opensaml.SAMLException;
-import org.opensaml.SAMLRequest;
-import org.opensaml.SAMLResponse;
 
 /**
  * Defines the processing for an IdP-supported protocol. A particular <code>IdPProtocolHandler</code> implementation
@@ -41,16 +34,14 @@ public interface IdPProtocolHandler {
 	public String getHandlerName();
 
 	/**
-	 * Runs the protocol-specific request processing.
+	 * Runs the protocol-specific request processing. Responsible for updating the <code>HttpServletResponse</code>.
 	 * 
-	 * @param samlRequest
-	 *            the request that inititiated the transaction or null
-	 * @param support
-	 * @return a <code>SAMLResponse</code> object that should be delivered to the binding upon which the request was
-	 *         received or null
+	 * @throws RequestHandlingException
+	 *             if the handler is unable to successfully respond with a successfull protocol exchange or a
+	 *             protocol-defined error message
 	 */
-	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException;
+	public void processRequest(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support)
+			throws RequestHandlingException;
 
 	/**
 	 * Returns the locations for which this handler should process requests.

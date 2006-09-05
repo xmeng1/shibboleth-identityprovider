@@ -35,11 +35,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.opensaml.Configuration;
-import org.opensaml.SAMLBinding;
-import org.opensaml.SAMLBindingFactory;
-import org.opensaml.SAMLException;
-import org.opensaml.SAMLRequest;
-import org.opensaml.SAMLResponse;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -61,8 +56,8 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
 import edu.internet2.middleware.shibboleth.log.LoggingInitializer;
 
 /**
- * Primary entry point for requests to the SAML IdP. Listens on multiple endpoints, routes requests to the appropriate
- * IdP processing components, and delivers proper protocol responses.
+ * Primary entry point for requests to the Shibboleth IdP. Listens on multiple endpoints, routes requests to the
+ * appropriate IdP processing components, and delivers proper protocol responses.
  * 
  * @author Walter Hoehn
  */
@@ -72,7 +67,6 @@ public class IdPResponder extends HttpServlet {
 	private static Logger transactionLog;
 	private static Logger log;
 	private static Random idgen = new Random();
-	private SAMLBinding binding;
 
 	private IdPConfig configuration;
 	private Map<String, IdPProtocolHandler> protocolHandlers = new HashMap<String, IdPProtocolHandler>();
@@ -81,16 +75,15 @@ public class IdPResponder extends HttpServlet {
 	/*
 	 * @see javax.servlet.GenericServlet#init()
 	 */
+	@SuppressWarnings("unused")
 	public void init(ServletConfig servletConfig) throws ServletException {
 
 		super.init(servletConfig);
-		
+
 		// Load OpenSAML2
 		Configuration.init();
 
 		try {
-			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
-
 			Document idPConfig = IdPConfigLoader.getIdPConfig(this.getServletContext());
 
 			// Initialize logging
@@ -239,9 +232,6 @@ public class IdPResponder extends HttpServlet {
 				log.fatal("The Identity Provider could not be initialized: " + ae);
 			}
 			throw new UnavailableException("Identity Provider failed to initialize.");
-		} catch (SAMLException se) {
-			log.fatal("SAML SOAP binding could not be loaded: " + se);
-			throw new UnavailableException("Identity Provider failed to initialize.");
 		}
 	}
 
@@ -251,24 +241,17 @@ public class IdPResponder extends HttpServlet {
 	 */
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
-		MDC.put("remoteAddr", request.getRemoteAddr());
 		log.debug("Received a request via GET for location (" + request.getRequestURL() + ").");
 
 		try {
-			IdPProtocolHandler activeHandler = lookupProtocolHandler(request);
-			// Pass request to the appropriate handler
-			log.info("Processing " + activeHandler.getHandlerName() + " request.");
-			if (activeHandler.processRequest(request, response, null, protocolSupport) != null) {
-				// This shouldn't happen unless somebody configures a protocol handler incorrectly
-				log.error("Protocol Handler returned a SAML Response, but there is no binding to handle it.");
-				throw new SAMLException(SAMLException.RESPONDER, "General error processing request.");
-			}
+			processRequest(request, response);
 
-		} catch (SAMLException ex) {
-			log.error(ex);
-			displayBrowserError(request, response, ex);
-			return;
+		} catch (RequestHandlingException e) {
+			log.error("Error while processing GET request: " + e);
+			sendGenericGetError(request, response, e);
+		} finally {
+			MDC.remove("serviceId");
+			MDC.remove("remoteAddr");
 		}
 	}
 
@@ -278,42 +261,38 @@ public class IdPResponder extends HttpServlet {
 	 */
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
-		MDC.put("remoteAddr", request.getRemoteAddr());
 		log.debug("Received a request via POST for location (" + request.getRequestURL() + ").");
 
-		// Parse SOAP request and marshall SAML request object
-		SAMLRequest samlRequest = null;
 		try {
-			try {
-				samlRequest = binding.receive(request, 1);
-			} catch (SAMLException e) {
-				log.fatal("Unable to parse request: " + e);
-				throw new SAMLException("Invalid request data.");
-			}
+			processRequest(request, response);
 
-			// If we have DEBUG logging turned on, dump out the request to the log
-			// This takes some processing, so only do it if we need to
-			if (log.isDebugEnabled()) {
-				log.debug("Dumping generated SAML Request:" + System.getProperty("line.separator")
-						+ samlRequest.toString());
-			}
-
-			IdPProtocolHandler activeHandler = lookupProtocolHandler(request);
-			// Pass request to the appropriate handler and respond
-			log.info("Processing " + activeHandler.getHandlerName() + " request.");
-
-			SAMLResponse samlResponse = activeHandler.processRequest(request, response, samlRequest, protocolSupport);
-			binding.respond(response, samlResponse, null);
-
-		} catch (SAMLException e) {
-			sendFailureToSAMLBinding(response, samlRequest, e);
+		} catch (RequestHandlingException e) {
+			log.error("Error while processing POST request: " + e);
+			sendGenericPostError(response, e);
+		} finally {
+			MDC.remove("serviceId");
+			MDC.remove("remoteAddr");
 		}
 	}
 
-	private IdPProtocolHandler lookupProtocolHandler(HttpServletRequest request) throws SAMLException {
+	/**
+	 * Refers the request to the appropriate protocol handler
+	 */
+	private void processRequest(HttpServletRequest request, HttpServletResponse response)
+			throws RequestHandlingException {
 
-		// Determine which protocol handler is active for this endpoint
+		MDC.put("serviceId", "[IdP] " + idgen.nextInt());
+		MDC.put("remoteAddr", request.getRemoteAddr());
+
+		IdPProtocolHandler activeHandler = lookupProtocolHandler(request);
+		// Pass request to the appropriate handler and respond
+		log.info("Processing " + activeHandler.getHandlerName() + " request.");
+		activeHandler.processRequest(request, response, protocolSupport);
+	}
+
+	/** Determine which protocol handler is active for this endpoint */
+	private IdPProtocolHandler lookupProtocolHandler(HttpServletRequest request) throws RequestHandlingException {
+
 		String requestURL = request.getRequestURL().toString();
 		IdPProtocolHandler activeHandler = null;
 
@@ -329,11 +308,15 @@ public class IdPResponder extends HttpServlet {
 
 		if (activeHandler == null) {
 			log.error("No protocol handler registered for location (" + request.getRequestURL() + ").");
-			throw new SAMLException("Request submitted to an invalid location.");
+			throw new RequestHandlingException("Request submitted to an invalid location.");
 		}
 		return activeHandler;
 	}
 
+	/**
+	 * Specifies a default set of IDPProtocolHandler configurations that should be used if none are specified in the IdP
+	 * configuration.
+	 */
 	private NodeList getDefaultHandlers() throws ShibbolethConfigurationException {
 
 		log.debug("Loading default protocol handler configuration.");
@@ -375,36 +358,24 @@ public class IdPResponder extends HttpServlet {
 		}
 	}
 
-	private void sendFailureToSAMLBinding(HttpServletResponse httpResponse, SAMLRequest samlRequest,
-			SAMLException exception) throws ServletException {
+	/**
+	 * Generic error response for GET requests.
+	 */
+	private void sendGenericPostError(HttpServletResponse httpResponse, RequestHandlingException exception)
+			throws ServletException {
 
-		log.error("Error while processing request: " + exception);
 		try {
-			SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
-					null, exception);
-			if (log.isDebugEnabled()) {
-				log.debug("Dumping generated SAML Error Response:" + System.getProperty("line.separator")
-						+ samlResponse.toString());
-			}
-			binding.respond(httpResponse, samlResponse, null);
-			log.debug("Returning SAML Error Response.");
-		} catch (SAMLException se) {
-			try {
-				binding.respond(httpResponse, null, exception);
-			} catch (SAMLException e) {
-				log.error("Caught exception while responding to requester: " + e.getMessage());
-				try {
-					httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
-				} catch (IOException ee) {
-					log.fatal("Could not construct a SAML error response: " + ee);
-					throw new ServletException("Identity Provider response failure.");
-				}
-			}
-			log.error("Identity Provider failed to make an error message: " + se);
+			httpResponse.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while responding.");
+		} catch (IOException ee) {
+			log.fatal("Could not construct a SAML error response: " + ee);
+			throw new ServletException("Identity Provider response failure.");
 		}
 	}
 
-	private static void displayBrowserError(HttpServletRequest req, HttpServletResponse res, Exception e)
+	/**
+	 * Generic error response for GET requests.
+	 */
+	private void sendGenericGetError(HttpServletRequest req, HttpServletResponse res, RequestHandlingException e)
 			throws ServletException, IOException {
 
 		req.setAttribute("errorText", e.toString());
