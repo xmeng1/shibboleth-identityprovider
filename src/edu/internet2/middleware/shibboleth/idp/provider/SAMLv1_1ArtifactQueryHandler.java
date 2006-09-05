@@ -26,10 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
-import org.opensaml.NoSuchProviderException;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.SAMLBinding;
-import org.opensaml.SAMLBindingFactory;
 import org.opensaml.SAMLException;
 import org.opensaml.SAMLRequest;
 import org.opensaml.SAMLResponse;
@@ -50,7 +48,7 @@ import edu.internet2.middleware.shibboleth.idp.RequestHandlingException;
 /**
  * @author Walter Hoehn
  */
-public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
+public class SAMLv1_1ArtifactQueryHandler extends SAMLv1_Base_QueryHandler implements IdPProtocolHandler {
 
 	private static Logger log = Logger.getLogger(SAMLv1_1ArtifactQueryHandler.class.getName());
 	private SAMLBinding binding;
@@ -58,13 +56,6 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 	public SAMLv1_1ArtifactQueryHandler(Element config) throws ShibbolethConfigurationException {
 
 		super(config);
-
-		try {
-			binding = SAMLBindingFactory.getInstance(SAMLBinding.SOAP);
-		} catch (NoSuchProviderException e) {
-			log.error("Unable to initialize SAML SOAP binding:" + e);
-			throw new ShibbolethConfigurationException("Couldn't initialize " + getHandlerName() + " handler.");
-		}
 	}
 
 	/*
@@ -84,22 +75,8 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 
 		log.info("Received a request to dereference assertion artifacts.");
 
-		// Parse SOAP request and marshall SAML request object
-		SAMLRequest samlRequest = null;
-		try {
-			samlRequest = binding.receive(request, 1);
-		} catch (SAMLException e) {
-			log.error("Unable to parse request: " + e);
-			throw new RequestHandlingException("Invalid request data.");
-		}
+		SAMLRequest samlRequest = parseSAMLRequest(request);
 
-		// If we have DEBUG logging turned on, dump out the request to the log
-		// This takes some processing, so only do it if we need to
-		if (log.isDebugEnabled()) {
-			log
-					.debug("Dumping generated SAML Request:" + System.getProperty("line.separator")
-							+ samlRequest.toString());
-		}
 		try {
 
 			// Pull credential from request
@@ -218,25 +195,7 @@ public class SAMLv1_1ArtifactQueryHandler extends BaseServiceHandler implements 
 			binding.respond(response, samlResponse, null);
 
 		} catch (SAMLException e) {
-
-			log.error("Error while processing request: " + e);
-			try {
-				SAMLResponse samlResponse = new SAMLResponse((samlRequest != null) ? samlRequest.getId() : null, null,
-						null, e);
-				if (log.isDebugEnabled()) {
-					log.debug("Dumping generated SAML Error Response:" + System.getProperty("line.separator")
-							+ samlResponse.toString());
-				}
-				binding.respond(response, samlResponse, null);
-				log.debug("Returning SAML Error Response.");
-			} catch (SAMLException se) {
-				try {
-					binding.respond(response, null, e);
-				} catch (SAMLException e1) {
-					log.error("Caught exception while responding to requester: " + e.getMessage());
-					throw new RequestHandlingException(e1.getMessage());
-				}
-			}
+			respondWithError(response, samlRequest, e);
 		}
 	}
 

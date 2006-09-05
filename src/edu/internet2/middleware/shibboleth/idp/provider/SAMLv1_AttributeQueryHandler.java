@@ -16,7 +16,6 @@
 
 package edu.internet2.middleware.shibboleth.idp.provider;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -64,13 +63,14 @@ import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolHandler;
 import edu.internet2.middleware.shibboleth.idp.IdPProtocolSupport;
+import edu.internet2.middleware.shibboleth.idp.RequestHandlingException;
 
 /**
  * @author Walter Hoehn
  */
-public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements IdPProtocolHandler {
+public class SAMLv1_AttributeQueryHandler extends SAMLv1_Base_QueryHandler implements IdPProtocolHandler {
 
-	private static Logger log = Logger.getLogger(SAMLv1_AttributeQueryHandler.class.getName());
+	static Logger log = Logger.getLogger(SAMLv1_AttributeQueryHandler.class.getName());
 
 	/**
 	 * Required DOM-based constructor.
@@ -134,13 +134,16 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 	 *      javax.servlet.http.HttpServletResponse, org.opensaml.SAMLRequest,
 	 *      edu.internet2.middleware.shibboleth.idp.ProtocolSupport)
 	 */
-	public SAMLResponse processRequest(HttpServletRequest request, HttpServletResponse response,
-			SAMLRequest samlRequest, IdPProtocolSupport support) throws SAMLException, IOException, ServletException {
+	public void processRequest(HttpServletRequest request, HttpServletResponse response, IdPProtocolSupport support)
+			throws RequestHandlingException, ServletException {
+
+		SAMLRequest samlRequest = parseSAMLRequest(request);
 
 		if (samlRequest == null || samlRequest.getQuery() == null
 				|| !(samlRequest.getQuery() instanceof SAMLAttributeQuery)) {
 			log.error("Protocol Handler can only respond to SAML Attribute Queries.");
-			throw new SAMLException("General error processing request.");
+			respondWithError(response, samlRequest, new SAMLException("General error processing request."));
+			return;
 		}
 
 		RelyingParty relyingParty = null;
@@ -168,8 +171,8 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 				}
 
 				if (effectiveName == null) {
-					log
-							.info("Remote provider not yet identified, attempting to derive requesting provider from credentials.");
+					log.info("Remote provider not yet identified, attempting to "
+							+ "derive requesting provider from credentials.");
 
 					// Try the additional candidates.
 					String[] candidateNames = getCredentialNames(credentials[0]);
@@ -179,7 +182,9 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 					}
 				}
 			} catch (InvalidProviderCredentialException ipc) {
-				throw new SAMLException(SAMLException.REQUESTER, "Invalid credentials for request.");
+				respondWithError(response, samlRequest, new SAMLException(SAMLException.REQUESTER,
+						"Invalid credentials for request."));
+				return;
 			}
 		}
 
@@ -204,12 +209,19 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 			log.info("Request contains SAML Subject Confirmation method: (" + method + ").");
 			hasConfirmationMethod = true;
 		}
-		if (hasConfirmationMethod) { throw new SAMLException(SAMLException.REQUESTER,
-				"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method(s)."); }
+		if (hasConfirmationMethod) {
+			respondWithError(
+					response,
+					samlRequest,
+					new SAMLException(SAMLException.REQUESTER,
+							"This SAML authority cannot honor requests containing the supplied SAML Subject Confirmation Method(s)."));
+			return;
+		}
 
-		// Map Subject to local principal
-		Principal principal = null;
 		try {
+			// Map Subject to local principal
+			Principal principal = null;
+
 			SAMLNameIdentifier nameId = attributeQuery.getSubject().getNameIdentifier();
 			log.debug("Name Identifier format: (" + nameId.getFormat() + ").");
 			NameIdentifierMapping mapping = null;
@@ -347,53 +359,54 @@ public class SAMLv1_AttributeQueryHandler extends BaseServiceHandler implements 
 								+ principal.getName() + ").");
 			}
 
-			return samlResponse;
+			binding.respond(response, samlResponse, null);
 
 		} catch (SAMLException e) {
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException("General error processing request.", e);
+				respondWithError(response, samlRequest, new SAMLException("General error processing request.", e));
 			} else {
-				throw new SAMLException("General error processing request.");
+				respondWithError(response, samlRequest, new SAMLException("General error processing request."));
 			}
 		} catch (MetadataProviderException e) {
 			log.error("Encountered an error while looking up metadata: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException("General error processing request.", e);
+				respondWithError(response, samlRequest, new SAMLException("General error processing request.", e));
 			} else {
-				throw new SAMLException("General error processing request.");
+				respondWithError(response, samlRequest, new SAMLException("General error processing request."));
 			}
 
 		} catch (InvalidNameIdentifierException e) {
 			log.error("Could not associate the request's subject with a principal: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException(Arrays.asList(e.getSAMLErrorCodes()), "The supplied Subject was unrecognized.",
-						e);
+				respondWithError(response, samlRequest, new SAMLException(Arrays.asList(e.getSAMLErrorCodes()),
+						"The supplied Subject was unrecognized.", e));
 			} else {
-				throw new SAMLException(Arrays.asList(e.getSAMLErrorCodes()), "The supplied Subject was unrecognized.");
+				respondWithError(response, samlRequest, new SAMLException(Arrays.asList(e.getSAMLErrorCodes()),
+						"The supplied Subject was unrecognized."));
 			}
 
 		} catch (NameIdentifierMappingException e) {
 			log.error("Encountered an error while mapping the name identifier from the request: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException("General error processing request.", e);
+				respondWithError(response, samlRequest, new SAMLException("General error processing request.", e));
 			} else {
-				throw new SAMLException("General error processing request.");
+				respondWithError(response, samlRequest, new SAMLException("General error processing request."));
 			}
 
 		} catch (AAException e) {
 			log.error("Encountered an error while resolving resolving attributes: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException("General error processing request.", e);
+				respondWithError(response, samlRequest, new SAMLException("General error processing request.", e));
 			} else {
-				throw new SAMLException("General error processing request.");
+				respondWithError(response, samlRequest, new SAMLException("General error processing request."));
 			}
 
 		} catch (CloneNotSupportedException e) {
 			log.error("Encountered an error while cloning request subject for use in response: " + e);
 			if (relyingParty.passThruErrors()) {
-				throw new SAMLException("General error processing request.", e);
+				respondWithError(response, samlRequest, new SAMLException("General error processing request.", e));
 			} else {
-				throw new SAMLException("General error processing request.");
+				respondWithError(response, samlRequest, new SAMLException("General error processing request."));
 			}
 		}
 	}
