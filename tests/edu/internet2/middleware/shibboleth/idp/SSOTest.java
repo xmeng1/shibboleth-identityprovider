@@ -110,8 +110,9 @@ public class SSOTest extends IdpTestCase {
 
 		testModule.doGet();
 
-		assertEquals("org.opensaml.SAMLException: Invalid assertion consumer service URL.", request
-				.getAttribute("errorText"));
+		assertEquals("edu.internet2.middleware.shibboleth.idp.RequestHandlingException: Unable to handle request.  "
+				+ "Client data is invalid: edu.internet2.middleware.shibboleth.idp.InvalidClientDataException: "
+				+ "Invalid assertion consumer service URL.", request.getAttribute("errorText"));
 	}
 
 	/**
