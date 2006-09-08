@@ -8,7 +8,6 @@
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 ../schemas/shibboleth-idpconfig-1.0.xsd" 
-	AAUrl="https://idp.example.org:8443/shibboleth-idp/AA" 
 	resolverConfig="$IDP_HOME$/etc/resolver.xml"
 	defaultRelyingParty="urn:mace:shibboleth:examples" 
 	providerId="https://idp.example.org/shibboleth">

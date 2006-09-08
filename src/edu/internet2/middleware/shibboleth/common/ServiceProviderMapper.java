@@ -16,10 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -220,7 +218,6 @@ public class ServiceProviderMapper {
 		private RelyingPartyIdentityProvider identityProvider;
 		private String name;
 		private String overridenIdPProviderId;
-		private URL overridenAAUrl;
 		private URI overridenDefaultAuthMethod;
 		private List<String> mappingIds = new ArrayList<String>();
 		private IdPConfig configuration;
@@ -253,17 +250,6 @@ public class ServiceProviderMapper {
 			if (attribute != null && !attribute.equals("")) {
 				log.debug("Overriding providerId for Relying Pary (" + name + ") with (" + attribute + ").");
 				overridenIdPProviderId = attribute;
-			}
-
-			attribute = ((Element) partyConfig).getAttribute("AAUrl");
-			if (attribute != null && !attribute.equals("")) {
-				log.debug("Overriding AAUrl for Relying Pary (" + name + ") with (" + attribute + ").");
-				try {
-					overridenAAUrl = new URL(attribute);
-				} catch (MalformedURLException e) {
-					log.error("(AAUrl) attribute to is not a valid URL.");
-					throw new ServiceProviderMapperException("Configuration is invalid.");
-				}
 			}
 
 			attribute = ((Element) partyConfig).getAttribute("defaultAuthMethod");
@@ -345,7 +331,7 @@ public class ServiceProviderMapper {
 
 			attribute = ((Element) partyConfig).getAttribute("preferredArtifactType");
 			if (attribute != null && !attribute.equals("")) {
-				log.debug("Overriding AAUrl for Relying Pary (" + name + ") with (" + attribute + ").");
+				log.debug("Overriding preferredArtifactType for Relying Pary (" + name + ") with (" + attribute + ").");
 				try {
 					preferredArtifactType = Integer.parseInt(attribute);
 				} catch (NumberFormatException e) {
@@ -437,15 +423,6 @@ public class ServiceProviderMapper {
 				return overridenDefaultAuthMethod;
 			} else {
 				return configuration.getDefaultAuthMethod();
-			}
-		}
-
-		public URL getAAUrl() {
-
-			if (overridenAAUrl != null) {
-				return overridenAAUrl;
-			} else {
-				return configuration.getAAUrl();
 			}
 		}
 
@@ -568,11 +545,6 @@ public class ServiceProviderMapper {
 			return wrapped.getNameMapperIds();
 		}
 
-		public URL getAAUrl() {
-
-			return wrapped.getAAUrl();
-		}
-
 		public URI getDefaultAuthMethod() {
 
 			return wrapped.getDefaultAuthMethod();
@@ -660,11 +632,6 @@ public class ServiceProviderMapper {
 			return wrapped.getNameMapperIds();
 		}
 
-		public URL getAAUrl() {
-
-			return wrapped.getAAUrl();
-		}
-
 		public URI getDefaultAuthMethod() {
 
 			return wrapped.getDefaultAuthMethod();
@@ -731,11 +698,6 @@ public class ServiceProviderMapper {
 		public String[] getNameMapperIds() {
 
 			return ((RelyingParty) wrapped).getNameMapperIds();
-		}
-
-		public URL getAAUrl() {
-
-			return ((RelyingParty) wrapped).getAAUrl();
 		}
 
 		public URI getDefaultAuthMethod() {

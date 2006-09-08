@@ -17,7 +17,6 @@
 package edu.internet2.middleware.shibboleth.common;
 
 import java.net.URI;
-import java.net.URL;
 
 /**
  * Defines a relationship between service providers and an identity provider. In Shibboleth parlance, a relying party
@@ -50,14 +49,6 @@ public interface RelyingParty extends ServiceProvider {
 	 * @return the ids of the mappers
 	 */
 	public String[] getNameMapperIds();
-
-	/**
-	 * Returns the location of the Shibboleth Attribute Authority that should answer requests for this
-	 * {@link RelyingParty}.
-	 * 
-	 * @return the URL
-	 */
-	public URL getAAUrl();
 
 	/**
 	 * The authentication method that should be included in assertions to the {@link RelyingParty}, if one is not found

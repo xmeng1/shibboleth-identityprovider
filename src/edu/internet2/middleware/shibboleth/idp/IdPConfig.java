@@ -16,10 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.idp;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -39,7 +37,6 @@ public class IdPConfig {
 	private int maxThreads = 30;
 	private String authHeaderName = "REMOTE_USER";
 	private URI defaultAuthMethod;
-	private URL AAUrl;
 
 	private static Logger log = Logger.getLogger(IdPConfig.class.getName());
 
@@ -76,18 +73,6 @@ public class IdPConfig {
 			passThruErrors = Boolean.valueOf(attribute).booleanValue();
 		}
 
-		attribute = ((Element) config).getAttribute("AAUrl");
-		if (attribute == null || attribute.equals("")) {
-			log.error("Global Attribute Authority URL not set.  Add an (AAUrl) attribute to <IdPConfig/>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
-		}
-		try {
-			AAUrl = new URL(attribute);
-		} catch (MalformedURLException e) {
-			log.error("(AAUrl) attribute to is not a valid URL.");
-			throw new ShibbolethConfigurationException("Required configuration is invalid.");
-		}
-
 		attribute = ((Element) config).getAttribute("defaultAuthMethod");
 		if (attribute == null || attribute.equals("")) {
 			try {
@@ -120,7 +105,6 @@ public class IdPConfig {
 			authHeaderName = attribute;
 		}
 
-		log.debug("Global IdP config: (AAUrl) = (" + getAAUrl() + ").");
 		log.debug("Global IdP config: (defaultAuthMethod) = (" + getDefaultAuthMethod() + ").");
 		log.debug("Global IdP config: (maxSigningThreads) = (" + getMaxThreads() + ").");
 		log.debug("Global IdP config: (authHeaderName) = (" + getAuthHeaderName() + ").");
@@ -163,10 +147,5 @@ public class IdPConfig {
 	public URI getDefaultAuthMethod() {
 
 		return defaultAuthMethod;
-	}
-
-	public URL getAAUrl() {
-
-		return AAUrl;
 	}
 }
