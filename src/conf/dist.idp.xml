@@ -1,44 +1,57 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- Shibboleth Identity Provider configuration -->
+<!--Put this in somewhere
+	<xs:attribute name="maxSigningThreads" type="xs:integer" use="optional"/>-->
 
-	<IdPConfig 
+<!-- Shibboleth Identity Provider configuration -->
+<IdPConfig 
 	xmlns="urn:mace:shibboleth:idp:config:1.0" 
 	xmlns:cred="urn:mace:shibboleth:credentials:1.0" 
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 ../schemas/shibboleth-idpconfig-1.0.xsd" 
-	resolverConfig="$IDP_HOME$/etc/resolver.xml"
-	defaultRelyingParty="urn:mace:shibboleth:examples" 
-	providerId="https://idp.example.org/shibboleth">
-
-
-	<!-- This section contains configuration options that apply only to a site or group of sites
-		This would normally be adjusted when a new federation or bilateral trust relationship is established -->
-	<RelyingParty name="urn:mace:shibboleth:examples" signingCredential="example_cred"> <!-- (signingCredential) must correspond to a <Credential/> element below -->
-		<NameID nameMapping="shm"/> <!-- (nameMapping) must correspond to a <NameMapping/> element below -->
-	</RelyingParty>
-
-	<!-- InQueue example (the schemaHack is needed for 1.1/1.2 SPs)-->
-	<!--
-	<RelyingParty name="urn:mace:inqueue" signingCredential="inqueue_cred"
-			schemaHack="true"> 
-		<NameID nameMapping="shm"/>
-	</RelyingParty> -->
+		
+	<!-- This section contains configuration options that apply only to a entity or group of entities
+	This would normally be adjusted when a new federation or bilateral trust relationship is established -->
+	<RelyingParty 
+		name="urn:mace:shibboleth:examples" 
+		providerId="https://idp.example.org/shibboleth3"
+		signingCredential="cred1"
+		passThruErrors="TRUE" 
+		defaultNameID="foo" /> <!-- (signingCredential) must correspond to a <Credential/> element below -->
 	
+	<!-- Uncomment and adjust the configuration section below if you would like the IdP to respond to 
+		 requests from entities for which it has no metadata-->
+	<!--
+	<AnonymousRelyingParty 
+		providerId="https://idp.example.org/shibboleth1" 
+		signingCredential="cred1"
+		defaultNameID="foo" /> -->
+	
+	<!-- Uncomment and adjust the configuration section below if you would like the IdP to respond to 
+		 requests from authenticated entities for which it has metadata, but no matching <RelyingParty/> 
+		 configuration -->
+	<!--
+	<DefaultRelyingParty 
+		providerId="https://idp.example.org/shibboleth2" 
+		signingCredential="cred1"
+		defaultNameID="foo" /> -->
+	
+	<!-- Configuration for the attribute resolver
+		 For most configurations this won't need adjustment -->
+	<AttributeResolver config="$IDP_HOME$/etc/resolver.xml"/>
 	
 	<!-- Configuration for the attribute release policy engine
-		For most configurations this won't need adjustment -->
+		 For most configurations this won't need adjustment -->
 	<ReleasePolicyEngine>
 		<ArpRepository implementation="edu.internet2.middleware.shibboleth.aa.arp.provider.FileSystemArpRepository">
 			<Path>$IDP_HOME$/etc/arps/</Path>
 		</ArpRepository>
 	</ReleasePolicyEngine>
 
-	
     <!-- Logging Configuration
-		The defaults work fine in this section, but it is sometimes helpful to use "DEBUG" as the level for 
-		the <ErrorLog/> when trying to diagnose problems -->
+		 The defaults work fine in this section, but it is sometimes helpful to use "DEBUG" as the level for 
+		 the <ErrorLog/> when trying to diagnose problems -->
 	<Logging>
 		<ErrorLog level="WARN" location="$IDP_HOME$/logs/shib-error.log" />
 		<TransactionLog level="INFO" location="$IDP_HOME$/logs/shib-access.log" />
@@ -49,27 +62,14 @@
 		<Log4JConfig location="file:///tmp/log4j.properties" />
 	</Logging> -->
 
-
-	<!-- This configuration section determines how Shibboleth maps between SAML Subjects and local principals.
-		The default mapping uses shibboleth handles, but other formats can be added.
-		The mappings listed here are only active when they are referenced within a <RelyingParty/> element above -->
-	<NameMapping 
-		xmlns="urn:mace:shibboleth:namemapper:1.0" 
-		id="shm" 
-		format="urn:mace:shibboleth:1.0:nameIdentifier" 
-		type="SharedMemoryShibHandle" 
-		handleTTL="28800"/>
-
-
 	<!-- Determines how SAML artifacts are stored and retrieved
-		The (sourceLocation) attribute must be specified when using type 2 artifacts -->
+ 	  	 The (sourceLocation) attribute must be specified when using type 2 artifacts -->
 	<ArtifactMapper implementation="edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper" />
-
 
 	<!-- This configuration section determines the keys/certs to be used when signing SAML assertions -->
 	<!-- The credentials listed here are used when referenced within <RelyingParty/> elements above -->
 	<Credentials xmlns="urn:mace:shibboleth:credentials:1.0">
-		<FileResolver Id="example_cred">
+		<FileResolver Id="cred1">
 			<Key>
 				<Path>$IDP_HOME$/etc/idp-example.key</Path>
 			</Key>
@@ -77,7 +77,7 @@
 				<Path>$IDP_HOME$/etc/idp-example.crt</Path>
 			</Certificate>
 		</FileResolver>
-	
+		
 		<!-- InQueue example (Deployments would need to generate an InQueue-compatible certificate) -->
 		<!--
 		<FileResolver Id="inqueue_cred">
@@ -89,35 +89,34 @@
 			</Certificate>
 		</FileResolver>
 		 -->
+		
 	</Credentials>
 
-
 	<!-- Protocol handlers specify what type of requests the IdP can respond to.  The default set listed here should work 
-		for most configurations.  Modifications to this section may require modifications to the deployment descriptor -->
-	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.ShibbolethV1SSOHandler">
-		<Location>https?://[^:/]+(:(443|80))?/$IDP_WEBAPP_NAME$/SSO</Location> <!-- regex works when using default protocol ports -->
+	 	 for most configurations.  Modifications to this section may require modifications to the deployment descriptor -->
+	<ProtocolHandler type="ShibbolethV1SSOHandler">
+		<Location>https?://[^:/]+(:(443|80))?/$IDP_WEBAPP_NAME$/SSO</Location> 
 	</ProtocolHandler>
-	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_AttributeQueryHandler">
+	<ProtocolHandler type="SAMLv1_AttributeQueryHandler">
 		<Location>.+:8443/$IDP_WEBAPP_NAME$/AA</Location>
 	</ProtocolHandler>
-	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.SAMLv1_1ArtifactQueryHandler">
+	<ProtocolHandler type="SAMLv1_1ArtifactQueryHandler">
 		<Location>.+:8443/$IDP_WEBAPP_NAME$/Artifact</Location>
 	</ProtocolHandler>
-	<ProtocolHandler implementation="edu.internet2.middleware.shibboleth.idp.provider.Shibboleth_StatusHandler">
+	<ProtocolHandler type="Shibboleth_StatusHandler">
 		<Location>https://[^:/]+(:443)?/$IDP_WEBAPP_NAME$/Status</Location>
 	</ProtocolHandler>
 
-	
 	<!-- This section configures the loading of SAML2 metadata, which contains information about system entities and 
-		how to authenticate them.  The metadatatool utility can be used to keep federation metadata files in synch.
-		Metadata can also be placed directly within this these elements. -->
+		 how to authenticate them.  The metadatatool utility can be used to keep federation metadata files in synch.
+		 Metadata can also be placed directly within this these elements. -->
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.FilesystemMetadataProvider"
                 path="$IDP_HOME$/etc/example-metadata.xml"/>
-	
-	
+
 	<!-- InQueue example (Deployments would need to get updated InQueue metadata) -->
 	<!--
 	<MetadataProvider type="edu.internet2.middleware.shibboleth.metadata.FilesystemMetadataProvider"
                 path="$IDP_HOME$/etc/IQ-metadata.xml"/> -->
+	
 </IdPConfig>
 
