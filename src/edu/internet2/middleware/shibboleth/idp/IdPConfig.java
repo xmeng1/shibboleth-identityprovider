@@ -16,9 +16,6 @@
 
 package edu.internet2.middleware.shibboleth.idp;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
@@ -29,14 +26,12 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationExcepti
  */
 public class IdPConfig {
 
-	private String defaultRelyingPartyName;
-	private String providerId;
+	// TODO re-evaluate whether or not we need this class... most of it has gone away anyway
+
 	public static final String configNameSpace = "urn:mace:shibboleth:idp:config:1.0";
 	private String resolverConfig = "/conf/resolver.xml";
-	private boolean passThruErrors = false;
+
 	private int maxThreads = 30;
-	private String authHeaderName = "REMOTE_USER";
-	private URI defaultAuthMethod;
 
 	private static Logger log = Logger.getLogger(IdPConfig.class.getName());
 
@@ -47,50 +42,13 @@ public class IdPConfig {
 
 		log.debug("Loading global configuration properties.");
 
-		// Global providerId
-		providerId = ((Element) config).getAttribute("providerId");
-		if (providerId == null || providerId.equals("")) {
-			log.error("Global providerId not set.  Add a (providerId) attribute to <IdPConfig/>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
-		}
-
-		// Default Relying Party
-		defaultRelyingPartyName = ((Element) config).getAttribute("defaultRelyingParty");
-		if (defaultRelyingPartyName == null || defaultRelyingPartyName.equals("")) {
-			log.error("Default Relying Party not set.  Add a (defaultRelyingParty) attribute to <IdPConfig/>.");
-			throw new ShibbolethConfigurationException("Required configuration not specified.");
-		}
-
 		// Attribute resolver config file location
 		String rawResolverConfig = ((Element) config).getAttribute("resolverConfig");
 		if (rawResolverConfig != null && !rawResolverConfig.equals("")) {
 			resolverConfig = rawResolverConfig;
 		}
 
-		// Global Pass thru error setting
-		String attribute = ((Element) config).getAttribute("passThruErrors");
-		if (attribute != null && !attribute.equals("")) {
-			passThruErrors = Boolean.valueOf(attribute).booleanValue();
-		}
-
-		attribute = ((Element) config).getAttribute("defaultAuthMethod");
-		if (attribute == null || attribute.equals("")) {
-			try {
-				defaultAuthMethod = new URI("urn:oasis:names:tc:SAML:1.0:am:unspecified");
-			} catch (URISyntaxException e1) {
-				// Shouldn't happen
-				throw new ShibbolethConfigurationException("Default Auth Method URI could not be constructed.");
-			}
-		} else {
-			try {
-				defaultAuthMethod = new URI(attribute);
-			} catch (URISyntaxException e1) {
-				log.error("(defaultAuthMethod) attribute to is not a valid URI.");
-				throw new ShibbolethConfigurationException("Required configuration is invalid.");
-			}
-		}
-
-		attribute = ((Element) config).getAttribute("maxSigningThreads");
+		String attribute = ((Element) config).getAttribute("maxSigningThreads");
 		if (attribute != null && !attribute.equals("")) {
 			try {
 				maxThreads = Integer.parseInt(attribute);
@@ -101,27 +59,11 @@ public class IdPConfig {
 		}
 
 		attribute = ((Element) config).getAttribute("authHeaderName");
-		if (attribute != null && !attribute.equals("")) {
-			authHeaderName = attribute;
-		}
 
-		log.debug("Global IdP config: (defaultAuthMethod) = (" + getDefaultAuthMethod() + ").");
 		log.debug("Global IdP config: (maxSigningThreads) = (" + getMaxThreads() + ").");
-		log.debug("Global IdP config: (authHeaderName) = (" + getAuthHeaderName() + ").");
 
 		log.debug("Global IdP config: (resolverConfig) = (" + getResolverConfigLocation() + ").");
-		log.debug("Global IdP config: (passThruErrors) = (" + passThruErrors() + ").");
-		log.debug("Global IdP config: Default Relying Party: (" + getDefaultRelyingPartyName() + ").");
-	}
 
-	public String getProviderId() {
-
-		return providerId;
-	}
-
-	public String getDefaultRelyingPartyName() {
-
-		return defaultRelyingPartyName;
 	}
 
 	public String getResolverConfigLocation() {
@@ -129,23 +71,9 @@ public class IdPConfig {
 		return resolverConfig;
 	}
 
-	public boolean passThruErrors() {
-
-		return passThruErrors;
-	}
-
 	public int getMaxThreads() {
 
 		return maxThreads;
 	}
 
-	public String getAuthHeaderName() {
-
-		return authHeaderName;
-	}
-
-	public URI getDefaultAuthMethod() {
-
-		return defaultAuthMethod;
-	}
 }

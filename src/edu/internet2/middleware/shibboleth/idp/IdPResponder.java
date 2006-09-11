@@ -50,8 +50,8 @@ import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
 import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
-import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
-import edu.internet2.middleware.shibboleth.common.ServiceProviderMapperException;
+import edu.internet2.middleware.shibboleth.common.RelyingPartyMapper;
+import edu.internet2.middleware.shibboleth.common.RelyingPartyMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.log.LoggingInitializer;
 
@@ -134,11 +134,11 @@ public class IdPResponder extends HttpServlet {
 			Credentials credentials = new Credentials((Element) itemElements.item(0));
 
 			// Load relying party config
-			ServiceProviderMapper spMapper;
+			RelyingPartyMapper spMapper;
 			try {
-				spMapper = new ServiceProviderMapper(idPConfig.getDocumentElement(), configuration, credentials,
+				spMapper = new RelyingPartyMapper(idPConfig.getDocumentElement(), configuration, credentials,
 						nameMapper);
-			} catch (ServiceProviderMapperException e) {
+			} catch (RelyingPartyMapperException e) {
 				log.error("Could not load Identity Provider configuration: " + e);
 				throw new ShibbolethConfigurationException("Could not load Identity Provider configuration.");
 			}

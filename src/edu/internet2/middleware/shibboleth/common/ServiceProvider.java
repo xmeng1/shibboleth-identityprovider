@@ -22,7 +22,7 @@ package edu.internet2.middleware.shibboleth.common;
  * @see IdentityProvider
  * @author Walter Hoehn
  */
-public interface ServiceProvider {
+public interface ServiceProvider extends RelyingParty {
 
 	/**
 	 * Returns the unique identifier for the service provider.

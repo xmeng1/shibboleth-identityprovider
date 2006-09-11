@@ -47,7 +47,7 @@ import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credential;
 import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
-import edu.internet2.middleware.shibboleth.common.ServiceProviderMapper;
+import edu.internet2.middleware.shibboleth.common.RelyingPartyMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.common.provider.ShibbolethTrustEngine;
 import edu.internet2.middleware.shibboleth.metadata.MetadataProviderFactory;
@@ -64,7 +64,7 @@ public class IdPProtocolSupport implements MetadataProvider {
 	private Logger transactionLog;
 	private IdPConfig config;
 	private NameMapper nameMapper;
-	private ServiceProviderMapper spMapper;
+	private RelyingPartyMapper spMapper;
 	private ArpEngine arpEngine;
 	private AttributeResolver resolver;
 	private ArtifactMapper artifactMapper;
@@ -72,7 +72,7 @@ public class IdPProtocolSupport implements MetadataProvider {
 	private TrustEngine<X509EntityCredential> trust = new ShibbolethTrustEngine();
 	private ChainingMetadataProvider wrappedMetadataProvider = new ChainingMetadataProvider();
 
-	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, ServiceProviderMapper spMapper,
+	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, RelyingPartyMapper spMapper,
 			ArpEngine arpEngine, AttributeResolver resolver, ArtifactMapper artifactMapper)
 			throws ShibbolethConfigurationException {
 
@@ -104,7 +104,7 @@ public class IdPProtocolSupport implements MetadataProvider {
 		return nameMapper;
 	}
 
-	public ServiceProviderMapper getServiceProviderMapper() {
+	public RelyingPartyMapper getRelyingPartyMapper() {
 
 		return spMapper;
 	}
@@ -201,12 +201,7 @@ public class IdPProtocolSupport implements MetadataProvider {
 			Map<String, AAAttribute> attributes = new HashMap<String, AAAttribute>();
 			for (URI name : attributeNames) {
 
-				AAAttribute attribute = null;
-				if (relyingParty.wantsSchemaHack()) {
-					attribute = new AAAttribute(name.toString(), true);
-				} else {
-					attribute = new AAAttribute(name.toString(), false);
-				}
+				AAAttribute attribute = new AAAttribute(name.toString(), false);
 				attributes.put(attribute.getName(), attribute);
 			}
 

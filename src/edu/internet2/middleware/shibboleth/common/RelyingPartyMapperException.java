@@ -19,9 +19,9 @@ package edu.internet2.middleware.shibboleth.common;
 /**
  * @author Walter Hoehn
  */
-public class ServiceProviderMapperException extends Exception {
+public class RelyingPartyMapperException extends Exception {
 
-	public ServiceProviderMapperException(String message) {
+	public RelyingPartyMapperException(String message) {
 
 		super(message);
 	}
