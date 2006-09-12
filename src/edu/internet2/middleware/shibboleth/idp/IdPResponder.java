@@ -136,8 +136,7 @@ public class IdPResponder extends HttpServlet {
 			// Load relying party config
 			RelyingPartyMapper spMapper;
 			try {
-				spMapper = new RelyingPartyMapper(idPConfig.getDocumentElement(), configuration, credentials,
-						nameMapper);
+				spMapper = new RelyingPartyMapper(idPConfig.getDocumentElement(), credentials);
 			} catch (RelyingPartyMapperException e) {
 				log.error("Could not load Identity Provider configuration: " + e);
 				throw new ShibbolethConfigurationException("Could not load Identity Provider configuration.");
