@@ -9,7 +9,7 @@
 	xmlns:cred="urn:mace:shibboleth:credentials:1.0" 
 	xmlns:name="urn:mace:shibboleth:namemapper:1.0" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 ../schemas/shibboleth-idpconfig-1.0.xsd" 
+	xsi:schemaLocation="urn:mace:shibboleth:idp:config:1.0 ../schemas/shibboleth-idpconfig-1.0.xsd">
 		
 	<!-- This section contains configuration options that apply only to a entity or group of entities
 	This would normally be adjusted when a new federation or bilateral trust relationship is established -->
@@ -17,7 +17,7 @@
 		name="urn:mace:shibboleth:examples" 
 		providerId="https://idp.example.org/shibboleth3"
 		signingCredential="cred1"
-		passThruErrors="TRUE" 
+		passThruErrors="true" 
 		defaultNameID="foo" /> <!-- (signingCredential) must correspond to a <Credential/> element below -->
 	
 	<!-- Uncomment and adjust the configuration section below if you would like the IdP to respond to 
