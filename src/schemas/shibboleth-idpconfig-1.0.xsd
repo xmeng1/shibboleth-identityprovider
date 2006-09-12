@@ -33,36 +33,37 @@
 			<xs:enumeration value="xml"/>
 		</xs:restriction>
 	</xs:simpleType>
+	
+	<xs:complexType name="RelyingPartyType">
+		<xs:attribute name="providerId" type="xs:anyURI" use="optional"/>
+		<xs:attribute name="signingCredential" type="xs:string" use="optional"/>
+		<xs:attribute name="passThruErrors" type="xs:boolean" use="optional"/>
+		<xs:attribute name="forceAttributePush" type="xs:boolean" use="optional"/>
+		<xs:attribute name="signAssertions" type="xs:boolean" use="optional"/>
+		<xs:attribute name="forceAttributeNoPush" type="xs:boolean" use="optional"/>
+		<xs:attribute name="singleAssertion" type="xs:boolean" use="optional"/>
+		<xs:attribute name="defaultToPOSTProfile" type="xs:boolean" use="optional"/>
+		<xs:attribute name="preferredArtifactType" type="xs:integer" use="optional"/>
+		<xs:attribute name="defaultTarget" type="xs:string" use="optional"/>
+		<xs:attribute name="defaultNameID" type="xs:string" use="optional"/>
+	</xs:complexType>
 
 		<xs:element name="IdPConfig">
 			<xs:complexType>
 				<xs:sequence>
 					<xs:sequence>
-						<xs:element name="RelyingParty" maxOccurs="unbounded">
+						<xs:element name="RelyingParty" minOccurs="0" maxOccurs="unbounded">
 							<xs:complexType>
-								<xs:sequence minOccurs="0" maxOccurs="unbounded">
-									<xs:element name="NameID">
-										<xs:complexType>
-											<xs:attribute name="nameMapping" type="xs:string" use="required"/>
-										</xs:complexType>
-									</xs:element>
-								</xs:sequence>
-								<xs:attribute name="name" type="xs:string" use="required"/>
-								<xs:attribute name="providerId" type="xs:anyURI" use="optional"/>
-								<xs:attribute name="signingCredential" type="xs:string" use="optional"/>
-								<xs:attribute name="passThruErrors" type="xs:boolean" use="optional"/>
-								<xs:attribute name="forceAttributePush" type="xs:boolean" use="optional"/>
-								<xs:attribute name="signAssertions" type="xs:boolean" use="optional"/>
-								<xs:attribute name="forceAttributeNoPush" type="xs:boolean" use="optional"/>
-								<xs:attribute name="singleAssertion" type="xs:boolean" use="optional"/>
-								<xs:attribute name="defaultToPOSTProfile" type="xs:boolean" use="optional"/>
-								<xs:attribute name="schemaHack" type="xs:boolean" use="optional"/>
-								<xs:attribute name="defaultAuthMethod" type="xs:string" use="optional"/>
-								<xs:attribute name="preferredArtifactType" type="xs:integer" use="optional"/>
-								<xs:attribute name="defaultTarget" type="xs:string" use="optional"/>
+								<xs:complexContent>
+									<xs:extension base="idp:RelyingPartyType">
+										<xs:attribute name="name" type="xs:string" use="required"/>
+									</xs:extension>
+								</xs:complexContent>
 							</xs:complexType>
 						</xs:element>
 					</xs:sequence>
+					<xs:element name="AnonymousRelyingParty" type="idp:RelyingPartyType" minOccurs="0" maxOccurs="1" />
+					<xs:element name="DefaultRelyingParty" type="idp:RelyingPartyType" minOccurs="0" maxOccurs="1" />
 					<xs:element name="ReleasePolicyEngine" minOccurs="0">
 						<xs:complexType>
 							<xs:sequence>
@@ -97,9 +98,6 @@
 							</xs:choice>
 						</xs:complexType>
 					</xs:element>
-					<xs:sequence>
-						<xs:element ref="namemapper:NameMapping" maxOccurs="unbounded"/>
-					</xs:sequence>
 					<xs:element name="ArtifactMapper" minOccurs="0" maxOccurs="1">
 						<xs:complexType>
 							<xs:sequence>
@@ -116,7 +114,8 @@
 								<xs:element name="Location" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
 								<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
 							</xs:sequence>
-							<xs:attribute name="implementation" type="xs:string" use="required" />
+							<xs:attribute name="implementation" type="xs:string" use="optional" />
+							<xs:attribute name="type" type="xs:string" use="optional" />
 							<xs:anyAttribute namespace="##any" processContents="lax"/>
 						</xs:complexType>
 					</xs:element>
@@ -130,15 +129,6 @@
 						</xs:complexType>
 					</xs:element>
 				</xs:sequence>
-				<xs:attribute name="resolverConfig" type="xs:string" use="optional" default="/conf/resolver.xml"/>
-				<xs:attribute name="AAUrl" type="xs:anyURI" use="optional"/>
-				<xs:attribute name="providerId" type="xs:anyURI" use="required"/>
-				<xs:attribute name="defaultRelyingParty" type="xs:anyURI" use="required"/>
-				<xs:attribute name="defaultAuthMethod" type="xs:string" use="optional" 
-					default="urn:oasis:names:tc:SAML:1.0:am:unspecified"/>
-				<xs:attribute name="passThruErrors" type="xs:boolean" use="optional" default="false"/>
-				<xs:attribute name="authHeaderName" type="xs:string" use="optional"/>
-				<xs:attribute name="maxSigningThreads" type="xs:integer" use="optional"/>
 			</xs:complexType>
 		</xs:element>
 
