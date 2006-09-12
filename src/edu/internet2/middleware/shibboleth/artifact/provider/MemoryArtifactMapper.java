@@ -41,7 +41,8 @@ public class MemoryArtifactMapper extends BaseArtifactMapper implements Artifact
 
 	private MemoryArtifactCleaner cleaner = new MemoryArtifactCleaner();
 	private static Logger log = Logger.getLogger(MemoryArtifactMapper.class.getName());
-	private static Map mappings = Collections.synchronizedMap(new HashMap());
+	private static Map<Artifact, ArtifactMapping> mappings = Collections
+			.synchronizedMap(new HashMap<Artifact, ArtifactMapping>());
 
 	public MemoryArtifactMapper() throws ShibbolethConfigurationException {
 
@@ -117,14 +118,14 @@ public class MemoryArtifactMapper extends BaseArtifactMapper implements Artifact
 						return;
 					}
 					log.debug("Memory-based artifact mapper cleanup thread searching for stale entries.");
-					Set needsDeleting = new HashSet();
+					Set<Artifact> needsDeleting = new HashSet<Artifact>();
 					synchronized (mappings) {
-						Iterator iterator = mappings.entrySet().iterator();
+						Iterator<Entry<Artifact, ArtifactMapping>> iterator = mappings.entrySet().iterator();
 						while (iterator.hasNext()) {
-							Entry entry = (Entry) iterator.next();
+							Entry entry = iterator.next();
 							ArtifactMapping mapping = (ArtifactMapping) entry.getValue();
 							if (mapping.isExpired()) {
-								needsDeleting.add(entry.getKey());
+								needsDeleting.add((Artifact) entry.getKey());
 							}
 						}
 						// release the lock to be friendly

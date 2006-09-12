@@ -19,7 +19,7 @@ package edu.internet2.middleware.shibboleth.artifact;
 import org.opensaml.SAMLAssertion;
 import org.opensaml.artifact.Artifact;
 
-import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 
 /**
  * Translates back and forth between SAML assertions and mapping strings (artifacts) needed for the SAML artifact
@@ -34,11 +34,11 @@ public interface ArtifactMapper {
 	 * 
 	 * @param assertion
 	 *            the SAML assertion
-	 * @param relyingParty
-	 *            the relying party on behalf of which the artifact is being created
+	 * @param serviceProvider
+	 *            the service provider on behalf of which the artifact is being created
 	 * @return the artifact
 	 */
-	public Artifact generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty);
+	public Artifact generateArtifact(SAMLAssertion assertion, ServiceProvider serviceProvider);
 
 	/**
 	 * Recover an assertion that was previosly generated for a given artifact.

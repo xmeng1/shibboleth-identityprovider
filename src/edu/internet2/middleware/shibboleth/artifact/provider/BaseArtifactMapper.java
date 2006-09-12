@@ -31,7 +31,7 @@ import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapping;
-import edu.internet2.middleware.shibboleth.common.RelyingParty;
+import edu.internet2.middleware.shibboleth.common.ServiceProvider;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 
 /**
@@ -77,32 +77,32 @@ public abstract class BaseArtifactMapper implements ArtifactMapper {
 		}
 	}
 
-	public Artifact generateArtifact(SAMLAssertion assertion, RelyingParty relyingParty) {
+	public Artifact generateArtifact(SAMLAssertion assertion, ServiceProvider serviceProvider) {
 
 		// Generate the artifact
 		Artifact artifact;
 
 		// If the relying party prefers type 2 and we have the proper data, use it
-		if (relyingParty.getPreferredArtifactType() == 2 && type2SourceLocation != null) {
+		if (serviceProvider.getPreferredArtifactType() == 2 && type2SourceLocation != null) {
 			artifact = new SAMLArtifactType0002(new org.opensaml.artifact.URI(type2SourceLocation.toString()));
 			// Else, use type 1
 		} else {
-			if (relyingParty.getPreferredArtifactType() == 2) {
+			if (serviceProvider.getPreferredArtifactType() == 2) {
 				log.warn("The relying party prefers Type 2 artifacts, but the mapper does not "
 						+ "have a sourceLocation configured.  Using Type 1.");
-			} else if (relyingParty.getPreferredArtifactType() != 1) {
-				log.warn("The relying party prefers Type " + relyingParty.getPreferredArtifactType()
+			} else if (serviceProvider.getPreferredArtifactType() != 1) {
+				log.warn("The relying party prefers Type " + serviceProvider.getPreferredArtifactType()
 						+ " artifacts, but the mapper does not " + "support this type.  Using Type 1.");
 			}
 
 			synchronized (md) {
-				artifact = new SAMLArtifactType0001(Util.generateSourceId(md, relyingParty.getIdentityProvider()
+				artifact = new SAMLArtifactType0001(Util.generateSourceId(md, serviceProvider.getIdentityProvider()
 						.getProviderId()));
 			}
 		}
 
 		// Delegate adding to extenders
-		addAssertionImpl(artifact, new ArtifactMapping(artifact, assertion, relyingParty));
+		addAssertionImpl(artifact, new ArtifactMapping(artifact, assertion, serviceProvider));
 
 		// Return the encoded artifact
 		return artifact;
