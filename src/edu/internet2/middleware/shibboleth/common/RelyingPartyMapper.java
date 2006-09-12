@@ -47,7 +47,7 @@ public class RelyingPartyMapper {
 	private MetadataProvider metaData;
 	private Credentials credentials;
 
-	public RelyingPartyMapper(Element rawConfig, IdPConfig configuration, Credentials credentials, NameMapper nameMapper)
+	public RelyingPartyMapper(Element rawConfig, IdPConfig configuration, Credentials credentials)
 			throws RelyingPartyMapperException {
 
 		this.credentials = credentials;
@@ -339,7 +339,6 @@ public class RelyingPartyMapper {
 
 			return identityProvider;
 		}
-
 
 		public boolean passThruErrors() {
 
