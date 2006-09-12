@@ -47,8 +47,10 @@ public class RelyingPartyMapper {
 	private MetadataProvider metaData;
 	private Credentials credentials;
 
-	public RelyingPartyMapper(Element rawConfig, IdPConfig configuration, Credentials credentials)
-			throws RelyingPartyMapperException {
+	public RelyingPartyMapper(Element rawConfig, Credentials credentials) throws RelyingPartyMapperException {
+
+		if (credentials == null) { throw new IllegalArgumentException(
+				"RelyingPartyMapper cannot be started without proper access to the IdP configuration."); }
 
 		this.credentials = credentials;
 
