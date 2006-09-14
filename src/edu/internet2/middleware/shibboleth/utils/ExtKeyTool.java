@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -64,7 +65,7 @@ import org.bouncycastle.util.encoders.Base64;
 
 /**
  * Extension utility for use alongside Sun's keytool program. Performs useful functions not found in original.
- * 
+ *
  * @author Walter Hoehn
  */
 
@@ -136,6 +137,20 @@ public class ExtKeyTool {
 		}
 	}
 
+	private void writeWithWrapping(byte[] base64text, int linesize, OutputStream out)
+	throws IOException
+	{
+		int length = base64text.length;
+		if (length == 0) return;
+
+		out.write( (int)base64text[0] );
+		for (int i=1; i < length; i++)
+		{
+			if (i%linesize == 0) out.write('\n');
+			out.write( (int)base64text[i] );
+		}
+	}
+
 	/**
 	 * Retrieves a private key from a java keystore and writes it to an <code>PrintStream</code>
 	 * 
@@ -179,15 +194,17 @@ public class ExtKeyTool {
 			}
 			log.info("Found key.");
 
+			byte[] encodedKey = key.getEncoded();
+
 			if (rfc) {
 				log.debug("Dumping with rfc encoding");
 				outStream.println("-----BEGIN PRIVATE KEY-----");
-				outStream.println(Base64.encode(key.getEncoded()));
-
+				writeWithWrapping(Base64.encode(encodedKey), 76, outStream);
+				outStream.println();
 				outStream.println("-----END PRIVATE KEY-----");
 			} else {
 				log.debug("Dumping with default encoding.");
-				outStream.write(key.getEncoded());
+				outStream.write(encodedKey);
 			}
 
 		} catch (KeyStoreException e) {
