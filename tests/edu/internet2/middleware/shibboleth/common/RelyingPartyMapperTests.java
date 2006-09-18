@@ -19,7 +19,9 @@ package edu.internet2.middleware.shibboleth.common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import junit.framework.TestCase;
 
@@ -27,7 +29,6 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.opensaml.Configuration;
-import org.opensaml.SAMLException;
 import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -36,8 +37,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import edu.internet2.middleware.shibboleth.xml.Parser;
-
 /**
  * Validation suite for the <code>RelyingPartyMapper</code>.
  * 
@@ -45,8 +44,6 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
  */
 
 public class RelyingPartyMapperTests extends TestCase {
-
-	private Parser.DOMParser parser = new Parser.DOMParser(true);
 
 	public RelyingPartyMapperTests(String name) {
 
@@ -72,15 +69,19 @@ public class RelyingPartyMapperTests extends TestCase {
 
 		try {
 			// Parse IdP config file
-			InputStream inStream = new FileInputStream("data/relyingPartyMapper1.xml");
-			parser.parse(new InputSource(inStream));
+			String fileLocation = "data/relyingPartyMapper1.xml";
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
 
 			// We have to get a credentials set in order to init the mapper
-			NodeList credentialNodes = parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+			NodeList credentialNodes = factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement().getElementsByTagNameNS(
 					Credentials.credentialsNamespace, "Credentials");
 			Credentials credentials = new Credentials((Element) credentialNodes.item(0));
 
-			RelyingPartyMapper mapper = new RelyingPartyMapper(parser.getDocument().getDocumentElement(), credentials);
+			RelyingPartyMapper mapper = new RelyingPartyMapper(factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement(), credentials);
 
 			// Make sure we have anonymous support turned off
 			assertFalse("Anonymous relying party support should be turned off.", mapper.anonymousSuported());
@@ -103,10 +104,10 @@ public class RelyingPartyMapperTests extends TestCase {
 			fail("Error in test specification: " + e.getMessage());
 		} catch (IOException e) {
 			fail("Error in test specification: " + e.getMessage());
-		} catch (SAMLException e) {
-			fail("Error in test specification: " + e.getMessage());
 		} catch (RelyingPartyMapperException e) {
 			fail("Unable to load relying party mapper: " + e.getMessage());
+		} catch (ParserConfigurationException e) {
+			fail("Unable to load XML parser: " + e.getMessage());
 		}
 	}
 
@@ -114,15 +115,19 @@ public class RelyingPartyMapperTests extends TestCase {
 
 		try {
 			// Parse IdP config file
-			InputStream inStream = new FileInputStream("data/relyingPartyMapper2.xml");
-			parser.parse(new InputSource(inStream));
+			String fileLocation = "data/relyingPartyMapper2.xml";
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
 
 			// We have to get a credentials set in order to init the mapper
-			NodeList credentialNodes = parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+			NodeList credentialNodes = factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement().getElementsByTagNameNS(
 					Credentials.credentialsNamespace, "Credentials");
 			Credentials credentials = new Credentials((Element) credentialNodes.item(0));
 
-			RelyingPartyMapper mapper = new RelyingPartyMapper(parser.getDocument().getDocumentElement(), credentials);
+			RelyingPartyMapper mapper = new RelyingPartyMapper(factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement(), credentials);
 
 			// Make sure we have anonymous support turned on
 			assertTrue("Anonymous relying party support should be turned on.", mapper.anonymousSuported());
@@ -136,10 +141,10 @@ public class RelyingPartyMapperTests extends TestCase {
 			fail("Error in test specification: " + e.getMessage());
 		} catch (IOException e) {
 			fail("Error in test specification: " + e.getMessage());
-		} catch (SAMLException e) {
-			fail("Error in test specification: " + e.getMessage());
 		} catch (RelyingPartyMapperException e) {
 			fail("Unable to load relying party mapper: " + e.getMessage());
+		} catch (ParserConfigurationException e) {
+			fail("Unable to load XML parser: " + e.getMessage());
 		}
 	}
 
@@ -147,15 +152,19 @@ public class RelyingPartyMapperTests extends TestCase {
 
 		try {
 			// Parse IdP config file
-			InputStream inStream = new FileInputStream("data/relyingPartyMapper2.xml");
-			parser.parse(new InputSource(inStream));
+			String fileLocation = "data/relyingPartyMapper2.xml";
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
 
 			// We have to get a credentials set in order to init the mapper
-			NodeList credentialNodes = parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+			NodeList credentialNodes = factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement().getElementsByTagNameNS(
 					Credentials.credentialsNamespace, "Credentials");
 			Credentials credentials = new Credentials((Element) credentialNodes.item(0));
 
-			RelyingPartyMapper mapper = new RelyingPartyMapper(parser.getDocument().getDocumentElement(), credentials);
+			RelyingPartyMapper mapper = new RelyingPartyMapper(factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement(), credentials);
 
 			// Make sure we have defaulting turned on
 			assertNotNull("Expected no relying party.", mapper.getRelyingParty("foobar"));
@@ -168,10 +177,10 @@ public class RelyingPartyMapperTests extends TestCase {
 			fail("Error in test specification: " + e.getMessage());
 		} catch (IOException e) {
 			fail("Error in test specification: " + e.getMessage());
-		} catch (SAMLException e) {
-			fail("Error in test specification: " + e.getMessage());
 		} catch (RelyingPartyMapperException e) {
 			fail("Unable to load relying party mapper: " + e.getMessage());
+		} catch (ParserConfigurationException e) {
+			fail("Unable to load XML parser: " + e.getMessage());
 		}
 	}
 
@@ -179,15 +188,20 @@ public class RelyingPartyMapperTests extends TestCase {
 
 		try {
 			// Parse IdP config file
-			InputStream inStream = new FileInputStream("data/relyingPartyMapper2.xml");
-			parser.parse(new InputSource(inStream));
+			String fileLocation = "data/relyingPartyMapper2.xml";
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
 
 			// We have to get a credentials set in order to init the mapper
-			NodeList credentialNodes = parser.getDocument().getDocumentElement().getElementsByTagNameNS(
+			NodeList credentialNodes = factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement().getElementsByTagNameNS(
 					Credentials.credentialsNamespace, "Credentials");
 			Credentials credentials = new Credentials((Element) credentialNodes.item(0));
 
-			RelyingPartyMapper mapper = new RelyingPartyMapper(parser.getDocument().getDocumentElement(), credentials);
+			RelyingPartyMapper mapper = new RelyingPartyMapper(factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement(), credentials);
+
 			Configuration.init();
 			MetadataProvider metadata = new FilesystemMetadataProvider(new File("data/relyingParty-metadata.xml"));
 			mapper.setMetadata(metadata);
@@ -201,12 +215,12 @@ public class RelyingPartyMapperTests extends TestCase {
 			fail("Error in test specification: " + e.getMessage());
 		} catch (IOException e) {
 			fail("Error in test specification: " + e.getMessage());
-		} catch (SAMLException e) {
-			fail("Error in test specification: " + e.getMessage());
 		} catch (RelyingPartyMapperException e) {
 			fail("Unable to load relying party mapper: " + e.getMessage());
 		} catch (MetadataProviderException e) {
 			fail("Error in test specification: " + e.getMessage());
+		} catch (ParserConfigurationException e) {
+			fail("Unable to load XML parser: " + e.getMessage());
 		}
 	}
 }
