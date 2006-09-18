@@ -17,6 +17,7 @@
 package edu.internet2.middleware.shibboleth.aa.attrresolv.provider;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -34,6 +35,12 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Base64;
@@ -49,7 +56,6 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolutionPlugInExcepti
 import edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverAttribute;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.XML;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * <code>AttributeDefinition</code> implementation that provides a persistent, but pseudonymous, identifier for
@@ -313,7 +319,19 @@ public class SAML2PersistentID extends BaseAttributeDefinition implements Attrib
 
 			public Object next() {
 
-				return Parser.serialize(((Element) wrapped.next()));
+				try {
+					TransformerFactory factory = TransformerFactory.newInstance();
+					DOMSource source = new DOMSource(((Element) wrapped.next()));
+					Transformer transformer = factory.newTransformer();
+					transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+					StringWriter stringWriter = new StringWriter();
+					StreamResult result = new StreamResult(stringWriter);
+					transformer.transform(source, result);
+					return stringWriter.toString();
+
+				} catch (TransformerException e) {
+					return null;
+				}
 			}
 
 			public void remove() {
