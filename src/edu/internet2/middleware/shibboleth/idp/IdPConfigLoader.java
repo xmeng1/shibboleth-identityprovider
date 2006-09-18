@@ -17,12 +17,14 @@
 package edu.internet2.middleware.shibboleth.idp;
 
 import javax.servlet.ServletContext;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
+import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Constructs a DOM tree for the IdP configuration XML file.
@@ -80,7 +82,13 @@ public class IdPConfigLoader {
 		}
 
 		try {
-			idpConfig = Parser.loadDom(configFileLocation, true);
+
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			idpConfig = factory.newDocumentBuilder().parse(
+					new InputSource(new ShibResource(configFileLocation).getInputStream()));
 
 			if (idpConfig == null) { throw new Exception("IdP configuration could not be loaded from (" + idpConfigFile
 					+ ")."); }
@@ -110,9 +118,10 @@ public class IdPConfigLoader {
 		return getIdPConfig(getIdPConfigFile(context));
 
 	}
-    
-    protected static void reset() {
-        idpConfig = null;
-        idpConfigFile = null;
-    }
+
+	protected static void reset() {
+
+		idpConfig = null;
+		idpConfigFile = null;
+	}
 }
