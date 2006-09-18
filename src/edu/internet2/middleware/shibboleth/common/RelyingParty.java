@@ -24,6 +24,8 @@ package edu.internet2.middleware.shibboleth.common;
  */
 public interface RelyingParty {
 
+	// TODO add support for extension attributes via getAttribute(foo)
+
 	/**
 	 * Returns the appropriate identity provider to create assertions for this relying party.
 	 * 
