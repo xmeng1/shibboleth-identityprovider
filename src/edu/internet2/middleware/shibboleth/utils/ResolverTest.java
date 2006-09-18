@@ -20,11 +20,18 @@ import jargs.gnu.CmdLineParser;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -46,7 +53,6 @@ import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
 import edu.internet2.middleware.shibboleth.idp.IdPConfigLoader;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Utility for testing an Attribute Resolver configuration.
@@ -232,10 +238,19 @@ public class ResolverTest {
 					System.err.println("Received bad Element data from SAML library.");
 					System.exit(1);
 				}
-				out.println(Parser.serialize(node));
+
+				TransformerFactory factory = TransformerFactory.newInstance();
+				DOMSource source = new DOMSource(node);
+				Transformer transformer = factory.newTransformer();
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				StringWriter stringWriter = new StringWriter();
+				StreamResult result = new StreamResult(stringWriter);
+				transformer.transform(source, result);
+				out.println(stringWriter.toString());
+
 				out.println();
 			}
-		} catch (SAMLException e) {
+		} catch (Exception e) {
 			System.err.println("Error creating SAML attribute: " + e.getMessage());
 			System.exit(1);
 		}
