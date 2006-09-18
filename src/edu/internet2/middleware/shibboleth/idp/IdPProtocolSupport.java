@@ -45,7 +45,6 @@ import edu.internet2.middleware.shibboleth.aa.arp.ArpProcessingException;
 import edu.internet2.middleware.shibboleth.aa.attrresolv.AttributeResolver;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credential;
-import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingParty;
 import edu.internet2.middleware.shibboleth.common.RelyingPartyMapper;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -63,7 +62,6 @@ public class IdPProtocolSupport implements MetadataProvider {
 	private static Logger log = Logger.getLogger(IdPProtocolSupport.class.getName());
 	private Logger transactionLog;
 	private IdPConfig config;
-	private NameMapper nameMapper;
 	private RelyingPartyMapper spMapper;
 	private ArpEngine arpEngine;
 	private AttributeResolver resolver;
@@ -72,13 +70,11 @@ public class IdPProtocolSupport implements MetadataProvider {
 	private TrustEngine<X509EntityCredential> trust = new ShibbolethTrustEngine();
 	private ChainingMetadataProvider wrappedMetadataProvider = new ChainingMetadataProvider();
 
-	IdPProtocolSupport(IdPConfig config, Logger transactionLog, NameMapper nameMapper, RelyingPartyMapper spMapper,
-			ArpEngine arpEngine, AttributeResolver resolver, ArtifactMapper artifactMapper)
-			throws ShibbolethConfigurationException {
+	IdPProtocolSupport(IdPConfig config, Logger transactionLog, RelyingPartyMapper spMapper, ArpEngine arpEngine,
+			AttributeResolver resolver, ArtifactMapper artifactMapper) throws ShibbolethConfigurationException {
 
 		this.transactionLog = transactionLog;
 		this.config = config;
-		this.nameMapper = nameMapper;
 		this.spMapper = spMapper;
 		spMapper.setMetadata(this);
 		this.arpEngine = arpEngine;
@@ -97,11 +93,6 @@ public class IdPProtocolSupport implements MetadataProvider {
 	public IdPConfig getIdPConfig() {
 
 		return config;
-	}
-
-	public NameMapper getNameMapper() {
-
-		return nameMapper;
 	}
 
 	public RelyingPartyMapper getRelyingPartyMapper() {

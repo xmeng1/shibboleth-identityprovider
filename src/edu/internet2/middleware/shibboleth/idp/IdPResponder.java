@@ -47,9 +47,6 @@ import edu.internet2.middleware.shibboleth.artifact.ArtifactMapper;
 import edu.internet2.middleware.shibboleth.artifact.ArtifactMapperFactory;
 import edu.internet2.middleware.shibboleth.artifact.provider.MemoryArtifactMapper;
 import edu.internet2.middleware.shibboleth.common.Credentials;
-import edu.internet2.middleware.shibboleth.common.NameIdentifierMapping;
-import edu.internet2.middleware.shibboleth.common.NameIdentifierMappingException;
-import edu.internet2.middleware.shibboleth.common.NameMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingPartyMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingPartyMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
@@ -108,19 +105,6 @@ public class IdPResponder extends HttpServlet {
 
 			// Load global configuration properties
 			configuration = new IdPConfig(idPConfig.getDocumentElement());
-
-			// Load name mappings
-			NameMapper nameMapper = new NameMapper();
-			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(
-					NameIdentifierMapping.mappingNamespace, "NameMapping");
-
-			for (int i = 0; i < itemElements.getLength(); i++) {
-				try {
-					nameMapper.addNameMapping((Element) itemElements.item(i));
-				} catch (NameIdentifierMappingException e) {
-					log.error("Name Identifier mapping could not be loaded: " + e);
-				}
-			}
 
 			// Load signing credentials
 			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(Credentials.credentialsNamespace,
@@ -185,8 +169,8 @@ public class IdPResponder extends HttpServlet {
 			}
 
 			// Load protocol handlers and support library
-			protocolSupport = new IdPProtocolSupport(configuration, transactionLog, nameMapper, spMapper, arpEngine,
-					resolver, artifactMapper);
+			protocolSupport = new IdPProtocolSupport(configuration, transactionLog, spMapper, arpEngine, resolver,
+					artifactMapper);
 			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"ProtocolHandler");
 
