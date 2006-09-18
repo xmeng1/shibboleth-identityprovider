@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.aa.arp;
 
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -30,6 +31,11 @@ import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
@@ -38,7 +44,6 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Defines a processing engine for Attribute Release Policies.
@@ -65,7 +70,7 @@ public class ArpEngine {
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:stringNotMatch"),
 					"edu.internet2.middleware.shibboleth.aa.arp.provider.StringValueNotMatchFunction");
 			matchFunctions.put(new URI("urn:mace:shibboleth:arp:matchFunction:anyValueMatch"),
-			"edu.internet2.middleware.shibboleth.aa.arp.provider.AnyValueMatchFunction");
+					"edu.internet2.middleware.shibboleth.aa.arp.provider.AnyValueMatchFunction");
 
 		} catch (URISyntaxException e) {
 			log.error("Error mapping standard match functions: " + e);
@@ -168,10 +173,12 @@ public class ArpEngine {
 	}
 
 	private Arp createEffectiveArp(Principal principal, String requester) throws ArpProcessingException {
+
 		return createEffectiveArp(principal, requester, null);
 	}
-	
-	private Arp createEffectiveArp(Principal principal, String requester, Collection<? extends ArpAttribute> attributes) throws ArpProcessingException {
+
+	private Arp createEffectiveArp(Principal principal, String requester, Collection<? extends ArpAttribute> attributes)
+			throws ArpProcessingException {
 
 		try {
 			Arp effectiveArp = new Arp(principal);
@@ -183,12 +190,20 @@ public class ArpEngine {
 				log.debug("Creating effective ARP from (" + userPolicies.length + ") polic(y|ies).");
 				try {
 					for (int i = 0; userPolicies.length > i; i++) {
-						String dump = Parser.serialize(userPolicies[i].unmarshall());
-						log.debug("Dumping ARP:" + System.getProperty("line.separator") + dump);
+
+						TransformerFactory factory = TransformerFactory.newInstance();
+						DOMSource source = new DOMSource(userPolicies[i].unmarshall());
+						Transformer transformer = factory.newTransformer();
+						transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+						StringWriter stringWriter = new StringWriter();
+						StreamResult result = new StreamResult(stringWriter);
+						transformer.transform(source, result);
+						log.debug("Dumping ARP:" + System.getProperty("line.separator") + stringWriter.toString());
 					}
+
 				} catch (Exception e) {
-					log
-							.error("Encountered a strange error while writing ARP debug messages.  This should never happen.");
+					log.error("Encountered a strange error while writing ARP debug "
+							+ "messages.  This should never happen.");
 				}
 			}
 
@@ -249,34 +264,34 @@ public class ArpEngine {
 	}
 
 	/**
-	 * Given an attribute request and a set of attributes that are planned to be 
-	 * resolved (either those specified in the request or the result of 
-	 * listPossibleReleaseAttributes()), determine what attributes may need to 
-	 * be resolved in order to properly evaluate any applicable constraints.
+	 * Given an attribute request and a set of attributes that are planned to be resolved (either those specified in the
+	 * request or the result of listPossibleReleaseAttributes()), determine what attributes may need to be resolved in
+	 * order to properly evaluate any applicable constraints.
 	 */
-	public Set<URI> listRequiredConstraintAttributes(Principal principal, String requester, Collection<URI> attributeNames) throws ArpProcessingException {
+	public Set<URI> listRequiredConstraintAttributes(Principal principal, String requester,
+			Collection<URI> attributeNames) throws ArpProcessingException {
+
 		HashSet<URI> constraintAttributes = new HashSet<URI>();
-		
+
 		Collection<Rule> rules = createEffectiveArp(principal, requester).getAllRules();
-		ArpRules: for (Rule rule : rules) {
+		ArpRules : for (Rule rule : rules) {
 			for (Rule.Attribute attr : rule.getAttributes()) {
 				if (attributeNames.contains(attr.getName())) {
 					// this rule deals with an attribute we might care about, so add the constraint attributes
 					for (Rule.Constraint constraint : rule.getConstraints()) {
 						constraintAttributes.add(constraint.getAttributeName());
 					}
-					
+
 					// we have the constraint attributes, move on to the next rule
 					continue ArpRules;
 				}
 			}
-			
+
 		}
-		
+
 		return constraintAttributes;
 	}
-	
-	
+
 	/**
 	 * Applies all applicable ARPs to a set of attributes.
 	 * 
