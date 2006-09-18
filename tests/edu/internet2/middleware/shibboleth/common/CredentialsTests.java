@@ -19,13 +19,14 @@ package edu.internet2.middleware.shibboleth.common;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import junit.framework.TestCase;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.xml.sax.InputSource;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Validation suite for the <code>Credentials</code> interface.
@@ -34,8 +35,6 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
  */
 
 public class CredentialsTests extends TestCase {
-
-	private Parser.DOMParser parser = new Parser.DOMParser(true);
 
 	public CredentialsTests(String name) {
 
@@ -64,8 +63,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials1.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -95,9 +98,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials16.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
 
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
@@ -118,8 +124,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials17.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -145,8 +155,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials18.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -166,8 +180,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials3.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -193,8 +211,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials2.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -220,8 +242,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials4.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -247,9 +273,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials5.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
 
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
@@ -274,8 +303,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials6.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -301,8 +334,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials7.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -328,9 +365,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials8.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
 
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
 
@@ -351,8 +391,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials9.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -374,8 +418,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials10.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -397,8 +445,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials11.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -424,8 +476,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials12.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -451,8 +507,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials14.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -478,8 +538,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials13.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
@@ -505,8 +569,12 @@ public class CredentialsTests extends TestCase {
 
 		try {
 			InputStream inStream = new FileInputStream("data/credentials15.xml");
-			parser.parse(new InputSource(inStream));
-			Credentials credentials = new Credentials(parser.getDocument().getDocumentElement());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			Credentials credentials = new Credentials(factory.newDocumentBuilder().parse(new InputSource(inStream))
+					.getDocumentElement());
 
 			assertTrue("Credential could not be found.", credentials.containsCredential("test"));
 			Credential credential = credentials.getCredential("test");
