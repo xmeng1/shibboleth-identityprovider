@@ -30,9 +30,10 @@ import java.util.Set;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Logger;
-import org.opensaml.SAMLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -44,7 +45,6 @@ import edu.internet2.middleware.shibboleth.aa.attrresolv.provider.ValueHandler;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.common.ShibResource.ResourceNotAvailableException;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * An engine for obtaining attribute values for specified principals. Attributes values are resolved using a directed
@@ -79,9 +79,11 @@ public class AttributeResolver {
 
 		try {
 			ShibResource config = new ShibResource(configFile, this.getClass());
-			Parser.DOMParser parser = new Parser.DOMParser(true);
-			parser.parse(new InputSource(config.getInputStream()));
-			loadConfig(parser.getDocument());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			loadConfig(factory.newDocumentBuilder().parse(new InputSource(config.getInputStream())));
 
 		} catch (ResourceNotAvailableException e) {
 			log.error("No Attribute Resolver configuration could be loaded from (" + configFile + "): " + e);
@@ -92,7 +94,7 @@ public class AttributeResolver {
 		} catch (IOException e) {
 			log.error("Error reading Attribute Resolver Configuration file: " + e);
 			throw new AttributeResolverException("Error reading Attribute Resolver Configuration file.");
-		} catch (SAMLException e) {
+		} catch (ParserConfigurationException e) {
 			log.error("Error parsing Attribute Resolver Configuration file: " + e);
 			throw new AttributeResolverException("Error parsing Attribute Resolver Configuration file.");
 		}

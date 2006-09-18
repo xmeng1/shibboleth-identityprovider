@@ -20,19 +20,21 @@ import java.io.File;
 import java.io.IOException;
 import java.security.Principal;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.log4j.Logger;
-import org.opensaml.SAMLException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
 import edu.internet2.middleware.shibboleth.aa.arp.Arp;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepository;
 import edu.internet2.middleware.shibboleth.aa.arp.ArpRepositoryException;
 import edu.internet2.middleware.shibboleth.common.ShibResource;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Simple <code>ArpRepository</code> implementation that uses a filesystem for storage.
@@ -105,9 +107,10 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 	}
 
 	/**
+	 * @throws ParserConfigurationException 
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository#retrieveSiteArpXml()
 	 */
-	protected Element retrieveSiteArpXml() throws IOException, SAXException {
+	protected Element retrieveSiteArpXml() throws IOException, SAXException, ParserConfigurationException {
 
 		String fileName = dataStorePath + siteArpFileName;
 		log.debug("Attempting to load site ARP from: (" + fileName + ").");
@@ -115,7 +118,7 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 
 	}
 
-	private Element retrieveArpXml(String fileName) throws SAXException, IOException {
+	private Element retrieveArpXml(String fileName) throws SAXException, IOException, ParserConfigurationException {
 
 		try {
 			ShibResource resource = new ShibResource(fileName, this.getClass());
@@ -124,13 +127,10 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 				return null;
 			}
 
-			Parser.DOMParser parser = new Parser.DOMParser(true);
-			try {
-				parser.parse(new InputSource(resource.getInputStream()));
-			} catch (SAMLException e) {
-				throw new SAXException(e);
-			}
-			return parser.getDocument().getDocumentElement();
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+			return factory.newDocumentBuilder().parse(new InputSource(resource.getInputStream())).getDocumentElement();
 
 		} catch (ShibResource.ResourceNotAvailableException e) {
 			log.debug("No ARP found.");
@@ -139,9 +139,10 @@ public class FileSystemArpRepository extends BaseArpRepository implements ArpRep
 	}
 
 	/**
+	 * @throws ParserConfigurationException 
 	 * @see edu.internet2.middleware.shibboleth.aa.arp.provider.BaseArpRepository#retrieveUserArpXml(Principal)
 	 */
-	protected Element retrieveUserArpXml(Principal principal) throws IOException, SAXException {
+	protected Element retrieveUserArpXml(Principal principal) throws IOException, SAXException, ParserConfigurationException {
 
 		String fileName = dataStorePath + "arp.user." + principal.getName() + ".xml";
 		log.debug("Attempting to load user (" + principal.getName() + ") ARP from: (" + fileName + ").");

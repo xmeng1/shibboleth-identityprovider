@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -120,6 +122,9 @@ public abstract class BaseArpRepository implements ArpRepository {
 		} catch (SAXException se) {
 			log.error("An error occurred while parsing an ARP: " + se);
 			throw new ArpRepositoryException("An error occurred while parsing an ARP.");
+		} catch (ParserConfigurationException e) {
+			log.error("An error occurred while loading the XML parser: " + e);
+			throw new ArpRepositoryException("An error occurred while loading the XML parser.");
 		}
 	}
 
@@ -128,7 +133,7 @@ public abstract class BaseArpRepository implements ArpRepository {
 	 * 
 	 * @return Element
 	 */
-	protected abstract Element retrieveSiteArpXml() throws IOException, SAXException;
+	protected abstract Element retrieveSiteArpXml() throws IOException, SAXException, ParserConfigurationException;
 
 	public void destroy() {
 
@@ -171,6 +176,9 @@ public abstract class BaseArpRepository implements ArpRepository {
 		} catch (SAXException se) {
 			log.error("An error occurred while parsing an ARP: " + se);
 			throw new ArpRepositoryException("An error occurred while parsing an ARP.");
+		} catch (ParserConfigurationException e) {
+			log.error("An error occurred while loading the XML parser: " + e);
+			throw new ArpRepositoryException("An error occurred while loading the XML parser.");
 		}
 	}
 
@@ -179,7 +187,8 @@ public abstract class BaseArpRepository implements ArpRepository {
 	 * 
 	 * @return Element
 	 */
-	protected abstract Element retrieveUserArpXml(Principal principal) throws IOException, SAXException;
+	protected abstract Element retrieveUserArpXml(Principal principal) throws IOException, SAXException,
+			ParserConfigurationException;
 
 }
 
