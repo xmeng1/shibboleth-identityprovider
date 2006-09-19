@@ -111,7 +111,7 @@ public class Rule {
 			Element ruleNode = placeHolder.createElementNS(Arp.arpNamespace, "Rule");
 
 			if (identifier != null) {
-				ruleNode.setAttributeNS(Arp.arpNamespace, "identifier", identifier.toString());
+				ruleNode.setAttributeNS(null, "identifier", identifier.toString());
 			}
 
 			if (description != null) {
@@ -357,7 +357,7 @@ public class Rule {
 				Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 				Element requesterNode = placeHolder.createElementNS(Arp.arpNamespace, "Requester");
 				if (!matchFunctionIdentifier.equals(new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch"))) {
-					requesterNode.setAttributeNS(Arp.arpNamespace, "matchFunction", matchFunctionIdentifier.toString());
+					requesterNode.setAttributeNS(null, "matchFunction", matchFunctionIdentifier.toString());
 				}
 				Text valueNode = placeHolder.createTextNode(value);
 				requesterNode.appendChild(valueNode);
@@ -560,25 +560,25 @@ public class Rule {
 				Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 				Element attributeNode = placeHolder.createElementNS(Arp.arpNamespace, "Attribute");
 
-				attributeNode.setAttributeNS(Arp.arpNamespace, "name", name.toString());
+				attributeNode.setAttributeNS(null, "name", name.toString());
 
 				if (identifier != null) {
-					attributeNode.setAttributeNS(Arp.arpNamespace, "identifier", identifier.toString());
+					attributeNode.setAttributeNS(null, "identifier", identifier.toString());
 				}
 
 				if (anyValue) {
 					Element anyValueNode = placeHolder.createElementNS(Arp.arpNamespace, "AnyValue");
-					anyValueNode.setAttributeNS(Arp.arpNamespace, "release", anyValueRelease);
+					anyValueNode.setAttributeNS(null, "release", anyValueRelease);
 					attributeNode.appendChild(anyValueNode);
 				}
 				Iterator valueIterator = values.iterator();
 				while (valueIterator.hasNext()) {
 					AttributeValue value = (AttributeValue) valueIterator.next();
 					Element valueNode = placeHolder.createElementNS(Arp.arpNamespace, "Value");
-					valueNode.setAttributeNS(Arp.arpNamespace, "release", value.getRelease());
+					valueNode.setAttributeNS(null, "release", value.getRelease());
 					if (!value.getMatchFunctionIdentifier().equals(
 							new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch"))) {
-						valueNode.setAttributeNS(Arp.arpNamespace, "matchFunction", value.getMatchFunctionIdentifier()
+						valueNode.setAttributeNS(null, "matchFunction", value.getMatchFunctionIdentifier()
 								.toString());
 					}
 					Text valueTextNode = placeHolder.createTextNode(value.getValue());
@@ -759,9 +759,9 @@ public class Rule {
 				Document placeHolder = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 				Element constraintNode = placeHolder.createElementNS(Arp.arpNamespace, "Constraint");
 
-				constraintNode.setAttributeNS(Arp.arpNamespace, "attributeName", attributeName.toString());
-				constraintNode.setAttributeNS(Arp.arpNamespace, "matchFunction", matchFunctionIdentifier.toString());
-				constraintNode.setAttributeNS(Arp.arpNamespace, "matches", matches);
+				constraintNode.setAttributeNS(null, "attributeName", attributeName.toString());
+				constraintNode.setAttributeNS(null, "matchFunction", matchFunctionIdentifier.toString());
+				constraintNode.setAttributeNS(null, "matches", matches);
 
 				Text textNode = placeHolder.createTextNode(value);
 				constraintNode.appendChild(textNode);
