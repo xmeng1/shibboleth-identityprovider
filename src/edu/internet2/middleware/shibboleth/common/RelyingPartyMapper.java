@@ -16,6 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.common;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +27,9 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.XMLObject;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
@@ -236,6 +240,10 @@ public class RelyingPartyMapper {
 		private boolean wantsAssertionsSigned = false;
 		private int preferredArtifactType = 1;
 		private String defaultTarget;
+		private Map<String, String> extensionAttributes = new HashMap<String, String>();
+		private Collection<String> knownAttributes = Arrays.asList(new String[]{"providerId", "passThruErrors",
+				"defaultToPOSTProfile", "singleAssertion", "signAssertions", "defaultTarget", "forceAttributePush",
+				"preferredArtifactType", "signingCredential"});
 
 		public RelyingPartyImpl(Element partyConfig, Credentials credentials) throws RelyingPartyMapperException {
 
@@ -335,6 +343,14 @@ public class RelyingPartyMapper {
 			// Initialize and Identity Provider object for this use by this relying party
 			identityProvider = new RelyingPartyIdentityProvider(providerId, signingCredential);
 
+			// Track extension attributes
+			NamedNodeMap nodeMap = ((Element) partyConfig).getAttributes();
+			for (int i = 0; i < nodeMap.getLength(); i++) {
+				Attr attr = (Attr) nodeMap.item(i);
+				if (!knownAttributes.contains(attr.getName())) {
+					extensionAttributes.put(attr.getName(), attr.getValue());
+				}
+			}
 		}
 
 		public IdentityProvider getIdentityProvider() {
@@ -382,6 +398,11 @@ public class RelyingPartyMapper {
 			return defaultTarget;
 		}
 
+		public String getCustomAttribute(String name) {
+
+			return extensionAttributes.get(name);
+		}
+
 		/**
 		 * Default identity provider implementation.
 		 * 
@@ -414,6 +435,7 @@ public class RelyingPartyMapper {
 				return credential;
 			}
 		}
+
 	}
 
 	class NamedRelyingParty extends RelyingPartyImpl {

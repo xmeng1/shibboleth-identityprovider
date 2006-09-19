@@ -223,4 +223,46 @@ public class RelyingPartyMapperTests extends TestCase {
 			fail("Unable to load XML parser: " + e.getMessage());
 		}
 	}
+
+	public void testCustomAttributes() {
+
+		try {
+			// Parse IdP config file
+			String fileLocation = "data/relyingPartyMapper3.xml";
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+
+			// We have to get a credentials set in order to init the mapper
+			NodeList credentialNodes = factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement().getElementsByTagNameNS(
+					Credentials.credentialsNamespace, "Credentials");
+			Credentials credentials = new Credentials((Element) credentialNodes.item(0));
+
+			RelyingPartyMapper mapper = new RelyingPartyMapper(factory.newDocumentBuilder().parse(
+					new InputSource(new FileInputStream(fileLocation))).getDocumentElement(), credentials);
+
+			// Make sure we can lookup by providerId
+			assertNotNull("Expected relying party lookup to succeed.", mapper.getRelyingParty("urn-x:test:1"));
+
+			// Check the extended config data for the relying party
+			assertEquals("Incorrect extenstion attribute for relying party.", "foo", mapper.getRelyingParty(
+					"urn-x:test:1").getCustomAttribute("extension1"));
+			assertEquals("Incorrect extension attribute for relying party.", "bar", mapper.getRelyingParty(
+					"urn-x:test:1").getCustomAttribute("extension2"));
+			assertNull("Incorrect extension attribute for relying party.", mapper.getRelyingParty("urn-x:test:1")
+					.getCustomAttribute("extension3"));
+			assertNull("Incorrect extension attribute for relying party.", mapper.getRelyingParty("urn-x:test:1")
+					.getCustomAttribute("providerId"));
+
+		} catch (SAXException e) {
+			fail("Error in test specification: " + e.getMessage());
+		} catch (IOException e) {
+			fail("Error in test specification: " + e.getMessage());
+		} catch (RelyingPartyMapperException e) {
+			fail("Unable to load relying party mapper: " + e.getMessage());
+		} catch (ParserConfigurationException e) {
+			fail("Unable to load XML parser: " + e.getMessage());
+		}
+	}
 }

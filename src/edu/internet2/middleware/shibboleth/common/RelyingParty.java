@@ -24,8 +24,6 @@ package edu.internet2.middleware.shibboleth.common;
  */
 public interface RelyingParty {
 
-	// TODO add support for extension attributes via getAttribute(foo)
-
 	/**
 	 * Returns the appropriate identity provider to create assertions for this relying party.
 	 * 
@@ -77,5 +75,10 @@ public interface RelyingParty {
 	 * Returns the default "TARGET" attribute to be used with the artifact profile or null if none is specified.
 	 */
 	public String getDefaultTarget();
+
+	/**
+	 * Provides a mechanism for extension developers to pass relying party specific data into their extensions.
+	 */
+	public String getCustomAttribute(String name);
 
 }
