@@ -86,15 +86,15 @@ public class Rule {
 
 		return attributes;
 	}
-	
+
 	/**
 	 * Returns all of the constraint specifications associated with this Rule.
 	 * 
 	 * @return the constraints
 	 */
-	
+
 	public Collection<Constraint> getConstraints() {
-		
+
 		return constraints;
 	}
 
@@ -119,11 +119,11 @@ public class Rule {
 				descriptionNode.appendChild(placeHolder.createTextNode(description));
 				ruleNode.appendChild(descriptionNode);
 			}
-			
-			for (Constraint constraint: constraints) {
+
+			for (Constraint constraint : constraints) {
 				ruleNode.appendChild(placeHolder.importNode(constraint.unmarshall(), true));
 			}
-			
+
 			ruleNode.appendChild(placeHolder.importNode(target.unmarshall(), true));
 			Iterator attrIterator = attributes.iterator();
 			while (attrIterator.hasNext()) {
@@ -183,7 +183,7 @@ public class Rule {
 			constraint.marshall((Element) constraintNodes.item(i));
 			constraints.add(constraint);
 		}
-		
+
 		// Create the Target
 		NodeList targetNodes = element.getElementsByTagNameNS(Arp.arpNamespace, "Target");
 		if (targetNodes.getLength() != 1) {
@@ -226,11 +226,11 @@ public class Rule {
 		// the only time we won't have attributes should be when listing possible attributes
 		// to be released -- ArpEngine.listPossibleReleaseAttributes()
 		if (attributes != null) {
-			for(Constraint constraint : constraints) {
+			for (Constraint constraint : constraints) {
 				if (!constraint.allowed(attributes)) { return false; }
 			}
 		}
-		
+
 		if (target.matchesAny()) { return true; }
 
 		if (requester == null) { return false; }
@@ -730,20 +730,21 @@ public class Rule {
 			this.value = value;
 		}
 	}
-	
-    /**
-     * ARP Rule Constraints define attribute-based limits on which user a given rule applies to.  
-     * 
-     * @author Will Norris (wnorris@usc.edu)
-     */
+
+	/**
+	 * ARP Rule Constraints define attribute-based limits on which user a given rule applies to.
+	 * 
+	 * @author Will Norris (wnorris@usc.edu)
+	 */
 	class Constraint {
 
 		private URI attributeName;
 		private URI matchFunctionIdentifier;
 		private String matches;
 		private String value;
-		
+
 		URI getAttributeName() {
+
 			return attributeName;
 		}
 
@@ -764,7 +765,7 @@ public class Rule {
 
 				Text textNode = placeHolder.createTextNode(value);
 				constraintNode.appendChild(textNode);
-				
+
 				return constraintNode;
 
 			} catch (ParserConfigurationException e) {
@@ -777,7 +778,7 @@ public class Rule {
 		 * Creates an ARP Rule Constraint from an xml representation.
 		 * 
 		 * @param element
-		 *			the xml <code>Element</code> containing the ARP Rule Constraint.
+		 *            the xml <code>Element</code> containing the ARP Rule Constraint.
 		 */
 		void marshall(Element element) throws ArpMarshallingException {
 
@@ -805,45 +806,44 @@ public class Rule {
 				if (element.hasAttribute("matchFunction")) {
 					matchFunctionIdentifier = new URI(element.getAttribute("matchFunction"));
 				} else {
-					log.error("Constraint matchFunction identifier not specified.");
-					throw new ArpMarshallingException("Constraint matchFunction identifier not specified.");
+					this.matchFunctionIdentifier = new URI("urn:mace:shibboleth:arp:matchFunction:stringMatch");
 				}
 			} catch (URISyntaxException e) {
 				log.error("Constraint attribute name not identified by a proper URI: " + e);
 				throw new ArpMarshallingException("Constraint attribute name not identified by a proper URI.");
 			}
-			
+
 			// Get the matches value
 			if (element.hasAttribute("matches")) {
 				matches = element.getAttribute("matches");
 			} else {
-				log.error("Constraint matches value not specified.");
-				throw new ArpMarshallingException("Constraint matches value not specified.");
+				matches = "any";
 			}
-			
+
 			// Get the element value
 			if (element.hasChildNodes() && element.getFirstChild().getNodeType() == Node.TEXT_NODE) {
 				value = ((CharacterData) element.getFirstChild()).getData();
 			}
-			
+
 		}
-		
+
 		boolean allowed(Collection<? extends ArpAttribute> arpAttributes) {
+
 			boolean allowed;
-			
+
 			if (matches.equalsIgnoreCase("none")) {
 				allowed = true;
 			} else {
 				allowed = false;
 			}
-			
+
 			for (ArpAttribute attribute : arpAttributes) {
 				if (attribute.getName().equals(attributeName.toString())) {
-				
+
 					Iterator iterator = attribute.getValues();
 					while (iterator.hasNext()) {
 						Object attributeValue = iterator.next();
-	
+
 						MatchFunction resourceFunction;
 						try {
 							resourceFunction = ArpEngine.lookupMatchFunction(matchFunctionIdentifier);
@@ -854,10 +854,12 @@ public class Rule {
 								return false;
 							}
 						} catch (ArpException e) {
-							log.error("Error while attempting to find referenced matching function for ARP constraint: " + e);
+							log.error("Error while attempting to find referenced matching "
+									+ "function for ARP constraint: " + e);
 							return false;
 						}
-		
+
+						// TODO this would be better as an enum switch
 						try {
 							if (matches.equalsIgnoreCase("any")) {
 								if (resourceFunction.match(value, attributeValue)) {
@@ -887,7 +889,7 @@ public class Rule {
 					}
 				}
 			}
-			
+
 			return allowed;
 		}
 	}
