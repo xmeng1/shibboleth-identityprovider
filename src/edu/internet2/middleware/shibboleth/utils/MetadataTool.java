@@ -23,11 +23,12 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -44,10 +45,10 @@ import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import edu.internet2.middleware.shibboleth.common.XML;
 import edu.internet2.middleware.shibboleth.metadata.DOMMetadataProvider;
-import edu.internet2.middleware.shibboleth.xml.Parser;
 
 /**
  * Signs/verifies/maintains Shibboleth metadata files
@@ -164,7 +165,11 @@ public class MetadataTool {
 		}
 
 		// Parse file and verify root element.
-		Document doc = Parser.loadDom(new URL(new URL("file:"), infile), true);
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream(infile)));
+
 		if (doc == null) {
 			System.out.println("error: unable to read in file (" + infile + ")");
 			System.exit(-1);
