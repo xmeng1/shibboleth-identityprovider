@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -31,6 +32,11 @@ import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import junit.framework.TestCase;
 
@@ -45,7 +51,7 @@ import org.xml.sax.InputSource;
 import edu.internet2.middleware.shibboleth.aa.AAAttribute;
 import edu.internet2.middleware.shibboleth.common.LocalPrincipal;
 import edu.internet2.middleware.shibboleth.idp.IdPConfig;
-import edu.internet2.middleware.shibboleth.xml.Parser;
+
 
 /**
  * Validation suite for <code>Arp</code> processing.
@@ -55,7 +61,6 @@ import edu.internet2.middleware.shibboleth.xml.Parser;
 
 public class ArpTests extends TestCase {
 
-	private Parser.DOMParser parser = new Parser.DOMParser(true);
 	Element memoryRepositoryElement;
 	private String[] arpExamples = {"data/example1.xml", "data/example2.xml", "data/example3.xml", "data/example4.xml",
 			"data/example5.xml", "data/example6.xml", "data/example7.xml", "data/example8.xml", "data/example9.xml",
@@ -104,10 +109,13 @@ public class ArpTests extends TestCase {
 
 		// Test ARP description
 		try {
-			InputStream inStream = new FileInputStream("data/arp1.xml");
-			parser.parse(new InputSource(inStream));
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+			Document doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream("data/arp1.xml")));
+			
 			Arp arp1 = new Arp();
-			arp1.marshall(parser.getDocument().getDocumentElement());
+			arp1.marshall(doc.getDocumentElement());
 			assertEquals("ARP Description not marshalled properly", arp1.getDescription(), "Simplest possible ARP.");
 
 			// Test Rule description
@@ -119,10 +127,13 @@ public class ArpTests extends TestCase {
 
 		// Test case where ARP description does not exist
 		try {
-			InputStream inStream = new FileInputStream("data/arp2.xml");
-			parser.parse(new InputSource(inStream));
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+			Document doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream("data/arp2.xml")));
+			
 			Arp arp2 = new Arp();
-			arp2.marshall(parser.getDocument().getDocumentElement());
+			arp2.marshall(doc.getDocumentElement());
 			assertNull("ARP Description not marshalled properly", arp2.getDescription());
 
 			// Test case where ARP Rule description does not exist
@@ -329,25 +340,54 @@ public class ArpTests extends TestCase {
 		assertNotNull("Failed to create file-based Arp Repository: Factory returned null.", repository);
 
 		try {
+			
+			// Load ARP directly from a file and serialize it to a string
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+			Document doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream("data/arp.site.xml")));			
+			
+			TransformerFactory tFactory = TransformerFactory.newInstance();
+			Transformer transformer = tFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "no");
+			
+			StringWriter stringWriter = new StringWriter();
+			StreamResult result = new StreamResult(stringWriter);
+			DOMSource source = new DOMSource(doc);
+			transformer.transform(source, result);
+			String directXML = stringWriter.toString();
+
+			// Load ARP through the repository and serialize it to a string
 			Arp siteArp = repository.getSitePolicy();
-
-			InputStream inStream = new FileInputStream("data/arp.site.xml");
-			parser.parse(new InputSource(inStream));
-			String directXML = Parser.serialize(parser.getDocument().getDocumentElement());
-
-			String processedXML = Parser.serialize(siteArp.unmarshall());
-
+			stringWriter = new StringWriter();
+			result = new StreamResult(stringWriter);
+			source = new DOMSource(siteArp.unmarshall());
+			transformer.transform(source, result);
+			String processedXML  = stringWriter.toString();
+			
+			// Compare the results
 			assertTrue("File-based ARP Repository did not return the correct site ARP.", directXML.toString()
 					.replaceAll(">[\t\r\n ]+<", "><").equals(processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
 
+			
+
+			// Load ARP directly from a file and serialize it to a string		
+			doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream("data/arp.user.test.xml")));		
+			stringWriter = new StringWriter();
+			result = new StreamResult(stringWriter);
+			source = new DOMSource(doc);
+			transformer.transform(source, result);
+			directXML = stringWriter.toString();
+
+			// Load ARP through the repository and serialize it to a string
 			Arp userArp = repository.getUserPolicy(new LocalPrincipal("test"));
+			stringWriter = new StringWriter();
+			result = new StreamResult(stringWriter);
+			source = new DOMSource(userArp.unmarshall());
+			transformer.transform(source, result);
+			processedXML  = stringWriter.toString();
 
-			inStream = new FileInputStream("data/arp.user.test.xml");
-			parser.parse(new InputSource(inStream));
-			directXML = Parser.serialize(parser.getDocument().getDocumentElement());
-
-			processedXML = Parser.serialize(userArp.unmarshall());
-
+			// Compare the reults
 			assertTrue("File-based ARP Repository did not return the correct user ARP.", directXML.toString()
 					.replaceAll(">[\t\r\n ]+<", "><").equals(processedXML.toString().replaceAll(">[\t\r\n ]+<", "><")));
 
@@ -383,31 +423,32 @@ public class ArpTests extends TestCase {
 			Set<URI> list3 = new HashSet<URI>();
 
 			// Test with just a site ARP
-			InputStream inStream = new FileInputStream("data/arp1.xml");
-			parser.parse(new InputSource(inStream));
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setValidating(false);
+			factory.setNamespaceAware(true);
+			Document doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream("data/arp1.xml")));
+			
 			Arp arp1 = new Arp();
-			arp1.marshall(parser.getDocument().getDocumentElement());
+			arp1.marshall(doc.getDocumentElement());
 			repository.update(arp1);
 			ArpEngine engine = new ArpEngine(repository);
 			Set<URI> possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu");
 			assertEquals("Incorrectly computed possible release set (1).", possibleAttributes, list1);
 
 			// Test with site and user ARPs
-			inStream = new FileInputStream("data/arp7.xml");
-			parser.parse(new InputSource(inStream));
+			doc = factory.newDocumentBuilder().parse(new InputSource( new FileInputStream("data/arp7.xml")));
 			Arp arp7 = new Arp();
 			arp7.setPrincipal(principal1);
-			arp7.marshall(parser.getDocument().getDocumentElement());
+			arp7.marshall(doc.getDocumentElement());
 			repository.update(arp7);
 			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu");
 			assertEquals("Incorrectly computed possible release set (2).", possibleAttributes, list2);
 
 			// Ensure that explicit denies on any value are not in the release set
-			inStream = new FileInputStream("data/arp6.xml");
-			parser.parse(new InputSource(inStream));
+			doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream("data/arp6.xml")));
 			Arp arp6 = new Arp();
 			arp6.setPrincipal(principal1);
-			arp6.marshall(parser.getDocument().getDocumentElement());
+			arp6.marshall(doc.getDocumentElement());
 			repository.update(arp6);
 			possibleAttributes = engine.listPossibleReleaseAttributes(principal1, "shar.example.edu");
 			assertEquals("Incorrectly computed possible release set (3).", possibleAttributes, list3);
@@ -432,29 +473,29 @@ public class ArpTests extends TestCase {
 
 		try {
 			
-			arpApplicationTest1(repository, parser);
-			arpApplicationTest2(repository, parser);
-			arpApplicationTest3(repository, parser);
-			arpApplicationTest4(repository, parser);
-			arpApplicationTest5(repository, parser);
-			arpApplicationTest6(repository, parser);
-			arpApplicationTest7(repository, parser);
-			arpApplicationTest8(repository, parser);
-			arpApplicationTest9(repository, parser);
-			arpApplicationTest10(repository, parser);
-			arpApplicationTest11(repository, parser);
-			arpApplicationTest12(repository, parser);
-			arpApplicationTest13(repository, parser);
-			arpApplicationTest14(repository, parser);
-			arpApplicationTest15(repository, parser);
-			arpApplicationTest17(repository, parser);
-			arpApplicationTest18(repository, parser);
-			arpApplicationTest19(repository, parser);
-			arpApplicationTest20(repository, parser);
-			arpApplicationTest21(repository, parser);
-			arpApplicationTest22(repository, parser);
-			arpApplicationTest23(repository, parser);
-			arpApplicationTest24(repository, parser);
+			arpApplicationTest1(repository);
+			arpApplicationTest2(repository);
+			arpApplicationTest3(repository);
+			arpApplicationTest4(repository);
+			arpApplicationTest5(repository);
+			arpApplicationTest6(repository);
+			arpApplicationTest7(repository);
+			arpApplicationTest8(repository);
+			arpApplicationTest9(repository);
+			arpApplicationTest10(repository);
+			arpApplicationTest11(repository);
+			arpApplicationTest12(repository);
+			arpApplicationTest13(repository);
+			arpApplicationTest14(repository);
+			arpApplicationTest15(repository);
+			arpApplicationTest17(repository);
+			arpApplicationTest18(repository);
+			arpApplicationTest19(repository);
+			arpApplicationTest20(repository);
+			arpApplicationTest21(repository);
+			arpApplicationTest22(repository);
+			arpApplicationTest23(repository);
+			arpApplicationTest24(repository);
 			 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -467,22 +508,33 @@ public class ArpTests extends TestCase {
 		try {
 			for (int i = 0; i < arpExamples.length; i++) {
 
-				// Get a non-validating parser so we don't fill in schema defaults
-				Parser.DOMParser nonValParser = new Parser.DOMParser(false);
-
-				InputStream inStream = new FileInputStream(arpExamples[i]);
-
-				nonValParser.parse(new InputSource(inStream));
-				String directXML = Parser.serialize(nonValParser.getDocument().getDocumentElement());
-				inStream.close();
-
-				// Use validation when marshalling into an ARP
-				inStream = new FileInputStream(arpExamples[i]);
-				parser.parse(new InputSource(inStream));
+				// Pull in a DOM and serialize it
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				factory.setValidating(false);
+				factory.setNamespaceAware(true);
+				Document doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream(arpExamples[i])));
+	
+				TransformerFactory tFactory = TransformerFactory.newInstance();
+				Transformer transformer = tFactory.newTransformer();
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				
+				StringWriter stringWriter = new StringWriter();
+				StreamResult result = new StreamResult(stringWriter);
+				DOMSource source = new DOMSource(doc);
+				transformer.transform(source, result);
+				String directXML = stringWriter.toString();
+		
+				// Construct an ARP and then serialize it
+				doc = factory.newDocumentBuilder().parse(new InputSource(new FileInputStream(arpExamples[i])));
 				Arp arp1 = new Arp();
-				arp1.marshall(parser.getDocument().getDocumentElement());
-				String processedXML = Parser.serialize(arp1.unmarshall());
-
+				arp1.marshall(doc.getDocumentElement());
+				stringWriter = new StringWriter();
+				result = new StreamResult(stringWriter);
+				source = new DOMSource(arp1.unmarshall());
+				transformer.transform(source, result);
+				String processedXML  = stringWriter.toString();
+				
+				// Compare
 				assertEquals("Round trip marshall/unmarshall failed for file (" + arpExamples[i] + ")", directXML
 						.toString().replaceAll(">[\t\r\n ]+<", "><"), processedXML.toString().replaceAll(
 						">[\t\r\n ]+<", "><"));
@@ -497,7 +549,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP only Target: Single Attribute: Any value release.  Most basic test.
 	 */
-	void arpApplicationTest1(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest1(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -523,9 +575,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -539,7 +595,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP only Target: Single Attribute: Any value release.  Test implicit deny of other attributes.
 	 */
-	void arpApplicationTest2(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest2(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -566,9 +622,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"})});
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -581,7 +641,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP only Target: Single Attribute: Single value release
 	 */
-	void arpApplicationTest3(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest3(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -604,9 +664,13 @@ public class ArpTests extends TestCase {
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -619,7 +683,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP only Target: Single Attribute: Any value except one release, canonical representation
 	 */
-	void arpApplicationTest4(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest4(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -645,9 +709,13 @@ public class ArpTests extends TestCase {
 						"employee@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -660,7 +728,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Single Attribute: Any value except one release, expanded representation
 	 */
-	void arpApplicationTest5(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest5(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -688,9 +756,13 @@ public class ArpTests extends TestCase {
 						"employee@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -703,7 +775,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Single Attribute: Any value except two release, expanded representation
 	 */
-	void arpApplicationTest6(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest6(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -733,9 +805,13 @@ public class ArpTests extends TestCase {
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"employee@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -748,7 +824,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Single Attribute: Two value release, canonical representation
 	 */
-	void arpApplicationTest7(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest7(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -774,9 +850,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -789,7 +869,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Single Attribute: Two value release, expanded representation
 	 */
-	void arpApplicationTest8(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest8(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -817,9 +897,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -832,7 +916,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Single Attribute: Any value deny
 	 */
-	void arpApplicationTest9(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest9(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -854,9 +938,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"})));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -869,7 +957,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Single Attribute: Any value deny trumps explicit permit expanded representation
 	 */
-	void arpApplicationTest10(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest10(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -894,9 +982,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"})));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -908,7 +1000,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: single Attribute: Any value deny trumps explicit permit canonical representation
 	 */
-	void arpApplicationTest11(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest11(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -931,9 +1023,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"})));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -946,7 +1042,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: Test release to a specific requester
 	 */
-	void arpApplicationTest12(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest12(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -971,9 +1067,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -985,7 +1085,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: Test release to multiple specific requesters
 	 */
-	void arpApplicationTest13(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest13(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1011,9 +1111,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1034,7 +1138,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: Specific requester (no match)
 	 */
-	void arpApplicationTest14(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest14(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1056,9 +1160,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"})));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1070,7 +1178,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: Multiple specific requesters (no match)
 	 */
-	void arpApplicationTest15(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest15(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1093,9 +1201,13 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"})));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1108,7 +1220,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP only Target: Multiple matching rules Attribute: various
 	 */
-	void arpApplicationTest17(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest17(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1155,9 +1267,13 @@ public class ArpTests extends TestCase {
 								new Object[]{"wassa@columbia.edu"})});
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1170,7 +1286,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Any Attribute: Any value release of two attributes in one rule
 	 */
-	void arpApplicationTest18(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest18(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1203,9 +1319,13 @@ public class ArpTests extends TestCase {
 						new Object[]{"mehoehn@example.edu"})});
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1218,7 +1338,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A user ARP any Target: Single Attribute: Any value release,
 	 */
-	void arpApplicationTest19(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest19(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1243,10 +1363,14 @@ public class ArpTests extends TestCase {
 						"faculty@example.edu"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp userArp = new Arp();
 		userArp.setPrincipal(principal1);
-		userArp.marshall(parser.getDocument().getDocumentElement());
+		userArp.marshall(doc.getDocumentElement());
 		repository.update(userArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1259,7 +1383,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP and user ARP Target: various Attribute: various combinations
 	 */
-	void arpApplicationTest20(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest20(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawSiteArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1351,16 +1475,19 @@ public class ArpTests extends TestCase {
 						new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[]{"EO"})});
 
 		// Add the site ARP
-		parser.parse(new InputSource(new StringReader(rawSiteArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawSiteArp)));
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 
 		// Add the user ARP
-		parser.parse(new InputSource(new StringReader(rawUserArp)));
+		doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawUserArp)));
 		Arp userArp = new Arp();
 		userArp.setPrincipal(principal1);
-		userArp.marshall(parser.getDocument().getDocumentElement());
+		userArp.marshall(doc.getDocumentElement());
 		repository.update(userArp);
 
 		ArpEngine engine = new ArpEngine(repository);
@@ -1374,7 +1501,7 @@ public class ArpTests extends TestCase {
 	 * ARPs: A site ARP and user ARP Target: various Attribute: various combinations (same ARPs as 20, different
 	 * requester)
 	 */
-	void arpApplicationTest21(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest21(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawSiteArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1462,16 +1589,19 @@ public class ArpTests extends TestCase {
 				new AAAttribute("urn:mace:inetOrgPerson:preferredLanguage", new Object[]{"EO"})});
 
 		// Add the site ARP
-		parser.parse(new InputSource(new StringReader(rawSiteArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawSiteArp)));
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 
 		// Add the user ARP
-		parser.parse(new InputSource(new StringReader(rawUserArp)));
+		doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawUserArp)));
 		Arp userArp = new Arp();
 		userArp.setPrincipal(principal1);
-		userArp.marshall(parser.getDocument().getDocumentElement());
+		userArp.marshall(doc.getDocumentElement());
 		repository.update(userArp);
 
 		ArpEngine engine = new ArpEngine(repository);
@@ -1485,7 +1615,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Specific requester: Release values by regex
 	 */
-	void arpApplicationTest22(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest22(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1509,9 +1639,13 @@ public class ArpTests extends TestCase {
 				"urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{"urn:x:adagio", "urn:x:awol"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1524,7 +1658,7 @@ public class ArpTests extends TestCase {
 	/**
 	 * ARPs: A site ARP any Target: Specific shar, Attribute: Deny specific values by regex
 	 */
-	void arpApplicationTest23(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest23(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1547,9 +1681,13 @@ public class ArpTests extends TestCase {
 				"urn:mace:dir:attribute-def:eduPersonEntitlement", new Object[]{"urn:x:a", "urn:x:foo", "urn:x:bar"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1563,7 +1701,7 @@ public class ArpTests extends TestCase {
 	 * ARPs: A site ARP Specific requester, Attribute: No matches on specific values should
 	 * yield no attribute
 	 */
-	void arpApplicationTest24(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpApplicationTest24(ArpRepository repository) throws Exception {
 
 		// Gather the Input
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -1591,9 +1729,13 @@ public class ArpTests extends TestCase {
 				"urn:mace:dir:attribute-def:eduPersonAffiliation", new Object[]{"member"}));
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1608,7 +1750,7 @@ public class ArpTests extends TestCase {
 	 * Use Case: must have an attribute
 	 * Example:  release uid only if user has any value for attribute "foo"
 	 */
-	void arpConstraintTest1(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpConstraintTest1(ArpRepository repository) throws Exception {
 
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
@@ -1627,9 +1769,13 @@ public class ArpTests extends TestCase {
 				+ " </AttributeReleasePolicy>";
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1661,7 +1807,7 @@ public class ArpTests extends TestCase {
 	 * Use Case: must have an attribute value
 	 * Example:  release uid only if user has a specific value for attribute "foo"
 	 */
-	void arpConstraintTest2(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpConstraintTest2(ArpRepository repository) throws Exception {
 
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
@@ -1680,9 +1826,13 @@ public class ArpTests extends TestCase {
 				+ " </AttributeReleasePolicy>";
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1713,7 +1863,7 @@ public class ArpTests extends TestCase {
 	 * Use Case: must have only a specific attribute value
 	 * Example:  release uid only if user has a specific value for attribute "foo", but not if it has other values
 	 */
-	void arpConstraintTest3(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpConstraintTest3(ArpRepository repository) throws Exception {
 
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
@@ -1732,9 +1882,13 @@ public class ArpTests extends TestCase {
 				+ " </AttributeReleasePolicy>";
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1765,7 +1919,7 @@ public class ArpTests extends TestCase {
 	 * Use Case: must have two  specific attribute values
 	 * Example:  release uid only if user has two specific value for attribute "foo", "bar" and "wee"
 	 */
-	void arpConstraintTest4(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpConstraintTest4(ArpRepository repository) throws Exception {
 
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
@@ -1788,9 +1942,13 @@ public class ArpTests extends TestCase {
 				+ " </AttributeReleasePolicy>";
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
@@ -1822,7 +1980,7 @@ public class ArpTests extends TestCase {
 	 * Use Case: must not have a specific attribute value
 	 * Example:  release uid only if user does not have a specific value for attribute "foo"
 	 */
-	void arpConstraintTest5(ArpRepository repository, Parser.DOMParser parser) throws Exception {
+	void arpConstraintTest5(ArpRepository repository) throws Exception {
 
 		String rawArp = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 				+ "<AttributeReleasePolicy xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mace:shibboleth:arp:1.0\" xsi:schemaLocation=\"urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd\">"
@@ -1841,9 +1999,13 @@ public class ArpTests extends TestCase {
 				+ " </AttributeReleasePolicy>";
 
 		// Setup the engine
-		parser.parse(new InputSource(new StringReader(rawArp)));
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(rawArp)));
+		
 		Arp siteArp = new Arp();
-		siteArp.marshall(parser.getDocument().getDocumentElement());
+		siteArp.marshall(doc.getDocumentElement());
 		repository.update(siteArp);
 		ArpEngine engine = new ArpEngine(repository);
 
