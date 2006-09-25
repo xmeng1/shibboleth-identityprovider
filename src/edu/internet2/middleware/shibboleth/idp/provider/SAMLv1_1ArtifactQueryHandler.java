@@ -147,7 +147,7 @@ public class SAMLv1_1ArtifactQueryHandler extends SAMLv1_Base_QueryHandler imple
 					// Make sure that the suppplied credential is valid for the provider to which the artifact was
 					// issued
 					if (chain != null && chain.length > 0) {
-						if (!support.getTrust().validate(new HttpX509EntityCredential(request), role)) {
+						if (!support.getTrustEngine().validate(new HttpX509EntityCredential(request), role)) {
 							log.error("Supplied TLS credential ("
 									+ chain[0].getSubjectX500Principal().getName(X500Principal.RFC2253)
 									+ ") is NOT valid for provider (" + mapping.getServiceProviderId()
@@ -158,7 +158,7 @@ public class SAMLv1_1ArtifactQueryHandler extends SAMLv1_Base_QueryHandler imple
 					}
 					if (samlRequest.isSigned()) {
 
-						if (!support.getTrust().validate(samlRequest, role)) {
+						if (!support.getTrustEngine().validate(samlRequest, role)) {
 							log.error("Signed SAML request message did NOT contain a valid signature from provider ("
 									+ mapping.getServiceProviderId() + "), to whom this artifact was issued.");
 							throw new SAMLException(SAMLException.REQUESTER, "Invalid signature.");

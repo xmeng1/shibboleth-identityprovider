@@ -117,8 +117,8 @@ public class SAMLv1_AttributeQueryHandler extends SAMLv1_Base_QueryHandler imple
 		}
 
 		// Make sure that the supplied credential is valid for the selected provider role.
-		if ((ar_role != null && support.getTrust().validate(credential, ar_role))
-				|| (sp_role != null && support.getTrust().validate(credential, sp_role))) {
+		if ((ar_role != null && support.getTrustEngine().validate(credential, ar_role))
+				|| (sp_role != null && support.getTrustEngine().validate(credential, sp_role))) {
 			log.info("Supplied credentials validated for this provider.");
 			return assertedId;
 		} else {

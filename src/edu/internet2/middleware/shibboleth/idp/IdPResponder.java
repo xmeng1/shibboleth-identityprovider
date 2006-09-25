@@ -67,7 +67,7 @@ public class IdPResponder extends HttpServlet {
 
 	private IdPConfig configuration;
 	private Map<String, IdPProtocolHandler> protocolHandlers = new HashMap<String, IdPProtocolHandler>();
-	private IdPProtocolSupport protocolSupport;
+	private GeneralProtocolSupport protocolSupport;
 
 	/*
 	 * @see javax.servlet.GenericServlet#init()
@@ -169,7 +169,7 @@ public class IdPResponder extends HttpServlet {
 			}
 
 			// Load protocol handlers and support library
-			protocolSupport = new IdPProtocolSupport(configuration, transactionLog, spMapper, arpEngine, resolver,
+			protocolSupport = new GeneralProtocolSupport(configuration, transactionLog, spMapper, arpEngine, resolver,
 					artifactMapper);
 			itemElements = idPConfig.getDocumentElement().getElementsByTagNameNS(IdPConfig.configNameSpace,
 					"ProtocolHandler");
@@ -270,7 +270,8 @@ public class IdPResponder extends HttpServlet {
 		IdPProtocolHandler activeHandler = lookupProtocolHandler(request);
 		// Pass request to the appropriate handler and respond
 		log.info("Processing " + activeHandler.getHandlerName() + " request.");
-		activeHandler.processRequest(request, response, protocolSupport);
+		activeHandler.processRequest(request, response, new RequestSpecificProtocolSupport(protocolSupport, request,
+				response));
 	}
 
 	/** Determine which protocol handler is active for this endpoint */
