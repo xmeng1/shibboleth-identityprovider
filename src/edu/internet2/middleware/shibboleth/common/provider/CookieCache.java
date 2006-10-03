@@ -413,7 +413,6 @@ public class CookieCache extends BaseCache implements Cache {
 		StringBuffer used = new StringBuffer();
 		used.append("Set-Cookie: ");
 		used.append(cookieName + "=" + " ");
-		System.err.println(CHUNK_SIZE - used.length() - 2);
 		return CHUNK_SIZE - used.length() - 2;
 	}
 
