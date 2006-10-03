@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 package edu.internet2.middleware.shibboleth.common;
 
-/**
- * @author Walter Hoehn
- */
-public interface Cache {
+public class CacheException extends Exception {
 
-	public enum CacheType {
-		CLIENT_SIDE, SERVER_SIDE, CLIENT_SERVER_SHARED
+	public CacheException(String message) {
+
+		super(message);
 	}
-
-	public String getName();
-
-	public CacheType getCacheType();
-
-	public String retrieve(String key) throws CacheException;
-
-	public void remove(String key) throws CacheException;
-
-	public boolean contains(String key) throws CacheException;
-
-	public void store(String key, String value, long duration) throws CacheException;
 }

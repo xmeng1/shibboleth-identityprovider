@@ -21,7 +21,10 @@ import java.util.Date;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.log4j.Logger;
+
 import edu.internet2.middleware.shibboleth.common.Cache;
+import edu.internet2.middleware.shibboleth.common.CacheException;
 
 /**
  * <code>Cache</code> implementation that uses Servlet API sessions to cache data. This implementation will reap
@@ -32,11 +35,16 @@ import edu.internet2.middleware.shibboleth.common.Cache;
  */
 public class ServletSessionCache extends BaseCache implements Cache {
 
-	HttpSession session;
+	private static Logger log = Logger.getLogger(ServletSessionCache.class.getName());
+	private HttpSession session;
 
 	ServletSessionCache(String name, HttpServletRequest request) {
 
 		super(name, Cache.CacheType.CLIENT_SERVER_SHARED);
+
+		if (request == null) { throw new IllegalArgumentException(
+				"Servlet request is  required for construction of BaseCache."); }
+
 		this.session = request.getSession();
 	}
 
@@ -53,6 +61,7 @@ public class ServletSessionCache extends BaseCache implements Cache {
 
 		// Clean cache if it is expired
 		if (new Date().after(((CacheEntry) object).expiration)) {
+			log.debug("Found expired object.  Deleting...");
 			session.removeAttribute(getInternalKeyName(key));
 			return false;
 		}
@@ -69,6 +78,7 @@ public class ServletSessionCache extends BaseCache implements Cache {
 
 		// Clean cache if it is expired
 		if (new Date().after(((CacheEntry) object).expiration)) {
+			log.debug("Found expired object.  Deleting...");
 			session.removeAttribute(getInternalKeyName(key));
 			return null;
 		}
@@ -80,6 +90,11 @@ public class ServletSessionCache extends BaseCache implements Cache {
 	public void store(String key, String value, long duration) {
 
 		session.setAttribute(getInternalKeyName(key), new CacheEntry(value, duration));
+	}
+
+	public void remove(String key) throws CacheException {
+
+		session.removeAttribute(getInternalKeyName(key));
 	}
 
 }

@@ -32,6 +32,9 @@ public abstract class BaseCache implements Cache {
 
 	protected BaseCache(String name, CacheType type) {
 
+		if (name == null || type == null) { throw new IllegalArgumentException(
+				"Name and type are required for construction of BaseCache."); }
+
 		this.name = name;
 		this.cacheType = type;
 	}
@@ -55,6 +58,12 @@ public abstract class BaseCache implements Cache {
 
 			this.value = value;
 			expiration = new Date(System.currentTimeMillis() + (duration * 1000));
+		}
+
+		protected CacheEntry(String value, Date expireAt) {
+
+			this.value = value;
+			this.expiration = expireAt;
 		}
 	}
 }
