@@ -56,7 +56,7 @@ public class CacheTests extends TestCase {
 		super(name);
 		BasicConfigurator.resetConfiguration();
 		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.DEBUG);
+		Logger.getRootLogger().setLevel(Level.OFF);
 	}
 
 	public static void main(String[] args) {
@@ -81,6 +81,35 @@ public class CacheTests extends TestCase {
 		try {
 			// Startup the cache
 			Cache cache = new ServletSessionCache("foobar", request);
+
+			// Make sure the cache starts clean
+			assertNull("Cache contained errant record.", cache.retrieve("foo"));
+
+			// Store and retrieve
+			cache.store("foo", "bar", 99999);
+			assertTrue("Cache expected to contain record.", cache.contains("foo"));
+			assertEquals("Cache expected to contain record.", "bar", cache.retrieve("foo"));
+
+			// Make sure expiration works
+			cache.store("bar", "foo", 1);
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				// Who cares
+			}
+			assertFalse("Cache expected to expire record.", cache.contains("bar"));
+			assertEquals("Cache expected to expire record.", null, cache.retrieve("bar"));
+
+		} catch (CacheException e) {
+			fail("Error exercising cache: " + e);
+		}
+	}
+
+	public void testMemoryCache() {
+
+		try {
+			// Startup the cache
+			Cache cache = new MemoryCache("foobar");
 
 			// Make sure the cache starts clean
 			assertNull("Cache contained errant record.", cache.retrieve("foo"));

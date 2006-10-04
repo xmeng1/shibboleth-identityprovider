@@ -65,5 +65,10 @@ public abstract class BaseCache implements Cache {
 			this.value = value;
 			this.expiration = expireAt;
 		}
+
+		protected boolean isExpired() {
+
+			return (new Date().after(expiration));
+		}
 	}
 }

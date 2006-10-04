@@ -127,7 +127,7 @@ public class CookieCache extends BaseCache implements Cache {
 		if (entry == null) { return false; }
 
 		// Clean cache if it is expired
-		if (new Date().after(((CacheEntry) entry).expiration)) {
+		if ((((CacheEntry) entry).isExpired())) {
 			log.debug("Found expired object.  Deleting...");
 			totalCookies--;
 			dataCache.remove(key);
@@ -145,7 +145,7 @@ public class CookieCache extends BaseCache implements Cache {
 		if (entry == null) { return null; }
 
 		// Clean cache if it is expired
-		if (new Date().after(((CacheEntry) entry).expiration)) {
+		if ((((CacheEntry) entry).isExpired())) {
 			log.debug("Found expired object.  Deleting...");
 			totalCookies--;
 			dataCache.remove(key);

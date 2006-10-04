@@ -17,6 +17,8 @@
 package edu.internet2.middleware.shibboleth.common;
 
 /**
+ * Defines an IdP-wide caching mechanism.
+ * 
  * @author Walter Hoehn
  */
 public interface Cache {
@@ -25,15 +27,47 @@ public interface Cache {
 		CLIENT_SIDE, SERVER_SIDE, CLIENT_SERVER_SHARED
 	}
 
+	/**
+	 * Returns the identifier for the cache. This will commonly be a string name for the subsytem that is accessing the
+	 * cache. Effectively acts as a namespace for the caching mechanisms.
+	 */
 	public String getName();
 
+	/**
+	 * Returns an indication of how the cache stores its data. Subsystems may enforce storage requirements on caches via
+	 * this mechanism.
+	 */
 	public CacheType getCacheType();
 
+	/**
+	 * Causes the cache to return a value associated with a given key.
+	 * 
+	 * @throws CacheException
+	 *             if an error was encountered while reading the cache
+	 */
 	public String retrieve(String key) throws CacheException;
 
+	/**
+	 * Causes the cache to remove a value associated with a given key.
+	 * 
+	 * @throws CacheException
+	 *             if an error was encountered while removing the value from the cache
+	 */
 	public void remove(String key) throws CacheException;
 
+	/**
+	 * Boolean indication of whether or not the cache contains a value tied to a specified key.
+	 * 
+	 * @throws CacheException
+	 *             if an error was encountered while reading the cache
+	 */
 	public boolean contains(String key) throws CacheException;
 
+	/**
+	 * Causes the cache to associate a value with a given key for a specified number of seconds.
+	 * 
+	 * @throws CacheException
+	 *             if the value could not be written to the cache
+	 */
 	public void store(String key, String value, long duration) throws CacheException;
 }

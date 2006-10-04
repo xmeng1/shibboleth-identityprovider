@@ -16,8 +16,6 @@
 
 package edu.internet2.middleware.shibboleth.common.provider;
 
-import java.util.Date;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -60,7 +58,7 @@ public class ServletSessionCache extends BaseCache implements Cache {
 		if (object == null || !(object instanceof CacheEntry)) { return false; }
 
 		// Clean cache if it is expired
-		if (new Date().after(((CacheEntry) object).expiration)) {
+		if (((CacheEntry) object).isExpired()) {
 			log.debug("Found expired object.  Deleting...");
 			session.removeAttribute(getInternalKeyName(key));
 			return false;
@@ -77,7 +75,7 @@ public class ServletSessionCache extends BaseCache implements Cache {
 		if (object == null || !(object instanceof CacheEntry)) { return null; }
 
 		// Clean cache if it is expired
-		if (new Date().after(((CacheEntry) object).expiration)) {
+		if (((CacheEntry) object).isExpired()) {
 			log.debug("Found expired object.  Deleting...");
 			session.removeAttribute(getInternalKeyName(key));
 			return null;
