@@ -216,7 +216,7 @@
         </antcall>
 
 		<!-- create the war -->
-		<war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="no" duplicate="preserve">
+		<war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="yes" duplicate="add">
 			<!-- Grab any custom extension libraries -->
 			<lib dir="${custom.libs}"/>
 
