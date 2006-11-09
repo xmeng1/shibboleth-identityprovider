@@ -2,32 +2,26 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry kind="lib" path="endorsed/resolver.jar"/>
-	<classpathentry kind="lib" path="endorsed/xml-apis.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/opensaml-1.1.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/struts.jar"/>
-	<classpathentry sourcepath="lib/junit-3.8.1-src.jar" kind="lib" path="lib/junit-3.8.1.jar"/>
-	<classpathentry kind="lib" path="lib/servlet-2.3.jar"/>
-	<classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-collections.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-logging-1.03.jar"/>
-	<classpathentry sourcepath="lib/commons-pool-1.2-src.jar" kind="lib" path="lib/commons-pool-1.2.jar"/>
-	<classpathentry sourcepath="lib/commons-dbcp-1.2.1-src.jar" kind="lib" path="lib/commons-dbcp-1.2.1.jar"/>
-	<classpathentry sourcepath="C:/cvs/xml-security/src" kind="lib" path="webApplication/WEB-INF/lib/xmlsec-20050514.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bc-asn1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/ant-launcher-1.6.3.jar"/>
-	<classpathentry kind="lib" path="lib/ant-contrib.jar"/>
-	<classpathentry kind="lib" path="lib/ant-1.6.3.jar"/>
-	<classpathentry kind="lib" path="endorsed/xalan.jar"/>
-	<classpathentry kind="lib" path="endorsed/xercesImpl.jar"/>
-	<classpathentry kind="lib" path="testlib/mockrunner-servlet.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/commons-codec-1.3.jar"/>
-	<classpathentry kind="lib" path="lib/commons-io-1.1.jar"/>
-	<classpathentry kind="lib" path="webApplication/WEB-INF/lib/bsh-2.0b1.jar"/>
-	<classpathentry kind="lib" path="lib/antext-04Jul2006.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/OpenSAML2-J"/>
+	<classpathentry kind="lib" path="build-lib/junit-3.8.1.jar"/>
+	<classpathentry kind="lib" path="build-lib/log4j-1.2.13.jar"/>
+	<classpathentry kind="lib" path="build-lib/servlet-2.3.jar"/>
+	<classpathentry kind="lib" path="lib/bc-asn1.jar"/>
+	<classpathentry kind="lib" path="lib/bsh-2.0b1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-collections.jar"/>
+	<classpathentry kind="lib" path="lib/commons-dbcp-1.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.03.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
+	<classpathentry kind="lib" path="build-lib/ant-1.6.3.jar"/>
+	<classpathentry kind="lib" path="build-lib/ant-contrib.jar"/>
+	<classpathentry kind="lib" path="build-lib/antext-04Jul2006.jar"/>
+	<classpathentry kind="lib" path="build-lib/ant-junit-1.6.3.jar"/>
+	<classpathentry kind="lib" path="build-lib/ant-launcher-1.6.3.jar"/>
+	<classpathentry kind="lib" path="build-lib/ant-nodeps-1.6.3.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/XMLTooling-J"/>
-	<classpathentry kind="lib" path="lib/log4j-1.2.13.jar"/>
-	<classpathentry kind="output" path="webApplication/WEB-INF/classes"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>
