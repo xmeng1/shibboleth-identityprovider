@@ -16,39 +16,48 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 /**
  * Authentication handlers are responsible for authenticating a user using a particular authentication context class.
+ * 
+ * Upon successfull authentication the handler <strong>must</strong> set an {@link HttpSession} attribute called
+ * "principal" with the principal name of the authenticated user and forward the request response to provided return
+ * location by means of the
+ * {@link RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)} method.
  */
 public interface AuthenticationHandler {
 
     /**
-     * Authenticates the user making the request.  Upon successfull authentication the handler <strong>must</strong>
-     * set an {@link HttpSession} attribute called "principal" with the principal name of the authenticated user.
+     * Authenticates the user making the request.
      * 
      * @param request user request
      * @param response response to use
      * @param passive whether the authentication must be passive
      */
-	public void authenticate(HttpServletRequest request, HttpServletResponse response, boolean passive);
-	
+    public void authenticate(HttpServletRequest request, HttpServletResponse response, boolean passive);
+
     /**
      * Gets whether this handler supports passive authentication.
      * 
      * @return whether this handler supports passive authentication
      */
-	public boolean supportsPassive();
-	
+    public boolean supportsPassive();
+
     /**
      * Gets the authentication context class supported by this handler.
      * 
      * @return authentication context class supported by this handler
      */
-	public String supportedAuthenticationContextClass();
-    
-    
-    public void setReturnPath(String path);
+    public String getAuthenticationContextClass();
+
+    /**
+     * Sets the location to return the user to once authenticated.
+     * 
+     * @param location location to return the user to once authenticated
+     */
+    public void setReturnLocation(String location);
 }
