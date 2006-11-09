@@ -23,5 +23,6 @@
 	<classpathentry kind="lib" path="build-lib/ant-launcher-1.6.3.jar"/>
 	<classpathentry kind="lib" path="build-lib/ant-nodeps-1.6.3.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/XMLTooling-J"/>
+	<classpathentry kind="lib" path="build-lib/mockrunner-servlet.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
