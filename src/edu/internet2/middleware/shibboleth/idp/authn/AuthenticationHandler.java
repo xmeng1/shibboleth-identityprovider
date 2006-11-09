@@ -37,8 +37,9 @@ public interface AuthenticationHandler {
      * @param request user request
      * @param response response to use
      * @param passive whether the authentication must be passive
+     * @param force whether the handler must force an authentication
      */
-    public void authenticate(HttpServletRequest request, HttpServletResponse response, boolean passive);
+    public void authenticate(HttpServletRequest request, HttpServletResponse response, boolean passive, boolean force);
 
     /**
      * Gets whether this handler supports passive authentication.
