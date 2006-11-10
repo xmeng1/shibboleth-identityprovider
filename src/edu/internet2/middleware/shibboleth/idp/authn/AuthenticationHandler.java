@@ -59,11 +59,11 @@ public interface AuthenticationHandler {
     public boolean supportsPassive();
 
     /**
-     * Gets the authentication context class or decleration URI supported by this handler.
+     * Gets whether this handler supports the ability to force a user's to authenticate.
      * 
-     * @return authentication context class or decleration URI supported by this handler
+     * @return whether this handler supports the ability to force a user's to authenticate
      */
-    public String getAuthenticationContext();
+    public boolean supportsForceAuthentication();
 
     /**
      * Sets the location to return the user to once authenticated.
