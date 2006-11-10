@@ -21,13 +21,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.opensaml.saml2.core.AuthnRequest;
+
 /**
  * Authentication handlers are responsible for authenticating a user using a particular authentication context class.
  * 
- * Upon successfull authentication the handler <strong>must</strong> set an {@link HttpSession} attribute called
- * "principal" with the principal name of the authenticated user and forward the request response to provided return
+ * The request incoming to the authentication handler will contain a {@link AuthnRequest} attribute registered under the
+ * name <strong>AuthnRequest</strong>. If the authentication request coming into the IdP is not a SAML 2 request the
+ * receiving profile handler will translate the incoming details into a {@link AuthnRequest}.
+ * 
+ * Upon successfull authentication the handler <strong>must</strong> set a request attribute called <strong>principal</strong>
+ * with the principal name of the authenticated user. It must then forward the request/response to the provided return
  * location by means of the
  * {@link RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)} method.
+ * 
+ * AuthentcationHandlers <strong>MUST NOT</strong> change or add any data to the user's {@link HttpSession} that
+ * persists past the process of authenticating the user, that is no additional session data may be added and no existing
+ * session data may be changed when the handler redirects back to the return location.
  */
 public interface AuthenticationHandler {
 
@@ -49,11 +59,11 @@ public interface AuthenticationHandler {
     public boolean supportsPassive();
 
     /**
-     * Gets the authentication context class supported by this handler.
+     * Gets the authentication context class or decleration URI supported by this handler.
      * 
-     * @return authentication context class supported by this handler
+     * @return authentication context class or decleration URI supported by this handler
      */
-    public String getAuthenticationContextClass();
+    public String getAuthenticationContext();
 
     /**
      * Sets the location to return the user to once authenticated.
