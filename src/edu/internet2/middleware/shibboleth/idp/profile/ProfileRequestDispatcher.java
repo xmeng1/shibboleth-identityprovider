@@ -15,11 +15,11 @@
  */
 package edu.internet2.middleware.shibboleth.idp.profile;
 
-import javax.servlet.http.HttpServlet;
+import org.springframework.web.servlet.HttpServletBean;
 
 /**
  * Servlet responsible for dispatching incoming requests to the appropriate {@link ProfileHandler}.
  */
-public class ProfileRequestDispatcher extends HttpServlet {
+public class ProfileRequestDispatcher extends HttpServletBean {
 
 }

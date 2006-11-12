@@ -16,14 +16,14 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn;
 
-import javax.servlet.http.HttpServlet;
+import org.springframework.web.servlet.HttpServletBean;
 
 import edu.internet2.middleware.shibboleth.idp.session.SessionManager;
 
 /**
  * Manager responsible for handling an authentication requests.
  */
-public class AuthenticationManager extends HttpServlet {
+public class AuthenticationManager extends HttpServletBean {
 
     /** Session manager to be used by this servlet */
 	private SessionManager sessionMgr;
