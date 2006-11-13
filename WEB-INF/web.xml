@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" 
+         version="2.4">
+    
+    <!--
+      Spring 2.0 application context files.  Files are loaded in the order they appear with subsequent files 
+      overwritting same named beans in previous files.
+    -->
+    <context-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>/WEB-INF/idpContext.xml, /WEB-INF/resolverContext.xml, /WEB-INF/profile.xml</param-value>
+    </context-param>
+    
+    <!-- 
+      Spring 2.0 listener used to load up the configuration
+    -->
+    <listener>
+      <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    
+    <!-- 
+      Session time inactivity timeout, in minutes.
+      
+      A timeout of 0 or less means the session never timesout.  Such a setting is strongly discouraged and will 
+      almost certainly lead to memory exhaustion under moderate to heavy loads or in servers with prolonged uptime.
+     -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+
+    <!--
+      Profile Request Dispatcher
+    -->
+    <servlet>
+        <servlet-name>ProfileRequestDispatcher</servlet-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.profile.ProfileRequestDispatcher</servlet-class>
+    </servlet>
+        
+    <servlet-mapping>
+        <servlet-name>ProfileRequestDispatcher</servlet-name>
+        <url-pattern>/IdP</url-pattern>
+    </servlet-mapping>
+    
+    <!--
+      Authentication Manager
+    -->
+    <servlet>
+        <servlet-name>AuthenticationManager</servlet-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.AuthenticationManager</servlet-class>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>AuthenticationManager</servlet-name>
+        <url-pattern>/IdP/Authn</url-pattern>
+    </servlet-mapping>
+    
+</web-app>
