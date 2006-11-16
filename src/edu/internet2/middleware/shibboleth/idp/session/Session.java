@@ -18,33 +18,10 @@ package edu.internet2.middleware.shibboleth.idp.session;
 
 import java.util.List;
 
-import org.joda.time.DateTime;
-
 /**
  * Session information for user logged into the IdP.
  */
-public interface Session {
-
-    /**
-     * Gets the unique identifier of the session.
-     * 
-     * @return unique identifier of the session
-     */
-    public String getSessionID();
-
-    /**
-     * Gets the principal ID of the user.
-     * 
-     * @return principal ID of the user
-     */
-    public String getPrincipalID();
-
-    /**
-     * Gets the time of the last activity from the user.
-     * 
-     * @return time of the last activity from the user
-     */
-    public DateTime getLastActivityInstance();
+public interface Session extends edu.internet2.middleware.shibboleth.common.session.Session{
 
     /**
      * Gets the methods by which the user has authenticated to the IdP.

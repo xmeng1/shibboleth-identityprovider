@@ -16,10 +16,10 @@
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
-import edu.internet2.middleware.shibboleth.idp.profile.ProfileHandler;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 
 /**
  * Shibboleth, version 1.X, single sign-on profile handler
@@ -27,7 +27,7 @@ import edu.internet2.middleware.shibboleth.idp.profile.ProfileHandler;
 public class ShibbolethSSO implements ProfileHandler {
 
     /** {@inheritDoc} */
-    public boolean processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+    public boolean processRequest(ServletRequest request, ServletResponse response) throws ServletException {
         // TODO Auto-generated method stub
         return false;
     }
