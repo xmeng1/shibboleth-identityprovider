@@ -24,16 +24,23 @@ import javax.servlet.http.HttpSession;
 import org.opensaml.saml2.core.AuthnRequest;
 
 /**
- * Authentication handlers are responsible for authenticating a user using a particular authentication context class.
+ * Authentication handlers are responsible for authenticating a user using a particular authentication context class and
+ * logging users out for that same mechanism.
  * 
- * The request incoming to the authentication handler will contain a {@link AuthnRequest} attribute registered under the
- * name <strong>AuthnRequest</strong>. If the authentication request coming into the IdP is not a SAML 2 request the
- * receiving profile handler will translate the incoming details into a {@link AuthnRequest}.
+ * When this handler is invoked to log a user in the incomg will contain a {@link AuthnRequest} attribute registered
+ * under the name <strong>AuthnRequest</strong>. If the authentication request coming into the IdP is not a SAML 2
+ * request the receiving profile handler will translate the incoming details into a {@link AuthnRequest}.
  * 
  * Upon successfull authentication the handler <strong>must</strong> set a request attribute called <strong>principal</strong>
  * with the principal name of the authenticated user. It must then forward the request/response to the provided return
  * location by means of the
  * {@link RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)} method.
+ * 
+ * When this handler is invoked to log a user out of the particular authentication source the handler may perform any
+ * operation necessary to log a user out. When finished it must then forward the request/response to the provided return
+ * location by means of the
+ * {@link RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)} method. This call will
+ * occur only after SAML log out requests have been sent to all services supporting such requests.
  * 
  * AuthentcationHandlers <strong>MUST NOT</strong> change or add any data to the user's {@link HttpSession} that
  * persists past the process of authenticating the user, that is no additional session data may be added and no existing
@@ -45,11 +52,20 @@ public interface AuthenticationHandler {
      * Authenticates the user making the request.
      * 
      * @param request user request
-     * @param response response to use
+     * @param response response to user
      * @param passive whether the authentication must be passive
      * @param force whether the handler must force an authentication
      */
-    public void authenticate(HttpServletRequest request, HttpServletResponse response, boolean passive, boolean force);
+    public void login(HttpServletRequest request, HttpServletResponse response, boolean passive, boolean force);
+
+    /**
+     * Logs out the given user from the authentication mechansim represented by this handler.
+     * 
+     * @param request user request
+     * @param response response to user
+     * @param principal principal named as returned during authentication
+     */
+    public void logout(HttpServletRequest request, HttpServletResponse response, String principal);
 
     /**
      * Gets whether this handler supports passive authentication.
