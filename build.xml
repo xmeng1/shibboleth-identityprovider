@@ -21,12 +21,17 @@
 	<property name="dist" value="${root}/dist/" />
 	<property name="docs" value="${root}/doc/" />
 	<property name="javadocs" value="${docs}/api/" />
+	<property name="reports.dir" value="${docs}/reports" />
+	<property name="test-report.dir" value="${reports.dir}/unit-test" />
 
 	<property name="year" value="2002-2005"/>
 	<property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
 
 	<!-- antcontrib tasks -->
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties" classpath="${buildlibs}/ant-contrib.jar"/>
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+	
+	<!-- Load Checkstyle tasks -->
+	<taskdef resource="checkstyletask.properties" />
 
 	<!-- Import the tasks for building custom extensions -->
 	<import file="${custom}/extension-build.xml"/>
@@ -440,6 +445,19 @@
 		description="Delete old configuration and Tomcat webapp directories.">
 		<delete dir="${idp.home}" />
 		<delete dir="${tomcat.home}/webapps/${idp.webapp.name}" />
+	</target>
+	
+	<!-- Checks code against style guidelines -->
+	<target name="checkstyle" >
+		<mkdir dir="${reports.dir}" />
+		
+		<checkstyle config="${basedir}/checkstyle.xml"
+					failOnViolation="false"
+	                classpathref="build-path">
+			<fileset dir="src" includes="**/*.java"/>
+			<formatter type="plain"
+					   toFile="${reports.dir}/checkstyle-report.txt" />
+		</checkstyle>
 	</target>
 	
 </project>
