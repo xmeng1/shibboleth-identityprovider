@@ -15,11 +15,54 @@
  */
 package edu.internet2.middleware.shibboleth.idp.profile;
 
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.web.servlet.HttpServletBean;
+
+import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 
 /**
  * Servlet responsible for dispatching incoming requests to the appropriate {@link ProfileHandler}.
  */
 public class ProfileRequestDispatcher extends HttpServletBean {
 
+    /** Serial version UID. */
+    private static final long serialVersionUID = -8899576775507240060L;
+
+    /** Registered profile handlers. */
+    private Map<String, ProfileHandler> profileHandlers;
+    
+    /**
+     * Gets the profile handlers currently registered.
+     * 
+     * @return profile handlers currently registered
+     */
+    public Map<String, ProfileHandler> getProfileHandlers(){
+        return profileHandlers;
+    }
+    
+    /**
+     * Sets all the profile handlers to use.
+     * 
+     * @param handlers the profile handlers to use
+     */
+    public void setProfileHandlers(Map<String, ProfileHandler> handlers){
+        profileHandlers = handlers;
+    }
+    
+    /** {@inheritDoc} */
+    public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException{
+        String path = request.getPathInfo();
+        ProfileHandler handler = profileHandlers.get(path);
+        
+        if(handler != null){
+            handler.processRequest(request, response);
+        }
+        
+        // TODO handle case where there is no registered profile
+    }
 }
