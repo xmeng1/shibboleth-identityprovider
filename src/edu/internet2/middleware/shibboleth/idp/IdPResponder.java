@@ -35,6 +35,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.opensaml.Configuration;
+import org.opensaml.log.LoggingInitializer;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -50,7 +51,6 @@ import edu.internet2.middleware.shibboleth.common.Credentials;
 import edu.internet2.middleware.shibboleth.common.RelyingPartyMapper;
 import edu.internet2.middleware.shibboleth.common.RelyingPartyMapperException;
 import edu.internet2.middleware.shibboleth.common.ShibbolethConfigurationException;
-import edu.internet2.middleware.shibboleth.log.LoggingInitializer;
 
 /**
  * Primary entry point for requests to the Shibboleth IdP. Listens on multiple endpoints, routes requests to the

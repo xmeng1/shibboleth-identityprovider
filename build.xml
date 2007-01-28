@@ -1,463 +1,223 @@
-<!-- Main build configutaion for Shibboleth java components - Walter Hoehn 06/04/2002 -->
+<project name="Shibboleth Identity Provider" basedir="." default="package">
+	
+	<tstamp>
+		<format property="build-date" pattern="ddMMyyyy'T'kkmmss" timezone="GMT"/>
+	</tstamp>
 
-<project name="Shibboleth" default="install" basedir=".">
+	<!-- User based property file that overrides any property below -->
+	<property file="${user.name}-build.properties"/>
+		
+	<!-- Project based property file -->
+    <property file="build.properties" />
 
-	<!-- Set global properties for this build -->
-	<property name="distnameWayf" value="shibboleth-wayf" />
-	<property name="root" value="." />
-	<property name="src" value="${root}/src/" />
-	<property name="tests" value="${root}/tests/" />
-	<property name="approot" value="${root}/webApplication/" />
-	<property name="appconfig" value="${src}/conf/" />
-	<property name="configroot" value="${root}/webAppConfig/" />
-	<property name="build" value="${approot}/WEB-INF/classes/" />
-	<property name="libdir" value="${approot}/WEB-INF/lib/" />
-	<property name="buildlibs" value="${root}/lib/" />
-	<property name="endorsed" value="${root}/endorsed/" />
-	<property name="distlibs" value="${root}/lib/" />
-	<property name="custom" value="${root}/custom/" />
-	<property name="custom.libs" value="${custom}/lib"/>
-	<property name="custom.webapges" value="${custom}/web"/>
-	<property name="dist" value="${root}/dist/" />
-	<property name="docs" value="${root}/doc/" />
-	<property name="javadocs" value="${docs}/api/" />
-	<property name="reports.dir" value="${docs}/reports" />
-	<property name="test-report.dir" value="${reports.dir}/unit-test" />
-
-	<property name="year" value="2002-2005"/>
-	<property name="copyright" value="Copyright &#169; ${year} UCAID. All Rights Reserved."/>
-
-	<!-- antcontrib tasks -->
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+    <!-- Load ant-contrib tasks -->
+    <taskdef resource="net/sf/antcontrib/antlib.xml" />
 	
 	<!-- Load Checkstyle tasks -->
 	<taskdef resource="checkstyletask.properties" />
 
-	<!-- Import the tasks for building custom extensions -->
-	<import file="${custom}/extension-build.xml"/>
+    <!-- Classpath for building core classes-->
+    <path id="build-path">
+        <fileset dir="${build-lib.dir}" includes="**/*.jar" />
+        <fileset dir="${lib.dir}" includes="**/*.jar" />
+    </path>
 
-	
-	<!-- Construct the CLASSPATH -->
-	<path id="build.path">
-		<pathelement location="${build}" />
-		<fileset dir="${endorsed}" includes="**/*.jar" />
-		<fileset dir="${libdir}" includes="**/*.jar" />
-		<fileset dir="${buildlibs}" includes="**/*.jar" />
-	</path>
-	
+    <!-- Classpath for testing classes-->
+    <path id="test-path">
+        <path refid="build-path" />
+        <pathelement location="${core-classes.dir}" />
+        <pathelement location="${core-src.dir}" />
+        <pathelement location="${test-classes.dir}" />
+    	<pathelement location="${test-classes.dir}/data" />
+    	<pathelement location="${test-classes.dir}/log4j.xml" />
+        <pathelement location="${test-src.dir}" />
+        <pathelement location="${classpathres.dir}" />
+    </path>
 
-	<!-- Add to the classpath for unit tests -->
-	<path id="test.path">
-		<path refid="build.path"/>
-		<pathelement location="${tests}"/>
-	</path>
+    <!-- Prepare directory structure for build -->
+    <target name="build-init">
+        <mkdir dir="${build.dir}" />
+    </target>
 
+    <!-- Compile core (non-test) classes -->
+    <target name="compile-core" depends="build-init, clean-compile">
+        <mkdir dir="${core-classes.dir}" />
 
-	<!-- Prepare directory structure for project build-->
-	<target name="init">
-		<mkdir dir="${build}" />
-		<mkdir dir="${dist}" />
-		<mkdir dir="${custom.libs}"/>
-		<mkdir dir="${custom.webapges}"/>
+        <javac srcdir="${core-src.dir}" destdir="${core-classes.dir}" includes="**/*.java" debug="on" source="1.5">
+            <classpath refid="build-path" />
+        </javac>
 
-		<if>
-			<not> <available file="build.properties" /> </not>
-			<then>
-				<copy file="conf/default.build.properties" tofile="build.properties" />
-			</then>
-		</if>
+    </target>
 
-		<property file="build.properties" />
-	</target>
+    <!-- Compile unit test classes -->
+    <target name="compile-test" depends="compile-core">
+        <mkdir dir="${test-classes.dir}" />
 
+        <javac srcdir="${test-src.dir}" destdir="${test-classes.dir}" includes="**/*.java" debug="on" source="1.5">
+            <classpath refid="test-path" />
+        </javac>
 
-	<!-- This target should be run before checking code into the repository -->
-	<target name="pre-checkin" depends="compile, test, clean-all" />
+    </target>
 
+    <!-- Compile and run unit tests -->
+    <target name="test" depends="compile-core, compile-test" description="Runs the unit tests for the project.">
+        <mkdir dir="${test-results.dir}" />
 
-	<!-- Compile classes and move them to ${build} -->
-	<target name="compile" depends="init"
-		description="Compile source files">
-		<!-- Compile the shib code into the build path -->
-		<javac srcdir="${src}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
-			<classpath refid="build.path" />
-		</javac>
-		<!-- Copy xml schemas to the build path -->
-		<copy todir="${build}/schemas">
-			<fileset dir="${src}/schemas"/>
-		</copy>
+    	<echo message="Excuting unit tests using endorsed directory ${java.endorsed.dirs}" />
+        <junit printsummary="off" fork="yes" forkmode="once" haltonerror="false" haltonfailure="false" dir="${basedir}" errorproperty="testFailed">
+        	<jvmarg value="-Djava.endorsed.dirs=${java.endorsed.dirs}" />
+            <classpath refid="test-path" />
+            <formatter type="xml" />
+            <batchtest todir="${test-results.dir}">
+                <fileset dir="${test-classes.dir}">
+                    <include name="**/*Test.class" />
+                </fileset>
+            </batchtest>
+        </junit>
+    	<junitreport todir="${test-results.dir}">
+    	  <fileset dir="${test-results.dir}">
+    	    <include name="TEST-*.xml"/>
+    	  </fileset>
+    	  <report format="frames" todir="${test-report.dir}"/>
+    	</junitreport>
+    	
+    	<echo message="Test report available at ${test-report.dir}/index.html" />
+    	<fail if="testFailed" message="Test failure; see ${test-report.dir}/index.html for more information."/>
+    </target>
 
-		<!-- Build extensions -->
-		<antcall target="ext-invoke">
-			<param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-build"/>      
-		</antcall>
-	</target>
+    <!-- Javadoc core (non-test) classes -->
+    <target name="javadoc" description="Creates the JavaDoc documentatin for the project.">
+        <mkdir dir="${javadoc.dir}" />
+        <javadoc packagenames="org.opensaml.*" 
+        	     sourcepath="${core-src.dir}" 
+        	     destdir="${javadoc.dir}" 
+        	     author="false" version="true" 
+        	     windowtitle="${ant.project.name} ${version} Java API" 
+        	     doctitle="${ant.project.name} ${version} Java API" 
+        	     bottom="${copyright}"
+        	     overview="${core-src.dir}/overview.html">
+            <classpath refid="build-path" />
+        </javadoc>
+    </target>
 
+    <!-- Removes previously compiled files -->
+    <target name="clean-compile">
+        <delete dir="${build.dir}" />
+    </target>
 
-	<!-- Generate API docs -->
-	<target name="javadocs">
-		<mkdir dir="${docs}" />
-		<mkdir dir="${javadocs}" />
-		<javadoc packagenames='edu.internet2.middleware.*'
-			sourcepath='${src}' destdir='${javadocs}'
-			author='true' version='true'
-			windowtitle='Shibboleth Java API' doctitle='Shibboleth Java API'
-			bottom='${copyright}'>
-			<classpath refid="build.path" />
-		</javadoc>
-	</target>
+    <!-- Removes all build generated content -->
+    <target name="clean" depends="clean-compile" description="Removes any artifact produced by the build process.">
+        <delete dir="${javadoc.dir}" />
+    	<delete dir="${reports.dir}" />
+        <delete dir="${dist.dir}" />
+    </target>
 
+    <!-- Create JAR file -->
+    <target name="package" depends="compile-core, test" description="Creates the project library jar file.">
+        <mkdir dir="${dist.dir}" />
 
-	<!-- Build command-line utilities -->
-	<target name="build-util" depends="compile">
-		<jar jarfile="${distlibs}/shib-util.jar" basedir="${build}" />
-	</target>
+        <if>
+            <equals arg1="${jdk.target}" arg2="1.4" />
+            <then>
+                <java classname="com.rc.retroweaver.Weaver">
+                    <arg value="-source" />
+                    <arg value="${core-classes.dir}" />
+                    <classpath>
+                        <fileset dir="${thirdpaty-lib.dir}">
+                            <include name="**/*.jar" />
+                        </fileset>
+                    </classpath>
+                </java>
 
-	
-	<!-- Compile classes needed for unit testing -->
-	<target name="compile-tests" depends="compile">
-		<javac srcdir="${tests}" destdir="${build}" includes="**/*.java" debug="on" source="1.4">
-			<classpath refid="build.path" />
-		</javac>
-	</target>
+                <echo message="**************************************************************" />
+                <echo message="    Remember, you must include the retroweaver-rt jar" />
+                <echo message="    file, located in the thirdparty-lib directory, along with the" />
+                <echo message="    ${jar.name} on your" />
+                <echo message="    classpath in order to use this with JDK 1.4" />
+                <echo message="**************************************************************" />
 
-	<target name="test" depends="compile-tests">
-		<junit printsummary="no" fork="yes" haltonfailure="yes" haltonerror="yes" dir="${root}">
-			<jvmarg value="-Djava.endorsed.dirs=${endorsed}" />
-			<classpath>
-			    <fileset dir="${custom.libs}">
-			    	<include name="*.jar"/>
-			    </fileset>
-			    <path refid="test.path"/>
-			</classpath>
-			<formatter type="plain" />
-			<test name="edu.internet2.middleware.shibboleth.aa.arp.ArpTests" />
-			<test name="edu.internet2.middleware.shibboleth.aa.attrresolv.ResolverTests" />
-			<test name="edu.internet2.middleware.shibboleth.common.CredentialsTests" />
-			<test name="edu.internet2.middleware.shibboleth.common.provider.NameMapperTests" />
-			<test name="edu.internet2.middleware.shibboleth.common.TrustTests" />
-			<test name="edu.internet2.middleware.shibboleth.idp.provider.DNHostNameExtractionTests" />
-			<test name="edu.internet2.middleware.shibboleth.metadata.MetadataTests" />
-			<test name="edu.internet2.middleware.shibboleth.idp.SSOTest" />      
-			<test name="edu.internet2.middleware.shibboleth.idp.AATest" />    
-		</junit>
-	</target>
+            </then>
+        </if>
 
+        <jar destfile="${dist.dir}/${jar.name}" whenempty="fail">
+        	<fileset dir="${classpathres.dir}" />
+        	<fileset dir="${metainf.dir}" />
+    		<fileset dir="${webinf.dir}" />
+        	<fileset dir="${webpages.dir}" />
+        	<zipfileset dir="${core-classes.dir}" prefix="/WEB-INF/classes/" />
+        	<zipfileset dir="${lib.dir}" prefix="/WEB-INF/lib/" />
+    	</jar>
 
-	<!-- Tomcat Management -->
-	<target name="setupTomcatTasks" depends="init">
-		<path id="tomcat.classpath">
-			<fileset dir="${tomcat.home}/server/lib" includes="catalina-ant.jar"/>
-		</path>
+    </target>
 
-		<taskdef name="tomcatStart" classname="org.apache.catalina.ant.StartTask" classpathref="tomcat.classpath"/>
-		<taskdef name="tomcatStop" classname="org.apache.catalina.ant.StopTask" classpathref="tomcat.classpath"/>
-		<taskdef name="tomcatDeploy" classname="org.apache.catalina.ant.DeployTask" classpathref="tomcat.classpath"/>
-		<taskdef name="tomcatUndeploy" classname="org.apache.catalina.ant.UndeployTask" classpathref="tomcat.classpath"/>
-	</target>
-
-	<target name="tomcat.start" depends="setupTomcatTasks" description="Start a deployed webapp using Tomcat manager">
-		<tomcatStart url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"/>
-	</target>
-
-	<target name="tomcat.stop" depends="setupTomcatTasks" description="Stop a deployed webapp using Tomcat manager">
-		<tomcatStop url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"/>
-	</target>
-
-	<target name="tomcat.deploy" depends="setupTomcatTasks" description="Upload and deploy using Tomcat manager">
-		<tomcatDeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"
-			war="file:${basedir}/${dist}/${idp.webapp.name}.war"/>
-	</target>
-
-	<target name="tomcat.undeploy" depends="setupTomcatTasks" description="Undeploy using Tomcat manager">
-		<tomcatUndeploy url="${tomcat.url}" username="${tomcat.username}" password="${tomcat.password}" path="/${idp.webapp.name}"/>
-	</target>
-
-
-	<!-- Automated key generation for crypto handles -->
-	<target name="genSecret" depends="compile">
-		<taskdef name="genSecret" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
-		<genSecret keyStorePath="${appconfig}/handle.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
-	</target>
-
-
-	<!-- Generate salt for use with targetted id -->
-	<target name="genSalt" depends="compile">
-		<taskdef name="genSalt" classname="edu.internet2.middleware.shibboleth.utils.HandleRepositorySecretGenerator" classpathref="build.path"/>
-		<genSalt keyStorePath="${appconfig}/persistent.jks" keyStorePassword="shibhs" keyStoreKeyAlias="handleKey" keyStoreKeyPassword="shibhs" />
-	</target>
-
-	<target name="exampleCertificates">
-		<!--
-		This target provides an example of the generation of
-		self-signed Certificates for the IdP. You may
-		change the cn= and use it to generate new identities
-		when you want to replace "example.org" with your real
-		organization dns. However,the generated key and 
-		certificate also have to be defined to the Credentials
-		of the IdP config files and added to the Metadata.
-		-->
-		<genkey alias="tomcat" storepass="exampleorg"
-			keystore="${tomcat.home}/conf/idp-example.jks"
-			keyalg="RSA" validity="365"
-			dname="cn=idp.example.org, o=example.org, c=US"
-			/>
-	</target>
-
-
-	<!-- Package Shibboleth -->
-	<target name="package-idp" depends="compile, install.url" description="Creates the IdP war file and moves it to ${dist}">
-		<!-- copy values to deployment descriptor -->
-		<copy file="${configroot}/${idp.deployment.descriptor}" tofile="${configroot}/idp.xml" overwrite="true" />
-		<replace file="${configroot}/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
-     
-        <!-- package extensions -->
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-package"/>
-            <param name="ext.filesystem.home" value="${idp.home}"/>
-            <param name="ext.home.token" value="$IDP_HOME$"/>
-        </antcall>
-
-		<!-- create the war -->
-		<war warfile="${dist}/${idp.webapp.name}.war" webxml="${configroot}/idp.xml" basedir="${approot}" update="yes" duplicate="add">
-			<!-- Grab any custom extension libraries -->
-			<lib dir="${custom.libs}"/>
-
-			<!-- Grab any web material from custom extensions -->
-			<fileset dir="${custom.webapges}"/>
-		</war>
-
-		<!-- clean up generated descriptor -->
-		<delete file="${configroot}/idp.xml"/>
-	</target>
-
-	<!-- Install Shibboleth -->
-	<target name="install.init">
-		<taskdef name="xinput" classname="edu.internet2.middleware.ant.XInput" classpath="${build}" />
-		<typedef name="xoption" classname="edu.internet2.middleware.ant.XInputOption" classpath="${build}" />
-	</target>
-
-	<target name="install.url">
-		<taskdef name="urlconvert" classname="edu.internet2.middleware.ant.URLConvert" classpath="${build}"/>
-	</target>
-
-	<target name="install" depends="init, install.init" description="Install Shibboleth">
-		<if>
-			<xinput type="confirm" defaultvalue="y">Do you want to install the Shibboleth Identity Provider?</xinput>
-			<then>
-				<input message="What name do you want to use for the Identity Provider web application? [default: ${idp.webapp.name}]" 
-					addproperty="idp.webapp.name.input" defaultValue="${idp.webapp.name}" />
-				<var name="idp.webapp.name" value="${idp.webapp.name.input}" />
-
-				<antcall target="install.idp" />
-			</then>
-		</if>
-	</target>
-
-	<target name="install.idp" depends="init, install.init">
-		<xinput message="Deploying the java web application.  Do you want to install it directly onto the filesystem or use the tomcat manager application?" 
-			addproperty="idp.install-type.input" type="menu" casesensitive="no" defaultValue="${idp.install-type}">
-			<xoption value="filesystem.prompt">filesystem</xoption>
-			<xoption>manager</xoption>
-		</xinput>
-		<var name="idp.install-type" value="${idp.install-type.input}" />
-
-		<antcall target="install.idp.${idp.install-type}" />
-	</target>
-
-	<!-- Prompt user for filesystem installation options and save them to build.properties -->
-	<target name="install.idp.filesystem.prompt" depends="init, install.init">
-		<input message="Select a home directory for the Shibboleth Identity Provider [default: ${idp.home}]"
-			addproperty="idp.home.input" defaultvalue="${idp.home}" />
-		<var name="idp.home" value="${idp.home.input}" />
-		<input message="Enter tomcat home directory [default: ${tomcat.home}]"
-			addproperty="tomcat.home.input" defaultvalue="${tomcat.home}" />
-		<var name="tomcat.home" value="${tomcat.home.input}" />
-
-		<if>
-			<available file="${idp.home}/etc" />
-			<then>
-				<echo>--------------------------------------------------------------------------------------</echo>
-				<echo>---</echo>
-				<echo>---   NOTE:  Existing Identiity Provider configuration at ${idp.home}/etc ${line.separator}---   will not be overwritten.</echo>
-				<echo>---</echo>
-				<echo>--------------------------------------------------------------------------------------</echo>
-				<property name="copy-idp-conf" value="n" />
-			</then>
-			<else>
-				<property name="copy-idp-conf" value="y" />
-			</else>
-		</if>
-
-		<antcall target="install.idp.filesystem" />
-		<antcall target="savePropertyFile" />
-	</target>
-
-	<!-- Install Shibboleth IdP to filesystem using the properties in build.properties -->
-	<target name="install.idp.filesystem" depends="init, install.init, build-util, install.url, package-idp" 
-		description="Install Shibboleth IdP to filesystem using the properties in build.properties">
-
-		<!-- Move IdP war to Tomcat deployment directory -->
-		<copy file="${dist}/${idp.webapp.name}.war" tofile="${tomcat.home}/webapps/${idp.webapp.name}.war" />
-
-		<!-- copy IdP jars and utilities -->
-		<copy todir="${idp.home}/lib">
-			<fileset dir="lib" includesfile="conf/idp-lib.include" />
-		</copy>
-
-		<copy todir="${idp.home}/endorsed">
-			<fileset dir="endorsed" />
-		</copy>
-
-		<copy todir="${idp.home}/bin">
-			<fileset dir="bin"/>
-		</copy>
-		<chmod dir="${idp.home}/bin" perm="ug+rx" includes="**/*"/>
-
-		<mkdir dir="${idp.home}/logs" />
-		
-		<!-- Copy necessary files to IDP_HOME -->
-		<antcall target="install.idp.buildHome" />
-		
-		<antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-install-filesystem"/>
-            <param name="ext.filesystem.home" value="${idp.home}"/>
-            <param name="ext.home.token" value="$IDP_HOME$"/>
-        </antcall>  
-	
-	</target>
-	
-	<target name="install.idp.buildHome" depends="init, install.init">
-		<!-- copy IdP configuration -->
-		<if>
-			<or>
-				<equals arg1="${copy-idp-conf}" arg2="y" />
-				<not> <available file="${idp.home}/etc" /> </not>
-			</or>
-			<then>
-				<delete dir="${idp.home}/etc" />
-				<antcall target="install.idp.filesystem.config" />
-			</then>
-		</if>
-	</target>
-
-	<!-- copy shibboleth configuration to $IDP_HOME/etc, overwriting any existing configuration -->
-	<target name="install.idp.filesystem.config" depends="init, install.init, install.url">
-		<mkdir dir="${idp.home}/etc" />
-		<copy todir="${idp.home}/etc" overwrite="true">
-			<fileset dir="${src}/conf" includesfile="conf/idp-conf.include"/>
-		</copy>
-		<move file="${idp.home}/etc/dist.idp.xml" tofile="${idp.home}/etc/idp.xml" overwrite="true" />
-		<replace file="${idp.home}/etc/idp.xml" token="$IDP_HOME$" value="${idp.home.url}" />
-		<replace file="${idp.home}/etc/idp.xml" token="$IDP_WEBAPP_NAME$" value="${idp.webapp.name}" />
-	</target>
-
-	<!-- install Shibboleth-IdP war using tomcat's manager app -->
-	<target name="install.idp.manager" depends="init, install.init">
-		<antcall target="setupTomcatTasks" />
-
-		<input message="Enter local tomcat directory [default: ${tomcat.home}]" addproperty="tomcat.home.input" defaultValue="${tomcat.home}" />
-		<var name="tomcat.home" value="${tomcat.home.input}" />
-
-		<input message="Enter tomcat url [default: ${tomcat.url}]" addproperty="tomcat.url.input" defaultValue="${tomcat.url}" />
-		<var name="tomcat.url" value="${tomcat.url.input}" />
-
-		<input message="Enter tomcat username [default: ${tomcat.username}]" addproperty="tomcat.username.input" defaultValue="${tomcat.username}" />
-		<var name="tomcat.username" value="${tomcat.username.input}" />
-
-		<input message="Enter tomcat password [default: ${tomcat.password}]" addproperty="tomcat.password.input" defaultValue="${tomcat.password}" />
-		<var name="tomcat.password" value="${tomcat.password.input}" />
-
-		<antcall target="package-idp" />
-		<antcall target="tomcat.deploy" />
-		<antcall target="install.idp.buildHome" />
-		<antcall target="savePropertyFile" />
-	</target>
-
-	<!-- save configuration to build.properties -->
-	<target name="savePropertyFile">
-		<propertyfile file="build.properties">
-			<entry key="idp.home" value="${idp.home}" />
-			<entry key="idp.webapp.name" value="${idp.webapp.name}" />
-			<entry key="idp.install-type" value="${idp.install-type}" />
-			<entry key="tomcat.home" value="${tomcat.home}" />
-			<entry key="tomcat.url" value="${tomcat.url}" />
-			<entry key="tomcat.username" value="${tomcat.username}" />
-			<entry key="tomcat.password" value="${tomcat.password}" />
-		</propertyfile>
-	</target>
-	
-
-	<!-- Cleanup after the build, test, and distribution processes -->
-	<target name="clean" depends="clean-all" />
-
-    <target name="clean-all" depends="clean-build, clean-dist, clean-test, clean-javadocs, clean-util"/>
-	
-    <target name="clean-build">
-		<delete dir="${build}" />
-		<delete dir="${custom.libs}"/>
-		<delete dir="${custom.webapges}"/>
-	    <antcall target="ext-invoke">
-	    	<param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-clean-build"/>   
-	    </antcall>
-	</target>
-	
-    <target name="clean-test">
-		<delete>
-			<fileset dir="${root}">
-				<include name="**/TEST*.txt" />
-			</fileset>
-		</delete>
-	</target>
-	
-    <target name="clean-dist">
-		<delete dir="${dist}" />
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-clean-dist"/>   
-        </antcall>   
-	</target>
-	
-    <target name="clean-javadocs">
-		<delete dir="${javadocs}" />
-        <antcall target="ext-invoke">
-            <param name="exts.dir" value="${custom}"/>
-            <param name="ext.build.function" value="ext-clean-javadocs"/>   
-        </antcall>
-	</target>
-	
-    <target name="clean-util">
-		<delete>
-			<fileset dir="${buildlibs}">
-				<include name="shib-util.jar" />
-			</fileset>
-		</delete>
-	</target>
-	
-	<!-- For IDE development, run this target first to delete all
-	directories generated by the install process before
-	recreating and reinstalling everything. -->
-	<target name="clean-install" depends="init" 
-		description="Delete old configuration and Tomcat webapp directories.">
-		<delete dir="${idp.home}" />
-		<delete dir="${tomcat.home}/webapps/${idp.webapp.name}" />
-	</target>
+    <!-- **************************************************************** -->
+    <!-- ***                                                          *** -->
+    <!-- ***                     Developer Tasks                      *** -->
+    <!-- ***                                                          *** -->
+    <!-- **************************************************************** -->
 	
 	<!-- Checks code against style guidelines -->
-	<target name="checkstyle" >
+	<target name="checkstyle" description="Developer task: Produces coding standard compliance report.">
 		<mkdir dir="${reports.dir}" />
 		
 		<checkstyle config="${basedir}/checkstyle.xml"
 					failOnViolation="false"
 	                classpathref="build-path">
-			<fileset dir="src" includes="**/*.java"/>
-			<formatter type="plain"
-					   toFile="${reports.dir}/checkstyle-report.txt" />
+			<fileset dir="src" includes="**/*.java" />
+			<formatter type="plain" toFile="${reports.dir}/checkstyle-report.txt" />
 		</checkstyle>
 	</target>
 	
+    <!-- Create TGZ source distribution -->
+    <target name="tgz-src-dist" depends="package, javadoc" description="Developer task: Creates the tar, gzipped source distribution.">
+        <tar tarfile="${dist.dir}/${src-dist.name}.tgz" compression="gzip">
+        	<tarfileset dir="${build-lib.dir}" prefix="/build-lib/" />
+        	<tarfileset dir="${lib.dir}" prefix="/lib/" />
+        	<tarfileset dir="${resources.dir}" prefix="/resources/" />
+        	<tarfileset dir="${core-src.dir}" prefix="/src/" />
+    		<tarfileset dir="${test-src.dir}" prefix="/test/" />
+        	<tarfileset dir="${doc.dir}" prefix="/doc/" />
+        	<tarfileset file="${dist.dir}/${jar.name}" prefix="/dist/" />
+        	<tarfileset file="${basedir}/*.*" prefix="/" />
+        </tar>
+    	<checksum file="${dist.dir}/${src-dist.name}.tgz" />
+    </target>
+
+    <!-- Create TGZ binary distribution -->
+    <target name="tgz-bin-dist" depends="package, javadoc" description="Developer task: Creates the tar, gzipped binary distribution.">
+        <tar tarfile="${dist.dir}/${bin-dist.name}.tgz" compression="gzip">
+        	<tarfileset dir="${lib.dir}" prefix="/lib/" />
+        	<tarfileset dir="${resources.dir}" prefix="/resources/" />
+        	<tarfileset dir="${doc.dir}" prefix="/doc/" />
+        	<tarfileset file="${dist.dir}/${jar.name}" prefix="/dist/" />
+        </tar>
+    	<checksum file="${dist.dir}/${bin-dist.name}.tgz" />
+    </target>
+
+    <!-- Create ZIP source distribution -->
+    <target name="zip-src-dist" depends="package, javadoc" description="Developer task: Creates the zipped source distribution.">
+        <zip zipfile="${dist.dir}/${src-dist.name}.zip" whenempty="fail">
+        	<zipfileset dir="${build-lib.dir}" prefix="build-lib/" />
+        	<zipfileset dir="${lib.dir}" prefix="lib/" />
+        	<zipfileset dir="${resources.dir}" prefix="/resources/" />
+        	<zipfileset dir="${core-src.dir}" prefix="src/" />
+    		<zipfileset dir="${test-src.dir}" prefix="test/" />
+        	<zipfileset dir="${doc.dir}" prefix="doc/" />
+        	<zipfileset file="${dist.dir}/${jar.name}" prefix="/dist/" />
+        	<zipfileset file="${basedir}/*.*" prefix="" />
+        </zip>
+    	<checksum file="${dist.dir}/${src-dist.name}.zip" />
+    </target>
+
+    <!-- Create ZIP binary distribution -->
+    <target name="zip-bin-dist" depends="package, javadoc"  description="Developer task: Creates the zipped binary distribution.">
+        <zip zipfile="${dist.dir}/${bin-dist.name}.zip" whenempty="fail">
+        	<zipfileset dir="${lib.dir}" prefix="lib/" />
+        	<zipfileset dir="${resources.dir}" prefix="/resources/" />
+        	<zipfileset dir="${doc.dir}" prefix="doc/" />
+        	<zipfileset file="${dist.dir}/${jar.name}" prefix="/dist/" />
+        </zip>
+    	<checksum file="${dist.dir}/${bin-dist.name}.zip" />
+    </target>
+
 </project>
