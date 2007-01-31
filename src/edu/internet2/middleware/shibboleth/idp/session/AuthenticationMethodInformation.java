@@ -35,7 +35,7 @@ public interface AuthenticationMethodInformation {
      * 
      * @return time the user authenticated with this member
      */
-    public DateTime getAuthenticationInstance();
+    public DateTime getAuthenticationInstant();
 
     /**
      * Gets the duration of this authentication method.
