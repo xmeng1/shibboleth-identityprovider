@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.impl.AuthenticationHandlerInfo;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.session.SessionManager;
 
@@ -64,13 +63,16 @@ public class AuthenticationManager extends HttpServletBean {
     private SessionManager sessionMgr;
     
     /** Map of URIs onto AuthenticationHandlerInfo */
-    private FastMap<String, AuthenticationHandlerInfo> handlerMap
-	    = new FastMap<String, AuthenticationHandlerInfo>();
+    private FastMap<String, AuthenticationHandler> handlerMap
+	    = new FastMap<String, AuthenticationHandler>();
     
     /** The default AuthenticationHandler */
-    private AuthenticationHandlerInfo defaultHandlerInfo;
+    private AuthenticationHandler defaultHandler;
     
-    
+    /* The URI for the default AuthenticationHandler */
+    private String defaultHandlerURI;
+
+	    
     /**
      * Gets the session manager to be used
      *
@@ -103,30 +105,32 @@ public class AuthenticationManager extends HttpServletBean {
      *
      * @throws IllegalArgumentExcetption if <code>handlerInfo.getUri()</code> returns </code>null</code>
      */
-    public void addHandlerMapping(String uri, AuthenticationHandlerInfo handlerInfo) {
+    public void addHandlerMapping(String uri, AuthenticationHandler handler) {
 	
-	if (uri == null || handlerInfo == null) {
+	if (uri == null || handler == null) {
 	    return;
 	}
 	
-	log.debug("registering " + handlerInfo.getHandler().getClass().getName()
-	+ " for " + uri);
+	log.debug("registering " + handler.getClass().getName()
+	    + " for " + uri);
 	
-	this.handlerMap.put(uri, handlerInfo);
+	this.handlerMap.put(uri, handler);
     }
     
     
     /**
      * Register the default {@link AuthenticationHandler}
      *
-     * @param handlerInfo Information about the handler.
+     * @param uri The URI of the default authentication handler (from saml-authn-context-2.0-os)
+     * @param handler The default {@link AuthenticationHandler}.
      */
-    public void addDefaultHandler(AuthenticationHandlerInfo handlerInfo) {
+    public void addDefaultHandler(String uri, AuthenticationHandler handler) {
 	
 	log.debug("Registering default handler "
-		+ handlerInfo.getHandler().getClass().getName());
+		+ handler.getClass().getName());
 	
-	this.defaultHandlerInfo = handlerInfo;
+	this.defaultHandler = handler;
+	this.defaultHandlerURI = uri;
     }
     
     
@@ -136,7 +140,7 @@ public class AuthenticationManager extends HttpServletBean {
      *
      * The URI SHOULD be from the saml-authn-context-2.0-os
      *
-     * @param URI A URI identifying the authentcation method.
+     * @param uri A URI identifying the authentcation method.
      */
     public void removeHandlerMapping(String uri) {
 	
@@ -206,21 +210,25 @@ public class AuthenticationManager extends HttpServletBean {
 	    authnCtx = samlLoginContext.getRequestedAuthnContext();
 	}
 	
-	AuthenticationHandler handler = this.getHandler(authnCtx, forceAuthN, isPassive);
+	// if no registered handler can evaluate the request, abort.
+	AuthenticationHandler handler =
+		this.getHandler(authnCtx, loginContext, forceAuthN, isPassive);
 	if (handler == null) {
 	    loginContext.setAuthenticationAttempted();
-	    loginContext.setAuthnOK(false);
-	    loginContext.setAuthnFailureMessage("No installed AuthenticationHandlers can satisfy the authentication request.");
+	    loginContext.setAuthenticationOK(false);
+	    loginContext.setAuthenticationFailureMessage("No installed AuthenticationHandlers can satisfy the authentication request.");
 	    
 	    RequestDispatcher dispatcher =
 		    servletRequest.getRequestDispatcher(loginContext.getProfileHandlerURL());
 	    dispatcher.forward(servletRequest, servletResponse);
 	}
 	
-	// forward control to the authenticationhandler
+	// otherwise, forward control to the authenticationhandler
 	ServletContext servletContext = this.getServletContext();
-	String saml2handlerPath = servletContext.getRealPath(servletRequest.getServletPath());
-	loginContext.setAuthnManagerURL(servletRequest.getPathInfo());
+	loginContext.setAuthenticationManagerURL(servletRequest.getPathInfo());
+	handler.setReturnLocation(servletRequest.getPathInfo());
+	handler.login(servletRequest, servletResponse,
+		loginContext.getPassiveAuth(), loginContext.getForceAuth());
     }
     
     
@@ -236,7 +244,7 @@ public class AuthenticationManager extends HttpServletBean {
 	// if authentication was successful, the authentication handler should
 	// have updated the LoginContext with additional information. Use that
 	// info to create a Session.
-	if (loginContext.getAuthnOK()) {
+	if (loginContext.getAuthenticationOK()) {
 	    
 	    AuthenticationMethodInformationImpl authMethodInfo =
 		    new AuthenticationMethodInformationImpl(loginContext.getAuthenticationMethod(),
@@ -266,25 +274,29 @@ public class AuthenticationManager extends HttpServletBean {
     /**
      * Examine an {@link RequestedAuthnContext} against a list of installed
      * {@link AuthenticationHandler}s. If an acceptable handler is found, return
-     * a reference to it. Otherwise return <code>null</code>
+     * a reference to it. Otherwise return <code>null</code>. The {@link LoginContext}
+     * is updated to reflect the selected authentication method's URI.
      *
-     * @param ctx A {@link RequestedAuthnContext}
+     * @param authnCtx A {@link RequestedAuthnContext}
+     * @param loginCtx The {@link LoginContext} 
      * @param forceAuthN Should authentication be forced.
      * @param passiveAuthN Must authentication happen without UI control.
      *
      * @return A reference to an {@link AuthenticationHandler} or <code>null</code>.
      */
-    private AuthenticationHandler getHandler(final RequestedAuthnContext ctx,
-	    boolean forceAuthN, boolean passiveAuthN) {
+    private AuthenticationHandler getHandler(final RequestedAuthnContext authnCtx,
+	    final LoginContext loginCtx, boolean forceAuthN, boolean passiveAuthN) {
 	
 	// if no context is specified, evaluate the default handler
-	if (ctx == null) {
-	    return this.evaluateHandler(this.defaultHandlerInfo, "default", forceAuthN, passiveAuthN);
+	if (authnCtx == null) {
+	    loginCtx.setAuthenticationMethod(this.defaultHandlerURI);
+	    return this.evaluateHandler(this.defaultHandler, "default", 
+		    forceAuthN, passiveAuthN);
 	}
 	
 	
 	// For the immediate future, we only support the "exact" comparator.
-	AuthnContextComparisonTypeEnumeration comparator = ctx.getComparison();
+	AuthnContextComparisonTypeEnumeration comparator = authnCtx.getComparison();
 	if (comparator != null && comparator != AuthnContextComparisonTypeEnumeration.EXACT) {
 	    log.error("Unsupported comparision operator ( " + comparator
 		    + ") in RequestedAuthnContext. Only exact comparisions are supported.");
@@ -293,8 +305,8 @@ public class AuthenticationManager extends HttpServletBean {
 	
 	// build a list of all requested authn classes and declrefs
 	List<String> requestedAuthnMethods = new FastList<String>();
-	List<AuthnContextClassRef> authnClasses = ctx.getAuthnContextClassRefs();
-	List<AuthnContextDeclRef> authnDeclRefs = ctx.getAuthnContextDeclRefs();
+	List<AuthnContextClassRef> authnClasses = authnCtx.getAuthnContextClassRefs();
+	List<AuthnContextDeclRef> authnDeclRefs = authnCtx.getAuthnContextDeclRefs();
 	
 	if (authnClasses != null) {
 	    for (AuthnContextClassRef classRef : authnClasses) {
@@ -322,7 +334,8 @@ public class AuthenticationManager extends HttpServletBean {
 	// if no AuthnContextClasses or AuthnContextDeclRefs were actually specified,
 	// evaluate the default handler
 	if (requestedAuthnMethods.size() == 0) {
-	    return this.evaluateHandler(this.defaultHandlerInfo, "default", forceAuthN, passiveAuthN);
+	    return this.evaluateHandler(this.defaultHandler, "default",
+		    forceAuthN, passiveAuthN);
 	}
 	
 	
@@ -330,19 +343,20 @@ public class AuthenticationManager extends HttpServletBean {
 	AuthenticationHandler handler = null;
 	for (String s : requestedAuthnMethods) {
 	    
-	    AuthenticationHandlerInfo handlerInfo = this.handlerMap.get(s);
-	    if (handlerInfo == null) {
+	    AuthenticationHandler candidateHandler = this.handlerMap.get(s);
+	    if (candidateHandler == null) {
 		log.debug("No registered authentication handlers can satisfy the "
 			+ " requested authentication method " + s);
 		continue;
 	    }
 	    
-	    handler = this.evaluateHandler(handlerInfo, s, forceAuthN, passiveAuthN);
+	    handler = this.evaluateHandler(candidateHandler, s, forceAuthN, passiveAuthN);
 	    
 	    if (handler != null) {
 		// we found a match. stop iterating.
-		log.info("Using authentication handler " + handlerInfo.getHandler().getClass().getName()
-		+ " for authentication method " + s);
+		log.info("Using authentication handler " + handler.getClass().getName()
+		    + " for authentication method " + s);
+		loginCtx.setAuthenticationMethod(s);
 		break;
 	    }
 	}
@@ -359,32 +373,31 @@ public class AuthenticationManager extends HttpServletBean {
     /**
      * Evaluate an authenticationhandler against a set of evaluation criteria.
      *
-     * @param handlerInfo Handler metadata
+     * @param handler A candiate {@link AuthenticationHandler}
+     * @param description A description of the handler
      * @param forceAuthN Is (re)authentication forced?
      * @param passiveAuthN Can the AuthenticationHandler take control of the UI
-     * @param description A description of the handler
-     *
      * @return A reference to an {@link AuthenticationHandler} or <code>null</code>.
      */
-    private AuthenticationHandler evaluateHandler(final AuthenticationHandlerInfo handlerInfo,
+    private AuthenticationHandler evaluateHandler(final AuthenticationHandler handler,
 	    String description, boolean forceAuthN, boolean passiveAuthN) {
 	
-	if (handlerInfo == null) {
+	if (handler == null) {
 	    return (null);
 	}
 	
-	if (forceAuthN && !handlerInfo.supportsForce()) {
+	if (forceAuthN && !handler.supportsForceAuthentication()) {
 	    log.debug("The RequestedAuthnContext required forced authentication, "
 		    + "but the " + description + " handler does not support that feature.");
 	    return (null);
 	}
 	
-	if (passiveAuthN && !handlerInfo.supportsPassive()) {
+	if (passiveAuthN && !handler.supportsPassive()) {
 	    log.debug("The RequestedAuthnContext required passive authentication, "
 		    + "but the " + description + " handler does not support that feature.");
 	    return (null);
 	}
 	
-	return handlerInfo.getHandler();
+	return handler;
     }
 }
