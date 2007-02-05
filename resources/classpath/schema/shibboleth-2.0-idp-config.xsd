@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" 
+             targetNamespace="urn:mace:shibboleth:2.0:idp-config" 
+             xmlns:idpc="urn:mace:shibboleth:2.0:idp-config"
+             xmlns:idpmd="urn:mace:shibboleth:2.0:metadata"
+             xmlns:idpcred="urn:mace:shibboleth:2.0:credential"
+             xmlns:idprp="urn:mace:shibboleth:2.0:relying-party">
+             
+             
+    <import namespace="urn:mace:shibboleth:2.0:credential" schemaLocation="/schema/shibboleth-2.0-credential.xsd" />
+    <import namespace="urn:mace:shibboleth:2.0:metadata" schemaLocation="/schema/shibboleth-2.0-metadata.xsd" />
+    <import namespace="urn:mace:shibboleth:2.0:relying-party" schemaLocation="/schema/shibboleth-2.0-relying-party.xsd" />
+
+    <element name="IdPConfig" type="idpc:IdPConfigType" />
+    
+    <complexType name="IdPConfigType">
+        <sequence>
+            <element ref="idprp:AnonymousRelyingParty" />
+            <element ref="idprp:DefaultRelyingParty" />
+            <element ref="idprp:RelyingParty" minOccurs="0" maxOccurs="unbounded" />
+            <element ref="idpcred:Credential" maxOccurs="unbounded"/>
+            <element ref="idpmd:MetadataProvider" />
+            <any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+        </sequence>
+    </complexType>
+    
+</schema>
