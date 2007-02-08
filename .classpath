@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="*|classpath/" including="META-INF" kind="src" path="resources"/>
 	<classpathentry kind="src" path="resources/classpath"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/jargs-0.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jargs-0.4.jar"/>
 	<classpathentry kind="lib" path="build-lib/ant-1.6.3.jar"/>
 	<classpathentry kind="lib" path="build-lib/ant-contrib.jar"/>
 	<classpathentry kind="lib" path="build-lib/antext-04Jul2006.jar"/>
@@ -12,7 +13,7 @@
 	<classpathentry kind="lib" path="build-lib/ant-launcher-1.6.3.jar"/>
 	<classpathentry kind="lib" path="build-lib/ant-nodeps-1.6.3.jar"/>
 	<classpathentry kind="lib" path="build-lib/mockrunner-servlet.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/java-shib-common"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/java-shib-common"/>
 	<classpathentry kind="lib" path="build-lib/jsp-2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
