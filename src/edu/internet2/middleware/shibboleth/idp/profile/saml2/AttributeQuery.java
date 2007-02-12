@@ -78,14 +78,9 @@ public class AttributeQuery extends AbstractProfileHandler {
         
         // construct attribute response
         List<org.opensaml.saml2.core.Attribute> encodedAttributes = new ArrayList<org.opensaml.saml2.core.Attribute>();
-        for (Attribute a: resolvedAttributes) {
-            for (AttributeEncoder<Attribute, org.opensaml.saml2.core.Attribute> e: a.getEncoders()) {
-                if (e instanceof SAML2AttributeEncoder) {
-                    // get encoder and call encode method
-                    encodedAttributes.add(e.encode(a));
-                    break;                
-                }
-            }
+        for (Attribute attr: resolvedAttributes) {
+            AttributeEncoder enc = attr.getEncoderByCategory(org.opensaml.saml2.core.Attribute.URI_REFERENCE);
+            encodedAttributes.add(enc.encode(attr));
         }
 
         Response samlResponse = buildResponse(getDecoder().getIssuer(), new DateTime(), encodedAttributes);
@@ -130,7 +125,7 @@ public class AttributeQuery extends AbstractProfileHandler {
      */
     private Status buildStatus() {
         // build status
-        SAMLObjectBuilder statusBuilder = (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(
+        SAMLObjectBuilder<Status> statusBuilder = (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(
                 Status.DEFAULT_ELEMENT_NAME);
         Status status = statusBuilder.buildObject();
 
