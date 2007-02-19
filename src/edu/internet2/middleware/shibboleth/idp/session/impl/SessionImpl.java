@@ -16,70 +16,51 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
+import java.net.InetAddress;
 import java.util.List;
 
 import javolution.util.FastList;
 
+import edu.internet2.middleware.shibboleth.common.session.impl.AbstractSession;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
-// implementation note: 
-// pay attention to package names in this file!
-//
-// this class is shib.idp.session.impl.SessionImpl. It implements the shib.idp.session.Session
-// interface. that interface, in turn, extends shib.common.session.Session, which is implemented
-// in shib.common.session.impl.SessionImpl.
-
-
 /**
  * Session information for user logged into the IdP.
  */
-public class SessionImpl
-	extends edu.internet2.middleware.shibboleth.common.session.impl.SessionImpl
-	implements Session {
+public class SessionImpl extends AbstractSession implements Session {
     
-    /** The list of methods used to authentictate the user */
-    private List<AuthenticationMethodInformation> authnMethods =
-	    new FastList<AuthenticationMethodInformation>();
-    
-    /** The list of services to which the user has logged in */
-    private List<ServiceInformation> servicesInformation =
-	    new FastList<ServiceInformation>();
+    /** Serial version UID. */
+    private static final long serialVersionUID = 2927868242208211623L;
 
-    
+    /** The list of methods used to authentictate the user. */
+    private List<AuthenticationMethodInformation> authnMethods;
+
+    /** The list of services to which the user has logged in. */
+    private List<ServiceInformation> servicesInformation;
+
     /**
      * Default constructor.
      * 
-     * @param principalID The principal ID of the user
+     * @param presenter IP address of the presenter
+     * @param principal principal ID of the user
      */
-    public SessionImpl(String principalID) {
-    	
-    	super(principalID);
-    }
-    
-    
-    /** {@inheritDoc} */
-    public List<AuthenticationMethodInformation> getAuthenticationMethods() {
-    
-	// XXX : This is suspect. One should not return
-	// a reference to a private mutable object. The Session
-	// interface should have methods for adding and removing
-	// AuthenticationMethodInformation and ServicesInformation
-	// entries. Further, the Session interface assumes that 
-	// the implementation will return a thread-safe List. Not
-	// all List implementations are thread-safe.
-	    
-	return this.authnMethods;
+    public SessionImpl(InetAddress presenter, String principal) {
+        super(presenter, principal);
+
+        authnMethods = new FastList<AuthenticationMethodInformation>();
+        servicesInformation = new FastList<ServiceInformation>();
     }
 
+    /** {@inheritDoc} */
+    public List<AuthenticationMethodInformation> getAuthenticationMethods() {
+        return authnMethods;
+    }
 
     /** {@inheritDoc} */
     public List<ServiceInformation> getServicesInformation() {
-	
-	// XXX: warning: Potentially dangerous. see above note.
-	
-	return this.servicesInformation;
+        return servicesInformation;
     }
-    
+
 }

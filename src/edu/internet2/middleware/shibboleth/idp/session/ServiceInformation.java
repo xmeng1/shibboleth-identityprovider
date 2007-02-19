@@ -29,26 +29,26 @@ public interface ServiceInformation {
      * 
      * @return unique identifier for the service
      */
-	public String getEntityID();
-	
+    public String getEntityID();
+
     /**
-     * Gets the time the user authenticated to the service. 
+     * Gets the time the user authenticated to the service.
      * 
      * @return time the user authenticated to the service
      */
-	public DateTime getAuthenticationInstance();
-	
+    public DateTime getAuthenticationInstant();
+
     /**
      * Gets the authentication method used to log into the service.
      * 
      * @return authentication method used to log into the service
      */
-	public AuthenticationMethodInformation getAuthenticationMethod();
-	
+    public AuthenticationMethodInformation getAuthenticationMethod();
+
     /**
      * Gets the NameID used for the subject/user with this service.
      * 
      * @return NameID used for the subject/user with this service
      */
-	public NameID getSubjectNameID();
+    public NameID getSubjectNameID();
 }
