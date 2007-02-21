@@ -42,7 +42,8 @@ import org.joda.time.DateTime;
  *
  * The {@link AuthenticationManager} or an {@link AuthenticationHandler} should set the
  * {@link LoginContext#setAuthenticationAttempted()}, {@link LoginContext#setAuthnOK(boolean)},
- * {@link LoginContext#setAuthnFailure(String)} appropriately.
+ * {@link LoginContext#setAuthnFailure(String)}, {@link LoginContext#{setAuthenticationDuration(long)}
+ * {@link LoginContext#setAuthenticationInstant(DateTime)} appropriately.
  *
  */
 public class LoginContext {
@@ -52,43 +53,43 @@ public class LoginContext {
     
     
     /** Should user authentication be forced */
-    private boolean forceAuth = false;
+    protected boolean forceAuth = false;
     
     /** Must authentication not interact with the UI */
-    private boolean passiveAuth = false;
+    protected boolean passiveAuth = false;
     
     /** a catch-all map for other properties */
-    private Map<String, Object> propsMap = new FastMap<String, Object>();
+    protected Map<String, Object> propsMap = new FastMap<String, Object>();;
     
     /** The ProfileHandler URL */
-    private String profileHandlerURL;
+    protected String profileHandlerURL;
     
     /** The AuthenticationManager's URL */
-    private String authnManagerURL;
+    protected String authnManagerURL;
     
     /** has authentication been attempted yet */
-    private boolean authnAttempted = false;
+    protected boolean authnAttempted = false;
     
     /** The id of the authenticated user */ 
-    private String userID;
+    protected String userID;
 
     /** Did authentication succceed? */
-    private boolean authenticationOK;
+    protected boolean authenticationOK;
     
     /** Optional failure message  */
-    private String authnFailureMessage;
+    protected String authnFailureMessage;
 
     /** The instant of authentication */
-    private DateTime authnInstant;
+    protected DateTime authnInstant;
     
     /** The duration of authentication */
-    private long authnDuration;
+    protected long authnDuration;
     
     /** The method used to authenticate the user */
-    private String authnMethod;        
+    protected String authnMethod;        
     
     /** The session id */
-    private String sessionID;
+    protected String sessionID;
     
     
     /** Creates a new instance of LoginContext */
@@ -104,8 +105,8 @@ public class LoginContext {
      */
     public LoginContext(boolean forceAuth, boolean passiveAuth) {
         
-        this.forceAuth = forceAuth;
-        this.passiveAuth = passiveAuth;
+        forceAuth = forceAuth;
+        passiveAuth = passiveAuth;
     }    
     
     
@@ -115,7 +116,7 @@ public class LoginContext {
      * @return <code>true</code> if the authentication manager must reauth the user.
      */
     public boolean getForceAuth() {
-        return this.forceAuth;
+        return forceAuth;
     }
     
     
@@ -125,7 +126,7 @@ public class LoginContext {
      * @return <code>true</code> if the authentication manager must not interact with the users UI.
      */
     public boolean getPassiveAuth() {
-        return this.passiveAuth;
+        return passiveAuth;
     }
     
     
@@ -157,7 +158,7 @@ public class LoginContext {
      * @return The object, or <code>null</code> is no object exists for the key.
      */
     public Object getProperty(String key) {
-        return this.propsMap.get(key);
+        return propsMap.get(key);
     }
     
     
@@ -170,7 +171,7 @@ public class LoginContext {
      * @param obj The object to associate with key.
      */
     public void setProperty(String key, final Object obj) {
-        this.propsMap.put(key, obj);
+        propsMap.put(key, obj);
     }
  
     
@@ -179,7 +180,7 @@ public class LoginContext {
      * 
      * @param authnOK if authentication succeeded;
      */
-    public void setAuthnOK(boolean authnOK) {
+    public void setAuthenticationOK(boolean authnOK) {
         this.authenticationOK = authnOK;
     }
     
@@ -189,8 +190,8 @@ public class LoginContext {
      * 
      * @return <code>true</code> is the user was successfully authenticated.
      */
-    public boolean getAuthnOK() {
-        return this.authenticationOK;
+    public boolean getAuthenticationOK() {
+        return authenticationOK;
     }
     
     
@@ -198,8 +199,8 @@ public class LoginContext {
      * 
      * @param failureMessage A description of why authN failed.
      */ 
-    public void setAuthnFailureMessage(String failureMessage) {
-        this.authnFailureMessage = failureMessage;
+    public void setAuthenticationFailureMessage(String failureMessage) {
+        authnFailureMessage = failureMessage;
     }
     
     
@@ -208,8 +209,8 @@ public class LoginContext {
      * 
      * @return The failure message, or <code>null</code> is none was set.
      */
-    public String getAuthnFailureMessage() {
-        return this.authnFailureMessage;
+    public String getAuthenticationFailureMessage() {
+        return authnFailureMessage;
     }
     
     
@@ -220,7 +221,7 @@ public class LoginContext {
      * while processing a request.
      */
     public void setAuthenticationAttempted() {
-	this.authnAttempted = true;
+        authnAttempted = true;
     }
     
     
@@ -228,7 +229,7 @@ public class LoginContext {
      * Returns if authentication has been attempted for this user.
      */
     public boolean getAuthenticationAttempted() {
-	return this.authnAttempted;
+        return authnAttempted;
     }
     
     
@@ -248,7 +249,7 @@ public class LoginContext {
      * @return the ID of the user, or <code>null</code> if authentication failed.
      */
     public String getUserID() {
-        return this.userID;
+        return userID;
     }
     
     
@@ -258,7 +259,7 @@ public class LoginContext {
      * @return the URL of the profile handler that is invoking the Authentication Manager.
      */
     public String getProfileHandlerURL() {
-	return this.profileHandlerURL;
+        return profileHandlerURL;
     }
     
     
@@ -268,7 +269,7 @@ public class LoginContext {
      * @param profileHandlerURL The URL of the profile handler that invoked the AuthenticationManager/
      */
     public void setProfileHandlerURL(String profileHandlerURL) {
-	this.profileHandlerURL = profileHandlerURL;
+        this.profileHandlerURL = profileHandlerURL;
     }
     
     
@@ -277,8 +278,8 @@ public class LoginContext {
      *
      * @return the URL of the AuthenticationManager.
      */
-    public String getAuthnManagerURL() {
-	return this.authnManagerURL;
+    public String getAuthenticationManagerURL() {
+        return authnManagerURL;
     }
     
     
@@ -287,8 +288,8 @@ public class LoginContext {
      *
      * @param authnManagerURL the URL of the AuthenticationManager.
      */
-    public void setAuthnManagerURL(String authnManagerURL) {
-	this.authnManagerURL = authnManagerURL;
+    public void setAuthenticationManagerURL(String authnManagerURL) {
+        this.authnManagerURL = authnManagerURL;
     }
     
     
@@ -298,7 +299,7 @@ public class LoginContext {
      * @return The instant of authentication, or <code>null</code> if none was set.
      */
     public DateTime getAuthenticationInstant() {
-	    return this.authnInstant;
+        return authnInstant;
     }
     
     
@@ -308,7 +309,7 @@ public class LoginContext {
      * @param authnInstant The instant of authentication.
      */
     public void setAuthenticationInstant(final DateTime authnInstant) {
-	this.authnInstant = authnInstant;
+        this.authnInstant = authnInstant;
     }
     
     
@@ -318,7 +319,7 @@ public class LoginContext {
      * @return The duration of authentication, or zero if none was set.
      */
     public long getAuthenticationDuration() {
-	return this.authnDuration;
+        return authnDuration;
     }
     
     
@@ -328,7 +329,7 @@ public class LoginContext {
      * @param authnDuration The duration of authentication.
      */
     public void setAuthenticationDuration(long authnDuration) {
-	this.authnDuration = authnDuration;
+        this.authnDuration = authnDuration;
     }
     
     
@@ -338,7 +339,7 @@ public class LoginContext {
      * @return The method used to authenticate the user.
      */
     public String getAuthenticationMethod() {
-	return this.authnMethod;
+        return authnMethod;
     }
     
     
@@ -348,7 +349,7 @@ public class LoginContext {
      * @param authnMethod The method used to authenticate the user.
      */
     public void setAuthenticationMethod(String authnMethod) {
-	this.authnMethod = authnMethod;
+        this.authnMethod = authnMethod;
     }
     
     
@@ -358,7 +359,7 @@ public class LoginContext {
      * @return the Session id.
      */
     public String getSessionID() {
-	return this.sessionID;
+        return sessionID;
     }
     
     
@@ -368,6 +369,20 @@ public class LoginContext {
      * @param sessionID the Session ID
      */
     public void setSessionID(String sessionID) {
-	this.sessionID = sessionID;
+        this.sessionID = sessionID;
+    }
+    
+    
+    /**
+     * Return the acceptable authentication handler URIs
+     * for authenticating this user. If no authentication
+     * methods are preferred, this method will return 
+     * <code>null</code>.
+     *
+     * @return an array of URIs, or <code>null</code>.
+     */
+    public String[] getRequestedAuthenticationMethods() {
+    
+        return null;
     }
 }

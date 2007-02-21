@@ -16,12 +16,9 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import org.opensaml.saml2.core.AuthnRequest;
 
 /**
  * Authentication handlers are responsible for authenticating a user using a 
@@ -38,7 +35,8 @@ import org.opensaml.saml2.core.AuthnRequest;
  * request attribute called <strong>principal</strong> with the principal name 
  * of the authenticated user. It must then forward the request/response to the 
  * provided return location by means of the
- * {@link RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)}
+ * {@link javax.servlet.RequestDispatcher.RequestDispatcher#forward(
+ *  javax.servlet.ServletRequest, javax.servlet.ServletResponse)}
  * method.
  * 
  * When this handler is invoked to log a user out of the particular
@@ -50,18 +48,12 @@ import org.opensaml.saml2.core.AuthnRequest;
  * supporting such requests.
  * 
  * AuthentcationHandlers <strong>MUST NOT</strong> change or add any data to the 
- * user's {@link HttpSession} that persists past the process of authenticating 
- * the user, that is no additional session data may be added and no existing
- * session data may be changed when the handler redirects back to the return 
- * location.
+ * user's {@link javax.servlet.http.HttpSession} that persists past the process 
+ * of authenticating the user, that is no additional session data may be added
+ * and no existing session data may be changed when the handler redirects back 
+ * to the return location.
  */
 public interface AuthenticationHandler {
-
-    /** Key contiaing in login()'s request parameter */
-    public static final String AUTHN_REQUEST_KEY = "AuthnRequest";
-
-    /** Key containing principal name in login()'s response parameter */
-    public static final String PRINCIPAL_KEY = "principal";
 
     
     /**
@@ -69,11 +61,10 @@ public interface AuthenticationHandler {
      * 
      * @param request user request
      * @param response response to user
-     * @param passive whether the authentication must be passive
-     * @param force whether the handler must force an authentication
+     * @param loginCtx The {@link LoginContext} for the reqeust.
      */
     public void login(HttpServletRequest request, HttpServletResponse response,
-    	boolean passive, boolean force);
+        LoginContext loginCtx);
 
 
     /**
@@ -85,7 +76,7 @@ public interface AuthenticationHandler {
      * @param principal principal named as returned during authentication
      */
     public void logout(HttpServletRequest request, HttpServletResponse response,
-    	String principal);
+        String principal);
 
 
     /**
@@ -103,12 +94,4 @@ public interface AuthenticationHandler {
      * @return if this handler can force a user to (re-)authenticate.
      */
     public boolean supportsForceAuthentication();
-
-
-    /**
-     * Sets the location to return the user to once authenticated.
-     * 
-     * @param location location to return the user to once authenticated
-     */
-    public void setReturnLocation(String location);
 }
