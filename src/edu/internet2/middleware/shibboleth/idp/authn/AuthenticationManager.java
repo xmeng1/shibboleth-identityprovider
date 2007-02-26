@@ -17,6 +17,7 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 
@@ -27,16 +28,14 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
-
+import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
-import edu.internet2.middleware.shibboleth.idp.session.SessionManager;
+import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 
 import javolution.util.FastMap;
 
 import org.apache.log4j.Logger;
-
 import org.springframework.web.servlet.HttpServletBean;
 
 
@@ -291,11 +290,22 @@ public class AuthenticationManager extends HttpServletBean {
         if (loginContext.getAuthenticationOK()) {
         
             AuthenticationMethodInformationImpl authMethodInfo =
-                new AuthenticationMethodInformationImpl(loginContext.getAuthenticationMethod(),
-                    loginContext.getAuthenticationInstant(), loginContext.getAuthenticationDuration());
+                new AuthenticationMethodInformationImpl(
+                    loginContext.getAuthenticationMethod(),
+                    loginContext.getAuthenticationInstant(),
+                    loginContext.getAuthenticationDuration());
         
-            Session shibSession = getSessionManager().createSession();
-            List<AuthenticationMethodInformation> authMethods = shibSession.getAuthenticationMethods();
+            InetAddress addr;
+            try {
+                addr = InetAddress.getByName(servletRequest.getRemoteAddr());
+            } catch (Exception ex) {
+                addr = null;
+            }
+            
+            Session shibSession = sessionMgr.createSession(addr,
+                    loginContext.getUserID());
+            List<AuthenticationMethodInformation> authMethods =
+                    shibSession.getAuthenticationMethods();
             authMethods.add(authMethodInfo);
             loginContext.setSessionID(shibSession.getSessionID());
         }
