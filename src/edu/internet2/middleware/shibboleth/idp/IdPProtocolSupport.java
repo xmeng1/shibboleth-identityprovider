@@ -87,7 +87,7 @@ public interface IdPProtocolSupport extends MetadataProvider {
 	/**
 	 * Returns an OpenSAML2 Trust Engine implementation.
 	 */
-	public TrustEngine<X509EntityCredential> getTrustEngine();
+	public TrustEngine<X509Credential> getTrustEngine();
 
 	/**
 	 * Returns the number of active Metadata Providers.

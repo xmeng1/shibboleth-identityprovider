@@ -66,7 +66,7 @@ public class GeneralProtocolSupport implements IdPProtocolSupport, MetadataProvi
 	private AttributeResolver resolver;
 	private ArtifactMapper artifactMapper;
 	private Semaphore throttle;
-	private TrustEngine<X509EntityCredential> trust = new ShibbolethTrustEngine();
+	private TrustEngine<X509Credential> trust = new ShibbolethTrustEngine();
 	private ChainingMetadataProvider wrappedMetadataProvider = new ChainingMetadataProvider();
 
 	GeneralProtocolSupport(IdPConfig config, Logger transactionLog, RelyingPartyMapper spMapper, ArpEngine arpEngine,
@@ -249,7 +249,7 @@ public class GeneralProtocolSupport implements IdPProtocolSupport, MetadataProvi
 		return artifactMapper;
 	}
 
-	public TrustEngine<X509EntityCredential> getTrustEngine() {
+	public TrustEngine<X509Credential> getTrustEngine() {
 
 		return trust;
 	}

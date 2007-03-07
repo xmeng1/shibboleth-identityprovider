@@ -106,7 +106,7 @@ public class RequestSpecificProtocolSupport implements IdPProtocolSupport {
 		return wrapped.getTransactionLog();
 	}
 
-	public TrustEngine<X509EntityCredential> getTrustEngine() {
+	public TrustEngine<X509Credential> getTrustEngine() {
 
 		return wrapped.getTrustEngine();
 	}

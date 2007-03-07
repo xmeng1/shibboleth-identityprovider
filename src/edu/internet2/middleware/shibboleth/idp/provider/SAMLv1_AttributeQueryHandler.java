@@ -88,7 +88,7 @@ public class SAMLv1_AttributeQueryHandler extends SAMLv1_Base_QueryHandler imple
 		return "SAML v1.1 Attribute Query";
 	}
 
-	private String authenticateAs(String assertedId, X509EntityCredential credential, IdPProtocolSupport support)
+	private String authenticateAs(String assertedId, X509Credential credential, IdPProtocolSupport support)
 			throws InvalidProviderCredentialException {
 
 		// See if we have metadata for this provider

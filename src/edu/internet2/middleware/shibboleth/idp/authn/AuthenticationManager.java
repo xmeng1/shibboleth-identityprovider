@@ -302,7 +302,7 @@ public class AuthenticationManager extends HttpServletBean {
                 addr = null;
             }
             
-            Session shibSession = sessionMgr.createSession(addr,
+            Session shibSession = (Session) sessionMgr.createSession(addr,
                     loginContext.getUserID());
             List<AuthenticationMethodInformation> authMethods =
                     shibSession.getAuthenticationMethods();
