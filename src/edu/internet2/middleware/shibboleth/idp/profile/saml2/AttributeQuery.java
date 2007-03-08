@@ -13,115 +13,142 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
+package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import edu.internet2.middleware.shibboleth.common.attribute.Attribute;
-import edu.internet2.middleware.shibboleth.common.attribute.AttributeEncoder;
-import edu.internet2.middleware.shibboleth.common.attribute.SAML2AttributeEncoder;
-import edu.internet2.middleware.shibboleth.common.attribute.resolver.ResolutionContext;
-import edu.internet2.middleware.shibboleth.idp.profile.AbstractProfileHandler;
-
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
-
 import org.opensaml.common.SAMLObjectBuilder;
-import org.opensaml.common.SAMLVersion;
-
+import org.opensaml.common.binding.BindingException;
+import org.opensaml.saml2.core.Advice;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.Conditions;
+import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
+import org.opensaml.xml.encryption.EncryptionException;
+
+import edu.internet2.middleware.shibboleth.common.attribute.filtering.FilteringException;
+import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
 
 /**
  * SAML 2.0 Attribute Query profile handler.
  */
 public class AttributeQuery extends AbstractProfileHandler {
 
-    /** SAML Version for this profile handler. */
-    public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
-    
-    
+    /** Class logger. */
+    private static Logger log = Logger.getLogger(AttributeQuery.class);
+
     /** {@inheritDoc} */
     public boolean processRequest(ServletRequest request, ServletResponse response) throws ServletException {
-        // call decode method on decoder
-        getDecoder().decode(request);
-        // get SAMLMessage from the decoder
-        final org.opensaml.saml2.core.AttributeQuery message =
-            (org.opensaml.saml2.core.AttributeQuery) getDecoder().getSAMLMessage();
-        
-        // intersect requested attributes with released attributes
-        final List<org.opensaml.saml2.core.Attribute> requestedAttributes = message.getAttributes();
-        final Set<String> releasedAttributes = new HashSet<String>(requestedAttributes.size());
-        for (org.opensaml.saml2.core.Attribute a: requestedAttributes) {
-            releasedAttributes.add(a.getName());            
+        if (log.isDebugEnabled()) {
+            log.debug("begin processRequest");
         }
-        List<String> releaseableAttributes = getFilterEngine().getReleaseableAttributes(getDecoder().getIssuer());
-        releasedAttributes.retainAll(releaseableAttributes);
-        // TODO go to metadata for other attributes
 
-        // create resolution context from the resolver, using nameid element from the attribute query
-        ResolutionContext context = getAttributeResolver().createResolutionContext(
-                message.getSubject().getNameID(), getDecoder().getIssuer(), request);
-        // call Attribute resolver
-        Set<Attribute> resolvedAttributes = getAttributeResolver().resolveAttributes(releasedAttributes, context);
-        
+        // get message from the decoder
+        org.opensaml.saml2.core.AttributeQuery message = null;
+        try {
+            message = (org.opensaml.saml2.core.AttributeQuery) decodeMessage(request);
+        } catch (BindingException e) {
+            log.error("Error decoding attribute query message", e);
+            throw new ServletException("Error decoding attribute query message");
+        }
+
+        // get attribute statement from attribute authority
+        AttributeAuthority aa = new AttributeAuthority();
+        aa.setAttributeResolver(getAttributeResolver());
+        aa.setFilteringEngine(getFilteringEngine());
+        aa.setRelyingPartyConfiguration(getRelyingPartyConfiguration());
+        aa.setSecurityPolicy(getDecoder().getSecurityPolicy());
+        aa.setRequest(request);
+        AttributeStatement statement = null;
+        try {
+            statement = aa.performAttributeQuery(message);
+        } catch (AttributeResolutionException e) {
+            log.error("Error resolving attributes", e);
+            throw new ServletException("Error resolving attributes");
+        } catch (FilteringException e) {
+            log.error("Error filtering attributes", e);
+            throw new ServletException("Error filtering attributes");
+        }
+
         // construct attribute response
-        List<org.opensaml.saml2.core.Attribute> encodedAttributes = new ArrayList<org.opensaml.saml2.core.Attribute>();
-        for (Attribute attr: resolvedAttributes) {
-            AttributeEncoder enc = attr.getEncoderByCategory(org.opensaml.saml2.core.Attribute.URI_REFERENCE);
-            encodedAttributes.add(enc.encode(attr));
+        Response samlResponse = null;
+        try {
+            samlResponse = buildResponse(message, request.getRemoteHost(), new DateTime(), statement);
+        } catch (EncryptionException e) {
+            log.error("Error encrypting SAML response", e);
+            throw new ServletException("Error encrypting SAML response");
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("built saml2 response: " + samlResponse);
         }
 
-        Response samlResponse = buildResponse(getDecoder().getIssuer(), new DateTime(), encodedAttributes);
-        getEncoder().setSAMLMessage(response);
-        getEncoder().encode();
+        try {
+            encodeResponse(samlResponse);
+        } catch (BindingException e) {
+            log.error("Error encoding attribute query response", e);
+            throw new ServletException("Error encoding attribute query response");
+        }
+
         return true;
     }
-    
-    
+
     /**
      * This builds the response for this SAML request.
      * 
-     *  @param issuer <code>String</code>
-     *  @param issueInstant <code>DateTime</code>
-     *  @param encodedAttributes <code>List</code> of attributes
-     *  @return <code>Response</code>
+     * @param message <code>AttributeQuery</code>
+     * @param dest <code>String</code>
+     * @param issueInstant <code>DateTime</code>
+     * @param statement <code>AttributeStatement</code> of attributes
+     * @return <code>Response</code>
+     * @throws EncryptionException if an error occurs attempting to encrypt data
      */
-    private Response buildResponse(
-            String issuer, DateTime issueInstant, List<org.opensaml.saml2.core.Attribute> encodedAttributes) {
+    public Response buildResponse(org.opensaml.saml2.core.AttributeQuery message, String dest, DateTime issueInstant,
+            AttributeStatement statement) throws EncryptionException {
         SAMLObjectBuilder<Response> responseBuilder = (SAMLObjectBuilder<Response>) getBuilderFactory().getBuilder(
-            Response.DEFAULT_ELEMENT_NAME);
+                Response.DEFAULT_ELEMENT_NAME);
+        /*
+         * required: samlp:Status, ID, Version, IssueInstant
+         */
         Response response = responseBuilder.buildObject();
         response.setVersion(SAML_VERSION);
         response.setID(getIdGenerator().generateIdentifier());
-        response.setInResponseTo(issuer);
+        response.setInResponseTo(getDecoder().getSecurityPolicy().getIssuer().toString());
         response.setIssueInstant(issueInstant);
+        response.setDestination(dest);
 
-        //response.setDestination(String);
-        //response.setConsent(String);
-        //response.setIssuer(Issuer);
-        //response.setExtensions(Extensions);
-        
+        response.setIssuer(buildIssuer());
+        // TODO set consent
+        /*
+         * if (consent != null) { response.setConsent(consent); }
+         */
+        // TODO set extensions
+        /*
+         * if (extensions != null) { response.setExtensions(extensions); }
+         */
+
         response.setStatus(buildStatus());
-        response.getAssertions().add(buildAssertion(issueInstant, encodedAttributes));        
+        if (getRelyingPartyConfiguration().encryptAssertion()) {
+            response.getEncryptedAssertions().add(
+                    getEncrypter().encrypt(buildAssertion(message.getSubject(), issueInstant, statement)));
+        } else {
+            response.getAssertions().add(buildAssertion(message.getSubject(), issueInstant, statement));
+        }
+        return response;
     }
-    
 
     /**
      * This builds the status response for this SAML request.
      * 
-     *  @return <code>Status</code>
+     * @return <code>Status</code>
      */
     private Status buildStatus() {
         // build status
@@ -130,55 +157,114 @@ public class AttributeQuery extends AbstractProfileHandler {
         Status status = statusBuilder.buildObject();
 
         // build status code
-        SAMLObjectBuilder statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) getBuilderFactory().getBuilder(
-                StatusCode.DEFAULT_ELEMENT_NAME);
+        SAMLObjectBuilder<StatusCode> statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) getBuilderFactory()
+                .getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
         StatusCode statusCode = statusCodeBuilder.buildObject();
         statusCode.setValue(StatusCode.SUCCESS_URI);
         status.setStatusCode(statusCode);
         return status;
     }
-    
-    
+
     /**
      * This builds the assertion for this SAML request.
      * 
-     *  @param issueInstant <code>DateTime</code>
-     *  @param encodedAttributes <code>List</code> of attributes
-     *  @return <code>Assertion</code>
+     * @param messageSubject <code>Subject</code>
+     * @param issueInstant <code>DateTime</code>
+     * @param statement <code>AttributeStatement</code> of attributes
+     * @return <code>Assertion</code>
+     * @throws EncryptionException if an error occurs attempting to encrypt data
      */
-    private Assertion buildAssertion(DateTime issueInstant, List<org.opensaml.saml2.core.Attribute> encodedAttributes) {
+    private Assertion buildAssertion(Subject messageSubject, DateTime issueInstant, AttributeStatement statement)
+            throws EncryptionException {
         // build assertions
-        SAMLObjectBuilder assertionBuilder = (SAMLObjectBuilder<Assertion>) getBuilderFactory().getBuilder(
+        SAMLObjectBuilder<Assertion> assertionBuilder = (SAMLObjectBuilder<Assertion>) getBuilderFactory().getBuilder(
                 Assertion.DEFAULT_ELEMENT_NAME);
+        /*
+         * required: saml:Issuer, ID, Version, IssueInstant
+         */
         Assertion assertion = assertionBuilder.buildObject();
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(issueInstant);
         assertion.setVersion(SAML_VERSION);
-        // TODO assertion.setIssuer();
+        assertion.setIssuer(buildIssuer());
 
         // build subject
-        SAMLObjectBuilder subjectBuilder = (SAMLObjectBuilder<Subject>) getBuilderFactory().getBuilder(
+        assertion.setSubject(buildSubject(messageSubject));
+        // build conditions
+        assertion.setConditions(buildConditions(issueInstant));
+        // build advice
+        assertion.setAdvice(buildAdvice());
+        // add attribute statement
+        assertion.getAttributeStatements().add(statement);
+        return assertion;
+    }
+
+    /**
+     * This builds the issuer response for this SAML request.
+     * 
+     * @return <code>Issuer</code>
+     */
+    private Issuer buildIssuer() {
+        // build status
+        SAMLObjectBuilder<Issuer> issuerBuilder = (SAMLObjectBuilder<Issuer>) getBuilderFactory().getBuilder(
+                Issuer.DEFAULT_ELEMENT_NAME);
+        Issuer issuer = issuerBuilder.buildObject();
+        issuer.setValue(getRelyingPartyConfiguration().getProviderID());
+        return issuer;
+    }
+
+    /**
+     * This builds the subject for this SAML request.
+     * 
+     * @param messageSubject <code>Subject</code>
+     * @return <code>Subject</code>
+     * @throws EncryptionException if encryption of the name id fails
+     */
+    private Subject buildSubject(Subject messageSubject) throws EncryptionException {
+        // build subject
+        SAMLObjectBuilder<Subject> subjectBuilder = (SAMLObjectBuilder<Subject>) getBuilderFactory().getBuilder(
                 Subject.DEFAULT_ELEMENT_NAME);
         Subject subject = subjectBuilder.buildObject();
-        // TOTO subject.setNameID(NameID); <- comes from request
-        assertion.setSubject(subject);
+        if (getRelyingPartyConfiguration().encryptNameID()) {
+            subject.setEncryptedID(getEncrypter().encrypt(messageSubject.getNameID()));
+        } else {
+            subject.setNameID(messageSubject.getNameID());
+            // TODO when is subject.setBaseID(newBaseID) called, if ever?
+        }
+        return subject;
+    }
 
-        // build conditions
-        SAMLObjectBuilder conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory().getBuilder(
-                Conditions.DEFAULT_ELEMENT_NAME);
+    /**
+     * This builds the conditions for this SAML request.
+     * 
+     * @param issueInstant <code>DateTime</code>
+     * @return <code>Conditions</code>
+     */
+    private Conditions buildConditions(DateTime issueInstant) {
+        SAMLObjectBuilder<Conditions> conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory()
+                .getBuilder(Conditions.DEFAULT_ELEMENT_NAME);
         Conditions conditions = conditionsBuilder.buildObject();
         conditions.setNotBefore(issueInstant);
-        //TODO conditions.setNotOnOrAfter();
-        //TODO add additional conditions : conditions.getConditions().add(Condition); 
-        assertion.setConditions(conditions);
+        // TODO conditions.setNotOnOrAfter();
+        // TODO add additional conditions : conditions.getConditions().add(Condition);
+        // TODO what about AudienceRestriction, OneTimeUse, ProxyRestriction?
+        return conditions;
+    }
 
-        // build attribute statement
-        SAMLObjectBuilder statementBuilder = (SAMLObjectBuilder<AttributeStatement>) getBuilderFactory().getBuilder(
-                AttributeStatement.DEFAULT_ELEMENT_NAME);
-        AttributeStatement statement = statementBuilder.buildObject();
-        statement.getAttributes().addAll(encodedAttributes);
-        assertion.getAttributeStatements().add(statement);
-        
-        return assertion;
+    /**
+     * This builds the advice for this SAML request.
+     * 
+     * @return <code>Advice</code>
+     */
+    private Advice buildAdvice() {
+        SAMLObjectBuilder<Advice> adviceBuilder = (SAMLObjectBuilder<Advice>) getBuilderFactory().getBuilder(
+                Advice.DEFAULT_ELEMENT_NAME);
+        Advice advice = adviceBuilder.buildObject();
+        // advice.getAssertionIDReferences().add();
+        // advice.getAssertionURIReferences().add();
+        // advice.getAssertions().add();
+        // advice.getEncryptedAssertions().add();
+        // advice.addNamespace(namespace);
+        return advice;
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.profile.saml2;
+package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -27,8 +27,6 @@ import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.MessageDecoder;
 import org.opensaml.common.binding.MessageEncoder;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
-import org.opensaml.saml2.encryption.Encrypter;
-import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.FilteringEngine;
@@ -42,11 +40,11 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 public abstract class AbstractProfileHandler implements ProfileHandler {
 
     /** SAML Version for this profile handler. */
-    public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
+    public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_11;
 
     /** Class logger. */
     private static Logger log = Logger.getLogger(AbstractProfileHandler.class);
-
+    
     /** For building XML. */
     private XMLObjectBuilderFactory builderFactory;
 
@@ -67,12 +65,6 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
 
     /** To determine releasable attributes. */
     private FilteringEngine engine;
-
-    /** Attribute metadata provider. */
-    private MetadataProvider provider;
-
-    /** For encrypting XML. */
-    private Encrypter encrypter;
 
     /**
      * Default constructor.
@@ -173,24 +165,6 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
     }
 
     /**
-     * Sets the metadata provider.
-     * 
-     * @param p <code>MetadataProvider</code>
-     */
-    public void setMetadataProvider(MetadataProvider p) {
-        provider = p;
-    }
-
-    /**
-     * Returns the metadata provider.
-     * 
-     * @return <code>MetadataProvider</code>
-     */
-    public MetadataProvider getMetadataProvider() {
-        return provider;
-    }
-
-    /**
      * Returns the relying party configuration.
      * 
      * @return Returns the relyingParty.
@@ -207,25 +181,7 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
     public void setRelyingPartyConfiguration(RelyingPartyConfiguration c) {
         relyingPartyConfiguration = c;
     }
-
-    /**
-     * Returns the encrypter.
-     * 
-     * @return Returns the encrypter.
-     */
-    public Encrypter getEncrypter() {
-        return encrypter;
-    }
-
-    /**
-     * Sets the encrypter.
-     * 
-     * @param e The encrypter to set.
-     */
-    public void setEncrypter(Encrypter e) {
-        encrypter = e;
-    }
-
+    
     /**
      * This decodes the attribute query message from the supplied request.
      * 
@@ -249,6 +205,7 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
 
         return message;
     }
+    
 
     /**
      * This encodes the supplied response.
@@ -262,5 +219,5 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
         if (log.isDebugEnabled()) {
             log.debug("encoded saml1 response");
         }
-    }
+    }    
 }
