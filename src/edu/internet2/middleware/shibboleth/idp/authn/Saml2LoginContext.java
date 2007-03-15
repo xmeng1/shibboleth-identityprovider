@@ -18,8 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 
 
 import java.util.List;
-
-import javolution.util.FastList;
+import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 
@@ -83,7 +82,7 @@ public class Saml2LoginContext extends LoginContext {
         }
     
         // build a list of all requested authn classes and declrefs
-        List<String> requestedAuthnMethods = new FastList<String>();
+        List<String> requestedAuthnMethods = new LinkedList<String>();
         List<AuthnContextClassRef> authnClasses = ctx.getAuthnContextClassRefs();
         List<AuthnContextDeclRef> authnDeclRefs = ctx.getAuthnContextDeclRefs();
     

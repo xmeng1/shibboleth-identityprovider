@@ -18,7 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 
 
 import java.util.Map;
-import javolution.util.FastMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.joda.time.DateTime;
 
@@ -59,7 +59,7 @@ public class LoginContext {
     protected boolean passiveAuth = false;
     
     /** a catch-all map for other properties */
-    protected Map<String, Object> propsMap = new FastMap<String, Object>();;
+    protected Map<String, Object> propsMap = new ConcurrentHashMap<String, Object>();;
     
     /** The ProfileHandler URL */
     protected String profileHandlerURL;

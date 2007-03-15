@@ -43,32 +43,32 @@ import org.springframework.web.servlet.HttpServletBean;
  * Manager responsible for handling authentication requests.
  */
 public class AuthenticationManager extends HttpServletBean {
-
-	/** log4j. */    
+    
+    /** log4j. */
     private static final Logger log =
-        Logger.getLogger(AuthenticationManager.class.getName());
+	    Logger.getLogger(AuthenticationManager.class.getName());
     
     /** SessionManager to be used. */
     private SessionManager sessionMgr;
     
     /** Map of URIs onto AuthenticationHandlerInfo. */
     private FastMap<String, AuthenticationHandler> handlerMap
-        = new FastMap<String, AuthenticationHandler>();
+	    = new FastMap<String, AuthenticationHandler>();
     
     /** The default AuthenticationHandler. */
     private AuthenticationHandler defaultHandler;
     
     /* The URI for the default AuthenticationHandler. */
     private String defaultHandlerURI;
-
-        
+    
+    
     /**
      * Gets the session manager to be used.
      *
      * @return session manager to be used
      */
     public SessionManager getSessionManager() {
-        return sessionMgr;
+	return sessionMgr;
     }
     
     
@@ -78,7 +78,7 @@ public class AuthenticationManager extends HttpServletBean {
      * @param manager session manager to be used.
      */
     public void setSessionManager(final SessionManager manager) {
-        sessionMgr = manager;
+	sessionMgr = manager;
     }
     
     
@@ -88,8 +88,8 @@ public class AuthenticationManager extends HttpServletBean {
      * @return The map of AuthenticationHandlers
      */
     public Map<String, AuthenticationHandler> getHandlerMap() {
-    
-        return new FastMap<String, AuthenticationHandler>(handlerMap);
+	
+	return new FastMap<String, AuthenticationHandler>(handlerMap);
     }
     
     
@@ -99,10 +99,10 @@ public class AuthenticationManager extends HttpServletBean {
      * @param handlerMap The Map of URIs to AuthenticationHandlers
      */
     public void setHandlerMap(final Map<String, AuthenticationHandler> handlerMap) {
-    
-        for (String uri : handlerMap.keySet()) {
-            addHandlerMapping(uri, handlerMap.get(uri));
-        }
+	
+	for (String uri : handlerMap.keySet()) {
+	    addHandlerMapping(uri, handlerMap.get(uri));
+	}
     }
     
     
@@ -117,15 +117,15 @@ public class AuthenticationManager extends HttpServletBean {
      * @param handler The AuthenticationHandler.
      */
     public void addHandlerMapping(String uri, AuthenticationHandler handler) {
-    
-        if (uri == null || handler == null) {
-            return;
-        }
-    
-        log.debug("registering " + handler.getClass().getName()
-            + " for " + uri);
-    
-        handlerMap.put(uri, handler);
+	
+	if (uri == null || handler == null) {
+	    return;
+	}
+	
+	log.debug("registering " + handler.getClass().getName()
+	+ " for " + uri);
+	
+	handlerMap.put(uri, handler);
     }
     
     
@@ -136,12 +136,12 @@ public class AuthenticationManager extends HttpServletBean {
      * @param handler The default {@link AuthenticationHandler}.
      */
     public void setDefaultHandler(String uri, AuthenticationHandler handler) {
-    
-        log.debug("Registering default handler "
-            + handler.getClass().getName());
-    
-        defaultHandler = handler;
-        defaultHandlerURI = uri;
+	
+	log.debug("Registering default handler "
+		+ handler.getClass().getName());
+	
+	defaultHandler = handler;
+	defaultHandlerURI = uri;
     }
     
     
@@ -154,14 +154,14 @@ public class AuthenticationManager extends HttpServletBean {
      * @param uri A URI identifying the authentcation method.
      */
     public void removeHandlerMapping(String uri) {
-    
-        if (uri == null) {
-            return;
-        }
-    
-        log.debug("unregistering handler for " + uri);
-    
-        handlerMap.remove(uri);
+	
+	if (uri == null) {
+	    return;
+	}
+	
+	log.debug("unregistering handler for " + uri);
+	
+	handlerMap.remove(uri);
     }
     
     
@@ -173,27 +173,27 @@ public class AuthenticationManager extends HttpServletBean {
      * @param resp The ServletResponse.
      */
     public void doPost(HttpServletRequest req,
-        HttpServletResponse resp) throws ServletException, IOException {
-    
-        if (req == null || resp == null) {
-            log.error("Invalid parameters in AuthenticationManager's doPost().");
-            return;
-        }
-    
-        HttpSession httpSession = req.getSession();
-        Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        if (! (o instanceof LoginContext)) {
-            log.error("Invalid login context object -- object is not an instance of LoginContext.");
-            return;
-        }
-        LoginContext loginContext = (LoginContext)o;
-    
-        // If authentication has been attempted, don't try it again.
-        if (loginContext.getAuthenticationAttempted()) {
-            handleNewAuthnRequest(loginContext, req, resp);
-        } else {
-            finishAuthnRequest(loginContext, req, resp);
-        }
+	    HttpServletResponse resp) throws ServletException, IOException {
+	
+	if (req == null || resp == null) {
+	    log.error("Invalid parameters in AuthenticationManager's doPost().");
+	    return;
+	}
+	
+	HttpSession httpSession = req.getSession();
+	Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+	if (! (o instanceof LoginContext)) {
+	    log.error("Invalid login context object -- object is not an instance of LoginContext.");
+	    return;
+	}
+	LoginContext loginContext = (LoginContext)o;
+	
+	// If authentication has been attempted, don't try it again.
+	if (loginContext.getAuthenticationAttempted()) {
+	    handleNewAuthnRequest(loginContext, req, resp);
+	} else {
+	    finishAuthnRequest(loginContext, req, resp);
+	}
     }
     
     
@@ -206,72 +206,72 @@ public class AuthenticationManager extends HttpServletBean {
      * @param servletResponse The associated servlet response.
      */
     private void handleNewAuthnRequest(final LoginContext loginContext,
-        final HttpServletRequest servletRequest,
-        final HttpServletResponse servletResponse) throws ServletException, IOException {
-    
-        boolean forceAuthN = loginContext.getForceAuth();
-        boolean passiveAuthN = loginContext.getPassiveAuth();
-    
-        // set that authentication has been attempted, to prevent processing loops
-        loginContext.setAuthenticationAttempted();
-    
-        // if the profile handler set a list of requested authn methods,
-        // evaluate them. otherwise, evaluate the default handler.
-        String[] requestedAuthnMethods = loginContext.getRequestedAuthenticationMethods();
-        AuthenticationHandler handler = null;
-    
-        if (requestedAuthnMethods == null) {
-
-            // if no authn methods were specified, try the default handler
-            
-            if (evaluateHandler(defaultHandler, "default", forceAuthN, passiveAuthN)) {
-                handler = defaultHandler;
-                loginContext.setAuthenticationMethod(defaultHandlerURI);
-            }
-        
-        } else { 
-    
-            // evaluate all requested authn methods until we find a match.
-
-            for (String authnMethodURI : requestedAuthnMethods) {
-
-            AuthenticationHandler candidateHandler = handlerMap.get(authnMethodURI);
-            if (candidateHandler == null) {
-                log.debug("No registered authentication handlers can satisfy the "
-                    + " requested authentication method " + authnMethodURI);
-                continue;
-            }
-
-            if (evaluateHandler(candidateHandler, authnMethodURI, forceAuthN, passiveAuthN)) {
-
-                // we found a match. stop iterating.
-                handler = candidateHandler;
-                log.info("Using authentication handler " + handler.getClass().getName()
-                    + " for authentication method " + authnMethodURI);
-                loginContext.setAuthenticationMethod(authnMethodURI);
-                break;
-            }
-        }
-    }
-
-    // if no acceptable handler was found, abort.
-    if (handler == null) {
-        loginContext.setAuthenticationOK(false);
-        loginContext.setAuthenticationFailureMessage(
-            "No installed AuthenticationHandler can satisfy the authentication request.");
-        
-        log.error("No registered authentication handlers could satisify any requested "
-            + "authentication methods. Unable to process authentication request.");
-        
-        RequestDispatcher dispatcher =
-            servletRequest.getRequestDispatcher(loginContext.getProfileHandlerURL());
-        dispatcher.forward(servletRequest, servletResponse);
-    }
-    
-    // otherwise, forward control to the AuthenticationHandler
-    ServletContext servletContext = getServletContext();
-    loginContext.setAuthenticationManagerURL(servletRequest.getPathInfo());
-    handler.login(servletRequest, servletResponse, loginContext);
+	final HttpServletRequest servletRequest,
+	final HttpServletResponse servletResponse) throws ServletException, IOException {
+	
+	boolean forceAuthN = loginContext.getForceAuth();
+	boolean passiveAuthN = loginContext.getPassiveAuth();
+	
+	// set that authentication has been attempted, to prevent processing loops
+	loginContext.setAuthenticationAttempted();
+	
+	// if the profile handler set a list of requested authn methods,
+	// evaluate them. otherwise, evaluate the default handler.
+	String[] requestedAuthnMethods = loginContext.getRequestedAuthenticationMethods();
+	AuthenticationHandler handler = null;
+	
+	if (requestedAuthnMethods == null) {
+	    
+	    // if no authn methods were specified, try the default handler
+	    
+	    if (evaluateHandler(defaultHandler, "default", forceAuthN, passiveAuthN)) {
+		handler = defaultHandler;
+		loginContext.setAuthenticationMethod(defaultHandlerURI);
+	    }
+	    
+	} else {
+	    
+	    // evaluate all requested authn methods until we find a match.
+	    
+	    for (String authnMethodURI : requestedAuthnMethods) {
+		
+		AuthenticationHandler candidateHandler = handlerMap.get(authnMethodURI);
+		if (candidateHandler == null) {
+		    log.debug("No registered authentication handlers can satisfy the "
+			+ " requested authentication method " + authnMethodURI);
+		    continue;
+		}
+		
+		if (evaluateHandler(candidateHandler, authnMethodURI, forceAuthN, passiveAuthN)) {
+		    
+		    // we found a match. stop iterating.
+		    handler = candidateHandler;
+		    log.info("Using authentication handler " + handler.getClass().getName()
+			+ " for authentication method " + authnMethodURI);
+		    loginContext.setAuthenticationMethod(authnMethodURI);
+		    break;
+		}
+	    }
+	}
+	
+	// if no acceptable handler was found, abort.
+	if (handler == null) {
+	    loginContext.setAuthenticationOK(false);
+	    loginContext.setAuthenticationFailureMessage(
+		    "No installed AuthenticationHandler can satisfy the authentication request.");
+	    
+	    log.error("No registered authentication handlers could satisify any requested "
+		    + "authentication methods. Unable to process authentication request.");
+	    
+	    RequestDispatcher dispatcher =
+		    servletRequest.getRequestDispatcher(loginContext.getProfileHandlerURL());
+	    dispatcher.forward(servletRequest, servletResponse);
+	}
+	
+	// otherwise, forward control to the AuthenticationHandler
+	ServletContext servletContext = getServletContext();
+	loginContext.setAuthenticationManagerURL(servletRequest.getPathInfo());
+	handler.login(servletRequest, servletResponse, loginContext);
     }
     
     
@@ -281,38 +281,36 @@ public class AuthenticationManager extends HttpServletBean {
      *
      */
     private void finishAuthnRequest(final LoginContext loginContext,
-        final HttpServletRequest servletRequest,
-        final HttpServletResponse servletResponse) throws ServletException, IOException {
-    
-        // if authentication was successful, the authentication handler should
-        // have updated the LoginContext with additional information. Use that
-        // info to create a Session.
-        if (loginContext.getAuthenticationOK()) {
-        
-            AuthenticationMethodInformationImpl authMethodInfo =
-                new AuthenticationMethodInformationImpl(
-                    loginContext.getAuthenticationMethod(),
-                    loginContext.getAuthenticationInstant(),
-                    loginContext.getAuthenticationDuration());
-        
-            InetAddress addr;
-            try {
-                addr = InetAddress.getByName(servletRequest.getRemoteAddr());
-            } catch (Exception ex) {
-                addr = null;
-            }
-            
-            Session shibSession = (Session) sessionMgr.createSession(addr,
-                    loginContext.getUserID());
-            List<AuthenticationMethodInformation> authMethods =
-                    shibSession.getAuthenticationMethods();
-            authMethods.add(authMethodInfo);
-            loginContext.setSessionID(shibSession.getSessionID());
-        }
-    
-        RequestDispatcher dispatcher =
-            servletRequest.getRequestDispatcher(loginContext.getProfileHandlerURL());
-        dispatcher.forward(servletRequest, servletResponse);
+	final HttpServletRequest servletRequest,
+	final HttpServletResponse servletResponse) throws ServletException, IOException {
+	
+	// if authentication was successful, the authentication handler should
+	// have updated the LoginContext with additional information. Use that
+	// info to create a Session.
+	if (loginContext.getAuthenticationOK()) {
+	    
+	    AuthenticationMethodInformation authMethodInfo = new AuthenticationMethodInformationImpl(
+		loginContext.getAuthenticationMethod(), loginContext.getAuthenticationInstant(),
+		loginContext.getAuthenticationDuration());
+	    
+	    InetAddress addr;
+	    try {
+		addr = InetAddress.getByName(servletRequest.getRemoteAddr());
+	    } catch (Exception ex) {
+		addr = null;
+	    }
+	    
+	    Session shibSession = (Session) sessionMgr.createSession(addr,
+		loginContext.getUserID());
+	    List<AuthenticationMethodInformation> authMethods =
+		shibSession.getAuthenticationMethods();
+	    authMethods.add(authMethodInfo);
+	    loginContext.setSessionID(shibSession.getSessionID());
+	}
+	
+	RequestDispatcher dispatcher =
+	    servletRequest.getRequestDispatcher(loginContext.getProfileHandlerURL());
+	dispatcher.forward(servletRequest, servletResponse);
     }
     
     
@@ -320,8 +318,8 @@ public class AuthenticationManager extends HttpServletBean {
      * "Stub" method for handling LogoutRequest.
      */
     private void handleLogoutRequest(final HttpServletRequest servletRequest,
-        final HttpServletResponse servletResponse) throws ServletException, IOException {
-    
+	final HttpServletResponse servletResponse) throws ServletException, IOException {
+	
     }
     
     
@@ -336,24 +334,24 @@ public class AuthenticationManager extends HttpServletBean {
      * @return <code>true</code> if handler meets the criteria, otherwise <code>false</code>
      */
     private boolean evaluateHandler(final AuthenticationHandler handler,
-        String description, boolean forceAuthN, boolean passiveAuthN) {
-    
-        if (handler == null) {
-            return false;
-        }
-    
-        if (forceAuthN && !handler.supportsForceAuthentication()) {
-            log.debug("The RequestedAuthnContext required forced authentication, "
-                + "but the " + description + " handler does not support that feature.");
-            return false;
-        }
-    
-        if (passiveAuthN && !handler.supportsPassive()) {
-            log.debug("The RequestedAuthnContext required passive authentication, "
-                + "but the " + description + " handler does not support that feature.");
-            return false;
-        }
-    
-        return true;
+	String description, boolean forceAuthN, boolean passiveAuthN) {
+	
+	if (handler == null) {
+	    return false;
+	}
+	
+	if (forceAuthN && !handler.supportsForceAuthentication()) {
+	    log.debug("The RequestedAuthnContext required forced authentication, "
+		+ "but the " + description + " handler does not support that feature.");
+	    return false;
+	}
+	
+	if (passiveAuthN && !handler.supportsPassive()) {
+	    log.debug("The RequestedAuthnContext required passive authentication, "
+		+ "but the " + description + " handler does not support that feature.");
+	    return false;
+	}
+	
+	return true;
     }
 }
