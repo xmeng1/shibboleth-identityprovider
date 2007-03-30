@@ -16,9 +16,10 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
+import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
+
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -35,7 +36,7 @@ import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml1.core.SubjectStatement;
 import org.opensaml.xml.encryption.EncryptionException;
 
-import edu.internet2.middleware.shibboleth.common.attribute.filtering.FilteringException;
+import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
 
 /**
@@ -47,7 +48,7 @@ public class AttributeQuery extends AbstractProfileHandler {
     private static Logger log = Logger.getLogger(AttributeQuery.class);
 
     /** {@inheritDoc} */
-    public boolean processRequest(ServletRequest request, ServletResponse response) throws ServletException {
+    public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {
         if (log.isDebugEnabled()) {
             log.debug("begin processRequest");
         }

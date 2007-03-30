@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
- * SAML 2.0 Artifact resolution profile handler
+ * SAML 2.0 Artifact resolution profile handler.
  */
 public class ArtifactResolution implements ProfileHandler {
 
     /** {@inheritDoc} */
-    public boolean processRequest(ServletRequest request, ServletResponse response) throws ServletException {
+    public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {
         // TODO Auto-generated method stub
         return false;
     }
