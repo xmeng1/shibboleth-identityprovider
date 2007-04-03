@@ -62,6 +62,7 @@ import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.xml.parse.BasicParserPool;
 import org.opensaml.xml.parse.ParserPool;
 import org.opensaml.xml.parse.XMLParserException;
 import org.w3c.dom.Document;
@@ -132,7 +133,7 @@ public class AuthenticationRequest extends AbstractProfileHandler {
      */
     public AuthenticationRequest() {
 
-        parserPool = new ParserPool();
+        parserPool = new BasicParserPool();
         artifactFactory = new SAMLArtifactFactory();
 
         assertionBuilder = getBuilderFactory().getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
