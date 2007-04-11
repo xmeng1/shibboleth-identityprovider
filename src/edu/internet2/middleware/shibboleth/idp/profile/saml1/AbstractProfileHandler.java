@@ -17,22 +17,17 @@
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import org.apache.log4j.Logger;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.binding.BindingException;
-import org.opensaml.common.binding.MessageDecoder;
-import org.opensaml.common.binding.MessageEncoder;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 
-import edu.internet2.middleware.shibboleth.common.attribute.filtering.FilteringEngine;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolver;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 
 /**
  * Common implementation details for profile handlers.
@@ -50,15 +45,6 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
 
     /** For generating random ids. */
     private SecureRandomIdentifierGenerator idGenerator;
-
-    /** For decoding requests. */
-    private MessageDecoder<ServletRequest> decoder;
-
-    /** For encoding responses. */
-    private MessageEncoder<ServletResponse> encoder;
-
-    /** Relying party configuration. */
-    private RelyingPartyConfiguration relyingPartyConfiguration;
 
     /** For resolving attributes. */
     private AttributeResolver resolver;
@@ -90,42 +76,6 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
      */
     public SecureRandomIdentifierGenerator getIdGenerator() {
         return idGenerator;
-    }
-
-    /**
-     * Sets the decoder.
-     * 
-     * @param d <code>MessageDecoder</code>
-     */
-    public void setDecoder(MessageDecoder<ServletRequest> d) {
-        decoder = d;
-    }
-
-    /**
-     * Returns the decoder.
-     * 
-     * @return <code>MessageDecoder</code>
-     */
-    public MessageDecoder<ServletRequest> getDecoder() {
-        return decoder;
-    }
-
-    /**
-     * Sets the encoder.
-     * 
-     * @param e <code>MessageEncoder</code>
-     */
-    public void setEncoder(MessageEncoder<ServletResponse> e) {
-        encoder = e;
-    }
-
-    /**
-     * Returns the encoder.
-     * 
-     * @return <code>MessageEncoder</code>
-     */
-    public MessageEncoder<ServletResponse> getEncoder() {
-        return encoder;
     }
 
     /**
@@ -162,24 +112,6 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
      */
     public FilteringEngine getFilteringEngine() {
         return engine;
-    }
-
-    /**
-     * Returns the relying party configuration.
-     * 
-     * @return Returns the relyingParty.
-     */
-    public RelyingPartyConfiguration getRelyingPartyConfiguration() {
-        return relyingPartyConfiguration;
-    }
-
-    /**
-     * Sets the relying party configuration.
-     * 
-     * @param c The relyingParty to set.
-     */
-    public void setRelyingPartyConfiguration(RelyingPartyConfiguration c) {
-        relyingPartyConfiguration = c;
     }
     
     /**

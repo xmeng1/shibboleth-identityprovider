@@ -16,10 +16,10 @@
 package edu.internet2.middleware.shibboleth.idp.profile.adfs;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
  * ADFS (Active Directory Federation Service) single sign-on profile handler
@@ -27,7 +27,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 public class SingleSignOn implements ProfileHandler {
 
     /** {@inheritDoc} */
-    public boolean processRequest(ServletRequest request, ServletResponse response) throws ServletException {
+    public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {
         // TODO Auto-generated method stub
         return false;
     }

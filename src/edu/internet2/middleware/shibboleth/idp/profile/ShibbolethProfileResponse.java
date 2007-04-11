@@ -16,41 +16,55 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
-import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
+import org.opensaml.common.SAMLObject;
+import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.MessageEncoder;
+import org.opensaml.xml.XMLObject;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
  * Shibboleth {@link ProfileResponse}.
  */
-public class ShibbolethProfileResponse implements ProfileResponse {
+public class ShibbolethProfileResponse implements ProfileResponse<HttpServletResponse> {
 
-    /** Response to send back to client. */
-    private ServletResponse response;
+    /** Encoder used to send the response. */
+    private MessageEncoder<HttpServletResponse> messageEncoder;
 
-    /** For encoding responses. */
-    private MessageEncoder<ServletResponse> messageEncoder;
+    /** The outgoing response. */
+    private HttpServletResponse rawResponse;
 
     /**
      * Constructor.
      * 
-     * @param r to send back
-     * @param e for encoding the servlet response
+     * @param response the raw response
+     * @param encoder the encoder used to encode the response
      */
-    public ShibbolethProfileResponse(ServletResponse r, MessageEncoder<ServletResponse> e) {
-        response = r;
-        messageEncoder = e;
+    public ShibbolethProfileResponse(HttpServletResponse response, MessageEncoder<HttpServletResponse> encoder) {
+        rawResponse = response;
+        messageEncoder = encoder;
     }
 
     /** {@inheritDoc} */
-    public ServletResponse getResponse() {
-        return response;
-    }
-
-    /** {@inheritDoc} */
-    public MessageEncoder<ServletResponse> getMessageEncoder() {
+    public MessageEncoder<HttpServletResponse> getMessageEncoder() {
         return messageEncoder;
+    }
+
+    /** {@inheritDoc} */
+    public HttpServletResponse getRawResponse() {
+        return rawResponse;
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @throws BindingException thrown if the message can not be encoded and sent to the relying party
+     */
+    public void sendResponse(XMLObject response) throws BindingException {
+        messageEncoder.setResponse(rawResponse);
+        messageEncoder.setSAMLMessage((SAMLObject) response);
+        messageEncoder.encode();
     }
 }

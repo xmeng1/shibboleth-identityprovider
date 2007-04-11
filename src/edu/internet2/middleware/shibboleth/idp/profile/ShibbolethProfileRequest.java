@@ -16,41 +16,81 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
-import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
+import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.MessageDecoder;
+import org.opensaml.xml.XMLObject;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyManager;
+import edu.internet2.middleware.shibboleth.common.session.SessionManager;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * Shibboleth {@link ProfileRequest}.
  */
-public class ShibbolethProfileRequest implements ProfileRequest {
+public class ShibbolethProfileRequest implements ProfileRequest<HttpServletRequest, Session> {
 
-    /** Request to process. */
-    private ServletRequest request;
+    /** Decoder used to decode the incomming request. */
+    private MessageDecoder<HttpServletRequest> messageDecoder;
 
-    /** For decoding requests. */
-    private MessageDecoder<ServletRequest> messageDecoder;
+    /** The in comming request. */
+    private HttpServletRequest rawRequest;
+
+    /** Configuration information for the requesting party. */
+    private RelyingPartyConfiguration rpConfiguration;
+
+    /** The decoded request message. */
+    private XMLObject decodedMessage;
+
+    /** The current user session. */
+    private Session userSession;
 
     /**
      * Constructor.
      * 
-     * @param r to process
-     * @param d for decoding the servlet request
+     * @param request the incomming HTTP request
+     * @param decoder the decoder for the request, all information but the request must be set already
+     * @param sessionManager the manager of current user sessions
+     * @param rpConfigManager the relying party configuration manager
      */
-    public ShibbolethProfileRequest(ServletRequest r, MessageDecoder<ServletRequest> d) {
-        request = r;
-        messageDecoder = d;
+    public ShibbolethProfileRequest(HttpServletRequest request, MessageDecoder<HttpServletRequest> decoder,
+            SessionManager<Session> sessionManager, RelyingPartyManager rpConfigManager){
+
+        rawRequest = request;
+        userSession = sessionManager.getSession(request.getSession().getId());
+        messageDecoder = decoder;
     }
 
     /** {@inheritDoc} */
-    public ServletRequest getRequest() {
-        return request;
-    }
-
-    /** {@inheritDoc} */
-    public MessageDecoder<ServletRequest> getMessageDecoder() {
+    public MessageDecoder<HttpServletRequest> getMessageDecoder() {
         return messageDecoder;
+    }
+
+    /** {@inheritDoc} */
+    public HttpServletRequest getRawRequest() {
+        return rawRequest;
+    }
+
+    /** {@inheritDoc} */
+    public RelyingPartyConfiguration getRelyingPartyConfiguration() {
+        return rpConfiguration;
+    }
+
+    /** {@inheritDoc} */
+    public synchronized XMLObject getRequest() throws BindingException{
+        if(decodedMessage == null){
+            messageDecoder.setRequest(rawRequest);
+            messageDecoder.decode();
+            decodedMessage = messageDecoder.getSAMLMessage();
+        }
+        return decodedMessage;
+    }
+
+    /** {@inheritDoc} */
+    public Session getSession() {
+        return userSession;
     }
 }

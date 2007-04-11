@@ -64,9 +64,6 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
     /** For generating random ids. */
     private IdentifierGenerator idGenerator;
 
-    /** Relying party configuration. */
-    private RelyingPartyManager relyingPartyManager;
-
     /** Builder for Response elements. */
     protected XMLObjectBuilder responseBuilder;
 
@@ -112,24 +109,6 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
      */
     public IdentifierGenerator getIdGenerator() {
         return idGenerator;
-    }
-
-    /**
-     * Returns the relying party manager.
-     * 
-     * @return Returns the relyingPartyManager.
-     */
-    public RelyingPartyManager getRelyingPartyManager() {
-        return relyingPartyManager;
-    }
-
-    /**
-     * Sets the relying party manager.
-     * 
-     * @param m The relyingPartyManager to set.
-     */
-    public void setRelyingPartyManager(RelyingPartyManager m) {
-        relyingPartyManager = m;
     }
 
     /**
