@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<AttributeReleasePolicy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:mace:shibboleth:arp:1.0" xsi:schemaLocation="urn:mace:shibboleth:arp:1.0 shibboleth-arp-1.0.xsd" >
-	<Description>A Rule Reference.</Description>
-	<RuleReference identifier="http://example.edu/rules/rule11" />
-</AttributeReleasePolicy>
