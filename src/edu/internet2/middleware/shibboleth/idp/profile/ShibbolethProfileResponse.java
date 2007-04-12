@@ -18,10 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.profile;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.opensaml.common.SAMLObject;
-import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.MessageEncoder;
-import org.opensaml.xml.XMLObject;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
@@ -29,9 +26,6 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
  * Shibboleth {@link ProfileResponse}.
  */
 public class ShibbolethProfileResponse implements ProfileResponse<HttpServletResponse> {
-
-    /** Encoder used to send the response. */
-    private MessageEncoder<HttpServletResponse> messageEncoder;
 
     /** The outgoing response. */
     private HttpServletResponse rawResponse;
@@ -44,27 +38,10 @@ public class ShibbolethProfileResponse implements ProfileResponse<HttpServletRes
      */
     public ShibbolethProfileResponse(HttpServletResponse response, MessageEncoder<HttpServletResponse> encoder) {
         rawResponse = response;
-        messageEncoder = encoder;
-    }
-
-    /** {@inheritDoc} */
-    public MessageEncoder<HttpServletResponse> getMessageEncoder() {
-        return messageEncoder;
     }
 
     /** {@inheritDoc} */
     public HttpServletResponse getRawResponse() {
         return rawResponse;
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @throws BindingException thrown if the message can not be encoded and sent to the relying party
-     */
-    public void sendResponse(XMLObject response) throws BindingException {
-        messageEncoder.setResponse(rawResponse);
-        messageEncoder.setSAMLMessage((SAMLObject) response);
-        messageEncoder.encode();
     }
 }

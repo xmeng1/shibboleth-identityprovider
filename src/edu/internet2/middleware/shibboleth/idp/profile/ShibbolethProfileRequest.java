@@ -18,9 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.profile;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.MessageDecoder;
-import org.opensaml.xml.XMLObject;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
@@ -33,17 +31,11 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
  */
 public class ShibbolethProfileRequest implements ProfileRequest<HttpServletRequest, Session> {
 
-    /** Decoder used to decode the incomming request. */
-    private MessageDecoder<HttpServletRequest> messageDecoder;
-
     /** The in comming request. */
     private HttpServletRequest rawRequest;
 
     /** Configuration information for the requesting party. */
     private RelyingPartyConfiguration rpConfiguration;
-
-    /** The decoded request message. */
-    private XMLObject decodedMessage;
 
     /** The current user session. */
     private Session userSession;
@@ -61,12 +53,6 @@ public class ShibbolethProfileRequest implements ProfileRequest<HttpServletReque
 
         rawRequest = request;
         userSession = sessionManager.getSession(request.getSession().getId());
-        messageDecoder = decoder;
-    }
-
-    /** {@inheritDoc} */
-    public MessageDecoder<HttpServletRequest> getMessageDecoder() {
-        return messageDecoder;
     }
 
     /** {@inheritDoc} */
@@ -77,16 +63,6 @@ public class ShibbolethProfileRequest implements ProfileRequest<HttpServletReque
     /** {@inheritDoc} */
     public RelyingPartyConfiguration getRelyingPartyConfiguration() {
         return rpConfiguration;
-    }
-
-    /** {@inheritDoc} */
-    public synchronized XMLObject getRequest() throws BindingException{
-        if(decodedMessage == null){
-            messageDecoder.setRequest(rawRequest);
-            messageDecoder.decode();
-            decodedMessage = messageDecoder.getSAMLMessage();
-        }
-        return decodedMessage;
     }
 
     /** {@inheritDoc} */
