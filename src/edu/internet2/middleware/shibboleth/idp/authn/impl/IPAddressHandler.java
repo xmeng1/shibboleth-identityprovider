@@ -82,7 +82,7 @@ public class IPAddressHandler implements AuthenticationHandler {
 		this.defaultDeny = defaultDeny;
 	}
 
-	/** {@inheritDoc  */
+	/** {@inheritDoc   */
 	public void setReturnLocation(String location) {
 		this.returnLocation = location;
 	}
@@ -102,42 +102,28 @@ public class IPAddressHandler implements AuthenticationHandler {
 			HttpServletResponse response, String principal) {
 
 		RequestDispatcher dispatcher = request
-				.getRequestDispatcher(this.returnLocation);
-		dispatcher.forward(request, response);
+				.getRequestDispatcher(returnLocation);
+		// dispatcher.forward(request, response);
 	}
 
 	/** {@inheritDoc} */
 	public void login(HttpServletRequest request, HttpServletResponse response,
-			boolean passive, boolean force) {
-
-		HttpSession httpSession = request.getSession();
-		if (httpSession == null) {
-			log.error("Unable to retrieve HttpSession from request.");
-			return;
-		}
-		Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-		if (!(o instanceof LoginContext)) {
-			log
-					.error("Invalid login context object -- object is not an instance of LoginContext.");
-			return;
-		}
-		LoginContext loginContext = (LoginContext) o;
+			LoginContext loginCtx) {
 
 		loginContext.setAuthenticationAttempted();
 		loginContext.setAuthenticationInstant(new DateTime());
 
-		if (this.defaultDeny) {
-			this.handleDefaultDeny(request, response, loginContext);
+		if (defaultDeny) {
+			handleDefaultDeny(request, response, loginContext);
 		} else {
-			this.handleDefaultAllow(request, response, loginContext);
+			handleDefaultAllow(request, response, loginContext);
 		}
-
 	}
 
-	private void handleDefaultDeny(HttpServletRequest request,
+	protected void handleDefaultDeny(HttpServletRequest request,
 			HttpServletResponse response, LoginContext loginCtx) {
 
-		boolean ipAllowed = this.searchIpList(request);
+		boolean ipAllowed = searchIpList(request);
 
 		if (ipAllowed) {
 			loginCtx.setAuthenticationOK(true);
@@ -148,10 +134,10 @@ public class IPAddressHandler implements AuthenticationHandler {
 		}
 	}
 
-	private void handleDefaultAllow(HttpServletRequest request,
+	protected void handleDefaultAllow(HttpServletRequest request,
 			HttpServletResponse response, LoginContext loginCtx) {
 
-		boolean ipDenied = this.searchIpList(request);
+		boolean ipDenied = searchIpList(request);
 
 		if (ipDenied) {
 			loginCtx.setAuthenticationOK(false);
@@ -179,7 +165,7 @@ public class IPAddressHandler implements AuthenticationHandler {
 			InetAddress[] addrs = InetAddress.getAllByName(request
 					.getRemoteAddr());
 			for (InetAddress a : addrs) {
-				if (this.ipList.contains(a)) {
+				if (ipList.contains(a)) {
 					found = true;
 					break;
 				}
