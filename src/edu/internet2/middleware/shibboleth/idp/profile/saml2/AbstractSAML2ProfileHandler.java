@@ -111,40 +111,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
-     * This decodes the attribute query message from the supplied request.
-     * 
-     * @param decoder <code>MessageDecoder</code>
-     * @param request <code>ServletRequest</code>
-     * @return <code>SAMLObject</code>
-     * @throws BindingException if the request cannot be decoded
-     */
-    public static SAMLObject decodeMessage(MessageDecoder<ServletRequest> decoder, ServletRequest request)
-            throws BindingException {
-
-        decoder.setRequest(request);
-        decoder.decode();
-        if (log.isDebugEnabled()) {
-            log.debug("decoded servlet request");
-        }
-
-        return decoder.getSAMLMessage();
-    }
-
-    /**
-     * This encodes the supplied response.
-     * 
-     * @param encoder <code>MessageEncoder</code>
-     * @param response <code>SAMLObject</code>
-     * @throws BindingException if the response cannot be encoded
-     */
-    public static void encodeResponse(MessageEncoder<ServletResponse> encoder, SAMLObject response)
-            throws BindingException {
-
-        encoder.setSAMLMessage(response);
-        encoder.encode();
-    }
-
-    /**
      * Build a status message, with an optional second-level failure message.
      * 
      * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
