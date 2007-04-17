@@ -34,9 +34,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyManager;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 
@@ -79,7 +78,7 @@ import org.opensaml.xml.signature.Signature;
  * 
  * This profile implements the SSO profile from "Shibboleth Architecture Protocols and Profiles" - 10 September 2005.
  */
-public class ShibbolethSSO extends AbstractProfileHandler {
+public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
 
     /** log4j. */
     private static final Logger log = Logger.getLogger(ShibbolethSSO.class);
@@ -103,7 +102,7 @@ public class ShibbolethSSO extends AbstractProfileHandler {
     protected static final String RP_COOKIE_DIGEST_ALG = "SHA-1";
 
     /** The RelyingPartyManager. */
-    protected RelyingPartyManager rpManager;
+    protected RelyingPartyConfigurationManager rpManager;
 
     /**
      * Backing store for artifacts. This must be shared between ShibbolethSSO and AttributeQuery.
@@ -214,7 +213,7 @@ public class ShibbolethSSO extends AbstractProfileHandler {
      * 
      * @param rpManager A RelyingPartyManager.
      */
-    public void setRelyingPartyManager(RelyingPartyManager rpManager) {
+    public void setRelyingPartyManager(RelyingPartyConfigurationManager rpManager) {
         this.rpManager = rpManager;
     }
 

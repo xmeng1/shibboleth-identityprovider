@@ -16,29 +16,14 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
-import javax.servlet.http.HttpServletRequest;
-
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.AbstractProfileHandler;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
- * Shibboleth {@link ProfileRequest}.
+ * Base class for SAML profile handlers.
  */
-public class ShibbolethProfileRequest implements ProfileRequest<HttpServletRequest> {
+public abstract class AbstractSAMLProfileHandler extends
+        AbstractProfileHandler<SAMLMDRelyingPartyConfigurationManager, Session> {
 
-    /** The in comming request. */
-    private HttpServletRequest rawRequest;
-
-    /**
-     * Constructor.
-     * 
-     * @param request the incomming HTTP request
-     */
-    public ShibbolethProfileRequest(HttpServletRequest request){
-        rawRequest = request;
-    }
-
-    /** {@inheritDoc} */
-    public HttpServletRequest getRawRequest() {
-        return rawRequest;
-    }
 }

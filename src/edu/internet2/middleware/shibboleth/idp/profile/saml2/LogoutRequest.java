@@ -18,14 +18,13 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import javax.servlet.ServletException;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
  * SAML 2.0 Logout Request profile handler.
  */
-public class LogoutRequest implements ProfileHandler {
+public class LogoutRequest extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
     public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {

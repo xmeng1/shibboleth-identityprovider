@@ -24,31 +24,22 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.servlet.HttpServletBean;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyManager;
-import edu.internet2.middleware.shibboleth.common.session.SessionManager;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
+import edu.internet2.middleware.shibboleth.common.profile.AbstractProfileHandler;
 
 /**
- * Servlet responsible for dispatching incoming requests to the appropriate {@link ProfileHandler}.
+ * Servlet responsible for dispatching incoming requests to the appropriate {@link AbstractProfileHandler}.
  */
 public class ProfileRequestDispatcher extends HttpServletBean {
 
     /** Registered profile handlers. */
-    private Map<String, ProfileHandler> profileHandlers;
-
-    /** User session manager. */
-    private SessionManager<Session> sessionManager;
-
-    /** Relying party configuration manager. */
-    private RelyingPartyManager rpManager;
+    private Map<String, AbstractProfileHandler> profileHandlers;
 
     /**
      * Gets the profile handlers currently registered.
      * 
      * @return profile handlers currently registered
      */
-    public Map<String, ProfileHandler> getProfileHandlers() {
+    public Map<String, AbstractProfileHandler> getProfileHandlers() {
         return profileHandlers;
     }
 
@@ -57,18 +48,18 @@ public class ProfileRequestDispatcher extends HttpServletBean {
      * 
      * @param handlers the profile handlers to use
      */
-    public void setProfileHandlers(Map<String, ProfileHandler> handlers) {
+    public void setProfileHandlers(Map<String, AbstractProfileHandler> handlers) {
         profileHandlers = handlers;
     }
 
     /** {@inheritDoc} */
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         String path = request.getPathInfo();
-        ProfileHandler handler = profileHandlers.get(path);
+        AbstractProfileHandler handler = profileHandlers.get(path);
 
         if (handler != null) {
-            ShibbolethProfileRequest profileReq = new ShibbolethProfileRequest(request, null, sessionManager, rpManager);
-            ShibbolethProfileResponse profileResp = new ShibbolethProfileResponse(response, null);
+            ShibbolethProfileRequest profileReq = new ShibbolethProfileRequest(request);
+            ShibbolethProfileResponse profileResp = new ShibbolethProfileResponse(response);
             handler.processRequest(profileReq, profileResp);
         }
 

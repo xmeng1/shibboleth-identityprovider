@@ -44,19 +44,18 @@ import org.opensaml.saml2.core.Subject;
 import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyManager;
+import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
 
 /**
  * Common implementation details for profile handlers.
  */
-public abstract class AbstractProfileHandler implements ProfileHandler {
+public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHandler {
 
     /** SAML Version for this profile handler. */
     public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
 
     /** Class logger. */
-    private static Logger log = Logger.getLogger(AbstractProfileHandler.class);
+    private static Logger log = Logger.getLogger(AbstractSAML2ProfileHandler.class);
 
     /** For building XML. */
     private XMLObjectBuilderFactory builderFactory;
@@ -82,7 +81,7 @@ public abstract class AbstractProfileHandler implements ProfileHandler {
     /**
      * Default constructor.
      */
-    public AbstractProfileHandler() {
+    public AbstractSAML2ProfileHandler() {
         builderFactory = Configuration.getBuilderFactory();
         idGenerator = new SecureRandomIdentifierGenerator();
 

@@ -18,8 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.profile;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.opensaml.common.binding.MessageEncoder;
-
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
@@ -34,9 +32,9 @@ public class ShibbolethProfileResponse implements ProfileResponse<HttpServletRes
      * Constructor.
      * 
      * @param response the raw response
-     * @param encoder the encoder used to encode the response
+
      */
-    public ShibbolethProfileResponse(HttpServletResponse response, MessageEncoder<HttpServletResponse> encoder) {
+    public ShibbolethProfileResponse(HttpServletResponse response) {
         rawResponse = response;
     }
 

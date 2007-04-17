@@ -17,14 +17,13 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import javax.servlet.ServletException;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
  * SAML 1 Artifact Query profile handler.
  */
-public class ArtifactQuery implements ProfileHandler {
+public class ArtifactQuery extends AbstractSAML1ProfileHandler {
 
     /** {@inheritDoc} */
     public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {

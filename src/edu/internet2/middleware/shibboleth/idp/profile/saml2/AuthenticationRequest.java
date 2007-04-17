@@ -71,7 +71,7 @@ import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyManager;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
@@ -80,7 +80,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 /**
  * SAML 2.0 Authentication Request profile handler
  */
-public class AuthenticationRequest extends AbstractProfileHandler {
+public class AuthenticationRequest extends AbstractSAML2ProfileHandler {
 
     private static final Logger log = Logger.getLogger(AuthenticationRequest.class.getName());
 
@@ -88,7 +88,7 @@ public class AuthenticationRequest extends AbstractProfileHandler {
     public static final String SAML20_PROTOCOL_URI = "urn:oasis:names:tc:SAML:2.0:protocol";
 
     /** The RelyingPartyManager. */
-    protected RelyingPartyManager rpManager;
+    protected RelyingPartyConfigurationManager rpManager;
 
     /**
      * Backing store for artifacts. This must be shared between ShibbolethSSO and AttributeQuery.
@@ -159,7 +159,7 @@ public class AuthenticationRequest extends AbstractProfileHandler {
      * 
      * @param rpManager The IdP's RelyingParyManager.
      */
-    public void setRelyingPartyManager(RelyingPartyManager rpManager) {
+    public void setRelyingPartyManager(RelyingPartyConfigurationManager rpManager) {
         this.rpManager = rpManager;
     }
 

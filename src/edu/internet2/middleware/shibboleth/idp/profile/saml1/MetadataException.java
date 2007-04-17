@@ -19,7 +19,7 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 /**
  * Metadata Exception. Generally thrown by a 
- * {@link edu.internet2.middleware.shibboleth.common.profile.ProfileHandler}
+ * {@link edu.internet2.middleware.shibboleth.common.profile.AbstractProfileHandler}
  * if unable ot locate needed metadata.
  */
 public class MetadataException extends java.lang.Exception {

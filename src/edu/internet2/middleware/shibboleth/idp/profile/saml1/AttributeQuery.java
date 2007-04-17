@@ -42,7 +42,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeRe
 /**
  * SAML 1 Attribute Query profile handler.
  */
-public class AttributeQuery extends AbstractProfileHandler {
+public class AttributeQuery extends AbstractSAML1ProfileHandler {
 
     /** Class logger. */
     private static Logger log = Logger.getLogger(AttributeQuery.class);

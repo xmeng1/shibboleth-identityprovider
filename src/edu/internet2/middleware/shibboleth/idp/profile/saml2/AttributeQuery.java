@@ -54,7 +54,7 @@ import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 /**
  * SAML 2.0 Attribute Query profile handler.
  */
-public class AttributeQuery extends AbstractProfileHandler {
+public class AttributeQuery extends AbstractSAML2ProfileHandler {
 
     /** Class logger. */
     private static Logger log = Logger.getLogger(AttributeQuery.class);
