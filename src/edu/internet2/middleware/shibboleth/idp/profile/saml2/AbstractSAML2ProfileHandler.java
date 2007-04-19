@@ -26,6 +26,7 @@ import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObject;
+import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.MessageDecoder;
@@ -64,19 +65,19 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     private IdentifierGenerator idGenerator;
 
     /** Builder for Response elements. */
-    protected XMLObjectBuilder responseBuilder;
+    //protected SAMLObjectBuilder<Response> responseBuilder;
 
     /** Builder for Status elements. */
-    private XMLObjectBuilder statusBuilder;
+    //private SAMLObjectBuilder<Status> statusBuilder;
 
     /** Builder for StatusCode elements. */
-    private XMLObjectBuilder statusCodeBuilder;
+    //private SAMLObjectBuilder<StatusCode> statusCodeBuilder;
 
     /** Builder for StatusMessage elements. */
-    private XMLObjectBuilder statusMessageBuilder;
+    //private SAMLObjectBuilder<StatusMessage> statusMessageBuilder;
 
     /** Builder for Issuer elements. */
-    protected XMLObjectBuilder issuerBuilder;
+    //protected SAMLObjectBuilder<Issuer> issuerBuilder;
 
     /**
      * Default constructor.
@@ -85,11 +86,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         builderFactory = Configuration.getBuilderFactory();
         idGenerator = new SecureRandomIdentifierGenerator();
 
-        responseBuilder = builderFactory.getBuilder(Response.DEFAULT_ELEMENT_NAME);
-        statusBuilder = builderFactory.getBuilder(Status.DEFAULT_ELEMENT_NAME);
-        statusCodeBuilder = builderFactory.getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
-        statusMessageBuilder = builderFactory.getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
-        issuerBuilder = builderFactory.getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+        /*
+        responseBuilder = (SAMLObjectBuilder<Response>) builderFactory.getBuilder(Response.DEFAULT_ELEMENT_NAME);
+        statusBuilder = (SAMLObjectBuilder<Status>) builderFactory.getBuilder(Status.DEFAULT_ELEMENT_NAME);
+        statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) builderFactory.getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
+        statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) builderFactory
+                .getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
+        issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory.getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+        */
     }
 
     /**
@@ -120,27 +124,28 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return a Status object.
      */
+    /*
     protected Status buildStatus(String topLevelCode, String secondLevelCode, String secondLevelFailureMessage) {
 
-        Status status = (Status) statusBuilder.buildObject(Status.DEFAULT_ELEMENT_NAME);
-        StatusCode statusCode = (StatusCode) statusCodeBuilder.buildObject(StatusCode.DEFAULT_ELEMENT_NAME);
+        Status status = statusBuilder.buildObject();
+        StatusCode statusCode = statusCodeBuilder.buildObject();
 
         statusCode.setValue(topLevelCode);
         if (secondLevelCode != null) {
-            StatusCode secondLevelStatusCode = (StatusCode) statusCodeBuilder
-                    .buildObject(StatusCode.DEFAULT_ELEMENT_NAME);
+            StatusCode secondLevelStatusCode = statusCodeBuilder.buildObject();
             secondLevelStatusCode.setValue(secondLevelCode);
             statusCode.setStatusCode(secondLevelStatusCode);
         }
 
         if (secondLevelFailureMessage != null) {
-            StatusMessage msg = (StatusMessage) statusMessageBuilder.buildObject(StatusMessage.DEFAULT_ELEMENT_NAME);
+            StatusMessage msg = statusMessageBuilder.buildObject();
             msg.setMessage(secondLevelFailureMessage);
-            status.setMessage(msg);
+            status.setStatusMessage(msg);
         }
 
         return status;
     }
+    */
 
     /**
      * Build a SAML 2 Response element with basic fields populated.
@@ -149,39 +154,43 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * before sending it.
      * 
      * @param inResponseTo The ID of the request this is in response to.
+     * @param issueInstant The timestamp of this response
      * @param issuer The URI of the RP issuing the response.
      * @param status The response's status code.
      * 
      * @return The populated Response object.
      */
-    protected Response buildResponse(String inResponseTo, String issuer, final Status status) {
+    /*
+    protected Response buildResponse(String inResponseTo, DateTime issueInstant, String issuer, final Status status) {
 
-        Response response = (Response) responseBuilder.buildObject(Response.DEFAULT_ELEMENT_NAME);
+        Response response = responseBuilder.buildObject();
 
-        Issuer i = (Issuer) issuerBuilder.buildObject(Issuer.DEFAULT_ELEMENT_NAME);
+        Issuer i = issuerBuilder.buildObject();
         i.setValue(issuer);
 
         response.setVersion(SAML_VERSION);
-        response.setId(getIdGenerator().generateIdentifier());
-        response.setInResponseto(inResponseTo);
-        response.setIssueInstance(new DateTime());
+        response.setID(getIdGenerator().generateIdentifier());
+        response.setInResponseTo(inResponseTo);
+        response.setIssueInstant(issueInstant);
         response.setIssuer(i);
         response.setStatus(status);
 
         return response;
     }
+    */
 
+    /*
     protected Assertion buildAssertion(final Subject subject, final Conditions conditions, String issuer,
             final String[] audiences) {
 
-        Assertion assertion = (Assertion) assertionBuilder.buildObject(Assertion.DEFAULT_ELEMENT_NAME);
+        Assertion assertion = (Assertion) assertionBuilder.buildObject();
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setVersion(SAML_VERSION);
         assertion.setIssueInstant(new DateTime());
         assertion.setConditions(conditions);
         assertion.setSubject(subject);
 
-        Issuer i = (Issuer) issuerBuilder.buildObject(Issuer.DEFAULT_ELEMENT_NAME);
+        Issuer i = (Issuer) issuerBuilder.buildObject();
         i.setValue(issuer);
         assertion.setIssuer(i);
 
@@ -193,11 +202,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
             for (String audienceURI : audiences) {
 
-                Audience audience = (Audience) audienceBuilder.buildObject(Audience.DEFAULT_ELEMENT_NAME);
+                Audience audience = audienceBuilder.buildObject();
                 audience.setAudienceURI(audienceURI);
 
-                AudienceRestriction audienceRestriction = (AudienceRestriction) audienceRestrictionBuilder
-                        .buildObject(AudienceRestriction.DEFAULT_ELEMENT_NAME);
+                AudienceRestriction audienceRestriction = audienceRestrictionBuilder
+                        .buildObject();
                 List<Audience> audienceList = audienceRestriction.getAudiences();
                 audienceList.add(audience);
 
@@ -207,4 +216,5 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         return assertion;
     }
+    */
 }
