@@ -33,6 +33,9 @@ public class ProfileResponseContext {
     /** Profile request message. */
     private SubjectQuery message;
 
+    /** Provider id to retrieve relying party configuration. */
+    private String providerId;
+    
     /** Issue instant for the response. */
     private DateTime issueInstant;
 
@@ -49,6 +52,7 @@ public class ProfileResponseContext {
     public ProfileResponseContext(ProfileRequest r, SubjectQuery m) {
         request = r;
         message = m;
+        providerId = m.getIssuer().getSPProvidedID();
         issueInstant = new DateTime();
     }
 
@@ -70,6 +74,15 @@ public class ProfileResponseContext {
         return message;
     }
 
+    /**
+     * Gets the provider id.
+     * 
+     * @return provider id
+     */
+    public String getProviderId() {
+        return providerId;
+    }
+    
     /**
      * Gets the issue instant for the response.
      * 
