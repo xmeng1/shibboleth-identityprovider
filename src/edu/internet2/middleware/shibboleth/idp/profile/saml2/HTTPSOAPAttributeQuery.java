@@ -126,9 +126,10 @@ public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
         Response samlResponse = null;
         try {
             ProfileResponseContext profileResponse = new ProfileResponseContext(request, message);
+            profileResponse.setIssuer(decoder.getSecurityPolicy().getIssuer().toString());
+            profileResponse.setDestination(request.getRawRequest().getRemoteHost());
             profileResponse.setAttributeStatement(statement);
-            samlResponse = buildResponse(profileResponse, decoder.getSecurityPolicy().getIssuer().toString(), request
-                    .getRawRequest().getRemoteHost());
+            samlResponse = buildResponse(profileResponse);
         } catch (EncryptionException e) {
             log.error("Error encrypting SAML response", e);
             throw new ProfileException("Error encrypting SAML response", e);

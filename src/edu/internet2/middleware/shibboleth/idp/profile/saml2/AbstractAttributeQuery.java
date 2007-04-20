@@ -157,13 +157,10 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
      * This builds the response for this SAML request.
      * 
      * @param responseContext <code>ProfileResponseContext</code>
-     * @param issuer <code>String</code>
-     * @param destination <code>String</code>
      * @return <code>Response</code>
      * @throws EncryptionException if an error occurs attempting to encrypt data
      */
-    protected Response buildResponse(ProfileResponseContext responseContext, String issuer, String destination)
-            throws EncryptionException {
+    protected Response buildResponse(ProfileResponseContext responseContext) throws EncryptionException {
         AttributeQueryConfiguration config = getAttributeQueryConfiguration(responseContext.getProviderId());
 
         /*
@@ -172,11 +169,11 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
         Response response = responseBuilder.buildObject();
         response.setVersion(SAML_VERSION);
         response.setID(getIdGenerator().generateIdentifier());
-        response.setInResponseTo(issuer);
+        response.setInResponseTo(responseContext.getIssuer());
         response.setIssueInstant(responseContext.getIssueInstant());
-        response.setDestination(destination);
+        response.setDestination(responseContext.getDestination());
 
-        response.setIssuer(buildIssuer(responseContext.getProviderId()));
+        response.setIssuer(buildIssuer(responseContext));
 
         /*
          * Will be hard coded in the future: if (consent != null) { response.setConsent(consent); }
@@ -249,10 +246,10 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(responseContext.getIssueInstant());
         assertion.setVersion(SAML_VERSION);
-        assertion.setIssuer(buildIssuer(responseContext.getProviderId()));
+        assertion.setIssuer(buildIssuer(responseContext));
 
         // build subject
-        assertion.setSubject(buildSubject(responseContext.getMessage().getSubject(), config.getEncryptNameID()));
+        assertion.setSubject(buildSubject(responseContext, config.getEncryptNameID()));
         // build conditions
         assertion.setConditions(buildConditions(responseContext));
         // build advice
@@ -265,11 +262,12 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
     /**
      * This builds the issuer response for this SAML request.
      * 
-     * @param providerId <code>String</code>
+     * @param responseContext <code>ProfileResponseContext</code>
      * @return <code>Issuer</code>
      */
-    private Issuer buildIssuer(String providerId) {
-        RelyingPartyConfiguration relyingPartyConfiguration = getRelyingPartyConfiguration(providerId);
+    private Issuer buildIssuer(ProfileResponseContext responseContext) {
+        RelyingPartyConfiguration relyingPartyConfiguration = getRelyingPartyConfiguration(responseContext
+                .getProviderId());
         Issuer issuer = issuerBuilder.buildObject();
         issuer.setValue(relyingPartyConfiguration.getProviderId());
         return issuer;
@@ -278,19 +276,20 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
     /**
      * This builds the subject for this SAML request.
      * 
-     * @param messageSubject <code>Subject</code>
+     * @param responseContext <code>ProfileResponseContext</code>
      * @param encryptNameId <code>boolean</code>
      * @return <code>Subject</code>
      * @throws EncryptionException if encryption of the name id fails
      */
-    private Subject buildSubject(Subject messageSubject, boolean encryptNameId) throws EncryptionException {
+    private Subject buildSubject(ProfileResponseContext responseContext, boolean encryptNameId)
+            throws EncryptionException {
         Subject subject = subjectBuilder.buildObject();
         if (encryptNameId) {
             // TODO load encryption parameters
             Encrypter encrypter = null;
-            subject.setEncryptedID(encrypter.encrypt(messageSubject.getNameID()));
+            subject.setEncryptedID(encrypter.encrypt(responseContext.getMessage().getSubject().getNameID()));
         } else {
-            subject.setNameID(messageSubject.getNameID());
+            subject.setNameID(responseContext.getMessage().getSubject().getNameID());
             // TODO when is subject.setBaseID(newBaseID) called, if ever?
         }
         return subject;

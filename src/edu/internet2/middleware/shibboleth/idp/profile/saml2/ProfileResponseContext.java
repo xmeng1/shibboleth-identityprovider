@@ -17,8 +17,8 @@
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import org.joda.time.DateTime;
-import org.opensaml.saml2.core.SubjectQuery;
 import org.opensaml.saml2.core.AttributeStatement;
+import org.opensaml.saml2.core.SubjectQuery;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 
@@ -33,9 +33,15 @@ public class ProfileResponseContext {
     /** Profile request message. */
     private SubjectQuery message;
 
+    /** Response issuer. */
+    private String issuer;
+
+    /** Response destination. */
+    private String destination;
+
     /** Provider id to retrieve relying party configuration. */
     private String providerId;
-    
+
     /** Issue instant for the response. */
     private DateTime issueInstant;
 
@@ -82,7 +88,7 @@ public class ProfileResponseContext {
     public String getProviderId() {
         return providerId;
     }
-    
+
     /**
      * Gets the issue instant for the response.
      * 
@@ -90,6 +96,42 @@ public class ProfileResponseContext {
      */
     public DateTime getIssueInstant() {
         return issueInstant;
+    }
+
+    /**
+     * Sets an issuer associated with this response.
+     * 
+     * @param i to set
+     */
+    public void setIssuer(String i) {
+        issuer = i;
+    }
+
+    /**
+     * Gets the issuer associated with this response.
+     * 
+     * @return issuer
+     */
+    public String getIssuer() {
+        return issuer;
+    }
+
+    /**
+     * Sets a destination associated with this response.
+     * 
+     * @param d to set
+     */
+    public void setDestination(String d) {
+        destination = d;
+    }
+
+    /**
+     * Gets the destination associated with this response.
+     * 
+     * @return destination
+     */
+    public String getDestination() {
+        return destination;
     }
 
     /**
