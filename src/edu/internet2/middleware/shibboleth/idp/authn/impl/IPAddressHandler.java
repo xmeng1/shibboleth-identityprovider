@@ -44,8 +44,7 @@ import org.joda.time.DateTime;
  */
 public class IPAddressHandler implements AuthenticationHandler {
 
-	private static final Logger log = Logger.getLogger(IPAddressHandler.class
-			.getName());
+	private static final Logger log = Logger.getLogger(IPAddressHandler.class.getName());
 
 	/** the URI of the AuthnContextDeclRef or the AuthnContextClass */
 	private String authnMethodURI;
@@ -110,13 +109,13 @@ public class IPAddressHandler implements AuthenticationHandler {
 	public void login(HttpServletRequest request, HttpServletResponse response,
 			LoginContext loginCtx) {
 
-		loginContext.setAuthenticationAttempted();
-		loginContext.setAuthenticationInstant(new DateTime());
+		loginCtx.setAuthenticationAttempted();
+		loginCtx.setAuthenticationInstant(new DateTime());
 
 		if (defaultDeny) {
-			handleDefaultDeny(request, response, loginContext);
+			handleDefaultDeny(request, response, loginCtx);
 		} else {
-			handleDefaultAllow(request, response, loginContext);
+			handleDefaultAllow(request, response, loginCtx);
 		}
 	}
 
@@ -129,8 +128,7 @@ public class IPAddressHandler implements AuthenticationHandler {
 			loginCtx.setAuthenticationOK(true);
 		} else {
 			loginCtx.setAuthenticationOK(false);
-			loginCtx
-					.setAuthenticationFailureMessage("User's IP is not in the permitted list.");
+			loginCtx.setAuthenticationFailureMessage("User's IP is not in the permitted list.");
 		}
 	}
 
