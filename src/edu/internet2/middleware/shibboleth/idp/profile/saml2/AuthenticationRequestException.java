@@ -16,23 +16,22 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.core.Status;
 
 /**
  * Indicates an error while processing an {@link AuthenticationRequest}.
  */
 public class AuthenticationRequestException extends java.lang.Exception {
 
-	protected StatusCode statusCode = null;
+	protected Status status = null;
 
 	/**
-	 * Get the SAML 2 StatusCode, if any, associated with this error.
+	 * Get the SAML 2 Status, if any, associated with this error.
 	 * 
-	 * @return A SAML 2 StatusCode object, or <code>null</code> if none was
-	 *         set.
+	 * @return A SAML 2 Status object, or <code>null</code> if none was set.
 	 */
-	public StatusCode getStatusCode() {
-		return statusCode;
+	public Status getStatus() {
+		return status;
 	}
 
 	/**
@@ -59,14 +58,14 @@ public class AuthenticationRequestException extends java.lang.Exception {
 	 * 
 	 * @param message
 	 *            The detail message.
-	 * @param code
-	 *            A SAML 2 StatusCode indicated which error should be returned
-	 *            to the requestor.
+	 * @param status
+	 *            A SAML 2 Status indicated which error should be returned to
+	 *            the requestor.
 	 */
 	public AuthenticationRequestException(final String message,
-			final StatusCode code) {
+			final Status status) {
 		super(message);
-		statusCode = code;
+		this.status = status;
 	}
 
 	/**
@@ -101,13 +100,13 @@ public class AuthenticationRequestException extends java.lang.Exception {
 	 *            is permitted, and indicates that the cause is nonexistent or
 	 *            unknown.)
 	 * @param code
-	 *            A SAML 2 StatusCode indicated which error should be returned
-	 *            to the requestor.
+	 *            A SAML 2 Status indicated which error should be returned to
+	 *            the requestor.
 	 */
 	public AuthenticationRequestException(final Throwable cause,
-			final StatusCode code) {
+			final Status status) {
 		super(cause);
-		statusCode = code;
+		this.status = status;
 	}
 
 	/**
@@ -145,13 +144,13 @@ public class AuthenticationRequestException extends java.lang.Exception {
 	 *            is permitted, and indicates that the cause is nonexistent or
 	 *            unknown.)
 	 * @param code
-	 *            A SAML 2 StatusCode indicated which error should be returned
-	 *            to the requestor.
+	 *            A SAML 2 Status indicated which error should be returned to
+	 *            the requestor.
 	 */
 	public AuthenticationRequestException(final String message,
-			final Throwable cause, final StatusCode code) {
+			final Throwable cause, final Status code) {
 		super(message, cause);
-		statusCode = code;
+		this.status = status;
 	}
 
 }

@@ -25,16 +25,17 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.common.IdentifierGenerator;
-import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
-import org.opensaml.common.binding.BindingException;
-import org.opensaml.common.binding.MessageDecoder;
-import org.opensaml.common.binding.MessageEncoder;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
+import org.opensaml.saml2.core.AuthnContext;
+import org.opensaml.saml2.core.AuthnContextClassRef;
+import org.opensaml.saml2.core.AuthnContextDeclRef;
+import org.opensaml.saml2.core.AuthnStatement;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Audience;
 import org.opensaml.saml2.core.AudienceRestriction;
+import org.opensaml.saml2.core.AuthnStatement;
 import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.Response;
@@ -42,7 +43,6 @@ import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.StatusMessage;
 import org.opensaml.saml2.core.Subject;
-import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
@@ -50,171 +50,282 @@ import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandle
 /**
  * Common implementation details for profile handlers.
  */
-public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHandler {
+public abstract class AbstractSAML2ProfileHandler extends
+		AbstractSAMLProfileHandler {
 
-    /** SAML Version for this profile handler. */
-    public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
+	/** SAML Version for this profile handler. */
+	public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
 
-    /** Class logger. */
-    private static Logger log = Logger.getLogger(AbstractSAML2ProfileHandler.class);
+	/** URI for the SAML 2 protocol. */
+	public static final String SAML20_PROTOCOL_URI = "urn:oasis:names:tc:SAML:2.0:protocol";
 
-    /** For building XML. */
-    private XMLObjectBuilderFactory builderFactory;
+	/** Class logger. */
+	private static Logger log = Logger
+			.getLogger(AbstractSAML2ProfileHandler.class);
 
-    /** For generating random ids. */
-    private IdentifierGenerator idGenerator;
+	/** For building XML. */
+	private XMLObjectBuilderFactory builderFactory;
 
-    /** Builder for Response elements. */
-    //protected SAMLObjectBuilder<Response> responseBuilder;
+	/** For generating random ids. */
+	private IdentifierGenerator idGenerator;
 
-    /** Builder for Status elements. */
-    //private SAMLObjectBuilder<Status> statusBuilder;
+	/** Builder for Response elements. */
+	protected SAMLObjectBuilder<Response> responseBuilder;
 
-    /** Builder for StatusCode elements. */
-    //private SAMLObjectBuilder<StatusCode> statusCodeBuilder;
+	/** Builder for Status elements. */
+	protected SAMLObjectBuilder<Status> statusBuilder;
 
-    /** Builder for StatusMessage elements. */
-    //private SAMLObjectBuilder<StatusMessage> statusMessageBuilder;
+	/** Builder for StatusCode elements. */
+	protected SAMLObjectBuilder<StatusCode> statusCodeBuilder;
 
-    /** Builder for Issuer elements. */
-    //protected SAMLObjectBuilder<Issuer> issuerBuilder;
+	/** Builder for StatusMessage elements. */
+	protected SAMLObjectBuilder<StatusMessage> statusMessageBuilder;
 
-    /**
-     * Default constructor.
-     */
-    public AbstractSAML2ProfileHandler() {
-        builderFactory = Configuration.getBuilderFactory();
-        idGenerator = new SecureRandomIdentifierGenerator();
+	/** Builder for Issuer elements. */
+	protected SAMLObjectBuilder<Issuer> issuerBuilder;
 
-        /*
-        responseBuilder = (SAMLObjectBuilder<Response>) builderFactory.getBuilder(Response.DEFAULT_ELEMENT_NAME);
-        statusBuilder = (SAMLObjectBuilder<Status>) builderFactory.getBuilder(Status.DEFAULT_ELEMENT_NAME);
-        statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) builderFactory.getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
-        statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) builderFactory
-                .getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
-        issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory.getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
-        */
-    }
+	/** Builder for Assertion elements. */
+	protected SAMLObjectBuilder<Assertion> assertionBuilder;
 
-    /**
-     * Returns the XML builder factory.
-     * 
-     * @return Returns the builderFactory.
-     */
-    public XMLObjectBuilderFactory getBuilderFactory() {
-        return builderFactory;
-    }
+	/** Builder for Condition elements. */
+	protected SAMLObjectBuilder<Conditions> conditionsBuilder;
 
-    /**
-     * Returns the id generator.
-     * 
-     * @return Returns the idGenerator.
-     */
-    public IdentifierGenerator getIdGenerator() {
-        return idGenerator;
-    }
+	/** Builder for AuthnStatement elements. */
+	protected SAMLObjectBuilder<AuthnStatement> authnStatementBuilder;
 
-    /**
-     * Build a status message, with an optional second-level failure message.
-     * 
-     * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
-     * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
-     *            null, no second-level Status element will be set.
-     * @param secondLevelFailureMessage An optional second-level failure message.
-     * 
-     * @return a Status object.
-     */
-    /*
-    protected Status buildStatus(String topLevelCode, String secondLevelCode, String secondLevelFailureMessage) {
+	/** Builder for AuthnContext elements. */
+	protected SAMLObjectBuilder<AuthnContext> authnContextBuilder;
 
-        Status status = statusBuilder.buildObject();
-        StatusCode statusCode = statusCodeBuilder.buildObject();
+	/** Builder for AuthnContextClassRef elements. */
+	protected SAMLObjectBuilder<AuthnContextClassRef> authnContextClassRefBuilder;
 
-        statusCode.setValue(topLevelCode);
-        if (secondLevelCode != null) {
-            StatusCode secondLevelStatusCode = statusCodeBuilder.buildObject();
-            secondLevelStatusCode.setValue(secondLevelCode);
-            statusCode.setStatusCode(secondLevelStatusCode);
-        }
+	/** Builder for AuthnContextDeclRef elements. */
+	protected SAMLObjectBuilder<AuthnContextDeclRef> authnContextDeclRefBuilder;
 
-        if (secondLevelFailureMessage != null) {
-            StatusMessage msg = statusMessageBuilder.buildObject();
-            msg.setMessage(secondLevelFailureMessage);
-            status.setStatusMessage(msg);
-        }
+	/** Builder for AudienceRestriction conditions. */
+	protected SAMLObjectBuilder<AudienceRestriction> audienceRestrictionBuilder;
 
-        return status;
-    }
-    */
+	/** Builder for Audience elemenets. */
+	protected SAMLObjectBuilder<Audience> audienceBuilder;
 
-    /**
-     * Build a SAML 2 Response element with basic fields populated.
-     * 
-     * Failure handlers can send the returned response element to the RP. Success handlers should add the assertions
-     * before sending it.
-     * 
-     * @param inResponseTo The ID of the request this is in response to.
-     * @param issueInstant The timestamp of this response
-     * @param issuer The URI of the RP issuing the response.
-     * @param status The response's status code.
-     * 
-     * @return The populated Response object.
-     */
-    /*
-    protected Response buildResponse(String inResponseTo, DateTime issueInstant, String issuer, final Status status) {
+	/**
+	 * Default constructor.
+	 */
+	public AbstractSAML2ProfileHandler() {
+		builderFactory = Configuration.getBuilderFactory();
+		idGenerator = new SecureRandomIdentifierGenerator();
 
-        Response response = responseBuilder.buildObject();
+		assertionBuilder = (SAMLObjectBuilder<Assertion>) getBuilderFactory()
+				.getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+		authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) getBuilderFactory()
+				.getBuilder(AuthnStatement.DEFAULT_ELEMENT_NAME);
+		authnContextBuilder = (SAMLObjectBuilder<AuthnContext>) getBuilderFactory()
+				.getBuilder(AuthnContext.DEFAULT_ELEMENT_NAME);
+		authnContextClassRefBuilder = (SAMLObjectBuilder<AuthnContextClassRef>) getBuilderFactory()
+				.getBuilder(AuthnContextClassRef.DEFAULT_ELEMENT_NAME);
+		authnContextDeclRefBuilder = (SAMLObjectBuilder<AuthnContextDeclRef>) getBuilderFactory()
+				.getBuilder(AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
+		audienceRestrictionBuilder = (SAMLObjectBuilder<AudienceRestriction>) getBuilderFactory()
+				.getBuilder(AudienceRestriction.DEFAULT_ELEMENT_NAME);
+		audienceBuilder = (SAMLObjectBuilder<Audience>) getBuilderFactory()
+				.getBuilder(Audience.DEFAULT_ELEMENT_NAME);
+		conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory()
+				.getBuilder(Conditions.DEFAULT_ELEMENT_NAME);
+		responseBuilder = (SAMLObjectBuilder<Response>) builderFactory
+				.getBuilder(Response.DEFAULT_ELEMENT_NAME);
+		statusBuilder = (SAMLObjectBuilder<Status>) builderFactory
+				.getBuilder(Status.DEFAULT_ELEMENT_NAME);
+		statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) builderFactory
+				.getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
+		statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) builderFactory
+				.getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
+		issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory
+				.getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+	}
 
-        Issuer i = issuerBuilder.buildObject();
-        i.setValue(issuer);
+	/**
+	 * Returns the XML builder factory.
+	 * 
+	 * @return Returns the builderFactory.
+	 */
+	public XMLObjectBuilderFactory getBuilderFactory() {
+		return builderFactory;
+	}
 
-        response.setVersion(SAML_VERSION);
-        response.setID(getIdGenerator().generateIdentifier());
-        response.setInResponseTo(inResponseTo);
-        response.setIssueInstant(issueInstant);
-        response.setIssuer(i);
-        response.setStatus(status);
+	/**
+	 * Returns the id generator.
+	 * 
+	 * @return Returns the idGenerator.
+	 */
+	public IdentifierGenerator getIdGenerator() {
+		return idGenerator;
+	}
 
-        return response;
-    }
-    */
+	/**
+	 * Build a status message, with an optional second-level failure message.
+	 * 
+	 * @param topLevelCode
+	 *            The top-level status code. Should be from saml-core-2.0-os,
+	 *            sec. 3.2.2.2
+	 * @param secondLevelCode
+	 *            An optional second-level failure code. Should be from
+	 *            saml-core-2.0-is, sec 3.2.2.2. If null, no second-level Status
+	 *            element will be set.
+	 * @param secondLevelFailureMessage
+	 *            An optional second-level failure message.
+	 * 
+	 * @return a Status object.
+	 */
+	protected Status buildStatus(String topLevelCode, String secondLevelCode,
+			String secondLevelFailureMessage) {
 
-    /*
-    protected Assertion buildAssertion(final Subject subject, final Conditions conditions, String issuer,
-            final String[] audiences) {
+		Status status = statusBuilder.buildObject();
+		StatusCode statusCode = statusCodeBuilder.buildObject();
 
-        Assertion assertion = (Assertion) assertionBuilder.buildObject();
-        assertion.setID(getIdGenerator().generateIdentifier());
-        assertion.setVersion(SAML_VERSION);
-        assertion.setIssueInstant(new DateTime());
-        assertion.setConditions(conditions);
-        assertion.setSubject(subject);
+		statusCode.setValue(topLevelCode);
+		if (secondLevelCode != null) {
+			StatusCode secondLevelStatusCode = statusCodeBuilder.buildObject();
+			secondLevelStatusCode.setValue(secondLevelCode);
+			statusCode.setStatusCode(secondLevelStatusCode);
+		}
 
-        Issuer i = (Issuer) issuerBuilder.buildObject();
-        i.setValue(issuer);
-        assertion.setIssuer(i);
+		if (secondLevelFailureMessage != null) {
+			StatusMessage msg = statusMessageBuilder.buildObject();
+			msg.setMessage(secondLevelFailureMessage);
+			status.setStatusMessage(msg);
+		}
 
-        // if audiences were specified, set an AudienceRestriction condition
-        if (audiences != null && audiences.length > 0) {
+		return status;
+	}
 
-            Conditions conditions = assertion.getConditions();
-            List<AudienceRestriction> audienceRestrictionConditions = conditions.getAudienceRestrictions();
+	/**
+	 * Build a status message, with an optional second-level failure message.
+	 * 
+	 * @param topLevelCode
+	 *            The top-level status code. Should be from saml-core-2.0-os,
+	 *            sec. 3.2.2.2
+	 * @param secondLevelCode
+	 *            An optional second-level failure code. Should be from
+	 *            saml-core-2.0-is, sec 3.2.2.2. If null, no second-level Status
+	 *            element will be set.
+	 * 
+	 * @return a Status object.
+	 */
+	protected Status buildStatus(String topLevelCode,
+			final StatusCode secondLevelCode) {
 
-            for (String audienceURI : audiences) {
+		Status status = statusBuilder.buildObject();
+		StatusCode statusCode = statusCodeBuilder.buildObject();
 
-                Audience audience = audienceBuilder.buildObject();
-                audience.setAudienceURI(audienceURI);
+		statusCode.setValue(topLevelCode);
+		if (secondLevelCode != null) {
+			statusCode.setStatusCode(secondLevelCode);
+		}
 
-                AudienceRestriction audienceRestriction = audienceRestrictionBuilder
-                        .buildObject();
-                List<Audience> audienceList = audienceRestriction.getAudiences();
-                audienceList.add(audience);
+		return status;
+	}
 
-                audienceRestrictionConditions.add(audienceRestriction);
-            }
-        }
+	/**
+	 * Build a StatusCode.
+	 * 
+	 * @param statusCode
+	 *            The URI status code.
+	 * @param message
+	 *            The message; may be <code>null</code.
+	 *
+	 * @return a StatusCode object.
+	 */
+	protected StatusCode buildStatusCode(String statusCode) {
+		return null;
+	}
 
-        return assertion;
-    }
-    */
+	/**
+	 * Build a SAML 2 Response element with basic fields populated.
+	 * 
+	 * Failure handlers can send the returned response element to the RP.
+	 * Success handlers should add the assertions before sending it.
+	 * 
+	 * @param inResponseTo
+	 *            The ID of the request this is in response to.
+	 * @param issueInstant
+	 *            The timestamp of this response.
+	 * @param issuer
+	 *            The URI of the RP issuing the response.
+	 * @param status
+	 *            The response's status code.
+	 * 
+	 * @return The populated Response object.
+	 */
+	protected Response buildResponse(String inResponseTo,
+			final DateTime issueInstant, String issuer, final Status status) {
+
+		Response response = responseBuilder.buildObject();
+
+		Issuer i = issuerBuilder.buildObject();
+		i.setValue(issuer);
+
+		response.setVersion(SAML_VERSION);
+		response.setID(getIdGenerator().generateIdentifier());
+		response.setInResponseTo(inResponseTo);
+		response.setIssueInstant(issueInstant);
+		response.setIssuer(i);
+		response.setStatus(status);
+
+		return response;
+	}
+
+	/**
+	 * Build a skeletal SAML 2 assertion.
+	 * 
+	 * Note, the caller may either set the audiences in the conditions argument,
+	 * or pass a list of URIs to this method. If the latter option is chosen,
+	 * this method will create the appropriate AudienceRestriction element.
+	 * 
+	 * @param subject
+	 *            The Subject of the assertion.
+	 * @param conditions
+	 *            The conditions object.
+	 * @param issuer
+	 *            The URI of the RP issuing the assertion.
+	 * @param audiences
+	 *            A possibly null array of audience URIs for the assertion.
+	 * 
+	 * @return The assertion object.
+	 */
+	protected Assertion buildAssertion(final Subject subject,
+			final Conditions conditions, final Issuer issuer,
+			final String[] audiences) {
+
+		Assertion assertion = assertionBuilder.buildObject();
+		assertion.setID(getIdGenerator().generateIdentifier());
+		assertion.setVersion(SAML_VERSION);
+		assertion.setIssueInstant(new DateTime());
+		assertion.setConditions(conditions);
+		assertion.setSubject(subject);
+
+		Issuer i = issuerBuilder.buildObject();
+		i.setValue(issuer.getValue());
+		assertion.setIssuer(i);
+
+		// if audiences were specified, set an AudienceRestriction condition
+		if (audiences != null && audiences.length > 0) {
+
+			List<AudienceRestriction> audienceRestrictionConditions = assertion
+					.getConditions().getAudienceRestrictions();
+
+			AudienceRestriction audienceRestriction = audienceRestrictionBuilder
+					.buildObject();
+			audienceRestrictionConditions.add(audienceRestriction);
+
+			List<Audience> audienceList = audienceRestriction.getAudiences();
+
+			for (String audienceURI : audiences) {
+				Audience audience = audienceBuilder.buildObject();
+				audience.setAudienceURI(audienceURI);
+				audienceList.add(audience);
+			}
+		}
+
+		return assertion;
+	}
 }

@@ -24,7 +24,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 /**
  * SAML 2.0 Logout Request profile handler.
  */
-public class LogoutRequest extends AbstractSAML2ProfileHandler {
+public abstract class LogoutRequest extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
     public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {
