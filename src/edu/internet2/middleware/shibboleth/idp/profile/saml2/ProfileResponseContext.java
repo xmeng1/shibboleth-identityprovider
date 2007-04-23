@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.AttributeStatement;
+import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.SubjectQuery;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
@@ -34,7 +35,7 @@ public class ProfileResponseContext {
     private SubjectQuery message;
 
     /** Response issuer. */
-    private String issuer;
+    private Issuer issuer;
 
     /** Response destination. */
     private String destination;
@@ -54,7 +55,6 @@ public class ProfileResponseContext {
      * @param r serlvet request
      * @param m decoded profile request message
      */
-
     public ProfileResponseContext(ProfileRequest r, SubjectQuery m) {
         request = r;
         message = m;
@@ -103,7 +103,7 @@ public class ProfileResponseContext {
      * 
      * @param i to set
      */
-    public void setIssuer(String i) {
+    public void setIssuer(Issuer i) {
         issuer = i;
     }
 
@@ -112,7 +112,7 @@ public class ProfileResponseContext {
      * 
      * @return issuer
      */
-    public String getIssuer() {
+    public Issuer getIssuer() {
         return issuer;
     }
 

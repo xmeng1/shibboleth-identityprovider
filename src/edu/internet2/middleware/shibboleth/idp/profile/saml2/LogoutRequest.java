@@ -16,8 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import javax.servlet.ServletException;
-
+import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
@@ -27,8 +26,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 public abstract class LogoutRequest extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
-    public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {
+    public void processRequest(ProfileRequest request, ProfileResponse response) throws ProfileException {
         // TODO Auto-generated method stub
-        return false;
     }
 }

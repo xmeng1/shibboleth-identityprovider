@@ -16,32 +16,30 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import org.apache.log4j.Logger;
-import org.opensaml.common.SAMLObjectBuilder;
-import org.opensaml.saml2.core.Advice;
-import org.opensaml.saml2.core.Assertion;
-import org.opensaml.saml2.core.Audience;
-import org.opensaml.saml2.core.AudienceRestriction;
-import org.opensaml.saml2.core.Conditions;
-import org.opensaml.saml2.core.Issuer;
-import org.opensaml.saml2.core.ProxyRestriction;
-import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.Status;
-import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.Subject;
-import org.opensaml.saml2.encryption.Encrypter;
-import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.xml.XMLObjectBuilder;
-import org.opensaml.xml.encryption.EncryptionException;
-import org.opensaml.xml.signature.Signature;
-import org.opensaml.xml.signature.Signer;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
+import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
+import org.opensaml.common.binding.BindingException;
+import org.opensaml.common.binding.MessageDecoder;
+import org.opensaml.common.binding.MessageEncoder;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.AttributeQuery;
+import org.opensaml.saml2.core.AttributeStatement;
+import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+
+import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.SAML2AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethAttributeRequestContext;
-import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML2AttributeAuthority;
-import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolver;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.AttributeQueryConfiguration;
+import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * SAML 2.0 Attribute Query profile handler.
@@ -51,308 +49,122 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
     /** Class logger. */
     private static Logger log = Logger.getLogger(AbstractAttributeQuery.class);
 
-    /** For building response. */
-    private SAMLObjectBuilder<Response> responseBuilder;
-
-    /** For building status. */
-    private SAMLObjectBuilder<Status> statusBuilder;
-
-    /** For building statuscode. */
-    private SAMLObjectBuilder<StatusCode> statusCodeBuilder;
-
-    /** For building assertion. */
-    private SAMLObjectBuilder<Assertion> assertionBuilder;
-
-    /** For building issuer. */
-    private SAMLObjectBuilder<Issuer> issuerBuilder;
-
-    /** For building subject. */
-    private SAMLObjectBuilder<Subject> subjectBuilder;
-
-    /** For building conditions. */
-    private SAMLObjectBuilder<Conditions> conditionsBuilder;
-
-    /** For building audience restriction. */
-    private SAMLObjectBuilder<AudienceRestriction> audienceRestrictionBuilder;
-
-    /** For building audience. */
-    private SAMLObjectBuilder<Audience> audienceBuilder;
-
-    /** For building advice. */
-    private SAMLObjectBuilder<Advice> adviceBuilder;
-
-    /** For building signature. */
-    private XMLObjectBuilder<Signature> signatureBuilder;
-
-    /** Attribute authority. */
-    private SAML2AttributeAuthority attributeAuthority;
-
     /**
-     * This creates a new attribute query.
+     * Gets the {@link AttributeQueryConfiguration} for the service provider identified by the given ID.
      * 
-     * @param ar <code>AttributeResolver</code>
+     * @param spId entity ID of the service provider
+     * 
+     * @return configuration for the given service provider or null
      */
-    public AbstractAttributeQuery(AttributeResolver<ShibbolethAttributeRequestContext> ar) {
-        // instantiate attribute authority
-        attributeAuthority = new ShibbolethSAML2AttributeAuthority(ar);
-
-        // instantiate XML builders
-        responseBuilder = (SAMLObjectBuilder<Response>) getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
-        statusBuilder = (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
-        statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) getBuilderFactory().getBuilder(
-                StatusCode.DEFAULT_ELEMENT_NAME);
-        issuerBuilder = (SAMLObjectBuilder<Issuer>) getBuilderFactory().getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
-        assertionBuilder = (SAMLObjectBuilder<Assertion>) getBuilderFactory()
-                .getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
-        subjectBuilder = (SAMLObjectBuilder<Subject>) getBuilderFactory().getBuilder(Subject.DEFAULT_ELEMENT_NAME);
-        conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory().getBuilder(
-                Conditions.DEFAULT_ELEMENT_NAME);
-        audienceRestrictionBuilder = (SAMLObjectBuilder<AudienceRestriction>) getBuilderFactory().getBuilder(
-                AudienceRestriction.DEFAULT_ELEMENT_NAME);
-        audienceBuilder = (SAMLObjectBuilder<Audience>) getBuilderFactory().getBuilder(Audience.DEFAULT_ELEMENT_NAME);
-        adviceBuilder = (SAMLObjectBuilder<Advice>) getBuilderFactory().getBuilder(Advice.DEFAULT_ELEMENT_NAME);
-        signatureBuilder = (XMLObjectBuilder<Signature>) getBuilderFactory().getBuilder(Signature.DEFAULT_ELEMENT_NAME);
+    protected AttributeQueryConfiguration getAttributeQueryConfiguration(String spId) {
+        return (AttributeQueryConfiguration) getProfileConfiguration(spId, AttributeQueryConfiguration.PROFILE_ID);
     }
 
     /**
-     * This returns the <code>RelyingPartyConfiguration</code> for the supplied provider id.
+     * Gets the attribute authority for the service provider identified by the given ID.
      * 
-     * @param providerId <code>String</code>
-     * @return <code>RelyingPartyConfiguration</code>
+     * @param spId entity ID of the service provider
+     * 
+     * @return attribute authority for the service provider or null
      */
-    protected RelyingPartyConfiguration getRelyingPartyConfiguration(String providerId) {
-        return getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(providerId);
+    protected SAML2AttributeAuthority getAttributeAuthority(String spId) {
+        AttributeQueryConfiguration config = getAttributeQueryConfiguration(spId);
+        if (config != null) {
+            return config.getAttributeAuthority();
+        }
+
+        return null;
     }
 
-    /**
-     * This returns the <code>AttributeQueryConfiguration</code> for the supplied provider id.
-     * 
-     * @param providerId <code>String</code>
-     * @return <code>AttributeQueryConfiguration</code>
-     */
-    protected AttributeQueryConfiguration getAttributeQueryConfiguration(String providerId) {
-        return (AttributeQueryConfiguration) getRelyingPartyConfiguration(providerId).getProfileConfigurations().get(
-                AttributeQueryConfiguration.PROFILE_ID);
-    }
+    /** {@inheritDoc} */
+    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
+            throws ProfileException {
+        MessageDecoder<ServletRequest> decoder = getMessageDecoder(request);
+        populateMessageDecoder(decoder);
+        decoder.setRequest(request.getRawRequest());
 
-    /**
-     * This returns the <code>MetadataProvider</code> for this attribute query.
-     * 
-     * @return <code>MetadataProvider</code>
-     */
-    protected MetadataProvider getMetadataProvider() {
-        return getRelyingPartyConfigurationManager().getMetadataProvider();
-    }
-
-    /**
-     * This returns the <code>AttributeAuthority</code> for this attribute query.
-     * 
-     * @return <code>SAML2AttributeAuthority</code>
-     */
-    protected SAML2AttributeAuthority getAttributeAuthority() {
-        return attributeAuthority;
-    }
-
-    /**
-     * This builds the response for this SAML request.
-     * 
-     * @param responseContext <code>ProfileResponseContext</code>
-     * @return <code>Response</code>
-     * @throws EncryptionException if an error occurs attempting to encrypt data
-     */
-    protected Response buildResponse(ProfileResponseContext responseContext) throws EncryptionException {
-        AttributeQueryConfiguration config = getAttributeQueryConfiguration(responseContext.getProviderId());
-
-        /*
-         * required: samlp:Status, ID, Version, IssueInstant
-         */
-        Response response = responseBuilder.buildObject();
-        response.setVersion(SAML_VERSION);
-        response.setID(getIdGenerator().generateIdentifier());
-        response.setInResponseTo(responseContext.getIssuer());
-        response.setIssueInstant(responseContext.getIssueInstant());
-        response.setDestination(responseContext.getDestination());
-
-        response.setIssuer(buildIssuer(responseContext));
-
-        /*
-         * Will be hard coded in the future: if (consent != null) { response.setConsent(consent); }
-         * 
-         */
-
-        /*
-         * No extensions currently exist, will be hardcorded in the future: if (extensions != null) {
-         * response.setExtensions(extensions); }
-         * 
-         */
-
-        if (config.getSignAssertions()) {
-            Signature s = buildSignature();
-            s.setSigningKey(config.getSigningCredential().getPrivateKey());
-            if (config.getEncryptAssertion()) {
-                // TODO load encryption parameters
-                Encrypter encrypter = null;
-                Assertion a = buildAssertion(responseContext);
-                a.setSignature(s);
-                Signer.signObject(s);
-                response.getEncryptedAssertions().add(encrypter.encrypt(a));
-            } else {
-                Assertion a = buildAssertion(responseContext);
-                a.setSignature(s);
-                Signer.signObject(s);
-                response.getAssertions().add(a);
+        // get message from the decoder
+        AttributeQuery attributeQuery = null;
+        try {
+            decoder.decode();
+            if (log.isDebugEnabled()) {
+                log.debug("decoded http servlet request");
             }
-        } else {
-            if (config.getEncryptAssertion()) {
-                // TODO load encryption parameters
-                Encrypter encrypter = null;
-                response.getEncryptedAssertions().add(encrypter.encrypt(buildAssertion(responseContext)));
-            } else {
-                response.getAssertions().add(buildAssertion(responseContext));
-            }
+            attributeQuery = (AttributeQuery) decoder.getSAMLMessage();
+        } catch (BindingException e) {
+            log.error("Error decoding attribute query message", e);
+            throw new ProfileException("Error decoding attribute query message");
         }
-        response.setStatus(buildStatus(StatusCode.SUCCESS_URI));
-        return response;
-    }
 
-    /**
-     * This builds the status response for this SAML request.
-     * 
-     * @param statusCodeUri <code>String</code> to set
-     * @return <code>Status</code>
-     */
-    private Status buildStatus(String statusCodeUri) {
-        Status status = statusBuilder.buildObject();
-        StatusCode statusCode = statusCodeBuilder.buildObject();
-        statusCode.setValue(statusCodeUri);
-        status.setStatusCode(statusCode);
-        return status;
-    }
+        String spEntityId = attributeQuery.getIssuer().getValue();
+        String userSessionId = getUserSessionId(request);
+        Session userSession = getSessionManager().getSession(userSessionId);
+        RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(spEntityId);
+        AttributeQueryConfiguration profileConfig = getAttributeQueryConfiguration(spEntityId);
+        DateTime issueInstant = new DateTime();
 
-    /**
-     * This builds the assertion for this SAML request.
-     * 
-     * @param responseContext <code>ProfileResponseContext</code>
-     * @return <code>Assertion</code>
-     * @throws EncryptionException if an error occurs attempting to encrypt data
-     */
-    private Assertion buildAssertion(ProfileResponseContext responseContext) throws EncryptionException {
-        AttributeQueryConfiguration config = getAttributeQueryConfiguration(responseContext.getProviderId());
+        ShibbolethAttributeRequestContext attributeRequestContext = buildAttributeRequestContext(spEntityId,
+                userSession, request);
 
-        /*
-         * required: saml:Issuer, ID, Version, IssueInstant
-         */
-        Assertion assertion = assertionBuilder.buildObject();
-        assertion.setID(getIdGenerator().generateIdentifier());
-        assertion.setIssueInstant(responseContext.getIssueInstant());
-        assertion.setVersion(SAML_VERSION);
-        assertion.setIssuer(buildIssuer(responseContext));
-
-        // build subject
-        assertion.setSubject(buildSubject(responseContext, config.getEncryptNameID()));
-        // build conditions
-        assertion.setConditions(buildConditions(responseContext));
-        // build advice
-        assertion.setAdvice(buildAdvice());
-        // add attribute statement
-        assertion.getAttributeStatements().add(responseContext.getAttributeStatement());
-        return assertion;
-    }
-
-    /**
-     * This builds the issuer response for this SAML request.
-     * 
-     * @param responseContext <code>ProfileResponseContext</code>
-     * @return <code>Issuer</code>
-     */
-    private Issuer buildIssuer(ProfileResponseContext responseContext) {
-        RelyingPartyConfiguration relyingPartyConfiguration = getRelyingPartyConfiguration(responseContext
-                .getProviderId());
-        Issuer issuer = issuerBuilder.buildObject();
-        issuer.setValue(relyingPartyConfiguration.getProviderId());
-        return issuer;
-    }
-
-    /**
-     * This builds the subject for this SAML request.
-     * 
-     * @param responseContext <code>ProfileResponseContext</code>
-     * @param encryptNameId <code>boolean</code>
-     * @return <code>Subject</code>
-     * @throws EncryptionException if encryption of the name id fails
-     */
-    private Subject buildSubject(ProfileResponseContext responseContext, boolean encryptNameId)
-            throws EncryptionException {
-        Subject subject = subjectBuilder.buildObject();
-        if (encryptNameId) {
-            // TODO load encryption parameters
-            Encrypter encrypter = null;
-            subject.setEncryptedID(encrypter.encrypt(responseContext.getMessage().getSubject().getNameID()));
-        } else {
-            subject.setNameID(responseContext.getMessage().getSubject().getNameID());
-            // TODO when is subject.setBaseID(newBaseID) called, if ever?
+        // resolve attributes with the attribute authority
+        AttributeStatement attributeStatement = null;
+        try {
+            SAML2AttributeAuthority attributeAuthority = profileConfig.getAttributeAuthority();
+            attributeStatement = attributeAuthority.performAttributeQuery(attributeRequestContext);
+        } catch (AttributeRequestException e) {
+            log.error("Error resolving attributes", e);
+            throw new ProfileException("Error resolving attributes", e);
         }
-        return subject;
-    }
 
-    /**
-     * This builds the conditions for this SAML request.
-     * 
-     * @param responseContext <code>ProfileResponseContext</code>
-     * @return <code>Conditions</code>
-     */
-    private Conditions buildConditions(ProfileResponseContext responseContext) {
-        AttributeQueryConfiguration config = getAttributeQueryConfiguration(responseContext.getProviderId());
+        // construct attribute response
+        Response samlResponse = getResponseBuilder().buildObject();
+        populateStatusResponse(samlResponse, issueInstant, attributeQuery, rpConfig);
 
-        Conditions conditions = conditionsBuilder.buildObject();
-        conditions.setNotBefore(responseContext.getIssueInstant());
-        conditions.setNotOnOrAfter(responseContext.getIssueInstant().plus(config.getAssertionLifetime()));
+        Assertion assertion = buildAssertion(issueInstant, rpConfig, profileConfig);
+        assertion.getAttributeStatements().add(attributeStatement);
+        samlResponse.getAssertions().add(assertion);
 
-        // add audience restrictions
-        AudienceRestriction audienceRestriction = audienceRestrictionBuilder.buildObject();
-        for (String s : config.getAssertionAudiences()) {
-            Audience audience = audienceBuilder.buildObject();
-            audience.setAudienceURI(s);
-            audienceRestriction.getAudiences().add(audience);
+        signAssertion(assertion, rpConfig, profileConfig);
+        signResponse(samlResponse, rpConfig, profileConfig);
+
+        MessageEncoder<ServletResponse> messageEncoder = getMessageEncoder(response);
+        populateMessageEncoder(messageEncoder);
+        messageEncoder.setRelyingParty(spEntityId);
+        messageEncoder.setSAMLMessage(samlResponse);
+
+        try {
+            messageEncoder.encode();
+        } catch (BindingException e) {
+            // TODO
         }
-        conditions.getAudienceRestrictions().add(audienceRestriction);
+    }
 
-        // add proxy restrictions
-        ProxyRestriction proxyRestriction = conditions.getProxyRestriction();
-        for (String s : config.getProxyAudiences()) {
-            Audience audience = audienceBuilder.buildObject();
-            audience.setAudienceURI(s);
-            proxyRestriction.getAudiences().add(audience);
+    /**
+     * Builds an attribute request context for this request.
+     * 
+     * @param spEntityId entity ID of the service provider
+     * @param userSession current user's session
+     * @param request current request
+     * 
+     * @return the attribute request context
+     * 
+     * @throws ProfileException thrown if the metadata information can not be located for the given service provider
+     */
+    protected ShibbolethAttributeRequestContext buildAttributeRequestContext(String spEntityId, Session userSession,
+            ProfileRequest<ServletRequest> request) throws ProfileException {
+        ServiceInformation spInformation = userSession.getServiceInformation(spEntityId);
+        ShibbolethAttributeRequestContext requestContext = null;
+        try {
+            requestContext = new ShibbolethAttributeRequestContext(getMetadataProvider(),
+                    getRelyingPartyConfiguration(spEntityId));
+            requestContext.setPrincipalName(userSession.getPrincipalID());
+            requestContext.setPrincipalAuthenticationMethod(spInformation.getAuthenticationMethod()
+                    .getAuthenticationMethod());
+            requestContext.setRequest(request.getRawRequest());
+            return requestContext;
+        } catch (MetadataProviderException e) {
+            log.error("Error creating ShibbolethAttributeRequestContext", e);
+            throw new ProfileException("Error retrieving metadata", e);
         }
-        proxyRestriction.setProxyCount(new Integer(config.getProxyCount()));
-
-        /*
-         * OneTimeUse and additional conditions not supported yet
-         */
-
-        return conditions;
-    }
-
-    /**
-     * This builds the advice for this SAML request.
-     * 
-     * @return <code>Advice</code>
-     */
-    private Advice buildAdvice() {
-        /*
-         * Advice not supported at this time
-         */
-        Advice advice = adviceBuilder.buildObject();
-        return advice;
-    }
-
-    /**
-     * This builds a signature for this SAML request.
-     * 
-     * @return <code>Signature</code>
-     */
-    private Signature buildSignature() {
-        Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
-        return signature;
     }
 }

@@ -17,9 +17,10 @@
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import javolution.util.FastList;
+import java.util.Map;
 
 import edu.internet2.middleware.shibboleth.common.session.impl.AbstractSession;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
@@ -38,7 +39,7 @@ public class SessionImpl extends AbstractSession implements Session {
     private List<AuthenticationMethodInformation> authnMethods;
 
     /** The list of services to which the user has logged in. */
-    private List<ServiceInformation> servicesInformation;
+    private Map<String, ServiceInformation> servicesInformation;
 
     /**
      * Default constructor.
@@ -49,18 +50,27 @@ public class SessionImpl extends AbstractSession implements Session {
     public SessionImpl(InetAddress presenter, String principal) {
         super(presenter, principal);
 
-        authnMethods = new FastList<AuthenticationMethodInformation>();
-        servicesInformation = new FastList<ServiceInformation>();
+        authnMethods = new ArrayList<AuthenticationMethodInformation>();
+        servicesInformation = new HashMap<String, ServiceInformation>();
     }
 
     /** {@inheritDoc} */
     public List<AuthenticationMethodInformation> getAuthenticationMethods() {
         return authnMethods;
     }
+    
+    /** {@inheritDoc} */
+    public ServiceInformation getServiceInformation(String entityId) {
+        return servicesInformation.get(entityId);
+    }
 
     /** {@inheritDoc} */
     public List<ServiceInformation> getServicesInformation() {
-        return servicesInformation;
+        ArrayList<ServiceInformation> info = new ArrayList<ServiceInformation>();
+        for(Map.Entry<String, ServiceInformation> entry : servicesInformation.entrySet()){
+            info.add(entry.getValue());
+        }
+        
+        return info;
     }
-
 }
