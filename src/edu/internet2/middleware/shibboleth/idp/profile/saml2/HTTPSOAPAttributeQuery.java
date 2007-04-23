@@ -41,17 +41,19 @@ public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
     protected MessageDecoder<ServletRequest> getMessageDecoder(ProfileRequest<ServletRequest> request)
             throws ProfileException {
-        MessageDecoder<ServletRequest> decoder = new HTTPSOAP11Decoder();
+        MessageDecoder decoder = new HTTPSOAP11Decoder();
         decoder.setRequest(request.getRawRequest());
         return decoder;
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
     protected MessageEncoder<ServletResponse> getMessageEncoder(ProfileResponse<ServletResponse> response)
             throws ProfileException {
-        MessageEncoder<ServletResponse> encoder = new HTTPSOAP11Encoder();
+        MessageEncoder encoder = new HTTPSOAP11Encoder();
         encoder.setResponse(response.getRawResponse());
         return encoder;
     }
