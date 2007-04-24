@@ -16,316 +16,419 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import java.util.List;
+import java.util.Collection;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-
-import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
-import org.opensaml.Configuration;
-import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
-import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
-import org.opensaml.saml2.core.AuthnContext;
-import org.opensaml.saml2.core.AuthnContextClassRef;
-import org.opensaml.saml2.core.AuthnContextDeclRef;
-import org.opensaml.saml2.core.AuthnStatement;
+import org.opensaml.common.impl.SAMLObjectContentReference;
+import org.opensaml.saml2.core.Advice;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Audience;
 import org.opensaml.saml2.core.AudienceRestriction;
-import org.opensaml.saml2.core.AuthnStatement;
 import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.Issuer;
+import org.opensaml.saml2.core.ProxyRestriction;
+import org.opensaml.saml2.core.RequestAbstractType;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.StatusMessage;
+import org.opensaml.saml2.core.StatusResponseType;
 import org.opensaml.saml2.core.Subject;
-import org.opensaml.xml.XMLObjectBuilderFactory;
+import org.opensaml.xml.XMLObjectBuilder;
+import org.opensaml.xml.encryption.EncryptionException;
+import org.opensaml.xml.security.credential.Credential;
+import org.opensaml.xml.signature.Signature;
+import org.opensaml.xml.signature.Signer;
+import org.opensaml.xml.util.DatatypeHelper;
 
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
 
 /**
  * Common implementation details for profile handlers.
  */
-public abstract class AbstractSAML2ProfileHandler extends
-		AbstractSAMLProfileHandler {
+public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHandler {
 
-	/** SAML Version for this profile handler. */
-	public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
+    /** For building response. */
+    private SAMLObjectBuilder<Response> responseBuilder;
 
-	/** URI for the SAML 2 protocol. */
-	public static final String SAML20_PROTOCOL_URI = "urn:oasis:names:tc:SAML:2.0:protocol";
+    /** For building status. */
+    private SAMLObjectBuilder<Status> statusBuilder;
 
-	/** Class logger. */
-	private static Logger log = Logger
-			.getLogger(AbstractSAML2ProfileHandler.class);
+    /** For building statuscode. */
+    private SAMLObjectBuilder<StatusCode> statusCodeBuilder;
 
-	/** For building XML. */
-	private XMLObjectBuilderFactory builderFactory;
+    /** For building StatusMessages. */
+    private SAMLObjectBuilder<StatusMessage> statusMessageBuilder;
 
-	/** For generating random ids. */
-	private IdentifierGenerator idGenerator;
+    /** For building assertion. */
+    private SAMLObjectBuilder<Assertion> assertionBuilder;
 
-	/** Builder for Response elements. */
-	protected SAMLObjectBuilder<Response> responseBuilder;
+    /** For building issuer. */
+    private SAMLObjectBuilder<Issuer> issuerBuilder;
 
-	/** Builder for Status elements. */
-	protected SAMLObjectBuilder<Status> statusBuilder;
+    /** For building subject. */
+    private SAMLObjectBuilder<Subject> subjectBuilder;
 
-	/** Builder for StatusCode elements. */
-	protected SAMLObjectBuilder<StatusCode> statusCodeBuilder;
+    /** For building conditions. */
+    private SAMLObjectBuilder<Conditions> conditionsBuilder;
 
-	/** Builder for StatusMessage elements. */
-	protected SAMLObjectBuilder<StatusMessage> statusMessageBuilder;
+    /** For building audience restriction. */
+    private SAMLObjectBuilder<AudienceRestriction> audienceRestrictionBuilder;
 
-	/** Builder for Issuer elements. */
-	protected SAMLObjectBuilder<Issuer> issuerBuilder;
+    /** For building proxy retrictions. */
+    private SAMLObjectBuilder<ProxyRestriction> proxyRestrictionBuilder;
 
-	/** Builder for Assertion elements. */
-	protected SAMLObjectBuilder<Assertion> assertionBuilder;
+    /** For building audience. */
+    private SAMLObjectBuilder<Audience> audienceBuilder;
 
-	/** Builder for Condition elements. */
-	protected SAMLObjectBuilder<Conditions> conditionsBuilder;
+    /** For building advice. */
+    private SAMLObjectBuilder<Advice> adviceBuilder;
 
-	/** Builder for AuthnStatement elements. */
-	protected SAMLObjectBuilder<AuthnStatement> authnStatementBuilder;
+    /** For building signature. */
+    private XMLObjectBuilder<Signature> signatureBuilder;
 
-	/** Builder for AuthnContext elements. */
-	protected SAMLObjectBuilder<AuthnContext> authnContextBuilder;
+    /** Constructor. */
+    @SuppressWarnings("unchecked")
+    protected AbstractSAML2ProfileHandler() {
+        super();
 
-	/** Builder for AuthnContextClassRef elements. */
-	protected SAMLObjectBuilder<AuthnContextClassRef> authnContextClassRefBuilder;
+        responseBuilder = (SAMLObjectBuilder<Response>) getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
+        statusBuilder = (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
+        statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) getBuilderFactory().getBuilder(
+                StatusCode.DEFAULT_ELEMENT_NAME);
+        statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) getBuilderFactory().getBuilder(
+                StatusMessage.DEFAULT_ELEMENT_NAME);
+        issuerBuilder = (SAMLObjectBuilder<Issuer>) getBuilderFactory().getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+        assertionBuilder = (SAMLObjectBuilder<Assertion>) getBuilderFactory()
+                .getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+        subjectBuilder = (SAMLObjectBuilder<Subject>) getBuilderFactory().getBuilder(Subject.DEFAULT_ELEMENT_NAME);
+        conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory().getBuilder(
+                Conditions.DEFAULT_ELEMENT_NAME);
+        audienceRestrictionBuilder = (SAMLObjectBuilder<AudienceRestriction>) getBuilderFactory().getBuilder(
+                AudienceRestriction.DEFAULT_ELEMENT_NAME);
+        proxyRestrictionBuilder = (SAMLObjectBuilder<ProxyRestriction>) getBuilderFactory().getBuilder(
+                ProxyRestriction.DEFAULT_ELEMENT_NAME);
+        audienceBuilder = (SAMLObjectBuilder<Audience>) getBuilderFactory().getBuilder(Audience.DEFAULT_ELEMENT_NAME);
+        adviceBuilder = (SAMLObjectBuilder<Advice>) getBuilderFactory().getBuilder(Advice.DEFAULT_ELEMENT_NAME);
+        signatureBuilder = (XMLObjectBuilder<Signature>) getBuilderFactory().getBuilder(Signature.DEFAULT_ELEMENT_NAME);
+    }
 
-	/** Builder for AuthnContextDeclRef elements. */
-	protected SAMLObjectBuilder<AuthnContextDeclRef> authnContextDeclRefBuilder;
+    /**
+     * Convenience method for getting the SAML 2 advice builder.
+     * 
+     * @return SAML 2 advice builder
+     */
+    public SAMLObjectBuilder<Advice> getAdviceBuilder() {
+        return adviceBuilder;
+    }
 
-	/** Builder for AudienceRestriction conditions. */
-	protected SAMLObjectBuilder<AudienceRestriction> audienceRestrictionBuilder;
+    /**
+     * Convenience method for getting the SAML 2 assertion builder.
+     * 
+     * @return SAML 2 assertion builder
+     */
+    public SAMLObjectBuilder<Assertion> getAssertionBuilder() {
+        return assertionBuilder;
+    }
 
-	/** Builder for Audience elemenets. */
-	protected SAMLObjectBuilder<Audience> audienceBuilder;
+    /**
+     * Convenience method for getting the SAML 2 audience builder.
+     * 
+     * @return SAML 2 audience builder
+     */
+    public SAMLObjectBuilder<Audience> getAudienceBuilder() {
+        return audienceBuilder;
+    }
 
-	/**
-	 * Default constructor.
-	 */
-	public AbstractSAML2ProfileHandler() {
-		builderFactory = Configuration.getBuilderFactory();
-		idGenerator = new SecureRandomIdentifierGenerator();
+    /**
+     * Convenience method for getting the SAML 2 audience restriction builder.
+     * 
+     * @return SAML 2 audience restriction builder
+     */
+    public SAMLObjectBuilder<AudienceRestriction> getAudienceRestrictionBuilder() {
+        return audienceRestrictionBuilder;
+    }
 
-		assertionBuilder = (SAMLObjectBuilder<Assertion>) getBuilderFactory()
-				.getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
-		authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) getBuilderFactory()
-				.getBuilder(AuthnStatement.DEFAULT_ELEMENT_NAME);
-		authnContextBuilder = (SAMLObjectBuilder<AuthnContext>) getBuilderFactory()
-				.getBuilder(AuthnContext.DEFAULT_ELEMENT_NAME);
-		authnContextClassRefBuilder = (SAMLObjectBuilder<AuthnContextClassRef>) getBuilderFactory()
-				.getBuilder(AuthnContextClassRef.DEFAULT_ELEMENT_NAME);
-		authnContextDeclRefBuilder = (SAMLObjectBuilder<AuthnContextDeclRef>) getBuilderFactory()
-				.getBuilder(AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
-		audienceRestrictionBuilder = (SAMLObjectBuilder<AudienceRestriction>) getBuilderFactory()
-				.getBuilder(AudienceRestriction.DEFAULT_ELEMENT_NAME);
-		audienceBuilder = (SAMLObjectBuilder<Audience>) getBuilderFactory()
-				.getBuilder(Audience.DEFAULT_ELEMENT_NAME);
-		conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory()
-				.getBuilder(Conditions.DEFAULT_ELEMENT_NAME);
-		responseBuilder = (SAMLObjectBuilder<Response>) builderFactory
-				.getBuilder(Response.DEFAULT_ELEMENT_NAME);
-		statusBuilder = (SAMLObjectBuilder<Status>) builderFactory
-				.getBuilder(Status.DEFAULT_ELEMENT_NAME);
-		statusCodeBuilder = (SAMLObjectBuilder<StatusCode>) builderFactory
-				.getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
-		statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) builderFactory
-				.getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
-		issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory
-				.getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
-	}
+    /**
+     * Convenience method for getting the SAML 2 conditions builder.
+     * 
+     * @return SAML 2 conditions builder
+     */
+    public SAMLObjectBuilder<Conditions> getConditionsBuilder() {
+        return conditionsBuilder;
+    }
 
-	/**
-	 * Returns the XML builder factory.
-	 * 
-	 * @return Returns the builderFactory.
-	 */
-	public XMLObjectBuilderFactory getBuilderFactory() {
-		return builderFactory;
-	}
+    /**
+     * Convenience method for getting the SAML 2 Issuer builder.
+     * 
+     * @return SAML 2 Issuer builder
+     */
+    public SAMLObjectBuilder<Issuer> getIssuerBuilder() {
+        return issuerBuilder;
+    }
 
-	/**
-	 * Returns the id generator.
-	 * 
-	 * @return Returns the idGenerator.
-	 */
-	public IdentifierGenerator getIdGenerator() {
-		return idGenerator;
-	}
+    /**
+     * Convenience method for getting the SAML 2 proxy restriction builder.
+     * 
+     * @return SAML 2 proxy restriction builder
+     */
+    public SAMLObjectBuilder<ProxyRestriction> getProxyRestrictionBuilder() {
+        return proxyRestrictionBuilder;
+    }
 
-	/**
-	 * Build a status message, with an optional second-level failure message.
-	 * 
-	 * @param topLevelCode
-	 *            The top-level status code. Should be from saml-core-2.0-os,
-	 *            sec. 3.2.2.2
-	 * @param secondLevelCode
-	 *            An optional second-level failure code. Should be from
-	 *            saml-core-2.0-is, sec 3.2.2.2. If null, no second-level Status
-	 *            element will be set.
-	 * @param secondLevelFailureMessage
-	 *            An optional second-level failure message.
-	 * 
-	 * @return a Status object.
-	 */
-	protected Status buildStatus(String topLevelCode, String secondLevelCode,
-			String secondLevelFailureMessage) {
+    /**
+     * Convenience method for getting the SAML 2 response builder.
+     * 
+     * @return SAML 2 response builder
+     */
+    public SAMLObjectBuilder<Response> getResponseBuilder() {
+        return responseBuilder;
+    }
 
-		Status status = statusBuilder.buildObject();
-		StatusCode statusCode = statusCodeBuilder.buildObject();
+    /**
+     * Convenience method for getting the Signature builder.
+     * 
+     * @return signature builder
+     */
+    public XMLObjectBuilder<Signature> getSignatureBuilder() {
+        return signatureBuilder;
+    }
 
-		statusCode.setValue(topLevelCode);
-		if (secondLevelCode != null) {
-			StatusCode secondLevelStatusCode = statusCodeBuilder.buildObject();
-			secondLevelStatusCode.setValue(secondLevelCode);
-			statusCode.setStatusCode(secondLevelStatusCode);
-		}
+    /**
+     * Convenience method for getting the SAML 2 status builder.
+     * 
+     * @return SAML 2 status builder
+     */
+    public SAMLObjectBuilder<Status> getStatusBuilder() {
+        return statusBuilder;
+    }
 
-		if (secondLevelFailureMessage != null) {
-			StatusMessage msg = statusMessageBuilder.buildObject();
-			msg.setMessage(secondLevelFailureMessage);
-			status.setStatusMessage(msg);
-		}
+    /**
+     * Convenience method for getting the SAML 2 status code builder.
+     * 
+     * @return SAML 2 status code builder
+     */
+    public SAMLObjectBuilder<StatusCode> getStatusCodeBuilder() {
+        return statusCodeBuilder;
+    }
 
-		return status;
-	}
+    /**
+     * Convenience method for getting the SAML 2 status message builder.
+     * 
+     * @return SAML 2 status message builder
+     */
+    public SAMLObjectBuilder<StatusMessage> getStatusMessageBuilder() {
+        return statusMessageBuilder;
+    }
 
-	/**
-	 * Build a status message, with an optional second-level failure message.
-	 * 
-	 * @param topLevelCode
-	 *            The top-level status code. Should be from saml-core-2.0-os,
-	 *            sec. 3.2.2.2
-	 * @param secondLevelCode
-	 *            An optional second-level failure code. Should be from
-	 *            saml-core-2.0-is, sec 3.2.2.2. If null, no second-level Status
-	 *            element will be set.
-	 * 
-	 * @return a Status object.
-	 */
-	protected Status buildStatus(String topLevelCode,
-			final StatusCode secondLevelCode) {
+    /**
+     * Convenience method for getting the SAML 2 subject builder.
+     * 
+     * @return SAML 2 subject builder
+     */
+    public SAMLObjectBuilder<Subject> getSubjectBuilder() {
+        return subjectBuilder;
+    }
 
-		Status status = statusBuilder.buildObject();
-		StatusCode statusCode = statusCodeBuilder.buildObject();
+    /**
+     * Populates the response's id, in response to, issue instant, version, and issuer properties.
+     * 
+     * @param response the response to populate
+     * @param issueInstant timestamp to use as the issue instant for the response
+     * @param request the request that the response is for
+     * @param rpConfig the relying party configuration for the request
+     */
+    protected void populateStatusResponse(StatusResponseType response, DateTime issueInstant,
+            RequestAbstractType request, RelyingPartyConfiguration rpConfig) {
+        response.setID(getIdGenerator().generateIdentifier());
+        response.setInResponseTo(request.getID());
+        response.setIssueInstant(issueInstant);
+        response.setVersion(SAMLVersion.VERSION_20);
+        response.setIssuer(buildEntityIssuer(rpConfig));
+    }
 
-		statusCode.setValue(topLevelCode);
-		if (secondLevelCode != null) {
-			statusCode.setStatusCode(secondLevelCode);
-		}
+    /**
+     * Builds a {@link Status} object populated with the given code and message.
+     * 
+     * @param statusCode status code or null
+     * @param statusMessage status message or null
+     * 
+     * @return built status object
+     */
+    protected Status buildStatus(String statusCode, String statusMessage) {
+        Status status = getStatusBuilder().buildObject();
 
-		return status;
-	}
+        String trimmedCode = DatatypeHelper.safeTrimOrNullString(statusCode);
+        if (trimmedCode != null) {
+            StatusCode code = getStatusCodeBuilder().buildObject();
+            code.setValue(trimmedCode);
+            status.setStatusCode(code);
+        }
 
-	/**
-	 * Build a StatusCode.
-	 * 
-	 * @param statusCode
-	 *            The URI status code.
-	 * @param message
-	 *            The message; may be <code>null</code.
-	 *
-	 * @return a StatusCode object.
-	 */
-	protected StatusCode buildStatusCode(String statusCode) {
-		return null;
-	}
+        String trimmedMessage = DatatypeHelper.safeTrimOrNullString(statusMessage);
+        if (trimmedMessage != null) {
+            StatusMessage message = getStatusMessageBuilder().buildObject();
+            message.setMessage(trimmedMessage);
+            status.setStatusMessage(message);
+        }
 
-	/**
-	 * Build a SAML 2 Response element with basic fields populated.
-	 * 
-	 * Failure handlers can send the returned response element to the RP.
-	 * Success handlers should add the assertions before sending it.
-	 * 
-	 * @param inResponseTo
-	 *            The ID of the request this is in response to.
-	 * @param issueInstant
-	 *            The timestamp of this response.
-	 * @param issuer
-	 *            The URI of the RP issuing the response.
-	 * @param status
-	 *            The response's status code.
-	 * 
-	 * @return The populated Response object.
-	 */
-	protected Response buildResponse(String inResponseTo,
-			final DateTime issueInstant, String issuer, final Status status) {
+        return status;
+    }
 
-		Response response = responseBuilder.buildObject();
+    /**
+     * Builds a basic assertion with its id, issue instant, SAML version, issuer, subject, and conditions populated.
+     * 
+     * @param issueInstant time to use as assertion issue instant
+     * @param rpConfig the relying party configuration
+     * @param profileConfig current profile configuration
+     * 
+     * @return the built assertion
+     */
+    protected Assertion buildAssertion(DateTime issueInstant, RelyingPartyConfiguration rpConfig,
+            AbstractSAML2ProfileConfiguration profileConfig) {
+        Assertion assertion = assertionBuilder.buildObject();
+        assertion.setID(getIdGenerator().generateIdentifier());
+        assertion.setIssueInstant(issueInstant);
+        assertion.setVersion(SAMLVersion.VERSION_20);
+        assertion.setIssuer(buildEntityIssuer(rpConfig));
+        //TODO assertion.setSubject(buildSubject());
 
-		Issuer i = issuerBuilder.buildObject();
-		i.setValue(issuer);
+        Conditions conditions = buildConditions(issueInstant, profileConfig);
+        assertion.setConditions(conditions);
 
-		response.setVersion(SAML_VERSION);
-		response.setID(getIdGenerator().generateIdentifier());
-		response.setInResponseTo(inResponseTo);
-		response.setIssueInstant(issueInstant);
-		response.setIssuer(i);
-		response.setStatus(status);
+        return assertion;
+    }
 
-		return response;
-	}
+    /**
+     * Builds an entity type Issuer populated with the correct provider Id for this relying party configuration.
+     * 
+     * @param rpConfig the relying party configuration
+     * 
+     * @return the built Issuer
+     */
+    protected Issuer buildEntityIssuer(RelyingPartyConfiguration rpConfig) {
+        Issuer issuer = getIssuerBuilder().buildObject();
+        issuer.setFormat(Issuer.ENTITY);
+        issuer.setValue(rpConfig.getProviderId());
 
-	/**
-	 * Build a skeletal SAML 2 assertion.
-	 * 
-	 * Note, the caller may either set the audiences in the conditions argument,
-	 * or pass a list of URIs to this method. If the latter option is chosen,
-	 * this method will create the appropriate AudienceRestriction element.
-	 * 
-	 * @param subject
-	 *            The Subject of the assertion.
-	 * @param conditions
-	 *            The conditions object.
-	 * @param issuer
-	 *            The URI of the RP issuing the assertion.
-	 * @param audiences
-	 *            A possibly null array of audience URIs for the assertion.
-	 * 
-	 * @return The assertion object.
-	 */
-	protected Assertion buildAssertion(final Subject subject,
-			final Conditions conditions, final Issuer issuer,
-			final String[] audiences) {
+        return issuer;
+    }
 
-		Assertion assertion = assertionBuilder.buildObject();
-		assertion.setID(getIdGenerator().generateIdentifier());
-		assertion.setVersion(SAML_VERSION);
-		assertion.setIssueInstant(new DateTime());
-		assertion.setConditions(conditions);
-		assertion.setSubject(subject);
+    /**
+     * Builds the SAML subject for the user for the service provider.
+     * 
+     * @return SAML subject for the user for the service provider
+     * 
+     * @throws EncryptionException thrown if there is a problem encryption the subject's NameID
+     */
+    protected Subject buildSubject() throws EncryptionException {
+        // TODO
+        return null;
+    }
 
-		Issuer i = issuerBuilder.buildObject();
-		i.setValue(issuer.getValue());
-		assertion.setIssuer(i);
+    /**
+     * Builds a SAML assertion condition set. The following fields are set; not before, not on or after, audience
+     * restrictions, and proxy restrictions.
+     * 
+     * @param issueInstant timestamp the assertion was created
+     * @param profileConfig current profile configuration
+     * 
+     * @return constructed conditions
+     */
+    private Conditions buildConditions(DateTime issueInstant, AbstractSAML2ProfileConfiguration profileConfig) {
+        Conditions conditions = conditionsBuilder.buildObject();
+        conditions.setNotBefore(issueInstant);
+        conditions.setNotOnOrAfter(issueInstant.plus(profileConfig.getAssertionLifetime()));
 
-		// if audiences were specified, set an AudienceRestriction condition
-		if (audiences != null && audiences.length > 0) {
+        Collection<String> audiences;
 
-			List<AudienceRestriction> audienceRestrictionConditions = assertion
-					.getConditions().getAudienceRestrictions();
+        // add audience restrictions
+        audiences = profileConfig.getAssertionAudiences();
+        if (audiences != null && audiences.size() > 0) {
+            AudienceRestriction audienceRestriction = audienceRestrictionBuilder.buildObject();
+            Audience audience;
+            for (String audienceUri : audiences) {
+                audience = audienceBuilder.buildObject();
+                audience.setAudienceURI(audienceUri);
+                audienceRestriction.getAudiences().add(audience);
+            }
+            conditions.getAudienceRestrictions().add(audienceRestriction);
+        }
 
-			AudienceRestriction audienceRestriction = audienceRestrictionBuilder
-					.buildObject();
-			audienceRestrictionConditions.add(audienceRestriction);
+        // add proxy restrictions
+        audiences = profileConfig.getProxyAudiences();
+        if (audiences != null && audiences.size() > 0) {
+            ProxyRestriction proxyRestriction = proxyRestrictionBuilder.buildObject();
+            Audience audience;
+            for (String audienceUri : audiences) {
+                audience = audienceBuilder.buildObject();
+                audience.setAudienceURI(audienceUri);
+                proxyRestriction.getAudiences().add(audience);
+            }
 
-			List<Audience> audienceList = audienceRestriction.getAudiences();
+            proxyRestriction.setProxyCount(profileConfig.getProxyCount());
+            conditions.getConditions().add(proxyRestriction);
+        }
 
-			for (String audienceURI : audiences) {
-				Audience audience = audienceBuilder.buildObject();
-				audience.setAudienceURI(audienceURI);
-				audienceList.add(audience);
-			}
-		}
+        return conditions;
+    }
 
-		return assertion;
-	}
+    /**
+     * Signs the given assertion if either the current profile configuration or the relying party configuration contains
+     * signing credentials.
+     * 
+     * @param assertion assertion to sign
+     * @param rpConfig relying party configuration
+     * @param profileConfig current profile configuration
+     */
+    protected void signAssertion(Assertion assertion, RelyingPartyConfiguration rpConfig,
+            AbstractSAML2ProfileConfiguration profileConfig) {
+        if (!profileConfig.getSignAssertions()) {
+            return;
+        }
+
+        Credential signatureCredential = profileConfig.getSigningCredential();
+        if (signatureCredential == null) {
+            signatureCredential = rpConfig.getDefaultSigningCredential();
+        }
+
+        if (signatureCredential == null) {
+            return;
+        }
+
+        SAMLObjectContentReference contentRef = new SAMLObjectContentReference(assertion);
+        Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
+        signature.getContentReferences().add(contentRef);
+        assertion.setSignature(signature);
+
+        Signer.signObject(signature);
+    }
+    
+    protected void signResponse(StatusResponseType response, RelyingPartyConfiguration rpConfig, AbstractSAML2ProfileConfiguration profileConfig){
+        if (!profileConfig.getSignResponses()) {
+            return;
+        }
+
+        Credential signatureCredential = profileConfig.getSigningCredential();
+        if (signatureCredential == null) {
+            signatureCredential = rpConfig.getDefaultSigningCredential();
+        }
+
+        if (signatureCredential == null) {
+            return;
+        }
+
+        SAMLObjectContentReference contentRef = new SAMLObjectContentReference(response);
+        Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
+        signature.getContentReferences().add(contentRef);
+        response.setSignature(signature);
+
+        Signer.signObject(signature);
+    }
+
+    // TODO encryption support
 }
