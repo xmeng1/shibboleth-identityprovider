@@ -16,53 +16,30 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
-import java.util.Map;
-
-import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.web.servlet.HttpServletBean;
-
-import edu.internet2.middleware.shibboleth.common.profile.AbstractProfileHandler;
+import edu.internet2.middleware.shibboleth.common.profile.BaseServletProfileRequestDispatcher;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
- * Servlet responsible for dispatching incoming requests to the appropriate {@link AbstractProfileHandler}.
+ * Servlet responsible for dispatching incoming shibboleth requests to the appropriate profile handler.
  */
-public class ProfileRequestDispatcher extends HttpServletBean {
+public class ProfileRequestDispatcher extends BaseServletProfileRequestDispatcher {
 
-    /** Registered profile handlers. */
-    private Map<String, AbstractProfileHandler> profileHandlers;
+    /** Serial version UID. */
+    private static final long serialVersionUID = -3939942569721369334L;
 
-    /**
-     * Gets the profile handlers currently registered.
-     * 
-     * @return profile handlers currently registered
-     */
-    public Map<String, AbstractProfileHandler> getProfileHandlers() {
-        return profileHandlers;
-    }
-
-    /**
-     * Sets all the profile handlers to use.
-     * 
-     * @param handlers the profile handlers to use
-     */
-    public void setProfileHandlers(Map<String, AbstractProfileHandler> handlers) {
-        profileHandlers = handlers;
+    /** {@inheritDoc} */
+    protected ProfileRequest getProfileRequest(ServletRequest request) {
+        return new ShibbolethProfileRequest((HttpServletRequest) request);
     }
 
     /** {@inheritDoc} */
-    public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-        String path = request.getPathInfo();
-        AbstractProfileHandler handler = profileHandlers.get(path);
-
-        if (handler != null) {
-            ShibbolethProfileRequest profileReq = new ShibbolethProfileRequest(request);
-            ShibbolethProfileResponse profileResp = new ShibbolethProfileResponse(response);
-            handler.processRequest(profileReq, profileResp);
-        }
-
-        // TODO handle case where there is no registered profile
+    protected ProfileResponse getProfileResponse(ServletResponse response) {
+        return new ShibbolethProfileResponse((HttpServletResponse) response);
     }
 }
