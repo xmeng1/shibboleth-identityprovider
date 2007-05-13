@@ -18,22 +18,19 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 
-import org.opensaml.common.binding.MessageDecoder;
-import org.opensaml.common.binding.MessageEncoder;
-import org.opensaml.saml2.binding.HTTPSOAP11Decoder;
-import org.opensaml.saml2.binding.HTTPSOAP11Encoder;
+import org.opensaml.common.binding.decoding.MessageDecoder;
+import org.opensaml.common.binding.encoding.MessageEncoder;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * SAML 2.0 SOAP Attribute Query profile handler.
  */
 public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
+
+    /** SAML binding URI. */
+    public static final String BINDING = "urn:oasis:names:tc:SAML:2.0:bindings:SOAP";
 
     /** Constructor. */
     public HTTPSOAPAttributeQuery() {
@@ -42,29 +39,27 @@ public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
-    protected MessageDecoder<ServletRequest> getMessageDecoder(ProfileRequest<ServletRequest> request)
-            throws ProfileException {
-        MessageDecoder decoder = new HTTPSOAP11Decoder();
-        decoder.setRequest(request.getRawRequest());
-        return decoder;
+    protected void getMessageDecoder(AttributeQueryRequestContext requestContext) throws ProfileException {
+        MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(BINDING);
+        if (decoder == null) {
+            throw new ProfileException("No request decoder was registered for binding type: " + BINDING);
+        }
+
+        requestContext.setMessageDecoder(decoder);
+        decoder.setRequest(requestContext.getProfileRequest().getRawRequest());
     }
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
-    protected MessageEncoder<ServletResponse> getMessageEncoder(ProfileResponse<ServletResponse> response)
-            throws ProfileException {
-        MessageEncoder encoder = new HTTPSOAP11Encoder();
-        encoder.setResponse(response.getRawResponse());
-        return encoder;
-    }
+    protected void getMessageEncoder(AttributeQueryRequestContext requestContext) throws ProfileException {
 
-    /** {@inheritDoc} */
-    protected String getUserSessionId(ProfileRequest<ServletRequest> request) {
-        HttpServletRequest rawRequest = (HttpServletRequest) request.getRawRequest();
-        if (rawRequest != null) {
-            return (String) rawRequest.getSession().getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(BINDING);
+        if (encoder == null) {
+            throw new ProfileException("No response encoder was registered for binding type: " + BINDING);
         }
 
-        return null;
+        requestContext.setMessageEncoder(encoder);
+        encoder.setResponse(requestContext.getProfileResponse().getRawResponse());
+        encoder.setSamlMessage(requestContext.getAttributeQueryResponse());
     }
 }

@@ -44,9 +44,9 @@ import org.bouncycastle.util.encoders.Hex;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLVersion;
-import org.opensaml.common.binding.SAMLArtifact;
-import org.opensaml.common.binding.SAMLArtifactFactory;
-import org.opensaml.common.binding.ArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifactMap;
+import org.opensaml.common.binding.artifact.SAMLArtifact;
+import org.opensaml.common.binding.artifact.SAMLArtifactFactory;
 import org.opensaml.saml1.core.Assertion;
 import org.opensaml.saml1.core.AttributeStatement;
 import org.opensaml.saml1.core.Audience;
@@ -107,7 +107,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
     /**
      * Backing store for artifacts. This must be shared between ShibbolethSSO and AttributeQuery.
      */
-    protected ArtifactMap artifactMap;
+    protected SAMLArtifactMap artifactMap;
 
     /** The path to the IdP's AuthenticationManager servlet */
     protected String authnMgrURL;
@@ -269,7 +269,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
      * 
      * @param artifactMap the Artifact mapping backing store.
      */
-    public void setArtifactMap(ArtifactMap artifactMap) {
+    public void setArtifactMap(SAMLArtifactMap artifactMap) {
         this.artifactMap = artifactMap;
     }
 
@@ -278,7 +278,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
      * 
      * @return An ArtifactMap instance.
      */
-    public ArtifactMap getArtifactMap() {
+    public SAMLArtifactMap getArtifactMap() {
         return artifactMap;
     }
 

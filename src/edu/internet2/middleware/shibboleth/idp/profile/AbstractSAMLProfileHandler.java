@@ -17,18 +17,18 @@
 package edu.internet2.middleware.shibboleth.idp.profile;
 
 import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
+import org.apache.log4j.Logger;
 import org.opensaml.common.IdentifierGenerator;
-import org.opensaml.common.binding.MessageDecoder;
-import org.opensaml.common.binding.MessageEncoder;
+import org.opensaml.common.binding.decoding.MessageDecoderFactory;
+import org.opensaml.common.binding.encoding.MessageEncoderFactory;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 
+import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.AbstractProfileHandler;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
@@ -38,8 +38,17 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 public abstract class AbstractSAMLProfileHandler extends
         AbstractProfileHandler<SAMLMDRelyingPartyConfigurationManager, Session> {
 
+    /** SAML message audit log. */
+    private final Logger auditLog = Logger.getLogger(AuditLogEntry.AUDIT_LOGGER_NAME);
+
     /** Generator of IDs which may be used for SAML assertions, requests, etc. */
     private IdentifierGenerator idGenerator;
+
+    /** Factory of message decoders. */
+    private MessageDecoderFactory decoderFactory;
+
+    /** Factory of message encoders. */
+    private MessageEncoderFactory encoderFactory;
 
     /** Constructor. */
     protected AbstractSAMLProfileHandler() {
@@ -57,6 +66,42 @@ public abstract class AbstractSAMLProfileHandler extends
     }
 
     /**
+     * Gets the factory used to build new message decoders.
+     * 
+     * @return factory used to build new message decoders
+     */
+    public MessageDecoderFactory getMessageDecoderFactory() {
+        return decoderFactory;
+    }
+
+    /**
+     * Sets the factory used to build new message decoders.
+     * 
+     * @param factory factory used to build new message decoders
+     */
+    public void setMessageDecoderFactory(MessageDecoderFactory factory) {
+        decoderFactory = factory;
+    }
+
+    /**
+     * Gets the factory used to build message encoders.
+     * 
+     * @return factory used to build message encoders
+     */
+    public MessageEncoderFactory getMessageEncoderFactory() {
+        return encoderFactory;
+    }
+
+    /**
+     * Sets the factory used to build message encoders.
+     * 
+     * @param factory factory used to build message encoders
+     */
+    public void setMessageEncoderFactory(MessageEncoderFactory factory) {
+        encoderFactory = factory;
+    }
+
+    /**
      * A convenience method for retrieving the SAML metadata provider from the relying party manager.
      * 
      * @return the metadata provider or null
@@ -69,51 +114,15 @@ public abstract class AbstractSAMLProfileHandler extends
 
         return null;
     }
-    
-    /**
-     * Populates the given message decoder with the profile handler's metadata provider.
-     * 
-     * {@inheritDoc}
-     */
-    @SuppressWarnings("unchecked")
-    protected void populateMessageDecoder(MessageDecoder<ServletRequest> decoder){
-        super.populateMessageDecoder(decoder);
-        decoder.setMetadataProvider(getMetadataProvider());
-    }
-    
-    /**
-     * Populates the given message encoder with the profile handler's metadata provider.
-     * 
-     * {@inheritDoc}
-     */
-    protected void populateMessageEncoder(MessageEncoder<ServletResponse> encoder) {
-        super.populateMessageEncoder(encoder);
-        encoder.setMetadataProvider(getMetadataProvider());
-    }
 
     /**
-     * Gets the message decoder to use in this query.
+     * Gets the audit log for this handler.
      * 
-     * @param request attribute request
-     * 
-     * @return message decoder to use in this query
-     * 
-     * @throws ProfileException thrown if a message decoder can not be created for the given request
+     * @return audit log for this handler
      */
-    protected abstract MessageDecoder<ServletRequest> getMessageDecoder(ProfileRequest<ServletRequest> request)
-            throws ProfileException;
-
-    /**
-     * Gets the message encoder to use in this query.
-     * 
-     * @param response attribute query response
-     * 
-     * @return message encoder to use in this query
-     * 
-     * @throws ProfileException thrown if a message encoder can not be created for the given request
-     */
-    protected abstract MessageEncoder<ServletResponse> getMessageEncoder(ProfileResponse<ServletResponse> response)
-            throws ProfileException;
+    protected Logger getAduitLog() {
+        return auditLog;
+    }
 
     /**
      * Gets the user's session ID from the current request.
@@ -122,5 +131,12 @@ public abstract class AbstractSAMLProfileHandler extends
      * 
      * @return user's session ID
      */
-    protected abstract String getUserSessionId(ProfileRequest<ServletRequest> request);
+    protected String getUserSessionId(ProfileRequest<ServletRequest> request) {
+        HttpServletRequest rawRequest = (HttpServletRequest) request.getRawRequest();
+        if (rawRequest != null) {
+            return (String) rawRequest.getSession().getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        }
+
+        return null;
+    }
 }

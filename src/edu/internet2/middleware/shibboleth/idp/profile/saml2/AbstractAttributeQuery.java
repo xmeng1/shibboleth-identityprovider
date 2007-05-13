@@ -22,8 +22,9 @@ import javax.servlet.ServletResponse;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.opensaml.common.binding.BindingException;
-import org.opensaml.common.binding.MessageDecoder;
-import org.opensaml.common.binding.MessageEncoder;
+import org.opensaml.common.binding.decoding.MessageDecoder;
+import org.opensaml.common.binding.encoding.MessageEncoder;
+import org.opensaml.log.Level;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.AttributeStatement;
@@ -33,6 +34,7 @@ import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.SAML2AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethAttributeRequestContext;
+import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
@@ -49,93 +51,128 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
     /** Class logger. */
     private static Logger log = Logger.getLogger(AbstractAttributeQuery.class);
 
-    /**
-     * Gets the {@link AttributeQueryConfiguration} for the service provider identified by the given ID.
-     * 
-     * @param spId entity ID of the service provider
-     * 
-     * @return configuration for the given service provider or null
-     */
-    protected AttributeQueryConfiguration getAttributeQueryConfiguration(String spId) {
-        return (AttributeQueryConfiguration) getProfileConfiguration(spId, AttributeQueryConfiguration.PROFILE_ID);
-    }
-
-    /**
-     * Gets the attribute authority for the service provider identified by the given ID.
-     * 
-     * @param spId entity ID of the service provider
-     * 
-     * @return attribute authority for the service provider or null
-     */
-    protected SAML2AttributeAuthority getAttributeAuthority(String spId) {
-        AttributeQueryConfiguration config = getAttributeQueryConfiguration(spId);
-        if (config != null) {
-            return config.getAttributeAuthority();
-        }
-
-        return null;
+    /** {@inheritDoc} */
+    public String getProfileId() {
+        return "urn:oasis:names:tc:SAML:2.0:profiles:query";
     }
 
     /** {@inheritDoc} */
     public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
             throws ProfileException {
-        MessageDecoder<ServletRequest> decoder = getMessageDecoder(request);
-        populateMessageDecoder(decoder);
-        decoder.setRequest(request.getRawRequest());
 
-        // get message from the decoder
-        AttributeQuery attributeQuery = null;
+        AttributeQueryRequestContext requestContext = new AttributeQueryRequestContext(request, response);
+
+        getMessageDecoder(requestContext);
+        
+        decodeRequest(requestContext);
+
+        buildResponse(requestContext);
+
+        getMessageEncoder(requestContext);
+
         try {
-            decoder.decode();
+            requestContext.getMessageEncoder().encode();
+            writeAuditLogEntry(requestContext);
+        } catch (BindingException e) {
+            log.error("Unable to encode response the relying party: " + requestContext.getRelyingPartyId(), e);
+            throw new ProfileException("Unable to encode response the relying party: "
+                    + requestContext.getRelyingPartyId(), e);
+        }
+    }
+
+    /**
+     * Gets a populated message decoder.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there is no message decoder that may be used to decoder the incoming request
+     */
+    protected abstract void getMessageDecoder(AttributeQueryRequestContext requestContext) throws ProfileException;
+
+    /**
+     * Gets a populated message encoder.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there is no message encoder that may be used to encoder the outgoing response
+     */
+    protected abstract void getMessageEncoder(AttributeQueryRequestContext requestContext) throws ProfileException;
+
+    /**
+     * Decodes the message in the request and adds it to the request context.
+     * 
+     * @param requestContext request context contianing the request to decode
+     * 
+     * @throws ProfileException throw if there is a problem decoding the request
+     */
+    protected void decodeRequest(AttributeQueryRequestContext requestContext)
+            throws ProfileException {
+
+        try {
+            requestContext.getMessageDecoder().decode();
             if (log.isDebugEnabled()) {
                 log.debug("decoded http servlet request");
             }
-            attributeQuery = (AttributeQuery) decoder.getSAMLMessage();
+            requestContext.setAttributeQuery((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
         } catch (BindingException e) {
             log.error("Error decoding attribute query message", e);
             throw new ProfileException("Error decoding attribute query message");
         }
+    }
 
-        String spEntityId = attributeQuery.getIssuer().getValue();
-        String userSessionId = getUserSessionId(request);
-        Session userSession = getSessionManager().getSession(userSessionId);
-        RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(spEntityId);
-        AttributeQueryConfiguration profileConfig = getAttributeQueryConfiguration(spEntityId);
+    /**
+     * Builds a response to the attribute query within the request context.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there is a problem creating the SAML response
+     */
+    protected void buildResponse(AttributeQueryRequestContext requestContext) throws ProfileException {
         DateTime issueInstant = new DateTime();
 
-        ShibbolethAttributeRequestContext attributeRequestContext = buildAttributeRequestContext(spEntityId,
-                userSession, request);
+        // create the attribute statement
+        AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
 
-        // resolve attributes with the attribute authority
-        AttributeStatement attributeStatement = null;
+        // create the assertion and add the attribute statement
+        Assertion assertion = buildAssertion(issueInstant, requestContext.getRelyingPartyConfiguration(),
+                requestContext.getProfileConfiguration());
+        assertion.getAttributeStatements().add(attributeStatement);
+
+        // create the SAML response and add the assertion
+        Response samlResponse = getResponseBuilder().buildObject();
+        populateStatusResponse(samlResponse, issueInstant, requestContext.getAttributeQuery(), requestContext
+                .getRelyingPartyConfiguration());
+        // TODO handle subject
+        samlResponse.getAssertions().add(assertion);
+
+        // sign the assertion if it should be signed
+        signAssertion(assertion, requestContext.getRelyingPartyConfiguration(), requestContext
+                .getProfileConfiguration());
+
+        requestContext.setAttributeQueryResponse(samlResponse);
+    }
+
+    /**
+     * Executes a query for attributes and builds a SAML attribute statement from the results.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return attribute statement resulting from the query
+     * 
+     * @throws ProfileException thrown if there is a problem making the query
+     */
+    protected AttributeStatement buildAttributeStatement(AttributeQueryRequestContext requestContext)
+            throws ProfileException {
+        ShibbolethAttributeRequestContext attributeRequestContext = buildAttributeRequestContext(requestContext
+                .getRelyingPartyId(), requestContext.getUserSession(), requestContext.getProfileRequest());
+
         try {
-            SAML2AttributeAuthority attributeAuthority = profileConfig.getAttributeAuthority();
-            attributeStatement = attributeAuthority.performAttributeQuery(attributeRequestContext);
+            SAML2AttributeAuthority attributeAuthority = requestContext.getProfileConfiguration()
+                    .getAttributeAuthority();
+            return attributeAuthority.performAttributeQuery(attributeRequestContext);
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes", e);
             throw new ProfileException("Error resolving attributes", e);
-        }
-
-        // construct attribute response
-        Response samlResponse = getResponseBuilder().buildObject();
-        populateStatusResponse(samlResponse, issueInstant, attributeQuery, rpConfig);
-
-        Assertion assertion = buildAssertion(issueInstant, rpConfig, profileConfig);
-        assertion.getAttributeStatements().add(attributeStatement);
-        samlResponse.getAssertions().add(assertion);
-
-        signAssertion(assertion, rpConfig, profileConfig);
-        signResponse(samlResponse, rpConfig, profileConfig);
-
-        MessageEncoder<ServletResponse> messageEncoder = getMessageEncoder(response);
-        populateMessageEncoder(messageEncoder);
-        messageEncoder.setRelyingParty(spEntityId);
-        messageEncoder.setSAMLMessage(samlResponse);
-
-        try {
-            messageEncoder.encode();
-        } catch (BindingException e) {
-            // TODO
         }
     }
 
@@ -165,6 +202,206 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
         } catch (MetadataProviderException e) {
             log.error("Error creating ShibbolethAttributeRequestContext", e);
             throw new ProfileException("Error retrieving metadata", e);
+        }
+    }
+
+    /**
+     * Writes an aduit log entry indicating the successful response to the attribute request.
+     * 
+     * @param requestContext current request context
+     */
+    protected void writeAuditLogEntry(AttributeQueryRequestContext requestContext) {
+        AuditLogEntry auditLogEntry = new AuditLogEntry();
+        auditLogEntry.setMessageProfile(getProfileId());
+        auditLogEntry.setPrincipalAuthenticationMethod(requestContext.getUserSession().getServiceInformation(
+                requestContext.getRelyingPartyId()).getAuthenticationMethod().getAuthenticationMethod());
+        auditLogEntry.setPrincipalId(requestContext.getUserSession().getPrincipalID());
+        auditLogEntry.setProviderId(requestContext.getRelyingPartyConfiguration().getProviderId());
+        auditLogEntry.setRelyingPartyId(requestContext.getRelyingPartyId());
+        auditLogEntry.setRequestBinding(requestContext.getMessageDecoder().getBindingURI());
+        auditLogEntry.setRequestId(requestContext.getAttributeQuery().getID());
+        auditLogEntry.setResponseBinding(requestContext.getMessageEncoder().getBindingURI());
+        auditLogEntry.setResponseId(requestContext.getAttributeQueryResponse().getID());
+        getAduitLog().log(Level.CRITICAL, auditLogEntry);
+    }
+
+    /** Basic data structure used to accumulate information as a request is being processed. */
+    protected class AttributeQueryRequestContext {
+
+        /** Current user's session. */
+        private Session userSession;
+
+        /** Current profile request. */
+        private ProfileRequest<ServletRequest> profileRequest;
+
+        /** Decoder used to decode the incoming request. */
+        private MessageDecoder<ServletRequest> messageDecoder;
+
+        /** Current profile response. */
+        private ProfileResponse<ServletResponse> profileResponse;
+
+        /** Encoder used to encode the outgoing response. */
+        private MessageEncoder<ServletResponse> messageEncoder;
+
+        /** Attribute query made by the relying party. */
+        private AttributeQuery attributeQuery;
+
+        /** Attribute query response to the relying party. */
+        private Response attributeQueryResponse;
+
+        /** ID of the relying party. */
+        private String relyingPartyId;
+
+        /** Relying party configuration information. */
+        private RelyingPartyConfiguration relyingPartyConfiguration;
+
+        /** Attribute query profile configuration for the relying party. */
+        private AttributeQueryConfiguration profileConfiguration;
+
+        /**
+         * Constructor.
+         * 
+         * @param request current profile request
+         * @param response current profile response
+         */
+        public AttributeQueryRequestContext(ProfileRequest<ServletRequest> request,
+                ProfileResponse<ServletResponse> response) {
+            userSession = getSessionManager().getSession(getUserSessionId(request));
+            profileRequest = request;
+            profileResponse = response;
+
+        }
+
+        /**
+         * Gets the attribute query from the relying party.
+         * 
+         * @return attribute query from the relying party
+         */
+        public AttributeQuery getAttributeQuery() {
+            return attributeQuery;
+        }
+
+        /**
+         * Sets the attribute query from the relying party. This also populates the relying party ID, configuration, and
+         * profile configuration using information from the query.
+         * 
+         * @param query attribute query from the relying party
+         */
+        public void setAttributeQuery(AttributeQuery query) {
+            attributeQuery = query;
+            relyingPartyId = attributeQuery.getIssuer().getValue();
+            relyingPartyConfiguration = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(
+                    relyingPartyId);
+            profileConfiguration = (AttributeQueryConfiguration) relyingPartyConfiguration
+                    .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
+        }
+
+        /**
+         * Gets the attribute query response.
+         * 
+         * @return attribute query response
+         */
+        public Response getAttributeQueryResponse() {
+            return attributeQueryResponse;
+        }
+
+        /**
+         * Sets the attribute query response.
+         * 
+         * @param response attribute query response
+         */
+        public void setAttributeQueryResponse(Response response) {
+            attributeQueryResponse = response;
+        }
+
+        /**
+         * Gets the decoder used to decode the request.
+         * 
+         * @return decoder used to decode the request
+         */
+        public MessageDecoder<ServletRequest> getMessageDecoder() {
+            return messageDecoder;
+        }
+
+        /**
+         * Sets the decoder used to decode the request.
+         * 
+         * @param decoder decoder used to decode the request
+         */
+        public void setMessageDecoder(MessageDecoder<ServletRequest> decoder) {
+            messageDecoder = decoder;
+        }
+
+        /**
+         * Gets the encoder used to encoder the response.
+         * 
+         * @return encoder used to encoder the response
+         */
+        public MessageEncoder<ServletResponse> getMessageEncoder() {
+            return messageEncoder;
+        }
+
+        /**
+         * Sets the encoder used to encoder the response.
+         * 
+         * @param encoder encoder used to encoder the response
+         */
+        public void setMessageEncoder(MessageEncoder<ServletResponse> encoder) {
+            messageEncoder = encoder;
+        }
+
+        /**
+         * Gets the attribute profile configuration for the relying party.
+         * 
+         * @return attribute profile configuration for the relying party
+         */
+        public AttributeQueryConfiguration getProfileConfiguration() {
+            return profileConfiguration;
+        }
+
+        /**
+         * Gets the current profile request.
+         * 
+         * @return current profile request
+         */
+        public ProfileRequest<ServletRequest> getProfileRequest() {
+            return profileRequest;
+        }
+
+        /**
+         * Gets the current profile response.
+         * 
+         * @return current profile response
+         */
+        public ProfileResponse<ServletResponse> getProfileResponse() {
+            return profileResponse;
+        }
+
+        /**
+         * Gets the configuration information specific to the relying party that made the attribute query.
+         * 
+         * @return configuration information specific to the relying party that made the attribute query
+         */
+        public RelyingPartyConfiguration getRelyingPartyConfiguration() {
+            return relyingPartyConfiguration;
+        }
+
+        /**
+         * Gets the ID of the relying party.
+         * 
+         * @return ID of the relying party
+         */
+        public String getRelyingPartyId() {
+            return relyingPartyId;
+        }
+
+        /**
+         * Gets the current user's session.
+         * 
+         * @return current user's session
+         */
+        public Session getUserSession() {
+            return userSession;
         }
     }
 }

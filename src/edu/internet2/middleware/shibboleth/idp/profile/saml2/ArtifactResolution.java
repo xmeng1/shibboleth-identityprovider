@@ -16,8 +16,13 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
+import org.opensaml.common.binding.decoding.MessageDecoder;
+import org.opensaml.common.binding.encoding.MessageEncoder;
+
+import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
@@ -27,8 +32,26 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
-    public boolean processRequest(ProfileRequest request, ProfileResponse response) throws ServletException {
+    protected MessageDecoder<ServletRequest> getMessageDecoder(ProfileRequest<ServletRequest> request) throws ProfileException {
         // TODO Auto-generated method stub
-        return false;
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    protected MessageEncoder<ServletResponse> getMessageEncoder(ProfileResponse<ServletResponse> response) throws ProfileException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    protected String getUserSessionId(ProfileRequest<ServletRequest> request) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) throws ProfileException {
+        // TODO Auto-generated method stub
+        
     }
 }

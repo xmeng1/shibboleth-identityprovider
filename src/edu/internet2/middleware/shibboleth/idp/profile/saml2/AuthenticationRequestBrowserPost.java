@@ -32,11 +32,11 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.SSOConfigur
 import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.BindingException;
-import org.opensaml.common.binding.MessageDecoder;
+import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.binding.HTTPPostDecoder;
+import org.opensaml.saml2.binding.decoding.HTTPPostDecoder;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 
 /**
