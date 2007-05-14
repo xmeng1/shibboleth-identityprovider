@@ -19,17 +19,18 @@ package edu.internet2.middleware.shibboleth.idp.authn.impl;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
-
+import java.util.BitSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import javax.servlet.ServletRequest;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 
 import org.apache.log4j.Logger;
 
@@ -44,7 +45,94 @@ import org.joda.time.DateTime;
  */
 public class IPAddressHandler implements AuthenticationHandler {
 
-	private static final Logger log = Logger.getLogger(IPAddressHandler.class.getName());
+	/**
+	 * Encapsulates a network address and a netmask on ipList.
+	 */
+	protected class IPEntry {
+
+		/** The network address. */
+		private final BitSet networkAddress;
+
+		/** The netmask. */
+		private final BitSet netmask;
+
+		/**
+		 * Construct a new IPEntry given a network address in CIDR format.
+		 * 
+		 * @param entry
+		 *            A CIDR-formatted network address/netmask
+		 * 
+		 * @throws UnknownHostException
+		 *             If entry is malformed.
+		 */
+		public IPEntry(String entry) throws UnknownHostException {
+
+			// quick sanity checks
+			if (entry == null || entry.length() == 0) {
+				throw new UnknownHostException("entry is null.");
+			}
+
+			int cidrOffset = entry.indexOf("/");
+			if (cidrOffset == -1) {
+				log.error("IPAddressHandler: invalid entry \"" + entry
+						+ "\" -- it lacks a netmask component.");
+				throw new UnknownHostException(
+						"entry lacks a netmask component.");
+			}
+
+			// ensure that only one "/" is present.
+			if (entry.indexOf("/", cidrOffset + 1) != -1) {
+				log.error("IPAddressHandler: invalid entry \"" + entry
+						+ "\" -- too many \"/\" present.");
+				throw new UnknownHostException(
+						"entry has too many netmask components.");
+			}
+
+			String networkString = entry.substring(0, cidrOffset);
+			String netmaskString = entry.substring(cidrOffset + 1, entry
+					.length());
+
+			InetAddress tempAddr = InetAddress.getByName(networkString);
+			networkAddress = byteArrayToBitSet(tempAddr.getAddress());
+
+			int masklen = Integer.parseInt(netmaskString);
+			int addrlen = networkAddress.length();
+
+			// ensure that the netmask isn't too large
+			if ((tempAddr instanceof Inet4Address) && (masklen > 32)) {
+				throw new UnknownHostException(
+						"IPAddressHandler: Netmask is too large for an IPv4 address: "
+								+ masklen);
+			} else if ((tempAddr instanceof Inet6Address) && masklen > 128) {
+				throw new UnknownHostException(
+						"IPAddressHandler: Netmask is too large for an IPv6 address: "
+								+ masklen);
+			}
+
+			netmask = new BitSet(addrlen);
+			netmask.set(addrlen - masklen, addrlen, true);
+		}
+
+		/**
+		 * Get the network address.
+		 * 
+		 * @return the network address.
+		 */
+		public BitSet getNetworkAddress() {
+			return networkAddress;
+		}
+
+		/**
+		 * Get the netmask.
+		 * 
+		 * @return the netmask.
+		 */
+		public BitSet getNetmask() {
+			return netmask;
+		}
+	}
+
+	private static final Logger log = Logger.getLogger(IPAddressHandler.class);
 
 	/** the URI of the AuthnContextDeclRef or the AuthnContextClass */
 	private String authnMethodURI;
@@ -56,7 +144,7 @@ public class IPAddressHandler implements AuthenticationHandler {
 	private boolean defaultDeny;
 
 	/** The list of denied or permitted IPs */
-	private List<InetAddress> ipList;
+	private List<IPEntry> ipList;
 
 	/** Creates a new instance of IPAddressHandler */
 	public IPAddressHandler() {
@@ -70,35 +158,46 @@ public class IPAddressHandler implements AuthenticationHandler {
 	 * <code>defaultDeny</code> is <code>false</code>, then all IP
 	 * addresses except those in <code>ipList</code> will be authenticated.
 	 * 
-	 * @param ipList
-	 *            A list of {@link InetAddress}es.
+	 * @param entries
+	 *            A list of IP addresses (with CIDR masks).
 	 * @param defaultDeny
 	 *            Does <code>ipList</code> contain a deny or permit list.
 	 */
-	public void setIpList(final List<InetAddress> ipList, boolean defaultDeny) {
+	public void setEntries(final List<String> entries, boolean defaultDeny) {
 
-		this.ipList = new CopyOnWriteArrayList(ipList);
 		this.defaultDeny = defaultDeny;
+		ipList = new CopyOnWriteArrayList<IPEntry>();
+
+		for (String addr : entries) {
+			try {
+				ipList
+						.add(new edu.internet2.middleware.shibboleth.idp.authn.impl.IPAddressHandler.IPEntry(
+								addr));
+			} catch (UnknownHostException ex) {
+				log.error("IPAddressHandler: Error parsing entry \"" + addr
+						+ "\". Ignoring.");
+			}
+		}
 	}
 
-	/** {@inheritDoc   */
+	/** {@inheritDoc    */
 	public void setReturnLocation(String location) {
 		this.returnLocation = location;
 	}
 
 	/** @{inheritDoc} */
 	public boolean supportsPassive() {
-		return (true);
+		return true;
 	}
 
 	/** {@inheritDoc} */
 	public boolean supportsForceAuthentication() {
-		return (true);
+		return true;
 	}
 
 	/** {@inheritDoc} */
-	public void logout(HttpServletRequest request,
-			HttpServletResponse response, String principal) {
+	public void logout(final HttpServletRequest request,
+			final HttpServletResponse response, final String principal) {
 
 		RequestDispatcher dispatcher = request
 				.getRequestDispatcher(returnLocation);
@@ -106,8 +205,8 @@ public class IPAddressHandler implements AuthenticationHandler {
 	}
 
 	/** {@inheritDoc} */
-	public void login(HttpServletRequest request, HttpServletResponse response,
-			LoginContext loginCtx) {
+	public void login(final HttpServletRequest request,
+			final HttpServletResponse response, final LoginContext loginCtx) {
 
 		loginCtx.setAuthenticationAttempted();
 		loginCtx.setAuthenticationInstant(new DateTime());
@@ -128,7 +227,8 @@ public class IPAddressHandler implements AuthenticationHandler {
 			loginCtx.setAuthenticationOK(true);
 		} else {
 			loginCtx.setAuthenticationOK(false);
-			loginCtx.setAuthenticationFailureMessage("User's IP is not in the permitted list.");
+			loginCtx
+					.setAuthenticationFailureMessage("User's IP is not in the permitted list.");
 		}
 	}
 
@@ -160,19 +260,50 @@ public class IPAddressHandler implements AuthenticationHandler {
 		boolean found = false;
 
 		try {
-			InetAddress[] addrs = InetAddress.getAllByName(request
-					.getRemoteAddr());
-			for (InetAddress a : addrs) {
-				if (ipList.contains(a)) {
+			InetAddress addr = InetAddress.getByName(request.getRemoteAddr());
+			BitSet addrbits = byteArrayToBitSet(addr.getAddress());
+
+			for (IPEntry entry : ipList) {
+
+				BitSet netaddr = entry.getNetworkAddress();
+				BitSet netmask = entry.getNetmask();
+
+				addrbits.and(netmask);
+				if (addrbits.equals(netaddr)) {
 					found = true;
 					break;
 				}
 			}
+
 		} catch (UnknownHostException ex) {
 			log.error("Error resolving hostname: ", ex);
+			return false;
 		}
 
-		return (found);
+		return found;
 	}
 
+	/**
+	 * Converts a byte array to a BitSet.
+	 * 
+	 * The supplied byte array is assumed to have the most signifigant bit in
+	 * element 0.
+	 * 
+	 * @param bytes
+	 *            the byte array with most signifigant bit in element 0.
+	 * 
+	 * @return the BitSet
+	 */
+	protected static BitSet byteArrayToBitSet(final byte[] bytes) {
+
+		BitSet bits = new BitSet();
+
+		for (int i = 0; i < bytes.length * 8; i++) {
+			if ((bytes[bytes.length - i / 8 - 1] & (1 << (i % 8))) > 0) {
+				bits.set(i);
+			}
+		}
+
+		return bits;
+	}
 }
