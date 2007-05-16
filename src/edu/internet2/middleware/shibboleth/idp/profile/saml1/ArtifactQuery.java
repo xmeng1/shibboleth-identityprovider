@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
-import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-
-import org.opensaml.common.binding.decoding.MessageDecoder;
-import org.opensaml.common.binding.encoding.MessageEncoder;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
@@ -32,27 +29,15 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 public class ArtifactQuery extends AbstractSAML1ProfileHandler {
 
     /** {@inheritDoc} */
-    protected MessageDecoder<ServletRequest> getMessageDecoder(ProfileRequest<ServletRequest> request) throws ProfileException {
+    public String getProfileId() {
         // TODO Auto-generated method stub
         return null;
     }
 
     /** {@inheritDoc} */
-    protected MessageEncoder<ServletResponse> getMessageEncoder(ProfileResponse<ServletResponse> response) throws ProfileException {
+    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
+            throws ProfileException {
         // TODO Auto-generated method stub
-        return null;
-    }
 
-    /** {@inheritDoc} */
-    protected String getUserSessionId(ProfileRequest<ServletRequest> request) {
-        // TODO Auto-generated method stub
-        return null;
     }
-
-    /** {@inheritDoc} */
-    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) throws ProfileException {
-        // TODO Auto-generated method stub
-        
-    }
-
 }
