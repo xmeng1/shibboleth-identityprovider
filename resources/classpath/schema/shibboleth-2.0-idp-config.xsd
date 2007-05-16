@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" 
-             targetNamespace="urn:mace:shibboleth:2.0:idp-config" 
-             xmlns:idpc="urn:mace:shibboleth:2.0:idp-config"
-             xmlns:idpmd="urn:mace:shibboleth:2.0:metadata"
-             xmlns:idpcred="urn:mace:shibboleth:2.0:credential"
-             xmlns:idprp="urn:mace:shibboleth:2.0:relying-party">
-             
-             
-    <import namespace="urn:mace:shibboleth:2.0:credential" schemaLocation="/schema/shibboleth-2.0-credential.xsd" />
-    <import namespace="urn:mace:shibboleth:2.0:metadata" schemaLocation="/schema/shibboleth-2.0-metadata.xsd" />
-    <import namespace="urn:mace:shibboleth:2.0:relying-party" schemaLocation="/schema/shibboleth-2.0-relying-party.xsd" />
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:mace:shibboleth:2.0:idp-config"
+    xmlns:idpconf="urn:mace:shibboleth:2.0:idp-config" xmlns:service="urn:mace:shibboleth:2.0:services"
+    elementFormDefault="qualified">
 
-    <element name="IdPConfig" type="idpc:IdPConfigType" />
-    
+    <import namespace="urn:mace:shibboleth:2.0:services" schemaLocation="classpath:/schema/shibboleth-2.0-services.xsd" />
+
+    <element name="IdPConfig" type="idpconf:IdPConfigType">
+        <annotation>
+            <documentation>Root of the IdP configuration file.</documentation>
+        </annotation>
+    </element>
+
     <complexType name="IdPConfigType">
         <sequence>
-            <element ref="idprp:AnonymousRelyingParty" />
-            <element ref="idprp:DefaultRelyingParty" />
-            <element ref="idprp:RelyingParty" minOccurs="0" maxOccurs="unbounded" />
-            <element ref="idpcred:Credential" maxOccurs="unbounded"/>
-            <element ref="idpmd:MetadataProvider" />
-            <any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+            <!-- TODO default logging configuration location -->
+            <element name="LoggingConfiguration" type="string" minOccurs="0">
+                <annotation>
+                    <documentation>
+                        Location, on the filesystem, where the Log4j configuration file is located.
+                    </documentation>
+                </annotation>
+            </element>
+            <element ref="service:Service" minOccurs="0" maxOccurs="unbounded">
+                <annotation>
+                    <documentation>List of IdP configured services.</documentation>
+                </annotation>
+            </element>
         </sequence>
     </complexType>
-    
+
 </schema>
