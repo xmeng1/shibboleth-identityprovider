@@ -136,8 +136,11 @@ public class IPAddressHandler implements AuthenticationHandler {
     
     private static final Logger log = Logger.getLogger(IPAddressHandler.class);
     
-    /** the URI of the AuthnContextDeclRef or the AuthnContextClass */
+    /** The URI of the AuthnContextDeclRef or the AuthnContextClass */
     private String authnMethodURI;
+    
+    /** The username to use for IP-address "authenticated" users. */
+    private String username;
     
     /** Are the IPs in ipList a permitted list or a deny list */
     private boolean defaultDeny;
@@ -189,6 +192,24 @@ public class IPAddressHandler implements AuthenticationHandler {
         return true;
     }
     
+    /**
+     * Set the username to use for all IP-address authenticated users.
+     * 
+     * @param username The username for IP-address authenticated users.
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    /**
+     * Get the username for all IP-address authenticated users.
+     * 
+     * @return The username for IP-address authenticated users.
+     */
+    public String getUsername() {
+        return username;
+    }
+    
     /** {@inheritDoc} */
     public void logout(final HttpServletRequest request,
             final HttpServletResponse response, final String principal) {
@@ -204,6 +225,7 @@ public class IPAddressHandler implements AuthenticationHandler {
         
         loginCtx.setAuthenticationAttempted();
         loginCtx.setAuthenticationInstant(new DateTime());
+        loginCtx.setUserID(username);
         
         if (defaultDeny) {
             handleDefaultDeny(request, response, loginCtx);
