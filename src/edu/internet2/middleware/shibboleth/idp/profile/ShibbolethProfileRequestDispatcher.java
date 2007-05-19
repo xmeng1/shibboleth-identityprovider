@@ -28,7 +28,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 /**
  * Servlet responsible for dispatching incoming shibboleth requests to the appropriate profile handler.
  */
-public class ProfileRequestDispatcher extends BaseServletProfileRequestDispatcher {
+public class ShibbolethProfileRequestDispatcher extends BaseServletProfileRequestDispatcher {
 
     /** Serial version UID. */
     private static final long serialVersionUID = -3939942569721369334L;

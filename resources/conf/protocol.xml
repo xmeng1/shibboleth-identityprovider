@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ProfileHandlers xmlns="urn:mace:shibboleth:2.0:profile-handler"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="urn:mace:shibboleth:2.0:profile-handler classpath:/schema/shibboleth-2.0-profile-handler.xsd">
+
+    <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
+    
+    <!-- ErrorHandler xsi:type="VelocityErrorHandler" jspPagePath="error.jsp" /-->
+
+    <ProfileHandler xsi:type="....">
+        <RequestPath> </RequestPath>
+        <RequestPath> </RequestPath>
+        <RequestPath> </RequestPath>
+    </ProfileHandler>
+
+</ProfileHandlers>

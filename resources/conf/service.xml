@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+    This file contains definitions to standalone subsystems, or services, used by the IdP.  These 
+    services include things such as the attribute resolver and filtering engines as well as the 
+    relying party configuration manager.
+    
+    Reloadable services (profile handler manager, relying party configuration manager, attribute resolver, and 
+    attribute filtering engine) can be configured to poll their configuration files on a given frequency and 
+    reload those files if they've changed.  Enable this feature by adding an attribute, on the Service element, 
+    named configurationResourcePollingFrequency whose value is the frequency, in milliseconds, to poll the file(s).
+    A second attribute, configurationResourcePollingRetryAttempts, specifies the number of times a particular 
+    configuration file may be cause an error before the service stops trying to load it.
+ -->
+
+<IdPConfig xmlns="urn:mace:shibboleth:2.0:idp-config" xmlns:service="urn:mace:shibboleth:2.0:services"
+    xmlns:profile="urn:mace:shibboleth:2.0:profile-handler" xmlns:relyingParty="urn:mace:shibboleth:2.0:relying-party"
+    xmlns:resolver="urn:mace:shibboleth:2.0:resolver" xmlns:afp="urn:mace:shibboleth:2.0:afp"
+    xmlns:resource="urn:mace:shibboleth:2.0:resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:mace:shibboleth:2.0:idp-config classpath:/schema/shibboleth-2.0-idp-config.xsd
+                        urn:mace:shibboleth:2.0:services classpath:/schema/shibboleth-2.0-services.xsd
+                        urn:mace:shibboleth:2.0:profile-handler classpath:/schema/shibboleth-2.0-profile-handler.xsd
+                        urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd
+                        urn:mace:shibboleth:2.0:resolver classpath:/schema/shibboleth-2.0-attribute-resolver.xsd
+                        urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd 
+                        urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd">
+
+    <LoggingConfiguration>$IdP_HOME$/etc/logging.xml</LoggingConfiguration>
+
+    <service:Service id="shibboleth.ProfileHandler"
+                           type="profile:ShibbolethProfileHandlerManager"
+                           configurationResourcePollingFrequency="300000"
+                           configurationResourcePollingRetryAttempts="10">
+        <resource:ConfigurationResource type="resource:FileSystemResource">
+            $IdP_HOME$/etc/protocol.xml
+        </resource:ConfigurationResource>
+    </service:Service>
+
+    <service:Service id="shibboleth.RelyingPartyConfigurationManager"
+                           type="relyingParty:SAMLMDRelyingPartyConfigurationManager"
+                           configurationResourcePollingFrequency="300000"
+                           configurationResourcePollingRetryAttempts="10">
+        <resource:ConfigurationResource type="resource:FileSystemResource">
+            $IdP_HOME$/etc/relying-party.xml
+        </resource:ConfigurationResource>
+    </service:Service>
+
+    <service:Service id="shibboleth.AttributeResolver"
+                           type="resolver:ShibbolethAttributeResolver"
+                           configurationResourcePollingFrequency="300000"
+                           configurationResourcePollingRetryAttempts="10">
+        <resource:ConfigurationResource type="resource:FileSystemResource">
+            $IdP_HOME$/etc/attribute-resolver.xml
+        </resource:ConfigurationResource>
+    </service:Service>
+
+    <service:Service id="shibboleth.AttributeFilterEngine"
+                           type="afp:ShibbolethAttributeFilteringEngine"
+                           configurationResourcePollingFrequency="60000"
+                           configurationResourcePollingRetryAttempts="10">
+        <resource:ConfigurationResource type="resource:FileSystemResource">
+            $IdP_HOME$/etc/attribute-filter.xml
+        </resource:ConfigurationResource>
+    </service:Service>
+
+</IdPConfig>
