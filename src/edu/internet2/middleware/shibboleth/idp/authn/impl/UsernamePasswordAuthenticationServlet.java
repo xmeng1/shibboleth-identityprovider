@@ -179,7 +179,7 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
         password = (String)o;
         
         authenticateUser(username, password, jassConfiguration, loginContext);
-        password = null
+        password = null;
         redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
     }
 
