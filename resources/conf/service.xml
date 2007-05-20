@@ -25,14 +25,14 @@
                         urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd 
                         urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd">
 
-    <LoggingConfiguration>$IdP_HOME$/etc/logging.xml</LoggingConfiguration>
+    <LoggingConfiguration>$IdP_HOME$/conf/logging.xml</LoggingConfiguration>
 
     <service:Service id="shibboleth.ProfileHandler"
                            type="profile:ShibbolethProfileHandlerManager"
                            configurationResourcePollingFrequency="300000"
                            configurationResourcePollingRetryAttempts="10">
         <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IdP_HOME$/etc/protocol.xml
+            $IDP_HOME$/conf/protocol.xml
         </resource:ConfigurationResource>
     </service:Service>
 
@@ -41,7 +41,7 @@
                            configurationResourcePollingFrequency="300000"
                            configurationResourcePollingRetryAttempts="10">
         <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IdP_HOME$/etc/relying-party.xml
+            $IDP_HOME$/conf/relying-party.xml
         </resource:ConfigurationResource>
     </service:Service>
 
@@ -50,7 +50,7 @@
                            configurationResourcePollingFrequency="300000"
                            configurationResourcePollingRetryAttempts="10">
         <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IdP_HOME$/etc/attribute-resolver.xml
+            $IDP_HOME$/conf/attribute-resolver.xml
         </resource:ConfigurationResource>
     </service:Service>
 
@@ -59,7 +59,7 @@
                            configurationResourcePollingFrequency="60000"
                            configurationResourcePollingRetryAttempts="10">
         <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IdP_HOME$/etc/attribute-filter.xml
+            $IDP_HOME$/conf/attribute-filter.xml
         </resource:ConfigurationResource>
     </service:Service>
 
