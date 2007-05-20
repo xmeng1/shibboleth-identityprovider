@@ -95,49 +95,7 @@
             <documentation>Base type for Shibboleth IdP profile handlers.</documentation>
         </annotation>
         <complexContent>
-            <extension base="ph:ProfileHandlerType">
-                <attribute name="relyingPartyManagerId" type="string"
-                    default="shibboleth.RelyingPartyConfigurationManager">
-                    <annotation>
-                        <documentation>
-                            The component ID of the relying party configuration manager to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="sessionManagerId" type="string" default="shibboleth.SessionManager">
-                    <annotation>
-                        <documentation>
-                            The component ID of the session manager to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="securityPolicyFactoryId" type="string" default="shibboleth.SecurityPolicyFactory">
-                    <annotation>
-                        <documentation>
-                            The component ID of the security policy factory to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="trustEngineId" type="string" default="shibboleth.TrustEngine">
-                    <annotation>
-                        <documentation>
-                            The component ID of the trust engine to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </documentation>
-                    </annotation>
-                </attribute>
-            </extension>
+            <extension base="ph:ProfileHandlerType" />
         </complexContent>
     </complexType>
 

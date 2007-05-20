@@ -7,8 +7,6 @@
                                      urn:mace:shibboleth:2.0:idp:profiles classpath:/schema/shibboleth-2.0-idp-profile.xsd">
 
     <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
-    
-    <!-- ErrorHandler xsi:type="VelocityErrorHandler" jspPagePath="error.jsp" /-->
 
     <ProfileHandler xsi:type="idpProfile:SAML2SSO">
         <RequestPath>/shibboleth/IdP/saml2/HTTP/SSO</RequestPath>
