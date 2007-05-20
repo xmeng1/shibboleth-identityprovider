@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<schema targetNamespace="urn:mace:shibboleth:2.0:idp:profiles" xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:ph="urn:mace:shibboleth:2.0:profile-handler" xmlns:idpph="urn:mace:shibboleth:2.0:idp:profiles"
+    elementFormDefault="qualified">
+
+    <import namespace="urn:mace:shibboleth:2.0:profile-handler"
+        schemaLocation="classpath:/schema/shibboleth-2.0-profile-handler.xsd" />
+        
+    <annotation>
+        <documentation>
+            This schema specifies the configuration options for Shibboleth IdP profile handlers.
+        </documentation>
+    </annotation>
+
+    <complexType name="SAML2SSO">
+        <annotation>
+            <documentation>Configuration type for SAML 2 Attribute Query profile handlers.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="idpph:SAML2ProfileHandler">
+                <attribute name="authenticationManagerId" type="string" default="shibboleth.AuthenticationManager">
+                    <annotation>
+                        <documentation>
+                            The component ID of the authentication manager to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="SAML2AttributeQuery">
+        <annotation>
+            <documentation>Configuration type for SAML 2 Attribute Query profile handlers.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="idpph:SAML2ProfileHandler" />
+        </complexContent>
+    </complexType>
+
+    <complexType name="SAML2ProfileHandler" abstract="true">
+        <annotation>
+            <documentation>Base type for SAML 2 profile handlers.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="idpph:SAMLProfileHandler" />
+        </complexContent>
+    </complexType>
+
+    <complexType name="SAML1ProfileHandler" abstract="true">
+        <annotation>
+            <documentation>Base type for SAML 1 profile handlers.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="idpph:SAMLProfileHandler" />
+        </complexContent>
+    </complexType>
+
+    <complexType name="SAMLProfileHandler" abstract="true">
+        <annotation>
+            <documentation>Base type for Shibboleth IdP SAML profile handlers.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="idpph:IdPProfileHandlerType">
+                <attribute name="messageDecoderFactoryId" type="string" default="shibboleth.MessageDecoderFactory">
+                    <annotation>
+                        <documentation>
+                            The component ID of the message decoder to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="messageEncoderFactoryId" type="string" default="shibboleth.MessageEncoderFactory">
+                    <annotation>
+                        <documentation>
+                            The component ID of the message encoder to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="IdPProfileHandlerType" abstract="true">
+        <annotation>
+            <documentation>Base type for Shibboleth IdP profile handlers.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="ph:ProfileHandlerType">
+                <attribute name="relyingPartyManagerId" type="string"
+                    default="shibboleth.RelyingPartyConfigurationManager">
+                    <annotation>
+                        <documentation>
+                            The component ID of the relying party configuration manager to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="sessionManagerId" type="string" default="shibboleth.SessionManager">
+                    <annotation>
+                        <documentation>
+                            The component ID of the session manager to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="securityPolicyFactoryId" type="string" default="shibboleth.SecurityPolicyFactory">
+                    <annotation>
+                        <documentation>
+                            The component ID of the security policy factory to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="trustEngineId" type="string" default="shibboleth.TrustEngine">
+                    <annotation>
+                        <documentation>
+                            The component ID of the trust engine to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+
+</schema>

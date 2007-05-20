@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:mace:shibboleth:2.0:idp-config"
-    xmlns:idpconf="urn:mace:shibboleth:2.0:idp-config" xmlns:service="urn:mace:shibboleth:2.0:services"
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:mace:shibboleth:2.0:idp:services"
+    xmlns:idpconf="urn:mace:shibboleth:2.0:idp:services" xmlns:service="urn:mace:shibboleth:2.0:services"
     elementFormDefault="qualified">
 
     <import namespace="urn:mace:shibboleth:2.0:services" schemaLocation="classpath:/schema/shibboleth-2.0-services.xsd" />

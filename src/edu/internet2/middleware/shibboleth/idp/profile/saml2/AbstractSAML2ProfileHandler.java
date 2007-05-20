@@ -355,7 +355,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      *
      * @return constructed conditions
      */
-    private Conditions buildConditions(final DateTime issueInstant, final AbstractSAML2ProfileConfiguration profileConfig) {
+    protected Conditions buildConditions(final DateTime issueInstant, final AbstractSAML2ProfileConfiguration profileConfig) {
         
         Conditions conditions = conditionsBuilder.buildObject();
         conditions.setNotBefore(issueInstant);

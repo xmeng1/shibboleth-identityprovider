@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <ProfileHandlers xmlns="urn:mace:shibboleth:2.0:profile-handler"
+                 xmlns:idpProfile="urn:mace:shibboleth:2.0:idp:profiles"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="urn:mace:shibboleth:2.0:profile-handler classpath:/schema/shibboleth-2.0-profile-handler.xsd">
+                 xsi:schemaLocation="urn:mace:shibboleth:2.0:profile-handler classpath:/schema/shibboleth-2.0-profile-handler.xsd
+                                     urn:mace:shibboleth:2.0:idp:profiles classpath:/schema/shibboleth-2.0-idp-profile.xsd">
 
     <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
     
     <!-- ErrorHandler xsi:type="VelocityErrorHandler" jspPagePath="error.jsp" /-->
 
-    <ProfileHandler xsi:type="....">
-        <RequestPath> </RequestPath>
-        <RequestPath> </RequestPath>
-        <RequestPath> </RequestPath>
+    <ProfileHandler xsi:type="idpProfile:SAML2SSO">
+        <RequestPath>/shibboleth/IdP/saml2/HTTP/SSO</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="idpProfile:SAML2AttributeQuery">
+        <RequestPath>/shibboleth/IdP/saml2/SOAP/attribute</RequestPath>
     </ProfileHandler>
 
 </ProfileHandlers>
