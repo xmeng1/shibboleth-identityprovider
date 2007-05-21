@@ -14,7 +14,7 @@
         <param-name>contextConfigLocation</param-name>
         <param-value>
             file://$IDP_HOME$/conf/internal.xml;
-            file://$IDP_HOME$/conf/services.xml;
+            file://$IDP_HOME$/conf/service.xml;
         </param-value>
     </context-param>
 
@@ -47,7 +47,7 @@
 
     <servlet-mapping>
         <servlet-name>ProfileRequestDispatcher</servlet-name>
-        <url-pattern>/IdP</url-pattern>
+        <url-pattern>/profile/*</url-pattern>
     </servlet-mapping>
 
     <!--

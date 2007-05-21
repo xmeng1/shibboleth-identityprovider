@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<ProfileHandlers xmlns="urn:mace:shibboleth:2.0:profile-handler"
+<ProfileHandlerGroup xmlns="urn:mace:shibboleth:2.0:profile-handler"
                  xmlns:idpProfile="urn:mace:shibboleth:2.0:idp:profiles"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xsi:schemaLocation="urn:mace:shibboleth:2.0:profile-handler classpath:/schema/shibboleth-2.0-profile-handler.xsd
@@ -16,4 +16,4 @@
         <RequestPath>/shibboleth/IdP/saml2/SOAP/attribute</RequestPath>
     </ProfileHandler>
 
-</ProfileHandlers>
+</ProfileHandlerGroup>

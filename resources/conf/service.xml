@@ -17,50 +17,46 @@
     xmlns:profile="urn:mace:shibboleth:2.0:profile-handler" xmlns:relyingParty="urn:mace:shibboleth:2.0:relying-party"
     xmlns:resolver="urn:mace:shibboleth:2.0:resolver" xmlns:afp="urn:mace:shibboleth:2.0:afp"
     xmlns:resource="urn:mace:shibboleth:2.0:resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="urn:mace:shibboleth:2.0:idp-config classpath:/schema/shibboleth-2.0-idp-service.xsd
-                        urn:mace:shibboleth:2.0:idp:services classpath:/schema/shibboleth-2.0-services.xsd
+    xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:services classpath:/schema/shibboleth-2.0-idp-service.xsd
+                        urn:mace:shibboleth:2.0:services classpath:/schema/shibboleth-2.0-services.xsd
                         urn:mace:shibboleth:2.0:profile-handler classpath:/schema/shibboleth-2.0-profile-handler.xsd
                         urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd
                         urn:mace:shibboleth:2.0:resolver classpath:/schema/shibboleth-2.0-attribute-resolver.xsd
                         urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd 
                         urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd">
 
-    <LoggingConfiguration>$IdP_HOME$/conf/logging.xml</LoggingConfiguration>
+    <LoggingConfiguration>$IDP_HOME$/conf/logging.xml</LoggingConfiguration>
 
-    <service:Service id="shibboleth.ProfileHandler"
-                           type="profile:ShibbolethProfileHandlerManager"
-                           configurationResourcePollingFrequency="300000"
-                           configurationResourcePollingRetryAttempts="10">
-        <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IDP_HOME$/conf/protocol.xml
-        </resource:ConfigurationResource>
-    </service:Service>
+    <Service id="shibboleth.ProfileHandler"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="profile:ShibbolethProfileHandlerManager"
+             configurationResourcePollingFrequency="300000"
+             configurationResourcePollingRetryAttempts="10">
+        <ConfigurationResource file="$IDP_HOME$/conf/protocol.xml" xsi:type="resource:FilesystemResource" />
+    </Service>
 
-    <service:Service id="shibboleth.RelyingPartyConfigurationManager"
-                           type="relyingParty:SAMLMDRelyingPartyConfigurationManager"
-                           configurationResourcePollingFrequency="300000"
-                           configurationResourcePollingRetryAttempts="10">
-        <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IDP_HOME$/conf/relying-party.xml
-        </resource:ConfigurationResource>
-    </service:Service>
+    <Service id="shibboleth.RelyingPartyConfigurationManager"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="relyingParty:SAMLMDRelyingPartyConfigurationManager"
+             configurationResourcePollingFrequency="300000"
+             configurationResourcePollingRetryAttempts="10">
+        <ConfigurationResource file="$IDP_HOME$/conf/relying-party.xml" xsi:type="resource:FilesystemResource" />
+    </Service>
 
-    <service:Service id="shibboleth.AttributeResolver"
-                           type="resolver:ShibbolethAttributeResolver"
-                           configurationResourcePollingFrequency="300000"
-                           configurationResourcePollingRetryAttempts="10">
-        <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IDP_HOME$/conf/attribute-resolver.xml
-        </resource:ConfigurationResource>
-    </service:Service>
+    <Service id="shibboleth.AttributeResolver"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="resolver:ShibbolethAttributeResolver"
+             configurationResourcePollingFrequency="300000"
+             configurationResourcePollingRetryAttempts="10">
+        <ConfigurationResource file="$IDP_HOME$/conf/attribute-resolver.xml" xsi:type="resource:FilesystemResource" />
+    </Service>
 
-    <service:Service id="shibboleth.AttributeFilterEngine"
-                           type="afp:ShibbolethAttributeFilteringEngine"
-                           configurationResourcePollingFrequency="60000"
-                           configurationResourcePollingRetryAttempts="10">
-        <resource:ConfigurationResource type="resource:FileSystemResource">
-            $IDP_HOME$/conf/attribute-filter.xml
-        </resource:ConfigurationResource>
-    </service:Service>
+    <Service id="shibboleth.AttributeFilterEngine"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="afp:ShibbolethAttributeFilteringEngine"
+             configurationResourcePollingFrequency="60000"
+             configurationResourcePollingRetryAttempts="10">
+        <ConfigurationResource file="$IDP_HOME$/conf/attribute-filter.xml" xsi:type="resource:FilesystemResource" />
+    </Service>
 
 </IdPConfig>

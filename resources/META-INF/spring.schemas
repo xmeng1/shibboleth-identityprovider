@@ -1,0 +1,2 @@
+urn\:mace\:shibboleth\:2.0\:idp\:services = schema/shibboleth-2.0-idp-service.xsd
+urn\:mace\:shibboleth\:2.0\:idp\:profiles = schema/shibboleth-2.0-idp-profile.xsd
