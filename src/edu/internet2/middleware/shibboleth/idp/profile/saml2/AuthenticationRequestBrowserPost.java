@@ -21,7 +21,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.servlet.ServletException;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
@@ -36,8 +35,9 @@ import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.binding.decoding.HTTPPostDecoder;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 
 /**
  * Browser POST binding for SAML 2 AuthenticationRequest.
@@ -47,9 +47,20 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
     /** Class logger. */
     private static final Logger log = Logger.getLogger(AuthenticationRequestBrowserPost.class);
     
+    /** SAML 2 Profile ID. */
+    protected static final String PROFILE_ID = "urn:oasis:names:tc:SAML:2.0:profiles:SSO:browser";
+    
+    /** SAML 2 Binding URI. */
+    protected static final String BINDING_URI = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST";
+    
     /** Constructor. */
     public AuthenticationRequestBrowserPost() {
         super();
+    }
+    
+    /** {@inheritDoc} */
+    public String getProfileId() {
+        return PROFILE_ID;
     }
     
     /** {@inheritDoc} */
@@ -60,30 +71,38 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
         // Only http servlets are supported for now.
         if (!(request.getRawRequest() instanceof HttpServletRequest)) {
             log.error("Received a non-HTTP request");
-            throw new ServletException("Received a non-HTTP request");
+            throw new ProfileException("Received a non-HTTP request");
         }
         
-        HttpServletRequest httpReq = (HttpServletRequest) request.getRawRequest();
-        HttpServletResponse httpResp = (HttpServletResponse) response.getRawResponse();
-        HttpSession httpSession = httpReq.getSession();
+        HttpServletRequest httpRequest = (HttpServletRequest) request.getRawRequest();
+        HttpServletResponse httpResponse = (HttpServletResponse) response.getRawResponse();
+        HttpSession httpSession = httpRequest.getSession();
         
-        AuthnRequest authnRequest;
-        Issuer issuer;
-        RelyingPartyConfiguration relyingParty;
-        SSOConfiguration ssoConfig;
-        SPSSODescriptor spDescriptor;
+        AuthnRequest authnRequest = null;
+        Issuer issuer = null;
+        MetadataProvider metadataProvider = null;
+        String providerId = null;
+        RelyingPartyConfiguration relyingParty = null;
+        SSOConfiguration ssoConfig = null;
+        SPSSODescriptor spDescriptor = null;
+        
         
         // If the user hasn't been authenticated, validate the AuthnRequest
         // and redirect to AuthenticationManager to authenticate the user.
         if (!hasUserAuthenticated(httpSession)) {
             
             try {
-                MessageDecoder<HttpServletRequest> decoder = new HTTPPostDecoder();
+                // decode the AuthnRequest
+                MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(BINDING_URI);
+                if (decoder == null) {
+                    log.error("SAML 2 AuthnRequest: No MessageDecoder registered for " + BINDING_URI);
+                    throw new ProfileException("SAML 2 AuthnRequest: No MessageDecoder registered for " + BINDING_URI);
+                }
+                
                 decoder.setMetadataProvider(getRelyingPartyConfigurationManager().getMetadataProvider());
-                // decoder.setSecurityPolicy(??);
-                // decoder.setTrustEngine(??);
-                decoder.setRequest(httpReq);
+                populateMessageDecoder(decoder);
                 decoder.decode();
+                
                 SAMLObject samlObject = decoder.getSAMLMessage();
                 if (!(samlObject instanceof AuthnRequest)) {
                     log.error("SAML 2 AuthnRequest: Received message is not a SAML 2 Authentication Request");
@@ -93,37 +112,55 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
                 authnRequest = (AuthnRequest) samlObject;
                 issuer = (Issuer) decoder.getSecurityPolicy().getIssuer();
                 
-                if (!findMetadataForSSORequest(issuer, relyingParty, ssoConfig, spDescriptor)) {
-                    throw new ProfileException(
-                            "SAML 2 AuthnRequest: Unable to locate metadata for issuer: "
-                            + issuer.getSPProvidedID());
+                // check that we have metadata for the RP
+                metadataProvider = getRelyingPartyConfigurationManager().getMetadataProvider();
+                providerId = issuer.getSPProvidedID();
+                relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(providerId);
+                ssoConfig = (SSOConfiguration) relyingParty.getProfileConfigurations().get(SSOConfiguration.PROFILE_ID);
+                
+                try {
+                    spDescriptor = metadataProvider.getEntityDescriptor(
+                            relyingParty.getRelyingPartyId()).getSPSSODescriptor(
+                            SAML20_PROTOCOL_URI);
+                } catch (MetadataProviderException ex) {
+                    log.error(
+                            "SAML 2 Authentication Request: Unable to locate metadata for SP "
+                            + providerId + " for protocol "
+                            + SAML20_PROTOCOL_URI, ex);
+                    throw new ProfileException("SAML 2 Authentication Request: Unable to locate metadata for SP "
+                            + providerId + " for protocol "
+                            + SAML20_PROTOCOL_URI, ex);
+                }
+                
+                if (spDescriptor == null) {
+                    log.error("SAML 2 Authentication Request: Unable to locate metadata for SP "
+                            + providerId
+                            + " for protocol "
+                            + SAML20_PROTOCOL_URI);
+                    throw new ProfileException("SAML 2 Authentication Request: Unable to locate metadata for SP "
+                            + providerId
+                            + " for protocol "
+                            + SAML20_PROTOCOL_URI);
                 }
                 
                 verifyAuthnRequest(authnRequest, issuer, relyingParty, httpSession);
                 storeRequestData(httpSession, authnRequest, issuer, relyingParty, ssoConfig, spDescriptor);
-                authenticateUser(authnRequest, httpSession, httpReq, httpResp);
+                authenticateUser(authnRequest, httpSession, httpRequest, httpResponse);
                 
             } catch (BindingException ex) {
                 log.error("SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
                 throw new ProfileException(
                         "SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
-            } catch (AuthenticationRequestException ex) {
+            } catch (AuthenticationRequestException ex) { 
                 // XXX: todo: generate and send the error, with a REQUEST_URI
                 // failure.
-            }
+            } 
         }
         
         // The user has already been authenticated,
         // so generate an AuthenticationStatement.
         retrieveRequestData(httpSession, authnRequest, issuer, relyingParty, ssoConfig, spDescriptor);
         Response samlResponse = evaluateRequest(authnRequest, issuer, httpSession, relyingParty, ssoConfig, spDescriptor);
-        encodeResponse(response, samlResponse, relyingParty, ssoConfig, spDescriptor);
-    }
-    
-    protected void encodeResponse(final ProfileResponse response,
-            final Response samlResponse,
-            final RelyingPartyConfiguration relyingParty,
-            final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor) {
-        // xxx: todo
+        encodeResponse(BINDING_URI, response, samlResponse, relyingParty, ssoConfig, spDescriptor);
     }
 }

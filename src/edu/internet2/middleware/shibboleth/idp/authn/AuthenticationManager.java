@@ -20,20 +20,20 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import javolution.util.FastMap;
+
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
-
-import javolution.util.FastMap;
 
 import org.apache.log4j.Logger;
 import org.springframework.web.servlet.HttpServletBean;
@@ -44,14 +44,13 @@ import org.springframework.web.servlet.HttpServletBean;
 public class AuthenticationManager extends HttpServletBean {
 
 	/** log4j. */
-	private static final Logger log = Logger
-			.getLogger(AuthenticationManager.class.getName());
+	private static final Logger log = Logger.getLogger(AuthenticationManager.class);
 
 	/** SessionManager to be used. */
 	private SessionManager sessionMgr;
 
 	/** Map of URIs onto AuthenticationHandlerInfo. */
-	private FastMap<String, AuthenticationHandler> handlerMap = new FastMap<String, AuthenticationHandler>();
+	private Map<String, AuthenticationHandler> handlerMap = new ConcurrentHashMap<String, AuthenticationHandler>();
 
 	/** The default AuthenticationHandler. */
 	private AuthenticationHandler defaultHandler;
@@ -138,8 +137,7 @@ public class AuthenticationManager extends HttpServletBean {
 	 */
 	public void setDefaultHandler(String uri, AuthenticationHandler handler) {
 
-		log
-				.debug("Registering default handler "
+		log.debug("Registering default handler "
 						+ handler.getClass().getName());
 
 		defaultHandler = handler;
@@ -284,7 +282,6 @@ public class AuthenticationManager extends HttpServletBean {
 		}
 
 		// otherwise, forward control to the AuthenticationHandler
-		ServletContext servletContext = getServletContext();
 		loginContext.setAuthenticationManagerURL(servletRequest.getPathInfo());
 		handler.login(servletRequest, servletResponse, loginContext);
 	}

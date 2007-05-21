@@ -25,7 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -34,16 +34,14 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
-import org.opensaml.common.binding.ArtifactMap;
-import org.opensaml.common.binding.SAMLArtifactFactory;
+import org.opensaml.common.binding.BindingException;
+import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthnStatement;
-import org.opensaml.saml2.core.Condition;
-import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.GetComplete;
 import org.opensaml.saml2.core.IDPEntry;
 import org.opensaml.saml2.core.IDPList;
@@ -59,7 +57,6 @@ import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
-import org.opensaml.xml.ConfigurationException;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.parse.BasicParserPool;
@@ -68,15 +65,16 @@ import org.opensaml.xml.parse.XMLParserException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+
+import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import javax.servlet.ServletException;
 
 
 /**
@@ -105,17 +103,12 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
     /** Key in an HttpSession for the Issuer. */
     protected static final String ISSUER_SESSION_KEY = "Issuer";
     
-    /** Backing store for artifacts. */
-    protected ArtifactMap artifactMap;
     
     /** The path to the IdP's AuthenticationManager servlet */
     protected String authnMgrURL;
     
     /** AuthenticationManager to be used */
     protected AuthenticationManager authnMgr;
-    
-    /** ArtifactFactory used to make artifacts. */
-    protected SAMLArtifactFactory artifactFactory;
     
     /** A pool of XML parsers. */
     protected ParserPool parserPool;
@@ -138,7 +131,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
     public AbstractAuthenticationRequest() {
         
         parserPool = new BasicParserPool();
-        artifactFactory = new SAMLArtifactFactory();
         authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) getBuilderFactory().getBuilder(AuthnStatement.DEFAULT_ELEMENT_NAME);
         authnContextBuilder = (SAMLObjectBuilder<AuthnContext>) getBuilderFactory().getBuilder(AuthnContext.DEFAULT_ELEMENT_NAME);
         authnContextDeclRefBuilder = (SAMLObjectBuilder<AuthnContextDeclRef>) getBuilderFactory().getBuilder(AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
@@ -153,16 +145,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      */
     public void setAuthenticationManager(AuthenticationManager authnManager) {
         this.authnMgr = authnMgr;
-    }
-    
-    /**
-     * Set the ArtifactMap.
-     *
-     * @param artifactMap
-     *            The IdP's ArtifactMap.
-     */
-    public void setArtifactMap(ArtifactMap artifactMap) {
-        this.artifactMap = artifactMap;
     }
     
     /**
@@ -183,58 +165,47 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *
      * @return A Response containing a failure message or a AuthenticationStmt.
      *
-     * @throws ServletException
+     * @throws ProfileException
      *             On Error.
      */
     protected Response evaluateRequest(final AuthnRequest authnRequest,
             final Issuer issuer, final HttpSession session,
             final RelyingPartyConfiguration relyingParty,
             final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor)
-            throws ServletException {
+            throws ProfileException {
         
         Response samlResponse;
         
-        try {
-            // check if the authentication was successful.
-            Saml2LoginContext loginCtx = getLoginContext(session);
-            if (!loginCtx.getAuthenticationOK()) {
-                // if authentication failed, send the appropriate SAML error message.
-                String failureMessage = loginCtx.getAuthenticationFailureMessage();
-                Status failureStatus = buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, failureMessage);
-                samlResponse = buildResponse(authnRequest.getID(), new DateTime(), relyingParty.getProviderId(),
-                        failureStatus);
-                
-                return samlResponse;
-            }
+        // check if the authentication was successful.
+        Saml2LoginContext loginCtx = getLoginContext(session);
+        if (!loginCtx.getAuthenticationOK()) {
+            // if authentication failed, send the appropriate SAML error message.
+            String failureMessage = loginCtx.getAuthenticationFailureMessage();
+            Status failureStatus = buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, failureMessage);
+            samlResponse = buildResponse(authnRequest.getID(), new DateTime(), relyingParty.getProviderId(),
+                    failureStatus);
             
-            // the user successfully authenticated.
-            // build an authentication assertion.
-            samlResponse = buildResponse(authnRequest.getID(), new DateTime(),
-                    relyingParty.getProviderId(), buildStatus(StatusCode.SUCCESS_URI, null, null));
-            
-            DateTime now = new DateTime();
-            Assertion assertion = buildAssertion(now, relyingParty,
-                    (AbstractSAML2ProfileConfiguration) relyingParty.getProfileConfigurations().get(SSOConfiguration.PROFILE_ID));
-            assertion.setSubject(authnRequest.getSubject());
-            setAuthenticationStatement(assertion, loginCtx, authnRequest);
-            
-            samlResponse.getAssertions().add(assertion);
-            
-            // retrieve the AssertionConsumerService endpoint (we parsed it in
-            // verifyAuthnRequest()
-            AssertionConsumerService acsEndpoint = getACSEndpointFromSession(session);
-            
-        } catch (AuthenticationRequestException ex) {
-            
-            Status errorStatus = ex.getStatus();
-            if (errorStatus == null) {
-                // if no explicit status code was set,
-                // assume the error was in the message.
-                samlResponse = buildResponse(authnRequest.getID(),
-                        new DateTime(), relyingParty.getProviderId(),
-                        errorStatus);
-            }
+            return samlResponse;
         }
+        
+        // the user successfully authenticated.
+        // build an authentication assertion.
+        samlResponse = buildResponse(authnRequest.getID(), new DateTime(),
+                relyingParty.getProviderId(), buildStatus(StatusCode.SUCCESS_URI, null, null));
+        
+        DateTime now = new DateTime();
+        Assertion assertion = buildAssertion(now, relyingParty,
+                (AbstractSAML2ProfileConfiguration) relyingParty.getProfileConfigurations().get(SSOConfiguration.PROFILE_ID));
+        assertion.setSubject(authnRequest.getSubject());
+        setAuthenticationStatement(assertion, loginCtx, authnRequest);
+        
+        samlResponse.getAssertions().add(assertion);
+        
+        // retrieve the AssertionConsumerService endpoint (we parsed it in
+        // verifyAuthnRequest()
+        AssertionConsumerService acsEndpoint = getACSEndpointFromSession(session);
+        
+        
         
         return samlResponse;
     }
@@ -272,59 +243,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         response.setStatus(status);
         
         return response;
-    }
-    
-    
-    /**
-     * Check that a request's issuer can be found in the metadata. If so, store
-     * the relevant metadata objects in the user's session.
-     *
-     * @param issuer
-     *            The issuer of the AuthnRequest.
-     * @param relyingParty
-     *            The RelyingPartyConfiguration for the issuer.
-     * @param ssoConfig
-     *            The SSOConfiguration for the relyingParty
-     * @param spDescriptor
-     *            The SPSSODescriptor for the ssoConfig.
-     *
-     * @return <code>true</code> if Metadata was found for the issuer;
-     *         otherwise, <code>false</code>.
-     */
-    protected boolean findMetadataForSSORequest(Issuer issuer,
-            RelyingPartyConfiguration relyingParty, SSOConfiguration ssoConfig,
-            SPSSODescriptor spDescriptor) {
-        
-        MetadataProvider metadataProvider = getRelyingPartyConfigurationManager()
-        .getMetadataProvider();
-        String providerId = issuer.getSPProvidedID();
-        relyingParty = getRelyingPartyConfigurationManager()
-        .getRelyingPartyConfiguration(providerId);
-        ssoConfig = (SSOConfiguration) relyingParty.getProfileConfigurations()
-        .get(SSOConfiguration.PROFILE_ID);
-        
-        try {
-            spDescriptor = metadataProvider.getEntityDescriptor(
-                    relyingParty.getRelyingPartyId()).getSPSSODescriptor(
-                    SAML20_PROTOCOL_URI);
-        } catch (MetadataProviderException ex) {
-            log.error(
-                    "SAML 2 Authentication Request: Unable to locate metadata for SP "
-                    + providerId + " for protocol "
-                    + SAML20_PROTOCOL_URI, ex);
-            return false;
-        }
-        
-        if (spDescriptor == null) {
-            log
-                    .error("SAML 2 Authentication Request: Unable to locate metadata for SP "
-                    + providerId
-                    + " for protocol "
-                    + SAML20_PROTOCOL_URI);
-            return false;
-        }
-        
-        return true;
     }
     
     /**
@@ -434,14 +352,12 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      * @param response
      *            The user's HttpServletResponse.
      *
-     * @return A LoginContext for the authenticated user.
-     *
-     * @throws SerlvetException
+     * @throws ProfileException
      *             on error.
      */
     protected void authenticateUser(final AuthnRequest authnRequest,
             final HttpSession httpSession, final HttpServletRequest request,
-            final HttpServletResponse response) throws ServletException {
+            final HttpServletResponse response) throws ProfileException {
         
         // Forward the request to the AuthenticationManager.
         // When the AuthenticationManager is done it will
@@ -457,37 +373,33 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         } catch (IOException ex) {
             log.error("Error forwarding SAML 2 AuthnRequest "
                     + authnRequest.getID() + " to AuthenticationManager", ex);
-            throw new ServletException("Error forwarding SAML 2 AuthnRequest "
+            throw new ProfileException("Error forwarding SAML 2 AuthnRequest "
+                    + authnRequest.getID() + " to AuthenticationManager", ex);
+        } catch (ServletException ex) {
+            log.error("Error forwarding SAML 2 AuthnRequest "
+                    + authnRequest.getID() + " to AuthenticationManager", ex);
+            throw new ProfileException("Error forwarding SAML 2 AuthnRequest "
                     + authnRequest.getID() + " to AuthenticationManager", ex);
         }
     }
     
     /**
-     * Build an AuthnStatement and add it to a Response.
+     * Build an AuthnStatement and add it to an Assertion.
      *
-     * @param response
-     *            The Response to which the AuthnStatement will be added.
-     * @param loginCtx
-     *            The LoginContext of the sucessfully authenticated user.
-     * @param authnRequest
-     *            The AuthnRequest that prompted this message.
-     * @param ssoConfig
-     *            The SSOConfiguration for the RP to which we are addressing
-     *            this message.
-     * @param issuer
-     *            The IdP's identifier.
-     * @param audiences
-     *            An array of URIs restricting the audience of this assertion.
+     * @param assertion An empty SAML 2 Assertion object.
+     * @param loginContext The processed login context for the AuthnRequest.
+     * @param authnRequest The AuthnRequest to which this is in response.
+     *
+     * @throws ProfileException On error.
      */
     protected void setAuthenticationStatement(Assertion assertion,
             final Saml2LoginContext loginContext,
-            final AuthnRequest authnRequest) throws ServletException {
+            final AuthnRequest authnRequest) throws ProfileException {
         
-        // Build the AuthnCtx. We need to determine if the user was
-        // authenticated
+        // Build the AuthnCtx.
+        // We need to determine if the user was authenticated
         // with an AuthnContextClassRef or a AuthnContextDeclRef
-        AuthnContext authnCtx = buildAuthnCtx(authnRequest
-                .getRequestedAuthnContext(), loginContext);
+        AuthnContext authnCtx = buildAuthnCtx(authnRequest.getRequestedAuthnContext(), loginContext);
         if (authnCtx == null) {
             log.error("Error respond to SAML 2 AuthnRequest "
                     + authnRequest.getID()
@@ -511,8 +423,8 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *
      * @param requestedAuthnCtx
      *            The RequestedAuthnContext from the Authentication Request.
-     * @param authnMethod
-     *            The authentication method that was used.
+     * @param loginContext
+     *            The processed LoginContext (it must contain the authn method).
      *
      * @return An AuthnCtx object on success or <code>null</code> on failure.
      */
@@ -571,23 +483,23 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *
      * @return The user's LoginContext.
      *
-     * @throws ServletException
+     * @throws ProfileException
      *             On error.
      */
     protected Saml2LoginContext getLoginContext(final HttpSession httpSession)
-    throws ServletException {
+            throws ProfileException {
         
         Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         if (o == null) {
             log.error("User's session does not contain a LoginContext object.");
-            throw new ServletException(
+            throw new ProfileException(
                     "User's session does not contain a LoginContext object.");
         }
         
         if (!(o instanceof Saml2LoginContext)) {
             log
                     .error("Invalid login context object -- object is not an instance of Saml2LoginContext.");
-            throw new ServletException("Invalid login context object.");
+            throw new ProfileException("Invalid login context object.");
         }
         
         Saml2LoginContext ctx = (Saml2LoginContext) o;
@@ -645,7 +557,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *             on error.
      */
     protected Subject getAndVerifySubject(final AuthnRequest authnRequest)
-    throws AuthenticationRequestException {
+            throws AuthenticationRequestException {
         
         Status failureStatus;
         
@@ -729,7 +641,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         SPSSODescriptor spDescriptor;
         try {
             spDescriptor = metadata.getEntityDescriptor(providerId)
-            .getSPSSODescriptor(SAML20_PROTOCOL_URI);
+                    .getSPSSODescriptor(SAML20_PROTOCOL_URI);
         } catch (MetadataProviderException ex) {
             log.error(
                     "Unable retrieve SPSSODescriptor metadata for providerId "
@@ -803,24 +715,24 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *
      * @return An AssertionConsumerServiceEndpoint object.
      *
-     * @throws ServletException
+     * @throws ProfileException
      *             On error.
      */
     protected AssertionConsumerService getACSEndpointFromSession(
-            final HttpSession session) throws ServletException {
+            final HttpSession session) throws ProfileException {
         
         Object o = session.getAttribute(ACS_SESSION_KEY);
         if (o == null) {
             log
                     .error("User's session does not contain an AssertionConsumerService object.");
-            throw new ServletException(
+            throw new ProfileException(
                     "User's session does not contain an AssertionConsumerService object.");
         }
         
         if (!(o instanceof AssertionConsumerService)) {
             log
                     .error("Invalid session data -- object is not an instance of AssertionConsumerService.");
-            throw new ServletException(
+            throw new ProfileException(
                     "Invalid session data -- object is not an instance of AssertionConsumerService.");
         }
         
@@ -845,7 +757,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *             on error.
      */
     protected void checkScope(final AuthnRequest authnRequest, String providerId)
-    throws AuthenticationRequestException {
+            throws AuthenticationRequestException {
         
         Status failureStatus;
         
@@ -898,7 +810,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         }
         
         log.error("SAML 2 AuthnRequest " + authnRequest.getID()
-        + " contains a Scoping element which "
+                + " contains a Scoping element which "
                 + "does not contain a providerID registered with this IdP.");
         
         failureStatus = buildStatus(StatusCode.RESPONDER_URI,
@@ -944,7 +856,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
             Document doc = parserPool.parse(istream);
             Element docElement = doc.getDocumentElement();
             Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory()
-            .getUnmarshaller(docElement);
+                    .getUnmarshaller(docElement);
             idpList = (IDPList) unmarshaller.unmarshall(docElement);
             
         } catch (MalformedURLException ex) {
@@ -953,10 +865,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
                     + uri, ex);
         } catch (IOException ex) {
             log.error("IO Error while retreieving GetComplete IDPList from "
-                    + uri, ex);
-        } catch (ConfigurationException ex) {
-            log.error(
-                    "Internal OpenSAML error while parsing GetComplete IDPList from "
                     + uri, ex);
         } catch (XMLParserException ex) {
             log.error(
@@ -979,4 +887,34 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         
         return idpList;
     }
+    
+    protected void encodeResponse(String binding, final ProfileResponse<ServletResponse> response,
+            final Response samlResponse,
+            final RelyingPartyConfiguration relyingParty,
+            final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor) throws ProfileException {
+        
+        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(binding);
+        if (encoder == null) {
+            log.error("SAML 2 Authentication Request: No MessageEncoder registered for " + binding);
+            throw new ProfileException("SAML 2 Authentication Request: No MessageEncoder registered for " + binding);
+        }
+        
+        encoder.setResponse(response.getRawResponse());
+        encoder.setIssuer(relyingParty.getProviderId());
+        encoder.setMetadataProvider(getRelyingPartyConfigurationManager().getMetadataProvider());
+        encoder.setRelyingPartyRole(spDescriptor);
+        encoder.setSigningCredential(relyingParty.getDefaultSigningCredential());
+        encoder.setSamlMessage(samlResponse);
+        encoder.setRelyingPartyEndpoint(spDescriptor.getDefaultAssertionConsumerService());
+        
+        try {
+            encoder.encode();
+        } catch (BindingException ex) {
+            log.error("Unable to encode response the relying party: " + relyingParty.getRelyingPartyId(), ex);
+            throw new ProfileException("Unable to encode response the relying party: "
+                    + relyingParty.getRelyingPartyId(), ex);
+        }
+        
+    }
+    
 }
