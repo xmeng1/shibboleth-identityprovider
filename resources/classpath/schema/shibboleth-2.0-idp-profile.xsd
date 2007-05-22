@@ -18,7 +18,7 @@
             <documentation>Basic handler that returns a general status of the IdP.</documentation>
         </annotation>
         <complexContent>
-            <extension base="ph:ProfileHandlerType" />
+            <extension base="ph:RequestURIMappedProfileHandlerType" />
         </complexContent>
     </complexType>
 
@@ -104,7 +104,7 @@
             <documentation>Base type for Shibboleth IdP profile handlers.</documentation>
         </annotation>
         <complexContent>
-            <extension base="ph:ProfileHandlerType" />
+            <extension base="ph:ShibbolethProfileHandlerType" />
         </complexContent>
     </complexType>
 
