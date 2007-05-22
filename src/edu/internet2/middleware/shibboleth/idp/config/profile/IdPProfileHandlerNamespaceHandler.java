@@ -28,6 +28,9 @@ public class IdPProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandle
 
     /** {@inheritDoc} */
     public void init() {
+        registerBeanDefinitionParser(StatusHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new StatusHandlerBeanDefinitionParser());
+
         registerBeanDefinitionParser(SAML2AttributeQueryProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2AttributeQueryProfileHandlerBeanDefinitionParser());
 

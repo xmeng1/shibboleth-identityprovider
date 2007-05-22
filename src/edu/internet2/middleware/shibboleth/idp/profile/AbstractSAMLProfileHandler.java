@@ -27,8 +27,8 @@ import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
-import edu.internet2.middleware.shibboleth.common.profile.AbstractProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
@@ -36,7 +36,7 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
  * Base class for SAML profile handlers.
  */
 public abstract class AbstractSAMLProfileHandler extends
-        AbstractProfileHandler<SAMLMDRelyingPartyConfigurationManager, Session> {
+        AbstractShibbolethProfileHandler<SAMLMDRelyingPartyConfigurationManager, Session> {
 
     /** SAML message audit log. */
     private final Logger auditLog = Logger.getLogger(AuditLogEntry.AUDIT_LOGGER_NAME);

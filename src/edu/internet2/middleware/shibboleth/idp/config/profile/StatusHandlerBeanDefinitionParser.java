@@ -16,23 +16,28 @@
 
 package edu.internet2.middleware.shibboleth.idp.config.profile;
 
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import javax.xml.namespace.QName;
+
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.config.profile.AbstractShibbolethProfileHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.common.config.profile.AbstractRequestURIMappedProfileHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.profile.StatusProfileHandler;
 
 /**
- * Base class for SAML profile handler configuration parsers.
+ * Spring bean definition parser for {@link StatusProfileHandler}s.
  */
-public abstract class AbstractSAMLProfileHandlerBeanDefinitionParser extends
-        AbstractShibbolethProfileHandlerBeanDefinitionParser {
+public class StatusHandlerBeanDefinitionParser extends AbstractRequestURIMappedProfileHandlerBeanDefinitionParser {
+    
+    /** Schema type. */
+    public static final QName SCHEMA_TYPE = new QName(IdPProfileHandlerNamespaceHandler.NAMESPACE, "Status");
 
     /** {@inheritDoc} */
-    protected void doParse(Element config, BeanDefinitionBuilder builder) {
-        super.doParse(config, builder);
+    protected Class getBeanClass(Element arg0) {
+        return StatusProfileHandler.class;
+    }
 
-        builder.addPropertyReference("messageDecoderFactory", config.getAttributeNS(null, "messageDecoderFactoryId"));
-
-        builder.addPropertyReference("messageEncoderFactory", config.getAttributeNS(null, "messageEncoderFactoryId"));
+    /** {@inheritDoc} */
+    protected boolean shouldGenerateId() {
+        return true;
     }
 }
