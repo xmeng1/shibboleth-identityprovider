@@ -364,7 +364,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         // forward the request back to this servlet.
         
         Saml2LoginContext loginCtx = new Saml2LoginContext(authnRequest);
-        loginCtx.setProfileHandlerURL(request.getPathInfo());
+        loginCtx.setProfileHandlerURL(request.getRequestURI());
         httpSession.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginCtx);
         try {
             RequestDispatcher dispatcher = request

@@ -282,7 +282,7 @@ public class AuthenticationManager extends HttpServletBean {
 		}
 
 		// otherwise, forward control to the AuthenticationHandler
-		loginContext.setAuthenticationManagerURL(servletRequest.getPathInfo());
+		loginContext.setAuthenticationManagerURL(servletRequest.getRequestURI());
 		handler.login(servletRequest, servletResponse, loginContext);
 	}
 
