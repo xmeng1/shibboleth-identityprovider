@@ -12,6 +12,7 @@
         <RequestPath>/shibboleth/IdP/status</RequestPath>
     </ProfileHandler>
 
+<!--
     <ProfileHandler xsi:type="idpProfile:SAML2SSO">
         <RequestPath>/shibboleth/IdP/saml2/HTTP/SSO</RequestPath>
     </ProfileHandler>
@@ -19,5 +20,6 @@
     <ProfileHandler xsi:type="idpProfile:SAML2AttributeQuery">
         <RequestPath>/shibboleth/IdP/saml2/SOAP/attribute</RequestPath>
     </ProfileHandler>
+-->
 
 </ProfileHandlerGroup>

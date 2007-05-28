@@ -37,8 +37,7 @@ public class IdPServicesBean {
      * @param logging logging service for the IdP
      * @param loadedServices service components loaded into the IdP
      */
-    public IdPServicesBean(IdPLoggingService logging, List<BaseService> loadedServices) {
-        loggingService = logging;
+    public IdPServicesBean(List<BaseService> loadedServices) {
         services = loadedServices;
     }
 
@@ -49,6 +48,10 @@ public class IdPServicesBean {
      */
     public IdPLoggingService getLoggingService() {
         return loggingService;
+    }
+    
+    public void setLoggingService(IdPLoggingService service){
+        loggingService = service;
     }
 
     /**

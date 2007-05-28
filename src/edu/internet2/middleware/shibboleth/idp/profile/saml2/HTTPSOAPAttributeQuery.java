@@ -45,8 +45,9 @@ public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
             throw new ProfileException("No request decoder was registered for binding type: " + BINDING);
         }
 
-        requestContext.setMessageDecoder(decoder);
+        super.populateMessageDecoder(decoder);
         decoder.setRequest(requestContext.getProfileRequest().getRawRequest());
+        requestContext.setMessageDecoder(decoder);
     }
 
     /** {@inheritDoc} */
@@ -58,8 +59,9 @@ public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
             throw new ProfileException("No response encoder was registered for binding type: " + BINDING);
         }
 
-        requestContext.setMessageEncoder(encoder);
+        super.populateMessageEncoder(encoder);
         encoder.setResponse(requestContext.getProfileResponse().getRawResponse());
         encoder.setSamlMessage(requestContext.getAttributeQueryResponse());
+        requestContext.setMessageEncoder(encoder);
     }
 }

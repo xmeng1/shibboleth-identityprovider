@@ -181,6 +181,7 @@
 		<mkdir dir="${idp.home}/logs" />
 		<mkdir dir="${idp.home}/bin" />
 		<mkdir dir="${idp.home}/war" />
+		<mkdir dir="${idp.home}/temp/metadata" />
 
 		<copy todir="${idp.home}/lib" preservelastmodified="true">
 			<fileset dir="${lib.dir}" />

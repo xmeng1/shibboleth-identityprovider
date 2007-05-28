@@ -53,7 +53,7 @@ public class IdPConfigBeanDefinitionParser extends AbstractSimpleBeanDefinitionP
 
         children = configChildren.get(new QName(IdPServicesNamespaceHandler.NAMESPACE, "LoggingConfiguration"));
         if (children != null && children.size() > 0) {
-            builder.addConstructorArg(SpringConfigurationUtils.parseCustomElement(children.get(0), context));
+            builder.addPropertyValue("loggingService", SpringConfigurationUtils.parseCustomElement(children.get(0), context));
         }
 
         children = configChildren.get(new QName(ServiceNamespaceHandler.NAMESPACE, "Service"));

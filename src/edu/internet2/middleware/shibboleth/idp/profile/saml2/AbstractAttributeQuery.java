@@ -39,7 +39,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.AttributeQueryConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
@@ -142,6 +142,7 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
         Response samlResponse = getResponseBuilder().buildObject();
         populateStatusResponse(samlResponse, issueInstant, requestContext.getAttributeQuery(), requestContext
                 .getRelyingPartyConfiguration());
+        
         // TODO handle subject
         samlResponse.getAssertions().add(assertion);
 

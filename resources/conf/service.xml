@@ -25,7 +25,9 @@
                         urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd 
                         urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd">
 
+<!--
     <LoggingConfiguration>$IDP_HOME$/conf/logging.xml</LoggingConfiguration>
+-->
 
     <Service id="shibboleth.ProfileHandler"
              xmlns="urn:mace:shibboleth:2.0:services"

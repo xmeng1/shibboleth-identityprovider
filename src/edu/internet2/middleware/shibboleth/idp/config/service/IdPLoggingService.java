@@ -20,9 +20,9 @@ import java.util.Timer;
 
 import org.apache.log4j.Logger;
 import org.opensaml.log.Level;
-import org.opensaml.resource.FilesystemResource;
-import org.opensaml.resource.ResourceChangeWatcher;
-import org.opensaml.resource.ResourceException;
+import org.opensaml.util.resource.FilesystemResource;
+import org.opensaml.util.resource.ResourceChangeWatcher;
+import org.opensaml.util.resource.ResourceException;
 import org.opensaml.xml.util.DatatypeHelper;
 
 import edu.internet2.middleware.shibboleth.common.log.Log4jConfigFileResourceListener;

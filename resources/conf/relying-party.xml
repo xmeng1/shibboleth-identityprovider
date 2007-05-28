@@ -21,25 +21,16 @@
     <DefaultRelyingParty provider="http://example.org/IdP" />
     
     <RelyingParty id="urn:mace:incommon"
-                  provider="http://example.org/IdP" 
-                  defaultSigningCredentialRef="MySigningKey">
+                  provider="http://example.org/IdP">
+          <!-- 
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
+        -->
     </RelyingParty>
     
     <MetadataProvider xsi:type="FileBackedURLMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
                       id="incommon-metadata"
-                      metadataUrl="https://wayf.incommonfederation.org/InCommon/InCommon-metadata.xml"
-                      backingFile="$IDP_HOME/temp/metadata/incommon.xml"/>
-    
-    <Credential xsi:type="InlineCredential" xmlns="urn:mace:shibboleth:2.0:credential"
-                id="MySigningKey">
-        <PrivateKey>
-            <!-- Encoded key -->
-        </PrivateKey>
-        <PublicKey>
-            <!-- Encoded key -->
-        </PublicKey>
-    </Credential>
+                      metadataURL="http://wayf.incommonfederation.org/InCommon/InCommon-metadata.xml"
+                      backingFile="$IDP_HOME$/temp/metadata/incommon.xml"/>
 
 </RelyingPartyGroup>
