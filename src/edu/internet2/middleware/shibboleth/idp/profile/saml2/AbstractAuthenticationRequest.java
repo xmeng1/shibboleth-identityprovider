@@ -533,8 +533,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         // Check if we are in scope to handle this AuthnRequest
         checkScope(authnRequest, issuer);
         
-        // XXX: run signature checks on authnRequest
-        
         // verify that the AssertionConsumerService url is valid.
         AssertionConsumerService acsEndpoint = getAndVerifyACSEndpoint(
                 authnRequest, relyingParty.getRelyingPartyId(),

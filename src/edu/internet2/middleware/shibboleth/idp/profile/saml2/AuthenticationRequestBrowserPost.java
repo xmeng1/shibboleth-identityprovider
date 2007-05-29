@@ -29,6 +29,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 
 import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
@@ -143,9 +144,12 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
                 log.error("SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
                 throw new ProfileException(
                         "SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
-            } catch (AuthenticationRequestException ex) { 
-                // XXX: todo: generate and send the error, with a REQUEST_URI
-                // failure.
+            } catch (AuthenticationRequestException ex) {
+                
+                // AuthN failed. Send the failure status.
+                retrieveRequestData(httpSession, authnRequest, issuer, relyingParty, ssoConfig, spDescriptor);
+                Response failureResponse = buildResponse(authnRequest.getID(), new DateTime(), issuer, ex.getStatus());
+                encodeResponse(BINDING_URI, response, failureResponse, relyingParty, ssoConfig, spDescriptor);
             } 
         }
         
