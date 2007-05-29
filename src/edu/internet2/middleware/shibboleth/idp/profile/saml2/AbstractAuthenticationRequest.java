@@ -69,8 +69,8 @@ import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.AbstractSAML2ProfileConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.SSOConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
@@ -169,7 +169,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *             On Error.
      */
     protected Response evaluateRequest(final AuthnRequest authnRequest,
-            final Issuer issuer, final HttpSession session,
+            String issuer, final HttpSession session,
             final RelyingPartyConfiguration relyingParty,
             final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor)
             throws ProfileException {
@@ -279,7 +279,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *            The SPSSODescriptor for the ssoConfig.
      */
     protected void storeRequestData(final HttpSession session,
-            final AuthnRequest authnRequest, final Issuer issuer,
+            final AuthnRequest authnRequest, String issuer,
             final RelyingPartyConfiguration relyingParty,
             final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor) {
         
@@ -313,7 +313,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *            Will be populated with the SPSSODescriptor for the ssoConfig.
      */
     protected void retrieveRequestData(final HttpSession session,
-            AuthnRequest authnRequest, Issuer issuer,
+            AuthnRequest authnRequest, String issuer,
             RelyingPartyConfiguration relyingParty, SSOConfiguration ssoConfig,
             SPSSODescriptor spDescriptor) {
         
@@ -324,7 +324,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         
         authnRequest = (AuthnRequest) session
                 .getAttribute(AUTHNREQUEST_SESSION_KEY);
-        issuer = (Issuer) session.getAttribute(ISSUER_SESSION_KEY);
+        issuer = (String) session.getAttribute(ISSUER_SESSION_KEY);
         relyingParty = (RelyingPartyConfiguration) session
                 .getAttribute(RPCONFIG_SESSION_KEY);
         ssoConfig = (SSOConfiguration) session
@@ -525,13 +525,13 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      *             on error.
      */
     protected void verifyAuthnRequest(final AuthnRequest authnRequest,
-            Issuer issuer, final RelyingPartyConfiguration relyingParty,
+            String issuer, final RelyingPartyConfiguration relyingParty,
             final HttpSession session) throws AuthenticationRequestException {
         
         Status failureStatus;
         
         // Check if we are in scope to handle this AuthnRequest
-        checkScope(authnRequest, issuer.getSPProvidedID());
+        checkScope(authnRequest, issuer);
         
         // XXX: run signature checks on authnRequest
         

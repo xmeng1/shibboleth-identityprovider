@@ -42,7 +42,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
-import edu.internet2.middleware.shibboleth.common.relyingparty.saml1.ShibbolethSSOConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import java.io.UnsupportedEncodingException;
 

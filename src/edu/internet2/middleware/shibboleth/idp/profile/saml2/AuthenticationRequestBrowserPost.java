@@ -26,7 +26,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.saml2.SSOConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObject;
@@ -79,9 +79,8 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
         HttpSession httpSession = httpRequest.getSession();
         
         AuthnRequest authnRequest = null;
-        Issuer issuer = null;
+        String issuer = null;
         MetadataProvider metadataProvider = null;
-        String providerId = null;
         RelyingPartyConfiguration relyingParty = null;
         SSOConfiguration ssoConfig = null;
         SPSSODescriptor spDescriptor = null;
@@ -99,7 +98,7 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
                     throw new ProfileException("SAML 2 AuthnRequest: No MessageDecoder registered for " + BINDING_URI);
                 }
                 
-                decoder.setMetadataProvider(getRelyingPartyConfigurationManager().getMetadataProvider());
+                decoder.setMetadataProvider(getMetadataProvider());
                 populateMessageDecoder(decoder);
                 decoder.decode();
                 
@@ -110,12 +109,11 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
                 }
                 
                 authnRequest = (AuthnRequest) samlObject;
-                issuer = (Issuer) decoder.getSecurityPolicy().getIssuer();
+                issuer = decoder.getSecurityPolicy().getIssuer();
                 
                 // check that we have metadata for the RP
                 metadataProvider = getRelyingPartyConfigurationManager().getMetadataProvider();
-                providerId = issuer.getSPProvidedID();
-                relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(providerId);
+                relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(issuer);
                 ssoConfig = (SSOConfiguration) relyingParty.getProfileConfigurations().get(SSOConfiguration.PROFILE_ID);
                 
                 try {
@@ -125,22 +123,16 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
                 } catch (MetadataProviderException ex) {
                     log.error(
                             "SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + providerId + " for protocol "
-                            + SAML20_PROTOCOL_URI, ex);
+                            + issuer + " for protocol " + SAML20_PROTOCOL_URI, ex);
                     throw new ProfileException("SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + providerId + " for protocol "
-                            + SAML20_PROTOCOL_URI, ex);
+                            + issuer + " for protocol " + SAML20_PROTOCOL_URI, ex);
                 }
                 
                 if (spDescriptor == null) {
                     log.error("SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + providerId
-                            + " for protocol "
-                            + SAML20_PROTOCOL_URI);
+                            + issuer + " for protocol " + SAML20_PROTOCOL_URI);
                     throw new ProfileException("SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + providerId
-                            + " for protocol "
-                            + SAML20_PROTOCOL_URI);
+                            + issuer + " for protocol " + SAML20_PROTOCOL_URI);
                 }
                 
                 verifyAuthnRequest(authnRequest, issuer, relyingParty, httpSession);
