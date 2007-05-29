@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+    <!-- ======================================= -->
+    <!-- Renderers for specific types of objects -->
+    <!-- ======================================= -->
+    <renderer renderedClass="edu.internet2.middleware.shibboleth.common.log.AuditLogEntry"
+        renderingClass="edu.internet2.middleware.shibboleth.common.log.CSVAuditEventRenderer" />
+
+    <renderer renderedClass="edu.internet2.middleware.shibboleth.common.log.AccessLogEntry"
+        renderingClass="edu.internet2.middleware.shibboleth.common.log.CSVAcessEventRenderer" />
+
+    <renderer renderedClass="org.w3c.dom.Node" renderingClass="org.opensaml.log.DOMNodeRenderer" />
+
+    <renderer renderedClass="org.opensaml.xml.XMLObject" renderingClass="org.opensaml.log.XMLObjectRenderer" />
+
+    <!-- ================================= -->
+    <!-- Send messages to local files      -->
+    <!-- ================================= -->
+    <appender name="IDP_LOG" class="org.opensaml.log.RollingFileAppender">
+        <param name="File" value="$IDP_HOME$/conf/idp.log" />
+        <param name="Append" value="false" />
+
+        <!-- Rollover at midnight each day -->
+        <param name="DatePattern" value="'.'yyyy-MM-dd" />
+
+        <layout class="org.apache.log4j.PatternLayout">
+            <!-- The default pattern: Date Priority [Category] Message -->
+            <param name="ConversionPattern" value="%d %-5p [%c] %m%n" />
+
+            <!-- The debug pattern (very slow): Date Priority [Class#Method:Line Number] Message -->
+            <!--
+                <param name="ConversionPattern" value="%d %-5p [%C{1}#%M:%L] %m%n"/>
+            -->
+        </layout>
+    </appender>
+
+    <appender name="IDP_AUDIT" class="org.opensaml.log.RollingFileAppender">
+        <param name="File" value="$IDP_HOME$/conf/audit.log" />
+        <param name="Append" value="false" />
+
+        <!-- Rollover at midnight each day -->
+        <param name="DatePattern" value="'.'yyyy-MM-dd" />
+
+        <layout class="org.apache.log4j.PatternLayout">
+            <!-- The default pattern: Date Priority [Category] Message -->
+            <param name="ConversionPattern" value="%d %-5p [%c] %m%n" />
+
+            <!-- The debug pattern (very slow): Date Priority [Class#Method:Line Number] Message -->
+            <!--
+                <param name="ConversionPattern" value="%d %-5p [%C{1}#%M:%L] %m%n"/>
+            -->
+        </layout>
+    </appender>
+
+    <appender name="IDP_ACCESS" class="org.opensaml.log.RollingFileAppender">
+        <param name="File" value="$IDP_HOME$/conf/access.log" />
+        <param name="Append" value="false" />
+
+        <!-- Rollover at midnight each day -->
+        <param name="DatePattern" value="'.'yyyy-MM-dd" />
+
+        <layout class="org.apache.log4j.PatternLayout">
+            <!-- The default pattern: Date Priority [Category] Message -->
+            <param name="ConversionPattern" value="%d %-5p [%c] %m%n" />
+
+            <!-- The debug pattern (very slow): Date Priority [Class#Method:Line Number] Message -->
+            <!--
+                <param name="ConversionPattern" value="%d %-5p [%C{1}#%M:%L] %m%n"/>
+            -->
+        </layout>
+    </appender>
+
+    <!-- ============================== -->
+    <!-- Append messages to the console -->
+    <!-- ============================== -->
+
+    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+        <param name="Target" value="System.out" />
+
+        <layout class="org.apache.log4j.PatternLayout">
+            <!-- The default pattern: Date Priority [Category] Message -->
+            <!-- param name="ConversionPattern" value="%d %-5p [%c] %m%n"/-->
+
+            <!-- The debug pattern (very slow): Date Priority [Class#Method:Line Number] Message -->
+            <param name="ConversionPattern" value="%d %-5p [%C{1}#%M:%L] %m%n" />
+        </layout>
+    </appender>
+
+
+    <!-- ================ -->
+    <!-- Limit categories -->
+    <!-- ================ -->
+
+    <category name="Shibboleth-Audit">
+        <priority value="CRITICAL" />
+        <appender-ref ref="IDP_AUDIT" />
+    </category>
+
+    <category name="Shibboleth-Access">
+        <priority value="CRITICAL" />
+        <appender-ref ref="IDP_ACCESS" />
+    </category>
+
+    <category name="edu.internet2.middleware.shibboleth">
+        <priority value="DEBUG" />
+    </category>
+
+
+    <!-- ======================= -->
+    <!-- Setup the Root category -->
+    <!-- ======================= -->
+
+    <root>
+        <priority value="WARN" />
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+</log4j:configuration>

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
+    default-autowire="byType">
+    
+    <!-- Spring configuration file that boostraps OpenSAML -->
+    <bean id="shibboleth.OpensamlConfig" class="edu.internet2.middleware.shibboleth.common.config.OpensamlConfigBean" lazy-init="false">
+        <constructor-arg>
+            <list>
+                <bean id="default" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/default-config.xml" />
+                </bean>
+                <bean id="schema" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/schema-config.xml" />
+                </bean>
+                <bean id="signature" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/signature-config.xml" />
+                </bean>
+                <bean id="encryption" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/encryption-config.xml" />
+                </bean>
+                <bean id="soap11" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/soap11-config.xml" />
+                </bean>
+                <bean id="saml1Assertion" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml1-assertion-config.xml" />
+                </bean>
+                <bean id="saml1Protocol" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml1-protocol-config.xml" />
+                </bean>
+                <bean id="saml1Metadata" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml1-metadata-config.xml" />
+                </bean>
+                <bean id="saml2Assertion" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml2-assertion-config.xml" />
+                </bean>
+                <bean id="saml2Protocol" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml2-protocol-config.xml" />
+                </bean>
+                <bean id="saml2ThirdParty" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml2-protocol-thirdparty-config.xml" />
+                </bean>
+                <bean id="saml2Metadata" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml2-metadata-config.xml" />
+                </bean>
+                <bean id="saml2MetadataQuery" class="org.opensaml.util.resource.ClasspathResource">
+                    <constructor-arg value="/saml2-metadata-query-config.xml" />
+                </bean>               
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="shibboleth.VelocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean" >
+        <property name="velocityProperties">
+            <props>
+                <prop key="resource.loader">classpath, string</prop>
+                <prop key="classpath.resource.loader.class">
+                    org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
+                </prop>
+                <prop key="string.resource.loader.class">
+                    org.apache.velocity.runtime.resource.loader.StringResourceLoader
+                </prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="shibboleth.TaskTimer" class="java.util.Timer" destroy-method="cancel">
+        <constructor-arg value="true" type="boolean" />
+    </bean>
+
+    <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool">
+        <property name="maxPoolSize" value="50" />
+        <property name="createBuildersAtPoolLimit" value="true" />
+        <property name="coalescing" value="true" />
+        <property name="ignoreComments" value="true" />
+        <property name="ignoreElementContentWhitespace" value="true" />
+        <property name="namespaceAware" value="true" />
+    </bean>
+
+    <bean id="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactory" class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory">
+        <property name="issuerRole">
+            <bean id="shibboleth.SAML2AttributeQueryRole" class="javax.xml.namespace.QName">
+                <constructor-arg value="urn:oasis:names:tc:SAML:2.0:metadata" />
+                <constructor-arg value="SPSSODescriptor" />
+            </bean>
+        </property>
+        <property name="issuerProtocol" value="urn:oasis:names:tc:SAML:2.0:protocol" />
+        <property name="policyRuleFactories">
+            <list>
+                <ref bean="shibboleth.SAML2ProtocolMessageRuleFactory" />
+                <ref bean="shibboleth.MessageIssueInstantRuleFactory" />
+            </list>
+        </property>
+    </bean>
+    
+    <bean id="shibboleth.SAML2ProtocolMessageRuleFactory" class="org.opensaml.saml2.binding.security.SAML2ProtocolMessageRuleFactory" />
+    
+    <bean id="shibboleth.MessageIssueInstantRuleFactory" class="org.opensaml.common.binding.security.IssueInstantRuleFactory">
+        <property name="clockSkew" value="5" />
+        <property name="expires" value="10" />
+    </bean>
+    
+    <bean id="shibboleth.MessageEncoderFactory" class="org.opensaml.common.binding.encoding.MessageEncoderFactory">
+        <property name="encoderBuilders">
+            <map>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST</value>
+                    </key>
+                    <bean id="shibboleth.SAML2HttpPostEncoderBuilder" class="org.opensaml.saml2.binding.encoding.HTTPPostEncoderBuilder">
+                        <constructor-arg ref="shibboleth.VelocityEngine" />
+                        <constructor-arg value="/templates/saml2-post-binding.vm"/>
+                    </bean>
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect</value>
+                    </key>
+                    <bean id="shibboleth.SAML2HttpRedirectEncoderBuilder" class="org.opensaml.saml2.binding.encoding.HTTPRedirectDeflateEncoderBuilder" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:2.0:bindings:SOAP</value>
+                    </key>
+                    <bean id="shibboleth.SAML2HttpSoap11EncoderBuilder" class="org.opensaml.saml2.binding.encoding.HTTPSOAP11EncoderBuilder" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:1.0:profiles:browser-post</value>
+                    </key>
+                    <bean id="shibboleth.SAML1HttpPostEncoderBuilder" class="org.opensaml.saml1.binding.encoding.HTTPPostEncoderBuilder">
+                        <constructor-arg ref="shibboleth.VelocityEngine" />
+                        <constructor-arg value="/templates/saml1-post-binding.vm"/>
+                    </bean>
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding</value>
+                    </key>
+                    <bean id="shibboleth.SAML1HttpSoap11EncoderBuilder" class="org.opensaml.saml1.binding.encoding.HTTPSOAP11EncoderBuilder" />
+                </entry>
+            </map>
+        </property>
+    </bean>
+    
+    <bean id="shibboleth.MessageDecoderFactory" class="org.opensaml.common.binding.decoding.MessageDecoderFactory">
+        <property name="decoderBuilders">
+            <map>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST</value>
+                    </key>
+                    <bean id="shibboleth.SAML2HttpPostDecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPPostDecoderBuilder" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect</value>
+                    </key>
+                    <bean id="shibboleth.SAML2HttpRedirectDecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoderBuilder" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:2.0:bindings:SOAP</value>
+                    </key>
+                    <bean id="shibboleth.SAML2HttpSoap11DecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPSOAP11DecoderBuilder" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:1.0:profiles:browser-post</value>
+                    </key>
+                    <bean id="shibboleth.SAML1HttpPostDecoderBuilder" class="org.opensaml.saml1.binding.decoding.HTTPPostDecoderBuilder" />
+                </entry>
+                <entry>
+                    <key>
+                        <value>urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding</value>
+                    </key>
+                    <bean id="shibboleth.SAML1HttpSoap11DecoderBuilder" class="org.opensaml.saml1.binding.decoding.HTTPSOAP11DecoderBuilder" />
+                </entry>
+            </map>
+        </property>
+    </bean>
+    
+    <bean id="shibboleth.SessionManager" class="edu.internet2.middleware.shibboleth.idp.session.impl.SessionManagerImpl" />
+    
+    <!-- We're not operating in a servlet container so this won't work -->
+    <!-- 
+    <bean id="shibboleth.ServletAttributeExporter"
+        class="org.springframework.web.context.support.ServletContextAttributeExporter">
+        <property name="attributes">
+            <map>
+                <entry>
+                    <key>
+                        <value>handlerManager</value>
+                    </key>
+                    <ref bean="shibboleth.ProfileHandler" />
+                </entry>
+            </map>
+        </property>
+    </bean>
+    -->
+    
+</beans>

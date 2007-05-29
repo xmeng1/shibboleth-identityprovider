@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<IdPConfig xmlns="urn:mace:shibboleth:2.0:idp:services" xmlns:service="urn:mace:shibboleth:2.0:services"
+    xmlns:profile="urn:mace:shibboleth:2.0:profile-handler" xmlns:relyingParty="urn:mace:shibboleth:2.0:relying-party"
+    xmlns:resolver="urn:mace:shibboleth:2.0:resolver" xmlns:afp="urn:mace:shibboleth:2.0:afp"
+    xmlns:resource="urn:mace:shibboleth:2.0:resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:services classpath:/schema/shibboleth-2.0-idp-service.xsd
+                        urn:mace:shibboleth:2.0:services classpath:/schema/shibboleth-2.0-services.xsd
+                        urn:mace:shibboleth:2.0:profile-handler classpath:/schema/shibboleth-2.0-profile-handler.xsd
+                        urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd
+                        urn:mace:shibboleth:2.0:resolver classpath:/schema/shibboleth-2.0-attribute-resolver.xsd
+                        urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd 
+                        urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd">
+
+<!--
+    <LoggingConfiguration>$IDP_HOME$/conf/logging.xml</LoggingConfiguration>
+-->
+
+    <Service id="shibboleth.ProfileHandler"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="profile:ShibbolethProfileHandlerManager">
+        <ConfigurationResource file="/data/conf1/protocol.xml" xsi:type="resource:ClasspathResource" />
+    </Service>
+
+    <Service id="shibboleth.RelyingPartyConfigurationManager"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="relyingParty:SAMLMDRelyingPartyConfigurationManager">
+        <ConfigurationResource file="/data/conf1/relying-party.xml" xsi:type="resource:ClasspathResource" />
+    </Service>
+
+    <Service id="shibboleth.AttributeResolver"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="resolver:ShibbolethAttributeResolver">
+        <ConfigurationResource file="/data/conf1/attribute-resolver.xml" xsi:type="resource:ClasspathResource" />
+    </Service>
+
+    <Service id="shibboleth.AttributeFilterEngine"
+             xmlns="urn:mace:shibboleth:2.0:services"
+             xsi:type="afp:ShibbolethAttributeFilteringEngine">
+        <ConfigurationResource file="/data/conf1/attribute-filter.xml" xsi:type="resource:ClasspathResource" />
+    </Service>
+
+</IdPConfig>

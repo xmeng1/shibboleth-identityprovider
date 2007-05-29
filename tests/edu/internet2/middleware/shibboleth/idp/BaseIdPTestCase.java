@@ -1,12 +1,16 @@
-package edu.internet2.middleware.shibboleth.idp.config;
+package edu.internet2.middleware.shibboleth.idp;
 
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opensaml.Configuration;
 import org.opensaml.util.resource.ClasspathResource;
 import org.opensaml.util.resource.Resource;
 import org.opensaml.util.resource.ResourceException;
+import org.opensaml.xml.XMLObjectBuilderFactory;
+import org.opensaml.xml.io.MarshallerFactory;
+import org.opensaml.xml.io.UnmarshallerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 
@@ -16,13 +20,26 @@ import edu.internet2.middleware.shibboleth.common.config.SpringConfigurationUtil
 /**
  * Base unit test case for Spring configuration tests.
  */
-public class BaseConfigTestCase extends BaseTestCase {
+public class BaseIdPTestCase extends BaseTestCase {
+    
+    /** Factory for XMLObject builders. */
+    protected XMLObjectBuilderFactory builderFactory;
+    
+    /** Factory for XMLObject marshallers. */
+    protected MarshallerFactory marshallerFactory;
+    
+    /** Factory for XMLObject unmarshallers. */
+    protected UnmarshallerFactory unmarshallerFactory;
 
     /** Configuration resources to be loaded for all unit tests. */
     private List<Resource> configResources;
 
     /** {@inheritDoc} */
     protected void setUp() throws Exception {
+        builderFactory = Configuration.getBuilderFactory();
+        marshallerFactory = Configuration.getMarshallerFactory();
+        unmarshallerFactory = Configuration.getUnmarshallerFactory();
+        
         configResources = new ArrayList<Resource>();
     }
 

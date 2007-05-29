@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<AttributeResolver xmlns="urn:mace:shibboleth:2.0:resolver"
+                   xmlns:resolver="urn:mace:shibboleth:2.0:resolver"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns:simple="urn:mace:shibboleth:2.0:resolver:ad:simple"
+	               xmlns:static="urn:mace:shibboleth:2.0:resolver:dc:static"
+	               xsi:schemaLocation="urn:mace:shibboleth:2.0:resolver classpath:/schema/shibboleth-2.0-attribute-resolver.xsd
+                                       urn:mace:shibboleth:2.0:resolver:ad:simple classpath:/schema/shibboleth-2.0-attribute-resolver-ad-simple.xsd
+                                       urn:mace:shibboleth:2.0:resolver:dc:static classpath:/schema/shibboleth-2.0-attribute-resolver-dc-static.xsd">
+                                       
+    <resolver:DataConnector xsi:type="static:Static" id="static">
+        <static:Attribute id="uid">
+            <static:Value>testuser</static:Value>
+        </static:Attribute>
+        <static:Attribute id="cn">
+            <static:Value>Test User</static:Value>
+        </static:Attribute>
+    </resolver:DataConnector>
+    
+</AttributeResolver>

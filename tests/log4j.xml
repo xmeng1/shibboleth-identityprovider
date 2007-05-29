@@ -16,6 +16,9 @@
 
     <renderer renderedClass="edu.internet2.middleware.shibboleth.common.log.AuditLogEntry"
         renderingClass="edu.internet2.middleware.shibboleth.common.log.CSVAuditEventRenderer" />
+        
+    <renderer renderedClass="edu.internet2.middleware.shibboleth.common.log.AccessLogEntry"
+        renderingClass="edu.internet2.middleware.shibboleth.common.log.CSVAccessEventRenderer" />
 
     <!-- ================================= -->
     <!-- Preserve messages in a local file -->
@@ -63,6 +66,11 @@
     <category name="Shibboleth-Audit">
         <priority value="CRITICAL" />
     </category>
+    
+    <category name="Shibboleth-Access">
+        <priority value="CRITICAL" />
+    </category>
+    
 
     <category name="edu.internet2.middleware.shibboleth.idp">
         <priority value="DEBUG" />
@@ -77,7 +85,7 @@
     </category>
 
     <category name="org.springframework">
-        <priority value="DEBUG" />
+        <priority value="WARN" />
     </category>
 
 
