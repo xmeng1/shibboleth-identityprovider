@@ -187,6 +187,8 @@
         </property>
     </bean>
     
+    <bean id="shibboleth.SessionManager" class="edu.internet2.middleware.shibboleth.idp.session.impl.SessionManagerImpl" />
+    
     <bean id="shibboleth.ServletAttributeExporter"
         class="org.springframework.web.context.support.ServletContextAttributeExporter">
         <property name="attributes">
