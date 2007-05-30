@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
+import java.io.UnsupportedEncodingException;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.security.KeyException;
@@ -44,7 +45,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
-import java.io.UnsupportedEncodingException;
+
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
@@ -66,6 +67,7 @@ import org.opensaml.saml1.core.StatusMessage;
 import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml1.core.SubjectConfirmation;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.signature.SignableXMLObject;
@@ -76,6 +78,276 @@ import org.opensaml.xml.signature.SignableXMLObject;
  * This profile implements the SSO profile from "Shibboleth Architecture Protocols and Profiles" - 10 September 2005.
  */
 public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
+    
+    
+    /**
+     * Request context for a ShibbolethSSO request.
+     */
+    protected class ShibbolethSSORequestContext {
+        
+        /** The servlet request. */
+        protected HttpServletRequest servletRequest;
+        
+        /** The servlet response. */
+        protected HttpServletResponse servletResponse;
+        
+        /** The profile request. */
+        protected ProfileRequest<ServletRequest> profileRequest;
+        
+        /** The profile response. */
+        protected ProfileResponse<ServletResponse> profileResponse;
+        
+        /** The AssertionConsumerService ("shire") URL. */
+        protected String shire;
+        
+        /** The location to which the response should be sent ("target"). */
+        protected String target;
+        
+        /** The SP's providerId in the metadata. */
+        protected String providerId;
+        
+        /** The requestor's address. */
+        protected String remoteAddr;
+        
+        /** The Shibboleth {@link LoginContext}. */
+        protected LoginContext loginContex;
+        
+        /** The RelyingPartyConfiguration for the request. */
+        protected RelyingPartyConfiguration rpConfiguration;
+        
+        /** The ShibbolethSSOConfiguration. */
+        protected ShibbolethSSOConfiguration shibSSOConfiguration;
+        
+        /** The SPSSODescriptor. */
+        protected SPSSODescriptor spDescriptor;
+        
+        /** The AssertionConsumerService to which the assertion should be sent. */
+        protected AssertionConsumerService assertionConsumerService;
+        
+        /** The Assertion we generate in response. */
+        protected Assertion assertion;
+        
+        public ShibbolethSSORequestContext() {
+        }
+        
+        public ShibbolethSSORequestContext(final ProfileRequest<ServletRequest> profileRequest,
+                final ProfileResponse<ServletResponse> profileResponse, String shire, String target,
+                String providerId, String remoteAddr) {
+            
+            this.profileRequest = profileRequest;
+            this.profileResponse = profileResponse;
+            this.servletRequest = (HttpServletRequest) profileRequest.getRawRequest();
+            this.servletResponse = (HttpServletResponse) profileResponse.getRawResponse();
+            this.shire = shire;
+            this.target = target;
+            this.providerId = providerId;
+            this.remoteAddr = remoteAddr;
+        }
+
+        public ProfileRequest<ServletRequest> getProfileRequest() {
+            return profileRequest;
+        }
+
+        public void setProfileRequest(ProfileRequest<ServletRequest> profileRequest) {
+            this.profileRequest = profileRequest;
+            this.servletRequest = (HttpServletRequest) profileRequest.getRawRequest();
+        }
+
+        public ProfileResponse<ServletResponse> getProfileResponse() {
+            return profileResponse;
+        }
+
+        public void setProfileResponse(ProfileResponse<ServletResponse> profileResponse) {
+            this.profileResponse = profileResponse;
+            this.servletResponse = (HttpServletResponse) profileResponse.getRawResponse();
+        }
+        
+        public HttpServletRequest getServletRequest() {
+            return servletRequest;
+        }
+        
+        public void setServletRequest(HttpServletRequest servletRequest) {
+            this.servletRequest = servletRequest;
+        }
+        
+        public HttpServletResponse getServletResponse() {
+            return servletResponse;
+        }
+        
+        public void setServletResponse(HttpServletResponse servletResponse) {
+            this.servletResponse = servletResponse;
+        }
+        
+        public String getShire() {
+            return shire;
+        }
+        
+        public void setShire(String shire) {
+            this.shire = shire;
+        }
+        
+        public String getTarget() {
+            return target;
+        }
+        
+        public void setTarget(String target) {
+            this.target = target;
+        }
+        
+        public String getProviderId() {
+            return providerId;
+        }
+        
+        public void setProviderId(String providerId) {
+            this.providerId = providerId;
+        }
+        
+        public String getRemoteAddr() {
+            return remoteAddr;
+        }
+        
+        public void setRemoteAddr(String remoteAddr) {
+            this.remoteAddr = remoteAddr;
+        }
+        
+        public LoginContext getLoginContex() {
+            return loginContex;
+        }
+        
+        public void setLoginContex(LoginContext loginContext) {
+            
+            this.loginContex = loginContext;
+            
+            if (loginContext.getProfileHandlerURL() == null) {
+                loginContext.setProfileHandlerURL(getServletRequest().getRequestURI());
+            }
+            
+            getHttpSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+        }
+        
+        public RelyingPartyConfiguration getRpConfiguration() {
+            return rpConfiguration;
+        }
+        
+        public void setRpConfiguration(RelyingPartyConfiguration rpConfiguration) {
+            this.rpConfiguration = rpConfiguration;
+        }
+        
+        public Assertion getAssertion() {
+            return assertion;
+        }
+        
+        public void setAssertion(Assertion assertion) {
+            this.assertion = assertion;
+        }
+        
+        public ShibbolethSSOConfiguration getShibSSOConfiguration() {
+            return shibSSOConfiguration;
+        }
+        
+        public void setShibSSOConfiguration(ShibbolethSSOConfiguration shibSSOConfiguration) {
+            this.shibSSOConfiguration = shibSSOConfiguration;
+        }
+        
+        public SPSSODescriptor getSpDescriptor() {
+            return spDescriptor;
+        }
+        
+        public void setSpDescriptor(SPSSODescriptor spDescriptor) {
+            this.spDescriptor = spDescriptor;
+        }
+        
+        public AssertionConsumerService getAssertionConsumerService() {
+            return assertionConsumerService;
+        }
+        
+        public void setAssertionConsumerService(AssertionConsumerService assertionConsumers) {
+            this.assertionConsumerService = assertionConsumers;
+        }
+        
+        
+        public HttpSession getHttpSession() {
+            
+            if (getServletRequest() != null) {
+                return getServletRequest().getSession();
+            } else {
+                return null;
+            }
+        }
+        
+        public boolean equals(final Object obj) {
+            
+            if (obj == null) {
+                return false;
+            }
+            
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            
+            final ShibbolethSSORequestContext other = (ShibbolethSSORequestContext) obj;
+            
+            if (servletRequest != other.servletRequest && (servletRequest == null || !this.servletRequest.equals(other.servletRequest))) {
+                return false;
+            }
+            
+            if (servletResponse != other.servletResponse && (servletResponse == null || !this.servletResponse.equals(other.servletResponse))) {
+                return false;
+            }
+            
+            if (shire != other.shire && (shire == null || !shire.equals(other.shire))) {
+                return false;
+            }
+            
+            if (target != other.target && (target == null || !target.equals(other.target))) {
+                return false;
+            }
+            
+            if (providerId != other.providerId && (providerId == null || !providerId.equals(other.providerId))) {
+                return false;
+            }
+            
+            if (remoteAddr != other.remoteAddr && (remoteAddr == null || !remoteAddr.equals(other.remoteAddr))) {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        public int hashCode() {
+            
+            int hash = 7;
+            hash = 71 * hash + shire != null ? shire.hashCode() : 0;
+            hash = 71 * hash + target != null ? target.hashCode() : 0;
+            hash = 71 * hash + providerId != null ? providerId.hashCode() : 0;
+            hash = 71 * hash + remoteAddr != null ? remoteAddr.hashCode() : 0;
+            
+            return hash;
+        }
+    }
+    
+    /**
+     * Internal exception class used by utilty methods.
+     */
+    protected class ShibbolethSSOException extends Exception {
+        
+        public ShibbolethSSOException() {
+        }
+        
+        public ShibbolethSSOException(final String message) {
+            super(message);
+        }
+        
+        public ShibbolethSSOException(final Throwable cause) {
+            super(cause);
+        }
+        
+        public ShibbolethSSOException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
+        
+    }
+    
     
     /** log4j. */
     private static final Logger log = Logger.getLogger(ShibbolethSSO.class);
@@ -100,6 +372,12 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
     
     /** Profile ID for this handler. */
     protected static final String PROFILE_ID = "urn:mace:shibboleth:1.0:profiles:AuthnRequest";
+    
+    /** The request parameter containing the time the request was made. */
+    protected static final String REQUEST_PARAMETER_TIME = "time";
+    
+    /** HttpSession key for the ShibbolethSSORequestContext. */
+    protected static final String REQUEST_CONTEXT_SESSION_KEY = "edu.internet2.middleware.shibboleth.idp.profile.ShibbolethSSORequestContext";
     
     /** The path to the IdP's AuthenticationManager servlet */
     protected String authnMgrURL;
@@ -131,36 +409,21 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
     /** Builder for Assertions. */
     protected SAMLObjectBuilder<Assertion> assertionBuilder;
     
-    /** Builder for Status objects. */
-    protected SAMLObjectBuilder<Status> statusBuilder;
-    
-    /** Builder for StatusCode objects. */
-    protected SAMLObjectBuilder<StatusCode> statusCodeBuilder;
-    
-    /** Builder for StatusMessage objects. */
-    protected SAMLObjectBuilder<StatusMessage> statusMessageBuilder;
-    
     /** Builder for Response objects. */
     protected SAMLObjectBuilder<Response> responseBuilder;
     
     /** Block stale requests. */
     protected boolean blockStaleRequests = false;
     
-    /** Blame the SP if requests are malformed. */
-    protected boolean blameSP = false;
-    
     /**
-     * Time after which an authn request is considered stale(in seconds). Defaults to 30 minutes.
+     * Time after which an authn request is considered stale (in seconds). Defaults to 30 minutes.
      */
     protected int requestTTL = 1800;
     
-    /** Protocol binding to use to the Authentication Assertion */
-    protected enum ENDPOINT_BINDING {
+    /** Protocol binding to use for the Authentication Assertion. */
+    protected static enum PROTOCOL_BINDING {
         BROWSER_POST, ARTIFACT
     };
-    
-    /** PRNG for Artifact assertionHandles. */
-    protected SecureRandom prng;
     
     /**
      * Default constructor.
@@ -177,9 +440,6 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         nameIdentifierBuilder      = (SAMLObjectBuilder<NameIdentifier>) getBuilderFactory().getBuilder(NameIdentifier.DEFAULT_ELEMENT_NAME);
         audienceBuilder            = (SAMLObjectBuilder<Audience>) getBuilderFactory().getBuilder(Audience.DEFAULT_ELEMENT_NAME);
         audienceRestrictionBuilder = (SAMLObjectBuilder<AudienceRestrictionCondition>) getBuilderFactory().getBuilder(AudienceRestrictionCondition.DEFAULT_ELEMENT_NAME);
-        statusBuilder              = (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
-        statusCodeBuilder          = (SAMLObjectBuilder<StatusCode>) getBuilderFactory().getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
-        statusMessageBuilder       = (SAMLObjectBuilder<StatusMessage>) getBuilderFactory().getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
         responseBuilder            = (SAMLObjectBuilder<Response>) getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
         
     }
@@ -251,96 +511,269 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         // Only http servlets are supported for now.
         if (!(request.getRawRequest() instanceof HttpServletRequest)) {
             log.error("Received a non-HTTP request.");
-            // xxx: throw exception
-            return;
+            throw new ProfileException("Received a non-HTTP request.");
         }
         
-        HttpServletRequest httpRequest = (HttpServletRequest) request.getRawRequest();
-        HttpServletResponse httpResponse = (HttpServletResponse) response.getRawResponse();
-        HttpSession httpSession = httpRequest.getSession();
-        LoginContext loginCtx;
+        // This method is called twice.
+        // On the first time, there will be no ShibbolethSSORequestContext object. We redirect control to the
+        // AuthenticationManager to authenticate the user. The AuthenticationManager then redirects control
+        // back to this servlet. On the "return leg" connection, there will be a ShibbolethSSORequestContext object.
         
-        String shire = null;
-        String target = null;
-        String providerId = null;
-        String remoteAddr = null;
-        
-        // extract the (mandatory) request parameters.
-        if (!getRequestParameters(httpRequest, shire, target, providerId, remoteAddr)) {
-            
-            if (blameSP) {
-                httpRequest.setAttribute("errorPage", "/IdPErrorBlameSP.jsp");
-                // XXX: flesh this out more.
-            }
-            
-            // xxx: throw exception;
-            return;
+        HttpServletRequest req = (HttpServletRequest) request.getRawRequest();
+        Object o = req.getSession().getAttribute(REQUEST_CONTEXT_SESSION_KEY);
+        if (o != null && !(o instanceof ShibbolethSSORequestContext)) {
+            log.error("SAML 1 Authentication Request Handler: Invalid session data found for ShibbolethSSORequestContext");
+            throw new ProfileException("SAML 1 Authentication Request Handler: Invalid session data found for ShibbolethSSORequestContext");
         }
         
-        // check for stale requests
-        if (blockStaleRequests) {
-            String cookieName = getRPCookieName(providerId);
-            if (!validateFreshness(httpRequest, httpResponse, cookieName)) {
-                // xxX: log error and throw exception
-                return;
-            }
-            
-            writeFreshnessCookie(httpRequest,httpResponse, cookieName);
-        }
-        
-        // check if the user has already been authenticated
-        Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         if (o == null) {
+            setupNewRequest(request, response);
+        } else {
+            ShibbolethSSORequestContext requestContext = (ShibbolethSSORequestContext)o;
+            finishProcessingRequest(requestContext);
+        }
+    }
+    
+    /**
+     * Begin processing a SAML 1.x authentication request.
+     * This ensurues that the request is well-formed and that
+     * appropriate metadata can be found for the SP.
+     * Once these conditions are met, control is passed to
+     * the AuthenticationManager to authenticate the user.
+     *
+     * @param request The ProfileRequest.
+     * @param response The ProfileResponse.
+     *
+     * @throws ProfileException On error.
+     */
+    protected void setupNewRequest(final ProfileRequest<ServletRequest> request, final ProfileResponse<ServletResponse> response) throws ProfileException {
+        
+        try {
+            ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
+            requestContext.setProfileRequest(request);
+            requestContext.setProfileResponse(response);
+                    
+            // extract the (mandatory) request parameters.
+            getRequestParameters(requestContext);
             
-            // the user hasn't been authenticated, so forward the request
-            // to the AuthenticationManager. When the AuthenticationManager
-            // is done it will forward the request back to this servlet.
-            
-            // don't force reauth or passive auth
-            loginCtx = new LoginContext(false, false);
-            loginCtx.setProfileHandlerURL(httpRequest.getPathInfo());
-            httpSession.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginCtx);
-            try {
-                RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authnMgrURL);
-                dispatcher.forward(httpRequest, httpResponse);
-            } catch (IOException ex) {
-                log.error("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
-                throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
-            } catch (ServletException ex) {
-                log.error("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
-                throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+            // check for stale requests
+            if (blockStaleRequests) {
+                String cookieName = getRPCookieName(requestContext.getProviderId());
+                if (!validateFreshness(requestContext, cookieName)) {
+                    log.error("SAML 1 Authentication Request Handler: detected stale authentiation request");
+                    throw new ProfileException("SAML 1 Authentication Request Handler: detected stale authentiation request");
+                }
+                
+                writeFreshnessCookie(requestContext, cookieName);
             }
-        }
-        
-        // The user has been authenticated.
-        // Process the SAML 1 authn request.
-        
-        if (!(o instanceof LoginContext)) {
-            log.error("Invalid login context object -- object is not an instance of LoginContext.");
-            // xxx: throw exception
-            return;
-        }
-        
-        loginCtx = (LoginContext) o;
-        
-        if (!loginCtx.getAuthenticationOK()) {
-            // issue error message.
-            String failureMessage = loginCtx.getAuthenticationFailureMessage();
             
-            // generate SAML failure message
+            // check if the user has already been authenticated
+            Object o = requestContext.getHttpSession().getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+            if (o == null) {
+                
+                // the user hasn't been authenticated, so forward the request
+                // to the AuthenticationManager. When the AuthenticationManager
+                // is done it will forward the request back to this servlet.
+                
+                // don't force reauth or passive auth
+                requestContext.setLoginContex(new LoginContext(false, false));
+                
+                try {
+                    RequestDispatcher dispatcher = requestContext.getServletRequest().getRequestDispatcher(authnMgrURL);
+                    dispatcher.forward(requestContext.getServletRequest(), requestContext.getServletResponse());
+                } catch (IOException ex) {
+                    log.error("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+                    throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+                } catch (ServletException ex) {
+                    log.error("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+                    throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+                }
+            }
             
-            return;
+        } catch (ShibbolethSSOException ex) {
+            log.error("Error processing Shibboleth SSO request", ex);
+            throw new ProfileException("Error processing Shibboleth SSO request", ex);
+        }
+    }
+    
+    
+    /**
+     * Process the "return leg" of a SAML 1 authentication request.
+     *
+     * This evaluates the AuthenticationManager's LoginContext, and generates an Authentication Assertion, as appropriate.
+     *
+     * @param requestContext The context for the request.
+     *
+     * @throws ProfileException On error.
+     */
+    protected void finishProcessingRequest(final ShibbolethSSORequestContext requestContext) throws ProfileException {
+        
+        try {
+            
+            LoginContext loginCtx = requestContext.getLoginContex();
+            
+            if (!loginCtx.getAuthenticationOK()) {
+                throw new ShibbolethSSOException("Authentication failed: " + loginCtx.getAuthenticationFailureMessage());
+            }
+            
+            // The user successfully authenticated,
+            // so build the appropriate AuthenticationStatement.
+            
+            DateTime now = new DateTime();
+            
+            generateAuthenticationAssertion(requestContext, now);
+            encodeSAMLResponse(requestContext);
+            
+        } catch (ShibbolethSSOException ex) {
+            log.error("Error processing Shibboleth SSO request", ex);
+            throw new ProfileException("Error processing Shibboleth SSO request", ex);
+        }
+    }
+    
+    /**
+     * Encode the SAML response.
+     *
+     * @param requestContext The context for the request.
+     *
+     * @throws ProfileException On error.
+     */
+    protected void encodeSAMLResponse(final ShibbolethSSORequestContext requestContext) throws ProfileException {
+        
+        Response samlResponse = responseBuilder.buildObject();
+        samlResponse.setID(getIdGenerator().generateIdentifier());
+        samlResponse.setIssueInstant(new DateTime());
+        samlResponse.setVersion(SAML_VERSION);
+        samlResponse.setRecipient(requestContext.getProviderId());
+        
+        Status status;
+        
+        if (requestContext.getLoginContex().getAuthenticationOK()) {
+            status = buildStatus("Success", null);
+            List<Assertion> assertionList = samlResponse.getAssertions();
+            assertionList.add(requestContext.getAssertion());
+        } else {
+            status = buildStatus("Responder", null);
         }
         
-        // The user successfully authenticated,
-        // so build the appropriate AuthenticationStatement.
+        samlResponse.setStatus(status);
         
-        DateTime now = new DateTime();
-        RelyingPartyConfiguration relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(providerId);
+        encodeResponse(PROFILE_ID, requestContext.getProfileResponse(), samlResponse,
+                requestContext.getRpConfiguration(), requestContext.getSpDescriptor(),
+                (Endpoint) requestContext.getAssertionConsumerService());
+    }
+    
+    /**
+     * Get the Shibboleth profile-specific request parameters.
+     *
+     * @param request The servlet request from the SP.
+     * @param response The servlet response.
+     *
+     * @throw ShibbolethSSOException On Error.
+     */
+    protected void getRequestParameters(final ShibbolethSSORequestContext requestContext) throws ShibbolethSSOException {
+        
+        HttpServletRequest servletRequest = requestContext.getServletRequest();
+        
+        String target = servletRequest.getParameter("target");
+        String providerId = servletRequest.getParameter("providerId");
+        String shire = servletRequest.getParameter("shire");
+        String remoteAddr = servletRequest.getRemoteAddr();
+        
+        if (target == null || target.equals("")) {
+            log.error("Shib 1 SSO request is missing or contains an invalid target parameter");
+            throw new ShibbolethSSOException("Shib 1 SSO request is missing or contains an invalid target parameter");
+        }
+        
+        if (providerId == null || providerId.equals("")) {
+            log.error("Shib 1 SSO request is missing or contains an invalid provierId parameter");
+            throw new ShibbolethSSOException("Shib 1 SSO request is missing or contains an invalid provierId parameter");
+        }
+        
+        if (shire == null || providerId.equals("")) {
+            log.error("Shib 1 SSO request is missing or contains an invalid shire parameter");
+            throw new ShibbolethSSOException("Shib 1 SSO request is missing or contains an invalid shire parameter");
+        }
+        
+        if (remoteAddr == null || remoteAddr.equals("")) {
+            log.error("Unable to obtain requestor address when processing Shib 1 SSO request");
+            throw new ShibbolethSSOException("Unable to obtain requestor address when processing Shib 1 SSO request");
+        }
+        
+        requestContext.setTarget(target);
+        requestContext.setProviderId(providerId);
+        requestContext.setShire(shire);
+        requestContext.setRemoteAddr(remoteAddr);
+    }
+    
+    /**
+     * Generate a SAML 1 AuthenticationStatement.
+     *
+     * @param requestContext The context for the ShibbolethSSO request.
+     * @param now The current timestamp
+     *
+     * @return A SAML 1 Authentication Assertion or <code>null</code> on error.
+     */
+    protected Assertion generateAuthenticationAssertion(final ShibbolethSSORequestContext requestContext,
+             final DateTime now) {
+        
+        String providerId = requestContext.getRpConfiguration().getProviderId();
+        
+        Assertion authenticationAssertion = assertionBuilder.buildObject();
+        authenticationAssertion.setIssueInstant(now);
+        authenticationAssertion.setVersion(SAML_VERSION);
+        authenticationAssertion.setIssuer(providerId);
+        authenticationAssertion.setID(getIdGenerator().generateIdentifier());
+        
+        Conditions conditions = authenticationAssertion.getConditions();
+        conditions.setNotBefore(now.minusSeconds(30)); // for now, clock skew is hard-coded to 30 seconds.
+        conditions.setNotOnOrAfter(now.plusMillis((int)requestContext.getShibSSOConfiguration().getAssertionLifetime()));
+        
+        List<AudienceRestrictionCondition> audienceRestrictions = conditions.getAudienceRestrictionConditions();
+        AudienceRestrictionCondition restrictionCondition = audienceRestrictionBuilder.buildObject();
+        audienceRestrictions.add(restrictionCondition);
+        
+        // add the RelyingParty to the audience.
+        Audience rpAudience = audienceBuilder.buildObject();
+        rpAudience.setUri(requestContext.getRpConfiguration().getProviderId());
+        restrictionCondition.getAudiences().add(rpAudience);
+        
+        // if necessary, explicitely add the SP to the audience.
+        if (!providerId.equals(requestContext.getProviderId())) {
+            Audience spAudience = (Audience) audienceBuilder.buildObject();
+            spAudience.setUri(requestContext.getProviderId());
+            restrictionCondition.getAudiences().add(spAudience);
+        }
+        
+        AuthenticationStatement authenticationStatement = authnStmtBuilder.buildObject();
+        authenticationStatement.setSubject(buildSubject(requestContext));
+        authenticationStatement.setAuthenticationInstant(requestContext.getLoginContex().getAuthenticationInstant());
+        authenticationStatement.setAuthenticationMethod(authenticationMethodURI);
+        
+        authenticationAssertion.getAuthenticationStatements().add(authenticationStatement);
+        
+        if (requestContext.getSpDescriptor().getWantAssertionsSigned()) {
+            signAssertion(authenticationAssertion, requestContext.getRpConfiguration(), requestContext.getShibSSOConfiguration());
+        }
+        
+        return authenticationAssertion;
+    }
+    
+    
+    /**
+     * Ensure that metadata can be found for the authentication request.
+     * If found, the request context is updated to reflect the appropriate entries.
+     *
+     * @param requestContext The context for the current request.
+     *
+     * @throws ShibbolethSSOException On error.
+     */
+    protected void validateRequestAgainstMetadata(final ShibbolethSSORequestContext requestContext) throws ShibbolethSSOException {
+        
+        RelyingPartyConfiguration relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(requestContext.getProviderId());
         ProfileConfiguration temp = relyingParty.getProfileConfigurations().get(ShibbolethSSOConfiguration.PROFILE_ID);
         if (temp == null) {
             log.error("No profile configuration registered for " + ShibbolethSSOConfiguration.PROFILE_ID);
-            throw new ProfileException("No profile configuration registered for " + ShibbolethSSOConfiguration.PROFILE_ID);
+            throw new ShibbolethSSOException("No profile configuration registered for " + ShibbolethSSOConfiguration.PROFILE_ID);
         }
         
         ShibbolethSSOConfiguration ssoConfig = (ShibbolethSSOConfiguration) temp;
@@ -349,373 +782,131 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         try {
             spDescriptor = getMetadataProvider().getEntityDescriptor(relyingParty.getRelyingPartyId()).getSPSSODescriptor(SAML11_PROTOCOL_URI);
         } catch (MetadataProviderException ex) {
-            log.error("Unable to locate metadata for SP " + providerId + " for protocol " + SAML11_PROTOCOL_URI, ex);
-            // xxx: throw exception
-            return;
+            log.error("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI, ex);
+            throw new ShibbolethSSOException("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI, ex);
         }
         
         if (spDescriptor == null) {
-            log.error("Unable to locate metadata for SP " + providerId + " for protocol " + SAML11_PROTOCOL_URI);
-            // handle error
-            return;
+            log.error("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
+            throw new ShibbolethSSOException("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
         }
         
-        // validate the AssertionConsumer URL
-        List<AssertionConsumerService> consumerEndpoints = validateAssertionConsumerURL(spDescriptor, shire);
-        if (consumerEndpoints.size() == 0) {
-            // handle error
-            return;
-        }
         
-        ENDPOINT_BINDING endpointBinding = getProtocolBinding(spDescriptor, consumerEndpoints, shire);
-        
-        String confMethod = null;
-        if (endpointBinding.equals(ENDPOINT_BINDING.BROWSER_POST)) {
-            confMethod = BEARER_CONF_METHOD_URI;
-        } else if (endpointBinding.equals(ENDPOINT_BINDING.ARTIFACT)) {
-            confMethod = ARTIFACT_CONF_METHOD_URI;
-        }
-        
-        Assertion authenticationAssertion = generateAuthenticationAssertion(loginCtx, relyingParty, ssoConfig,
-                providerId, spDescriptor, confMethod, now);
-        if (authenticationAssertion == null) {
-            // do error handling
-            return;
-        }
-        
-        if (endpointBinding.equals(ENDPOINT_BINDING.BROWSER_POST)) {
-            // do post
-        } else if (endpointBinding.equals(ENDPOINT_BINDING.ARTIFACT)) {
-            //respondWithArtifact(httpRequest, httpResponse, shire, target, new Assertion[] { authenticationAssertion });
-        }
-        
-        return;
-    }
-    
-    /**
-     * Respond with a SAML Artifact.
-     *
-     * @param request The HttpServletRequest.
-     * @param response The HttpServletResponse.
-     * @param shire The AssertionConsumerService URL.
-     * @parma target The target parameter from the request.
-     * @param assertions One or more SAML assertions.
-     */
-    protected void respondWithArtifact(HttpServletRequest request, HttpServletResponse response, String shire,
-            String target, RelyingPartyConfiguration relyingParty, Assertion[] assertions) throws ProfileException,
-            NoSuchProviderException {
-        
-        //        if (assertions.length < 1) {
-        //            return;
-        //        }
-        //
-        //        StringBuilder buf = new StringBuilder(shire);
-        //        buf.append("?TARGET=");
-        //        buf.append(URLEncoder.encode(target), "UTF-8");;
-        //
-        //        // We construct the type 1 Artifact's sourceID by SHA-1 hashing the
-        //        // IdP's providerID.
-        //        // This is legacy holdover from Shib 1.x.
-        //        MessageDigest digester = MessageDigest.getInstance("SHA-1");
-        //        byte[] sourceID = digester.digest(relyingParty.getProviderID);
-        //
-        //        for (Assertion assertion : assertions) {
-        //
-        //            // XXX: todo: log the assertion to log4j @ debug level.
-        //
-        //            byte artifactType = (byte) relyingParty.getDefaultArtifactType();
-        //
-        //            SAMLArtifact artifact = artifactFactory.buildArtifact(SAML_VERSION, new byte[] { 0, artifactType },
-        //                    relyingParty.getProviderID());
-        //
-        //            String artifactID = artifact.hexEncode();
-        //            artifactMap.put(artifact, assertion);
-        //
-        //            log.debug("encoding assertion " + assertion.getID() + " into artifact " + artifactID);
-        //            log.debug("appending artifact " + artifactID + " for URL " + shire);
-        //            buf.append("&SAMLArt=");
-        //            buf.append(URLEncoder.encode(artifact.base64Encode(), "UTF-8"));
-        //        }
-        //
-        //        String url = buf.toString();
-        //        response.sendRedirect(url);
-    }
-    
-    /**
-     * Respond with the SAML 1 Browser/POST profile.
-     *
-     * @param request The HttpServletRequest.
-     * @param response The HttpServletResponse.
-     * @param shire The AssertionConsumerService URL.
-     * @parma target The target parameter from the request.
-     * @param assertions One or more SAML assertions.
-     */
-    protected void respondWithPOST(HttpServletRequest request, HttpServletResponse response, String shire,
-            String target, RelyingPartyConfiguration relyingParty, Assertion[] assertions) throws ProfileException {
-        
-        //        Response samlResponse = (Response) responseBuilder.buildObject(Response.DEFAULT_ELEMENT_NAME);
-        //        Status status = buildStatus("Success", null);
-        //        samlResponse.setStatus(status);
-        //        samlResponse.setIssueInstant(new DateTime());
-        //        samlResponse.setVersion(SAML_VERSION);
-        //        samlResponse.setID(getIdGenerator().generateIdentifier());
-        //        samlResponse.setRecipient(relyingParty.getRelyingPartyID());
-        //
-        //        List<Assertion> assertionList = samlResponse.getAssertions();
-        //        for (Assertion assertion : assertions) {
-        //            assertionList.add(assertion);
-        //        }
-        //
-        //        request.setAttribute("acceptanceURL", shire);
-        //        request.setAttribute("target", target);
-        //
-        //        RequestDispatcher dispatcher = request.getRequestDispatcher("/IdP_SAML1_POST.jdp");
-        //        dispatcher.forward(request, response);
-    }
-    
-    /**
-     * Get the Shibboleth profile-specific request parameters. The shire, target, providerId and remoteAddr parameters
-     * will be populated upon successful return.
-     *
-     * @param request The servlet request from the SP.
-     * @param shire The AttributeConsumerService URL
-     * @param target The location to which to POST the response.
-     * @param providerId The SP's provider ID in the metadata.
-     * @param remoteAddr The address of the requestor.
-     *
-     * @return <code>true</code> if the request contains valid parameters.
-     */
-    protected boolean getRequestParameters(HttpServletRequest request, String shire, String target, String providerId,
-            String remoteAddr) {
-        
-        target = request.getParameter("target");
-        providerId = request.getParameter("providerId");
-        shire = request.getParameter("shire");
-        remoteAddr = request.getRemoteAddr();
-        
-        if (target == null || target.equals("")) {
-            log.error("Shib 1 SSO request is missing or contains an invalid target parameter");
-            return false;
-        }
-        
-        if (providerId == null || providerId.equals("")) {
-            log.error("Shib 1 SSO request is missing or contains an invalid provierId parameter");
-            return false;
-        }
-        
-        if (shire == null || providerId.equals("")) {
-            log.error("Shib 1 SSO request is missing or contains an invalid shire parameter");
-            return false;
-        }
-        
-        if (remoteAddr == null || remoteAddr.equals("")) {
-            log.error("Unable to obtain requestor address when processing Shib 1 SSO request");
-            return false;
-        }
-        
-        return true;
-    }
-    
-    /**
-     * Generate a SAML 1 AuthenticationStatement.
-     *
-     * @param loginCtx The LoginContext.
-     * @param relyingParty The Replying Party configuration for the SP.
-     * @param ssoConfig The ShibbolethSSOConfiguration data.
-     * @param spID The providerID of the SP that sent the request.
-     * @param spDescriptor The SPSSO Descriptor from the metadata.
-     * @param subjectConfirmationMethod The SubjectConfirmationMethod. If <code>null</code> no
-     *            SubjectConfirmationMethod element will be generated.
-     * @param now The current timestamp
-     *
-     * @return A SAML 1 Authentication Assertion or <code>null</code> on error.
-     */
-    protected Assertion generateAuthenticationAssertion(final LoginContext loginCtx,
-            final RelyingPartyConfiguration relyingParty, final ShibbolethSSOConfiguration ssoConfig, String spID,
-            final SPSSODescriptor spDescriptor, String subjectConfirmationMethod, final DateTime now) {
-        
-        Assertion authenticationAssertion = assertionBuilder.buildObject();
-        authenticationAssertion.setIssueInstant(now);
-        authenticationAssertion.setVersion(SAMLVersion.VERSION_11);
-        authenticationAssertion.setIssuer(relyingParty.getProviderId());
-        authenticationAssertion.setID(getIdGenerator().generateIdentifier());
-        
-        Conditions conditions = authenticationAssertion.getConditions();
-        conditions.setNotBefore(now.minusSeconds(30)); // for now, clock skew is hard-coded to 30 seconds.
-        conditions.setNotOnOrAfter(now.plusMillis((int)ssoConfig.getAssertionLifetime()));
-        
-        List<AudienceRestrictionCondition> audienceRestrictions = conditions.getAudienceRestrictionConditions();
-        AudienceRestrictionCondition restrictionCondition = audienceRestrictionBuilder.buildObject();
-        audienceRestrictions.add(restrictionCondition);
-        
-        // add the RelyingParty to the audience.
-        Audience rpAudience = audienceBuilder.buildObject();
-        rpAudience.setUri(relyingParty.getProviderId());
-        restrictionCondition.getAudiences().add(rpAudience);
-        
-        // if necessary, explicitely add the SP to the audience.
-        if (!relyingParty.getProviderId().equals(spID)) {
-            Audience spAudience = (Audience) audienceBuilder.buildObject();
-            spAudience.setUri(spID);
-            restrictionCondition.getAudiences().add(spAudience);
-        }
-        
-        AuthenticationStatement authenticationStatement = authnStmtBuilder.buildObject();
-        authenticationStatement.setSubject(buildSubject(loginCtx, subjectConfirmationMethod, ssoConfig));
-        authenticationStatement.setAuthenticationInstant(loginCtx.getAuthenticationInstant());
-        authenticationStatement.setAuthenticationMethod(authenticationMethodURI);
-        
-        authenticationAssertion.getAuthenticationStatements().add(authenticationStatement);
-        
-        if (spDescriptor.getWantAssertionsSigned()) {
-            // xxx: sign the assertion
-        }
-        
-        return authenticationAssertion;
-    }
-    
-    /**
-     * Get the protocol binding to use for sending the authentication assertion. Currently, only Browser/POST and
-     * Artifact are supported. This method will return the first recognized binding that it locates.
-     *
-     * @param spDescriptor The SP's SPSSODescriptor
-     * @param endpoints The list of AssertionConsumerEndpoints with the "shire" URL as their location.
-     * @param shireURL The "shire" url from the authn request.
-     *
-     * @return The protocol binding for a given SPSSODescriptor.
-     *
-     * @throws ProfileException if no Browswer/POST or Artifact binding can be found.
-     */
-    protected ENDPOINT_BINDING getProtocolBinding(final SPSSODescriptor spDescriptor,
-            final List<AssertionConsumerService> endpoints, String shireURL) throws ProfileException {
-        
-        // check the default AssertionConsumerService first.
-        AssertionConsumerService defaultConsumer = spDescriptor.getDefaultAssertionConsumerService();
-        
-        if (defaultConsumer != null && defaultConsumer.getLocation().equals(shireURL)) {
+        // validate the AssertionConsumer ("shire") URL against the AssertionConsumerService endpoints in the metadata.
+        if (!(evaluateACSEndpoint(requestContext, requestContext.getSpDescriptor().getDefaultAssertionConsumerService()))) {
             
-            if (defaultConsumer.getBinding().equals(PROFILE_ARTIFACT_URI)) {
-                return ENDPOINT_BINDING.ARTIFACT;
-            } else if (defaultConsumer.getBinding().equals(PROFILE_BROWSER_POST_URI)) {
-                return ENDPOINT_BINDING.BROWSER_POST;
+            // if the default AssertionConsumerService endpoint was not valid, iterate over all remaining endpoints.
+            boolean found = false;
+            for (AssertionConsumerService candidateEndpoint : requestContext.getSpDescriptor().getAssertionConsumerServices()) {
+                if (evaluateACSEndpoint(requestContext, candidateEndpoint)) {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                log.error("SAML 1 AuthenticationRequest Handler: Unable to find AssertionConsumerService " +
+                        requestContext.getShire() + " for SP " + requestContext.getProviderId() + 
+                        " for protocol " + SAML11_PROTOCOL_URI);
+                throw new ShibbolethSSOException("SAML 1 AuthenticationRequest Handler: Unable to find AssertionConsumerService " +
+                        requestContext.getShire() + " for SP " + requestContext.getProviderId() + 
+                        " for protocol " + SAML11_PROTOCOL_URI);
             }
         }
         
-        // check the (already filtered) list of AssertionConsumer endpoints
-        for (AssertionConsumerService endpoint : endpoints) {
-            if (endpoint.getBinding().equals(PROFILE_ARTIFACT_URI)) {
-                return ENDPOINT_BINDING.ARTIFACT;
-            } else if (endpoint.getBinding().equals(PROFILE_BROWSER_POST_URI)) {
-                return ENDPOINT_BINDING.BROWSER_POST;
-            }
-        }
         
-        // no AssertionConsumerServices were found, or none had a recognized
-        // binding
-        log.error("Unable to find a Browswer/POST or Artifact binding " + " for an AssertionConsumerService in "
-                + spDescriptor.getID());
-        
-        throw new ProfileException("Unable to find a Browswer/POST or Artifact binding "
-                + " for an AssertionConsumerService in " + spDescriptor.getID());
-    }
-    
-    /**
-     * Sign an {@link XMLObject}.
-     *
-     * @param object The XMLObject to be signed.
-     *
-     * @throws KeyException On error.
-     */
-    protected void signXMLObject(final SignableXMLObject object) throws KeyException {
-        // sign the object
-    }
-    
-    /**
-     * Validate the AssertionConsumer ("shire") URL against the metadata.
-     *
-     * @param spDescriptor The SPSSO element from the metadata
-     * @param url The "shire" URL.
-     *
-     * @return a {@link List} of AssertionConsumerServices which have <code>url</code> as their location.
-     */
-    protected List<AssertionConsumerService> validateAssertionConsumerURL(final SPSSODescriptor spDescriptor, String url) {
-        
-        // spDescriptor returns a reference to an
-        // internal mutable copy, so make a copy of it.
+        // spDescriptor returns a reference to an internal mutable copy, so make a copy of it.
         List<AssertionConsumerService> consumerURLs =
-                new ArrayList<AssertionConsumerService>(spDescriptor.getAssertionConsumerServices().size());
+                new ArrayList<AssertionConsumerService>(requestContext.getSpDescriptor().getAssertionConsumerServices().size());
         
         // filter out any list elements that don't have the correct location field.
         // copy any consumerURLs with the correct location
-        for (AssertionConsumerService service : spDescriptor.getAssertionConsumerServices()) {
-            if (service.getLocation().equals(url)) {
+        for (AssertionConsumerService service : requestContext.getSpDescriptor().getAssertionConsumerServices()) {
+            if (service.getLocation().equals(requestContext.getShire())) {
                 consumerURLs.add(service);
             }
         }
+        if (consumerURLs.size() == 0) {
+            log.error("Unable to validate AssertionConsumerService URL against metadata: " + requestContext.getShire()
+                    + " not found for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
+            throw new ShibbolethSSOException("Unable to validate AssertionConsumerService URL against metadata: " + requestContext.getShire()
+                    + " not found for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
+        }
         
-        return consumerURLs;
+        requestContext.setRpConfiguration(relyingParty);
+        requestContext.setShibSSOConfiguration(ssoConfig);
+        requestContext.setSpDescriptor(spDescriptor);
     }
+    
+    
+    /**
+     * Evaluate a specific AssertionConsumerService endpoint against the request's "shire" parameter.
+     * If it matches, update the request context to use this endpoint.
+     *
+     * @param requestContext The context for the current request.
+     * @param candidateEndpoint An endpoint to consider for use for the response.
+     *
+     * @return <code>true</code> if <code>candidateEndpoint</code> is valid; otherwise, <code>false</code>.
+     */
+    protected boolean evaluateACSEndpoint(final ShibbolethSSORequestContext requestContext, final AssertionConsumerService candidateEndpoint) {
+        
+        if (requestContext.getShire().equals(candidateEndpoint.getLocation())) {
+            requestContext.setAssertionConsumerService(candidateEndpoint);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    
     
     /**
      * Validate the "freshness" of an authn request. If the reqeust is more than 30 minutes old, reject it.
      *
-     * @param request The HttpServletRequest
-     * @param response The HttpServletResponse
+     * @param requestContext The context for the current request.
      * @param cookieName The name of the RP's cookie.
      *
      * @return <code>true</code> if the cookie is fresh; otherwise <code>false</code>
      *
-     * @throws ProfileException On error.
      */
-    protected boolean validateFreshness(HttpServletRequest request, HttpServletResponse response, String cookieName)
-            throws ProfileException {
+    protected boolean validateFreshness(final ShibbolethSSORequestContext requestContext, String cookieName) {
         
+        if (cookieName == null) {
+            return false;
+        }
+        
+        String timestamp = requestContext.getServletRequest().getParameter(REQUEST_PARAMETER_TIME);
+        if (timestamp == null || timestamp.equals("")) {
+            return true;
+        }
+        
+        long reqtime;
         try {
-            if (cookieName == null) {
-                return false;
-            }
-            
-            String timestamp = request.getParameter("time");
-            if (timestamp == null || timestamp.equals("")) {
-                return true;
-            }
-            
-            long reqtime;
-            try {
-                reqtime = Long.parseLong(timestamp);
-            } catch (NumberFormatException ex) {
-                log.error("Unable to parse Authentication Request's timestamp", ex);
-                return false;
-            }
-            
-            if (reqtime * 1000 < System.currentTimeMillis() - requestTTL * 1000) {
-                RequestDispatcher rd = request.getRequestDispatcher("/IdPStale.jsp");
-                rd.forward(request, response);
-                return false;
-            }
-            
-            for (Cookie cookie : request.getCookies()) {
-                if (cookieName.equals(cookie.getName())) {
-                    try {
-                        long cookieTime = Long.parseLong(cookie.getValue());
-                        if (reqtime <= cookieTime) {
-                            RequestDispatcher rd = request.getRequestDispatcher("/IdPStale.jsp");
-                            rd.forward(request, response);
-                            return false;
-                        }
-                    } catch (NumberFormatException ex) {
-                        log.error("Unable to parse freshness cookie's timestamp", ex);
+            reqtime = Long.parseLong(timestamp);
+        } catch (NumberFormatException ex) {
+            log.error("Unable to parse Authentication Request's timestamp", ex);
+            return false;
+        }
+        
+        if (reqtime * 1000 < (System.currentTimeMillis() - requestTTL * 1000)) {
+            return false;
+        }
+        
+        for (Cookie cookie : requestContext.getServletRequest().getCookies()) {
+            if (cookieName.equals(cookie.getName())) {
+                try {
+                    long cookieTime = Long.parseLong(cookie.getValue());
+                    if (reqtime <= cookieTime) {
                         return false;
                     }
+                } catch (NumberFormatException ex) {
+                    log.error("Unable to parse freshness cookie's timestamp", ex);
+                    return false;
                 }
             }
-            
-            return true;
-        } catch (IOException ex) {
-            throw new ProfileException("Error validating freshness cookie", ex);
-        } catch (ServletException ex) {
-            throw new ProfileException("Error validating freshness cookie", ex);
         }
+        
+        return true;
     }
     
     /**
@@ -742,120 +933,64 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
     
     /**
      * Write the current time into the freshness cookie.
+     *
+     * @param requestContext The context for the current request.
+     * @param cookieName The name of the cookie to write.
      */
-    protected void writeFreshnessCookie(HttpServletRequest request, HttpServletResponse response, String cookieName) {
+    protected void writeFreshnessCookie(final ShibbolethSSORequestContext requestContext, String cookieName) {
         
-        String timestamp = request.getParameter("time");
+        String timestamp = requestContext.getServletRequest().getParameter("time");
         if (timestamp == null || timestamp.equals("")) {
             return;
         }
         
         Cookie cookie = new Cookie(cookieName, timestamp);
         cookie.setSecure(true);
-        response.addCookie(cookie);
+        requestContext.getServletResponse().addCookie(cookie);
     }
     
     /**
      * Generate a SAML 1 Subject element.
      *
-     * @param loginContext The LoginContext for an authenticated user.
-     * @param confirmationMethod The SubjectConfirmationMethod URI, or <code>null</code> is none is to be set.
-     * @param ssoConfig The ShibbolethSSO configuration for the request.
+     * @param requestContext The context for the current request.
      *
      * @return a Subject object.
      */
-    protected Subject buildSubject(final LoginContext loginCtx, String confirmationMethod,
-            final ShibbolethSSOConfiguration ssoConfig) {
+    protected Subject buildSubject(final ShibbolethSSORequestContext requestContext) {
+        
+        LoginContext loginContext = requestContext.getLoginContex();
+        ShibbolethSSOConfiguration ssoConfig =  requestContext.getShibSSOConfiguration();    
+        
+        String protocolBinding = requestContext.getAssertionConsumerService().getBinding();
+        String confirmationMethod = null;
+        
+        // Set the SubjectConfirmationMethod appropriately depending on the protocol binding
+        if (protocolBinding.equals(PROFILE_ARTIFACT_URI)) {
+            confirmationMethod = ARTIFACT_CONF_METHOD_URI;
+        } else if (protocolBinding.equals(PROFILE_BROWSER_POST_URI)) {
+            confirmationMethod = BEARER_CONF_METHOD_URI;
+        }
         
         Subject subject = subjectBuilder.buildObject();
         
         NameIdentifier nameID = nameIdentifierBuilder.buildObject();
         nameID.setFormat(ssoConfig.getDefaultNameIDFormat());
-        String username = loginCtx.getUserID();
+        
+        String username = loginContext.getUserID();
+        
         // XXX: todo: map the username onto an appropriate format
         nameID.setNameQualifier(username);
         
         if (confirmationMethod != null) {
             
-            SubjectConfirmation subjConf = (SubjectConfirmation) subjConfBuilder
-                    .buildObject(SubjectConfirmation.DEFAULT_ELEMENT_NAME);
-            
-            ConfirmationMethod m = (ConfirmationMethod) confMethodBuilder
-                    .buildObject(ConfirmationMethod.DEFAULT_ELEMENT_NAME);
-            
+            ConfirmationMethod m = confMethodBuilder.buildObject();
             m.setConfirmationMethod(confirmationMethod);
+            
+            SubjectConfirmation subjConf = subjConfBuilder.buildObject();
             subjConf.getConfirmationMethods().add(m);
             subject.setSubjectConfirmation(subjConf);
         }
         
         return subject;
-    }
-    
-    /**
-     * Build a SAML 1 Status element.
-     *
-     * @param statusCode The status code - see oasis-sstc-saml-core-1.1, section 3.4.3.1.
-     * @param statusMessage The status message, or <code>null</code> if none is to be set.
-     *
-     * @return The Status object, or <code>null</code> on error.
-     */
-    protected Status buildStatus(String statusCode, String statusMessage) {
-        
-        if (statusCode == null || statusCode.equals("")) {
-            return null;
-        }
-        
-        Status status = (Status) statusBuilder.buildObject(Status.DEFAULT_ELEMENT_NAME);
-        StatusCode sc = (StatusCode) statusCodeBuilder.buildObject(StatusCode.DEFAULT_ELEMENT_NAME);
-        sc.setValue(statusCode);
-        status.setStatusCode(sc);
-        
-        if (statusMessage != null || !(statusMessage.equals(""))) {
-            
-            StatusMessage sm = (StatusMessage) statusMessageBuilder.buildObject(StatusMessage.DEFAULT_ELEMENT_NAME);
-            sm.setMessage(statusMessage);
-            status.setStatusMessage(sm);
-        }
-        
-        return status;
-    }
-    
-    /**
-     * Get an Attribute Statement.
-     *
-     * @param rpConfig The RelyingPartyConfiguration for the request.
-     * @param subject The Subject of the request.
-     * @param request The ServletRequest.
-     *
-     * @return An AttributeStatement.
-     *
-     * @throws ProfileException On error.
-     */
-    protected AttributeStatement getAttributeStatement(RelyingPartyConfiguration rpConfig, Subject subject,
-            ServletRequest request) throws ProfileException {
-        //
-        //        // build a dummy AttributeQuery object for the AA.
-        //
-        //        AttributeAuthority aa = new AttributeAuthority();
-        //        aa.setAttributeResolver(getAttributeResolver());
-        //        aa.setFilteringEngine(getFilteringEngine());
-        //        // aa.setSecurityPolicy(getDecoder().getSecurityPolicy()); //
-        //        // super.getDecoder() will need to change.
-        //        aa.setRequest(request);
-        //        aa.setRelyingPartyConfiguration(rpConfig);
-        //        AttributeStatement statement = null;
-        //        try {
-        //            statement = aa.performAttributeQuery(message);
-        //        } catch (AttributeResolutionException e) {
-        //            log.error("Error resolving attributes", e);
-        //            throw new ServletException("Error resolving attributes");
-        //        } catch (FilteringException e) {
-        //            log.error("Error filtering attributes", e);
-        //            throw new ServletException("Error filtering attributes");
-        //        }
-        //
-        //        return statement;
-        
-        return null;
     }
 }
