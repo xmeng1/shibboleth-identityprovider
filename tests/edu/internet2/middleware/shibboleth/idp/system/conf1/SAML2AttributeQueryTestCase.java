@@ -16,6 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.idp.system.conf1;
 
+import java.io.StringWriter;
+
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
@@ -45,7 +47,8 @@ import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileResponse
  */
 public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
-    public void testAttributeQuery() throws Exception {
+    /** Tests a request where the Issuer can not be authenticated. */
+    public void testUnathenticatedIssuerAttributeQuery() throws Exception {
         AttributeQuery query = buildAttributeQuery();
         String soapMessage = getSOAPMessage(query);
 
@@ -58,13 +61,16 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         ShibbolethProfileHandlerManager handlerManager = (ShibbolethProfileHandlerManager) getApplicationContext()
                 .getBean("shibboleth.ProfileHandler");
         ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
-        
-        return;
+        assertNotNull(handler);
 
-//        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
-//        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
-//        handler.processRequest(profileRequest, profileResponse);
+        // Process request
+        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
+        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        handler.processRequest(profileRequest, profileResponse);
 
+        String response = servletResponse.getContentAsString();
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Responder"));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
     }
 
     /**
@@ -125,6 +131,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         Marshaller marshaller = marshallerFactory.getMarshaller(envelope);
         Element envelopeElem = marshaller.marshall(envelope);
 
-        return XMLHelper.nodeToString(envelopeElem);
+        StringWriter writer = new StringWriter();
+        XMLHelper.writeNode(envelopeElem, writer);
+        return writer.toString();
     }
 }

@@ -275,9 +275,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected Status buildStatus(String topLevelCode, String secondLevelCode, String secondLevelFailureMessage) {
 
         Status status = statusBuilder.buildObject();
+        
         StatusCode statusCode = statusCodeBuilder.buildObject();
-
         statusCode.setValue(DatatypeHelper.safeTrimOrNullString(topLevelCode));
+        status.setStatusCode(statusCode);
+        
         if (secondLevelCode != null) {
             StatusCode secondLevelStatusCode = statusCodeBuilder.buildObject();
             secondLevelStatusCode.setValue(DatatypeHelper.safeTrimOrNullString(secondLevelCode));

@@ -29,7 +29,10 @@ import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.Status;
+import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.ws.security.SecurityPolicyException;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.SAML2AttributeAuthority;
@@ -63,10 +66,15 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
         AttributeQueryRequestContext requestContext = new AttributeQueryRequestContext(request, response);
 
         getMessageDecoder(requestContext);
-        
-        decodeRequest(requestContext);
 
-        buildResponse(requestContext);
+        try {
+            decodeRequest(requestContext);
+            buildResponse(requestContext);
+        } catch (SecurityPolicyException e) {
+            buildErrorResponse(requestContext, e);
+        }catch (AttributeRequestException e){
+            buildErrorResponse(requestContext, e);
+        }
 
         getMessageEncoder(requestContext);
 
@@ -104,19 +112,22 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
      * @param requestContext request context contianing the request to decode
      * 
      * @throws ProfileException throw if there is a problem decoding the request
+     * @throws SecurityPolicyException thrown if the message was decoded properly but did not meet the necessary
+     *             security policy requirements
      */
-    protected void decodeRequest(AttributeQueryRequestContext requestContext)
-            throws ProfileException {
+    protected void decodeRequest(AttributeQueryRequestContext requestContext) throws ProfileException,
+            SecurityPolicyException {
 
         try {
             requestContext.getMessageDecoder().decode();
             if (log.isDebugEnabled()) {
                 log.debug("decoded http servlet request");
             }
-            requestContext.setAttributeQuery((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
         } catch (BindingException e) {
             log.error("Error decoding attribute query message", e);
             throw new ProfileException("Error decoding attribute query message");
+        } finally{
+            requestContext.setAttributeQuery((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
         }
     }
 
@@ -126,8 +137,10 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
      * @param requestContext current request context
      * 
      * @throws ProfileException thrown if there is a problem creating the SAML response
+     * @throws AttributeRequestException thrown if there is a problem resolving attributes
      */
-    protected void buildResponse(AttributeQueryRequestContext requestContext) throws ProfileException {
+    protected void buildResponse(AttributeQueryRequestContext requestContext) throws ProfileException,
+            AttributeRequestException {
         DateTime issueInstant = new DateTime();
 
         // create the attribute statement
@@ -142,13 +155,16 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
         Response samlResponse = getResponseBuilder().buildObject();
         populateStatusResponse(samlResponse, issueInstant, requestContext.getAttributeQuery(), requestContext
                 .getRelyingPartyConfiguration());
-        
+
         // TODO handle subject
         samlResponse.getAssertions().add(assertion);
 
         // sign the assertion if it should be signed
         signAssertion(assertion, requestContext.getRelyingPartyConfiguration(), requestContext
                 .getProfileConfiguration());
+
+        Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
+        samlResponse.setStatus(status);
 
         requestContext.setAttributeQueryResponse(samlResponse);
     }
@@ -161,9 +177,10 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
      * @return attribute statement resulting from the query
      * 
      * @throws ProfileException thrown if there is a problem making the query
+     * @throws AttributeRequestException thrown if there is a problem resolving attributes
      */
     protected AttributeStatement buildAttributeStatement(AttributeQueryRequestContext requestContext)
-            throws ProfileException {
+            throws ProfileException, AttributeRequestException {
         ShibbolethAttributeRequestContext attributeRequestContext = buildAttributeRequestContext(requestContext
                 .getRelyingPartyId(), requestContext.getUserSession(), requestContext.getProfileRequest());
 
@@ -173,7 +190,7 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
             return attributeAuthority.performAttributeQuery(attributeRequestContext);
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes", e);
-            throw new ProfileException("Error resolving attributes", e);
+            throw e;
         }
     }
 
@@ -190,20 +207,41 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
      */
     protected ShibbolethAttributeRequestContext buildAttributeRequestContext(String spEntityId, Session userSession,
             ProfileRequest<ServletRequest> request) throws ProfileException {
-        ServiceInformation spInformation = userSession.getServiceInformation(spEntityId);
         ShibbolethAttributeRequestContext requestContext = null;
         try {
             requestContext = new ShibbolethAttributeRequestContext(getMetadataProvider(),
                     getRelyingPartyConfiguration(spEntityId));
             requestContext.setPrincipalName(userSession.getPrincipalID());
-            requestContext.setPrincipalAuthenticationMethod(spInformation.getAuthenticationMethod()
-                    .getAuthenticationMethod());
+            if (userSession != null) {
+                ServiceInformation spInformation = userSession.getServiceInformation(spEntityId);
+                requestContext.setPrincipalAuthenticationMethod(spInformation.getAuthenticationMethod()
+                        .getAuthenticationMethod());
+            }
             requestContext.setRequest(request.getRawRequest());
             return requestContext;
         } catch (MetadataProviderException e) {
             log.error("Error creating ShibbolethAttributeRequestContext", e);
             throw new ProfileException("Error retrieving metadata", e);
         }
+    }
+
+    /**
+     * Constructs an SAML response message carrying a request error.
+     * 
+     * @param requestContext current request context
+     * @param error the encountered error
+     */
+    protected void buildErrorResponse(AttributeQueryRequestContext requestContext, Exception error) {
+        DateTime issueInstant = new DateTime();
+        Response samlResponse = getResponseBuilder().buildObject();
+        populateStatusResponse(samlResponse, issueInstant, requestContext.getAttributeQuery(), requestContext
+                .getRelyingPartyConfiguration());
+
+        Status status = buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI, error
+                .getLocalizedMessage());
+        samlResponse.setStatus(status);
+
+        requestContext.setAttributeQueryResponse(samlResponse);
     }
 
     /**
@@ -214,9 +252,13 @@ public abstract class AbstractAttributeQuery extends AbstractSAML2ProfileHandler
     protected void writeAuditLogEntry(AttributeQueryRequestContext requestContext) {
         AuditLogEntry auditLogEntry = new AuditLogEntry();
         auditLogEntry.setMessageProfile(getProfileId());
-        auditLogEntry.setPrincipalAuthenticationMethod(requestContext.getUserSession().getServiceInformation(
-                requestContext.getRelyingPartyId()).getAuthenticationMethod().getAuthenticationMethod());
-        auditLogEntry.setPrincipalId(requestContext.getUserSession().getPrincipalID());
+        
+        if(requestContext.getUserSession() != null){
+            auditLogEntry.setPrincipalAuthenticationMethod(requestContext.getUserSession().getServiceInformation(
+                    requestContext.getRelyingPartyId()).getAuthenticationMethod().getAuthenticationMethod());
+            auditLogEntry.setPrincipalId(requestContext.getUserSession().getPrincipalID());
+        }
+
         auditLogEntry.setProviderId(requestContext.getRelyingPartyConfiguration().getProviderId());
         auditLogEntry.setRelyingPartyId(requestContext.getRelyingPartyId());
         auditLogEntry.setRequestBinding(requestContext.getMessageDecoder().getBindingURI());

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd"
-    default-autowire="byType">
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
     
     <!-- Spring configuration file that boostraps OpenSAML -->
     <bean id="shibboleth.OpensamlConfig" class="edu.internet2.middleware.shibboleth.common.config.OpensamlConfigBean" lazy-init="false">
@@ -78,7 +77,8 @@
         <property name="namespaceAware" value="true" />
     </bean>
 
-    <bean id="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactory" class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory">
+    <bean id="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryNoIssuerAuth"
+          class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory">
         <property name="issuerRole">
             <bean id="shibboleth.SAML2AttributeQueryRole" class="javax.xml.namespace.QName">
                 <constructor-arg value="urn:oasis:names:tc:SAML:2.0:metadata" />
@@ -92,6 +92,13 @@
                 <ref bean="shibboleth.MessageIssueInstantRuleFactory" />
             </list>
         </property>
+        <property name="requiredAuthenticatedIssuer" value="false" />
+    </bean>
+    
+    <bean id="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryIssuerAuth"
+          class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory"
+          parent="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryNoIssuerAuth">
+        <property name="requiredAuthenticatedIssuer" value="true" />
     </bean>
     
     <bean id="shibboleth.SAML2ProtocolMessageRuleFactory" class="org.opensaml.saml2.binding.security.SAML2ProtocolMessageRuleFactory" />
@@ -151,31 +158,41 @@
                     <key>
                         <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST</value>
                     </key>
-                    <bean id="shibboleth.SAML2HttpPostDecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPPostDecoderBuilder" />
+                    <bean id="shibboleth.SAML2HttpPostDecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPPostDecoderBuilder">
+                        <property name="parser" ref="shibboleth.ParserPool" />
+                    </bean>
                 </entry>
                 <entry>
                     <key>
                         <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect</value>
                     </key>
-                    <bean id="shibboleth.SAML2HttpRedirectDecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoderBuilder" />
+                    <bean id="shibboleth.SAML2HttpRedirectDecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPRedirectDeflateDecoderBuilder" >
+                        <property name="parser" ref="shibboleth.ParserPool" />
+                    </bean>
                 </entry>
                 <entry>
                     <key>
                         <value>urn:oasis:names:tc:SAML:2.0:bindings:SOAP</value>
                     </key>
-                    <bean id="shibboleth.SAML2HttpSoap11DecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPSOAP11DecoderBuilder" />
+                    <bean id="shibboleth.SAML2HttpSoap11DecoderBuilder" class="org.opensaml.saml2.binding.decoding.HTTPSOAP11DecoderBuilder" >
+                        <property name="parser" ref="shibboleth.ParserPool" />
+                    </bean>
                 </entry>
                 <entry>
                     <key>
                         <value>urn:oasis:names:tc:SAML:1.0:profiles:browser-post</value>
                     </key>
-                    <bean id="shibboleth.SAML1HttpPostDecoderBuilder" class="org.opensaml.saml1.binding.decoding.HTTPPostDecoderBuilder" />
+                    <bean id="shibboleth.SAML1HttpPostDecoderBuilder" class="org.opensaml.saml1.binding.decoding.HTTPPostDecoderBuilder" >
+                        <property name="parser" ref="shibboleth.ParserPool" />
+                    </bean>
                 </entry>
                 <entry>
                     <key>
                         <value>urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding</value>
                     </key>
-                    <bean id="shibboleth.SAML1HttpSoap11DecoderBuilder" class="org.opensaml.saml1.binding.decoding.HTTPSOAP11DecoderBuilder" />
+                    <bean id="shibboleth.SAML1HttpSoap11DecoderBuilder" class="org.opensaml.saml1.binding.decoding.HTTPSOAP11DecoderBuilder" >
+                        <property name="parser" ref="shibboleth.ParserPool" />
+                    </bean>
                 </entry>
             </map>
         </property>
