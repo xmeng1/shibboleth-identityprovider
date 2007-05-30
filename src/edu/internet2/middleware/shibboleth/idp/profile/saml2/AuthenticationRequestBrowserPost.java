@@ -39,6 +39,7 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.ws.security.SecurityPolicyException;
 
 /**
  * Browser POST binding for SAML 2 AuthenticationRequest.
@@ -144,8 +145,10 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
                 log.error("SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
                 throw new ProfileException(
                         "SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
+            } catch (SecurityPolicyException ex) {
+               log.error("SAML 2 Authentication Request: Security error while decoding SAML 2 Authentication Request", ex);
             } catch (AuthenticationRequestException ex) {
-                
+            
                 // AuthN failed. Send the failure status.
                 retrieveRequestData(httpSession, authnRequest, issuer, relyingParty, ssoConfig, spDescriptor);
                 Response failureResponse = buildResponse(authnRequest.getID(), new DateTime(), issuer, ex.getStatus());
