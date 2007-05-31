@@ -200,6 +200,12 @@
     
     <bean id="shibboleth.SessionManager" class="edu.internet2.middleware.shibboleth.idp.session.impl.SessionManagerImpl" />
     
+    <bean id="shibboleth.SAML2AttributeAuthority"
+          class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML2AttributeAuthority">
+          <constructor-arg ref="shibboleth.AttributeResolver" />
+          <property name="filteringEngine" ref="shibboleth.AttributeFilterEngine" />
+    </bean>
+    
     <!-- We're not operating in a servlet container so this won't work -->
     <!-- 
     <bean id="shibboleth.ServletAttributeExporter"

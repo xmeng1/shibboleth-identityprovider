@@ -39,7 +39,7 @@ public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
-    protected void getMessageDecoder(AttributeQueryRequestContext requestContext) throws ProfileException {
+    protected void getMessageDecoder(AttributeQueryContext requestContext) throws ProfileException {
         MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(BINDING);
         if (decoder == null) {
             throw new ProfileException("No request decoder was registered for binding type: " + BINDING);
@@ -52,7 +52,7 @@ public class HTTPSOAPAttributeQuery extends AbstractAttributeQuery {
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
-    protected void getMessageEncoder(AttributeQueryRequestContext requestContext) throws ProfileException {
+    protected void getMessageEncoder(AttributeQueryContext requestContext) throws ProfileException {
 
         MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(BINDING);
         if (encoder == null) {

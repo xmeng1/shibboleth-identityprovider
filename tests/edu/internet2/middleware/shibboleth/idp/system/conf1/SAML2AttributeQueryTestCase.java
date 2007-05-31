@@ -48,8 +48,8 @@ import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileResponse
 public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
     /** Tests a request where the Issuer can not be authenticated. */
-    public void testUnathenticatedIssuerAttributeQuery() throws Exception {
-        AttributeQuery query = buildAttributeQuery();
+    public void testUnathenticatedIssuer() throws Exception {
+        AttributeQuery query = buildAttributeQuery("urn:example.org:unitTest:sp1");
         String soapMessage = getSOAPMessage(query);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
@@ -69,21 +69,74 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Responder"));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Requester"));
         assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
     }
+    
+    /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
+    public void testAuthenticatedIssuerNoProfileConfiguration() throws Exception {
+        AttributeQuery query = buildAttributeQuery("urn:example.org:unitTest:sp1");
+        String soapMessage = getSOAPMessage(query);
 
+        MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setPathInfo("/IdP/saml2/SOAP/AttributeQueryNoAuth");
+        servletRequest.setContent(soapMessage.getBytes());
+
+        MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+
+        ShibbolethProfileHandlerManager handlerManager = (ShibbolethProfileHandlerManager) getApplicationContext()
+                .getBean("shibboleth.ProfileHandler");
+        ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
+        assertNotNull(handler);
+
+        // Process request
+        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
+        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        handler.processRequest(profileRequest, profileResponse);
+
+        String response = servletResponse.getContentAsString();
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Requester"));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
+    }
+    
+    /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
+    public void testAuthenticatedIssuerNoRequestAttributes() throws Exception {
+        AttributeQuery query = buildAttributeQuery("urn:example.org:unitTestFed:sp2");
+        String soapMessage = getSOAPMessage(query);
+
+        MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setPathInfo("/IdP/saml2/SOAP/AttributeQueryNoAuth");
+        servletRequest.setContent(soapMessage.getBytes());
+
+        MockHttpServletResponse servletResponse = new MockHttpServletResponse();
+
+        ShibbolethProfileHandlerManager handlerManager = (ShibbolethProfileHandlerManager) getApplicationContext()
+                .getBean("shibboleth.ProfileHandler");
+        ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
+        assertNotNull(handler);
+
+        // Process request
+        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
+        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        handler.processRequest(profileRequest, profileResponse);
+
+        String response = servletResponse.getContentAsString();
+        System.out.println(response);
+//        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Requester"));
+//        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
+    }
+    
     /**
      * Builds a basic attribute query.
      * 
      * @return basic attribute query
      */
     @SuppressWarnings("unchecked")
-    protected AttributeQuery buildAttributeQuery() {
+    protected AttributeQuery buildAttributeQuery(String requester) {
         SAMLObjectBuilder<Issuer> issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory
                 .getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
         Issuer issuer = issuerBuilder.buildObject();
-        issuer.setValue("urn:example.org:unitTestFed:mysp");
+        issuer.setValue(requester);
 
         SAMLObjectBuilder<NameID> nameIdBuilder = (SAMLObjectBuilder<NameID>) builderFactory
                 .getBuilder(NameID.DEFAULT_ELEMENT_NAME);
