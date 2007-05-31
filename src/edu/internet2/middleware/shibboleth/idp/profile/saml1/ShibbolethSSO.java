@@ -143,20 +143,20 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
             this.providerId = providerId;
             this.remoteAddr = remoteAddr;
         }
-
+        
         public ProfileRequest<ServletRequest> getProfileRequest() {
             return profileRequest;
         }
-
+        
         public void setProfileRequest(ProfileRequest<ServletRequest> profileRequest) {
             this.profileRequest = profileRequest;
             this.servletRequest = (HttpServletRequest) profileRequest.getRawRequest();
         }
-
+        
         public ProfileResponse<ServletResponse> getProfileResponse() {
             return profileResponse;
         }
-
+        
         public void setProfileResponse(ProfileResponse<ServletResponse> profileResponse) {
             this.profileResponse = profileResponse;
             this.servletResponse = (HttpServletResponse) profileResponse.getRawResponse();
@@ -420,11 +420,6 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
      */
     protected int requestTTL = 1800;
     
-    /** Protocol binding to use for the Authentication Assertion. */
-    protected static enum PROTOCOL_BINDING {
-        BROWSER_POST, ARTIFACT
-    };
-    
     /**
      * Default constructor.
      */
@@ -529,7 +524,13 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         if (o == null) {
             setupNewRequest(request, response);
         } else {
+            
             ShibbolethSSORequestContext requestContext = (ShibbolethSSORequestContext)o;
+            
+            // clean up the HttpSession.
+            requestContext.getHttpSession().removeAttribute(REQUEST_CONTEXT_SESSION_KEY);
+            requestContext.getHttpSession().removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+            
             finishProcessingRequest(requestContext);
         }
     }
@@ -552,7 +553,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
             ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
             requestContext.setProfileRequest(request);
             requestContext.setProfileResponse(response);
-                    
+            
             // extract the (mandatory) request parameters.
             getRequestParameters(requestContext);
             
@@ -561,37 +562,35 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
                 String cookieName = getRPCookieName(requestContext.getProviderId());
                 if (!validateFreshness(requestContext, cookieName)) {
                     log.error("SAML 1 Authentication Request Handler: detected stale authentiation request");
-                    throw new ProfileException("SAML 1 Authentication Request Handler: detected stale authentiation request");
+                    throw new ProfileException("SAML 1 Authentication Request Handler: detected stale authentication request");
                 }
                 
                 writeFreshnessCookie(requestContext, cookieName);
             }
             
-            // check if the user has already been authenticated
-            Object o = requestContext.getHttpSession().getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-            if (o == null) {
+            // don't force reauth or passive auth
+            requestContext.setLoginContex(new LoginContext(false, false));
+            
+            try {
+                // put the request context object in the HttpSession, so we can retrieve it on the "return leg"
+                requestContext.getHttpSession().setAttribute(REQUEST_CONTEXT_SESSION_KEY, requestContext);
                 
-                // the user hasn't been authenticated, so forward the request
-                // to the AuthenticationManager. When the AuthenticationManager
-                // is done it will forward the request back to this servlet.
+                // the AuthenticationManager expect the LoginContext to be in the HttpSession too.
+                requestContext.getHttpSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, requestContext.getLoginContex());
                 
-                // don't force reauth or passive auth
-                requestContext.setLoginContex(new LoginContext(false, false));
-                
-                try {
-                    RequestDispatcher dispatcher = requestContext.getServletRequest().getRequestDispatcher(authnMgrURL);
-                    dispatcher.forward(requestContext.getServletRequest(), requestContext.getServletResponse());
-                } catch (IOException ex) {
-                    log.error("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
-                    throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
-                } catch (ServletException ex) {
-                    log.error("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
-                    throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
-                }
+                // forward control to the AuthenticationManager
+                RequestDispatcher dispatcher = requestContext.getServletRequest().getRequestDispatcher(authnMgrURL);
+                dispatcher.forward(requestContext.getServletRequest(), requestContext.getServletResponse());
+            } catch (IOException ex) {
+                log.error("SAML 1 Authentication Request Handler: Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+                throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+            } catch (ServletException ex) {
+                log.error("SAML 1 Authentication Request Handler: Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
+                throw new ProfileException("Error forwarding SAML 1 SSO request to AuthenticationManager", ex);
             }
             
         } catch (ShibbolethSSOException ex) {
-            log.error("Error processing Shibboleth SSO request", ex);
+            log.error("SAML 1 Authentication Request Handler: Error processing Shibboleth SSO request", ex);
             throw new ProfileException("Error processing Shibboleth SSO request", ex);
         }
     }
@@ -608,26 +607,14 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
      */
     protected void finishProcessingRequest(final ShibbolethSSORequestContext requestContext) throws ProfileException {
         
-        try {
-            
-            LoginContext loginCtx = requestContext.getLoginContex();
-            
-            if (!loginCtx.getAuthenticationOK()) {
-                throw new ShibbolethSSOException("Authentication failed: " + loginCtx.getAuthenticationFailureMessage());
-            }
-            
-            // The user successfully authenticated,
-            // so build the appropriate AuthenticationStatement.
-            
+        // If the user successfully authenticated
+        // build the appropriate AuthenticationStatement.
+        if (requestContext.getLoginContex().getAuthenticationOK()) {
             DateTime now = new DateTime();
-            
             generateAuthenticationAssertion(requestContext, now);
-            encodeSAMLResponse(requestContext);
-            
-        } catch (ShibbolethSSOException ex) {
-            log.error("Error processing Shibboleth SSO request", ex);
-            throw new ProfileException("Error processing Shibboleth SSO request", ex);
         }
+        
+        encodeSAMLResponse(requestContext);
     }
     
     /**
@@ -714,7 +701,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
      * @return A SAML 1 Authentication Assertion or <code>null</code> on error.
      */
     protected Assertion generateAuthenticationAssertion(final ShibbolethSSORequestContext requestContext,
-             final DateTime now) {
+            final DateTime now) {
         
         String providerId = requestContext.getRpConfiguration().getProviderId();
         
@@ -806,10 +793,10 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
             
             if (!found) {
                 log.error("SAML 1 AuthenticationRequest Handler: Unable to find AssertionConsumerService " +
-                        requestContext.getShire() + " for SP " + requestContext.getProviderId() + 
+                        requestContext.getShire() + " for SP " + requestContext.getProviderId() +
                         " for protocol " + SAML11_PROTOCOL_URI);
                 throw new ShibbolethSSOException("SAML 1 AuthenticationRequest Handler: Unable to find AssertionConsumerService " +
-                        requestContext.getShire() + " for SP " + requestContext.getProviderId() + 
+                        requestContext.getShire() + " for SP " + requestContext.getProviderId() +
                         " for protocol " + SAML11_PROTOCOL_URI);
             }
         }
@@ -959,7 +946,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
     protected Subject buildSubject(final ShibbolethSSORequestContext requestContext) {
         
         LoginContext loginContext = requestContext.getLoginContex();
-        ShibbolethSSOConfiguration ssoConfig =  requestContext.getShibSSOConfiguration();    
+        ShibbolethSSOConfiguration ssoConfig =  requestContext.getShibSSOConfiguration();
         
         String protocolBinding = requestContext.getAssertionConsumerService().getBinding();
         String confirmationMethod = null;
