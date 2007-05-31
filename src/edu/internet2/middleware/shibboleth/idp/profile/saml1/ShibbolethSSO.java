@@ -575,7 +575,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
                 // put the request context object in the HttpSession, so we can retrieve it on the "return leg"
                 requestContext.getHttpSession().setAttribute(REQUEST_CONTEXT_SESSION_KEY, requestContext);
                 
-                // the AuthenticationManager expect the LoginContext to be in the HttpSession too.
+                // the AuthenticationManager expects the LoginContext to be in the HttpSession too.
                 requestContext.getHttpSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, requestContext.getLoginContex());
                 
                 // forward control to the AuthenticationManager
@@ -634,6 +634,15 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         
         Status status;
         
+        // If AuthN failed, and if we're using the Artifact binding, we don't send a failure message.
+        if (!(requestContext.getLoginContex().getAuthenticationOK()) 
+                && (requestContext.getAssertionConsumerService().getBinding().equals(PROFILE_ARTIFACT_URI))) {
+            
+            log.error("SAML 1 Authentication Request Handler: Authentication failed but using the Artifact binding for SP " +
+                    requestContext.getProviderId());
+            return;
+        }
+        
         if (requestContext.getLoginContex().getAuthenticationOK()) {
             status = buildStatus("Success", null);
             List<Assertion> assertionList = samlResponse.getAssertions();
@@ -667,22 +676,22 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         String remoteAddr = servletRequest.getRemoteAddr();
         
         if (target == null || target.equals("")) {
-            log.error("Shib 1 SSO request is missing or contains an invalid target parameter");
+            log.error("SAML 1 Authentication Request Handler: Shib 1 SSO request is missing or contains an invalid target parameter");
             throw new ShibbolethSSOException("Shib 1 SSO request is missing or contains an invalid target parameter");
         }
         
         if (providerId == null || providerId.equals("")) {
-            log.error("Shib 1 SSO request is missing or contains an invalid provierId parameter");
+            log.error("SAML 1 Authentication Request Handler: Shib 1 SSO request is missing or contains an invalid provierId parameter");
             throw new ShibbolethSSOException("Shib 1 SSO request is missing or contains an invalid provierId parameter");
         }
         
         if (shire == null || providerId.equals("")) {
-            log.error("Shib 1 SSO request is missing or contains an invalid shire parameter");
+            log.error("SAML 1 Authentication Request Handler: Shib 1 SSO request is missing or contains an invalid shire parameter");
             throw new ShibbolethSSOException("Shib 1 SSO request is missing or contains an invalid shire parameter");
         }
         
         if (remoteAddr == null || remoteAddr.equals("")) {
-            log.error("Unable to obtain requestor address when processing Shib 1 SSO request");
+            log.error("SAML 1 Authentication Request Handler: Unable to obtain requestor address when processing Shib 1 SSO request");
             throw new ShibbolethSSOException("Unable to obtain requestor address when processing Shib 1 SSO request");
         }
         
@@ -759,7 +768,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         RelyingPartyConfiguration relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(requestContext.getProviderId());
         ProfileConfiguration temp = relyingParty.getProfileConfigurations().get(ShibbolethSSOConfiguration.PROFILE_ID);
         if (temp == null) {
-            log.error("No profile configuration registered for " + ShibbolethSSOConfiguration.PROFILE_ID);
+            log.error("SAML 1 Authentication Request Handler: No profile configuration registered for " + ShibbolethSSOConfiguration.PROFILE_ID);
             throw new ShibbolethSSOException("No profile configuration registered for " + ShibbolethSSOConfiguration.PROFILE_ID);
         }
         
@@ -769,12 +778,12 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         try {
             spDescriptor = getMetadataProvider().getEntityDescriptor(relyingParty.getRelyingPartyId()).getSPSSODescriptor(SAML11_PROTOCOL_URI);
         } catch (MetadataProviderException ex) {
-            log.error("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI, ex);
+            log.error("SAML 1 Authentication Request Handler: Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI, ex);
             throw new ShibbolethSSOException("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI, ex);
         }
         
         if (spDescriptor == null) {
-            log.error("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
+            log.error("SAML 1 Authentication Request Handler: Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
             throw new ShibbolethSSOException("Unable to locate metadata for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
         }
         
@@ -792,10 +801,10 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
             }
             
             if (!found) {
-                log.error("SAML 1 AuthenticationRequest Handler: Unable to find AssertionConsumerService " +
+                log.error("SAML 1 Authentication Request Handler: Unable to find AssertionConsumerService " +
                         requestContext.getShire() + " for SP " + requestContext.getProviderId() +
                         " for protocol " + SAML11_PROTOCOL_URI);
-                throw new ShibbolethSSOException("SAML 1 AuthenticationRequest Handler: Unable to find AssertionConsumerService " +
+                throw new ShibbolethSSOException("Unable to find AssertionConsumerService " +
                         requestContext.getShire() + " for SP " + requestContext.getProviderId() +
                         " for protocol " + SAML11_PROTOCOL_URI);
             }
@@ -814,7 +823,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
             }
         }
         if (consumerURLs.size() == 0) {
-            log.error("Unable to validate AssertionConsumerService URL against metadata: " + requestContext.getShire()
+            log.error("SAML 1 Authentication Request Handler: Unable to validate AssertionConsumerService URL against metadata: " + requestContext.getShire()
                     + " not found for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
             throw new ShibbolethSSOException("Unable to validate AssertionConsumerService URL against metadata: " + requestContext.getShire()
                     + " not found for SP " + requestContext.getProviderId() + " for protocol " + SAML11_PROTOCOL_URI);
@@ -871,7 +880,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         try {
             reqtime = Long.parseLong(timestamp);
         } catch (NumberFormatException ex) {
-            log.error("Unable to parse Authentication Request's timestamp", ex);
+            log.error("SAML 1 Authentication Request Handler: Unable to parse Authentication Request's timestamp", ex);
             return false;
         }
         
@@ -887,7 +896,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
                         return false;
                     }
                 } catch (NumberFormatException ex) {
-                    log.error("Unable to parse freshness cookie's timestamp", ex);
+                    log.error("SAML 1 Authentication Request Handler: Unable to parse freshness cookie's timestamp", ex);
                     return false;
                 }
             }
