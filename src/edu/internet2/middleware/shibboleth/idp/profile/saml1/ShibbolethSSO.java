@@ -366,7 +366,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
     protected static final String REQUEST_PARAMETER_TIME = "time";
     
     /** HttpSession key for the ShibbolethSSORequestContext. */
-    protected static final String REQUEST_CONTEXT_SESSION_KEY = "edu.internet2.middleware.shibboleth.idp.profile.ShibbolethSSORequestContext";
+    protected static final String REQUEST_CONTEXT_SESSION_KEY = "edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSORequestContext";
     
     /** The path to the IdP's AuthenticationManager servlet */
     protected String authnMgrURL;
