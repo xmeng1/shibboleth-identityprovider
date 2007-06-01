@@ -546,6 +546,9 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
             // extract the (mandatory) request parameters.
             getRequestParameters(requestContext);
             
+            // check that we have metadata for the SP
+            validateRequestAgainstMetadata(requestContext);
+            
             // check for stale requests
             if (blockStaleRequests) {
                 String cookieName = getRPCookieName(requestContext.getProviderId());
