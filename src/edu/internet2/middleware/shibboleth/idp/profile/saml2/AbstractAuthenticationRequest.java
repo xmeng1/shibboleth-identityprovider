@@ -25,10 +25,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -54,6 +57,8 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -65,44 +70,265 @@ import org.opensaml.xml.parse.XMLParserException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
+import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
-import javax.servlet.ServletException;
-
 
 /**
  * Abstract SAML 2.0 Authentication Request profile handler.
  */
 public abstract class AbstractAuthenticationRequest extends AbstractSAML2ProfileHandler {
     
+    
+    /**
+     * Represents the internal state of a SAML 2.0 Authentiation Request while it's being processed by the IdP.
+     */
+    protected class AuthenticationRequestContext {
+        
+        /** The ProfileRequest. */
+        protected ProfileRequest<ServletRequest> profileRequest;
+        
+        /** The ProfileResponse. */
+        protected ProfileResponse<ServletResponse> profileResponse;
+        
+        /** The HttpServletRequest. */
+        protected HttpServletRequest servletRequest;
+        
+        /** The HttpServletResponse. */
+        protected HttpServletResponse servletResponse;
+        
+        /** The SAML 2.0 AuthnRequest. */
+        protected AuthnRequest authnRequest;
+        
+        /** The issuer. */
+        protected String issuer;
+        
+        /** The Subject. */
+        protected Subject subject;
+        
+        /** The Response. */
+        protected Response response;
+        
+        /** The IdP's LoginContext. */
+        protected LoginContext loginContext;
+        
+        /** The RelyingPartyConfiguration. */
+        protected RelyingPartyConfiguration rpConfig;
+        
+        /** The SSOConfiguration. */
+        protected SSOConfiguration ssoConfig;
+        
+        /** The SPSSOConfiguration. */
+        protected SPSSODescriptor spDescriptor;
+        
+        /** The AssertionConsumerService endpoint. */
+        protected AssertionConsumerService assertionConsumerService;
+        
+        public AuthenticationRequestContext() {
+        }
+        
+        public ProfileRequest<ServletRequest> getProfileRequest() {
+            return profileRequest;
+        }
+        
+        public void setProfileRequest(ProfileRequest<ServletRequest> profileRequest) {
+            this.profileRequest = profileRequest;
+            this.servletRequest = (HttpServletRequest) profileRequest.getRawRequest();
+        }
+        
+        public ProfileResponse<ServletResponse> getProfileResponse() {
+            return profileResponse;
+        }
+        
+        public void setProfileResponse(ProfileResponse<ServletResponse> profileResponse) {
+            this.profileResponse = profileResponse;
+            this.servletResponse = (HttpServletResponse) profileResponse.getRawResponse();
+        }
+        
+        public HttpServletRequest getServletRequest() {
+            return servletRequest;
+        }
+        
+        public void setServletRequest(HttpServletRequest servletRequest) {
+            this.servletRequest = servletRequest;
+        }
+        
+        public HttpServletResponse getServletResponse() {
+            return servletResponse;
+        }
+        
+        public void setServletResponse(HttpServletResponse servletResponse) {
+            this.servletResponse = servletResponse;
+        }
+        
+        public HttpSession getHttpSession() {
+            
+            if (getServletRequest() != null) {
+                return getServletRequest().getSession();
+            } else {
+                return null;
+            }
+        }
+        
+        public AuthnRequest getAuthnRequest() {
+            return authnRequest;
+        }
+        
+        public void setAuthnRequest(AuthnRequest authnRequest) {
+            this.authnRequest = authnRequest;
+        }
+        
+        public String getIssuer() {
+            return issuer;
+        }
+        
+        public void setIssuer(String issuer) {
+            this.issuer = issuer;
+        }
+        
+        public Subject getSubject() {
+            return subject;
+        }
+        
+        public void setSubject(Subject subject) {
+            this.subject = subject;
+        }
+        
+        public LoginContext getLoginContext() {
+            return loginContext;
+        }
+        
+        public void setLoginContext(LoginContext loginContext) {
+            this.loginContext = loginContext;
+        }
+        
+        public RelyingPartyConfiguration getRpConfig() {
+            return rpConfig;
+        }
+        
+        public void setRpConfig(RelyingPartyConfiguration rpConfig) {
+            this.rpConfig = rpConfig;
+        }
+        
+        public SSOConfiguration getSsoConfig() {
+            return ssoConfig;
+        }
+        
+        public void setSsoConfig(SSOConfiguration ssoConfig) {
+            this.ssoConfig = ssoConfig;
+        }
+        
+        public SPSSODescriptor getSpDescriptor() {
+            return spDescriptor;
+        }
+        
+        public void setSpDescriptor(SPSSODescriptor spDescriptor) {
+            this.spDescriptor = spDescriptor;
+        }
+        
+        public Response getResponse() {
+            return response;
+        }
+        
+        public void setResponse(Response response) {
+            this.response = response;
+        }
+        
+        public AssertionConsumerService getAssertionConsumerService() {
+            return assertionConsumerService;
+        }
+        
+        public void setAssertionConsumerService(AssertionConsumerService assertionConsumerService) {
+            this.assertionConsumerService = assertionConsumerService;
+        }
+        
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            
+            final edu.internet2.middleware.shibboleth.idp.profile.saml2.AbstractAuthenticationRequest.AuthenticationRequestContext other = (edu.internet2.middleware.shibboleth.idp.profile.saml2.AbstractAuthenticationRequest.AuthenticationRequestContext) obj;
+            
+            if (this.profileRequest != other.profileRequest && (this.profileRequest == null || !this.profileRequest.equals(other.profileRequest))) {
+                return false;
+            }
+            
+            if (this.profileResponse != other.profileResponse && (this.profileResponse == null || !this.profileResponse.equals(other.profileResponse))) {
+                return false;
+            }
+            
+            if (this.servletRequest != other.servletRequest && (this.servletRequest == null || !this.servletRequest.equals(other.servletRequest))) {
+                return false;
+            }
+            
+            if (this.servletResponse != other.servletResponse && (this.servletResponse == null || !this.servletResponse.equals(other.servletResponse))) {
+                return false;
+            }
+            
+            if (this.authnRequest != other.authnRequest && (this.authnRequest == null || !this.authnRequest.equals(other.authnRequest))) {
+                return false;
+            }
+            
+            if (this.issuer != other.issuer && (this.issuer == null || !this.issuer.equals(other.issuer))) {
+                return false;
+            }
+            
+            if (this.subject != other.subject && (this.subject == null || !this.subject.equals(other.subject))) {
+                return false;
+            }
+            
+            if (this.response != other.response && (this.response == null || !this.response.equals(other.response))) {
+                return false;
+            }
+            
+            if (this.loginContext != other.loginContext && (this.loginContext == null || !this.loginContext.equals(other.loginContext))) {
+                return false;
+            }
+            
+            if (this.rpConfig != other.rpConfig && (this.rpConfig == null || !this.rpConfig.equals(other.rpConfig))) {
+                return false;
+            }
+            
+            if (this.ssoConfig != other.ssoConfig && (this.ssoConfig == null || !this.ssoConfig.equals(other.ssoConfig))) {
+                return false;
+            }
+            
+            if (this.spDescriptor != other.spDescriptor && (this.spDescriptor == null || !this.spDescriptor.equals(other.spDescriptor))) {
+                return false;
+            }
+            
+            if (this.assertionConsumerService != other.assertionConsumerService && (this.assertionConsumerService == null || !this.assertionConsumerService.equals(other.assertionConsumerService))) {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        public int hashCode() {
+            int hash = 7;
+            return hash;
+        }
+        
+        
+    }
+    
+    
     /** Class logger. */
     private static final Logger log = Logger.getLogger(AbstractAuthenticationRequest.class);
     
-    /** Key in an HttpSession for the AssertionConsumerService object. */
-    protected static final String ACS_SESSION_KEY = "AssertionConsumerService";
-    
-    /** Key in an HttpSession for the RelyingParty. */
-    protected static final String RPCONFIG_SESSION_KEY = "RelyingPartyConfiguration";
-    
-    /** Key in an HttpSession for the SSOConfiguration. */
-    protected static final String SSOCONFIG_SESSION_KEY = "SSOConfiguration";
-    
-    /** Key in an HttpSession for the SPSSODescriptor. */
-    protected static final String SPSSODESC_SESSION_KEY = "SPSSODescriptor";
-    
-    /** Key in an HttpSession for the AuthnRequest. */
-    protected static final String AUTHNREQUEST_SESSION_KEY = "AuthnRequest";
-    
-    /** Key in an HttpSession for the Issuer. */
-    protected static final String ISSUER_SESSION_KEY = "Issuer";
-    
+    /** HttpSession key for the AuthenticationRequestContext. */
+    protected static final String REQUEST_CONTEXT_SESSION_KEY = "edu.internet2.middleware.shibboleth.idp.profile.saml2.AuthenticationRequestContext";
     
     /** The path to the IdP's AuthenticationManager servlet */
     protected String authnMgrURL;
@@ -163,51 +389,44 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      * @param spDescriptor
      *            The SPSSODescriptor for the request.
      *
-     * @return A Response containing a failure message or a AuthenticationStmt.
-     *
      * @throws ProfileException
      *             On Error.
      */
-    protected Response evaluateRequest(final AuthnRequest authnRequest,
-            String issuer, final HttpSession session,
-            final RelyingPartyConfiguration relyingParty,
-            final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor)
-            throws ProfileException {
+    protected void evaluateRequest(final AuthenticationRequestContext requestContext) throws ProfileException {
         
         Response samlResponse;
         
-        // check if the authentication was successful.
-        Saml2LoginContext loginCtx = getLoginContext(session);
-        if (!loginCtx.getAuthenticationOK()) {
-            // if authentication failed, send the appropriate SAML error message.
+        final AuthnRequest authnRequest = requestContext.getAuthnRequest();
+        String issuer = requestContext.getIssuer();
+        final HttpSession session = requestContext.getHttpSession();
+        final RelyingPartyConfiguration relyingParty = requestContext.getRpConfig();
+        final SSOConfiguration ssoConfig = requestContext.getSsoConfig();
+        final SPSSODescriptor spDescriptor = requestContext.getSpDescriptor();
+        
+        LoginContext loginCtx = requestContext.getLoginContext();
+        if (loginCtx.getAuthenticationOK()) {
+            
+            // the user successfully authenticated.
+            // build an authentication assertion.
+            samlResponse = buildResponse(authnRequest.getID(), new DateTime(),
+                    relyingParty.getProviderId(), buildStatus(StatusCode.SUCCESS_URI, null, null));
+            
+            DateTime now = new DateTime();
+            Assertion assertion = buildAssertion(now, relyingParty, (AbstractSAML2ProfileConfiguration) ssoConfig);
+            assertion.setSubject(requestContext.getSubject());
+            setAuthenticationStatement(assertion, loginCtx, authnRequest);
+            samlResponse.getAssertions().add(assertion);
+            
+        } else {
+            
+            // if authentication failed, encode the appropriate SAML error message.
             String failureMessage = loginCtx.getAuthenticationFailureMessage();
             Status failureStatus = buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, failureMessage);
             samlResponse = buildResponse(authnRequest.getID(), new DateTime(), relyingParty.getProviderId(),
                     failureStatus);
-            
-            return samlResponse;
         }
         
-        // the user successfully authenticated.
-        // build an authentication assertion.
-        samlResponse = buildResponse(authnRequest.getID(), new DateTime(),
-                relyingParty.getProviderId(), buildStatus(StatusCode.SUCCESS_URI, null, null));
-        
-        DateTime now = new DateTime();
-        Assertion assertion = buildAssertion(now, relyingParty,
-                (AbstractSAML2ProfileConfiguration) relyingParty.getProfileConfigurations().get(SSOConfiguration.PROFILE_ID));
-        assertion.setSubject(authnRequest.getSubject());
-        setAuthenticationStatement(assertion, loginCtx, authnRequest);
-        
-        samlResponse.getAssertions().add(assertion);
-        
-        // retrieve the AssertionConsumerService endpoint (we parsed it in
-        // verifyAuthnRequest()
-        AssertionConsumerService acsEndpoint = getACSEndpointFromSession(session);
-        
-        
-        
-        return samlResponse;
+        requestContext.setResponse(samlResponse);
     }
     
     /**
@@ -263,83 +482,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
     }
     
     /**
-     * Store a user's AuthnRequest and Issuer in the session.
-     *
-     * @param authnRequest
-     *            A SAML 2 AuthnRequest.
-     * @param issuer
-     *            The issuer of the AuthnRequest.
-     * @param session
-     *            The HttpSession in which the data should be stored.
-     * @param relyingParty
-     *            The RelyingPartyConfiguration for the issuer.
-     * @param ssoConfig
-     *            The SSOConfiguration for the relyingParty
-     * @param spDescriptor
-     *            The SPSSODescriptor for the ssoConfig.
-     */
-    protected void storeRequestData(final HttpSession session,
-            final AuthnRequest authnRequest, String issuer,
-            final RelyingPartyConfiguration relyingParty,
-            final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor) {
-        
-        if (session == null) {
-            return;
-        }
-        
-        session.setAttribute(AUTHNREQUEST_SESSION_KEY, authnRequest);
-        session.setAttribute(ISSUER_SESSION_KEY, issuer);
-        session.setAttribute(RPCONFIG_SESSION_KEY, relyingParty);
-        session.setAttribute(SSOCONFIG_SESSION_KEY, ssoConfig);
-        session.setAttribute(SPSSODESC_SESSION_KEY, spDescriptor);
-    }
-    
-    /**
-     * Retrieve the AuthnRequest and Issuer from a session.
-     *
-     * @param session
-     *            The HttpSession in which the data was stored.
-     * @param authnRequest
-     *            Will be populated with the AuthnRequest.
-     * @param issuer
-     *            Will be populated with the ssuer of the AuthnRequest.
-     * @param relyingParty
-     *            Will be populated with the RelyingPartyConfiguration for the
-     *            issuer.
-     * @param ssoConfig
-     *            Will be populated with the SSOConfiguration for the
-     *            relyingParty
-     * @param spDescriptor
-     *            Will be populated with the SPSSODescriptor for the ssoConfig.
-     */
-    protected void retrieveRequestData(final HttpSession session,
-            AuthnRequest authnRequest, String issuer,
-            RelyingPartyConfiguration relyingParty, SSOConfiguration ssoConfig,
-            SPSSODescriptor spDescriptor) {
-        
-        if (session == null) {
-            authnRequest = null;
-            issuer = null;
-        }
-        
-        authnRequest = (AuthnRequest) session
-                .getAttribute(AUTHNREQUEST_SESSION_KEY);
-        issuer = (String) session.getAttribute(ISSUER_SESSION_KEY);
-        relyingParty = (RelyingPartyConfiguration) session
-                .getAttribute(RPCONFIG_SESSION_KEY);
-        ssoConfig = (SSOConfiguration) session
-                .getAttribute(SSOCONFIG_SESSION_KEY);
-        spDescriptor = (SPSSODescriptor) session
-                .getAttribute(SPSSODESC_SESSION_KEY);
-        
-        session.removeAttribute(AUTHNREQUEST_SESSION_KEY);
-        session.removeAttribute(ISSUER_SESSION_KEY);
-        session.removeAttribute(RPCONFIG_SESSION_KEY);
-        session.removeAttribute(SSOCONFIG_SESSION_KEY);
-        session.removeAttribute(SPSSODESC_SESSION_KEY);
-    }
-    
-    /**
      * Check if the user has already been authenticated. If so, return the
      * LoginContext. If not, redirect the user to the AuthenticationManager.
      *
@@ -355,21 +497,31 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      * @throws ProfileException
      *             on error.
      */
-    protected void authenticateUser(final AuthnRequest authnRequest,
-            final HttpSession httpSession, final HttpServletRequest request,
-            final HttpServletResponse response) throws ProfileException {
+    protected void authenticateUser(final AuthenticationRequestContext requestContext) throws ProfileException {
+        
+        AuthnRequest authnRequest = requestContext.getAuthnRequest();
+        HttpSession httpSession = requestContext.getHttpSession();
+        HttpServletRequest servletRequest = requestContext.getServletRequest();
+        HttpServletResponse servletResponse = requestContext.getServletResponse();
         
         // Forward the request to the AuthenticationManager.
         // When the AuthenticationManager is done it will
         // forward the request back to this servlet.
         
+        // push the AuthenticationRequestContext into the session so we have it
+        // for the return leg.
+        httpSession.setAttribute(REQUEST_CONTEXT_SESSION_KEY, requestContext);
+        
         Saml2LoginContext loginCtx = new Saml2LoginContext(authnRequest);
-        loginCtx.setProfileHandlerURL(request.getRequestURI());
+        requestContext.setLoginContext(loginCtx);
+        loginCtx.setProfileHandlerURL(servletRequest.getRequestURI());
+        
+        // the AuthenticationManager expects the LoginContext to be in the HttpSession.
         httpSession.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginCtx);
         try {
-            RequestDispatcher dispatcher = request
+            RequestDispatcher dispatcher = servletRequest
                     .getRequestDispatcher(authnMgrURL);
-            dispatcher.forward(request, response);
+            dispatcher.forward(servletRequest,servletResponse);
         } catch (IOException ex) {
             log.error("Error forwarding SAML 2 AuthnRequest "
                     + authnRequest.getID() + " to AuthenticationManager", ex);
@@ -393,7 +545,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      * @throws ProfileException On error.
      */
     protected void setAuthenticationStatement(Assertion assertion,
-            final Saml2LoginContext loginContext,
+            final LoginContext loginContext,
             final AuthnRequest authnRequest) throws ProfileException {
         
         // Build the AuthnCtx.
@@ -430,7 +582,7 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      */
     protected AuthnContext buildAuthnCtx(
             final RequestedAuthnContext requestedAuthnCtx,
-            final Saml2LoginContext loginContext) {
+            final LoginContext loginContext) {
         
         // this method assumes that only one URI will match.
         
@@ -476,40 +628,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
     }
     
     /**
-     * Get the user's LoginContext.
-     *
-     * @param httpSession
-     *            The user's HttpSession.
-     *
-     * @return The user's LoginContext.
-     *
-     * @throws ProfileException
-     *             On error.
-     */
-    protected Saml2LoginContext getLoginContext(final HttpSession httpSession)
-            throws ProfileException {
-        
-        Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        if (o == null) {
-            log.error("User's session does not contain a LoginContext object.");
-            throw new ProfileException(
-                    "User's session does not contain a LoginContext object.");
-        }
-        
-        if (!(o instanceof Saml2LoginContext)) {
-            log
-                    .error("Invalid login context object -- object is not an instance of Saml2LoginContext.");
-            throw new ProfileException("Invalid login context object.");
-        }
-        
-        Saml2LoginContext ctx = (Saml2LoginContext) o;
-        
-        httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        
-        return ctx;
-    }
-    
-    /**
      * Verify the AuthnRequest is well-formed.
      *
      * @param authnRequest
@@ -524,9 +642,12 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
      * @throws AuthenticationRequestException
      *             on error.
      */
-    protected void verifyAuthnRequest(final AuthnRequest authnRequest,
-            String issuer, final RelyingPartyConfiguration relyingParty,
-            final HttpSession session) throws AuthenticationRequestException {
+    protected void verifyAuthnRequest(final AuthenticationRequestContext requestContext) throws AuthenticationRequestException {
+        
+        final AuthnRequest authnRequest = requestContext.getAuthnRequest();
+        String issuer = requestContext.getIssuer();
+        final RelyingPartyConfiguration relyingParty = requestContext.getRpConfig();
+        final HttpSession session = requestContext.getHttpSession();
         
         Status failureStatus;
         
@@ -534,28 +655,25 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         checkScope(authnRequest, issuer);
         
         // verify that the AssertionConsumerService url is valid.
-        AssertionConsumerService acsEndpoint = getAndVerifyACSEndpoint(
-                authnRequest, relyingParty.getRelyingPartyId(),
+        verifyAssertionConsumerService(requestContext,
                 getRelyingPartyConfigurationManager().getMetadataProvider());
-        session.setAttribute(ACS_SESSION_KEY, acsEndpoint);
         
         // check for nameID constraints.
-        Subject subject = getAndVerifySubject(authnRequest);
+        verifySubject(requestContext);
     }
     
     /**
      * Get and verify the Subject element.
      *
-     * @param authnRequest
-     *            The SAML 2 AuthnRequest.
-     *
-     * @return A Subject element.
-     *
+     * @param requestContext The context for the current request.
+     * 
      * @throws AuthenticationRequestException
      *             on error.
      */
-    protected Subject getAndVerifySubject(final AuthnRequest authnRequest)
+    protected void verifySubject(final AuthenticationRequestContext requestContext)
             throws AuthenticationRequestException {
+        
+        final AuthnRequest authnRequest = requestContext.getAuthnRequest();
         
         Status failureStatus;
         
@@ -589,31 +707,94 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
                     failureStatus);
         }
         
-        return subject;
+        requestContext.setSubject(subject);
+        
+        return;
+    }
+    
+    /**
+     * Ensure that metadata can be found for the SP that issued
+     * the AuthnRequest.
+     *
+     * If found, the request context is updated to reflect the appropriate entries.
+     *
+     * Before this method may be called, the request context must have an issuer set.
+     *
+     * @param requestContext The context for the current request.
+     *
+     * @throws AuthenticationRequestException On error.
+     */
+    protected void validateRequestAgainstMetadata(final AuthenticationRequestContext requestContext) throws AuthenticationRequestException {
+        
+        RelyingPartyConfiguration relyingParty = null;
+        SSOConfiguration ssoConfig = null;
+        SPSSODescriptor spDescriptor = null;
+        
+        // check that we have metadata for the RP
+        relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(requestContext.getIssuer());
+        
+        ProfileConfiguration temp = relyingParty.getProfileConfigurations().get(SSOConfiguration.PROFILE_ID);
+        if (temp == null) {
+            log.error("SAML 2 Authentication Request: No profile configuration registered for " + SSOConfiguration.PROFILE_ID);
+            throw new AuthenticationRequestException("No profile configuration registered for " + SSOConfiguration.PROFILE_ID);
+        }
+        
+        ssoConfig = (SSOConfiguration) temp;
+        
+        try {
+            spDescriptor = getMetadataProvider().getEntityDescriptor(
+                    relyingParty.getRelyingPartyId()).getSPSSODescriptor(
+                    SAML20_PROTOCOL_URI);
+        } catch (MetadataProviderException ex) {
+            log.error(
+                    "SAML 2 Authentication Request: Unable to locate SPSSODescriptor for SP "
+                    + requestContext.getIssuer() + " for protocol " + SAML20_PROTOCOL_URI, ex);
+            
+            Status failureStatus = buildStatus(StatusCode.REQUESTER_URI, null,
+                    "No metadata available for " + relyingParty.getRelyingPartyId());
+            
+            throw new AuthenticationRequestException("SAML 2 Authentication Request: Unable to locate SPSSODescriptor for SP "
+                    + requestContext.getIssuer() + " for protocol " + SAML20_PROTOCOL_URI, ex, failureStatus);
+        }
+        
+        if (spDescriptor == null) {
+            log.error("SAML 2 Authentication Request: Unable to locate SPSSODescriptor for SP "
+                    + requestContext.getIssuer() + " for protocol " + SAML20_PROTOCOL_URI);
+
+            Status failureStatus = buildStatus(StatusCode.REQUESTER_URI, null,
+                    "No metadata available for " + relyingParty.getRelyingPartyId());
+            
+            throw new AuthenticationRequestException("SAML 2 Authentication Request: Unable to locate SPSSODescriptor for SP "
+                    + requestContext.getIssuer() + " for protocol " + SAML20_PROTOCOL_URI, failureStatus);
+        }
+        
+        // if all metadata was found, update the request context.
+        requestContext.setRpConfig(relyingParty);
+        requestContext.setSsoConfig(ssoConfig);
+        requestContext.setSpDescriptor(spDescriptor);
     }
     
     /**
      * Return the endpoint URL and protocol binding to use for the AuthnRequest.
      *
-     * @param authnRequest
-     *            The SAML 2 AuthnRequest.
-     * @param providerId
-     *            The SP's providerId.
+     * @param requestContext The context for the current request.
+     * 
      * @param metadata
      *            The appropriate Metadata.
-     *
-     * @return The AssertionConsumerService for the endpoint, or
-     *         <code>null</code> on error.
      *
      * @throws AuthenticationRequestException
      *             On error.
      */
-    protected AssertionConsumerService getAndVerifyACSEndpoint(
-            final AuthnRequest authnRequest, String providerId,
+    protected void verifyAssertionConsumerService(
+            final AuthenticationRequestContext requestContext,
+            
             final MetadataProvider metadata)
             throws AuthenticationRequestException {
         
         Status failureStatus;
+        
+        final AuthnRequest authnRequest = requestContext.getAuthnRequest();
+        String providerId = requestContext.getRpConfig().getRelyingPartyId();
         
         // Either the AssertionConsumerServiceIndex must be present
         // or AssertionConsumerServiceURL must be present.
@@ -675,7 +856,8 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
                         failureStatus);
             }
             
-            return acsList.get(i);
+            requestContext.setAssertionConsumerService(acsList.get(i));
+            return;
         }
         
         // if the ACS endpoint is specified, validate it against the metadata
@@ -684,7 +866,8 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
             if (acsURL.equals(acs.getLocation())) {
                 if (protocolBinding != null) {
                     if (protocolBinding.equals(acs.getBinding())) {
-                        return acs;
+                        requestContext.setAssertionConsumerService(acs);
+                        return;
                     }
                 }
             }
@@ -702,43 +885,6 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         throw new AuthenticationRequestException(
                 "SAML 2 AuthenticationRequest: Unable to validate AssertionConsumerService against Metadata",
                 failureStatus);
-    }
-    
-    /**
-     * Retrieve a parsed AssertionConsumerService endpoint from the user's
-     * session.
-     *
-     * @param session
-     *            The user's HttpSession.
-     *
-     * @return An AssertionConsumerServiceEndpoint object.
-     *
-     * @throws ProfileException
-     *             On error.
-     */
-    protected AssertionConsumerService getACSEndpointFromSession(
-            final HttpSession session) throws ProfileException {
-        
-        Object o = session.getAttribute(ACS_SESSION_KEY);
-        if (o == null) {
-            log
-                    .error("User's session does not contain an AssertionConsumerService object.");
-            throw new ProfileException(
-                    "User's session does not contain an AssertionConsumerService object.");
-        }
-        
-        if (!(o instanceof AssertionConsumerService)) {
-            log
-                    .error("Invalid session data -- object is not an instance of AssertionConsumerService.");
-            throw new ProfileException(
-                    "Invalid session data -- object is not an instance of AssertionConsumerService.");
-        }
-        
-        AssertionConsumerService endpoint = (AssertionConsumerService) o;
-        
-        session.removeAttribute(ACS_SESSION_KEY);
-        
-        return endpoint;
     }
     
     /**
@@ -886,24 +1032,37 @@ public abstract class AbstractAuthenticationRequest extends AbstractSAML2Profile
         return idpList;
     }
     
-    protected void encodeResponse(String binding, final ProfileResponse<ServletResponse> response,
-            final Response samlResponse,
-            final RelyingPartyConfiguration relyingParty,
-            final SSOConfiguration ssoConfig, final SPSSODescriptor spDescriptor) throws ProfileException {
+    /**
+     * Encode a SAML Response.
+     *
+     * @param binding The SAML protocol binding to use.
+     * @param requestContext The context for the request.
+     *
+     * @throws ProfileException On error.
+     */
+    protected void encodeResponse(String binding,
+            final AuthenticationRequestContext requestContext) throws ProfileException {
+        
+        final ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
+        final Response samlResponse = requestContext.getResponse();
+        final RelyingPartyConfiguration relyingParty = requestContext.getRpConfig();
+        final RoleDescriptor roleDescriptor = requestContext.getSpDescriptor();
+        final Endpoint endpoint = requestContext.getAssertionConsumerService();
+        
         
         MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(binding);
         if (encoder == null) {
-            log.error("SAML 2 Authentication Request: No MessageEncoder registered for " + binding);
-            throw new ProfileException("SAML 2 Authentication Request: No MessageEncoder registered for " + binding);
+            log.error("No MessageEncoder registered for " + binding);
+            throw new ProfileException("No MessageEncoder registered for " + binding);
         }
         
-        encoder.setResponse(response.getRawResponse());
+        encoder.setResponse(profileResponse.getRawResponse());
         encoder.setIssuer(relyingParty.getProviderId());
         encoder.setMetadataProvider(getRelyingPartyConfigurationManager().getMetadataProvider());
-        encoder.setRelyingPartyRole(spDescriptor);
+        encoder.setRelyingPartyRole(roleDescriptor);
         encoder.setSigningCredential(relyingParty.getDefaultSigningCredential());
         encoder.setSamlMessage(samlResponse);
-        encoder.setRelyingPartyEndpoint(spDescriptor.getDefaultAssertionConsumerService());
+        encoder.setRelyingPartyEndpoint(endpoint);
         
         try {
             encoder.encode();

@@ -19,14 +19,12 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
+
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -34,11 +32,7 @@ import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.saml2.core.AuthnRequest;
-import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.security.SecurityPolicyException;
 
 /**
@@ -54,6 +48,9 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
     
     /** SAML 2 Binding URI. */
     protected static final String BINDING_URI = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST";
+    
+    /** SubjectConfirmation method for Web Browser SSO profile. */
+    protected static final String SUBJ_CONF_METHOD_URI = "urn:oasis:namurn:oasis:names:tc:SAML:2.0:cm:bearer";
     
     /** Constructor. */
     public AuthenticationRequestBrowserPost() {
@@ -76,90 +73,110 @@ public class AuthenticationRequestBrowserPost extends AbstractAuthenticationRequ
             throw new ProfileException("Received a non-HTTP request");
         }
         
-        HttpServletRequest httpRequest = (HttpServletRequest) request.getRawRequest();
-        HttpServletResponse httpResponse = (HttpServletResponse) response.getRawResponse();
-        HttpSession httpSession = httpRequest.getSession();
+        // This method is called twice.
+        // On the first time, there will be no AuthenticationRequestContext object. We redirect control to the
+        // AuthenticationManager to authenticate the user. The AuthenticationManager then redirects control
+        // back to this servlet. On the "return leg" connection, there will be a AuthenticationRequestContext object.
         
-        AuthnRequest authnRequest = null;
-        String issuer = null;
-        MetadataProvider metadataProvider = null;
-        RelyingPartyConfiguration relyingParty = null;
-        SSOConfiguration ssoConfig = null;
-        SPSSODescriptor spDescriptor = null;
+        HttpServletRequest req = (HttpServletRequest) request.getRawRequest();
+        Object o = req.getSession().getAttribute(REQUEST_CONTEXT_SESSION_KEY);
+        if (o != null && !(o instanceof AuthenticationRequestContext)) {
+            log.error("SAML 2 AuthnRequest: Invalid session data found for AuthenticationRequestContext");
+            throw new ProfileException("SAML 2 AuthnRequest: Invalid session data found for AuthenticationRequestContext");
+        }
         
+        if (o == null) {
+            setupNewRequest(request, response);
+        } else {
+            
+            AuthenticationRequestContext requestContext = (AuthenticationRequestContext)o;
+            
+            // clean up the HttpSession.
+            requestContext.getHttpSession().removeAttribute(REQUEST_CONTEXT_SESSION_KEY);
+            requestContext.getHttpSession().removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+            
+            finishProcessingRequest(requestContext);
+        }
+    }
+    
+    /**
+     * Begin processing a SAML 2.0 AuthnRequest.
+     *
+     * This ensures that the request is well-formed and that
+     * appropriate metadata can be found for the SP.
+     * Once these conditions are met, control is passed to
+     * the AuthenticationManager to authenticate the user.
+     * 
+     * @param request The ProfileRequest.
+     * @param response The ProfileResponse
+     * 
+     * @throws ProfileException On error.
+     */
+    protected void setupNewRequest(final ProfileRequest<ServletRequest> request,
+            final ProfileResponse<ServletResponse> response) throws ProfileException {
         
         // If the user hasn't been authenticated, validate the AuthnRequest
         // and redirect to AuthenticationManager to authenticate the user.
-        if (!hasUserAuthenticated(httpSession)) {
+        
+        AuthenticationRequestContext requestContext = new AuthenticationRequestContext();
+        
+        requestContext.setProfileRequest(request);
+        requestContext.setProfileResponse(response);
+        
+        try {
+            // decode the AuthnRequest
+            MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(BINDING_URI);
+            if (decoder == null) {
+                log.error("SAML 2 AuthnRequest: No MessageDecoder registered for " + BINDING_URI);
+                throw new ProfileException("SAML 2 AuthnRequest: No MessageDecoder registered for " + BINDING_URI);
+            }
             
-            try {
-                // decode the AuthnRequest
-                MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(BINDING_URI);
-                if (decoder == null) {
-                    log.error("SAML 2 AuthnRequest: No MessageDecoder registered for " + BINDING_URI);
-                    throw new ProfileException("SAML 2 AuthnRequest: No MessageDecoder registered for " + BINDING_URI);
-                }
-                
-                decoder.setMetadataProvider(getMetadataProvider());
-                populateMessageDecoder(decoder);
-                decoder.decode();
-                
-                SAMLObject samlObject = decoder.getSAMLMessage();
-                if (!(samlObject instanceof AuthnRequest)) {
-                    log.error("SAML 2 AuthnRequest: Received message is not a SAML 2 Authentication Request");
-                    throw new ProfileException("SAML 2 AuthnRequest: Received message is not a SAML 2 Authentication Request");
-                }
-                
-                authnRequest = (AuthnRequest) samlObject;
-                issuer = decoder.getSecurityPolicy().getIssuer();
-                
-                // check that we have metadata for the RP
-                metadataProvider = getRelyingPartyConfigurationManager().getMetadataProvider();
-                relyingParty = getRelyingPartyConfigurationManager().getRelyingPartyConfiguration(issuer);
-                ssoConfig = (SSOConfiguration) relyingParty.getProfileConfigurations().get(SSOConfiguration.PROFILE_ID);
-                
-                try {
-                    spDescriptor = metadataProvider.getEntityDescriptor(
-                            relyingParty.getRelyingPartyId()).getSPSSODescriptor(
-                            SAML20_PROTOCOL_URI);
-                } catch (MetadataProviderException ex) {
-                    log.error(
-                            "SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + issuer + " for protocol " + SAML20_PROTOCOL_URI, ex);
-                    throw new ProfileException("SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + issuer + " for protocol " + SAML20_PROTOCOL_URI, ex);
-                }
-                
-                if (spDescriptor == null) {
-                    log.error("SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + issuer + " for protocol " + SAML20_PROTOCOL_URI);
-                    throw new ProfileException("SAML 2 Authentication Request: Unable to locate metadata for SP "
-                            + issuer + " for protocol " + SAML20_PROTOCOL_URI);
-                }
-                
-                verifyAuthnRequest(authnRequest, issuer, relyingParty, httpSession);
-                storeRequestData(httpSession, authnRequest, issuer, relyingParty, ssoConfig, spDescriptor);
-                authenticateUser(authnRequest, httpSession, httpRequest, httpResponse);
-                
-            } catch (BindingException ex) {
-                log.error("SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
-                throw new ProfileException(
-                        "SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
-            } catch (SecurityPolicyException ex) {
-               log.error("SAML 2 Authentication Request: Security error while decoding SAML 2 Authentication Request", ex);
-            } catch (AuthenticationRequestException ex) {
+            decoder.setMetadataProvider(getMetadataProvider());
+            populateMessageDecoder(decoder);
+            decoder.decode();
             
-                // AuthN failed. Send the failure status.
-                retrieveRequestData(httpSession, authnRequest, issuer, relyingParty, ssoConfig, spDescriptor);
-                Response failureResponse = buildResponse(authnRequest.getID(), new DateTime(), issuer, ex.getStatus());
-                encodeResponse(BINDING_URI, response, failureResponse, relyingParty, ssoConfig, spDescriptor);
-            } 
+            SAMLObject samlObject = decoder.getSAMLMessage();
+            if (!(samlObject instanceof AuthnRequest)) {
+                log.error("SAML 2 AuthnRequest: Received message is not a SAML 2 Authentication Request");
+                throw new ProfileException("SAML 2 AuthnRequest: Received message is not a SAML 2 Authentication Request");
+            }
+            
+            requestContext.setAuthnRequest((AuthnRequest) samlObject);
+            requestContext.setIssuer(decoder.getSecurityPolicy().getIssuer());
+            validateRequestAgainstMetadata(requestContext);
+            verifyAuthnRequest(requestContext);
+            authenticateUser(requestContext);
+            
+        } catch (BindingException ex) {
+            log.error("SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
+            throw new ProfileException(
+                    "SAML 2 Authentication Request: Unable to decode SAML 2 Authentication Request", ex);
+        } catch (SecurityPolicyException ex) {
+            log.error("SAML 2 Authentication Request: Security error while decoding SAML 2 Authentication Request", ex);
+        } catch (AuthenticationRequestException ex) {
+            
+            // AuthN failed. Send the failure status.
+            requestContext.setResponse(buildResponse(requestContext.getAuthnRequest().getID(), 
+                    new DateTime(), requestContext.getIssuer(), ex.getStatus()));
+            encodeResponse(BINDING_URI, requestContext);
         }
+    }
+    
+    /**
+     * Process the "return leg" of a SAML 2 Authentication Request.
+     *
+     * This evaluates the AuthenticationManager's LoginContext and generates an Authentication Assertion.
+     *
+     * @param requestContext The context for this request.
+     *
+     * @throws ProfileException On error.
+     */
+    protected void finishProcessingRequest(final AuthenticationRequestContext requestContext) throws ProfileException {
         
         // The user has already been authenticated,
         // so generate an AuthenticationStatement.
-        retrieveRequestData(httpSession, authnRequest, issuer, relyingParty, ssoConfig, spDescriptor);
-        Response samlResponse = evaluateRequest(authnRequest, issuer, httpSession, relyingParty, ssoConfig, spDescriptor);
-        encodeResponse(BINDING_URI, response, samlResponse, relyingParty, ssoConfig, spDescriptor);
+        evaluateRequest(requestContext);
+        encodeResponse(BINDING_URI, requestContext);
     }
+    
 }
