@@ -119,8 +119,7 @@ public class AuthenticationManager extends HttpServletBean {
 			return;
 		}
 
-		log
-				.debug("registering " + handler.getClass().getName() + " for "
+		log.debug("AuthenticationManager: Registering " + handler.getClass().getName() + " for "
 						+ uri);
 
 		handlerMap.put(uri, handler);
@@ -137,7 +136,7 @@ public class AuthenticationManager extends HttpServletBean {
 	 */
 	public void setDefaultHandler(String uri, AuthenticationHandler handler) {
 
-		log.debug("Registering default handler "
+		log.debug("AuthenticationManager: Registering default handler "
 						+ handler.getClass().getName());
 
 		defaultHandler = handler;
@@ -159,7 +158,7 @@ public class AuthenticationManager extends HttpServletBean {
 			return;
 		}
 
-		log.debug("unregistering handler for " + uri);
+		log.debug("AuthenticationManager: Unregistering handler for " + uri);
 
 		handlerMap.remove(uri);
 	}
@@ -176,16 +175,15 @@ public class AuthenticationManager extends HttpServletBean {
 			throws ServletException, IOException {
 
 		if (req == null || resp == null) {
-			log
-					.error("Invalid parameters in AuthenticationManager's doPost().");
+			log.error("AuthenticationManager: Invalid parameters in AuthenticationManager's doPost().");
 			return;
 		}
 
 		HttpSession httpSession = req.getSession();
 		Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-		if (!(o instanceof LoginContext)) {
-			log
-					.error("Invalid login context object -- object is not an instance of LoginContext.");
+                
+                if (o == null || !(o instanceof LoginContext)) {
+			log.error("AuthenticationManager: Invalid login context object found in HttpSession.");
 			return;
 		}
 		LoginContext loginContext = (LoginContext) o;
@@ -245,8 +243,7 @@ public class AuthenticationManager extends HttpServletBean {
 				AuthenticationHandler candidateHandler = handlerMap
 						.get(authnMethodURI);
 				if (candidateHandler == null) {
-					log
-							.debug("No registered authentication handlers can satisfy the "
+					log.debug("AuthenticationManager:  No registered authentication handlers can satisfy the "
 									+ " requested authentication method "
 									+ authnMethodURI);
 					continue;
@@ -257,7 +254,7 @@ public class AuthenticationManager extends HttpServletBean {
 
 					// we found a match. stop iterating.
 					handler = candidateHandler;
-					log.info("Using authentication handler "
+					log.info("AuthenticationManager: Using authentication handler "
 							+ handler.getClass().getName()
 							+ " for authentication method " + authnMethodURI);
 					loginContext.setAuthenticationMethod(authnMethodURI);
@@ -269,11 +266,9 @@ public class AuthenticationManager extends HttpServletBean {
 		// if no acceptable handler was found, abort.
 		if (handler == null) {
 			loginContext.setAuthenticationOK(false);
-			loginContext
-					.setAuthenticationFailureMessage("No installed AuthenticationHandler can satisfy the authentication request.");
+			loginContext.setAuthenticationFailureMessage("No installed AuthenticationHandler can satisfy the authentication request.");
 
-			log
-					.error("No registered authentication handlers could satisify any requested "
+			log.error("AuthenticationManager:  No registered authentication handlers could satisify any requested "
 							+ "authentication methods. Unable to process authentication request.");
 
 			RequestDispatcher dispatcher = servletRequest
@@ -358,8 +353,7 @@ public class AuthenticationManager extends HttpServletBean {
 		}
 
 		if (forceAuthN && !handler.supportsForceAuthentication()) {
-			log
-					.debug("The RequestedAuthnContext required forced authentication, "
+			log.debug("AuthenticationManager: The RequestedAuthnContext required forced authentication, "
 							+ "but the "
 							+ description
 							+ " handler does not support that feature.");
@@ -367,8 +361,7 @@ public class AuthenticationManager extends HttpServletBean {
 		}
 
 		if (passiveAuthN && !handler.supportsPassive()) {
-			log
-					.debug("The RequestedAuthnContext required passive authentication, "
+			log.debug("AuthenticationManager:  The RequestedAuthnContext required passive authentication, "
 							+ "but the "
 							+ description
 							+ " handler does not support that feature.");

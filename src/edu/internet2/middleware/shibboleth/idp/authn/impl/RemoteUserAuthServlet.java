@@ -61,7 +61,6 @@ public class RemoteUserAuthServlet extends HttpServlet {
 		String remoteUser = request.getRemoteUser();
 		if (remoteUser == null || remoteUser.length() == 0) {
 			loginContext.setAuthenticationOK(false);
-			;
 		} else {
 			loginContext.setAuthenticationOK(true);
 			loginContext.setUserID(remoteUser);
