@@ -962,7 +962,7 @@ public class ShibbolethSSO extends AbstractSAML1ProfileHandler {
         Subject subject = subjectBuilder.buildObject();
         
         NameIdentifier nameID = nameIdentifierBuilder.buildObject();
-        nameID.setFormat(ssoConfig.getDefaultNameIDFormat());
+        nameID.setFormat(ssoConfig.getSubjectNameFormat());
         
         String username = loginContext.getUserID();
         

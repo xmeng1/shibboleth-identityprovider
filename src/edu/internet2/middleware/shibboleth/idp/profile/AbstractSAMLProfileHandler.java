@@ -17,17 +17,19 @@
 package edu.internet2.middleware.shibboleth.idp.profile;
 
 import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.binding.decoding.MessageDecoderFactory;
 import org.opensaml.common.binding.encoding.MessageEncoderFactory;
-import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -53,7 +55,6 @@ public abstract class AbstractSAMLProfileHandler extends
     /** Constructor. */
     protected AbstractSAMLProfileHandler() {
         super();
-        idGenerator = new SecureRandomIdentifierGenerator();
     }
 
     /**
@@ -63,6 +64,15 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     public IdentifierGenerator getIdGenerator() {
         return idGenerator;
+    }
+    
+    /**
+     * Gets an ID generator which may be used for SAML assertions, requests, etc.
+     * 
+     * @param generator an ID generator which may be used for SAML assertions, requests, etc
+     */
+    public void setIdGenerator(IdentifierGenerator generator){
+        idGenerator = generator;
     }
 
     /**
@@ -138,5 +148,64 @@ public abstract class AbstractSAMLProfileHandler extends
         }
 
         return null;
+    }
+    
+    /**
+     * Contextual object used to accumlate information as profile requests are being processed.
+     */
+    protected class SAMLProfileRequestContext extends ShibbolethProfileRequestContext {
+        
+        /** Role descriptor name that the asserting party is operating in. */
+        private QName assertingPartyRole;
+        
+        /** Role descriptor name that the relying party is operating in. */
+        private QName relyingPartyRole;
+        
+        /**
+         * Constructor.
+         * 
+         * @param request current profile request
+         * @param response current profile response
+         */
+        public SAMLProfileRequestContext(ProfileRequest<ServletRequest> request,
+                ProfileResponse<ServletResponse> response) {
+            super(request, response);
+        }
+
+        /**
+         * Gets the role descriptor name that the asserting party is operating in.
+         * 
+         * @return role descriptor name that the asserting party is operating in
+         */
+        public QName getAssertingPartyRole() {
+            return assertingPartyRole;
+        }
+
+        /**
+         * Sets the role descriptor name that the asserting party is operating in.
+         * 
+         * @param role role descriptor name that the asserting party is operating in
+         */
+        public void setAssertingPartyRole(QName role) {
+            assertingPartyRole = role;
+        }
+
+        /**
+         * Gets the role descriptor name that the relying party is operating in.
+         * 
+         * @return role descriptor name that the relying party is operating in
+         */
+        public QName getRelyingPartyRole() {
+            return relyingPartyRole;
+        }
+
+        /**
+         * Sets the role descriptor name that the relying party is operating in.
+         * 
+         * @param role role descriptor name that the relying party is operating in
+         */
+        public void setRelyingPartyRole(QName role) {
+            relyingPartyRole = role;
+        }
     }
 }

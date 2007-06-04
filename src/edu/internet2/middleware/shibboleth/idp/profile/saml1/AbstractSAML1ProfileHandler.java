@@ -16,27 +16,24 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
+import java.security.NoSuchAlgorithmException;
+
 import javax.servlet.ServletResponse;
 
 import org.apache.log4j.Logger;
-import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.impl.SAMLObjectContentReference;
-import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml1.core.Assertion;
+import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Status;
 import org.opensaml.saml1.core.StatusCode;
 import org.opensaml.saml1.core.StatusMessage;
-import org.opensaml.saml1.core.Response;
-import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.RoleDescriptor;
-import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.xml.XMLObjectBuilder;
-import org.opensaml.xml.XMLObjectBuilderFactory;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.Signer;
@@ -59,9 +56,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     /** Class logger. */
     private static Logger log = Logger.getLogger(AbstractSAML1ProfileHandler.class);
     
-    /** For generating random ids. */
-    private SecureRandomIdentifierGenerator idGenerator;
-    
     /** Builder for Status objects. */
     protected SAMLObjectBuilder<Status> statusBuilder;
     
@@ -77,22 +71,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     /**
      * Default constructor.
      */
-    public AbstractSAML1ProfileHandler() {
-        idGenerator = new SecureRandomIdentifierGenerator();
-        
+    @SuppressWarnings("unchecked")
+    public AbstractSAML1ProfileHandler(){
+        super();
         statusBuilder        = (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
         statusCodeBuilder    = (SAMLObjectBuilder<StatusCode>) getBuilderFactory().getBuilder(StatusCode.DEFAULT_ELEMENT_NAME);
         statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) getBuilderFactory().getBuilder(StatusMessage.DEFAULT_ELEMENT_NAME);
         signatureBuilder     = (XMLObjectBuilder<Signature>) getBuilderFactory().getBuilder(Signature.DEFAULT_ELEMENT_NAME);
-    }
-    
-    /**
-     * Returns the id generator.
-     *
-     * @return Returns the idGenerator.
-     */
-    public SecureRandomIdentifierGenerator getIdGenerator() {
-        return idGenerator;
     }
     
     /**

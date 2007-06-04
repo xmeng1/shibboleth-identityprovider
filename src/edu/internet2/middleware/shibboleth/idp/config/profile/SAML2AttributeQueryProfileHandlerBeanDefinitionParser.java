@@ -20,7 +20,7 @@ import javax.xml.namespace.QName;
 
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.idp.profile.saml2.HTTPSOAPAttributeQuery;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.AttributeQueryProfileHandler;
 
 /**
  * Spring bean definition parser for {@link HTTPSOAPAttributeQuery} profile handlers.
@@ -34,6 +34,6 @@ public class SAML2AttributeQueryProfileHandlerBeanDefinitionParser extends
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
-        return HTTPSOAPAttributeQuery.class;
+        return AttributeQueryProfileHandler.class;
     }
 }

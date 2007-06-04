@@ -16,37 +16,55 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
 import org.joda.time.DateTime;
-
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
-
+import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.log.Level;
 import org.opensaml.saml2.core.Advice;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Audience;
 import org.opensaml.saml2.core.AudienceRestriction;
+import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.Issuer;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.ProxyRestriction;
 import org.opensaml.saml2.core.RequestAbstractType;
 import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.StatusMessage;
 import org.opensaml.saml2.core.StatusResponseType;
 import org.opensaml.saml2.core.Subject;
-
+import org.opensaml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
+import org.opensaml.saml2.metadata.AuthnAuthorityDescriptor;
+import org.opensaml.saml2.metadata.NameIDFormat;
+import org.opensaml.saml2.metadata.PDPDescriptor;
+import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.saml2.metadata.SSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.XMLObjectBuilder;
-import org.opensaml.xml.encryption.EncryptionException;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.util.DatatypeHelper;
 
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
+import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
+import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
 
@@ -82,6 +100,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     /** For building subject. */
     private SAMLObjectBuilder<Subject> subjectBuilder;
 
+    /** For builder subject confirmation. */
+    private SAMLObjectBuilder<SubjectConfirmation> subjectConfirmationBuilder;
+
     /** For building conditions. */
     private SAMLObjectBuilder<Conditions> conditionsBuilder;
 
@@ -103,7 +124,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     /** Constructor. */
     @SuppressWarnings("unchecked")
     protected AbstractSAML2ProfileHandler() {
-
         super();
 
         responseBuilder = (SAMLObjectBuilder<Response>) getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
@@ -116,6 +136,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         assertionBuilder = (SAMLObjectBuilder<Assertion>) getBuilderFactory()
                 .getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
         subjectBuilder = (SAMLObjectBuilder<Subject>) getBuilderFactory().getBuilder(Subject.DEFAULT_ELEMENT_NAME);
+        subjectConfirmationBuilder = (SAMLObjectBuilder<SubjectConfirmation>) getBuilderFactory().getBuilder(
+                SubjectConfirmation.DEFAULT_ELEMENT_NAME);
         conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory().getBuilder(
                 Conditions.DEFAULT_ELEMENT_NAME);
         audienceRestrictionBuilder = (SAMLObjectBuilder<AudienceRestriction>) getBuilderFactory().getBuilder(
@@ -245,122 +267,103 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
-     * Populates the response's id, in response to, issue instant, version, and issuer properties.
+     * Convenience method for getting the SAML 2 subject confirmation builder.
      * 
-     * @param response the response to populate
-     * @param issueInstant timestamp to use as the issue instant for the response
-     * @param request the request that the response is for
-     * @param rpConfig the relying party configuration for the request
+     * @return SAML 2 subject confirmation builder
      */
-    protected void populateStatusResponse(StatusResponseType response, DateTime issueInstant,
-            RequestAbstractType request, RelyingPartyConfiguration rpConfig) {
-
-        response.setID(getIdGenerator().generateIdentifier());
-        response.setInResponseTo(request.getID());
-        response.setIssueInstant(issueInstant);
-        response.setVersion(SAMLVersion.VERSION_20);
-        response.setIssuer(buildEntityIssuer(rpConfig));
+    public SAMLObjectBuilder<SubjectConfirmation> getSubjectConfirmationBuilder() {
+        return subjectConfirmationBuilder;
     }
 
     /**
-     * Build a status message, with an optional second-level failure message.
+     * Builds a response to the attribute query within the request context.
      * 
-     * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
-     * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
-     *            null, no second-level Status element will be set.
-     * @param secondLevelFailureMessage An optional second-level failure message.
+     * @param requestContext current request context
+     * @param assertionSubject subject of the assertion within the response
+     * @param statements the statements to include in the response
      * 
-     * @return a Status object.
+     * @return the built response
+     * 
+     * @throws ProfileException thrown if there is a problem creating the SAML response
+     * @throws AttributeRequestException thrown if there is a problem resolving attributes
      */
-    protected Status buildStatus(String topLevelCode, String secondLevelCode, String secondLevelFailureMessage) {
+    protected Response buildResponse(SAML2ProfileRequestContext requestContext, Subject assertionSubject,
+            List<Statement> statements) throws ProfileException, AttributeRequestException {
 
-        Status status = statusBuilder.buildObject();
-        
-        StatusCode statusCode = statusCodeBuilder.buildObject();
-        statusCode.setValue(DatatypeHelper.safeTrimOrNullString(topLevelCode));
-        status.setStatusCode(statusCode);
-        
-        if (secondLevelCode != null) {
-            StatusCode secondLevelStatusCode = statusCodeBuilder.buildObject();
-            secondLevelStatusCode.setValue(DatatypeHelper.safeTrimOrNullString(secondLevelCode));
-            statusCode.setStatusCode(secondLevelStatusCode);
+        DateTime issueInstant = new DateTime();
+
+        // create the assertion and add the attribute statement
+        Assertion assertion = buildAssertion(requestContext, issueInstant);
+        assertion.setSubject(assertionSubject);
+        if (statements != null) {
+            assertion.getStatements().addAll(statements);
         }
 
-        if (secondLevelFailureMessage != null) {
-            StatusMessage msg = statusMessageBuilder.buildObject();
-            msg.setMessage(secondLevelFailureMessage);
-            status.setStatusMessage(msg);
-        }
+        // create the SAML response and add the assertion
+        Response samlResponse = getResponseBuilder().buildObject();
+        populateStatusResponse(requestContext, samlResponse);
 
-        return status;
+        samlResponse.getAssertions().add(assertion);
+
+        // sign the assertion if it should be signed
+        signAssertion(requestContext, assertion);
+
+        Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
+        samlResponse.setStatus(status);
+
+        return samlResponse;
     }
 
     /**
      * Builds a basic assertion with its id, issue instant, SAML version, issuer, subject, and conditions populated.
      * 
+     * @param requestContext current request context
      * @param issueInstant time to use as assertion issue instant
-     * @param rpConfig the relying party configuration
-     * @param profileConfig current profile configuration
      * 
      * @return the built assertion
      */
-    protected Assertion buildAssertion(final DateTime issueInstant, final RelyingPartyConfiguration rpConfig,
-            final AbstractSAML2ProfileConfiguration profileConfig) {
+    protected Assertion buildAssertion(SAML2ProfileRequestContext requestContext, DateTime issueInstant) {
 
-        Assertion assertion = assertionBuilder.buildObject();
+        Assertion assertion = getAssertionBuilder().buildObject();
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(issueInstant);
         assertion.setVersion(SAMLVersion.VERSION_20);
-        assertion.setIssuer(buildEntityIssuer(rpConfig));
-        // TODO assertion.setSubject(buildSubject());
+        assertion.setIssuer(buildEntityIssuer(requestContext));
 
-        Conditions conditions = buildConditions(issueInstant, profileConfig);
+        Conditions conditions = buildConditions(requestContext, issueInstant);
         assertion.setConditions(conditions);
 
         return assertion;
     }
 
     /**
-     * Builds an entity type Issuer populated with the correct provider Id for this relying party configuration.
+     * Creates an {@link Issuer} populated with information about the relying party.
      * 
-     * @param rpConfig the relying party configuration
+     * @param requestContext current request context
      * 
-     * @return the built Issuer
+     * @return the built issuer
      */
-    protected Issuer buildEntityIssuer(final RelyingPartyConfiguration rpConfig) {
-
+    protected Issuer buildEntityIssuer(SAML2ProfileRequestContext requestContext) {
         Issuer issuer = getIssuerBuilder().buildObject();
         issuer.setFormat(Issuer.ENTITY);
-        issuer.setValue(rpConfig.getProviderId());
+        issuer.setValue(requestContext.getRelyingPartyId());
 
         return issuer;
-    }
-
-    /**
-     * Builds the SAML subject for the user for the service provider.
-     * 
-     * @return SAML subject for the user for the service provider
-     * 
-     * @throws EncryptionException thrown if there is a problem encryption the subject's NameID
-     */
-    protected Subject buildSubject() throws EncryptionException {
-        // TODO
-        return null;
     }
 
     /**
      * Builds a SAML assertion condition set. The following fields are set; not before, not on or after, audience
      * restrictions, and proxy restrictions.
      * 
+     * @param requestContext current request context
      * @param issueInstant timestamp the assertion was created
-     * @param profileConfig current profile configuration
      * 
      * @return constructed conditions
      */
-    protected Conditions buildConditions(final DateTime issueInstant,
-            final AbstractSAML2ProfileConfiguration profileConfig) {
+    protected Conditions buildConditions(SAML2ProfileRequestContext requestContext, DateTime issueInstant) {
+        AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
-        Conditions conditions = conditionsBuilder.buildObject();
+        Conditions conditions = getConditionsBuilder().buildObject();
         conditions.setNotBefore(issueInstant);
         conditions.setNotOnOrAfter(issueInstant.plus(profileConfig.getAssertionLifetime()));
 
@@ -369,9 +372,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         // add audience restrictions
         audiences = profileConfig.getAssertionAudiences();
         if (audiences != null && audiences.size() > 0) {
-            AudienceRestriction audienceRestriction = audienceRestrictionBuilder.buildObject();
+            AudienceRestriction audienceRestriction = getAudienceRestrictionBuilder().buildObject();
             for (String audienceUri : audiences) {
-                Audience audience = audienceBuilder.buildObject();
+                Audience audience = getAudienceBuilder().buildObject();
                 audience.setAudienceURI(audienceUri);
                 audienceRestriction.getAudiences().add(audience);
             }
@@ -381,10 +384,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         // add proxy restrictions
         audiences = profileConfig.getProxyAudiences();
         if (audiences != null && audiences.size() > 0) {
-            ProxyRestriction proxyRestriction = proxyRestrictionBuilder.buildObject();
+            ProxyRestriction proxyRestriction = getProxyRestrictionBuilder().buildObject();
             Audience audience;
             for (String audienceUri : audiences) {
-                audience = audienceBuilder.buildObject();
+                audience = getAudienceBuilder().buildObject();
                 audience.setAudienceURI(audienceUri);
                 proxyRestriction.getAudiences().add(audience);
             }
@@ -397,22 +400,36 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
+     * Populates the response's id, in response to, issue instant, version, and issuer properties.
+     * 
+     * @param requestContext current request context
+     * @param response the response to populate
+     */
+    protected void populateStatusResponse(SAML2ProfileRequestContext requestContext, StatusResponseType response) {
+        response.setID(getIdGenerator().generateIdentifier());
+        response.setInResponseTo(requestContext.getSamlRequest().getID());
+        response.setIssueInstant(response.getIssueInstant());
+        response.setVersion(SAMLVersion.VERSION_20);
+        response.setIssuer(buildEntityIssuer(requestContext));
+    }
+
+    /**
      * Signs the given assertion if either the current profile configuration or the relying party configuration contains
      * signing credentials.
      * 
+     * @param requestContext current request context
      * @param assertion assertion to sign
-     * @param rpConfig relying party configuration
-     * @param profileConfig current profile configuration
      */
-    protected void signAssertion(Assertion assertion, RelyingPartyConfiguration rpConfig,
-            AbstractSAML2ProfileConfiguration profileConfig) {
+    protected void signAssertion(SAML2ProfileRequestContext requestContext, Assertion assertion) {
+        AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
+
         if (!profileConfig.getSignAssertions()) {
             return;
         }
 
         Credential signatureCredential = profileConfig.getSigningCredential();
         if (signatureCredential == null) {
-            signatureCredential = rpConfig.getDefaultSigningCredential();
+            signatureCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
         }
 
         if (signatureCredential == null) {
@@ -427,5 +444,287 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         Signer.signObject(signature);
     }
 
-    // TODO encryption support
+    /**
+     * Build a status message, with an optional second-level failure message.
+     * 
+     * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
+     * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
+     *            null, no second-level Status element will be set.
+     * @param secondLevelFailureMessage An optional second-level failure message
+     * 
+     * @return a Status object.
+     */
+    protected Status buildStatus(String topLevelCode, String secondLevelCode, String secondLevelFailureMessage) {
+
+        Status status = getStatusBuilder().buildObject();
+
+        StatusCode statusCode = getStatusCodeBuilder().buildObject();
+        statusCode.setValue(DatatypeHelper.safeTrimOrNullString(topLevelCode));
+        status.setStatusCode(statusCode);
+
+        if (secondLevelCode != null) {
+            StatusCode secondLevelStatusCode = getStatusCodeBuilder().buildObject();
+            secondLevelStatusCode.setValue(DatatypeHelper.safeTrimOrNullString(secondLevelCode));
+            statusCode.setStatusCode(secondLevelStatusCode);
+        }
+
+        if (secondLevelFailureMessage != null) {
+            StatusMessage msg = getStatusMessageBuilder().buildObject();
+            msg.setMessage(secondLevelFailureMessage);
+            status.setStatusMessage(msg);
+        }
+
+        return status;
+    }
+
+    /**
+     * Builds the SAML subject for the user for the service provider.
+     * 
+     * @param requestContext current request context
+     * @param confirmationMethod subject confirmation method used for the subject
+     * 
+     * @return SAML subject for the user for the service provider
+     */
+    protected Subject buildSubject(SAML2ProfileRequestContext requestContext, String confirmationMethod) {
+        NameID nameID = requestContext.getSubjectNameID();
+        // TODO handle encryption
+
+        SubjectConfirmation subjectConfirmation = getSubjectConfirmationBuilder().buildObject();
+        subjectConfirmation.setMethod(confirmationMethod);
+
+        Subject subject = getSubjectBuilder().buildObject();
+        subject.setNameID(nameID);
+        subject.getSubjectConfirmations().add(subjectConfirmation);
+
+        return subject;
+    }
+
+    /**
+     * Constructs an SAML response message carrying a request error.
+     * 
+     * @param requestContext current request context
+     * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
+     * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
+     *            null, no second-level Status element will be set.
+     * @param secondLevelFailureMessage An optional second-level failure message
+     * 
+     * @return the constructed error response
+     */
+    protected Response buildErrorResponse(SAML2ProfileRequestContext requestContext, String topLevelCode,
+            String secondLevelCode, String secondLevelFailureMessage) {
+        Response samlResponse = getResponseBuilder().buildObject();
+        samlResponse.setIssueInstant(new DateTime());
+        populateStatusResponse(requestContext, samlResponse);
+
+        Status status = buildStatus(topLevelCode, secondLevelCode, secondLevelFailureMessage);
+        samlResponse.setStatus(status);
+
+        return samlResponse;
+    }
+
+    /**
+     * Gets the NameID format to use when creating NameIDs for the relying party.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return list of nameID formats that may be used with the relying party
+     * 
+     * @throws ProfileException thrown if there is a problem determing the NameID format to use
+     */
+    protected List<String> getNameIDFormat(SAML2ProfileRequestContext requestContext) throws ProfileException {
+        ArrayList<String> nameFormats = new ArrayList<String>();
+
+        try {
+            RoleDescriptor assertingPartyRole = getMetadataProvider().getRole(requestContext.getAssertingPartyId(),
+                    requestContext.getAssertingPartyRole(), SAMLConstants.SAML20P_NS);
+            List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
+
+            String nameFormat = null;
+            if (requestContext.getSamlRequest() instanceof AuthnRequest) {
+                AuthnRequest authnRequest = (AuthnRequest) requestContext.getSamlRequest();
+                if (authnRequest.getNameIDPolicy() != null) {
+                    nameFormat = authnRequest.getNameIDPolicy().getFormat();
+                    if (assertingPartySupportedFormats.contains(nameFormat)) {
+                        nameFormats.add(nameFormat);
+                    } else {
+                        throw new ProfileException("NameID format required by relying party is not supported");
+                    }
+                }
+            }
+
+            if (nameFormats.isEmpty()) {
+                RoleDescriptor relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
+                        requestContext.getRelyingPartyRole(), SAMLConstants.SAML20P_NS);
+                List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
+
+                assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
+                nameFormats.addAll(assertingPartySupportedFormats);
+            }
+            if (nameFormats.isEmpty()) {
+                nameFormats.add("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified");
+            }
+
+            return nameFormats;
+
+        } catch (MetadataProviderException e) {
+            throw new ProfileException("Unable to determine lookup entity metadata", e);
+        }
+    }
+
+    /**
+     * Gets the list of NameID formats supported for a given role.
+     * 
+     * @param role the role to get the list of supported NameID formats
+     * 
+     * @return list of supported NameID formats
+     */
+    protected List<String> getEntitySupportedFormats(RoleDescriptor role) {
+        List<NameIDFormat> nameIDFormats = null;
+
+        if (role instanceof SSODescriptor) {
+            nameIDFormats = ((SSODescriptor) role).getNameIDFormats();
+        } else if (role instanceof AuthnAuthorityDescriptor) {
+            nameIDFormats = ((AuthnAuthorityDescriptor) role).getNameIDFormats();
+        } else if (role instanceof PDPDescriptor) {
+            nameIDFormats = ((PDPDescriptor) role).getNameIDFormats();
+        } else if (role instanceof AttributeAuthorityDescriptor) {
+            nameIDFormats = ((AttributeAuthorityDescriptor) role).getNameIDFormats();
+        }
+
+        ArrayList<String> supportedFormats = new ArrayList<String>();
+        if (nameIDFormats != null) {
+            for (NameIDFormat format : nameIDFormats) {
+                supportedFormats.add(format.getFormat());
+            }
+        }
+
+        return supportedFormats;
+    }
+
+    /**
+     * Writes an aduit log entry indicating the successful response to the attribute request.
+     * 
+     * @param context current request context
+     */
+    protected void writeAuditLogEntry(SAML2ProfileRequestContext context) {
+        AuditLogEntry auditLogEntry = new AuditLogEntry();
+        auditLogEntry.setMessageProfile(getProfileId());
+        auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
+        auditLogEntry.setPrincipalName(context.getPrincipalName());
+        auditLogEntry.setAssertingPartyId(context.getAssertingPartyId());
+        auditLogEntry.setRelyingPartyId(context.getRelyingPartyId());
+        auditLogEntry.setRequestBinding(context.getMessageDecoder().getBindingURI());
+        auditLogEntry.setRequestId(context.getSamlRequest().getID());
+        auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
+        auditLogEntry.setResponseId(context.getSamlResponse().getID());
+        getAduitLog().log(Level.CRITICAL, auditLogEntry);
+    }
+
+    /**
+     * Contextual object used to accumlate information as profile requests are being processed.
+     * 
+     * @param <RequestType> type of SAML 2 request
+     * @param <ResponseType> type of SAML 2 response
+     * @param <ProfileConfigurationType> configuration type for this profile
+     */
+    protected class SAML2ProfileRequestContext<RequestType extends RequestAbstractType, 
+                                               ResponseType extends StatusResponseType, 
+                                               ProfileConfigurationType extends AbstractSAML2ProfileConfiguration>
+            extends SAMLProfileRequestContext {
+
+        /** SAML request message. */
+        private RequestType samlRequest;
+
+        /** SAML response message. */
+        private ResponseType samlResponse;
+
+        /** Request profile configuration. */
+        private ProfileConfigurationType profileConfiguration;
+
+        /** The NameID of the subject of this request. */
+        private NameID subjectNameID;
+
+        /**
+         * Constructor.
+         * 
+         * @param request current profile request
+         * @param response current profile response
+         */
+        public SAML2ProfileRequestContext(ProfileRequest<ServletRequest> request,
+                ProfileResponse<ServletResponse> response) {
+            super(request, response);
+        }
+
+        /**
+         * Gets the NameID of the subject of this request.
+         * 
+         * @return NameID of the subject of this request
+         */
+        public NameID getSubjectNameID() {
+            return subjectNameID;
+        }
+
+        /**
+         * Sets the NameID of the subject of this request.
+         * 
+         * @param nameID NameID of the subject of this request
+         */
+        public void setSubjectNameID(NameID nameID) {
+            subjectNameID = nameID;
+        }
+
+        /**
+         * Gets the profile configuration for this request.
+         * 
+         * @return profile configuration for this request
+         */
+        public ProfileConfigurationType getProfileConfiguration() {
+            return profileConfiguration;
+        }
+
+        /**
+         * Sets the profile configuration for this request.
+         * 
+         * @param configuration profile configuration for this request
+         */
+        public void setProfileConfiguration(ProfileConfigurationType configuration) {
+            profileConfiguration = configuration;
+        }
+
+        /**
+         * Gets the SAML request message.
+         * 
+         * @return SAML request message
+         */
+        public RequestType getSamlRequest() {
+            return samlRequest;
+        }
+
+        /**
+         * Sets the SAML request message.
+         * 
+         * @param request SAML request message
+         */
+        public void setSamlRequest(RequestType request) {
+            samlRequest = request;
+        }
+
+        /**
+         * Gets the SAML response message.
+         * 
+         * @return SAML response message
+         */
+        public ResponseType getSamlResponse() {
+            return samlResponse;
+        }
+
+        /**
+         * Sets the SAML response message.
+         * 
+         * @param response SAML response message
+         */
+        public void setSamlResponse(ResponseType response) {
+            samlResponse = response;
+        }
+    }
 }
