@@ -45,6 +45,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethS
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -75,25 +76,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         try {
             decodeRequest(requestContext);
 
-            // populate request context with information from decoded message
-            SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
-            requestContext.setRelyingPartyId(securityPolicy.getIssuer());
-            requestContext
-                    .setRelyingPartyConfiguration(getRelyingPartyConfiguration(requestContext.getRelyingPartyId()));
-            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
-            requestContext.setAssertingPartyRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setProfileConfiguration((AttributeQueryConfiguration) getProfileConfiguration(requestContext
-                    .getRelyingPartyId(), AttributeQueryConfiguration.PROFILE_ID));
-            requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
-
-            // TODO principal
-
-            // create the SAML attribute statement
+            // Lookup principal name and attributes, create attribute statement from information
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAttributeStatement(requestContext));
-            
-            //TODO NameID
+
+            // create the assertion subject
             Subject assertionSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches");
 
             // create the SAML response
@@ -104,6 +91,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         } catch (AttributeRequestException e) {
             samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER_URI,
                     StatusCode.INVALID_ATTR_NAME_VALUE_URI, e.getMessage());
+        } catch (ProfileException e) {
+            samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
+                    e.getMessage());
         }
 
         requestContext.setSamlResponse(samlResponse);
@@ -122,23 +112,44 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      *             security policy requirements
      */
     protected void decodeRequest(AttributeQueryContext requestContext) throws ProfileException, SecurityPolicyException {
+        if (log.isDebugEnabled()) {
+            log.debug("Decoding incomming request");
+        }
         MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(BINDING);
         if (decoder == null) {
             throw new ProfileException("No request decoder was registered for binding type: " + BINDING);
         }
-
         super.populateMessageDecoder(decoder);
+
         decoder.setRequest(requestContext.getProfileRequest().getRawRequest());
         requestContext.setMessageDecoder(decoder);
 
         try {
             decoder.decode();
             if (log.isDebugEnabled()) {
-                log.debug("decoded http servlet request");
+                log.debug("Decoded request");
             }
         } catch (BindingException e) {
             log.error("Error decoding attribute query message", e);
             throw new ProfileException("Error decoding attribute query message");
+        } finally {
+            // Set as much information as can be retrieved from the decoded message
+            SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
+            requestContext.setRelyingPartyId(securityPolicy.getIssuer());
+
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
+            requestContext.setRelyingPartyConfiguration(rpConfig);
+
+            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+
+            requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
+
+            requestContext.setAssertingPartyRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
+
+            requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
+                    .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
+
+            requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
         }
     }
 
@@ -155,6 +166,12 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     protected AttributeStatement buildAttributeStatement(AttributeQueryContext requestContext) throws ProfileException,
             AttributeRequestException {
 
+        if (log.isDebugEnabled()) {
+            log.debug("Creating attribute statement in response to SAML request "
+                    + requestContext.getSamlRequest().getID() + " from relying party "
+                    + requestContext.getRelyingPartyId());
+        }
+
         try {
             AttributeQueryConfiguration profileConfiguration = requestContext.getProfileConfiguration();
             if (profileConfiguration == null) {
@@ -165,6 +182,21 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
+            ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> attributeRequestContext = buildAttributeRequestContext(requestContext);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Resolving principal name for subject of SAML request "
+                        + requestContext.getSamlRequest().getID() + " from relying party "
+                        + requestContext.getRelyingPartyId());
+            }
+            String principal = attributeAuthority.getPrincipal(attributeRequestContext);
+            requestContext.setPrincipalName(principal);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Resolving attributes for principal " + principal + " of SAML request "
+                        + requestContext.getSamlRequest().getID() + " from relying party "
+                        + requestContext.getRelyingPartyId());
+            }
             Map<String, BaseAttribute> principalAttributes = attributeAuthority
                     .getAttributes(buildAttributeRequestContext(requestContext));
 
@@ -173,7 +205,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             return attributeAuthority.buildAttributeStatement(requestContext.getSamlRequest(), principalAttributes
                     .values());
         } catch (AttributeRequestException e) {
-            log.error("Error resolving attributes", e);
+            log.error("Error resolving attributes for SAML request " + requestContext.getSamlRequest().getID()
+                    + " from relying party " + requestContext.getRelyingPartyId(), e);
             throw e;
         }
     }
@@ -191,6 +224,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(
                 getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), requestContext.getSamlRequest());
 
+        queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
+        queryContext.setPrincipalName(requestContext.getPrincipalName());
+        queryContext.setProfileConfiguration(requestContext.getProfileConfiguration());
+        queryContext.setRequest(requestContext.getProfileRequest());
+
         Session userSession = getSessionManager().getSession(getUserSessionId(requestContext.getProfileRequest()));
         if (userSession != null) {
             queryContext.setUserSession(userSession);
@@ -203,9 +241,6 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             }
         }
 
-        queryContext.setProfileConfiguration(requestContext.getProfileConfiguration());
-        queryContext.setRequest(requestContext.getProfileRequest());
-
         return queryContext;
     }
 
@@ -217,6 +252,10 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      * @throws ProfileException thrown if no message encoder is registered for this profiles binding
      */
     protected void encodeResponse(AttributeQueryContext requestContext) throws ProfileException {
+        if (log.isDebugEnabled()) {
+            log.debug("Encoding response to SAML request " + requestContext.getSamlRequest().getID()
+                    + " from relying party " + requestContext.getRelyingPartyId());
+        }
         MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(BINDING);
         if (encoder == null) {
             throw new ProfileException("No response encoder was registered for binding type: " + BINDING);
@@ -226,6 +265,13 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         encoder.setResponse(requestContext.getProfileResponse().getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
         requestContext.setMessageEncoder(encoder);
+
+        try {
+            encoder.encode();
+        } catch (BindingException e) {
+            throw new ProfileException("Unable to encode response to relying party: "
+                    + requestContext.getRelyingPartyId(), e);
+        }
     }
 
     /** Basic data structure used to accumulate information as a request is being processed. */

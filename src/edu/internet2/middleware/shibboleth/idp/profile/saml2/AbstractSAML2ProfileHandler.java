@@ -19,15 +19,16 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
-import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.log.Level;
 import org.opensaml.saml2.core.Advice;
 import org.opensaml.saml2.core.Assertion;
@@ -52,6 +53,7 @@ import org.opensaml.saml2.metadata.AuthnAuthorityDescriptor;
 import org.opensaml.saml2.metadata.NameIDFormat;
 import org.opensaml.saml2.metadata.PDPDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.XMLObjectBuilder;
@@ -61,6 +63,9 @@ import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.util.DatatypeHelper;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
+import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
@@ -78,6 +83,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
     /** URI for the SAML 2 protocol. */
     public static final String SAML20_PROTOCOL_URI = "urn:oasis:names:tc:SAML:2.0:protocol";
+
+    /** Class logger. */
+    private Logger log = Logger.getLogger(AbstractSAML2ProfileHandler.class);
 
     /** For building response. */
     private SAMLObjectBuilder<Response> responseBuilder;
@@ -301,6 +309,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         // create the SAML response and add the assertion
         Response samlResponse = getResponseBuilder().buildObject();
+        samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
 
         samlResponse.getAssertions().add(assertion);
@@ -323,7 +332,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @return the built assertion
      */
     protected Assertion buildAssertion(SAML2ProfileRequestContext requestContext, DateTime issueInstant) {
-
         Assertion assertion = getAssertionBuilder().buildObject();
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(issueInstant);
@@ -407,8 +415,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected void populateStatusResponse(SAML2ProfileRequestContext requestContext, StatusResponseType response) {
         response.setID(getIdGenerator().generateIdentifier());
-        response.setInResponseTo(requestContext.getSamlRequest().getID());
-        response.setIssueInstant(response.getIssueInstant());
+        if (requestContext.getSamlRequest() != null) {
+            response.setInResponseTo(requestContext.getSamlRequest().getID());
+        }
         response.setVersion(SAMLVersion.VERSION_20);
         response.setIssuer(buildEntityIssuer(requestContext));
     }
@@ -419,23 +428,67 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @param requestContext current request context
      * @param assertion assertion to sign
+     * 
+     * @throws ProfileException thrown if the metadata can not be located for the relying party or, if signing is
+     *             required, if a signing credential is not configured
      */
-    protected void signAssertion(SAML2ProfileRequestContext requestContext, Assertion assertion) {
+    protected void signAssertion(SAML2ProfileRequestContext requestContext, Assertion assertion)
+            throws ProfileException {
+        if (log.isDebugEnabled()) {
+            log.debug("Determining if SAML assertion to relying party " + requestContext.getRelyingPartyId()
+                    + " should be signed");
+        }
+
+        boolean signAssertion = false;
+
+        RoleDescriptor relyingPartyRole;
+        try {
+            relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
+                    requestContext.getRelyingPartyRole(), SAML20_PROTOCOL_URI);
+        } catch (MetadataProviderException e) {
+            throw new ProfileException("Unable to lookup entity metadata for relying party "
+                    + requestContext.getRelyingPartyId());
+        }
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
-        if (!profileConfig.getSignAssertions()) {
+        if (relyingPartyRole instanceof SPSSODescriptor) {
+            SPSSODescriptor ssoDescriptor = (SPSSODescriptor) relyingPartyRole;
+            if (ssoDescriptor.getWantAssertionsSigned() != null) {
+                signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
+                if (log.isDebugEnabled()) {
+                    log.debug("Entity metadata for relying party " + requestContext.getRelyingPartyId()
+                            + " indicates to sign assertions: " + signAssertion);
+                }
+            }
+        } else if (profileConfig.getSignAssertions()) {
+            signAssertion = true;
+            log.debug("IdP relying party configuration "
+                    + requestContext.getRelyingPartyConfiguration().getRelyingPartyId()
+                    + " indicates to sign assertions: " + signAssertion);
+        }
+
+        if (!signAssertion) {
             return;
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("Determining signing credntial for assertion to relying party "
+                    + requestContext.getRelyingPartyId());
+        }
         Credential signatureCredential = profileConfig.getSigningCredential();
         if (signatureCredential == null) {
             signatureCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
         }
 
         if (signatureCredential == null) {
-            return;
+            throw new ProfileException("No signing credential is specified for relying party configuration "
+                    + requestContext.getRelyingPartyConfiguration().getProviderId()
+                    + " or it's SAML2 attribute query profile configuration");
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("Signing assertion to relying party " + requestContext.getRelyingPartyId());
+        }
         SAMLObjectContentReference contentRef = new SAMLObjectContentReference(assertion);
         Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
         signature.getContentReferences().add(contentRef);
@@ -455,7 +508,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @return a Status object.
      */
     protected Status buildStatus(String topLevelCode, String secondLevelCode, String secondLevelFailureMessage) {
-
         Status status = getStatusBuilder().buildObject();
 
         StatusCode statusCode = getStatusCodeBuilder().buildObject();
@@ -484,9 +536,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @param confirmationMethod subject confirmation method used for the subject
      * 
      * @return SAML subject for the user for the service provider
+     * 
+     * @throws ProfileException thrown if a NameID can not be created either because there was a problem encoding the
+     *             name ID attribute or because there are no supported name formats
      */
-    protected Subject buildSubject(SAML2ProfileRequestContext requestContext, String confirmationMethod) {
-        NameID nameID = requestContext.getSubjectNameID();
+    protected Subject buildSubject(SAML2ProfileRequestContext requestContext, String confirmationMethod)
+            throws ProfileException {
+        NameID nameID = buildNameId(requestContext);
+        requestContext.setSubjectNameID(nameID);
         // TODO handle encryption
 
         SubjectConfirmation subjectConfirmation = getSubjectConfirmationBuilder().buildObject();
@@ -500,26 +557,53 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
-     * Constructs an SAML response message carrying a request error.
+     * Builds a NameID appropriate for this request. NameIDs are built by inspecting the SAML request and metadata,
+     * picking a name format that was requested by the relying party or is mutually supported by both the relying party
+     * and asserting party as described in their metadata entries. Once a set of supported name formats is determined
+     * the principals attributes are inspected for an attribtue supported an attribute encoder whose category is one of
+     * the supported name formats.
      * 
      * @param requestContext current request context
-     * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
-     * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
-     *            null, no second-level Status element will be set.
-     * @param secondLevelFailureMessage An optional second-level failure message
      * 
-     * @return the constructed error response
+     * @return the NameID appropriate for this request
+     * 
+     * @throws ProfileException thrown if a NameID can not be created either because there was a problem encoding the
+     *             name ID attribute or because there are no supported name formats
      */
-    protected Response buildErrorResponse(SAML2ProfileRequestContext requestContext, String topLevelCode,
-            String secondLevelCode, String secondLevelFailureMessage) {
-        Response samlResponse = getResponseBuilder().buildObject();
-        samlResponse.setIssueInstant(new DateTime());
-        populateStatusResponse(requestContext, samlResponse);
+    protected NameID buildNameId(SAML2ProfileRequestContext requestContext) throws ProfileException {
+        if (log.isDebugEnabled()) {
+            log.debug("Building assertion NameID for principal/relying party:" + requestContext.getPrincipalName()
+                    + "/" + requestContext.getRelyingPartyId());
+        }
+        Map<String, BaseAttribute> principalAttributes = requestContext.getPrincipalAttributes();
+        List<String> supportedNameFormats = getNameIDFormat(requestContext);
 
-        Status status = buildStatus(topLevelCode, secondLevelCode, secondLevelFailureMessage);
-        samlResponse.setStatus(status);
+        if (log.isDebugEnabled()) {
+            log.debug("Supported NameID formats: " + supportedNameFormats);
+        }
 
-        return samlResponse;
+        if (principalAttributes != null && supportedNameFormats != null) {
+            try {
+                AttributeEncoder<NameID> nameIdEncoder = null;
+                for (BaseAttribute attribute : principalAttributes.values()) {
+                    for (String nameFormat : supportedNameFormats) {
+                        nameIdEncoder = attribute.getEncoderByCategory(nameFormat);
+                        if (nameIdEncoder != null) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Using attribute " + attribute.getId() + " suppoting NameID format "
+                                        + nameFormat + " to create the NameID for principal "
+                                        + requestContext.getPrincipalName());
+                            }
+                            return nameIdEncoder.encode(attribute);
+                        }
+                    }
+                }
+            } catch (AttributeEncodingException e) {
+                throw new ProfileException("Unable to encode NameID attribute", e);
+            }
+        }
+
+        throw new ProfileException("No principal attributes support NameID construction");
     }
 
     /**
@@ -536,7 +620,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         try {
             RoleDescriptor assertingPartyRole = getMetadataProvider().getRole(requestContext.getAssertingPartyId(),
-                    requestContext.getAssertingPartyRole(), SAMLConstants.SAML20P_NS);
+                    requestContext.getAssertingPartyRole(), SAML20_PROTOCOL_URI);
             List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
 
             String nameFormat = null;
@@ -554,7 +638,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
             if (nameFormats.isEmpty()) {
                 RoleDescriptor relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
-                        requestContext.getRelyingPartyRole(), SAMLConstants.SAML20P_NS);
+                        requestContext.getRelyingPartyRole(), SAML20_PROTOCOL_URI);
                 List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
 
                 assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
@@ -602,6 +686,29 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
+     * Constructs an SAML response message carrying a request error.
+     * 
+     * @param requestContext current request context
+     * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
+     * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
+     *            null, no second-level Status element will be set.
+     * @param secondLevelFailureMessage An optional second-level failure message
+     * 
+     * @return the constructed error response
+     */
+    protected Response buildErrorResponse(SAML2ProfileRequestContext requestContext, String topLevelCode,
+            String secondLevelCode, String secondLevelFailureMessage) {
+        Response samlResponse = getResponseBuilder().buildObject();
+        samlResponse.setIssueInstant(new DateTime());
+        populateStatusResponse(requestContext, samlResponse);
+
+        Status status = buildStatus(topLevelCode, secondLevelCode, secondLevelFailureMessage);
+        samlResponse.setStatus(status);
+
+        return samlResponse;
+    }
+
+    /**
      * Writes an aduit log entry indicating the successful response to the attribute request.
      * 
      * @param context current request context
@@ -627,9 +734,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @param <ResponseType> type of SAML 2 response
      * @param <ProfileConfigurationType> configuration type for this profile
      */
-    protected class SAML2ProfileRequestContext<RequestType extends RequestAbstractType, 
-                                               ResponseType extends StatusResponseType, 
-                                               ProfileConfigurationType extends AbstractSAML2ProfileConfiguration>
+    protected class SAML2ProfileRequestContext<RequestType extends RequestAbstractType, ResponseType extends StatusResponseType, ProfileConfigurationType extends AbstractSAML2ProfileConfiguration>
             extends SAMLProfileRequestContext {
 
         /** SAML request message. */

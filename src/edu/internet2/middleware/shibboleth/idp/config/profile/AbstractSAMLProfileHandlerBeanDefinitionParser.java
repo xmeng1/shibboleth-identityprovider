@@ -34,5 +34,7 @@ public abstract class AbstractSAMLProfileHandlerBeanDefinitionParser extends
         builder.addPropertyReference("messageDecoderFactory", config.getAttributeNS(null, "messageDecoderFactoryId"));
 
         builder.addPropertyReference("messageEncoderFactory", config.getAttributeNS(null, "messageEncoderFactoryId"));
+        
+        builder.addPropertyReference("idGenerator", config.getAttributeNS(null, "idGeneratorId"));
     }
 }

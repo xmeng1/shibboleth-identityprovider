@@ -3,16 +3,19 @@
 <AttributeResolver xmlns="urn:mace:shibboleth:2.0:resolver"
                    xmlns:resolver="urn:mace:shibboleth:2.0:resolver"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xmlns:pc="urn:mace:shibboleth:2.0:resolver:pc:direct"
+                   xmlns:pc="urn:mace:shibboleth:2.0:resolver:pc"
                    xmlns:simple="urn:mace:shibboleth:2.0:resolver:ad:simple"
 	               xmlns:static="urn:mace:shibboleth:2.0:resolver:dc:static"
+                   xmlns:enc="urn:mace:shibboleth:2.0:attribute:encoder"
 	               xsi:schemaLocation="urn:mace:shibboleth:2.0:resolver classpath:/schema/shibboleth-2.0-attribute-resolver.xsd
-                                       urn:mace:shibboleth:2.0:resolver:pc:direct classpath:/schema/shibboleth-2.0-attribute-resolver-pc-direct.xsd
+                                       urn:mace:shibboleth:2.0:resolver:pc classpath:/schema/shibboleth-2.0-attribute-resolver-pc.xsd
                                        urn:mace:shibboleth:2.0:resolver:ad:simple classpath:/schema/shibboleth-2.0-attribute-resolver-ad-simple.xsd
-                                       urn:mace:shibboleth:2.0:resolver:dc:static classpath:/schema/shibboleth-2.0-attribute-resolver-dc-static.xsd">
+                                       urn:mace:shibboleth:2.0:resolver:dc:static classpath:/schema/shibboleth-2.0-attribute-resolver-dc-static.xsd
+                                       urn:mace:shibboleth:2.0:attribute:encoder classpath:/schema/shibboleth-2.0-attribute-encoder.xsd">
                                        
     <resolver:AttributeDefinition xsi:type="simple:Simple" id="uid">
         <resolver:DataConnectorDependency ref="static" />
+        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" />
     </resolver:AttributeDefinition>
     
     <resolver:AttributeDefinition xsi:type="simple:Simple" id="cn">

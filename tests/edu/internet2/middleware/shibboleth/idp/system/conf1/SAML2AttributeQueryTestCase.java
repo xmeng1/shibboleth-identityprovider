@@ -24,6 +24,7 @@ import org.opensaml.common.SAMLVersion;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.ws.soap.common.SOAPObjectBuilder;
 import org.opensaml.ws.soap.soap11.Body;
@@ -69,8 +70,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Requester"));
-        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
+        assertTrue(response.contains(StatusCode.REQUESTER_URI));
+        assertTrue(response.contains(StatusCode.REQUEST_DENIED_URI));
     }
     
     /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
@@ -95,8 +96,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Requester"));
-        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
+        assertTrue(response.contains(StatusCode.RESPONDER_URI));
+        assertTrue(response.contains(StatusCode.INVALID_ATTR_NAME_VALUE_URI));
     }
     
     /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */

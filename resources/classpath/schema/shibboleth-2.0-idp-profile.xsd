@@ -95,6 +95,16 @@
                         </documentation>
                     </annotation>
                 </attribute>
+                <attribute name="idGeneratorId" type="string" default="shibboleth.IdGenerator">
+                    <annotation>
+                        <documentation>
+                            The component ID of a generator used to generated things like response and assertion IDs.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </documentation>
+                    </annotation>
+                </attribute>
             </extension>
         </complexContent>
     </complexType>

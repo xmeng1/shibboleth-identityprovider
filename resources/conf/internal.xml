@@ -56,6 +56,10 @@
             </list>
         </constructor-arg>
     </bean>
+    
+    <bean id="shibboleth.IdGenerator" class="org.opensaml.common.impl.SecureRandomIdentifierGenerator">
+        <constructor-arg value="SHA1PRNG" />
+    </bean>
 
     <bean id="shibboleth.VelocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean" >
         <property name="velocityProperties">
