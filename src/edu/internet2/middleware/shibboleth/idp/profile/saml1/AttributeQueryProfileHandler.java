@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.profile.saml2;
+package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -27,44 +27,42 @@ import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
-import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
-import org.opensaml.saml2.core.AttributeQuery;
-import org.opensaml.saml2.core.AttributeStatement;
-import org.opensaml.saml2.core.NameID;
-import org.opensaml.saml2.core.Response;
-import org.opensaml.saml2.core.Statement;
-import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.Subject;
+import org.opensaml.saml1.binding.decoding.HTTPSOAP11Decoder;
+import org.opensaml.saml1.binding.encoding.HTTPSOAP11Encoder;
+import org.opensaml.saml1.core.AttributeQuery;
+import org.opensaml.saml1.core.AttributeStatement;
+import org.opensaml.saml1.core.NameIdentifier;
+import org.opensaml.saml1.core.Response;
+import org.opensaml.saml1.core.Statement;
+import org.opensaml.saml1.core.StatusCode;
+import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.ws.security.SecurityPolicyException;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
-import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
+import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AttributeQueryConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
- * SAML 2.0 Attribute Query profile handler.
+ * SAML 1 Attribute Query profile handler.
  */
-public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
+public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** Class logger. */
-    private static Logger log = Logger.getLogger(AttributeQueryProfileHandler.class);
-
-    /** SAML binding URI. */
-    private static final String BINDING = "urn:oasis:names:tc:SAML:2.0:bindings:SOAP";
+    private final Logger log = Logger.getLogger(AttributeQueryProfileHandler.class);
 
     /** {@inheritDoc} */
     public String getProfileId() {
-        return "urn:mace:shibboleth:2.0:idp:profiles:saml2:query:attribute";
+        return "urn:mace:shibboleth:2.0:idp:profiles:saml1:query:attribute";
     }
 
     /** {@inheritDoc} */
@@ -77,30 +75,19 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         try {
             decodeRequest(requestContext);
 
-            // Lookup principal name and attributes, create attribute statement from information
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAttributeStatement(requestContext));
 
-            // create the assertion subject
-            Subject assertionSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches");
-
-            // create the SAML response
-            samlResponse = buildResponse(requestContext, assertionSubject, statements);
+            samlResponse = buildResponse(requestContext, statements);
         } catch (SecurityPolicyException e) {
-            samlResponse = buildErrorResponse(requestContext, StatusCode.REQUESTER_URI, StatusCode.REQUEST_DENIED_URI,
-                    e.getMessage());
+            samlResponse = buildErrorResponse(requestContext, StatusCode.REQUESTER, StatusCode.REQUEST_DENIED, e
+                    .getMessage());
         } catch (AttributeRequestException e) {
-            samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER_URI,
-                    StatusCode.INVALID_ATTR_NAME_VALUE_URI, e.getMessage());
+            samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER, null, e.getMessage());
         } catch (ProfileException e) {
-            samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
-                    e.getMessage());
+            samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER, StatusCode.REQUEST_DENIED, e
+                    .getMessage());
         }
-
-        requestContext.setSamlResponse(samlResponse);
-
-        encodeResponse(requestContext);
-        writeAuditLogEntry(requestContext);
     }
 
     /**
@@ -170,34 +157,31 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             AttributeRequestException {
 
         if (log.isDebugEnabled()) {
-            log.debug("Creating attribute statement in response to SAML request "
-                    + requestContext.getSamlRequest().getID() + " from relying party "
+            log.debug("Creating attribute statement in response to SAML request  from relying party "
                     + requestContext.getRelyingPartyId());
         }
 
         try {
             AttributeQueryConfiguration profileConfiguration = requestContext.getProfileConfiguration();
             if (profileConfiguration == null) {
-                log.error("No SAML 2 attribute query profile configuration is defined for relying party: "
+                log.error("No SAML 1 attribute query profile configuration is defined for relying party: "
                         + requestContext.getRelyingPartyId());
-                throw new AttributeRequestException("SAML 2 attribute query is not configured for this relying party");
+                throw new AttributeRequestException("SAML 1 attribute query is not configured for this relying party");
             }
 
-            SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
+            SAML1AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
-            ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> attributeRequestContext = buildAttributeRequestContext(requestContext);
+            ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> attributeRequestContext = buildAttributeRequestContext(requestContext);
 
             if (log.isDebugEnabled()) {
-                log.debug("Resolving principal name for subject of SAML request "
-                        + requestContext.getSamlRequest().getID() + " from relying party "
+                log.debug("Resolving principal name for subject of SAML request from relying party "
                         + requestContext.getRelyingPartyId());
             }
             String principal = attributeAuthority.getPrincipal(attributeRequestContext);
             requestContext.setPrincipalName(principal);
 
             if (log.isDebugEnabled()) {
-                log.debug("Resolving attributes for principal " + principal + " of SAML request "
-                        + requestContext.getSamlRequest().getID() + " from relying party "
+                log.debug("Resolving attributes for principal " + principal + " of SAML request from relying party "
                         + requestContext.getRelyingPartyId());
             }
             Map<String, BaseAttribute> principalAttributes = attributeAuthority
@@ -205,11 +189,16 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             requestContext.setPrincipalAttributes(principalAttributes);
 
-            return attributeAuthority.buildAttributeStatement(requestContext.getSamlRequest(), principalAttributes
-                    .values());
+            AttributeStatement statment = attributeAuthority.buildAttributeStatement(requestContext.getSamlRequest(),
+                    principalAttributes.values());
+
+            Subject statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches");
+            statment.setSubject(statementSubject);
+
+            return statment;
         } catch (AttributeRequestException e) {
-            log.error("Error resolving attributes for SAML request " + requestContext.getSamlRequest().getID()
-                    + " from relying party " + requestContext.getRelyingPartyId(), e);
+            log.error("Error resolving attributes for SAML request from relying party "
+                    + requestContext.getRelyingPartyId(), e);
             throw e;
         }
     }
@@ -221,10 +210,10 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @return created query context
      */
-    protected ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> buildAttributeRequestContext(
+    protected ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> buildAttributeRequestContext(
             AttributeQueryContext requestContext) {
 
-        ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(
+        ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
                 getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), requestContext.getSamlRequest());
 
         queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
@@ -256,12 +245,13 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void encodeResponse(AttributeQueryContext requestContext) throws ProfileException {
         if (log.isDebugEnabled()) {
-            log.debug("Encoding response to SAML request " + requestContext.getSamlRequest().getID()
-                    + " from relying party " + requestContext.getRelyingPartyId());
+            log.debug("Encoding response to SAML request from relying party " + requestContext.getRelyingPartyId());
         }
-        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(BINDING);
+        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(
+                HTTPSOAP11Encoder.BINDING_URI);
         if (encoder == null) {
-            throw new ProfileException("No response encoder was registered for binding type: " + BINDING);
+            throw new ProfileException("No response encoder was registered for binding type: "
+                    + HTTPSOAP11Encoder.BINDING_URI);
         }
 
         super.populateMessageEncoder(encoder);
@@ -279,7 +269,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** Basic data structure used to accumulate information as a request is being processed. */
     protected class AttributeQueryContext extends
-            SAML2ProfileRequestContext<AttributeQuery, Response, AttributeQueryConfiguration> {
+            SAML1ProfileRequestContext<AttributeQuery, Response, AttributeQueryConfiguration> {
 
         /**
          * Constructor.

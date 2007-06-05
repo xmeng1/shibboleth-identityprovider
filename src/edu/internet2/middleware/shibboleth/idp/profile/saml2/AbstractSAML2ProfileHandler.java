@@ -29,6 +29,7 @@ import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
+import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.log.Level;
 import org.opensaml.saml2.core.Advice;
 import org.opensaml.saml2.core.Assertion;
@@ -80,9 +81,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
     /** SAML Version for this profile handler. */
     public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
-
-    /** URI for the SAML 2 protocol. */
-    public static final String SAML20_PROTOCOL_URI = "urn:oasis:names:tc:SAML:2.0:protocol";
 
     /** Class logger. */
     private Logger log = Logger.getLogger(AbstractSAML2ProfileHandler.class);
@@ -444,7 +442,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         RoleDescriptor relyingPartyRole;
         try {
             relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
-                    requestContext.getRelyingPartyRole(), SAML20_PROTOCOL_URI);
+                    requestContext.getRelyingPartyRole(), SAMLConstants.SAML20P_NS);
         } catch (MetadataProviderException e) {
             throw new ProfileException("Unable to lookup entity metadata for relying party "
                     + requestContext.getRelyingPartyId());
@@ -576,7 +574,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     + "/" + requestContext.getRelyingPartyId());
         }
         Map<String, BaseAttribute> principalAttributes = requestContext.getPrincipalAttributes();
-        List<String> supportedNameFormats = getNameIDFormat(requestContext);
+        List<String> supportedNameFormats = getNameFormats(requestContext);
 
         if (log.isDebugEnabled()) {
             log.debug("Supported NameID formats: " + supportedNameFormats);
@@ -615,12 +613,12 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem determing the NameID format to use
      */
-    protected List<String> getNameIDFormat(SAML2ProfileRequestContext requestContext) throws ProfileException {
+    protected List<String> getNameFormats(SAML2ProfileRequestContext requestContext) throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
         try {
             RoleDescriptor assertingPartyRole = getMetadataProvider().getRole(requestContext.getAssertingPartyId(),
-                    requestContext.getAssertingPartyRole(), SAML20_PROTOCOL_URI);
+                    requestContext.getAssertingPartyRole(), SAMLConstants.SAML20P_NS);
             List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
 
             String nameFormat = null;
@@ -638,7 +636,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
             if (nameFormats.isEmpty()) {
                 RoleDescriptor relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
-                        requestContext.getRelyingPartyRole(), SAML20_PROTOCOL_URI);
+                        requestContext.getRelyingPartyRole(), SAMLConstants.SAML20P_NS);
                 List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
 
                 assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
