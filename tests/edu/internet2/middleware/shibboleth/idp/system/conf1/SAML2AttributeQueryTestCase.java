@@ -70,7 +70,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains(StatusCode.REQUESTER_URI));
+        assertTrue(response.contains(StatusCode.RESPONDER_URI));
         assertTrue(response.contains(StatusCode.REQUEST_DENIED_URI));
     }
     
@@ -97,7 +97,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
         String response = servletResponse.getContentAsString();
         assertTrue(response.contains(StatusCode.RESPONDER_URI));
-        assertTrue(response.contains(StatusCode.INVALID_ATTR_NAME_VALUE_URI));
+        assertTrue(response.contains(StatusCode.REQUEST_DENIED_URI));
     }
     
     /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
@@ -122,9 +122,9 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        System.out.println(response);
-//        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Requester"));
-//        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
+        assertTrue(response.contains(StatusCode.SUCCESS_URI));
+        assertTrue(response.contains("Name=\"cn\""));
+        assertTrue(response.contains("Name=\"uid\""));
     }
     
     /**
