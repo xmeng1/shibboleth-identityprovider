@@ -86,15 +86,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             // create the SAML response
             samlResponse = buildResponse(requestContext, assertionSubject, statements);
-        } catch (SecurityPolicyException e) {
-            samlResponse = buildErrorResponse(requestContext, StatusCode.REQUESTER_URI, StatusCode.REQUEST_DENIED_URI,
-                    e.getMessage());
-        } catch (AttributeRequestException e) {
-            samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER_URI,
-                    StatusCode.INVALID_ATTR_NAME_VALUE_URI, e.getMessage());
         } catch (ProfileException e) {
-            samlResponse = buildErrorResponse(requestContext, StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
-                    e.getMessage());
+            samlResponse = buildErrorResponse(requestContext);
         }
 
         requestContext.setSamlResponse(samlResponse);
@@ -109,10 +102,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      * @param requestContext request context contianing the request to decode
      * 
      * @throws ProfileException throw if there is a problem decoding the request
-     * @throws SecurityPolicyException thrown if the message was decoded properly but did not meet the necessary
-     *             security policy requirements
      */
-    protected void decodeRequest(AttributeQueryContext requestContext) throws ProfileException, SecurityPolicyException {
+    protected void decodeRequest(AttributeQueryContext requestContext) throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Decoding incomming request");
         }
@@ -134,7 +125,13 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             }
         } catch (BindingException e) {
             log.error("Error decoding attribute query message", e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error decoding message"));
             throw new ProfileException("Error decoding attribute query message");
+        } catch (SecurityPolicyException e) {
+            log.error("Message did not meet security policy requirements", e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
+                    "Message did not meet security policy requirements"));
+            throw new ProfileException("Message did not meet security policy requirements", e);
         } finally {
             // Set as much information as can be retrieved from the decoded message
             SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
@@ -154,97 +151,6 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
         }
-    }
-
-    /**
-     * Executes a query for attributes and builds a SAML attribute statement from the results.
-     * 
-     * @param requestContext current request context
-     * 
-     * @return attribute statement resulting from the query
-     * 
-     * @throws ProfileException thrown if there is a problem making the query
-     * @throws AttributeRequestException thrown if there is a problem resolving attributes
-     */
-    protected AttributeStatement buildAttributeStatement(AttributeQueryContext requestContext) throws ProfileException,
-            AttributeRequestException {
-
-        if (log.isDebugEnabled()) {
-            log.debug("Creating attribute statement in response to SAML request "
-                    + requestContext.getSamlRequest().getID() + " from relying party "
-                    + requestContext.getRelyingPartyId());
-        }
-
-        try {
-            AttributeQueryConfiguration profileConfiguration = requestContext.getProfileConfiguration();
-            if (profileConfiguration == null) {
-                log.error("No SAML 2 attribute query profile configuration is defined for relying party: "
-                        + requestContext.getRelyingPartyId());
-                throw new AttributeRequestException("SAML 2 attribute query is not configured for this relying party");
-            }
-
-            SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
-
-            ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> attributeRequestContext = buildAttributeRequestContext(requestContext);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Resolving principal name for subject of SAML request "
-                        + requestContext.getSamlRequest().getID() + " from relying party "
-                        + requestContext.getRelyingPartyId());
-            }
-            String principal = attributeAuthority.getPrincipal(attributeRequestContext);
-            requestContext.setPrincipalName(principal);
-
-            if (log.isDebugEnabled()) {
-                log.debug("Resolving attributes for principal " + principal + " of SAML request "
-                        + requestContext.getSamlRequest().getID() + " from relying party "
-                        + requestContext.getRelyingPartyId());
-            }
-            Map<String, BaseAttribute> principalAttributes = attributeAuthority
-                    .getAttributes(buildAttributeRequestContext(requestContext));
-
-            requestContext.setPrincipalAttributes(principalAttributes);
-
-            return attributeAuthority.buildAttributeStatement(requestContext.getSamlRequest(), principalAttributes
-                    .values());
-        } catch (AttributeRequestException e) {
-            log.error("Error resolving attributes for SAML request " + requestContext.getSamlRequest().getID()
-                    + " from relying party " + requestContext.getRelyingPartyId(), e);
-            throw e;
-        }
-    }
-
-    /**
-     * Creates an attribute query context from the current profile request context.
-     * 
-     * @param requestContext current profile request
-     * 
-     * @return created query context
-     */
-    protected ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> buildAttributeRequestContext(
-            AttributeQueryContext requestContext) {
-
-        ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(
-                getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), requestContext.getSamlRequest());
-
-        queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
-        queryContext.setPrincipalName(requestContext.getPrincipalName());
-        queryContext.setProfileConfiguration(requestContext.getProfileConfiguration());
-        queryContext.setRequest(requestContext.getProfileRequest());
-
-        Session userSession = getSessionManager().getSession(getUserSessionId(requestContext.getProfileRequest()));
-        if (userSession != null) {
-            queryContext.setUserSession(userSession);
-            ServiceInformation serviceInfo = userSession.getServiceInformation(requestContext.getRelyingPartyId());
-            if (serviceInfo != null) {
-                String principalAuthenticationMethod = serviceInfo.getAuthenticationMethod().getAuthenticationMethod();
-
-                requestContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
-                queryContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
-            }
-        }
-
-        return queryContext;
     }
 
     /**

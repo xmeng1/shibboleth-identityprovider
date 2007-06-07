@@ -33,6 +33,8 @@ import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.log.Level;
 import org.opensaml.saml2.core.Advice;
 import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.AttributeQuery;
+import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.Audience;
 import org.opensaml.saml2.core.AudienceRestriction;
 import org.opensaml.saml2.core.AuthnRequest;
@@ -67,12 +69,16 @@ import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestExce
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
+import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
+import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * Common implementation details for profile handlers.
@@ -291,10 +297,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @return the built response
      * 
      * @throws ProfileException thrown if there is a problem creating the SAML response
-     * @throws AttributeRequestException thrown if there is a problem resolving attributes
      */
     protected Response buildResponse(SAML2ProfileRequestContext requestContext, Subject assertionSubject,
-            List<Statement> statements) throws ProfileException, AttributeRequestException {
+            List<Statement> statements) throws ProfileException {
 
         DateTime issueInstant = new DateTime();
 
@@ -421,6 +426,128 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
+     * Executes a query for attributes and builds a SAML attribute statement from the results.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return attribute statement resulting from the query
+     * 
+     * @throws ProfileException thrown if there is a problem making the query
+     */
+    protected AttributeStatement buildAttributeStatement(SAML2ProfileRequestContext requestContext)
+            throws ProfileException {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Creating attribute statement in response to SAML request "
+                    + requestContext.getSamlRequest().getID() + " from relying party "
+                    + requestContext.getRelyingPartyId());
+        }
+
+        AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
+        SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Resolving principal name for subject of SAML request " + requestContext.getSamlRequest().getID()
+                    + " from relying party " + requestContext.getRelyingPartyId());
+        }
+
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Resolving attributes for principal " + requestContext.getPrincipalName()
+                        + " of SAML request " + requestContext.getSamlRequest().getID() + " from relying party "
+                        + requestContext.getRelyingPartyId());
+            }
+            Map<String, BaseAttribute> principalAttributes = attributeAuthority
+                    .getAttributes(buildAttributeRequestContext(requestContext));
+
+            requestContext.setPrincipalAttributes(principalAttributes);
+
+            if (requestContext.getSamlRequest() instanceof AttributeQuery) {
+                return attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext.getSamlRequest(),
+                        principalAttributes.values());
+            } else {
+                return attributeAuthority.buildAttributeStatement(null, principalAttributes.values());
+            }
+        } catch (AttributeRequestException e) {
+            log.error("Error resolving attributes for SAML request " + requestContext.getSamlRequest().getID()
+                    + " from relying party " + requestContext.getRelyingPartyId(), e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error resolving attributes"));
+            throw new ProfileException("Error resolving attributes for SAML request "
+                    + requestContext.getSamlRequest().getID() + " from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+        }
+    }
+
+    /**
+     * Resolves the principal name of the subject of the request.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if the principal name can not be resolved
+     */
+    protected void resolvePrincipal(SAML2ProfileRequestContext requestContext) throws ProfileException {
+        AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
+        SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Resolving principal name for subject of SAML request " + requestContext.getSamlRequest().getID()
+                    + " from relying party " + requestContext.getRelyingPartyId());
+        }
+
+        try {
+            String principal = attributeAuthority.getPrincipal(buildAttributeRequestContext(requestContext));
+            requestContext.setPrincipalName(principal);
+        } catch (AttributeRequestException e) {
+            log.error("Error resolving attributes for SAML request " + requestContext.getSamlRequest().getID()
+                    + " from relying party " + requestContext.getRelyingPartyId(), e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI,
+                    "Error resolving principal"));
+            throw new ProfileException("Error resolving attributes for SAML request "
+                    + requestContext.getSamlRequest().getID() + " from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+        }
+    }
+
+    /**
+     * Creates an attribute query context from the current profile request context.
+     * 
+     * @param requestContext current profile request
+     * 
+     * @return created query context
+     */
+    protected ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> buildAttributeRequestContext(
+            SAML2ProfileRequestContext requestContext) {
+
+        ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> queryContext;
+        if (requestContext.getSamlRequest() instanceof AttributeQuery) {
+            queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
+                    requestContext.getRelyingPartyConfiguration(), (AttributeQuery) requestContext.getSamlRequest());
+        } else {
+            queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
+                    requestContext.getRelyingPartyConfiguration());
+        }
+
+        queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
+        queryContext.setPrincipalName(requestContext.getPrincipalName());
+        queryContext.setProfileConfiguration(requestContext.getProfileConfiguration());
+        queryContext.setRequest(requestContext.getProfileRequest());
+
+        Session userSession = getSessionManager().getSession(getUserSessionId(requestContext.getProfileRequest()));
+        if (userSession != null) {
+            queryContext.setUserSession(userSession);
+            ServiceInformation serviceInfo = userSession.getServiceInformation(requestContext.getRelyingPartyId());
+            if (serviceInfo != null) {
+                String principalAuthenticationMethod = serviceInfo.getAuthenticationMethod().getAuthenticationMethod();
+
+                requestContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
+                queryContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
+            }
+        }
+
+        return queryContext;
+    }
+
+    /**
      * Signs the given assertion if either the current profile configuration or the relying party configuration contains
      * signing credentials.
      * 
@@ -501,11 +628,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
      * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
      *            null, no second-level Status element will be set.
-     * @param secondLevelFailureMessage An optional second-level failure message
+     * @param failureMessage An optional second-level failure message
      * 
      * @return a Status object.
      */
-    protected Status buildStatus(String topLevelCode, String secondLevelCode, String secondLevelFailureMessage) {
+    protected Status buildStatus(String topLevelCode, String secondLevelCode, String failureMessage) {
         Status status = getStatusBuilder().buildObject();
 
         StatusCode statusCode = getStatusCodeBuilder().buildObject();
@@ -518,9 +645,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             statusCode.setStatusCode(secondLevelStatusCode);
         }
 
-        if (secondLevelFailureMessage != null) {
+        if (failureMessage != null) {
             StatusMessage msg = getStatusMessageBuilder().buildObject();
-            msg.setMessage(secondLevelFailureMessage);
+            msg.setMessage(failureMessage);
             status.setStatusMessage(msg);
         }
 
@@ -597,10 +724,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     }
                 }
             } catch (AttributeEncodingException e) {
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                        "Unable to construct NameID"));
                 throw new ProfileException("Unable to encode NameID attribute", e);
             }
         }
 
+        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
+                "Unable to construct NameID"));
         throw new ProfileException("No principal attributes support NameID construction");
     }
 
@@ -629,6 +760,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     if (assertingPartySupportedFormats.contains(nameFormat)) {
                         nameFormats.add(nameFormat);
                     } else {
+                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
+                                StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + nameFormat));
                         throw new ProfileException("NameID format required by relying party is not supported");
                     }
                 }
@@ -649,6 +782,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             return nameFormats;
 
         } catch (MetadataProviderException e) {
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                    "Unable to lookup entity metadata"));
             throw new ProfileException("Unable to determine lookup entity metadata", e);
         }
     }
@@ -687,21 +822,15 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * Constructs an SAML response message carrying a request error.
      * 
      * @param requestContext current request context
-     * @param topLevelCode The top-level status code. Should be from saml-core-2.0-os, sec. 3.2.2.2
-     * @param secondLevelCode An optional second-level failure code. Should be from saml-core-2.0-is, sec 3.2.2.2. If
-     *            null, no second-level Status element will be set.
-     * @param secondLevelFailureMessage An optional second-level failure message
      * 
      * @return the constructed error response
      */
-    protected Response buildErrorResponse(SAML2ProfileRequestContext requestContext, String topLevelCode,
-            String secondLevelCode, String secondLevelFailureMessage) {
+    protected Response buildErrorResponse(SAML2ProfileRequestContext requestContext) {
         Response samlResponse = getResponseBuilder().buildObject();
         samlResponse.setIssueInstant(new DateTime());
         populateStatusResponse(requestContext, samlResponse);
 
-        Status status = buildStatus(topLevelCode, secondLevelCode, secondLevelFailureMessage);
-        samlResponse.setStatus(status);
+        samlResponse.setStatus(requestContext.getFailureStatus());
 
         return samlResponse;
     }
@@ -746,6 +875,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         /** The NameID of the subject of this request. */
         private NameID subjectNameID;
+
+        /** The request failure status. */
+        private Status failureStatus;
 
         /**
          * Constructor.
@@ -828,6 +960,24 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
          */
         public void setSamlResponse(ResponseType response) {
             samlResponse = response;
+        }
+
+        /**
+         * Gets the status reflecting a request failure.
+         * 
+         * @return status reflecting a request failure
+         */
+        public Status getFailureStatus() {
+            return failureStatus;
+        }
+
+        /**
+         * Sets the status reflecting a request failure.
+         * 
+         * @param status status reflecting a request failure
+         */
+        public void setFailureStatus(Status status) {
+            failureStatus = status;
         }
     }
 }

@@ -193,5 +193,4 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
             throw new UnmarshallingException("Unable to read serialized authentication request");
         }
     }
-
 }

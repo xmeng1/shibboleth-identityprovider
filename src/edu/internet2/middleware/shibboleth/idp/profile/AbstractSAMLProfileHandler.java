@@ -23,6 +23,7 @@ import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.IdentifierGenerator;
+import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.decoding.MessageDecoderFactory;
 import org.opensaml.common.binding.encoding.MessageEncoderFactory;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
@@ -152,8 +153,10 @@ public abstract class AbstractSAMLProfileHandler extends
     
     /**
      * Contextual object used to accumlate information as profile requests are being processed.
+     * 
+     * @param <StatusType> type of Status object
      */
-    protected class SAMLProfileRequestContext extends ShibbolethProfileRequestContext {
+    protected class SAMLProfileRequestContext<StatusType extends SAMLObject> extends ShibbolethProfileRequestContext {
         
         /** Role descriptor name that the asserting party is operating in. */
         private QName assertingPartyRole;
