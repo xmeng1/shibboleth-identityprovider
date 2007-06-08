@@ -24,24 +24,25 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import javolution.util.FastMap;
+
+import org.apache.log4j.Logger;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 
-import org.apache.log4j.Logger;
-import org.springframework.web.servlet.HttpServletBean;
-
 /**
  * Manager responsible for handling authentication requests.
  */
-public class AuthenticationManager extends HttpServletBean {
+//TODO map needed objects into servlet context information and fetch from there
+public class AuthenticationManager extends HttpServlet {
 
     /** log4j. */
     private final Logger log = Logger.getLogger(AuthenticationManager.class);

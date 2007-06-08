@@ -18,10 +18,11 @@ package edu.internet2.middleware.shibboleth.idp.config.profile;
 
 import javax.xml.namespace.QName;
 
+import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.idp.profile.saml2.AuthenticationRequestBrowserPost;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.SSOProfileHandler;
 
 /**
  * Spring bean definition parser for {@link AuthenticationRequestBrowserPost} profile handlers.
@@ -33,13 +34,18 @@ public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2Pro
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
-        return AuthenticationRequestBrowserPost.class;
+        return SSOProfileHandler.class;
     }
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addPropertyReference("authenticationManager", config.getAttributeNS(null, "authenticationManagerId"));
+        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
+                "authenticationManagerPath")));
+
+        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "decodingBinding")));
+
+        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "encodingBinding")));
     }
 }

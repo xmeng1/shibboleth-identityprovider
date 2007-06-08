@@ -28,13 +28,25 @@
         </annotation>
         <complexContent>
             <extension base="idpph:SAML2ProfileHandler">
-                <attribute name="authenticationManagerId" type="string" default="shibboleth.AuthenticationManager">
+                <attribute name="authenticationManagerPath" type="string" default="/AuthnManager">
                     <annotation>
                         <documentation>
-                            The component ID of the authentication manager to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
+                            The context relative path to the authentication manager used by this profile handler.  This should 
+                            match the URL pattern given in the web.xml
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="decodingBinding" type="anyURI" default=" urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+                    <annotation>
+                        <documentation>
+                            The URI of the binding used when decoding requests from relying parties.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="encodingBinding" type="anyURI" default=" urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+                    <annotation>
+                        <documentation>
+                            The URI of the binding used when encoding responses to relying parties.
                         </documentation>
                     </annotation>
                 </attribute>
@@ -57,6 +69,15 @@
         </annotation>
         <complexContent>
             <extension base="idpph:SAMLProfileHandler" />
+        </complexContent>
+    </complexType>
+
+    <complexType name="SAML1AttributeQuery">
+        <annotation>
+            <documentation>Configuration type for SAML 1 Attribute Query profile handlers.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="idpph:SAML1ProfileHandler" />
         </complexContent>
     </complexType>
 

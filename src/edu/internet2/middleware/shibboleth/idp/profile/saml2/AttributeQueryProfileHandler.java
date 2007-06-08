@@ -17,7 +17,6 @@
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -29,8 +28,6 @@ import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
 import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml2.core.AttributeQuery;
-import org.opensaml.saml2.core.AttributeStatement;
-import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
@@ -39,17 +36,11 @@ import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.ws.security.SecurityPolicyException;
 
-import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
-import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
-import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
-import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
-import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * SAML 2.0 Attribute Query profile handler.

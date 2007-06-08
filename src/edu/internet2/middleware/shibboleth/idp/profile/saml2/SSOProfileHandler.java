@@ -59,10 +59,10 @@ import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 /**
  * SAML 2.0 authentication request profile handler.
  */
-public class AuthenticationRequestProfileHandler extends AbstractSAML2ProfileHandler {
+public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(AuthenticationRequestProfileHandler.class);
+    private final Logger log = Logger.getLogger(SSOProfileHandler.class);
 
     /** Builder of AuthnStatement objects. */
     private SAMLObjectBuilder<AuthnStatement> authnStatementBuilder;
@@ -77,7 +77,7 @@ public class AuthenticationRequestProfileHandler extends AbstractSAML2ProfileHan
     private SAMLObjectBuilder<AuthnContextDeclRef> authnContextDeclRefBuilder;
 
     /** URL of the authentication manager servlet. */
-    private String authenticationManagerURL;
+    private String authenticationManagerPath;
 
     /** URI of request decoder. */
     private String decodingBinding;
@@ -88,16 +88,21 @@ public class AuthenticationRequestProfileHandler extends AbstractSAML2ProfileHan
     /**
      * Constructor.
      * 
+     * @param authnManagerPath path to the authentication manager servlet
      * @param decoder URI of the request decoder to use
      * @param encoder URI of the response encoder to use
      */
     @SuppressWarnings("unchecked")
-    public AuthenticationRequestProfileHandler(String decoder, String encoder) {
+    public SSOProfileHandler(String authnManagerPath, String decoder, String encoder) {
         super();
 
-        if (decoder == null || encoder == null) {
-            throw new IllegalArgumentException("Message decoding and encoding binding URI may not be null");
+        if (authnManagerPath == null || decoder == null || encoder == null) {
+            throw new IllegalArgumentException("AuthN manager path, decoding, encoding bindings URI may not be null");
         }
+        
+        authenticationManagerPath = authnManagerPath;
+        decodingBinding = decoder;
+        encodingBinding = encoder;
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) getBuilderFactory().getBuilder(
                 AuthnStatement.DEFAULT_ELEMENT_NAME);
@@ -153,7 +158,7 @@ public class AuthenticationRequestProfileHandler extends AbstractSAML2ProfileHan
 
             HttpSession httpSession = httpRequest.getSession();
             httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
-            RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authenticationManagerURL);
+            RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(httpRequest, response.getRawResponse());
         } catch (MarshallingException e) {
             log.error("Unable to marshall authentication request context");
