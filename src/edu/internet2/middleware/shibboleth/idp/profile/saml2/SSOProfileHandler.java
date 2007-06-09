@@ -56,9 +56,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SS
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 
-/**
- * SAML 2.0 authentication request profile handler.
- */
+/** SAML 2.0 SSO request profile handler. */
 public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** Class logger. */
@@ -113,10 +111,46 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         authnContextDeclRefBuilder = (SAMLObjectBuilder<AuthnContextDeclRef>) getBuilderFactory().getBuilder(
                 AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
     }
+    
+    /**
+     * Convenience method for getting the SAML 2 AuthnStatement builder.
+     * 
+     * @return SAML 2 AuthnStatement builder
+     */
+    public SAMLObjectBuilder<AuthnStatement> getAuthnStatementBuilder(){
+        return authnStatementBuilder;
+    }
+    
+    /**
+     * Convenience method for getting the SAML 2 AuthnContext builder.
+     * 
+     * @return SAML 2 AuthnContext builder
+     */
+    public SAMLObjectBuilder<AuthnContext> getAuthnContextBuilder(){
+        return authnContextBuilder;
+    }
+    
+    /**
+     * Convenience method for getting the SAML 2 AuthnContextClassRef builder.
+     * 
+     * @return SAML 2 AuthnContextClassRef builder
+     */
+    public SAMLObjectBuilder<AuthnContextClassRef> getAuthnContextClassRefBuilder(){
+        return authnContextClassRefBuilder;
+    }
+    
+    /**
+     * Convenience method for getting the SAML 2 AuthnContextDeclRef builder.
+     * 
+     * @return SAML 2 AuthnContextDeclRef builder
+     */
+    public SAMLObjectBuilder<AuthnContextDeclRef> getAuthnContextDeclRefBuilder(){
+        return authnContextDeclRefBuilder;
+    }
 
     /** {@inheritDoc} */
     public String getProfileId() {
-        return "urn:mace:shibboleth:2.0:idp:profiles:saml2:request:authentication";
+        return "urn:mace:shibboleth:2.0:idp:profiles:saml2:request:sso";
     }
 
     /** {@inheritDoc} */
@@ -154,6 +188,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             authnRequest = (AuthnRequest) decoder.getSAMLMessage();
 
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, authnRequest);
+            loginContext.setAuthenticationManagerURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(httpRequest.getRequestURI());
 
             HttpSession httpSession = httpRequest.getSession();
@@ -187,8 +222,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             ProfileResponse<ServletResponse> response) throws ProfileException {
 
         HttpSession httpSession = ((HttpServletRequest) request.getRawRequest()).getSession(true);
+        
         Saml2LoginContext loginContext = (Saml2LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        AuthenticationRequestContext requestContext = buildRequestContext(loginContext, request, response);
+        httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        
+        SSORequestContext requestContext = buildRequestContext(loginContext, request, response);
 
         Response samlResponse;
         try {
@@ -256,9 +294,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @throws ProfileException thrown if there is a problem creating the context
      */
-    protected AuthenticationRequestContext buildRequestContext(Saml2LoginContext loginContext,
+    protected SSORequestContext buildRequestContext(Saml2LoginContext loginContext,
             ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) throws ProfileException {
-        AuthenticationRequestContext requestContext = new AuthenticationRequestContext(request, response);
+        SSORequestContext requestContext = new SSORequestContext(request, response);
 
         try {
             String relyingPartyId = loginContext.getRelyingPartyId();
@@ -296,12 +334,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @return constructed authentication statement
      */
-    protected AuthnStatement buildAuthnStatement(AuthenticationRequestContext requestContext) {
+    protected AuthnStatement buildAuthnStatement(SSORequestContext requestContext) {
         Saml2LoginContext loginContext = requestContext.getLoginContext();
 
         AuthnContext authnContext = buildAuthnContext(requestContext);
 
-        AuthnStatement statement = authnStatementBuilder.buildObject();
+        AuthnStatement statement = getAuthnStatementBuilder().buildObject();
         statement.setAuthnContext(authnContext);
         statement.setAuthnInstant(loginContext.getAuthenticationInstant());
 
@@ -326,8 +364,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @return the built authn context
      */
-    protected AuthnContext buildAuthnContext(AuthenticationRequestContext requestContext) {
-        AuthnContext authnContext = authnContextBuilder.buildObject();
+    protected AuthnContext buildAuthnContext(SSORequestContext requestContext) {
+        AuthnContext authnContext = getAuthnContextBuilder().buildObject();
 
         Saml2LoginContext loginContext = requestContext.getLoginContext();
         AuthnRequest authnRequest = requestContext.getSamlRequest();
@@ -336,7 +374,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (requestedAuthnContext.getAuthnContextClassRefs() != null) {
                 for (AuthnContextClassRef classRef : requestedAuthnContext.getAuthnContextClassRefs()) {
                     if (classRef.getAuthnContextClassRef().equals(loginContext.getAuthenticationMethod())) {
-                        AuthnContextClassRef ref = authnContextClassRefBuilder.buildObject();
+                        AuthnContextClassRef ref = getAuthnContextClassRefBuilder().buildObject();
                         ref.setAuthnContextClassRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextClassRef(ref);
                     }
@@ -344,14 +382,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             } else if (requestedAuthnContext.getAuthnContextDeclRefs() != null) {
                 for (AuthnContextDeclRef declRef : requestedAuthnContext.getAuthnContextDeclRefs()) {
                     if (declRef.getAuthnContextDeclRef().equals(loginContext.getAuthenticationMethod())) {
-                        AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
+                        AuthnContextDeclRef ref = getAuthnContextDeclRefBuilder().buildObject();
                         ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextDeclRef(ref);
                     }
                 }
             }
         } else {
-            AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
+            AuthnContextDeclRef ref = getAuthnContextDeclRefBuilder().buildObject();
             ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
             authnContext.setAuthnContextDeclRef(ref);
         }
@@ -366,7 +404,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @throws ProfileException thrown if no message encoder is registered for this profiles binding
      */
-    protected void encodeResponse(AuthenticationRequestContext requestContext) throws ProfileException {
+    protected void encodeResponse(SSORequestContext requestContext) throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Encoding response to SAML request " + requestContext.getSamlRequest().getID()
                     + " from relying party " + requestContext.getRelyingPartyId());
@@ -390,10 +428,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         }
     }
 
-    /**
-     * Represents the internal state of a SAML 2.0 Authentiation Request while it's being processed by the IdP.
-     */
-    protected class AuthenticationRequestContext extends
+    /** Represents the internal state of a SAML 2.0 SSO Request while it's being processed by the IdP. */
+    protected class SSORequestContext extends
             SAML2ProfileRequestContext<AuthnRequest, Response, SSOConfiguration> {
 
         /** Current login context. */
@@ -405,7 +441,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
          * @param request current profile request
          * @param response current profile response
          */
-        public AuthenticationRequestContext(ProfileRequest<ServletRequest> request,
+        public SSORequestContext(ProfileRequest<ServletRequest> request,
                 ProfileResponse<ServletResponse> response) {
             super(request, response);
         }

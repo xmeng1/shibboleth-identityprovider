@@ -42,9 +42,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
 
-/**
- * SAML 2.0 Attribute Query profile handler.
- */
+/** SAML 2.0 Attribute Query profile handler. */
 public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** Class logger. */
@@ -67,6 +65,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         Response samlResponse;
         try {
             decodeRequest(requestContext);
+            
+            // Resolve attribute query name id to principal name and place in context
+            resolvePrincipal(requestContext);
 
             // Lookup principal name and attributes, create attribute statement from information
             ArrayList<Statement> statements = new ArrayList<Statement>();

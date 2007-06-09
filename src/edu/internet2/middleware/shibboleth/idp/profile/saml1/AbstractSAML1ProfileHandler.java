@@ -31,7 +31,10 @@ import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.log.Level;
 import org.opensaml.saml1.core.Assertion;
+import org.opensaml.saml1.core.AttributeQuery;
+import org.opensaml.saml1.core.AttributeStatement;
 import org.opensaml.saml1.core.Audience;
 import org.opensaml.saml1.core.AudienceRestrictionCondition;
 import org.opensaml.saml1.core.Conditions;
@@ -64,15 +67,18 @@ import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestExce
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
+import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
+import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
+import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
-/**
- * Common implementation details for profile handlers.
- */
+/** Common implementation details for profile handlers. */
 public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHandler {
 
     /** SAML Version for this profile handler. */
@@ -266,10 +272,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @return the built response
      * 
      * @throws ProfileException thrown if there is a problem creating the SAML response
-     * @throws AttributeRequestException thrown if there is a problem resolving attributes
      */
     protected Response buildResponse(SAML1ProfileRequestContext requestContext, List<Statement> statements)
-            throws ProfileException, AttributeRequestException {
+            throws ProfileException {
 
         DateTime issueInstant = new DateTime();
 
@@ -421,10 +426,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     }
                 }
             } catch (AttributeEncodingException e) {
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                        "Unable to construct NameIdentifier"));
                 throw new ProfileException("Unable to encode NameIdentifier attribute", e);
             }
         }
 
+        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to construct NameID"));
         throw new ProfileException("No principal attributes support NameIdentifier construction");
     }
 
@@ -460,6 +468,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             return nameFormats;
 
         } catch (MetadataProviderException e) {
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to lookup metadata"));
             throw new ProfileException("Unable to determine lookup entity metadata", e);
         }
     }
@@ -497,21 +506,16 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     /**
      * Constructs an SAML response message carrying a request error.
      * 
-     * @param requestContext current request context
-     * @param topLevelCode top-level status code
-     * @param secondLevelCode second-level status code
-     * @param failureMessage An optional second-level failure message
+     * @param requestContext current request context containing the failure status
      * 
      * @return the constructed error response
      */
-    protected Response buildErrorResponse(SAML1ProfileRequestContext requestContext, String topLevelCode,
-            String secondLevelCode, String failureMessage) {
+    protected Response buildErrorResponse(SAML1ProfileRequestContext requestContext) {
         Response samlResponse = getResponseBuilder().buildObject();
         samlResponse.setIssueInstant(new DateTime());
         populateStatusResponse(requestContext, samlResponse);
 
-        Status status = buildStatus(topLevelCode, secondLevelCode, failureMessage);
-        samlResponse.setStatus(status);
+        samlResponse.setStatus(requestContext.getFailureStatus());
 
         return samlResponse;
     }
@@ -561,6 +565,128 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         return status;
+    }
+
+    /**
+     * Executes a query for attributes and builds a SAML attribute statement from the results.
+     * 
+     * @param requestContext current request context
+     * @param subjectConfMethod subject confirmation method
+     * 
+     * @return attribute statement resulting from the query
+     * 
+     * @throws ProfileException thrown if there is a problem making the query
+     */
+    protected AttributeStatement buildAttributeStatement(SAML1ProfileRequestContext requestContext, String subjectConfMethod)
+            throws ProfileException {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Creating attribute statement in response to SAML request from relying party "
+                    + requestContext.getRelyingPartyId());
+        }
+
+        AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
+        SAML1AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
+
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Resolving attributes for principal " + requestContext.getPrincipalName()
+                        + " of SAML request from relying party " + requestContext.getRelyingPartyId());
+            }
+            Map<String, BaseAttribute> principalAttributes = attributeAuthority
+                    .getAttributes(buildAttributeRequestContext(requestContext));
+
+            requestContext.setPrincipalAttributes(principalAttributes);
+
+            AttributeStatement statment;
+            if (requestContext.getSamlRequest() instanceof AttributeQuery) {
+                statment = attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext.getSamlRequest(),
+                        principalAttributes.values());
+            } else {
+                statment = attributeAuthority.buildAttributeStatement(null, principalAttributes.values());
+            }
+
+            Subject statementSubject = buildSubject(requestContext, subjectConfMethod);
+            statment.setSubject(statementSubject);
+
+            return statment;
+        } catch (AttributeRequestException e) {
+            log.error("Error resolving attributes for SAML request from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error resolving attributes"));
+            throw new ProfileException("Error resolving attributes for SAML request from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+        }
+    }
+
+    /**
+     * Resolves the principal name of the subject of the request.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if the principal name can not be resolved
+     */
+    protected void resolvePrincipal(SAML1ProfileRequestContext requestContext) throws ProfileException {
+        AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
+        SAML1AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Resolving principal name for subject of SAML request from relying party "
+                    + requestContext.getRelyingPartyId());
+        }
+
+        try {
+            String principal = attributeAuthority.getPrincipal(buildAttributeRequestContext(requestContext));
+            requestContext.setPrincipalName(principal);
+        } catch (AttributeRequestException e) {
+            log.error("Error resolving attributes for SAML request from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
+                    "Error resolving principal"));
+            throw new ProfileException("Error resolving attributes for SAML request from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+        }
+    }
+
+    /**
+     * Creates an attribute query context from the current profile request context.
+     * 
+     * @param requestContext current profile request
+     * 
+     * @return created query context
+     */
+    protected ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> buildAttributeRequestContext(
+            SAML1ProfileRequestContext requestContext) {
+
+        ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> queryContext;
+
+        if (requestContext.getSamlRequest() instanceof AttributeQuery) {
+            queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
+                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration(),
+                    (AttributeQuery) requestContext.getSamlRequest());
+        } else {
+            queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
+                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration());
+        }
+
+        queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
+        queryContext.setPrincipalName(requestContext.getPrincipalName());
+        queryContext.setProfileConfiguration(requestContext.getProfileConfiguration());
+        queryContext.setRequest(requestContext.getProfileRequest());
+
+        Session userSession = getSessionManager().getSession(getUserSessionId(requestContext.getProfileRequest()));
+        if (userSession != null) {
+            queryContext.setUserSession(userSession);
+            ServiceInformation serviceInfo = userSession.getServiceInformation(requestContext.getRelyingPartyId());
+            if (serviceInfo != null) {
+                String principalAuthenticationMethod = serviceInfo.getAuthenticationMethod().getAuthenticationMethod();
+
+                requestContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
+                queryContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
+            }
+        }
+
+        return queryContext;
     }
 
     /**
@@ -639,6 +765,25 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
+     * Writes an aduit log entry indicating the successful response to the attribute request.
+     * 
+     * @param context current request context
+     */
+    protected void writeAuditLogEntry(SAML1ProfileRequestContext context) {
+        AuditLogEntry auditLogEntry = new AuditLogEntry();
+        auditLogEntry.setMessageProfile(getProfileId());
+        auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
+        auditLogEntry.setPrincipalName(context.getPrincipalName());
+        auditLogEntry.setAssertingPartyId(context.getAssertingPartyId());
+        auditLogEntry.setRelyingPartyId(context.getRelyingPartyId());
+        auditLogEntry.setRequestBinding(context.getMessageDecoder().getBindingURI());
+        auditLogEntry.setRequestId(null);
+        auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
+        auditLogEntry.setResponseId(context.getSamlResponse().getID());
+        getAduitLog().log(Level.CRITICAL, auditLogEntry);
+    }
+
+    /**
      * Contextual object used to accumlate information as profile requests are being processed.
      * 
      * @param <RequestType> type of SAML 1 request
@@ -659,6 +804,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         /** The NameIdentifier of the subject of this request. */
         private NameIdentifier subjectNameIdentifier;
+
+        /** The request failure status. */
+        private Status failureStatus;
 
         /**
          * Constructor.
@@ -741,6 +889,24 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
          */
         public void setSamlResponse(ResponseType response) {
             samlResponse = response;
+        }
+
+        /**
+         * Gets the status reflecting a request failure.
+         * 
+         * @return status reflecting a request failure
+         */
+        public Status getFailureStatus() {
+            return failureStatus;
+        }
+
+        /**
+         * Sets the status reflecting a request failure.
+         * 
+         * @param status status reflecting a request failure
+         */
+        public void setFailureStatus(Status status) {
+            failureStatus = status;
         }
     }
 }

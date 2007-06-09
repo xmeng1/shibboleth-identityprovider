@@ -80,9 +80,7 @@ import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandle
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
-/**
- * Common implementation details for profile handlers.
- */
+/** Common implementation details for profile handlers. */
 public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHandler {
 
     /** SAML Version for this profile handler. */
@@ -445,11 +443,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
-
-        if (log.isDebugEnabled()) {
-            log.debug("Resolving principal name for subject of SAML request " + requestContext.getSamlRequest().getID()
-                    + " from relying party " + requestContext.getRelyingPartyId());
-        }
 
         try {
             if (log.isDebugEnabled()) {

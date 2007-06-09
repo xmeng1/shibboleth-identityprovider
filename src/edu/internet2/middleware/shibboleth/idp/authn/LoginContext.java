@@ -48,7 +48,7 @@ public class LoginContext implements Serializable {
 
     /** the key in a HttpSession where login contexts are stored. */
     public static final String LOGIN_CONTEXT_KEY = "shib2.logincontext";
-    
+
     /** Serial version UID. */
     private static final long serialVersionUID = 4268661186941572372L;
 
@@ -149,19 +149,19 @@ public class LoginContext implements Serializable {
     /**
      * Sets if authentication must be forced.
      * 
-     * @param forceAuth if the authentication manager must reauth the user.
+     * @param force if the authentication manager must reauth the user.
      */
-    public void setForceAuth(boolean forceAuth) {
-        this.forceAuth = forceAuth;
+    public void setForceAuth(boolean force) {
+        forceAuth = force;
     }
 
     /**
      * Sets if authentication must be passive.
      * 
-     * @param passiveAuth if the authentication manager must not interact with the users UI.
+     * @param passicve if the authentication manager must not interact with the users UI.
      */
-    public void setPassiveAuth(boolean passiveAuth) {
-        this.passiveAuth = passiveAuth;
+    public void setPassiveAuth(boolean passicve) {
+        passiveAuth = passicve;
     }
 
     /**
@@ -271,10 +271,10 @@ public class LoginContext implements Serializable {
     /**
      * Sets the ProfileHandler URL.
      * 
-     * @param profileHandlerURL The URL of the profile handler that invoked the AuthenticationManager/
+     * @param url The URL of the profile handler that invoked the AuthenticationManager/
      */
-    public void setProfileHandlerURL(String profileHandlerURL) {
-        this.profileHandlerURL = profileHandlerURL;
+    public void setProfileHandlerURL(String url) {
+        profileHandlerURL = url;
     }
 
     /**
@@ -289,10 +289,10 @@ public class LoginContext implements Serializable {
     /**
      * Sets the AuthenticationManager's URL.
      * 
-     * @param authnManagerURL the URL of the AuthenticationManager.
+     * @param url the URL of the AuthenticationManager.
      */
-    public void setAuthenticationManagerURL(String authnManagerURL) {
-        this.authnManagerURL = authnManagerURL;
+    public void setAuthenticationManagerURL(String url) {
+        authnManagerURL = url;
     }
 
     /**
@@ -307,10 +307,10 @@ public class LoginContext implements Serializable {
     /**
      * Sets the authentication instant.
      * 
-     * @param authnInstant The instant of authentication.
+     * @param instant The instant of authentication.
      */
-    public void setAuthenticationInstant(final DateTime authnInstant) {
-        this.authnInstant = authnInstant;
+    public void setAuthenticationInstant(final DateTime instant) {
+        authnInstant = instant;
     }
 
     /**
@@ -325,10 +325,10 @@ public class LoginContext implements Serializable {
     /**
      * Sets the duration of authentication.
      * 
-     * @param authnDuration The duration of authentication.
+     * @param duration The duration of authentication.
      */
-    public void setAuthenticationDuration(long authnDuration) {
-        this.authnDuration = authnDuration;
+    public void setAuthenticationDuration(long duration) {
+        authnDuration = duration;
     }
 
     /**
@@ -343,28 +343,28 @@ public class LoginContext implements Serializable {
     /**
      * Sets the method used to authenticate the user.
      * 
-     * @param authnMethod The method used to authenticate the user.
+     * @param method The method used to authenticate the user.
      */
-    public void setAuthenticationMethod(String authnMethod) {
-        this.authnMethod = authnMethod;
+    public void setAuthenticationMethod(String method) {
+        authnMethod = method;
     }
 
     /**
-     * Gets the {@link Session} ID
+     * Gets the {@link Session} ID.
      * 
-     * @return the Session id.
+     * @return the Session id
      */
     public String getSessionID() {
         return sessionID;
     }
 
     /**
-     * Sets the {@link Session} ID
+     * Sets the {@link Session} ID.
      * 
-     * @param sessionID the Session ID
+     * @param id the Session ID
      */
-    public void setSessionID(String sessionID) {
-        this.sessionID = sessionID;
+    public void setSessionID(String id) {
+        sessionID = id;
     }
 
     /**
