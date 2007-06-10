@@ -97,7 +97,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (authnManagerPath == null || decoder == null || encoder == null) {
             throw new IllegalArgumentException("AuthN manager path, decoding, encoding bindings URI may not be null");
         }
-        
+
         authenticationManagerPath = authnManagerPath;
         decodingBinding = decoder;
         encodingBinding = encoder;
@@ -111,40 +111,40 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         authnContextDeclRefBuilder = (SAMLObjectBuilder<AuthnContextDeclRef>) getBuilderFactory().getBuilder(
                 AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
     }
-    
+
     /**
      * Convenience method for getting the SAML 2 AuthnStatement builder.
      * 
      * @return SAML 2 AuthnStatement builder
      */
-    public SAMLObjectBuilder<AuthnStatement> getAuthnStatementBuilder(){
+    public SAMLObjectBuilder<AuthnStatement> getAuthnStatementBuilder() {
         return authnStatementBuilder;
     }
-    
+
     /**
      * Convenience method for getting the SAML 2 AuthnContext builder.
      * 
      * @return SAML 2 AuthnContext builder
      */
-    public SAMLObjectBuilder<AuthnContext> getAuthnContextBuilder(){
+    public SAMLObjectBuilder<AuthnContext> getAuthnContextBuilder() {
         return authnContextBuilder;
     }
-    
+
     /**
      * Convenience method for getting the SAML 2 AuthnContextClassRef builder.
      * 
      * @return SAML 2 AuthnContextClassRef builder
      */
-    public SAMLObjectBuilder<AuthnContextClassRef> getAuthnContextClassRefBuilder(){
+    public SAMLObjectBuilder<AuthnContextClassRef> getAuthnContextClassRefBuilder() {
         return authnContextClassRefBuilder;
     }
-    
+
     /**
      * Convenience method for getting the SAML 2 AuthnContextDeclRef builder.
      * 
      * @return SAML 2 AuthnContextDeclRef builder
      */
-    public SAMLObjectBuilder<AuthnContextDeclRef> getAuthnContextDeclRefBuilder(){
+    public SAMLObjectBuilder<AuthnContextDeclRef> getAuthnContextDeclRefBuilder() {
         return authnContextDeclRefBuilder;
     }
 
@@ -166,8 +166,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Creates a {@link Saml2LoginContext} an sends the request off to the AuthenticationManager to begin the
-     * process of authenticating the user.
+     * Creates a {@link Saml2LoginContext} an sends the request off to the AuthenticationManager to begin the process of
+     * authenticating the user.
      * 
      * @param request current request
      * @param response current response
@@ -222,10 +222,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             ProfileResponse<ServletResponse> response) throws ProfileException {
 
         HttpSession httpSession = ((HttpServletRequest) request.getRawRequest()).getSession(true);
-        
+
         Saml2LoginContext loginContext = (Saml2LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        
+
         SSORequestContext requestContext = buildRequestContext(loginContext, request, response);
 
         Response samlResponse;
@@ -238,7 +238,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthnStatement(requestContext));
-            statements.add(buildAttributeStatement(requestContext));
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
+                statements.add(buildAttributeStatement(requestContext));
+            }
 
             Subject assertionSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:bearer");
 
@@ -429,8 +431,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /** Represents the internal state of a SAML 2.0 SSO Request while it's being processed by the IdP. */
-    protected class SSORequestContext extends
-            SAML2ProfileRequestContext<AuthnRequest, Response, SSOConfiguration> {
+    protected class SSORequestContext extends SAML2ProfileRequestContext<AuthnRequest, Response, SSOConfiguration> {
 
         /** Current login context. */
         private Saml2LoginContext loginContext;
@@ -441,8 +442,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
          * @param request current profile request
          * @param response current profile response
          */
-        public SSORequestContext(ProfileRequest<ServletRequest> request,
-                ProfileResponse<ServletResponse> response) {
+        public SSORequestContext(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) {
             super(request, response);
         }
 

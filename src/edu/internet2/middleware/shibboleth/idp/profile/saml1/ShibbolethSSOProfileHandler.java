@@ -173,7 +173,10 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthenticationStatement(requestContext));
-            statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
+                statements
+                        .add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
+            }
 
             samlResponse = buildResponse(requestContext, statements);
         } catch (ProfileException e) {
@@ -272,6 +275,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * @param requestContext current request context
      * 
      * @return the created statement
+     * 
+     * @throws ProfileException thrown if the authentication statement can not be created
      */
     protected AuthenticationStatement buildAuthenticationStatement(ShibbolethSSORequestContext requestContext)
             throws ProfileException {
