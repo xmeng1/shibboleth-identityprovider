@@ -40,6 +40,7 @@ import org.opensaml.saml1.core.AudienceRestrictionCondition;
 import org.opensaml.saml1.core.Conditions;
 import org.opensaml.saml1.core.ConfirmationMethod;
 import org.opensaml.saml1.core.NameIdentifier;
+import org.opensaml.saml1.core.Query;
 import org.opensaml.saml1.core.RequestAbstractType;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.ResponseAbstractType;
@@ -261,6 +262,30 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      */
     public SAMLObjectBuilder<StatusMessage> getStatusMessageBuilder() {
         return statusMessageBuilder;
+    }
+
+    /**
+     * Checks that the SAML major version for a request is 1.
+     * 
+     * @param requestContext current request context containing the SAML message
+     * 
+     * @throws ProfileException thrown if the major version of the SAML request is not 1
+     */
+    protected void checkSamlVersion(SAML1ProfileRequestContext requestContext) throws ProfileException {
+        SAMLObject samlObject = requestContext.getSamlRequest();
+
+        if (samlObject instanceof RequestAbstractType) {
+            RequestAbstractType request = (RequestAbstractType) samlObject;
+            if (request.getMajorVersion() < 1) {
+                requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER, StatusCode.REQUEST_VERSION_TOO_LOW,
+                        null));
+                throw new ProfileException("SAML request major version too low");
+            } else if (request.getMajorVersion() > 1) {
+                requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER, StatusCode.REQUEST_VERSION_TOO_HIGH,
+                        null));
+                throw new ProfileException("SAML request major version too low");
+            }
+        }
     }
 
     /**
@@ -577,8 +602,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem making the query
      */
-    protected AttributeStatement buildAttributeStatement(SAML1ProfileRequestContext requestContext, String subjectConfMethod)
-            throws ProfileException {
+    protected AttributeStatement buildAttributeStatement(SAML1ProfileRequestContext requestContext,
+            String subjectConfMethod) throws ProfileException {
 
         if (log.isDebugEnabled()) {
             log.debug("Creating attribute statement in response to SAML request from relying party "

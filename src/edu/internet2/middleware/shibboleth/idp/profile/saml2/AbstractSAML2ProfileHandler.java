@@ -286,6 +286,26 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
+     * Checks that the SAML major version for a request is 2.
+     * 
+     * @param requestContext current request context containing the SAML message
+     * 
+     * @throws ProfileException thrown if the major version of the SAML request is not 2
+     */
+    protected void checkSamlVersion(SAML2ProfileRequestContext requestContext) throws ProfileException {
+        SAMLVersion version = requestContext.getSamlRequest().getVersion();
+        if (version.getMajorVersion() < 2) {
+            requestContext.setFailureStatus(buildStatus(StatusCode.VERSION_MISMATCH_URI,
+                    StatusCode.REQUEST_VERSION_TOO_LOW_URI, null));
+            throw new ProfileException("SAML request version too low");
+        } else if (version.getMajorVersion() > 2) {
+            requestContext.setFailureStatus(buildStatus(StatusCode.VERSION_MISMATCH_URI,
+                    StatusCode.REQUEST_VERSION_TOO_HIGH_URI, null));
+            throw new ProfileException("SAML request version too high");
+        }
+    }
+
+    /**
      * Builds a response to the attribute query within the request context.
      * 
      * @param requestContext current request context

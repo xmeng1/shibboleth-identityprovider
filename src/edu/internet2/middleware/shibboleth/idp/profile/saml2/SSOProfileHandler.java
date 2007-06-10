@@ -227,6 +227,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
         SSORequestContext requestContext = buildRequestContext(loginContext, request, response);
+        
+        checkSamlVersion(requestContext);
 
         Response samlResponse;
         try {

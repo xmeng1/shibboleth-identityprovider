@@ -66,6 +66,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         try {
             decodeRequest(requestContext);
             
+            checkSamlVersion(requestContext);
+            
             // Resolve attribute query name id to principal name and place in context
             resolvePrincipal(requestContext);
 
