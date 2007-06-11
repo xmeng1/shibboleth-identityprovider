@@ -182,7 +182,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         AuthnRequest authnRequest = null;
         try {
             MessageDecoder<ServletRequest> decoder = decodeRequest(request);
-            SAMLSecurityPolicy<ServletRequest> securityPolicy = decoder.getSecurityPolicy();
+            SAMLSecurityPolicy securityPolicy = decoder.getSecurityPolicy();
 
             String relyingParty = securityPolicy.getIssuer();
             authnRequest = (AuthnRequest) decoder.getSAMLMessage();
