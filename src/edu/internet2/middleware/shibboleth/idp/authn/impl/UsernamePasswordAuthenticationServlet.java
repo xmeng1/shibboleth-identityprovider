@@ -144,7 +144,7 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
         if (!(o instanceof String)) {
             log.error("UsernamePasswordAuthenticationServlet: Unable to authenticate user - Invalid JAAS configuration name specified: " + o.toString());
             
-            loginContext.setAuthenticationOK(false);
+            loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
             redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
         }
@@ -157,9 +157,9 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
         o = request.getAttribute(LOGIN_FORM_USERNAME);
         if (!(o instanceof String)) {
             log.error("UsernamePasswordAuthenticationServlet: Login form's username is not a String.");
-            loginContext.setAuthenticationOK(false);
+            loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
-            loginContext.setAuthenticationOK(false);
+            loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
             redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
             
@@ -169,9 +169,9 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
         o = request.getAttribute(LOGIN_FORM_PASSWORD);
         if (!(o instanceof String)) {
             log.error("UsernamePasswordAuthenticationServlet: Login form's password is not a String.");
-            loginContext.setAuthenticationOK(false);
+            loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
-            loginContext.setAuthenticationOK(false);
+            loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
             redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
             
@@ -244,21 +244,21 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
 			log
 					.debug("UsernamePasswordAuthenticationServlet: Authentication successful for "
 							+ username);
-			idpLoginCtx.setAuthenticationOK(true);
+			idpLoginCtx.setPrincipalAuthenticated(true);
 
 			// if JAAS returned multiple usernames, only use the first one.
 			Set<Principal> principals = jaasLoginCtx.getSubject()
 					.getPrincipals();
 			Principal[] temp = new Principal[principals.size()];
 			principals.toArray(temp);
-			idpLoginCtx.setUserID(temp[0].getName());
+			idpLoginCtx.setPrincipalName(temp[0].getName());
 
 		} catch (LoginException ex) {
 			log
 					.error(
 							"UsernamePasswordAuthenticationServlet: Error authenticating user.",
 							ex);
-			idpLoginCtx.setAuthenticationOK(false);
+			idpLoginCtx.setPrincipalAuthenticated(false);
 		}
 	}
 }

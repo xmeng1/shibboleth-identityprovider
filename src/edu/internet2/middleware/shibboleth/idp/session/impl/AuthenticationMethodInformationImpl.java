@@ -20,94 +20,74 @@ import org.joda.time.DateTime;
 
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 
-
 /**
  * Information about an authentication method employed by a user.
  */
 public class AuthenticationMethodInformationImpl implements AuthenticationMethodInformation {
-    
-    /** The authentication method (a URI) */
+
+    /** The authentication method (a URI). */
     private String authenticationMethod;
-    
-    /** The timestamp at which authentication occurred */
+
+    /** The timestamp at which authentication occurred. */
     private DateTime authenticationInstant;
-    
-    /** The lifetime of the authentication method */
+
+    /** The lifetime of the authentication method. */
     private long authenticationDuration;
-    
-    
+
+    /** Time when this method expires. */
+    private DateTime expirationInstant;
+
     /**
-     * Default constructor
-     *
-     * @param authenticationMethod The unique identifier for the authentication method.
-     * @param authenticationInstant The time the user authenticated with this member.
-     * @param authenticationDuration The duration of this authentication method.
+     * Default constructor.
+     * 
+     * @param method The unique identifier for the authentication method.
+     * @param instant The time the user authenticated with this member.
+     * @param duration The duration of this authentication method.
      */
-    public AuthenticationMethodInformationImpl(final String authenticationMethod,
-	    final DateTime authenticationInstant, long authenticationDuration) {
-	
-	if (authenticationMethod == null || authenticationInstant == null
-		|| authenticationDuration < 0) {
-	    return;
-	}
-	
-	this.authenticationMethod = authenticationMethod;
-	this.authenticationInstant = authenticationInstant;
-	this.authenticationDuration = authenticationDuration;
+    public AuthenticationMethodInformationImpl(String method, DateTime instant, long duration) {
+
+        if (method == null || instant == null || duration < 0) {
+            throw new IllegalArgumentException("Authentication method, instant, and duration may not be null");
+        }
+
+        authenticationMethod = method;
+        authenticationInstant = instant;
+        authenticationDuration = duration;
+        expirationInstant = instant.plus(duration);
     }
-    
-    
-    /**
-     * "Cloning" constructor.
-     *
-     * @param methodInfo The {@link AuthenticationMethodInfo} to duplicate.
-     */
-    public AuthenticationMethodInformationImpl(final AuthenticationMethodInformation methodInfo) {
-	
-	if (methodInfo == null) {
-	    return;
-	}
-	
-	this.authenticationMethod = methodInfo.getAuthenticationMethod();
-	this.authenticationInstant = methodInfo.getAuthenticationInstant();
-	this.authenticationDuration = methodInfo.getAuthenticationDuration();
-    }
-    
-    
+
     /** {@inheritDoc} */
     public String getAuthenticationMethod() {
-	return this.authenticationMethod;
+        return authenticationMethod;
     }
-    
-    
+
     /** {@inheritDoc} */
     public DateTime getAuthenticationInstant() {
-	return this.authenticationInstant;
+        return authenticationInstant;
     }
-    
-    
+
     /** {@inheritDoc} */
     public long getAuthenticationDuration() {
-	return this.authenticationDuration;
+        return authenticationDuration;
+    }
+
+    /** {@inheritDoc} */
+    public boolean isExpired() {
+        return expirationInstant.isBeforeNow();
     }
     
-    
+    /** {@inheritDoc} */
+    public int hashCode() {
+        return authenticationMethod.hashCode();
+    }
+
     /** {@inheritDoc} */
     public boolean equals(Object obj) {
-	
-	if (!(obj instanceof AuthenticationMethodInformation)) {
-	    return false;
-	}
-	
-	AuthenticationMethodInformation amInfo = (AuthenticationMethodInformation)obj;
-	
-	if (this.getAuthenticationMethod().equals(amInfo.getAuthenticationMethod())
-	    && this.getAuthenticationInstant().equals(amInfo.getAuthenticationInstant())
-	    && this.getAuthenticationDuration() == amInfo.getAuthenticationDuration()) {
-	    
-	    return true;
-	} else {
-	    return false;
-	}
+        if (!(obj instanceof AuthenticationMethodInformation)) {
+            return false;
+        }
+
+        AuthenticationMethodInformation amInfo = (AuthenticationMethodInformation) obj;
+        return authenticationMethod.equals(amInfo.getAuthenticationMethod());
     }
 }

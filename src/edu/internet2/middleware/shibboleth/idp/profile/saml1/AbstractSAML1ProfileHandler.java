@@ -702,7 +702,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         Session userSession = getSessionManager().getSession(getUserSessionId(requestContext.getProfileRequest()));
         if (userSession != null) {
             queryContext.setUserSession(userSession);
-            ServiceInformation serviceInfo = userSession.getServiceInformation(requestContext.getRelyingPartyId());
+            ServiceInformation serviceInfo = userSession.getServicesInformation().get(
+                    requestContext.getRelyingPartyId());
             if (serviceInfo != null) {
                 String principalAuthenticationMethod = serviceInfo.getAuthenticationMethod().getAuthenticationMethod();
 

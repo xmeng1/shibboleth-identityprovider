@@ -17,9 +17,7 @@
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import edu.internet2.middleware.shibboleth.common.session.impl.AbstractSession;
@@ -31,15 +29,15 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
  * Session information for user logged into the IdP.
  */
 public class SessionImpl extends AbstractSession implements Session {
-    
+
     /** Serial version UID. */
     private static final long serialVersionUID = 2927868242208211623L;
 
     /** The list of methods used to authentictate the user. */
-    private List<AuthenticationMethodInformation> authnMethods;
+    private HashMap<String, AuthenticationMethodInformation> authnMethods;
 
     /** The list of services to which the user has logged in. */
-    private Map<String, ServiceInformation> servicesInformation;
+    private HashMap<String, ServiceInformation> servicesInformation;
 
     /**
      * Default constructor.
@@ -50,27 +48,22 @@ public class SessionImpl extends AbstractSession implements Session {
     public SessionImpl(InetAddress presenter, String principal) {
         super(presenter, principal);
 
-        authnMethods = new ArrayList<AuthenticationMethodInformation>();
+        authnMethods = new HashMap<String, AuthenticationMethodInformation>();
         servicesInformation = new HashMap<String, ServiceInformation>();
     }
 
     /** {@inheritDoc} */
-    public List<AuthenticationMethodInformation> getAuthenticationMethods() {
+    public Map<String, AuthenticationMethodInformation> getAuthenticationMethods() {
         return authnMethods;
     }
-    
+
     /** {@inheritDoc} */
     public ServiceInformation getServiceInformation(String entityId) {
         return servicesInformation.get(entityId);
     }
 
     /** {@inheritDoc} */
-    public List<ServiceInformation> getServicesInformation() {
-        ArrayList<ServiceInformation> info = new ArrayList<ServiceInformation>();
-        for(Map.Entry<String, ServiceInformation> entry : servicesInformation.entrySet()){
-            info.add(entry.getValue());
-        }
-        
-        return info;
+    public Map<String, ServiceInformation> getServicesInformation() {
+        return servicesInformation;
     }
 }

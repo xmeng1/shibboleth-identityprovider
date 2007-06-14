@@ -166,7 +166,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         Response samlResponse;
         try {
-            if (!loginContext.getAuthenticationOK()) {
+            if (!loginContext.isPrincipalAuthenticated()) {
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "User failed authentication"));
                 throw new ProfileException("User failed authentication");
             }
@@ -246,7 +246,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         requestContext.setLoginContext(loginContext);
 
-        requestContext.setPrincipalName(loginContext.getUserID());
+        requestContext.setPrincipalName(loginContext.getPrincipalName());
 
         requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
 

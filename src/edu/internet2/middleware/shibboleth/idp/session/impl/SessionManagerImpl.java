@@ -29,6 +29,8 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * Manager of IdP sessions.
+ * 
+ * TODO change session map to use storage api
  */
 public class SessionManagerImpl implements SessionManager<Session>, ApplicationContextAware {
 

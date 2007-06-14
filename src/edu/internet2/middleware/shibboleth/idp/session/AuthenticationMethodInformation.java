@@ -43,4 +43,11 @@ public interface AuthenticationMethodInformation {
      * @return duration of this authentication method
      */
     public long getAuthenticationDuration();
+
+    /**
+     * Gets whether this authentication method has expired and is not longer valid for use in constructing new sessions.
+     * 
+     * @return whether this authentication method has expired
+     */
+    public boolean isExpired();
 }

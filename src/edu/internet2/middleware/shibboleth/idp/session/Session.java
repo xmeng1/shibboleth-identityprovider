@@ -16,13 +16,13 @@
 
 package edu.internet2.middleware.shibboleth.idp.session;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * Session information for user logged into the IdP.
  */
 public interface Session extends edu.internet2.middleware.shibboleth.common.session.Session {
-    
+
     /** Name of the HttpSession attribute a users Shibboleth session Id is bound to. */
     public static final String HTTP_SESSION_BINDING_ATTRIBUTE = "ShibbolethSessionId";
 
@@ -31,21 +31,12 @@ public interface Session extends edu.internet2.middleware.shibboleth.common.sess
      * 
      * @return methods by which the user has authenticated to the IdP
      */
-    public List<AuthenticationMethodInformation> getAuthenticationMethods();
-
-    /**
-     * Gets the information for a service a user is logged into.
-     * 
-     * @param entityId ID of the service
-     * 
-     * @return information for a service a user is logged into or null if the user is not logged into the given service
-     */
-    public ServiceInformation getServiceInformation(String entityId);
+    public Map<String, AuthenticationMethodInformation> getAuthenticationMethods();
 
     /**
      * Gets the services the user has logged in to.
      * 
      * @return services the user has logged in to
      */
-    public List<ServiceInformation> getServicesInformation();
+    public Map<String, ServiceInformation> getServicesInformation();
 }

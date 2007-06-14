@@ -18,65 +18,24 @@ package edu.internet2.middleware.shibboleth.idp.authn.impl;
 
 import java.io.IOException;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
-
-import org.apache.log4j.Logger;
-import org.joda.time.DateTime;
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
 
 /**
- * This servlet should be protected by a filter which populates REMOTE_USER. The
- * serlvet will then set the remote user field in a LoginContext.
+ * Extracts the REMOTE_USER and places it in a request attribute to be used by the authentication engine.
  */
 public class RemoteUserAuthServlet extends HttpServlet {
 
-	private static final Logger log = Logger
-			.getLogger(RemoteUserAuthServlet.class);
+    /** Serial version UID. */
+    private static final long serialVersionUID = 1968754704168240644L;
 
-	public RemoteUserAuthServlet() {
-	}
-
-	public void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws IOException {
-
-		HttpSession httpSession = request.getSession();
-
-		Object o = httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-		if (!(o instanceof LoginContext)) {
-			log
-					.error("RemoteUSerAuthServlet - Invalid login context object -- object is not an instance of LoginContext");
-			return; // where this will return to, I don't know.
-		}
-
-		LoginContext loginContext = (LoginContext) o;
-
-		loginContext.setAuthenticationInstant(new DateTime());
-
-		String remoteUser = request.getRemoteUser();
-		if (remoteUser == null || remoteUser.length() == 0) {
-			loginContext.setAuthenticationOK(false);
-		} else {
-			loginContext.setAuthenticationOK(true);
-			loginContext.setUserID(remoteUser);
-		}
-
-		// redirect the user back to the AuthenticationManager
-		try {
-			RequestDispatcher dispatcher = request
-					.getRequestDispatcher(loginContext
-							.getAuthenticationManagerURL());
-			dispatcher.forward(request, response);
-		} catch (ServletException ex) {
-			log
-					.error(
-							"RemoteUserAuthServlet: Error redirecting back to AuthenticationManager",
-							ex);
-		}
-	}
+    /** {@inheritDoc} */
+    public void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
+        httpRequest.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
+        AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
+    }
 }

@@ -38,8 +38,8 @@ import org.joda.time.DateTime;
  * LoginContexts should be created by a profile handler when authentication is needed. Once control has returned to the
  * profile handler, it should remove the LoginContext from the HttpSession.
  * 
- * The {@link AuthenticationManager} or an {@link AuthenticationHandler} should set the
- * {@link LoginContext#setAuthenticationAttempted()}, {@link LoginContext#setAuthnOK(boolean)},
+ * The {@link AuthenticationEngine} or an {@link AuthenticationHandler} should set the
+ * {@link LoginContext#setAuthenticationAttempted()}, {@link LoginContext#setPrincipalAuthenticated(boolean)},
  * {@link LoginContext#setAuthnFailure(String)}, {@link LoginContext#{setAuthenticationDuration(long)}
  * {@link LoginContext#setAuthenticationInstant(DateTime)} appropriately.
  * 
@@ -50,7 +50,7 @@ public class LoginContext implements Serializable {
     public static final String LOGIN_CONTEXT_KEY = "shib2.logincontext";
 
     /** Serial version UID. */
-    private static final long serialVersionUID = 4268661186941572372L;
+    private static final long serialVersionUID = -8764003758734956911L;
 
     /** Entity ID of the relying party. */
     private String relyingPartyId;
@@ -74,10 +74,10 @@ public class LoginContext implements Serializable {
     private boolean authnAttempted;
 
     /** The id of the authenticated user. */
-    private String userID;
+    private String principalName;
 
     /** Did authentication succceed? */
-    private boolean authenticationOK;
+    private boolean principalAuthenticated;
 
     /** Optional failure message. */
     private String authnFailureMessage;
@@ -192,8 +192,8 @@ public class LoginContext implements Serializable {
      * 
      * @param authnOK if authentication succeeded;
      */
-    public void setAuthenticationOK(boolean authnOK) {
-        this.authenticationOK = authnOK;
+    public void setPrincipalAuthenticated(boolean authnOK) {
+        this.principalAuthenticated = authnOK;
     }
 
     /**
@@ -201,8 +201,8 @@ public class LoginContext implements Serializable {
      * 
      * @return <code>true</code> is the user was successfully authenticated.
      */
-    public boolean getAuthenticationOK() {
-        return authenticationOK;
+    public boolean isPrincipalAuthenticated() {
+        return principalAuthenticated;
     }
 
     /**
@@ -246,8 +246,8 @@ public class LoginContext implements Serializable {
      * 
      * @param id The userid.
      */
-    public void setUserID(String id) {
-        userID = id;
+    public void setPrincipalName(String id) {
+        principalName = id;
     }
 
     /**
@@ -255,8 +255,8 @@ public class LoginContext implements Serializable {
      * 
      * @return the ID of the user, or <code>null</code> if authentication failed.
      */
-    public String getUserID() {
-        return userID;
+    public String getPrincipalName() {
+        return principalName;
     }
 
     /**
@@ -368,10 +368,10 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Return the acceptable authentication handler URIs for authenticating this user. If no authentication methods are
-     * preferred the resultant list will be empty.
+     * Return the acceptable authentication handler URIs, in preference order, for authenticating this user. If no
+     * authentication methods are preferred the resultant list will be empty.
      * 
-     * @return an array of URIs
+     * @return an list of authentication method identifiers
      */
     public List<String> getRequestedAuthenticationMethods() {
         return new ArrayList<String>();
