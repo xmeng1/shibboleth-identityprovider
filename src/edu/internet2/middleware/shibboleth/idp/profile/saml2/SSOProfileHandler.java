@@ -303,6 +303,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         SSORequestContext requestContext = new SSORequestContext(request, response);
 
         try {
+            requestContext.setLoginContext(loginContext);
+            
             String relyingPartyId = loginContext.getRelyingPartyId();
             AuthnRequest authnRequest = loginContext.getAuthenticationRequest();
 
@@ -316,6 +318,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
 
             requestContext.setAssertingPartyRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            
+            requestContext.setPrincipalName(loginContext.getPrincipalName());
 
             requestContext.setProfileConfiguration((SSOConfiguration) rpConfig
                     .getProfileConfiguration(SSOConfiguration.PROFILE_ID));

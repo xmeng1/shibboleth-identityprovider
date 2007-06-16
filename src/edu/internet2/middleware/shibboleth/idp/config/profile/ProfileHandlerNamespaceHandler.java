@@ -16,18 +16,34 @@
 
 package edu.internet2.middleware.shibboleth.idp.config.profile;
 
+import javax.xml.namespace.QName;
+
 import edu.internet2.middleware.shibboleth.common.config.BaseSpringNamespaceHandler;
+import edu.internet2.middleware.shibboleth.common.config.profile.JSPErrorHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.common.config.profile.VelocityErrorHandlerBeanDefinitionParser;
 
 /**
- * Spring namespace handler for IdP profile handlers.
+ * Spring namespace handler for profile handler configurations.
  */
-public class IdPProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
+public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
 
-    /** IdP profile handler namespace URI. */
-    public static final String NAMESPACE = "urn:mace:shibboleth:2.0:idp:profiles";
+    /** Namespace URI. */
+    public static final String NAMESPACE = "urn:mace:shibboleth:2.0:idp:profile";
 
     /** {@inheritDoc} */
     public void init() {
+        registerBeanDefinitionParser(IdPProfileHandlerManagerBeanDefinitionParser.SCHEMA_TYPE,
+                new IdPProfileHandlerManagerBeanDefinitionParser());
+
+        registerBeanDefinitionParser(ProfileHandlerGroupBeanDefinitionParser.SCHEMA_TYPE,
+                new ProfileHandlerGroupBeanDefinitionParser());
+
+        registerBeanDefinitionParser(new QName(NAMESPACE, JSPErrorHandlerBeanDefinitionParser.ELEMENT_NAME),
+                new JSPErrorHandlerBeanDefinitionParser());
+
+        registerBeanDefinitionParser(new QName(NAMESPACE, VelocityErrorHandlerBeanDefinitionParser.ELEMENT_NAME),
+                new VelocityErrorHandlerBeanDefinitionParser());
+
         registerBeanDefinitionParser(StatusHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new StatusHandlerBeanDefinitionParser());
 

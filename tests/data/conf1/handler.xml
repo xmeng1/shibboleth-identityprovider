@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ProfileHandlerGroup xmlns="urn:mace:shibboleth:2.0:idp:profile" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:profile classpath:/schema/shibboleth-2.0-idp-profile.xsd">
+
+    <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
+
+    <ProfileHandler xsi:type="Status">
+        <RequestPath>/shibboleth/IdP/status</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="SAML2AttributeQuery"
+        securityPolicyFactoryId="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryNoIssuerAuth">
+        <RequestPath>/IdP/saml2/SOAP/AttributeQueryNoAuth</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="SAML2AttributeQuery"
+        securityPolicyFactoryId="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryIssuerAuth">
+        <RequestPath>/IdP/saml2/SOAP/AttributeQuery</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML2SSO"
+        securityPolicyFactoryId="shibboleth.SAML2SSOMessageSecurityPolicyFactoryNoIssuerAuth">
+        <RequestPath>/IdP/saml2/SSONoAuth</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="SAML2SSO"
+        securityPolicyFactoryId="shibboleth.SAML2SSOMessageSecurityPolicyFactoryIssuerAuth">
+        <RequestPath>/IdP/saml2/SSO</RequestPath>
+    </ProfileHandler>
+
+</ProfileHandlerGroup>

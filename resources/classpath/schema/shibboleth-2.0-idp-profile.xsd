@@ -1,142 +1,205 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<schema targetNamespace="urn:mace:shibboleth:2.0:idp:profiles" xmlns="http://www.w3.org/2001/XMLSchema"
-    xmlns:ph="urn:mace:shibboleth:2.0:profile-handler" xmlns:idpph="urn:mace:shibboleth:2.0:idp:profiles"
+<xsd:schema targetNamespace="urn:mace:shibboleth:2.0:idp:profile" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="urn:mace:shibboleth:2.0:idp:profile" xmlns:service="urn:mace:shibboleth:2.0:services"
     elementFormDefault="qualified">
 
-    <import namespace="urn:mace:shibboleth:2.0:profile-handler"
-        schemaLocation="classpath:/schema/shibboleth-2.0-profile-handler.xsd" />
+    <xsd:include schemaLocation="classpath:/schema/shibboleth-2.0-profile-handler.xsd" />
 
-    <annotation>
-        <documentation>
+    <xsd:import namespace="urn:mace:shibboleth:2.0:services"
+        schemaLocation="classpath:/schema/shibboleth-2.0-services.xsd" />
+
+    <xsd:annotation>
+        <xsd:documentation>
             This schema specifies the configuration options for Shibboleth IdP profile handlers.
-        </documentation>
-    </annotation>
+        </xsd:documentation>
+    </xsd:annotation>
 
-    <complexType name="Status">
-        <annotation>
-            <documentation>Basic handler that returns a general status of the IdP.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="ph:RequestURIMappedProfileHandlerType" />
-        </complexContent>
-    </complexType>
+    <xsd:complexType name="IdPProfileHandlerManager">
+        <xsd:annotation>
+            <xsd:documentation>Definition for the basic Shibboleth profile handler manager service.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="service:ReloadableServiceType" />
+        </xsd:complexContent>
+    </xsd:complexType>
 
-    <complexType name="SAML2SSO">
-        <annotation>
-            <documentation>Configuration type for SAML 2 Attribute Query profile handlers.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="idpph:SAML2ProfileHandler">
-                <attribute name="authenticationManagerPath" type="string" default="/AuthnManager">
-                    <annotation>
-                        <documentation>
-                            The context relative path to the authentication manager used by this profile handler.  This should 
-                            match the URL pattern given in the web.xml
-                        </documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="decodingBinding" type="anyURI" default=" urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
-                    <annotation>
-                        <documentation>
+    <xsd:element name="ProfileHandlerGroup">
+        <xsd:annotation>
+            <xsd:documentation>Root of a profile handler configuration file.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ErrorHandler" type="ErrorHandlerType">
+
+                </xsd:element>
+                <xsd:element name="ProfileHandler" type="RequestHandlerType" minOccurs="0"
+                    maxOccurs="unbounded">
+
+                </xsd:element>
+                <xsd:element name="AuthenticationHandler" type="AuthenticationHandlerType" minOccurs="0"
+                    maxOccurs="unbounded">
+
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:complexType name="Status">
+        <xsd:annotation>
+            <xsd:documentation>Basic handler that returns a general status of the IdP.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="RequestURIMappedProfileHandlerType" />
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="SAML2SSO">
+        <xsd:annotation>
+            <xsd:documentation>Configuration type for SAML 2 Attribute Query profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAML2ProfileHandler">
+                <xsd:attribute name="authenticationManagerPath" type="xsd:string" default="/AuthnManager">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The context relative path to the authentication manager used by this profile handler. This
+                            should match the URL pattern given in the web.xml
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="decodingBinding" type="xsd:anyURI"
+                    default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+                    <xsd:annotation>
+                        <xsd:documentation>
                             The URI of the binding used when decoding requests from relying parties.
-                        </documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="encodingBinding" type="anyURI" default=" urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
-                    <annotation>
-                        <documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="encodingBinding" type="xsd:anyURI"
+                    default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+                    <xsd:annotation>
+                        <xsd:documentation>
                             The URI of the binding used when encoding responses to relying parties.
-                        </documentation>
-                    </annotation>
-                </attribute>
-            </extension>
-        </complexContent>
-    </complexType>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="securityPolicyFactoryId" type="xsd:string"
+                    default="shibboleth.SAML2SSOMessageSecurityPolicyFactory">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The component ID of the security policy factory to use with the profile handler.
 
-    <complexType name="SAML2AttributeQuery">
-        <annotation>
-            <documentation>Configuration type for SAML 2 Attribute Query profile handlers.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="idpph:SAML2ProfileHandler" />
-        </complexContent>
-    </complexType>
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
 
-    <complexType name="SAML2ProfileHandler" abstract="true">
-        <annotation>
-            <documentation>Base type for SAML 2 profile handlers.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="idpph:SAMLProfileHandler" />
-        </complexContent>
-    </complexType>
+    <xsd:complexType name="SAML2AttributeQuery">
+        <xsd:annotation>
+            <xsd:documentation>Configuration type for SAML 2 Attribute Query profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAML2ProfileHandler">
+                <xsd:attribute name="securityPolicyFactoryId" type="xsd:string"
+                    default="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactory">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The component ID of the security policy factory to use with the profile handler.
 
-    <complexType name="SAML1AttributeQuery">
-        <annotation>
-            <documentation>Configuration type for SAML 1 Attribute Query profile handlers.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="idpph:SAML1ProfileHandler" />
-        </complexContent>
-    </complexType>
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
 
-    <complexType name="SAML1ProfileHandler" abstract="true">
-        <annotation>
-            <documentation>Base type for SAML 1 profile handlers.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="idpph:SAMLProfileHandler" />
-        </complexContent>
-    </complexType>
+    <xsd:complexType name="SAML2ProfileHandler" abstract="true">
+        <xsd:annotation>
+            <xsd:documentation>Base type for SAML 2 profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAMLProfileHandler" />
+        </xsd:complexContent>
+    </xsd:complexType>
 
-    <complexType name="SAMLProfileHandler" abstract="true">
-        <annotation>
-            <documentation>Base type for Shibboleth IdP SAML profile handlers.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="idpph:IdPProfileHandlerType">
-                <attribute name="messageDecoderFactoryId" type="string" default="shibboleth.MessageDecoderFactory">
-                    <annotation>
-                        <documentation>
+    <xsd:complexType name="SAML1AttributeQuery">
+        <xsd:annotation>
+            <xsd:documentation>Configuration type for SAML 1 Attribute Query profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAML1ProfileHandler" />
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="SAML1ProfileHandler" abstract="true">
+        <xsd:annotation>
+            <xsd:documentation>Base type for SAML 1 profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAMLProfileHandler" />
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="SAMLProfileHandler" abstract="true">
+        <xsd:annotation>
+            <xsd:documentation>Base type for Shibboleth IdP SAML profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="IdPProfileHandlerType">
+                <xsd:attribute name="messageDecoderFactoryId" type="xsd:string"
+                    default="shibboleth.MessageDecoderFactory">
+                    <xsd:annotation>
+                        <xsd:documentation>
                             The component ID of the message decoder to use with the profile handler.
 
                             This setting should not be changed from its default unless the deployer fully understands
                             the inter-relationship between IdP components.
-                        </documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="messageEncoderFactoryId" type="string" default="shibboleth.MessageEncoderFactory">
-                    <annotation>
-                        <documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="messageEncoderFactoryId" type="xsd:string"
+                    default="shibboleth.MessageEncoderFactory">
+                    <xsd:annotation>
+                        <xsd:documentation>
                             The component ID of the message encoder to use with the profile handler.
 
                             This setting should not be changed from its default unless the deployer fully understands
                             the inter-relationship between IdP components.
-                        </documentation>
-                    </annotation>
-                </attribute>
-                <attribute name="idGeneratorId" type="string" default="shibboleth.IdGenerator">
-                    <annotation>
-                        <documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="idGeneratorId" type="xsd:string" default="shibboleth.IdGenerator">
+                    <xsd:annotation>
+                        <xsd:documentation>
                             The component ID of a generator used to generated things like response and assertion IDs.
 
                             This setting should not be changed from its default unless the deployer fully understands
                             the inter-relationship between IdP components.
-                        </documentation>
-                    </annotation>
-                </attribute>
-            </extension>
-        </complexContent>
-    </complexType>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
 
-    <complexType name="IdPProfileHandlerType" abstract="true">
-        <annotation>
-            <documentation>Base type for Shibboleth IdP profile handlers.</documentation>
-        </annotation>
-        <complexContent>
-            <extension base="ph:ShibbolethProfileHandlerType" />
-        </complexContent>
-    </complexType>
+    <xsd:complexType name="IdPProfileHandlerType" abstract="true">
+        <xsd:annotation>
+            <xsd:documentation>Base type for IdP profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="ShibbolethProfileHandlerType" />
+        </xsd:complexContent>
+    </xsd:complexType>
 
-</schema>
+    <xsd:complexType name="AuthenticationHandlerType" abstract="true">
+    
+    </xsd:complexType>
+    
+</xsd:schema>

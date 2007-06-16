@@ -20,24 +20,19 @@ import javax.xml.namespace.QName;
 
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.config.profile.AbstractRequestURIMappedProfileHandlerBeanDefinitionParser;
-import edu.internet2.middleware.shibboleth.idp.profile.StatusProfileHandler;
+import edu.internet2.middleware.shibboleth.common.config.service.AbstractReloadableServiceBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 
 /**
- * Spring bean definition parser for {@link StatusProfileHandler}s.
+ * Spring bean definition parser for {@link IdPProfileHandlerManager}s.
  */
-public class StatusHandlerBeanDefinitionParser extends AbstractRequestURIMappedProfileHandlerBeanDefinitionParser {
+public class IdPProfileHandlerManagerBeanDefinitionParser extends AbstractReloadableServiceBeanDefinitionParser {
 
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "Status");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "IdPProfileHandlerManager");
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
-        return StatusProfileHandler.class;
-    }
-
-    /** {@inheritDoc} */
-    protected boolean shouldGenerateId() {
-        return true;
+        return IdPProfileHandlerManager.class;
     }
 }

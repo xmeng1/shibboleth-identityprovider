@@ -1,2 +1,2 @@
 urn\:mace\:shibboleth\:2.0\:idp\:services = edu.internet2.middleware.shibboleth.idp.config.service.IdPServicesNamespaceHandler
-urn\:mace\:shibboleth\:2.0\:idp\:profiles = edu.internet2.middleware.shibboleth.idp.config.profile.IdPProfileHandlerNamespaceHandler
+urn\:mace\:shibboleth\:2.0\:idp\:profile = edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler

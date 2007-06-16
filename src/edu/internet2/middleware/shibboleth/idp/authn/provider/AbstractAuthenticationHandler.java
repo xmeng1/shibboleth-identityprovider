@@ -16,25 +16,21 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
-
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 
 /**
  * Base class for authentication handlers.
  */
 public abstract class AbstractAuthenticationHandler implements AuthenticationHandler {
-
-    /** Class logger. */
-    private final Logger log = Logger.getLogger(AbstractAuthenticationHandler.class);
+    
+    /** Authentication methods this handler supports. */
+    private ArrayList<String> supportedAuthenticationMethods;
 
     /** Length of time, in milliseconds, after which a user should be re-authenticated. */
     private long authenticationDuration;
@@ -44,6 +40,16 @@ public abstract class AbstractAuthenticationHandler implements AuthenticationHan
 
     /** Whether this handler supports passive authentication. */
     private boolean supportsPassive;
+    
+    /** Constructor. */
+    protected AbstractAuthenticationHandler(){
+        supportedAuthenticationMethods = new ArrayList<String>();
+    }
+    
+    /** {@inheritDoc} */
+    public List<String> getSupportedAuthenticationMethods() {
+        return supportedAuthenticationMethods;
+    }
 
     /** {@inheritDoc} */
     public long getAuthenticationDuration() {

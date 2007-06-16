@@ -500,6 +500,15 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected void resolvePrincipal(SAML2ProfileRequestContext requestContext) throws ProfileException {
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
+        if (profileConfiguration == null) {
+            log.error("Unable to resolve principal, no SAML 2 profile configuration for relying party "
+                    + requestContext.getRelyingPartyId());
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
+                    "Error resolving principal"));
+            throw new ProfileException(
+                    "Unable to resolve principal, no SAML 2 profile configuration for relying party "
+                            + requestContext.getRelyingPartyId());
+        }
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
         if (log.isDebugEnabled()) {

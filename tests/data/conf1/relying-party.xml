@@ -23,7 +23,8 @@
     
     <RelyingParty id="urn:example.org:unitTestFed"
                   provider="http://example.org/IdP">
-        <ProfileConfiguration xsi:type="saml:SAML2AttributesQueryProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
     </RelyingParty>
     
     <MetadataProvider id="UnitTestConf1" xsi:type="InlineMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">

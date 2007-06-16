@@ -30,7 +30,7 @@ import edu.internet2.middleware.shibboleth.idp.profile.saml2.SSOProfileHandler;
 public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2ProfileHandlerBeanDefinitionParser {
 
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(IdPProfileHandlerNamespaceHandler.NAMESPACE, "SAML2SSO");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "SAML2SSO");
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
@@ -47,5 +47,8 @@ public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2Pro
         builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "decodingBinding")));
 
         builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "encodingBinding")));
+
+        builder.addPropertyReference("securityPolicyFactory", DatatypeHelper.safeTrimOrNullString(config
+                .getAttributeNS(null, "securityPolicyFactoryId")));
     }
 }

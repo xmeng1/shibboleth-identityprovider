@@ -37,9 +37,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
+import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
-import edu.internet2.middleware.shibboleth.common.profile.provider.ShibbolethProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileRequest;
 import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileResponse;
 
@@ -59,8 +59,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
-        ShibbolethProfileHandlerManager handlerManager = (ShibbolethProfileHandlerManager) getApplicationContext()
-                .getBean("shibboleth.ProfileHandler");
+        ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
+                "shibboleth.HandlerManager");
         ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
         assertNotNull(handler);
 
@@ -73,7 +73,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         assertTrue(response.contains(StatusCode.RESPONDER_URI));
         assertTrue(response.contains(StatusCode.REQUEST_DENIED_URI));
     }
-    
+
     /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
     public void testAuthenticatedIssuerNoProfileConfiguration() throws Exception {
         AttributeQuery query = buildAttributeQuery("urn:example.org:unitTest:sp1");
@@ -85,8 +85,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
-        ShibbolethProfileHandlerManager handlerManager = (ShibbolethProfileHandlerManager) getApplicationContext()
-                .getBean("shibboleth.ProfileHandler");
+        ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
+                "shibboleth.HandlerManager");
         ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
         assertNotNull(handler);
 
@@ -99,7 +99,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         assertTrue(response.contains(StatusCode.RESPONDER_URI));
         assertTrue(response.contains(StatusCode.REQUEST_DENIED_URI));
     }
-    
+
     /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
     public void testAuthenticatedIssuerNoRequestAttributes() throws Exception {
         AttributeQuery query = buildAttributeQuery("urn:example.org:unitTestFed:sp2");
@@ -111,8 +111,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
-        ShibbolethProfileHandlerManager handlerManager = (ShibbolethProfileHandlerManager) getApplicationContext()
-                .getBean("shibboleth.ProfileHandler");
+        ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
+                "shibboleth.HandlerManager");
         ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
         assertNotNull(handler);
 
@@ -126,7 +126,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         assertTrue(response.contains("Name=\"cn\""));
         assertTrue(response.contains("Name=\"uid\""));
     }
-    
+
     /**
      * Builds a basic attribute query.
      * 

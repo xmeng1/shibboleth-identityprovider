@@ -33,8 +33,8 @@ import org.joda.time.DateTime;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.Pair;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
+import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -46,6 +46,9 @@ import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationIm
  */
 public class AuthenticationEngine extends HttpServlet {
 
+    /** Serial version UID. */
+    private static final long serialVersionUID = 8494202791991613148L;
+
     /** Class logger. */
     private static final Logger LOG = Logger.getLogger(AuthenticationEngine.class);
 
@@ -54,8 +57,8 @@ public class AuthenticationEngine extends HttpServlet {
      * 
      * @return manager used to retrieve handlers for requests
      */
-    public ProfileHandlerManager getProfileHandlerManager() {
-        return (ProfileHandlerManager) getServletContext().getAttribute("handlerManager");
+    public IdPProfileHandlerManager getProfileHandlerManager() {
+        return (IdPProfileHandlerManager) getServletContext().getAttribute("handlerManager");
     }
 
     /**
@@ -66,15 +69,6 @@ public class AuthenticationEngine extends HttpServlet {
     @SuppressWarnings("unchecked")
     public SessionManager<Session> getSessionManager() {
         return (SessionManager<Session>) getServletContext().getAttribute("sessionManager");
-    }
-
-    /**
-     * Gets the authentication handler manager used by this engine.
-     * 
-     * @return authentication handler manager used by this engine
-     */
-    public AuthenticationHandlerManager getAuthenticationHandlerManager() {
-        return (AuthenticationHandlerManager) getServletContext().getAttribute("authenticationHandlerManager");
     }
 
     /**
@@ -218,7 +212,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Selecting appropriate authentication method for request.");
         }
-        Pair<String, AuthenticationHandler> handler = getAuthenticationHandlerManager().getAuthenticationHandler(
+        Pair<String, AuthenticationHandler> handler = getProfileHandlerManager().getAuthenticationHandler(
                 loginContext);
 
         if (handler == null) {

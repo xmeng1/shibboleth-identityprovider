@@ -16,6 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -44,6 +46,13 @@ public interface AuthenticationHandler {
     /** Request attribute to which an error message may be bound. */
     public static final String AUTHENTICATION_ERROR_KEY = "authnError";
 
+    /**
+     * Gets the list of authentication methods this handler supports.
+     * 
+     * @return authentication methods this handler supports
+     */
+    public List<String> getSupportedAuthenticationMethods();
+    
     /**
      * Gets the length of time, in milliseconds, after which a user authenticated by this handler should be
      * re-authenticated.

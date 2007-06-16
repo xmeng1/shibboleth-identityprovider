@@ -81,14 +81,37 @@
         <property name="namespaceAware" value="true" />
     </bean>
 
+    <bean id="shibboleth.SAML2SSOMessageSecurityPolicyFactoryNoIssuerAuth"
+          parent="shibboleth.SAML2SSOMessageSecurityPolicyFactoryIssuerAuth">
+        <property name="requiredAuthenticatedIssuer" value="false" />
+    </bean>
+    
+    <bean id="shibboleth.SAML2SSOMessageSecurityPolicyFactoryIssuerAuth"
+          parent="shibboleth.BaseSAML2SecurityPolicyFactory">
+        <property name="issuerRole">
+            <bean id="shibboleth.SAML2SSORole" class="javax.xml.namespace.QName">
+                <constructor-arg value="urn:oasis:names:tc:SAML:2.0:metadata" />
+                <constructor-arg value="SPSSODescriptor" />
+            </bean>
+        </property>
+    </bean>
+    
     <bean id="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryNoIssuerAuth"
-          class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory">
+          parent="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryIssuerAuth">
+        <property name="requiredAuthenticatedIssuer" value="false" />
+    </bean>
+    
+    <bean id="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryIssuerAuth"
+          parent="shibboleth.BaseSAML2SecurityPolicyFactory">
         <property name="issuerRole">
             <bean id="shibboleth.SAML2AttributeQueryRole" class="javax.xml.namespace.QName">
                 <constructor-arg value="urn:oasis:names:tc:SAML:2.0:metadata" />
                 <constructor-arg value="SPSSODescriptor" />
             </bean>
         </property>
+    </bean>
+    
+    <bean id="shibboleth.BaseSAML2SecurityPolicyFactory" abstract="true" class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory">
         <property name="issuerProtocol" value="urn:oasis:names:tc:SAML:2.0:protocol" />
         <property name="policyRuleFactories">
             <list>
@@ -96,12 +119,6 @@
                 <ref bean="shibboleth.MessageIssueInstantRuleFactory" />
             </list>
         </property>
-        <property name="requiredAuthenticatedIssuer" value="false" />
-    </bean>
-    
-    <bean id="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryIssuerAuth"
-          class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory"
-          parent="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactoryNoIssuerAuth">
         <property name="requiredAuthenticatedIssuer" value="true" />
     </bean>
     
