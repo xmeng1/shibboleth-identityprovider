@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.authn.impl;
+package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 

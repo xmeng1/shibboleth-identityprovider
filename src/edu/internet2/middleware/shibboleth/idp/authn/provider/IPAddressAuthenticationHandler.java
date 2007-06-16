@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.authn.impl;
+package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 import java.net.Inet4Address;
@@ -47,10 +47,10 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
  * If an Authentication Context Class or DeclRef URI is not specified, it will default to
  * "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol".
  */
-public class IPAddressHandler extends AbstractAuthenticationHandler {
+public class IPAddressAuthenticationHandler extends AbstractAuthenticationHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(IPAddressHandler.class);
+    private final Logger log = Logger.getLogger(IPAddressAuthenticationHandler.class);
 
     /** The URI of the AuthnContextDeclRef or the AuthnContextClass. */
     private String authnMethodURI = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol";
@@ -81,7 +81,7 @@ public class IPAddressHandler extends AbstractAuthenticationHandler {
 
         for (String addr : entries) {
             try {
-                ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.impl.IPAddressHandler.IPEntry(addr));
+                ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressAuthenticationHandler.IPEntry(addr));
             } catch (UnknownHostException ex) {
                 log.error("IPAddressHandler: Error parsing entry \"" + addr + "\". Ignoring.");
             }
