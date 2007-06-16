@@ -34,6 +34,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 
 /**
@@ -115,50 +117,32 @@ public class IPAddressHandler extends AbstractAuthenticationHandler {
     }
 
     /** {@inheritDoc} */
-    public void login(LoginContext loginContext, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-
-        loginContext.setAuthenticationAttempted();
-        loginContext.setAuthenticationInstant(new DateTime());
-        loginContext.setPrincipalName(username);
+    public void login(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
 
         if (defaultDeny) {
-            handleDefaultDeny(httpRequest, httpResponse, loginContext);
+            handleDefaultDeny(httpRequest, httpResponse);
         } else {
-            handleDefaultAllow(httpRequest, httpResponse, loginContext);
+            handleDefaultAllow(httpRequest, httpResponse);
         }
 
-        // return control back to the AuthNManager.
-        try {
-            RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(loginContext.getAuthenticationManagerURL());
-            dispatcher.forward(httpRequest, httpResponse);
-        } catch (ServletException ex) {
-            log.error("IPAddressHandler: Error returning control to AuthnManager.", ex);
-        } catch (IOException ex) {
-            log.error("IPAddressHandler: Error returning control to AuthnManager.", ex);
-        }
+        AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }
 
-    protected void handleDefaultDeny(HttpServletRequest request, HttpServletResponse response, LoginContext loginCtx) {
+    protected void handleDefaultDeny(HttpServletRequest request, HttpServletResponse response) {
 
         boolean ipAllowed = searchIpList(request);
 
         if (ipAllowed) {
-            loginCtx.setPrincipalAuthenticated(true);
-        } else {
-            loginCtx.setPrincipalAuthenticated(false);
-            loginCtx.setAuthenticationFailureMessage("The user's IP address is not in the permitted list.");
+            request.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, username);
         }
     }
 
-    protected void handleDefaultAllow(HttpServletRequest request, HttpServletResponse response, LoginContext loginCtx) {
+    protected void handleDefaultAllow(HttpServletRequest request, HttpServletResponse response) {
 
         boolean ipDenied = searchIpList(request);
 
-        if (ipDenied) {
-            loginCtx.setPrincipalAuthenticated(false);
-            loginCtx.setAuthenticationFailureMessage("The user's IP address is in the deny list.");
-        } else {
-            loginCtx.setPrincipalAuthenticated(true);
+        if (!ipDenied) {
+            request.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, username);
         }
     }
 
@@ -267,11 +251,9 @@ public class IPAddressHandler extends AbstractAuthenticationHandler {
 
             // ensure that the netmask isn't too large
             if ((tempAddr instanceof Inet4Address) && (masklen > 32)) {
-                throw new UnknownHostException("IPAddressHandler: Netmask is too large for an IPv4 address: " 
-                        + masklen);
+                throw new UnknownHostException("IPAddressHandler: Netmask is too large for an IPv4 address: " + masklen);
             } else if ((tempAddr instanceof Inet6Address) && masklen > 128) {
-                throw new UnknownHostException("IPAddressHandler: Netmask is too large for an IPv6 address: " 
-                        + masklen);
+                throw new UnknownHostException("IPAddressHandler: Netmask is too large for an IPv6 address: " + masklen);
             }
 
             netmask = new BitSet(addrlen);

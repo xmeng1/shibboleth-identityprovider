@@ -25,8 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
-
 /**
  * Authentication Handler that redirects to servlet protected by a Web Single-Sign-On system.
  */
@@ -57,7 +55,7 @@ public class RemoteUserAuthenticationHandler extends AbstractAuthenticationHandl
     }
 
     /** {@inheritDoc} */
-    public void login(LoginContext loginContext, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    public void login(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
 
         // forward control to the servlet.
         try {

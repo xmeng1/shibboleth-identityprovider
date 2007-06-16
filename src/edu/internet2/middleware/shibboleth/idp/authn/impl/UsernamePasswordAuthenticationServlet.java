@@ -146,7 +146,7 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
             
             loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
-            redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
+            redirectControl(loginContext.getAuthenticationEngineURL(), "AuthenticationManager", request, response);
         }
         
         String jassConfiguration = (String)o;
@@ -161,7 +161,7 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
             loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
-            redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
+            redirectControl(loginContext.getAuthenticationEngineURL(), "AuthenticationManager", request, response);
             
         }
         username = (String)o;
@@ -173,14 +173,14 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
             loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("Internal configuration error.");
-            redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
+            redirectControl(loginContext.getAuthenticationEngineURL(), "AuthenticationManager", request, response);
             
         }
         password = (String)o;
         
         authenticateUser(username, password, jassConfiguration, loginContext);
         password = null;
-        redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", request, response);
+        redirectControl(loginContext.getAuthenticationEngineURL(), "AuthenticationManager", request, response);
     }
 
 	/**

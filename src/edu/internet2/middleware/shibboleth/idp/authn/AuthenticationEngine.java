@@ -30,6 +30,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
+import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.Pair;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
@@ -46,7 +47,7 @@ import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationIm
 public class AuthenticationEngine extends HttpServlet {
 
     /** Class logger. */
-    private static final Logger log = Logger.getLogger(AuthenticationEngine.class);
+    private static final Logger LOG = Logger.getLogger(AuthenticationEngine.class);
 
     /**
      * Gets the manager used to retrieve handlers for requests.
@@ -75,94 +76,234 @@ public class AuthenticationEngine extends HttpServlet {
     public AuthenticationHandlerManager getAuthenticationHandlerManager() {
         return (AuthenticationHandlerManager) getServletContext().getAttribute("authenticationHandlerManager");
     }
-    
 
     /**
      * Returns control back to the authentication engine.
      * 
      * @param httpRequest current http request
      * @param httpResponse current http response
-     * @param loginContext user login context
      */
     public static void returnToAuthenticationEngine(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Returning control to authentication engine");
+        }
         HttpSession httpSession = httpRequest.getSession();
-
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        
+        forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
+    }
+
+    /**
+     * Returns control back to the profile handler that invoked the authentication engine.
+     * 
+     * @param loginContext current login context
+     * @param httpRequest current http request
+     * @param httpResponse current http response
+     */
+    public static void returnToProfileHandler(LoginContext loginContext, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Returning control to profile handler at: " + loginContext.getProfileHandlerURL());
+        }
+        forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
+    }
+
+    /**
+     * Forwards a request to the given path.
+     * 
+     * @param forwardPath path to forward the request to
+     * @param httpRequest current HTTP request
+     * @param httpResponse current HTTP response
+     */
+    protected static void forwardRequest(String forwardPath, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
         try {
-            RequestDispatcher distpather = httpRequest.getRequestDispatcher(loginContext.getAuthenticationManagerURL());
-            distpather.forward(httpRequest, httpResponse);
+            RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(forwardPath);
+            dispatcher.forward(httpRequest, httpResponse);
         } catch (IOException e) {
-            log.fatal("Unable to return control back to authentication engine", e);
+            LOG.fatal("Unable to return control back to authentication engine", e);
         } catch (ServletException e) {
-            log.fatal("Unable to return control back to authentication engine", e);
+            LOG.fatal("Unable to return control back to authentication engine", e);
         }
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
     protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
-        HttpSession httpSession = httpRequest.getSession();
-
-        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        if (loginContext == null) {
-            // TODO error
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Processing incoming request");
         }
 
-        // If authentication has been attempted, don't try it again.
-        if (loginContext.getAuthenticationAttempted()) {
-            handleNewAuthnRequest(loginContext, httpRequest, httpResponse);
+        HttpSession httpSession = httpRequest.getSession();
+        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        if (loginContext == null) {
+            LOG.error("Incoming request does not have attached login context");
+            throw new ServletException("Incoming request does not have attached login context");
+        }
+
+        if (!loginContext.getAuthenticationAttempted()) {
+            String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+            Session shibSession = getSessionManager().getSession(shibSessionId);
+
+            if (shibSession != null) {
+                AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(
+                        loginContext, shibSession);
+                if (authenticationMethod != null) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("An active authentication method is applicable for relying party.  "
+                                + "Using authentication method " + authenticationMethod.getAuthenticationMethod()
+                                + " as authentication method to relying party without re-authenticating user.");
+                    }
+                    authenticateUserWithActiveMethod(httpRequest, httpResponse, authenticationMethod);
+                }
+            }
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No active authentication method is applicable for relying party.  "
+                        + "Authenticating user with to be determined method.");
+            }
+            authenticateUserWithoutActiveMethod1(httpRequest, httpResponse);
         } else {
-            finishAuthnRequest(loginContext, httpRequest, httpResponse);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Request returned from authentication handler, completing authentication process.");
+            }
+            authenticateUserWithoutActiveMethod2(httpRequest, httpResponse);
         }
     }
 
     /**
-     * Handle a new authentication request.
+     * Completes the authentication request using an existing, active, authentication method for the current user.
      * 
-     * @param loginContext The {@link LoginContext} for the new authentication request
-     * @param httpRequest The servlet request containing the authn request
-     * @param httpResponse The associated servlet response.
-     * 
-     * @throws IOException thrown if there is a problem reading/writting to the HTTP request/response
-     * @throws ServletException thrown if there is a problem transferring control to the authentication handler
+     * @param httpRequest current HTTP request
+     * @param httpResponse current HTTP response
+     * @param authenticationMethod authentication method to use to complete the request
      */
-    protected void handleNewAuthnRequest(LoginContext loginContext, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) throws ServletException, IOException {
-
+    protected void authenticateUserWithActiveMethod(HttpServletRequest httpRequest, HttpServletResponse httpResponse,
+            AuthenticationMethodInformation authenticationMethod) {
         HttpSession httpSession = httpRequest.getSession();
+
         String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         Session shibSession = getSessionManager().getSession(shibSessionId);
 
-        AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(loginContext,
-                shibSession);
-        if (authenticationMethod != null) {
-            loginContext.setAuthenticationDuration(authenticationMethod.getAuthenticationDuration());
-            loginContext.setAuthenticationInstant(authenticationMethod.getAuthenticationInstant());
-            loginContext.setAuthenticationMethod(authenticationMethod.getAuthenticationMethod());
-            loginContext.setPrincipalAuthenticated(true);
-            loginContext.setPrincipalName(shibSession.getPrincipalName());
-            finishAuthnRequest(loginContext, httpRequest, httpResponse);
-        } else {
-            Pair<String, AuthenticationHandler> handler = getAuthenticationHandlerManager().getAuthenticationHandler(
-                    loginContext);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Populating login context with existing session and authentication method information.");
+        }
+        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        loginContext.setAuthenticationDuration(authenticationMethod.getAuthenticationDuration());
+        loginContext.setAuthenticationInstant(authenticationMethod.getAuthenticationInstant());
+        loginContext.setAuthenticationMethod(authenticationMethod.getAuthenticationMethod());
+        loginContext.setPrincipalAuthenticated(true);
+        loginContext.setPrincipalName(shibSession.getPrincipalName());
 
-            if (handler == null) {
-                loginContext.setPassiveAuth(false);
-                loginContext
-                        .setAuthenticationFailureMessage("No installed AuthenticationHandler can satisfy the authentication request.");
-                log.error("No installed AuthenticationHandler can satisfy the authentication request.");
-                finishAuthnRequest(loginContext, httpRequest, httpResponse);
+        ServiceInformation serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(),
+                authenticationMethod);
+        shibSession.getServicesInformation().put(serviceInfo.getEntityID(), serviceInfo);
+
+        returnToProfileHandler(loginContext, httpRequest, httpResponse);
+    }
+
+    /**
+     * Performs the first part of user authentication. An authentication handler is determined, the login context is
+     * populated with some initial information, and control is forward to the selected handler so that it may
+     * authenticate the user.
+     * 
+     * @param httpRequest current HTTP request
+     * @param httpResponse current HTTP response
+     */
+    protected void authenticateUserWithoutActiveMethod1(HttpServletRequest httpRequest, 
+            HttpServletResponse httpResponse) {
+        HttpSession httpSession = httpRequest.getSession();
+        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Selecting appropriate authentication method for request.");
+        }
+        Pair<String, AuthenticationHandler> handler = getAuthenticationHandlerManager().getAuthenticationHandler(
+                loginContext);
+
+        if (handler == null) {
+            loginContext.setPrincipalAuthenticated(false);
+            loginContext.setAuthenticationFailureMessage("No AuthenticationHandler satisfys the request from: "
+                            + loginContext.getRelyingPartyId());
+            LOG.error("No AuthenticationHandler satisfys the request from relying party: "
+                    + loginContext.getRelyingPartyId());
+            returnToProfileHandler(loginContext, httpRequest, httpResponse);
+        }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Authentication method " + handler.getFirst() + " will be used to authenticate user.");
+        }
+        loginContext.setAuthenticationAttempted();
+        loginContext.setAuthenticationDuration(handler.getSecond().getAuthenticationDuration());
+        loginContext.setAuthenticationMethod(handler.getFirst());
+        loginContext.setAuthenticationEngineURL(httpRequest.getRequestURI());
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Transferring control to authentication handler of type: "
+                    + handler.getSecond().getClass().getName());
+        }
+        handler.getSecond().login(httpRequest, httpResponse);
+    }
+
+    /**
+     * Performs the second part of user authentication. The principal name set by the authentication handler is
+     * retrieved and pushed in to the login context, a Shibboleth session is created if needed, information indicating
+     * that the user has logged into the service is recorded and finally control is returned back to the profile
+     * handler.
+     * 
+     * @param httpRequest current HTTP request
+     * @param httpResponse current HTTP response
+     */
+    protected void authenticateUserWithoutActiveMethod2(HttpServletRequest httpRequest, 
+            HttpServletResponse httpResponse) {
+        HttpSession httpSession = httpRequest.getSession();
+
+        String principalName = (String) httpRequest.getAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY);
+        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        if (DatatypeHelper.isEmpty(principalName)) {
+            loginContext.setPrincipalAuthenticated(false);
+            loginContext.setAuthenticationFailureMessage("No principal name returned from authentication handler.");
+            LOG.error("No principal name returned from authentication method: "
+                    + loginContext.getAuthenticationMethod());
+            returnToProfileHandler(loginContext, httpRequest, httpResponse);
+        }
+        loginContext.setPrincipalName(principalName);
+
+        String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        Session shibSession = getSessionManager().getSession(shibSessionId);
+
+        if (shibSession == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Creating shibboleth session for principal " + principalName);
             }
 
-            loginContext.setAuthenticationAttempted();
-            loginContext.setAuthenticationDuration(handler.getSecond().getAuthenticationDuration());
-            loginContext.setAuthenticationMethod(handler.getFirst());
-            loginContext.setAuthenticationManagerURL(httpRequest.getRequestURI());
+            InetAddress addr;
+            try {
+                addr = InetAddress.getByName(httpRequest.getRemoteAddr());
+            } catch (UnknownHostException ex) {
+                addr = null;
+            }
 
-            httpSession.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
-            handler.getSecond().login(loginContext, httpRequest, httpResponse);
+            shibSession = (Session) getSessionManager().createSession(addr, loginContext.getPrincipalName());
+            loginContext.setSessionID(shibSession.getSessionID());
+            httpSession.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession.getSessionID());
         }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Recording authentication and service information in Shibboleth session for principal: "
+                    + principalName);
+        }
+        AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(loginContext
+                .getAuthenticationMethod(), new DateTime(), loginContext.getAuthenticationDuration());
+        shibSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);
+
+        ServiceInformation serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(),
+                authnMethodInfo);
+        shibSession.getServicesInformation().put(serviceInfo.getEntityID(), serviceInfo);
+
+        shibSession.setLastActivityInstant(new DateTime());
+
+        returnToProfileHandler(loginContext, httpRequest, httpResponse);
     }
 
     /**
@@ -203,59 +344,4 @@ public class AuthenticationEngine extends HttpServlet {
 
         return null;
     }
-
-    /**
-     * Handle the "return leg" of an authentication request (i.e. clean up after an authentication handler has run).
-     * 
-     * @param loginContext The {@link LoginContext} for the new authentication request
-     * @param httpRequest The servlet request containing the authn request
-     * @param httpResponse The associated servlet response.
-     * 
-     * @throws IOException thrown if there is a problem reading/writting to the HTTP request/response
-     * @throws ServletException thrown if there is a problem transferring control to the authentication profile handler
-     */
-    protected void finishAuthnRequest(LoginContext loginContext, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) throws ServletException, IOException {
-
-        HttpSession httpSession = httpRequest.getSession();
-        String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-        Session shibSession = null;
-        AuthenticationMethodInformation authnMethodInfo = null;
-        ServiceInformation serviceInfo = null;
-
-        if (!loginContext.getAuthenticationAttempted()) {
-            // Authentication wasn't attempted so we're using a previously established authentication method
-            shibSession = getSessionManager().getSession(shibSessionId);
-            authnMethodInfo = shibSession.getAuthenticationMethods().get(loginContext.getAuthenticationMethod());
-        } else {
-            if (shibSessionId == null) {
-                InetAddress addr;
-                try {
-                    addr = InetAddress.getByName(httpRequest.getRemoteAddr());
-                } catch (UnknownHostException ex) {
-                    addr = null;
-                }
-
-                shibSession = (Session) getSessionManager().createSession(addr, loginContext.getPrincipalName());
-                httpSession.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession.getSessionID());
-
-                authnMethodInfo = new AuthenticationMethodInformationImpl(loginContext.getAuthenticationMethod(),
-                        new DateTime(), loginContext.getAuthenticationDuration());
-                shibSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);
-            }
-        }
-
-        loginContext.setSessionID(shibSession.getSessionID());
-        shibSession.setLastActivityInstant(new DateTime());
-
-        serviceInfo = shibSession.getServicesInformation().get(loginContext.getRelyingPartyId());
-        if (serviceInfo == null) {
-            serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(), authnMethodInfo);
-        }
-
-        RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(loginContext.getProfileHandlerURL());
-        dispatcher.forward(httpRequest, httpResponse);
-    }
-
-    // TODO logout support
 }

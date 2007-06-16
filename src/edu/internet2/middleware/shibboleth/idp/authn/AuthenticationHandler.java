@@ -20,33 +20,29 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Authentication handlers are responsible for authenticating a user using a particular authentication context class and
- * logging users out for that same mechanism.
+ * Authentication handlers authenticate a user in an implementation specific manner. Some examples of this might be by
+ * collecting a user name and password and validating it against an LDAP directory or collecting and validating a client
+ * certificate or one-time password.
  * 
- * When this handler is invoked to log a user in the incoming request will contain a {@link AuthnRequest} attribute
- * registered under the name <strong>AuthnRequest</strong>. If the authentication request coming into the IdP is not a
- * SAML 2 request the receiving profile handler will translate the incoming details into a {@link AuthnRequest}.
+ * After the handler has authenticated the user it <strong>MUST</strong> bind the user's principal name to the
+ * {@link HttpServletRequest} attribute identified by {@link AuthenticationHandler#PRINCIPAL_NAME_KEY}. The handler may
+ * also bind an error message, if an error occurred during authentication to the request attribute identified by
+ * {@link AuthenticationHandler#AUTHENTICATION_ERROR_KEY}. Finally, the handler must return control to the
+ * authentication engine by invoking
+ * {@link AuthenticationEngine#returnToAuthenticationEngine(HttpServletRequest, HttpServletResponse)}. After which the
+ * authentication handler must immediately return.
  * 
- * Upon successfull authentication the handler <strong>must</strong> set a request attribute called <strong>principal</strong>
- * with the principal name of the authenticated user. It must then forward the request/response to the provided return
- * location by means of the {@link javax.servlet.RequestDispatcher.RequestDispatcher#forward(
- * javax.servlet.ServletRequest, javax.servlet.ServletResponse)} method.
- * 
- * When this handler is invoked to log a user out of the particular authentication source the handler may perform any
- * operation necessary to log a user out. When finished it must then forward the request/response to the provided return
- * location by means of the
- * {@link RequestDispatcher#forward(javax.servlet.ServletRequest, javax.servlet.ServletResponse)} method. This call will
- * occur before SAML logout requests have been sent to all services supporting such requests.
- * 
- * AuthentcationHandlers <strong>MUST NOT</strong> change or add any data to the user's
- * {@link javax.servlet.http.HttpSession} that persists past the process of authenticating the user, that is no
- * additional session data may be added and no existing session data may be changed when the handler redirects back to
- * the return location.
+ * Handlers <strong>MUST NOT</strong> change or add any data to the user's {@link javax.servlet.http.HttpSession} that
+ * persists past the process of authenticating the user, that is no additional session data may be added and no existing
+ * session data may be changed when the handler returns control to the authentication engine.
  */
 public interface AuthenticationHandler {
-    
+
     /** Request attribute to which user's principal name should be bound. */
     public static final String PRINCIPAL_NAME_KEY = "principal";
+
+    /** Request attribute to which an error message may be bound. */
+    public static final String AUTHENTICATION_ERROR_KEY = "authnError";
 
     /**
      * Gets the length of time, in milliseconds, after which a user authenticated by this handler should be
@@ -55,7 +51,7 @@ public interface AuthenticationHandler {
      * @return length of time, in milliseconds, after which a user should be re-authenticated
      */
     public long getAuthenticationDuration();
-    
+
     /**
      * Gets whether this handler supports passive authentication.
      * 
@@ -71,12 +67,12 @@ public interface AuthenticationHandler {
     public boolean supportsForceAuthentication();
 
     /**
-     * Authenticates the user making the request.
-     * @param loginContext The {@link LoginContext} for the reqeust.
+     * Authenticate the user making the request.
+     * 
      * @param httpRequest user request
      * @param httpResponse response to user
      */
-    public void login(LoginContext loginContext, HttpServletRequest httpRequest, HttpServletResponse httpResponse);
+    public void login(HttpServletRequest httpRequest, HttpServletResponse httpResponse);
 
     /**
      * Logs out the given user from the authentication mechanism represented by this handler.

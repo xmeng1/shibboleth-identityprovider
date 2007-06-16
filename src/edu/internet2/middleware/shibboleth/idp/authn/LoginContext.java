@@ -29,7 +29,7 @@ import org.joda.time.DateTime;
  * 
  * Two properties are tracked by default:
  * 
- * <code>forceAuth</code> - Should user authentiation be forced. <code>passiveAuth</code> - Should user
+ * <code>forceAuth</code> - Should user authentication be forced. <code>passiveAuth</code> - Should user
  * authentication not control the UI.
  * 
  * A Map&lt;String, Object&gt; is provided to store other properties. Alternatively, a profile handler may create a
@@ -67,8 +67,8 @@ public class LoginContext implements Serializable {
     /** The ProfileHandler URL. */
     private String profileHandlerURL;
 
-    /** The AuthenticationManager's URL. */
-    private String authnManagerURL;
+    /** The authentication engine's URL. */
+    private String authnEngineURL;
 
     /** has authentication been attempted yet. */
     private boolean authnAttempted;
@@ -76,7 +76,7 @@ public class LoginContext implements Serializable {
     /** The id of the authenticated user. */
     private String principalName;
 
-    /** Did authentication succceed? */
+    /** Did authentication succeed? */
     private boolean principalAuthenticated;
 
     /** Optional failure message. */
@@ -101,7 +101,7 @@ public class LoginContext implements Serializable {
     /**
      * Creates a new instance of LoginContext.
      * 
-     * @param force if the authentication manager must reauth the user.
+     * @param force if the authentication manager must re-authenticate the user.
      * @param passive if the authentication manager must not interact with the users UI.
      */
     public LoginContext(boolean force, boolean passive) {
@@ -131,7 +131,7 @@ public class LoginContext implements Serializable {
     /**
      * Returns if authentication must be forced.
      * 
-     * @return <code>true</code> if the authentication manager must reauth the user.
+     * @return <code>true</code> if the authentication manager must re-authenticate the user.
      */
     public boolean getForceAuth() {
         return forceAuth;
@@ -149,7 +149,7 @@ public class LoginContext implements Serializable {
     /**
      * Sets if authentication must be forced.
      * 
-     * @param force if the authentication manager must reauth the user.
+     * @param force if the authentication manager must re-authenticate the user.
      */
     public void setForceAuth(boolean force) {
         forceAuth = force;
@@ -158,16 +158,16 @@ public class LoginContext implements Serializable {
     /**
      * Sets if authentication must be passive.
      * 
-     * @param passicve if the authentication manager must not interact with the users UI.
+     * @param passive if the authentication manager must not interact with the users UI.
      */
-    public void setPassiveAuth(boolean passicve) {
-        passiveAuth = passicve;
+    public void setPassiveAuth(boolean passive) {
+        passiveAuth = passive;
     }
 
     /**
      * Get an optional property object.
      * 
-     * @param key The key in the properites Map.
+     * @param key The key in the properties Map.
      * 
      * @return The object, or <code>null</code> is no object exists for the key.
      */
@@ -278,21 +278,21 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Gets the AuthenticationManager URL.
+     * Gets the authentication engine's URL.
      * 
-     * @return the URL of the AuthenticationManager.
+     * @return the URL of the authentication engine
      */
-    public String getAuthenticationManagerURL() {
-        return authnManagerURL;
+    public String getAuthenticationEngineURL() {
+        return authnEngineURL;
     }
 
     /**
-     * Sets the AuthenticationManager's URL.
+     * Sets the authentication engine's URL.
      * 
-     * @param url the URL of the AuthenticationManager.
+     * @param url the URL of the authentication engine
      */
-    public void setAuthenticationManagerURL(String url) {
-        authnManagerURL = url;
+    public void setAuthenticationEngineURL(String url) {
+        authnEngineURL = url;
     }
 
     /**

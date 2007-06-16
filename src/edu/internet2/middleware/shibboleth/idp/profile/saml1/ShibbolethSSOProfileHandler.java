@@ -226,7 +226,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             // UTF-8 encoding required to be supported by all JVMs.
         }
 
-        loginContext.setAuthenticationManagerURL(authenticationManagerPath);
+        loginContext.setAuthenticationEngineURL(authenticationManagerPath);
         loginContext.setProfileHandlerURL(request.getRequestURI());
         return loginContext;
     }

@@ -77,73 +77,73 @@ public class UsernamePasswordAuthenticationHandler extends AbstractAuthenticatio
     }
 
     /** {@inheritDoc} */
-    public void login(final edu.internet2.middleware.shibboleth.idp.authn.LoginContext loginContext,
+    public void login(
             final HttpServletRequest httpRequest, final HttpServletResponse httpResponse) {
 
-        HttpSession session = httpRequest.getSession();
-
-        // these fields will need to be set, regardless of how we branch.
-        loginContext.setAuthenticationAttempted();
-        loginContext.setAuthenticationMethod(authnMethodURI);
-
-        // If forceAuth is set, we must forward to the login JSP.
-        if (loginContext.getForceAuth()) {
-
-            if (loginContext.getPassiveAuth()) {
-                log
-                        .error("UsernamePasswordAuthenticationHandler: Unable to authenticate user: both forceAuthN and passiveAuthnN are set in the login context.");
-                redirectControl(loginContext.getAuthenticationManagerURL(), "AuthenticationManager", httpRequest,
-                        httpResponse);
-            }
-
-            session.setAttribute(JAAS_CONFIG_NAME, jaasConfigurationName);
-            redirectControl(loginURL, "login page", httpRequest, httpResponse);
-        }
-
-        // If the user has already been authenticated, forceAuth is not set,
-        // and the authentication hasn't expired, then populate the LoginCtx
-        // and return control to the AuthenticationManager.
-        // Otherwise, redirect the user to loginJSPURL to collect a username and
-        // password.
-
-        // implementation note: There is a race condition here, but I'm not sure
-        // how to avoid it. I need a way to instantiate a lock in the session to
-        // protect the
-        // username and authnInstant fields.
-
-        Object o = session.getAttribute(USERNAME);
-        if (!(o instanceof String)) {
-            log
-                    .debug("UsernamePasswordAuthenticationHandler: Username attribute found in HttpSession, but it is not a String.");
-
-            redirectControl(loginURL, "login page", httpRequest, httpResponse);
-        }
-
-        String username = (String) o;
-
-        o = session.getAttribute(AUTHN_INSTANT);
-        if (!(o instanceof DateTime)) {
-            log.debug("UsernamePasswordAuthenticationHandler: AuthnInstant attribute found in HttpSession for user "
-                    + username + ", but it is not a DateTime.");
-
-            redirectControl(loginURL, "login page", httpRequest, httpResponse);
-        }
-
-        DateTime authnInstant = (DateTime) o;
-        DateTime authnExpires = authnInstant.plusSeconds(authnDuration);
-        DateTime now = new DateTime();
-        if (now.isAfter(authnExpires)) {
-            log.info("UsernamePasswordAuthenticationHandler: Authentication has expired for user " + username);
-            redirectControl(loginURL, "login page", httpRequest, httpResponse);
-        }
-
-        // the current authentication information is still valid, so return it.
-        loginContext.setPrincipalAuthenticated(true);
-        loginContext.setPrincipalName(username);
-        loginContext.setAuthenticationInstant(authnInstant);
-
-        // XXX: adjust for the appropriate units?
-        loginContext.setAuthenticationDuration(authnDuration);
+//        HttpSession session = httpRequest.getSession();
+//
+//        // these fields will need to be set, regardless of how we branch.
+//        loginContext.setAuthenticationAttempted();
+//        loginContext.setAuthenticationMethod(authnMethodURI);
+//
+//        // If forceAuth is set, we must forward to the login JSP.
+//        if (loginContext.getForceAuth()) {
+//
+//            if (loginContext.getPassiveAuth()) {
+//                log
+//                        .error("UsernamePasswordAuthenticationHandler: Unable to authenticate user: both forceAuthN and passiveAuthnN are set in the login context.");
+//                redirectControl(loginContext.getAuthenticationEngineURL(), "AuthenticationManager", httpRequest,
+//                        httpResponse);
+//            }
+//
+//            session.setAttribute(JAAS_CONFIG_NAME, jaasConfigurationName);
+//            redirectControl(loginURL, "login page", httpRequest, httpResponse);
+//        }
+//
+//        // If the user has already been authenticated, forceAuth is not set,
+//        // and the authentication hasn't expired, then populate the LoginCtx
+//        // and return control to the AuthenticationManager.
+//        // Otherwise, redirect the user to loginJSPURL to collect a username and
+//        // password.
+//
+//        // implementation note: There is a race condition here, but I'm not sure
+//        // how to avoid it. I need a way to instantiate a lock in the session to
+//        // protect the
+//        // username and authnInstant fields.
+//
+//        Object o = session.getAttribute(USERNAME);
+//        if (!(o instanceof String)) {
+//            log
+//                    .debug("UsernamePasswordAuthenticationHandler: Username attribute found in HttpSession, but it is not a String.");
+//
+//            redirectControl(loginURL, "login page", httpRequest, httpResponse);
+//        }
+//
+//        String username = (String) o;
+//
+//        o = session.getAttribute(AUTHN_INSTANT);
+//        if (!(o instanceof DateTime)) {
+//            log.debug("UsernamePasswordAuthenticationHandler: AuthnInstant attribute found in HttpSession for user "
+//                    + username + ", but it is not a DateTime.");
+//
+//            redirectControl(loginURL, "login page", httpRequest, httpResponse);
+//        }
+//
+//        DateTime authnInstant = (DateTime) o;
+//        DateTime authnExpires = authnInstant.plusSeconds(authnDuration);
+//        DateTime now = new DateTime();
+//        if (now.isAfter(authnExpires)) {
+//            log.info("UsernamePasswordAuthenticationHandler: Authentication has expired for user " + username);
+//            redirectControl(loginURL, "login page", httpRequest, httpResponse);
+//        }
+//
+//        // the current authentication information is still valid, so return it.
+//        loginContext.setPrincipalAuthenticated(true);
+//        loginContext.setPrincipalName(username);
+//        loginContext.setAuthenticationInstant(authnInstant);
+//
+//        // XXX: adjust for the appropriate units?
+//        loginContext.setAuthenticationDuration(authnDuration);
 
     }
 

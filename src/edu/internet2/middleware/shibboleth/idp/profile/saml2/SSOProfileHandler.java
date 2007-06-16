@@ -188,7 +188,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             authnRequest = (AuthnRequest) decoder.getSAMLMessage();
 
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, authnRequest);
-            loginContext.setAuthenticationManagerURL(authenticationManagerPath);
+            loginContext.setAuthenticationEngineURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(httpRequest.getRequestURI());
 
             HttpSession httpSession = httpRequest.getSession();
