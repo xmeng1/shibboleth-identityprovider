@@ -76,14 +76,6 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="encodingBinding" type="xsd:anyURI"
-                    default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            The URI of the binding used when encoding responses to relying parties.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                </xsd:attribute>
                 <xsd:attribute name="securityPolicyFactoryId" type="xsd:string"
                     default="shibboleth.SAML2SSOMessageSecurityPolicyFactory">
                     <xsd:annotation>

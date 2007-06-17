@@ -29,7 +29,6 @@ import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
-import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.log.Level;
 import org.opensaml.saml2.core.Advice;
 import org.opensaml.saml2.core.Assertion;
@@ -58,7 +57,6 @@ import org.opensaml.saml2.metadata.PDPDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
@@ -589,18 +587,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         boolean signAssertion = false;
 
-        RoleDescriptor relyingPartyRole;
-        try {
-            relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
-                    requestContext.getRelyingPartyRole(), SAMLConstants.SAML20P_NS);
-        } catch (MetadataProviderException e) {
-            throw new ProfileException("Unable to lookup entity metadata for relying party "
-                    + requestContext.getRelyingPartyId());
-        }
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
-        if (relyingPartyRole instanceof SPSSODescriptor) {
-            SPSSODescriptor ssoDescriptor = (SPSSODescriptor) relyingPartyRole;
+        if (requestContext.getRelyingPartyRoleMetadata() instanceof SPSSODescriptor) {
+            SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getRelyingPartyRoleMetadata();
             if (ssoDescriptor.getWantAssertionsSigned() != null) {
                 signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
                 if (log.isDebugEnabled()) {
@@ -770,45 +760,36 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected List<String> getNameFormats(SAML2ProfileRequestContext requestContext) throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
-        try {
-            RoleDescriptor assertingPartyRole = getMetadataProvider().getRole(requestContext.getAssertingPartyId(),
-                    requestContext.getAssertingPartyRole(), SAMLConstants.SAML20P_NS);
-            List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
+        List<String> assertingPartySupportedFormats = getEntitySupportedFormats(requestContext
+                .getAssertingPartyRoleMetadata());
 
-            String nameFormat = null;
-            if (requestContext.getSamlRequest() instanceof AuthnRequest) {
-                AuthnRequest authnRequest = (AuthnRequest) requestContext.getSamlRequest();
-                if (authnRequest.getNameIDPolicy() != null) {
-                    nameFormat = authnRequest.getNameIDPolicy().getFormat();
-                    if (assertingPartySupportedFormats.contains(nameFormat)) {
-                        nameFormats.add(nameFormat);
-                    } else {
-                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
-                                StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + nameFormat));
-                        throw new ProfileException("NameID format required by relying party is not supported");
-                    }
+        String nameFormat = null;
+        if (requestContext.getSamlRequest() instanceof AuthnRequest) {
+            AuthnRequest authnRequest = (AuthnRequest) requestContext.getSamlRequest();
+            if (authnRequest.getNameIDPolicy() != null) {
+                nameFormat = authnRequest.getNameIDPolicy().getFormat();
+                if (assertingPartySupportedFormats.contains(nameFormat)) {
+                    nameFormats.add(nameFormat);
+                } else {
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
+                            StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + nameFormat));
+                    throw new ProfileException("NameID format required by relying party is not supported");
                 }
             }
-
-            if (nameFormats.isEmpty()) {
-                RoleDescriptor relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
-                        requestContext.getRelyingPartyRole(), SAMLConstants.SAML20P_NS);
-                List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
-
-                assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
-                nameFormats.addAll(assertingPartySupportedFormats);
-            }
-            if (nameFormats.isEmpty()) {
-                nameFormats.add("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified");
-            }
-
-            return nameFormats;
-
-        } catch (MetadataProviderException e) {
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                    "Unable to lookup entity metadata"));
-            throw new ProfileException("Unable to determine lookup entity metadata", e);
         }
+
+        if (nameFormats.isEmpty()) {
+            List<String> relyingPartySupportedFormats = getEntitySupportedFormats(requestContext
+                    .getRelyingPartyRoleMetadata());
+
+            assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
+            nameFormats.addAll(assertingPartySupportedFormats);
+        }
+        if (nameFormats.isEmpty()) {
+            nameFormats.add("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified");
+        }
+
+        return nameFormats;
     }
 
     /**

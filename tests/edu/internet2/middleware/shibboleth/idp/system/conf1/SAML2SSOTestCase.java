@@ -16,19 +16,13 @@
 
 package edu.internet2.middleware.shibboleth.idp.system.conf1;
 
-import java.io.StringWriter;
-
 import javax.servlet.http.HttpSession;
 
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
-import org.opensaml.common.binding.encoding.MessageEncoder;
-import org.opensaml.common.binding.encoding.MessageEncoderFactory;
 import org.opensaml.saml2.binding.decoding.HTTPPostDecoder;
-import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.Issuer;
-import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.util.Base64;
@@ -132,6 +126,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
 
+        System.out.println(servletResponse.getContentAsString());
     }
 
     protected AuthnRequest buildAuthnRequest(String requester) {

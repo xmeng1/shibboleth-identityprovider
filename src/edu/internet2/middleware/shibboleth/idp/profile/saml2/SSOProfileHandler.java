@@ -32,6 +32,8 @@ import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
+import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.binding.AuthnResponseEndpointSelector;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
@@ -42,8 +44,9 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
-import org.opensaml.saml2.metadata.IDPSSODescriptor;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.UnmarshallingException;
@@ -80,27 +83,22 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** URI of request decoder. */
     private String decodingBinding;
 
-    /** URI of response encoder. */
-    private String encodingBinding;
-
     /**
      * Constructor.
      * 
      * @param authnManagerPath path to the authentication manager servlet
      * @param decoder URI of the request decoder to use
-     * @param encoder URI of the response encoder to use
      */
     @SuppressWarnings("unchecked")
-    public SSOProfileHandler(String authnManagerPath, String decoder, String encoder) {
+    public SSOProfileHandler(String authnManagerPath, String decoder) {
         super();
 
-        if (authnManagerPath == null || decoder == null || encoder == null) {
-            throw new IllegalArgumentException("AuthN manager path, decoding, encoding bindings URI may not be null");
+        if (authnManagerPath == null || decoder == null) {
+            throw new IllegalArgumentException("AuthN manager path or decoding bindings URI may not be null");
         }
 
         authenticationManagerPath = authnManagerPath;
         decodingBinding = decoder;
-        encodingBinding = encoder;
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) getBuilderFactory().getBuilder(
                 AuthnStatement.DEFAULT_ELEMENT_NAME);
@@ -227,7 +225,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
         SSORequestContext requestContext = buildRequestContext(loginContext, request, response);
-        
+
         checkSamlVersion(requestContext);
 
         Response samlResponse;
@@ -303,22 +301,31 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         SSORequestContext requestContext = new SSORequestContext(request, response);
 
         try {
+            requestContext.setMessageDecoder(getMessageDecoderFactory().getMessageDecoder(decodingBinding));
+
             requestContext.setLoginContext(loginContext);
-            
+
             String relyingPartyId = loginContext.getRelyingPartyId();
             AuthnRequest authnRequest = loginContext.getAuthenticationRequest();
 
             requestContext.setRelyingPartyId(relyingPartyId);
 
+            requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(relyingPartyId));
+
+            requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                    SAMLConstants.SAML20P_NS));
+
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             requestContext.setRelyingPartyConfiguration(rpConfig);
 
-            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-
             requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
 
-            requestContext.setAssertingPartyRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            
+            requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
+                    requestContext.getAssertingPartyId()));
+
+            requestContext.setAssertingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getIDPSSODescriptor(
+                    SAMLConstants.SAML20P_NS));
+
             requestContext.setPrincipalName(loginContext.getPrincipalName());
 
             requestContext.setProfileConfiguration((SSOConfiguration) rpConfig
@@ -332,6 +339,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
                     "Error recovering request state"));
             throw new ProfileException("Error recovering request state", e);
+        } catch (MetadataProviderException e) {
+            log.error("Unable to locate metadata for asserting or relying party");
+            requestContext
+                    .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error locating party metadata"));
+            throw new ProfileException("Error locating party metadata");
         }
     }
 
@@ -417,13 +429,28 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             log.debug("Encoding response to SAML request " + requestContext.getSamlRequest().getID()
                     + " from relying party " + requestContext.getRelyingPartyId());
         }
-        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(encodingBinding);
+        AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
+        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+        endpointSelector.setMetadataProvider(getMetadataProvider());
+        endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
+        endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
+        endpointSelector.setSamlRequest(requestContext.getSamlRequest());
+        endpointSelector.getSupportedIssuerBindings().addAll(getMessageEncoderFactory().getEncoderBuilders().keySet());
+        Endpoint relyingPartyEndpoint = endpointSelector.selectEndpoint();
+
+        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(
+                relyingPartyEndpoint.getBinding());
         if (encoder == null) {
-            log.error("No response encoder was registered for binding type: " + encodingBinding);
-            throw new ProfileException("No response encoder was registered for binding type: " + encodingBinding);
+            log.error("No response encoder was registered for binding type: " + relyingPartyEndpoint.getBinding());
+            throw new ProfileException("No response encoder was registered for binding type: "
+                    + relyingPartyEndpoint.getBinding());
         }
 
         super.populateMessageEncoder(encoder);
+        encoder.setIssuer(requestContext.getAssertingPartyId());
+        encoder.setRelyingParty(requestContext.getRelyingPartyMetadata());
+        encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
+        encoder.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
         encoder.setResponse(requestContext.getProfileResponse().getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
         requestContext.setMessageEncoder(encoder);

@@ -30,7 +30,6 @@ import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
-import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.log.Level;
 import org.opensaml.saml1.core.Assertion;
 import org.opensaml.saml1.core.AttributeQuery;
@@ -40,7 +39,6 @@ import org.opensaml.saml1.core.AudienceRestrictionCondition;
 import org.opensaml.saml1.core.Conditions;
 import org.opensaml.saml1.core.ConfirmationMethod;
 import org.opensaml.saml1.core.NameIdentifier;
-import org.opensaml.saml1.core.Query;
 import org.opensaml.saml1.core.RequestAbstractType;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.ResponseAbstractType;
@@ -57,7 +55,6 @@ import org.opensaml.saml2.metadata.PDPDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
@@ -473,29 +470,21 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     protected List<String> getNameFormats(SAML1ProfileRequestContext requestContext) throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
-        try {
-            RoleDescriptor assertingPartyRole = getMetadataProvider().getRole(requestContext.getAssertingPartyId(),
-                    requestContext.getAssertingPartyRole(), SAMLConstants.SAML1P_NS);
-            List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
+        RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyRoleMetadata();
+        List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
 
-            if (nameFormats.isEmpty()) {
-                RoleDescriptor relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
-                        requestContext.getRelyingPartyRole(), SAMLConstants.SAML1P_NS);
-                List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
+        if (nameFormats.isEmpty()) {
+            RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyRoleMetadata();
+            List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
 
-                assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
-                nameFormats.addAll(assertingPartySupportedFormats);
-            }
-            if (nameFormats.isEmpty()) {
-                nameFormats.add("urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified");
-            }
-
-            return nameFormats;
-
-        } catch (MetadataProviderException e) {
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to lookup metadata"));
-            throw new ProfileException("Unable to determine lookup entity metadata", e);
+            assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
+            nameFormats.addAll(assertingPartySupportedFormats);
         }
+        if (nameFormats.isEmpty()) {
+            nameFormats.add("urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified");
+        }
+
+        return nameFormats;
     }
 
     /**
@@ -734,14 +723,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         boolean signAssertion = false;
 
-        RoleDescriptor relyingPartyRole;
-        try {
-            relyingPartyRole = getMetadataProvider().getRole(requestContext.getRelyingPartyId(),
-                    requestContext.getRelyingPartyRole(), SAMLConstants.SAML20P_NS);
-        } catch (MetadataProviderException e) {
-            throw new ProfileException("Unable to lookup entity metadata for relying party "
-                    + requestContext.getRelyingPartyId());
-        }
+        RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyRoleMetadata();
         AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
         if (relyingPartyRole instanceof SPSSODescriptor) {

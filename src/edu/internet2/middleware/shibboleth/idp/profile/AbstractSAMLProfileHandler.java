@@ -19,13 +19,14 @@ package edu.internet2.middleware.shibboleth.idp.profile;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.decoding.MessageDecoderFactory;
 import org.opensaml.common.binding.encoding.MessageEncoderFactory;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
@@ -66,13 +67,13 @@ public abstract class AbstractSAMLProfileHandler extends
     public IdentifierGenerator getIdGenerator() {
         return idGenerator;
     }
-    
+
     /**
      * Gets an ID generator which may be used for SAML assertions, requests, etc.
      * 
      * @param generator an ID generator which may be used for SAML assertions, requests, etc
      */
-    public void setIdGenerator(IdentifierGenerator generator){
+    public void setIdGenerator(IdentifierGenerator generator) {
         idGenerator = generator;
     }
 
@@ -150,20 +151,26 @@ public abstract class AbstractSAMLProfileHandler extends
 
         return null;
     }
-    
+
     /**
      * Contextual object used to accumlate information as profile requests are being processed.
      * 
      * @param <StatusType> type of Status object
      */
     protected class SAMLProfileRequestContext<StatusType extends SAMLObject> extends ShibbolethProfileRequestContext {
-        
-        /** Role descriptor name that the asserting party is operating in. */
-        private QName assertingPartyRole;
-        
-        /** Role descriptor name that the relying party is operating in. */
-        private QName relyingPartyRole;
-        
+
+        /** Entity descriptor for the asserting party. */
+        private EntityDescriptor assertingPartyMetadata;
+
+        /** Role descriptor meatadata for the asserting party. */
+        private RoleDescriptor assertingPartyRoleMetadata;
+
+        /** Entity descriptor for the relying party. */
+        private EntityDescriptor relyingPartyMetadata;
+
+        /** Role descriptor meatadata for the relying party. */
+        private RoleDescriptor relyingPartyRoleMetadata;
+
         /**
          * Constructor.
          * 
@@ -176,39 +183,75 @@ public abstract class AbstractSAMLProfileHandler extends
         }
 
         /**
-         * Gets the role descriptor name that the asserting party is operating in.
+         * Gets the metadata for the asserting party.
          * 
-         * @return role descriptor name that the asserting party is operating in
+         * @return metadata for the asserting party
          */
-        public QName getAssertingPartyRole() {
-            return assertingPartyRole;
+        public EntityDescriptor getAssertingPartyMetadata() {
+            return assertingPartyMetadata;
         }
 
         /**
-         * Sets the role descriptor name that the asserting party is operating in.
+         * Sets the metadata for the asserting party.
          * 
-         * @param role role descriptor name that the asserting party is operating in
+         * @param metadata metadata for the asserting party
          */
-        public void setAssertingPartyRole(QName role) {
-            assertingPartyRole = role;
+        public void setAssertingPartyMetadata(EntityDescriptor metadata) {
+            assertingPartyMetadata = metadata;
         }
 
         /**
-         * Gets the role descriptor name that the relying party is operating in.
+         * Gets the role descriptor for the asserting party.
          * 
-         * @return role descriptor name that the relying party is operating in
+         * @return role descriptor for the asserting party
          */
-        public QName getRelyingPartyRole() {
-            return relyingPartyRole;
+        public RoleDescriptor getAssertingPartyRoleMetadata() {
+            return assertingPartyRoleMetadata;
         }
 
         /**
-         * Sets the role descriptor name that the relying party is operating in.
+         * Sets the role descriptor for the asserting party.
          * 
-         * @param role role descriptor name that the relying party is operating in
+         * @param descriptor role descriptor for the asserting party
          */
-        public void setRelyingPartyRole(QName role) {
-            relyingPartyRole = role;
+        public void setAssertingPartyRoleMetadata(RoleDescriptor descriptor) {
+            assertingPartyRoleMetadata = descriptor;
+        }
+
+        /**
+         * Gets the metadata for the relying party.
+         * 
+         * @return metadata for the relying party
+         */
+        public EntityDescriptor getRelyingPartyMetadata() {
+            return relyingPartyMetadata;
+        }
+
+        /**
+         * Sets the metadata for the relying party.
+         * 
+         * @param metadata metadata for the relying party
+         */
+        public void setRelyingPartyMetadata(EntityDescriptor metadata) {
+            relyingPartyMetadata = metadata;
+        }
+
+        /**
+         * Gets the role descriptor for the relying party.
+         * 
+         * @return role descriptor for the relying party
+         */
+        public RoleDescriptor getRelyingPartyRoleMetadata() {
+            return relyingPartyRoleMetadata;
+        }
+
+        /**
+         * Sets the role descriptor for the relying party.
+         * 
+         * @param descriptor role descriptor for the relying party
+         */
+        public void setRelyingPartyRoleMetadata(RoleDescriptor descriptor) {
+            relyingPartyRoleMetadata = descriptor;
         }
     }
 }

@@ -26,14 +26,14 @@ import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
+import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
-import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.security.SecurityPolicyException;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
@@ -65,9 +65,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         Response samlResponse;
         try {
             decodeRequest(requestContext);
-            
+
             checkSamlVersion(requestContext);
-            
+
             // Resolve attribute query name id to principal name and place in context
             resolvePrincipal(requestContext);
 
@@ -131,19 +131,34 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
             requestContext.setRelyingPartyId(securityPolicy.getIssuer());
 
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
-            requestContext.setRelyingPartyConfiguration(rpConfig);
+            try {
+                requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
+                        requestContext.getRelyingPartyId()));
 
-            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                        SAMLConstants.SAML20P_NS));
 
-            requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
+                RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
+                requestContext.setRelyingPartyConfiguration(rpConfig);
 
-            requestContext.setAssertingPartyRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
 
-            requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
-                    .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
+                requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
+                        requestContext.getAssertingPartyId()));
 
-            requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
+                requestContext.setAssertingPartyRoleMetadata(requestContext.getAssertingPartyMetadata()
+                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML20P_NS));
+
+                requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
+                        .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
+
+                requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
+            } catch (MetadataProviderException e) {
+                log.error("Unable to locate metadata for asserting or relying party");
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                        "Error locating party metadata"));
+                throw new ProfileException("Error locating party metadata");
+            }
         }
     }
 

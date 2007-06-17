@@ -46,8 +46,6 @@ public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2Pro
 
         builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "decodingBinding")));
 
-        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "encodingBinding")));
-
         builder.addPropertyReference("securityPolicyFactory", DatatypeHelper.safeTrimOrNullString(config
                 .getAttributeNS(null, "securityPolicyFactoryId")));
     }

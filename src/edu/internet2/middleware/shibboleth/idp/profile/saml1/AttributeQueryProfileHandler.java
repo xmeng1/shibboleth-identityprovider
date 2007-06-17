@@ -26,14 +26,14 @@ import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
+import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml1.binding.encoding.HTTPSOAP11Encoder;
 import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
-import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.security.SecurityPolicyException;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
@@ -117,19 +117,34 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
             requestContext.setRelyingPartyId(securityPolicy.getIssuer());
 
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
-            requestContext.setRelyingPartyConfiguration(rpConfig);
+            try {
+                requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
+                        requestContext.getRelyingPartyId()));
 
-            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                        SAMLConstants.SAML1P_NS));
 
-            requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
+                RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
+                requestContext.setRelyingPartyConfiguration(rpConfig);
 
-            requestContext.setAssertingPartyRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
 
-            requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
-                    .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
+                requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
+                        requestContext.getAssertingPartyId()));
 
-            requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
+                requestContext.setAssertingPartyRoleMetadata(requestContext.getAssertingPartyMetadata()
+                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML1P_NS));
+
+                requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
+                        .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
+
+                requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
+            } catch (MetadataProviderException e) {
+                log.error("Unable to locate metadata for asserting or relying party");
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                        "Error locating party metadata"));
+                throw new ProfileException("Error locating party metadata");
+            }
         }
     }
 
