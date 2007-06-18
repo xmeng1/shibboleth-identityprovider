@@ -165,7 +165,6 @@
 		</copy>
 
 		<jar destfile="${dist.dir}/${war.name}" whenempty="fail">
-			<zipfileset dir="${classpathres.dir}" prefix="WEB-INF/classes/" />
 			<zipfileset dir="${webinf-temp.dir}" prefix="WEB-INF/" />
 			<zipfileset dir="${webpages.dir}" prefix="" />
 			<zipfileset dir="${lib.dir}" prefix="WEB-INF/lib/" />
