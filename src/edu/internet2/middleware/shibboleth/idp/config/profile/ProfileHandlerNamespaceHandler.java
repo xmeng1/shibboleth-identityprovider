@@ -28,7 +28,7 @@ import edu.internet2.middleware.shibboleth.common.config.profile.VelocityErrorHa
 public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
 
     /** Namespace URI. */
-    public static final String NAMESPACE = "urn:mace:shibboleth:2.0:idp:profile";
+    public static final String NAMESPACE = "urn:mace:shibboleth:2.0:idp:profile-handler";
 
     /** {@inheritDoc} */
     public void init() {
@@ -52,5 +52,8 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
 
         registerBeanDefinitionParser(SAML2SSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SSOProfileHandlerBeanDefinitionParser());
+
+        registerBeanDefinitionParser(RemoteUserAuthenticationHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new RemoteUserAuthenticationHandlerBeanDefinitionParser());
     }
 }

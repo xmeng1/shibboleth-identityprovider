@@ -409,7 +409,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * Builds a NameIdentifier appropriate for this request. NameIdentifier are built by inspecting the SAML request and
      * metadata, picking a name format that was requested by the relying party or is mutually supported by both the
      * relying party and asserting party as described in their metadata entries. Once a set of supported name formats is
-     * determined the principals attributes are inspected for an attribtue supported an attribute encoder whose category
+     * determined the principals attributes are inspected for an attribute supported an attribute encoder whose category
      * is one of the supported name formats.
      * 
      * @param requestContext current request context

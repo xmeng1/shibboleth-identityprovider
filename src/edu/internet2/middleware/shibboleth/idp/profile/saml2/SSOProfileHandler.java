@@ -183,11 +183,20 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             SAMLSecurityPolicy securityPolicy = decoder.getSecurityPolicy();
 
             String relyingParty = securityPolicy.getIssuer();
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingParty);
+            if(rpConfig == null){
+                log.error("No relying party configuration for " + relyingParty);
+                throw new ProfileException("No relying party configuration for " + relyingParty);
+            }
+
             authnRequest = (AuthnRequest) decoder.getSAMLMessage();
 
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, authnRequest);
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(httpRequest.getRequestURI());
+            if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
+                loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
+            }
 
             HttpSession httpSession = httpRequest.getSession();
             httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);

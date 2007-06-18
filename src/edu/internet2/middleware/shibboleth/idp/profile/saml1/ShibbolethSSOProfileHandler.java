@@ -208,6 +208,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 throw new ProfileException("No providerId parameter in Shibboleth SSO request");
             }
             loginContext.setRelyingParty(URLDecoder.decode(providerId, "UTF-8"));
+            
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(providerId);
+            if(rpConfig == null){
+                log.error("No relying party configuration available for " + providerId);
+                throw new ProfileException("No relying party configuration available for " + providerId);
+            }
+            loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
 
             String acs = DatatypeHelper.safeTrimOrNullString(request.getParameter("shire"));
             if (acs == null) {

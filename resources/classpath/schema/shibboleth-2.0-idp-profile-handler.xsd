@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsd:schema targetNamespace="urn:mace:shibboleth:2.0:idp:profile" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    xmlns="urn:mace:shibboleth:2.0:idp:profile" xmlns:service="urn:mace:shibboleth:2.0:services"
+<xsd:schema targetNamespace="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:service="urn:mace:shibboleth:2.0:services"
     elementFormDefault="qualified">
 
     <xsd:include schemaLocation="classpath:/schema/shibboleth-2.0-profile-handler.xsd" />
@@ -30,17 +30,10 @@
         </xsd:annotation>
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element name="ErrorHandler" type="ErrorHandlerType">
-
-                </xsd:element>
-                <xsd:element name="ProfileHandler" type="RequestHandlerType" minOccurs="0"
-                    maxOccurs="unbounded">
-
-                </xsd:element>
+                <xsd:element name="ErrorHandler" type="ErrorHandlerType" />
+                <xsd:element name="ProfileHandler" type="RequestHandlerType" minOccurs="0" maxOccurs="unbounded" />
                 <xsd:element name="AuthenticationHandler" type="AuthenticationHandlerType" minOccurs="0"
-                    maxOccurs="unbounded">
-
-                </xsd:element>
+                    maxOccurs="unbounded" />
             </xsd:sequence>
         </xsd:complexType>
     </xsd:element>
@@ -190,8 +183,45 @@
         </xsd:complexContent>
     </xsd:complexType>
 
-    <xsd:complexType name="AuthenticationHandlerType" abstract="true">
-    
+    <xsd:complexType name="RemoteUser">
+        <xsd:complexContent>
+            <xsd:extension base="AuthenticationHandlerType">
+                <xsd:attribute name="protectedServletPath" type="xsd:string" default="/Authn/RemoteUser">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The servlet context path to the
+                            edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserAuthServlet instance
+                            protected by the container or web server.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
     </xsd:complexType>
-    
+
+    <xsd:complexType name="AuthenticationHandlerType" abstract="true">
+        <xsd:annotation>
+            <xsd:documentation>Base type for authentication handler types.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="AuthenticationMethod" type="xsd:string" maxOccurs="unbounded">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The authentication methods supported by this handler. In SAML these methods represent the SAML 2
+                        authentication contexts class and declaration reference URIs.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+        <xsd:attribute name="authenticationDuration" type="xsd:positiveInteger" default="30">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The length of time, in minutes, that an authentication performed by this handler should be
+                    considered active. After which time a user, previously authenticated by this handler, must
+                    re-authenticate in order to assert the authentication method again.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+
 </xsd:schema>

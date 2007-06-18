@@ -104,7 +104,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         
         Saml2LoginContext loginContext = new Saml2LoginContext("urn:example.org:unitTestFed:sp2", authnRequest);
         loginContext.setAuthenticationInstant(new DateTime());
-        loginContext.setAuthenticationMethod(IdPProfileHandlerManager.DEFAULT_AUTHEN_METHOD_URI);
+        loginContext.setAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified");
         loginContext.setPrincipalAuthenticated(true);
         loginContext.setPrincipalName("testUser");        
 
@@ -148,7 +148,6 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
     protected String getSamlRequestString(AuthnRequest request) throws MarshallingException {
         Marshaller marshaller = marshallerFactory.getMarshaller(request);
         Element requestElem = marshaller.marshall(request);
-        String requestString = XMLHelper.nodeToString(requestElem);
-        return Base64.encodeBytes(requestString.getBytes());
+        return XMLHelper.nodeToString(requestElem);
     }
 }

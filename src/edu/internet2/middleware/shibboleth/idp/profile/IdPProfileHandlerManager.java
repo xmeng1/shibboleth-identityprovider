@@ -45,9 +45,6 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
  */
 public class IdPProfileHandlerManager extends BaseReloadableService implements ProfileHandlerManager {
 
-    /** URI of the default authentication method. */
-    public static final String DEFAULT_AUTHEN_METHOD_URI = "urn:mace:shibboleth:2.0:idp:authentication:method:default";
-
     /** Class logger. */
     private final Logger log = Logger.getLogger(IdPProfileHandlerManager.class);
 
@@ -159,9 +156,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
             }
         }
 
-        Pair<String, AuthenticationHandler> authenticationHandler = new Pair<String, AuthenticationHandler>(
-                DEFAULT_AUTHEN_METHOD_URI, authenticationHandlers.get(DEFAULT_AUTHEN_METHOD_URI));
-        return authenticationHandler;
+        return null;
     }
 
     /**
