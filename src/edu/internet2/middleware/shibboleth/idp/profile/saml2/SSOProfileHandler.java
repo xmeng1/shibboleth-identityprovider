@@ -460,7 +460,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         encoder.setRelyingParty(requestContext.getRelyingPartyMetadata());
         encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
         encoder.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
-        encoder.setResponse(requestContext.getProfileResponse().getRawResponse());
+        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse(); 
+        encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
         requestContext.setMessageEncoder(encoder);
 

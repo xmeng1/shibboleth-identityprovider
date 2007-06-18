@@ -336,7 +336,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         }
 
         super.populateMessageEncoder(encoder);
-        encoder.setResponse(requestContext.getProfileResponse().getRawResponse());
+        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse(); 
+        encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
         requestContext.setMessageEncoder(encoder);
 

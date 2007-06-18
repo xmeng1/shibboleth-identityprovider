@@ -109,7 +109,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         }
         super.populateMessageDecoder(decoder);
 
-        decoder.setRequest(requestContext.getProfileRequest().getRawRequest());
+        ProfileRequest<ServletRequest> profileRequest = requestContext.getProfileRequest(); 
+        decoder.setRequest(profileRequest.getRawRequest());
         requestContext.setMessageDecoder(decoder);
 
         try {
@@ -180,7 +181,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         }
 
         super.populateMessageEncoder(encoder);
-        encoder.setResponse(requestContext.getProfileResponse().getRawResponse());
+        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
+        encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
         requestContext.setMessageEncoder(encoder);
 
