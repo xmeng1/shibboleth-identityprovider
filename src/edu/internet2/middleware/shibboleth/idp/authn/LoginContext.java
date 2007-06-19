@@ -93,9 +93,13 @@ public class LoginContext implements Serializable {
 
     /** The session id. */
     private String sessionID;
+    
+    /** List of request authentication methods. */
+    private ArrayList<String> requestAuthenticationMethods;
 
     /** Creates a new instance of LoginContext. */
     public LoginContext() {
+        requestAuthenticationMethods = new ArrayList<String>();
     }
 
     /**
@@ -105,9 +109,9 @@ public class LoginContext implements Serializable {
      * @param passive if the authentication manager must not interact with the users UI.
      */
     public LoginContext(boolean force, boolean passive) {
-
         forceAuth = force;
         passiveAuth = passive;
+        requestAuthenticationMethods = new ArrayList<String>();
     }
 
     /**
@@ -374,6 +378,6 @@ public class LoginContext implements Serializable {
      * @return an list of authentication method identifiers
      */
     public List<String> getRequestedAuthenticationMethods() {
-        return new ArrayList<String>();
+        return requestAuthenticationMethods;
     }
 }

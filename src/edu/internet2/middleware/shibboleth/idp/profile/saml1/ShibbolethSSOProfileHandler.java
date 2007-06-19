@@ -67,7 +67,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * Constructor.
      * 
      * @param authnManagerPath path to the authentication manager servlet
-     * @param encoder URI of the encoding binding
      * 
      * @throws IllegalArgumentException thrown if either the authentication manager path or encoding binding URI are
      *             null or empty

@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.xml.namespace.QName;
 
+import org.apache.log4j.Logger;
 import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -34,6 +35,9 @@ import edu.internet2.middleware.shibboleth.common.config.SpringConfigurationUtil
  * Spring bean definition parser for profile handler root element.
  */
 public class ProfileHandlerGroupBeanDefinitionParser extends AbstractBeanDefinitionParser {
+    
+    /** Class logger. */
+    private static Logger log = Logger.getLogger(ProfileHandlerGroupBeanDefinitionParser.class);
 
     /** Schema type name. */
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandlerGroup");
@@ -46,12 +50,21 @@ public class ProfileHandlerGroupBeanDefinitionParser extends AbstractBeanDefinit
         List<Element> children;
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ErrorHandler"));
+        if(log.isDebugEnabled()){
+            log.debug(children.size() + " error handler definitions found");
+        }
         builder.addPropertyValue("errorHandler", SpringConfigurationUtils.parseCustomElement(children.get(0), context));
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandler"));
+        if(log.isDebugEnabled()){
+            log.debug(children.size() + " profile handler definitions found");
+        }
         builder.addPropertyValue("profileHandlers", SpringConfigurationUtils.parseCustomElements(children, context));
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "AuthenticationHandler"));
+        if(log.isDebugEnabled()){
+            log.debug(children.size() + " authentication handler definitions found");
+        }
         builder.addPropertyValue("authenticationHandlers", SpringConfigurationUtils.parseCustomElements(children,
                 context));
 

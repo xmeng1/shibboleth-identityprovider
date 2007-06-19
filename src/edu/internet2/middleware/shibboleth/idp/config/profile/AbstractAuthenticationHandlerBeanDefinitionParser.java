@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.idp.config.profile;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -30,17 +31,30 @@ import org.w3c.dom.Element;
  */
 public abstract class AbstractAuthenticationHandlerBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
+    /** Class logger. */
+    private static Logger log = Logger.getLogger(AbstractAuthenticationHandlerBeanDefinitionParser.class);
+
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
-        builder.addPropertyValue("authenticationDuration", Integer.parseInt(config.getAttributeNS(null,
-                "authenticationDuration")));
 
+        int duration = Integer.parseInt(config.getAttributeNS(null, "authenticationDuration"));
+        if (log.isDebugEnabled()) {
+            log.debug("Authentication handler declared duration of " + duration + " minutes");
+        }
+        builder.addPropertyValue("authenticationDuration", duration);
+
+        String authnMethod;
         ArrayList<String> authnMethods = new ArrayList<String>();
         List<Element> authnMethodElems = XMLHelper.getChildElementsByTagNameNS(config,
                 ProfileHandlerNamespaceHandler.NAMESPACE, "AuthenticationMethod");
         for (Element authnMethodElem : authnMethodElems) {
-            authnMethods.add(DatatypeHelper.safeTrimOrNullString(authnMethodElem.getTextContent()));
+            authnMethod = DatatypeHelper.safeTrimOrNullString(authnMethodElem.getTextContent());
+            if (log.isDebugEnabled()) {
+                log.debug("Authentication handler declared support for authentication method " + authnMethod);
+            }
+            authnMethods.add(authnMethod);
         }
+        builder.addPropertyValue("authenticationMethods", authnMethods);
     }
 
     /** {@inheritDoc} */
