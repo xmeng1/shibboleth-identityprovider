@@ -203,7 +203,7 @@
 			</filterset>
 		</copy>
 
-		<symlink link="${idp.home}/bin/aacli.sh" resource="shib-tools.sh" />
+		<symlink link="${idp.home}/bin/aacli.sh" resource="shib-tools.sh" overwrite="true"/>
 		<chmod file="${idp.home}/bin/*.sh" perm="+x" />
 
 		<copy todir="${idp.home}/war" file="${dist.dir}/${war.name}" preservelastmodified="true" />

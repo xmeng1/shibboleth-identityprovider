@@ -63,9 +63,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
-    /** Message encoder binding URI. */
-    private String encodingBinding;
-
     /**
      * Constructor.
      * 
@@ -75,13 +72,12 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * @throws IllegalArgumentException thrown if either the authentication manager path or encoding binding URI are
      *             null or empty
      */
-    public ShibbolethSSOProfileHandler(String authnManagerPath, String encoder) {
-        if (DatatypeHelper.isEmpty(authnManagerPath) || DatatypeHelper.isEmpty(encoder)) {
-            throw new IllegalArgumentException("Authentication manager path and encoder binding URI may not be null");
+    public ShibbolethSSOProfileHandler(String authnManagerPath) {
+        if (DatatypeHelper.isEmpty(authnManagerPath)) {
+            throw new IllegalArgumentException("Authentication manager path may not be null");
         }
 
         authenticationManagerPath = authnManagerPath;
-        encodingBinding = encoder;
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthenticationStatement>) getBuilderFactory().getBuilder(
                 AuthenticationStatement.DEFAULT_ELEMENT_NAME);
@@ -330,10 +326,10 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         if (log.isDebugEnabled()) {
             log.debug("Encoding response to SAML request from relying party " + requestContext.getRelyingPartyId());
         }
-        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(encodingBinding);
-        if (encoder == null) {
-            throw new ProfileException("No response encoder was registered for binding type: " + encodingBinding);
-        }
+
+        
+        //TODO endpoint selection
+        MessageEncoder<ServletResponse> encoder = null;
 
         super.populateMessageEncoder(encoder);
         ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse(); 

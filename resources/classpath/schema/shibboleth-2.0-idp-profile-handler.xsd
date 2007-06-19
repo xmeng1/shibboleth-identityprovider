@@ -46,10 +46,10 @@
             <xsd:extension base="RequestURIMappedProfileHandlerType" />
         </xsd:complexContent>
     </xsd:complexType>
-
+    
     <xsd:complexType name="SAML2SSO">
         <xsd:annotation>
-            <xsd:documentation>Configuration type for SAML 2 Attribute Query profile handlers.</xsd:documentation>
+            <xsd:documentation>Configuration type for SAML 2 SSO profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
             <xsd:extension base="SAML2ProfileHandler">
@@ -114,12 +114,42 @@
         </xsd:complexContent>
     </xsd:complexType>
 
+    <xsd:complexType name="ShibbolethSSO">
+        <xsd:annotation>
+            <xsd:documentation>Configuration type for Shibboleth 1 SSO profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAML1ProfileHandler">
+                <xsd:attribute name="authenticationManagerPath" type="xsd:string" default="/AuthnEngine">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The context relative path to the authentication manager used by this profile handler. This
+                            should match the URL pattern given in the web.xml
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+    
     <xsd:complexType name="SAML1AttributeQuery">
         <xsd:annotation>
             <xsd:documentation>Configuration type for SAML 1 Attribute Query profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="SAML1ProfileHandler" />
+            <xsd:extension base="SAML1ProfileHandler">
+                <xsd:attribute name="securityPolicyFactoryId" type="xsd:string"
+                    default="shibboleth.SAML1AttributeQueryMessageSecurityPolicyFactory">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The component ID of the security policy factory to use with the profile handler.
+
+                            This setting should not be changed from its default unless the deployer fully understands
+                            the inter-relationship between IdP components.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
 

@@ -114,7 +114,32 @@
         <property name="requiredAuthenticatedIssuer" value="false" />
     </bean>
     
+    <bean id="shibboleth.SAML1AttributeQueryMessageSecurityPolicyFactory"
+          parent="shibboleth.BaseSAML1SecurityPolicyFactory">
+        <property name="issuerRole">
+            <bean id="shibboleth.SAML1AttributeQueryRole" class="javax.xml.namespace.QName">
+                <constructor-arg value="urn:oasis:names:tc:SAML:2.0:metadata" />
+                <constructor-arg value="SPSSODescriptor" />
+            </bean>
+        </property>
+    </bean>
+    
+    <bean id="shibboleth.BaseSAML1SecurityPolicyFactory" abstract="true" class="org.opensaml.common.binding.security.SAMLSecurityPolicyFactory">
+        <property name="issuerProtocol" value="urn:oasis:names:tc:SAML:1.0:protocol" />
+        <property name="policyRuleFactories">
+            <list>
+                <ref bean="shibboleth.SAML1ProtocolMessageRuleFactory" />
+                <!-- Removed for testing -->
+                <!-- ref bean="shibboleth.MessageIssueInstantRuleFactory" /-->
+            </list>
+        </property>
+        <!-- Turn off for testing -->
+        <property name="requiredAuthenticatedIssuer" value="false" />
+    </bean>
+    
     <bean id="shibboleth.SAML2ProtocolMessageRuleFactory" class="org.opensaml.saml2.binding.security.SAML2ProtocolMessageRuleFactory" />
+    
+    <bean id="shibboleth.SAML1ProtocolMessageRuleFactory" class="org.opensaml.saml1.binding.security.SAML1ProtocolMessageRuleFactory" />
     
     <bean id="shibboleth.MessageIssueInstantRuleFactory" class="org.opensaml.common.binding.security.IssueInstantRuleFactory">
         <property name="clockSkew" value="5" />

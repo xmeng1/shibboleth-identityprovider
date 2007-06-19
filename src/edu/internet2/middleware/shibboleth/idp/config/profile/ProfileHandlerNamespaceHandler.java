@@ -44,6 +44,12 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
         registerBeanDefinitionParser(new QName(NAMESPACE, VelocityErrorHandlerBeanDefinitionParser.ELEMENT_NAME),
                 new VelocityErrorHandlerBeanDefinitionParser());
 
+        registerBeanDefinitionParser(ShibbolethSSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new ShibbolethSSOProfileHandlerBeanDefinitionParser());
+
+        registerBeanDefinitionParser(SAML1AttributeQueryProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new SAML1AttributeQueryProfileHandlerBeanDefinitionParser());
+
         registerBeanDefinitionParser(StatusHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new StatusHandlerBeanDefinitionParser());
 

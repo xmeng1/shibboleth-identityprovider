@@ -9,12 +9,20 @@
         <RequestPath>/status</RequestPath>
     </ProfileHandler>
 
-    <ProfileHandler xsi:type="SAML2AttributeQuery">
-        <RequestPath>/saml2/SOAP/AttributeQuery</RequestPath>
+    <ProfileHandler xsi:type="ShibbolethSSO">
+        <RequestPath>/shibboleth/SSO</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML1AttributeQuery">
+        <RequestPath>/saml1/SSO</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML2SSO">
         <RequestPath>/saml2/SSO</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML2AttributeQuery">
+        <RequestPath>/saml2/SOAP/AttributeQuery</RequestPath>
     </ProfileHandler>
     
     <AuthenticationHandler xsi:type="RemoteUser">
