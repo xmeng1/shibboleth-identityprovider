@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.idp.config.profile;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
@@ -27,14 +28,22 @@ import edu.internet2.middleware.shibboleth.common.config.profile.AbstractShibbol
 public abstract class AbstractSAMLProfileHandlerBeanDefinitionParser extends
         AbstractShibbolethProfileHandlerBeanDefinitionParser {
 
+    /** Class loggger. */
+    private static Logger log = Logger.getLogger(AbstractSAMLProfileHandlerBeanDefinitionParser.class);
+
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
+        if (log.isInfoEnabled()) {
+            log.info("Parsing configuration for " + config.getLocalName() + " SAML profile handler.");
+        }
         super.doParse(config, builder);
 
-        builder.addPropertyReference("messageDecoderFactory", config.getAttributeNS(null, "messageDecoderFactoryId"));
+        builder.addPropertyReference("messageDecoderFactory", config.getAttributeNS(null,
+                "messageDecoderFactoryId"));
 
-        builder.addPropertyReference("messageEncoderFactory", config.getAttributeNS(null, "messageEncoderFactoryId"));
-        
+        builder.addPropertyReference("messageEncoderFactory", config.getAttributeNS(null,
+                "messageEncoderFactoryId"));
+
         builder.addPropertyReference("idGenerator", config.getAttributeNS(null, "idGeneratorId"));
     }
 }
