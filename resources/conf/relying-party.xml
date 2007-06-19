@@ -14,23 +14,36 @@
                    xsi:schemaLocation="urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd
                                        urn:mace:shibboleth:2.0:relying-party:saml classpath:/schema/shibboleth-2.0-relying-party-saml.xsd
                                        urn:mace:shibboleth:2.0:metadata classpath:/schema/shibboleth-2.0-metadata.xsd
-                                       urn:mace:shibboleth:2.0:credential classpath:/schema/shibboleth-2.0-credential.xsd">
+                                       urn:mace:shibboleth:2.0:credential classpath:/schema/shibboleth-2.0-credential.xsd
+                                       urn:oasis:names:tc:SAML:2.0:metadata classpath:/schema/saml-schema-metadata-2.0.xsd">
                                        
     <AnonymousRelyingParty provider="http://example.org/IdP" />
     
     <DefaultRelyingParty provider="http://example.org/IdP" />
     
-    <RelyingParty id="urn:mace:incommon"
+    <RelyingParty id="urn:example.org:unitTestFed"
                   provider="http://example.org/IdP">
-          <!-- 
-        <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
-        -->
     </RelyingParty>
     
-    <MetadataProvider xsi:type="FileBackedURLMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                      id="incommon-metadata"
-                      metadataURL="http://wayf.incommonfederation.org/InCommon/InCommon-metadata.xml"
-                      backingFile="$IDP_HOME$/temp/metadata/incommon.xml"/>
+    <MetadataProvider id="UnitTestConf1" xsi:type="InlineMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
+        <EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+            <EntityDescriptor entityID="urn:example.org:unitTest:sp1">
+                <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+                    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />
+                    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0" />
+                </SPSSODescriptor>
+            </EntityDescriptor>
+            <EntitiesDescriptor Name="urn:example.org:unitTestFed" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+                <EntityDescriptor entityID="urn:example.org:unitTestFed:sp2">
+                    <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0" />
+                    </SPSSODescriptor>
+                </EntityDescriptor>
+            </EntitiesDescriptor>
+        </EntitiesDescriptor>
+    </MetadataProvider>
 
 </RelyingPartyGroup>

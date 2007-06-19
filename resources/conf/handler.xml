@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ProfileHandlerGroup xmlns="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:profile-handler classpath:/schema/shibboleth-2.0-idp-profile-handler.xsd">
+
+    <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
+
+    <ProfileHandler xsi:type="Status">
+        <RequestPath>/status</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="SAML2AttributeQuery">
+        <RequestPath>/saml2/SOAP/AttributeQuery</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML2SSO">
+        <RequestPath>/saml2/SSO</RequestPath>
+    </ProfileHandler>
+    
+    <AuthenticationHandler xsi:type="RemoteUser">
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
+    </AuthenticationHandler>
+
+</ProfileHandlerGroup>

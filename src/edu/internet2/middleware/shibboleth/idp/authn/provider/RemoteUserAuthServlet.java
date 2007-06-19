@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,10 +32,11 @@ import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
 public class RemoteUserAuthServlet extends HttpServlet {
 
     /** Serial version UID. */
-    private static final long serialVersionUID = 1968754704168240644L;
+    private static final long serialVersionUID = -4073010252382266761L;
 
     /** {@inheritDoc} */
-    public void doPost(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
+    protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
+            IOException {
         httpRequest.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
         AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }

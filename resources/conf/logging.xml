@@ -21,7 +21,7 @@
     <!-- Send messages to local files      -->
     <!-- ================================= -->
     <appender name="IDP_LOG" class="org.opensaml.log.RollingFileAppender">
-        <param name="File" value="$IDP_HOME$/conf/idp.log" />
+        <param name="File" value="$IDP_HOME$/logs/idp.log" />
         <param name="Append" value="false" />
 
         <!-- Rollover at midnight each day -->
@@ -39,7 +39,7 @@
     </appender>
 
     <appender name="IDP_AUDIT" class="org.opensaml.log.RollingFileAppender">
-        <param name="File" value="$IDP_HOME$/conf/audit.log" />
+        <param name="File" value="$IDP_HOME$/logs/audit.log" />
         <param name="Append" value="false" />
 
         <!-- Rollover at midnight each day -->
@@ -57,7 +57,7 @@
     </appender>
 
     <appender name="IDP_ACCESS" class="org.opensaml.log.RollingFileAppender">
-        <param name="File" value="$IDP_HOME$/conf/access.log" />
+        <param name="File" value="$IDP_HOME$/logs/access.log" />
         <param name="Append" value="false" />
 
         <!-- Rollover at midnight each day -->
