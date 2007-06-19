@@ -58,6 +58,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import edu.internet2.middleware.shibboleth.idp.util.HttpHelper;
 
 /** SAML 2.0 SSO request profile handler. */
 public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
@@ -193,7 +194,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, authnRequest);
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
-            loginContext.setProfileHandlerURL(httpRequest.getRequestURI());
+            loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
             if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
                 loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
             }

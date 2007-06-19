@@ -40,6 +40,7 @@ import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationImpl;
+import edu.internet2.middleware.shibboleth.idp.util.HttpHelper;
 
 /**
  * Manager responsible for handling authentication requests.
@@ -113,6 +114,7 @@ public class AuthenticationEngine extends HttpServlet {
         try {
             RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(forwardPath);
             dispatcher.forward(httpRequest, httpResponse);
+            return;
         } catch (IOException e) {
             LOG.fatal("Unable to return control back to authentication engine", e);
         } catch (ServletException e) {
@@ -126,6 +128,10 @@ public class AuthenticationEngine extends HttpServlet {
             IOException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Processing incoming request");
+        }
+        
+        if(httpResponse.isCommitted()){
+            LOG.error("HTTP Response already committed");
         }
 
         HttpSession httpSession = httpRequest.getSession();
@@ -163,6 +169,8 @@ public class AuthenticationEngine extends HttpServlet {
             }
             authenticateUserWithoutActiveMethod2(httpRequest, httpResponse);
         }
+        
+        return;
     }
 
     /**
@@ -222,6 +230,7 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.error("No AuthenticationHandler satisfys the request from relying party: "
                     + loginContext.getRelyingPartyId());
             returnToProfileHandler(loginContext, httpRequest, httpResponse);
+            return;
         }
 
         if (LOG.isDebugEnabled()) {
@@ -230,7 +239,7 @@ public class AuthenticationEngine extends HttpServlet {
         loginContext.setAuthenticationAttempted();
         loginContext.setAuthenticationDuration(handler.getSecond().getAuthenticationDuration());
         loginContext.setAuthenticationMethod(handler.getFirst());
-        loginContext.setAuthenticationEngineURL(httpRequest.getRequestURI());
+        loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Transferring control to authentication handler of type: "
@@ -260,6 +269,7 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.error("No principal name returned from authentication method: "
                     + loginContext.getAuthenticationMethod());
             returnToProfileHandler(loginContext, httpRequest, httpResponse);
+            return;
         }
         loginContext.setPrincipalName(principalName);
 

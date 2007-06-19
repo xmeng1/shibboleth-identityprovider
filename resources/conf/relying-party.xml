@@ -22,13 +22,18 @@
     <DefaultRelyingParty provider="http://example.org/IdP" />
     
     <RelyingParty id="urn:example.org:unitTestFed"
-                  provider="http://example.org/IdP">
+                  provider="urn:example.org:unitTest:idp1">
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
     </RelyingParty>
     
     <MetadataProvider id="UnitTestConf1" xsi:type="InlineMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
         <EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+            <EntityDescriptor entityID="urn:example.org:unitTest:idp1">
+                <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+                    <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/myIdP" />
+                </IDPSSODescriptor>
+            </EntityDescriptor>
             <EntityDescriptor entityID="urn:example.org:unitTest:sp1">
                 <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
                     <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />

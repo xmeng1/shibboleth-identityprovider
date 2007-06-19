@@ -61,6 +61,7 @@ public class RemoteUserAuthenticationHandler extends AbstractAuthenticationHandl
         try {
             RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(servletURL);
             dispatcher.forward(httpRequest, httpResponse);
+            return;
         } catch (IOException ex) {
             log.error("RemoteUserAuthenticationHandler: Unable to forward control to SSO servlet.", ex);
         } catch (ServletException ex) {

@@ -32,14 +32,18 @@ import javax.servlet.http.HttpSession;
 import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.log.XMLObjectRenderer;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
 import org.opensaml.saml1.core.Subject;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.util.DatatypeHelper;
 
@@ -50,6 +54,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
+import edu.internet2.middleware.shibboleth.idp.util.HttpHelper;
 
 /** Shibboleth SSO request profile handler. */
 public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
@@ -99,11 +104,24 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     /** {@inheritDoc} */
     public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
             throws ProfileException {
+        
+        if(response.getRawResponse().isCommitted()){
+            log.error("HTTP Response already committed");
+        }
 
+        if (log.isDebugEnabled()) {
+            log.debug("Processing incomming request");
+        }
         HttpSession httpSession = ((HttpServletRequest) request.getRawRequest()).getSession(true);
         if (httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY) == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("User session does not contain a login context, processing as first leg of request");
+            }
             performAuthentication(request, response);
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug("User session contains a login context, processing as second leg of request");
+            }
             completeAuthenticationRequest(request, response);
         }
     }
@@ -131,6 +149,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         try {
             RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(httpRequest, httpResponse);
+            return;
         } catch (IOException ex) {
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
@@ -203,9 +222,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 throw new ProfileException("No providerId parameter in Shibboleth SSO request");
             }
             loginContext.setRelyingParty(URLDecoder.decode(providerId, "UTF-8"));
-            
+
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(providerId);
-            if(rpConfig == null){
+            if (rpConfig == null) {
                 log.error("No relying party configuration available for " + providerId);
                 throw new ProfileException("No relying party configuration available for " + providerId);
             }
@@ -229,7 +248,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         }
 
         loginContext.setAuthenticationEngineURL(authenticationManagerPath);
-        loginContext.setProfileHandlerURL(request.getRequestURI());
+        loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(request));
         return loginContext;
     }
 
@@ -326,12 +345,27 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.debug("Encoding response to SAML request from relying party " + requestContext.getRelyingPartyId());
         }
 
-        
-        //TODO endpoint selection
-        MessageEncoder<ServletResponse> encoder = null;
+        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+        endpointSelector.setMetadataProvider(getMetadataProvider());
+        endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
+        endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
+        endpointSelector.setSamlRequest(requestContext.getSamlRequest());
+        endpointSelector.getSupportedIssuerBindings().addAll(getMessageEncoderFactory().getEncoderBuilders().keySet());
+        Endpoint relyingPartyEndpoint = endpointSelector.selectEndpoint();
+
+        if (relyingPartyEndpoint == null) {
+            log.error("Unable to determine endpoint, from metadata, for relying party "
+                    + requestContext.getRelyingPartyId() + " acting in SPSSO role");
+            throw new ProfileException("Unable to determine endpoint, from metadata, for relying party "
+                    + requestContext.getRelyingPartyId() + " acting in SPSSO role");
+        }
+
+        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(
+                relyingPartyEndpoint.getBinding());
 
         super.populateMessageEncoder(encoder);
-        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse(); 
+        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
         requestContext.setMessageEncoder(encoder);
