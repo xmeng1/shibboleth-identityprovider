@@ -172,7 +172,7 @@
 			<fileset file="${dist.dir}/${jar.name}" />
 		</copy>
 
-		<copy todir="${idp.home}/conf" preservelastmodified="true">
+		<copy todir="${idp.home}/conf" preservelastmodified="true" overwrite="${idp.overwrite-config}">
 			<fileset dir="${conf.dir}" />
 			<filterset begintoken="$" endtoken="$">
 				<filter token="IDP_HOME" value="${idp.home}" />
@@ -198,13 +198,12 @@
 				<filter token="IDP_VERSION" value="${version}" />
 			</filterset>
 		</copy>
-		<jar destfile="${dist.dir}/${war.name}" whenempty="fail">
+		<jar destfile="${idp.home}/war/${war.name}" whenempty="fail">
 			<zipfileset dir="${webinf-temp.dir}" prefix="WEB-INF/" />
 			<zipfileset dir="${webpages.dir}" prefix="" />
 			<zipfileset dir="${lib.dir}" prefix="WEB-INF/lib/" excludes="**/log4j*.jar" />
 			<zipfileset file="${dist.dir}/${jar.name}" prefix="WEB-INF/lib/" />
 		</jar>
-		<copy todir="${idp.home}/war" file="${dist.dir}/${war.name}" preservelastmodified="true" />
 
 	</target>
 
