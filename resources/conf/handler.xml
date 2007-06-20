@@ -14,7 +14,7 @@
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML1AttributeQuery">
-        <RequestPath>/saml1/SSO</RequestPath>
+        <RequestPath>/saml1/SOAP/SSO</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML2SSO">
@@ -26,7 +26,6 @@
     </ProfileHandler>
     
     <AuthenticationHandler xsi:type="RemoteUser">
-        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
     </AuthenticationHandler>
 
