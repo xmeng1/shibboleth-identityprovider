@@ -12,6 +12,7 @@
             * any value of uid
             * only the member value of affiliation
     -->
+    <!--
     <AttributeFilterPolicy id="ReleaseToAnyone">
         <PolicyRequirementRule xsi:type="basic:ANY" />
         
@@ -25,6 +26,8 @@
         </AttributeRule>
         
     </AttributeFilterPolicy>
+    -->
+    
     
     <!-- 
           Releases to only SP 1:
@@ -33,6 +36,7 @@
             * any value of affiliation
             * any value of full name
     -->
+    <!--
     <AttributeFilterPolicy id="ReleaseToSP1">
         <PolicyRequirementRule value="urn:example.org:myFederation:sp1" 
                                xsi:type="basic:AttributeRequesterString" />
@@ -65,5 +69,6 @@
         </AttributeRule>
         
     </AttributeFilterPolicy>
-                                                    
+    -->
+    
 </AttributeFilterPolicyGroup>
