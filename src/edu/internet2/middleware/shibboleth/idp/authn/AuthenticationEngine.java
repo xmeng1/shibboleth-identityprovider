@@ -34,13 +34,13 @@ import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.Pair;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
+import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationImpl;
-import edu.internet2.middleware.shibboleth.idp.util.HttpHelper;
 
 /**
  * Manager responsible for handling authentication requests.

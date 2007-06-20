@@ -56,9 +56,9 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
+import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
-import edu.internet2.middleware.shibboleth.idp.util.HttpHelper;
 
 /** SAML 2.0 SSO request profile handler. */
 public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
