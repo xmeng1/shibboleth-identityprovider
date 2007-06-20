@@ -36,7 +36,6 @@ import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.xml.SAMLConstants;
-import org.opensaml.log.XMLObjectRenderer;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
@@ -104,8 +103,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     /** {@inheritDoc} */
     public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
             throws ProfileException {
-        
-        if(response.getRawResponse().isCommitted()){
+
+        if (response.getRawResponse().isCommitted()) {
             log.error("HTTP Response already committed");
         }
 
@@ -144,6 +143,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         HttpSession httpSession = httpRequest.getSession(true);
 
         LoginContext loginContext = buildLoginContext(httpRequest);
+        if (getRelyingPartyConfiguration(loginContext.getRelyingPartyId()) == null) {
+            log.error("Shibboleth SSO profile is not configured for relying party "
+                    + loginContext.getRelyingPartyId());
+            throw new ProfileException("Shibboleth SSO profile is not configured for relying party "
+                    + loginContext.getRelyingPartyId());
+        }
+
         httpSession.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
 
         try {

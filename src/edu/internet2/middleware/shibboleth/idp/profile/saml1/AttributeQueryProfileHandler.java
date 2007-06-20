@@ -65,6 +65,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         try {
             decodeRequest(requestContext);
 
+            if (requestContext.getRelyingPartyConfiguration() == null) {
+                log.error("SAML 1 Attribute Query profile is not configured for relying party "
+                        + requestContext.getRelyingPartyId());
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
+                        "SAML 1 Attribute Query profile is not configured for relying party "
+                                + requestContext.getRelyingPartyId()));
+                samlResponse = buildErrorResponse(requestContext);
+            }
+
             resolvePrincipal(requestContext);
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
@@ -74,6 +83,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
         }
+        
+        requestContext.setSamlResponse(samlResponse);
+        encodeResponse(requestContext);
     }
 
     /**
@@ -142,8 +154,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
             } catch (MetadataProviderException e) {
                 log.error("Unable to locate metadata for asserting or relying party");
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                        "Error locating party metadata"));
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
                 throw new ProfileException("Error locating party metadata");
             }
         }

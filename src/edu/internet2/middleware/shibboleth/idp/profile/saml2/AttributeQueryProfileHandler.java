@@ -65,6 +65,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         Response samlResponse;
         try {
             decodeRequest(requestContext);
+            
+            if (requestContext.getRelyingPartyConfiguration() == null) {
+                log.error("SAML 2 Attribute Query profile is not configured for relying party "
+                        + requestContext.getRelyingPartyId());
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
+                        "SAML 2 Attribute Query profile is not configured for relying party "
+                                + requestContext.getRelyingPartyId()));
+                samlResponse = buildErrorResponse(requestContext);
+            }
 
             checkSamlVersion(requestContext);
 
