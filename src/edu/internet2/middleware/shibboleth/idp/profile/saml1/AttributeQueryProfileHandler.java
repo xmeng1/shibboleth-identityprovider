@@ -22,6 +22,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.apache.log4j.Logger;
+import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
@@ -33,6 +34,7 @@ import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
+import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.security.SecurityPolicyException;
 
@@ -41,6 +43,9 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AttributeQueryConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
+import edu.internet2.middleware.shibboleth.idp.ShibbolethConstants;
+import edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSOProfileHandler.ShibbolethSSORequestContext;
 
 /**
  * SAML 1 Attribute Query profile handler.
@@ -83,7 +88,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
         }
-        
+
         requestContext.setSamlResponse(samlResponse);
         encodeResponse(requestContext);
     }
@@ -130,35 +135,87 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
             requestContext.setRelyingPartyId(securityPolicy.getIssuer());
 
-            try {
-                requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
-                        requestContext.getRelyingPartyId()));
+            AttributeQuery attributeQuery = (AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage();
+            requestContext.setSamlRequest(attributeQuery);
 
-                //TODO determine protocol by message version
-                requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                        SAMLConstants.SAML10P_NS));
+            populateRelyingPartyData(requestContext);
 
-                RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
-                requestContext.setRelyingPartyConfiguration(rpConfig);
+            populateAssertingPartyData(requestContext);
+        }
+    }
 
-                requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
+    /**
+     * Populates the relying party entity and role metadata and relying party configuration data.
+     * 
+     * @param requestContext current request context with relying party ID populated
+     * 
+     * @throws ProfileException thrown if metadata can not be located for the relying party
+     */
+    protected void populateRelyingPartyData(AttributeQueryContext requestContext) throws ProfileException {
+        try {
+            requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
+                    requestContext.getRelyingPartyId()));
 
-                requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
-                        requestContext.getAssertingPartyId()));
+            RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                    SAMLConstants.SAML10P_NS);
 
-                requestContext.setAssertingPartyRoleMetadata(requestContext.getAssertingPartyMetadata()
-                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML10P_NS));
-
-                requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
-                        .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
-
-                requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
-            } catch (MetadataProviderException e) {
-                log.error("Unable to locate metadata for asserting or relying party");
-                requestContext
-                        .setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
-                throw new ProfileException("Error locating party metadata");
+            if (relyingPartyRole == null) {
+                relyingPartyRole = requestContext.getRelyingPartyMetadata()
+                        .getSPSSODescriptor(SAMLConstants.SAML10P_NS);
+                if (relyingPartyRole == null) {
+                    throw new MetadataProviderException("Unable to locate SPSSO role descriptor for entity "
+                            + requestContext.getRelyingPartyId());
+                }
             }
+            requestContext.setRelyingPartyRoleMetadata(relyingPartyRole);
+
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
+            requestContext.setRelyingPartyConfiguration(rpConfig);
+
+            requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
+                    .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
+
+        } catch (MetadataProviderException e) {
+            log.error("Unable to locate metadata for relying party " + requestContext.getRelyingPartyId());
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Unable to locate metadata for relying party " + requestContext.getRelyingPartyId()));
+            throw new ProfileException("Unable to locate metadata for relying party "
+                    + requestContext.getRelyingPartyId());
+        }
+    }
+
+    /**
+     * Populates the asserting party entity and role metadata.
+     * 
+     * @param requestContext current request context with relying party configuration populated
+     * 
+     * @throws ProfileException thrown if metadata can not be located for the asserting party
+     */
+    protected void populateAssertingPartyData(AttributeQueryContext requestContext) throws ProfileException {
+        String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
+
+        try {
+            requestContext.setAssertingPartyId(assertingPartyId);
+
+            requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(assertingPartyId));
+
+            RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyMetadata()
+                    .getAttributeAuthorityDescriptor(SAMLConstants.SAML11P_NS);
+
+            if (assertingPartyRole == null) {
+                assertingPartyRole = requestContext.getAssertingPartyMetadata().getAttributeAuthorityDescriptor(
+                        SAMLConstants.SAML10P_NS);
+                if (assertingPartyRole == null) {
+                    throw new MetadataProviderException("Unable to locate IDPSSO role descriptor for entity "
+                            + assertingPartyId);
+                }
+            }
+            requestContext.setAssertingPartyRoleMetadata(assertingPartyRole);
+        } catch (MetadataProviderException e) {
+            log.error("Unable to locate metadata for asserting party " + assertingPartyId);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Unable to locate metadata for relying party " + assertingPartyId));
+            throw new ProfileException("Unable to locate metadata for relying party " + assertingPartyId);
         }
     }
 

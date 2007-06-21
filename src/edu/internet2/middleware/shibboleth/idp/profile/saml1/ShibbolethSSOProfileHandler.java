@@ -53,6 +53,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
+import edu.internet2.middleware.shibboleth.idp.ShibbolethConstants;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
 
@@ -283,44 +284,80 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         requestContext.setRelyingPartyId(relyingPartyId);
 
-        try {
+        populateRelyingPartyData(requestContext);
+        
+        populateAssertingPartyData(requestContext);
+        
+        return requestContext;
+    }
 
+    /**
+     * Populates the relying party entity and role metadata and relying party configuration data.
+     * 
+     * @param requestContext current request context with relying party ID populated
+     * 
+     * @throws ProfileException thrown if metadata can not be located for the relying party
+     */
+    protected void populateRelyingPartyData(ShibbolethSSORequestContext requestContext) throws ProfileException {
+        try {
             requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
                     requestContext.getRelyingPartyId()));
 
-            RoleDescriptor assertingPartyRole;
             RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                    "urn:oasis:names:tc:SAML:1.1:protocol");
+                    SAMLConstants.SAML10P_NS);
 
             if (relyingPartyRole == null) {
                 relyingPartyRole = requestContext.getRelyingPartyMetadata()
-                        .getSPSSODescriptor(SAMLConstants.SAML11P_NS);
-                assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
-                        SAMLConstants.SAML10P_NS);
-            } else {
-                assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
-                        SAMLConstants.SAML11P_NS);
+                        .getSPSSODescriptor(SAMLConstants.SAML10P_NS);
+                if (relyingPartyRole == null) {
+                    throw new MetadataProviderException("Unable to locate SPSSO role descriptor for entity "
+                            + requestContext.getRelyingPartyId());
+                }
             }
             requestContext.setRelyingPartyRoleMetadata(relyingPartyRole);
 
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
             requestContext.setRelyingPartyConfiguration(rpConfig);
-
-            requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
-
-            requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
-                    requestContext.getAssertingPartyId()));
-
-            requestContext.setAssertingPartyRoleMetadata(assertingPartyRole);
 
             requestContext.setProfileConfiguration((ShibbolethSSOConfiguration) rpConfig
                     .getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID));
 
-            return requestContext;
         } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for asserting or relying party");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
-            throw new ProfileException("Error locating party metadata");
+            log.error("Unable to locate metadata for relying party " + requestContext.getRelyingPartyId());
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Unable to locate metadata for relying party " + requestContext.getRelyingPartyId()));
+            throw new ProfileException("Unable to locate metadata for relying party "
+                    + requestContext.getRelyingPartyId());
+        }
+    }
+
+    /**
+     * Populates the asserting party entity and role metadata.
+     * 
+     * @param requestContext current request context with relying party configuration populated
+     * 
+     * @throws ProfileException thrown if metadata can not be located for the asserting party
+     */
+    protected void populateAssertingPartyData(ShibbolethSSORequestContext requestContext) throws ProfileException {
+        String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
+
+        try {
+            requestContext.setAssertingPartyId(assertingPartyId);
+
+            requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(assertingPartyId));
+
+            RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
+                    ShibbolethConstants.SHIB_SSO_PROFILE_URI);
+            if (assertingPartyRole == null) {
+                throw new MetadataProviderException("Unable to locate IDPSSO role descriptor for entity "
+                        + assertingPartyId);
+            }
+            requestContext.setAssertingPartyRoleMetadata(assertingPartyRole);
+        } catch (MetadataProviderException e) {
+            log.error("Unable to locate metadata for asserting party " + assertingPartyId);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Unable to locate metadata for relying party " + assertingPartyId));
+            throw new ProfileException("Unable to locate metadata for relying party " + assertingPartyId);
         }
     }
 
