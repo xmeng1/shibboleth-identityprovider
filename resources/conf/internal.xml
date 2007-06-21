@@ -238,6 +238,12 @@
     
     <bean id="shibboleth.SessionManager" class="edu.internet2.middleware.shibboleth.idp.session.impl.SessionManagerImpl" />
     
+    <bean id="shibboleth.SAML1AttributeAuthority"
+          class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML1AttributeAuthority">
+          <constructor-arg ref="shibboleth.AttributeResolver" />
+          <property name="filteringEngine" ref="shibboleth.AttributeFilterEngine" />
+    </bean>
+    
     <bean id="shibboleth.SAML2AttributeAuthority"
           class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML2AttributeAuthority">
           <constructor-arg ref="shibboleth.AttributeResolver" />

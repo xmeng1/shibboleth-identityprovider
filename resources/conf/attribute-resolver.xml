@@ -37,8 +37,7 @@
                                    name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
                                    
         <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" />
-        
-        </resolver:AttributeEncoder>
+
     </resolver:AttributeDefinition>
     -->
     
