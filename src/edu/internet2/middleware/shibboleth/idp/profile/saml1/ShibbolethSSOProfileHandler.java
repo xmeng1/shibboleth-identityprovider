@@ -43,6 +43,7 @@ import org.opensaml.saml1.core.StatusCode;
 import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.xml.util.DatatypeHelper;
 
@@ -144,8 +145,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         LoginContext loginContext = buildLoginContext(httpRequest);
         if (getRelyingPartyConfiguration(loginContext.getRelyingPartyId()) == null) {
-            log.error("Shibboleth SSO profile is not configured for relying party "
-                    + loginContext.getRelyingPartyId());
+            log.error("Shibboleth SSO profile is not configured for relying party " + loginContext.getRelyingPartyId());
             throw new ProfileException("Shibboleth SSO profile is not configured for relying party "
                     + loginContext.getRelyingPartyId());
         }
@@ -288,8 +288,12 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
                     requestContext.getRelyingPartyId()));
 
-            requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                    SAMLConstants.SAML1P_NS));
+            RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                    "urn:oasis:names:tc:SAML:1.1:protocol");
+            if (relyingPartyRole == null) {
+                requestContext.getRelyingPartyMetadata().getSPSSODescriptor("urn:oasis:names:tc:SAML:1.0:protocol");
+            }
+            requestContext.setRelyingPartyRoleMetadata(relyingPartyRole);
 
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             requestContext.setRelyingPartyConfiguration(rpConfig);
@@ -299,8 +303,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
                     requestContext.getAssertingPartyId()));
 
-            requestContext.setAssertingPartyRoleMetadata(requestContext.getAssertingPartyMetadata()
-                    .getIDPSSODescriptor(SAMLConstants.SAML1P_NS));
+            RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
+                    "urn:oasis:names:tc:SAML:1.1:protocol");
+            if (assertingPartyRole == null) {
+                assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
+                        "urn:oasis:names:tc:SAML:1.0:protocol");
+            }
+            requestContext.setAssertingPartyRoleMetadata(assertingPartyRole);
 
             requestContext.setProfileConfiguration((ShibbolethSSOConfiguration) rpConfig
                     .getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID));
