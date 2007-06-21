@@ -25,7 +25,8 @@
     -->
     
     <!--
-    <resolver:AttributeDefinition id="scopedPrimaryAffiliation" xsi:type="ad:Scoped">
+    <resolver:AttributeDefinition id="scopedPrimaryAffiliation" xsi:type="ad:Scoped"
+                                  scope="example.org">
         <resolver:DataConnectorDependency ref="staticAttributes" sourceAttributeID="staticEPPA" />
         <resolver:DataConnectorDependency ref="myLDAP" sourceAttribute="eduPersonPrimaryAffiliation" />
         
