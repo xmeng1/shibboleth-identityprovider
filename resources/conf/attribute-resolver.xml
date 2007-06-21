@@ -26,38 +26,40 @@
     
     <!--
     <resolver:AttributeDefinition id="scopedPrimaryAffiliation" xsi:type="ad:Scoped"
-                                  scope="example.org">
-        <resolver:DataConnectorDependency ref="staticAttributes" sourceAttributeID="staticEPPA" />
-        <resolver:DataConnectorDependency ref="myLDAP" sourceAttribute="eduPersonPrimaryAffiliation" />
+                                  scope="example.org"
+                                  sourceAttributeID="eduPersonPrimaryAffiliation">
+        <resolver:DataConnectorDependency ref="myLDAP" />
         
-        <resolver:AttributeEncoder xsi:type="SAML1ScopedString"
+        <resolver:AttributeEncoder xsi:type="enc:SAML1ScopedString"
                                    name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
         
-        <resolver:AttributeEncoder xsi:type="SAML2ScopedString"
+        <resolver:AttributeEncoder xsi:type="enc:SAML2ScopedString"
                                    name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
                                    
-        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" />
+        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" />
         
         </resolver:AttributeEncoder>
     </resolver:AttributeDefinition>
     -->
     
     <!--
-    <resolver:AttributeDefinition id="affiliation" xsi:type="ad:Simple">
-        <resolver:DataConnectorDependency ref="myLDAP" sourceAttribute="eduPersonAffiliation" />
+    <resolver:AttributeDefinition id="affiliation" xsi:type="ad:Simple"
+                                   sourceAttribute="eduPersonAffiliation">
+        <resolver:DataConnectorDependency ref="staticAttributes" />
+        <resolver:DataConnectorDependency ref="myLDAP" />
         
-        <resolver:AttributeEncoder xsi:type="SAML1String"
+        <resolver:AttributeEncoder xsi:type="enc:SAML1String"
                                    name="urn:mace:dir:attribute-def:eduPersondAffiliation"/>
         
-        <resolver:AttributeEncoder xsi:type="SAML2String"
+        <resolver:AttributeEncoder xsi:type="enc:SAML2String"
                                    name="urn:oid:1.3.6.1.4.1.5923.1.1.1.1"
                                    friendlyName="eduPersonAffiliation"/>
     </resolver:AttributeDefinition>
     -->
     
     <!--
-    <resolver:AttributeDefinition id="fullName" xsi:type="Script">
-        <resolver:DataConnectorDependency ref="myLDAP" sourceAttribute="eduPersonAffiliation" />
+    <resolver:AttributeDefinition id="fullName" xsi:type="Script" >
+        <resolver:DataConnectorDependency ref="myLDAP" />
         
         <Script>
             <![CDATA[
@@ -77,10 +79,10 @@
     <!-- Example Static Connector -->
     <!--
     <resolver:DataConnector id="staticAttributes" xsi:type="dc:Static">
-        <dc:Attribute id="staticEPPA">
+        <dc:Attribute id="eduPersonAffiliation">
             <dc:Value>member</dc:Value>
         </dc:Attribute>
-        <dc:Attribute id="staticEPE">
+        <dc:Attribute id="eduPersonEntitlement">
             <dc:Value>urn:example.org:entitlement:entitlement1</dc:Value>
             <dc:Value>urn:mace:dir:entitlement:common-lib-terms</dc:Value>
         </dc:Attribute>
