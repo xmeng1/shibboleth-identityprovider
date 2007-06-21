@@ -288,10 +288,18 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
                     requestContext.getRelyingPartyId()));
 
+            RoleDescriptor assertingPartyRole;
             RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
                     "urn:oasis:names:tc:SAML:1.1:protocol");
+
             if (relyingPartyRole == null) {
-                requestContext.getRelyingPartyMetadata().getSPSSODescriptor("urn:oasis:names:tc:SAML:1.0:protocol");
+                relyingPartyRole = requestContext.getRelyingPartyMetadata()
+                        .getSPSSODescriptor(SAMLConstants.SAML11P_NS);
+                assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
+                        SAMLConstants.SAML10P_NS);
+            } else {
+                assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
+                        SAMLConstants.SAML11P_NS);
             }
             requestContext.setRelyingPartyRoleMetadata(relyingPartyRole);
 
@@ -303,12 +311,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
                     requestContext.getAssertingPartyId()));
 
-            RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
-                    "urn:oasis:names:tc:SAML:1.1:protocol");
-            if (assertingPartyRole == null) {
-                assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
-                        "urn:oasis:names:tc:SAML:1.0:protocol");
-            }
             requestContext.setAssertingPartyRoleMetadata(assertingPartyRole);
 
             requestContext.setProfileConfiguration((ShibbolethSSOConfiguration) rpConfig

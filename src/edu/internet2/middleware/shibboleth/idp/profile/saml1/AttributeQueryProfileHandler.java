@@ -134,8 +134,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
                         requestContext.getRelyingPartyId()));
 
+                //TODO determine protocol by message version
                 requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                        SAMLConstants.SAML1P_NS));
+                        SAMLConstants.SAML10P_NS));
 
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
                 requestContext.setRelyingPartyConfiguration(rpConfig);
@@ -146,7 +147,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                         requestContext.getAssertingPartyId()));
 
                 requestContext.setAssertingPartyRoleMetadata(requestContext.getAssertingPartyMetadata()
-                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML1P_NS));
+                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML10P_NS));
 
                 requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
                         .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
