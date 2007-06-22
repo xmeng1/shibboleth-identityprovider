@@ -157,7 +157,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                     requestContext.getRelyingPartyId()));
 
             RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                    SAMLConstants.SAML10P_NS);
+                    SAMLConstants.SAML11P_NS);
 
             if (relyingPartyRole == null) {
                 relyingPartyRole = requestContext.getRelyingPartyMetadata()
