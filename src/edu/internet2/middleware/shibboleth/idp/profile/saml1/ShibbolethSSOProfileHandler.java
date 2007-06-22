@@ -35,7 +35,6 @@ import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.encoding.MessageEncoder;
-import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
@@ -304,11 +303,11 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                     requestContext.getRelyingPartyId()));
 
             RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                    SAMLConstants.SAML11P_NS);
+                    ShibbolethConstants.SAML11P_NS);
 
             if (relyingPartyRole == null) {
                 relyingPartyRole = requestContext.getRelyingPartyMetadata()
-                        .getSPSSODescriptor(SAMLConstants.SAML10P_NS);
+                        .getSPSSODescriptor(ShibbolethConstants.SAML10P_NS);
                 if (relyingPartyRole == null) {
                     throw new MetadataProviderException("Unable to locate SPSSO role descriptor for entity "
                             + requestContext.getRelyingPartyId());

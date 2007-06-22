@@ -22,12 +22,10 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.apache.log4j.Logger;
-import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
-import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml1.binding.encoding.HTTPSOAP11Encoder;
 import org.opensaml.saml1.core.AttributeQuery;
@@ -43,9 +41,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AttributeQueryConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.idp.ShibbolethConstants;
-import edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSOProfileHandler.ShibbolethSSORequestContext;
 
 /**
  * SAML 1 Attribute Query profile handler.
@@ -157,11 +153,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                     requestContext.getRelyingPartyId()));
 
             RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                    SAMLConstants.SAML11P_NS);
+                    ShibbolethConstants.SAML11P_NS);
 
             if (relyingPartyRole == null) {
                 relyingPartyRole = requestContext.getRelyingPartyMetadata()
-                        .getSPSSODescriptor(SAMLConstants.SAML10P_NS);
+                        .getSPSSODescriptor(ShibbolethConstants.SAML10P_NS);
                 if (relyingPartyRole == null) {
                     throw new MetadataProviderException("Unable to locate SPSSO role descriptor for entity "
                             + requestContext.getRelyingPartyId());
@@ -200,11 +196,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(assertingPartyId));
 
             RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyMetadata()
-                    .getAttributeAuthorityDescriptor(SAMLConstants.SAML11P_NS);
+                    .getAttributeAuthorityDescriptor(ShibbolethConstants.SAML11P_NS);
 
             if (assertingPartyRole == null) {
                 assertingPartyRole = requestContext.getAssertingPartyMetadata().getAttributeAuthorityDescriptor(
-                        SAMLConstants.SAML10P_NS);
+                        ShibbolethConstants.SAML10P_NS);
                 if (assertingPartyRole == null) {
                     throw new MetadataProviderException("Unable to locate IDPSSO role descriptor for entity "
                             + assertingPartyId);
