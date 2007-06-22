@@ -21,6 +21,10 @@
     <!--
     <resolver:AttributeDefinition id="uid" xsi:type="ad:Simple">
         <resolver:DataConnectorDependency ref="myLDAP" />
+        
+        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" />
+        
+        <resolver:AttributeEncoder xsi:type="enc:SAML1StringNameIdentifier" />
     </resolver:AttributeDefinition>
     -->
     
@@ -35,8 +39,6 @@
         
         <resolver:AttributeEncoder xsi:type="enc:SAML2ScopedString"
                                    name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
-                                   
-        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" />
 
     </resolver:AttributeDefinition>
     -->
