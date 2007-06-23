@@ -36,12 +36,12 @@ import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.security.SecurityPolicyException;
 
+import edu.internet2.middleware.shibboleth.common.ShibbolethConstants;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AttributeQueryConfiguration;
-import edu.internet2.middleware.shibboleth.idp.ShibbolethConstants;
 
 /**
  * SAML 1 Attribute Query profile handler.
