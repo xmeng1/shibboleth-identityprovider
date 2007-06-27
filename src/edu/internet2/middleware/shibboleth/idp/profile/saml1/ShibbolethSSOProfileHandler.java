@@ -30,12 +30,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
-import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.saml1.core.AuthenticationStatement;
+import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
@@ -433,7 +433,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** Represents the internal state of a Shibboleth SSO Request while it's being processed by the IdP. */
     protected class ShibbolethSSORequestContext extends
-            SAML1ProfileRequestContext<SAMLObject, Response, ShibbolethSSOConfiguration> {
+            SAML1ProfileRequestContext<Request, Response, ShibbolethSSOConfiguration> {
 
         /** Current login context. */
         private ShibbolethSSOLoginContext loginContext;

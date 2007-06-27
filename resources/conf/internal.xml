@@ -139,7 +139,7 @@
     
     <bean id="shibboleth.SAML2ProtocolMessageRuleFactory" class="org.opensaml.saml2.binding.security.SAML2ProtocolMessageRuleFactory" />
     
-    <bean id="shibboleth.SAML1ProtocolMessageRuleFactory" class="org.opensaml.saml1.binding.security.SAML1ProtocolMessageRuleFactory" />
+    <bean id="shibboleth.SAML1ProtocolMessageRuleFactory" class="edu.internet2.middleware.shibboleth.common.binding.security.ShibbolethSAML1ProtocolMessageRuleFactory" />
     
     <bean id="shibboleth.MessageIssueInstantRuleFactory" class="org.opensaml.common.binding.security.IssueInstantRuleFactory">
         <property name="clockSkew" value="5" />

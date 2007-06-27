@@ -39,6 +39,7 @@ import org.opensaml.saml1.core.AudienceRestrictionCondition;
 import org.opensaml.saml1.core.Conditions;
 import org.opensaml.saml1.core.ConfirmationMethod;
 import org.opensaml.saml1.core.NameIdentifier;
+import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.RequestAbstractType;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.ResponseAbstractType;
@@ -674,13 +675,14 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> queryContext;
 
-        if (requestContext.getSamlRequest() instanceof AttributeQuery) {
+        if (requestContext.getSamlRequest() instanceof Request) {
+            Request samlRequest = (Request) requestContext.getSamlRequest();
             queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
                     getMetadataProvider(), requestContext.getRelyingPartyConfiguration(),
-                    (AttributeQuery) requestContext.getSamlRequest());
+                    samlRequest.getAttributeQuery());
         } else {
             queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
-                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration());
+                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), null);
         }
 
         queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
@@ -798,7 +800,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @param <ResponseType> type of SAML 1 response
      * @param <ProfileConfigurationType> configuration type for this profile
      */
-    protected class SAML1ProfileRequestContext<RequestType extends SAMLObject, ResponseType extends ResponseAbstractType, ProfileConfigurationType extends AbstractSAML1ProfileConfiguration>
+    protected class SAML1ProfileRequestContext<RequestType extends RequestAbstractType, ResponseType extends ResponseAbstractType, ProfileConfigurationType extends AbstractSAML1ProfileConfiguration>
             extends SAMLProfileRequestContext {
 
         /** SAML request message. */

@@ -29,6 +29,7 @@ import org.opensaml.common.binding.security.SAMLSecurityPolicy;
 import org.opensaml.saml1.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml1.binding.encoding.HTTPSOAP11Encoder;
 import org.opensaml.saml1.core.AttributeQuery;
+import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
@@ -131,8 +132,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
             requestContext.setRelyingPartyId(securityPolicy.getIssuer());
 
-            AttributeQuery attributeQuery = (AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage();
-            requestContext.setSamlRequest(attributeQuery);
+            Request request = (Request) requestContext.getMessageDecoder().getSAMLMessage();
+            requestContext.setSamlRequest(request);
+            requestContext.setAttributeQuery(request.getAttributeQuery());
 
             populateRelyingPartyData(requestContext);
 
@@ -249,7 +251,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** Basic data structure used to accumulate information as a request is being processed. */
     protected class AttributeQueryContext extends
-            SAML1ProfileRequestContext<AttributeQuery, Response, AttributeQueryConfiguration> {
+            SAML1ProfileRequestContext<Request, Response, AttributeQueryConfiguration> {
+        
+        private AttributeQuery attributeQuery;
 
         /**
          * Constructor.
@@ -259,6 +263,14 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
          */
         public AttributeQueryContext(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) {
             super(request, response);
+        }
+        
+        public AttributeQuery getAttributeQuery(){
+            return attributeQuery;
+        }
+        
+        public void setAttributeQuery(AttributeQuery query){
+            attributeQuery = query;
         }
     }
 }

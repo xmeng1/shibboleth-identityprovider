@@ -539,14 +539,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             SAML2ProfileRequestContext requestContext) {
 
         ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> queryContext;
-        if (requestContext.getSamlRequest() instanceof AttributeQuery) {
-            queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
-                    requestContext.getRelyingPartyConfiguration(), (AttributeQuery) requestContext.getSamlRequest());
-        } else {
-            queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
-                    requestContext.getRelyingPartyConfiguration());
-        }
-
+        
+        queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
+                requestContext.getRelyingPartyConfiguration(), (AttributeQuery) requestContext.getSamlRequest());
         queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
         queryContext.setPrincipalName(requestContext.getPrincipalName());
         queryContext.setProfileConfiguration(requestContext.getProfileConfiguration());
