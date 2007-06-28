@@ -67,6 +67,10 @@
             </props>
         </property>
     </bean>
+    
+    <bean id="shibboleth.TemplateEngine" class="edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.dataConnector.TemplateEngine" >
+        <constructor-arg ref="shibboleth.VelocityEngine" />
+    </bean>
 
     <bean id="shibboleth.TaskTimer" class="java.util.Timer" destroy-method="cancel">
         <constructor-arg value="true" type="boolean" />
