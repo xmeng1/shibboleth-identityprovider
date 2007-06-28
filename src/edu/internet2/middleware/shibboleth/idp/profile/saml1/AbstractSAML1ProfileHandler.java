@@ -23,6 +23,7 @@ import java.util.Map;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.xml.namespace.QName;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -60,7 +61,6 @@ import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.Signer;
-import org.opensaml.xml.util.DatatypeHelper;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -560,16 +560,16 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return a Status object.
      */
-    protected Status buildStatus(String topLevelCode, String secondLevelCode, String failureMessage) {
+    protected Status buildStatus(QName topLevelCode, QName secondLevelCode, String failureMessage) {
         Status status = getStatusBuilder().buildObject();
 
         StatusCode statusCode = getStatusCodeBuilder().buildObject();
-        statusCode.setValue(DatatypeHelper.safeTrimOrNullString(topLevelCode));
+        statusCode.setValue(topLevelCode);
         status.setStatusCode(statusCode);
 
         if (secondLevelCode != null) {
             StatusCode secondLevelStatusCode = getStatusCodeBuilder().buildObject();
-            secondLevelStatusCode.setValue(DatatypeHelper.safeTrimOrNullString(secondLevelCode));
+            secondLevelStatusCode.setValue(secondLevelCode);
             statusCode.setStatusCode(secondLevelStatusCode);
         }
 
