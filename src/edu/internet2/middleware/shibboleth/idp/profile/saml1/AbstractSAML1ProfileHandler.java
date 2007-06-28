@@ -449,13 +449,16 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     }
                 }
             } catch (AttributeEncodingException e) {
+                log.error("Unable to construct NameIdentifier", e);
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
                         "Unable to construct NameIdentifier"));
                 throw new ProfileException("Unable to encode NameIdentifier attribute", e);
             }
         }
 
-        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to construct NameID"));
+        log.error("No attributes for principal " + requestContext.getPrincipalName() 
+                + " support constructions of NameIdentifier");
+        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to construct NameIdentifier"));
         throw new ProfileException("No principal attributes support NameIdentifier construction");
     }
 
