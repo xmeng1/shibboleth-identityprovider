@@ -40,6 +40,7 @@ import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
 import org.opensaml.saml1.core.Subject;
+import org.opensaml.saml1.core.SubjectLocality;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.RoleDescriptor;
@@ -65,6 +66,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     /** Builder of AuthenticationStatement objects. */
     private SAMLObjectBuilder<AuthenticationStatement> authnStatementBuilder;
 
+    /** Builder of SubjectLocality objects. */
+    private SAMLObjectBuilder<SubjectLocality> subjectLocalityBuilder;
+
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
@@ -85,6 +89,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthenticationStatement>) getBuilderFactory().getBuilder(
                 AuthenticationStatement.DEFAULT_ELEMENT_NAME);
+
+        subjectLocalityBuilder = (SAMLObjectBuilder<SubjectLocality>) getBuilderFactory().getBuilder(
+                SubjectLocality.DEFAULT_ELEMENT_NAME);
     }
 
     /**
@@ -284,9 +291,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setRelyingPartyId(relyingPartyId);
 
         populateRelyingPartyData(requestContext);
-        
+
         populateAssertingPartyData(requestContext);
-        
+
         return requestContext;
     }
 
@@ -306,8 +313,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                     ShibbolethConstants.SAML11P_NS);
 
             if (relyingPartyRole == null) {
-                relyingPartyRole = requestContext.getRelyingPartyMetadata()
-                        .getSPSSODescriptor(ShibbolethConstants.SAML10P_NS);
+                relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                        ShibbolethConstants.SAML10P_NS);
                 if (relyingPartyRole == null) {
                     throw new MetadataProviderException("Unable to locate SPSSO role descriptor for entity "
                             + requestContext.getRelyingPartyId());
@@ -377,13 +384,40 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         statement.setAuthenticationInstant(loginContext.getAuthenticationInstant());
         statement.setAuthenticationMethod(loginContext.getAuthenticationMethod());
 
-        // TODO
-        statement.setSubjectLocality(null);
+        statement.setSubjectLocality(buildSubjectLocality(requestContext));
 
         Subject statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches");
         statement.setSubject(statementSubject);
 
         return statement;
+    }
+
+    /**
+     * Constructs the subject locality for the authentication statement.
+     * 
+     * @param requestContext curent request context
+     * 
+     * @return subject locality for the authentication statement
+     */
+    protected SubjectLocality buildSubjectLocality(ShibbolethSSORequestContext requestContext) {
+        SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
+
+        ShibbolethSSOConfiguration profileConfig = requestContext.getProfileConfiguration();
+        HttpServletRequest httpRequest = (HttpServletRequest) requestContext.getProfileRequest().getRawRequest();
+
+        if (profileConfig.getLocalityAddress() != null) {
+            subjectLocality.setIPAddress(profileConfig.getLocalityAddress());
+        } else {
+            subjectLocality.setIPAddress(httpRequest.getLocalAddr());
+        }
+
+        if (profileConfig.getLocalityDNSName() != null) {
+            subjectLocality.setDNSAddress(profileConfig.getLocalityDNSName());
+        } else {
+            subjectLocality.setDNSAddress(httpRequest.getLocalName());
+        }
+
+        return subjectLocality;
     }
 
     /**

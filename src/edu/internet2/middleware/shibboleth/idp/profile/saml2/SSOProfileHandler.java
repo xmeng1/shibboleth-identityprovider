@@ -33,6 +33,7 @@ import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.core.SubjectLocality;
 import org.opensaml.saml2.binding.AuthnResponseEndpointSelector;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
@@ -78,6 +79,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** Builder of AuthnContextDeclRef objects. */
     private SAMLObjectBuilder<AuthnContextDeclRef> authnContextDeclRefBuilder;
 
+    /** Builder of SubjectLocality objects. */
+    private SAMLObjectBuilder<SubjectLocality> subjectLocalityBuilder;
+
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
@@ -109,6 +113,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 AuthnContextClassRef.DEFAULT_ELEMENT_NAME);
         authnContextDeclRefBuilder = (SAMLObjectBuilder<AuthnContextDeclRef>) getBuilderFactory().getBuilder(
                 AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
+        subjectLocalityBuilder = (SAMLObjectBuilder<SubjectLocality>) getBuilderFactory().getBuilder(
+                SubjectLocality.DEFAULT_ELEMENT_NAME);
     }
 
     /**
@@ -185,7 +191,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             String relyingParty = securityPolicy.getIssuer();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingParty);
-            if(rpConfig == null){
+            if (rpConfig == null) {
                 log.error("No relying party configuration for " + relyingParty);
                 throw new ProfileException("No relying party configuration for " + relyingParty);
             }
@@ -381,8 +387,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                     loginContext.getAuthenticationDuration()));
         }
 
-        // TODO
-        statement.setSubjectLocality(null);
+        statement.setSubjectLocality(buildSubjectLocality(requestContext));
 
         return statement;
     }
@@ -428,6 +433,34 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
+     * Constructs the subject locality for the authentication statement.
+     * 
+     * @param requestContext curent request context
+     * 
+     * @return subject locality for the authentication statement
+     */
+    protected SubjectLocality buildSubjectLocality(SSORequestContext requestContext) {
+        SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
+
+        SSOConfiguration profileConfig = requestContext.getProfileConfiguration();
+        HttpServletRequest httpRequest = (HttpServletRequest) requestContext.getProfileRequest().getRawRequest();
+
+        if (profileConfig.getLocalityAddress() != null) {
+            subjectLocality.setAddress(profileConfig.getLocalityAddress());
+        } else {
+            subjectLocality.setAddress(httpRequest.getLocalAddr());
+        }
+
+        if (profileConfig.getLocalityDNSName() != null) {
+            subjectLocality.setDNSName(profileConfig.getLocalityDNSName());
+        } else {
+            subjectLocality.setDNSName(httpRequest.getLocalName());
+        }
+
+        return subjectLocality;
+    }
+
+    /**
      * Encodes the request's SAML response and writes it to the servlet response.
      * 
      * @param requestContext current request context
@@ -461,7 +494,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         encoder.setRelyingParty(requestContext.getRelyingPartyMetadata());
         encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
         encoder.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
-        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse(); 
+        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
         requestContext.setMessageEncoder(encoder);
