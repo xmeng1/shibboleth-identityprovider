@@ -373,7 +373,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected Issuer buildEntityIssuer(SAML2ProfileRequestContext requestContext) {
         Issuer issuer = getIssuerBuilder().buildObject();
         issuer.setFormat(Issuer.ENTITY);
-        issuer.setValue(requestContext.getRelyingPartyId());
+        issuer.setValue(requestContext.getAssertingPartyId());
 
         return issuer;
     }
