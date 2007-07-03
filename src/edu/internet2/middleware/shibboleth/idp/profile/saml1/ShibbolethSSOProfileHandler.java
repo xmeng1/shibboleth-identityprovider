@@ -199,7 +199,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             }
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
-            statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
+            statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer "));
             statements.add(buildAuthenticationStatement(requestContext));
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
                 // TODO support this
@@ -386,7 +386,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         statement.setSubjectLocality(buildSubjectLocality(requestContext));
 
-        Subject statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches");
+        Subject statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer");
         statement.setSubject(statementSubject);
 
         return statement;
