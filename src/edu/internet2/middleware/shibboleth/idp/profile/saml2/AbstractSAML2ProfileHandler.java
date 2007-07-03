@@ -67,6 +67,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestExce
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML2NameIDAttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
@@ -539,7 +540,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             SAML2ProfileRequestContext requestContext) {
 
         ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> queryContext;
-        
+
         queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
                 requestContext.getRelyingPartyConfiguration(), (AttributeQuery) requestContext.getSamlRequest());
         queryContext.setAttributeRequester(requestContext.getAssertingPartyId());
@@ -715,32 +716,37 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             log.debug("Supported NameID formats: " + supportedNameFormats);
         }
 
-        if (principalAttributes != null && supportedNameFormats != null) {
-            try {
-                AttributeEncoder<NameID> nameIdEncoder = null;
-                for (BaseAttribute attribute : principalAttributes.values()) {
-                    for (String nameFormat : supportedNameFormats) {
-                        nameIdEncoder = attribute.getEncoderByCategory(nameFormat);
-                        if (nameIdEncoder != null) {
+        if (principalAttributes == null || supportedNameFormats == null) {
+            log.error("No attributes for principal " + requestContext.getPrincipalName() 
+                    + " support constructions of NameID");
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
+                    "Unable to construct NameID"));
+            throw new ProfileException("No principal attributes support NameID construction");
+        }
+
+        try {
+            SAML2NameIDAttributeEncoder nameIdEncoder;
+            for (BaseAttribute<?> attribute : principalAttributes.values()) {
+                for (AttributeEncoder encoder : attribute.getEncoders()) {
+                    if (encoder instanceof SAML2NameIDAttributeEncoder) {
+                        nameIdEncoder = (SAML2NameIDAttributeEncoder) encoder;
+                        if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                             if (log.isDebugEnabled()) {
                                 log.debug("Using attribute " + attribute.getId() + " suppoting NameID format "
-                                        + nameFormat + " to create the NameID for principal "
+                                        + nameIdEncoder.getNameFormat() + " to create the NameID for principal "
                                         + requestContext.getPrincipalName());
                             }
                             return nameIdEncoder.encode(attribute);
                         }
                     }
                 }
-            } catch (AttributeEncodingException e) {
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                        "Unable to construct NameID"));
-                throw new ProfileException("Unable to encode NameID attribute", e);
             }
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));
+            throw new ProfileException("No principal attribute supported encoding into the a supported name ID format.");
+        } catch (AttributeEncodingException e) {
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));
+            throw new ProfileException("Unable to encode NameID attribute", e);
         }
-
-        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
-                "Unable to construct NameID"));
-        throw new ProfileException("No principal attributes support NameID construction");
     }
 
     /**

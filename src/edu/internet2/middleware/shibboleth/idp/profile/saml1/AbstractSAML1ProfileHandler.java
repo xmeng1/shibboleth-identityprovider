@@ -66,6 +66,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestExce
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML1NameIdentifierEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
@@ -432,34 +433,43 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             log.debug("Supported name formats: " + supportedNameFormats);
         }
 
-        if (principalAttributes != null && supportedNameFormats != null) {
-            try {
-                AttributeEncoder<NameIdentifier> nameIdEncoder = null;
-                for (BaseAttribute attribute : principalAttributes.values()) {
-                    for (String nameFormat : supportedNameFormats) {
-                        nameIdEncoder = attribute.getEncoderByCategory(nameFormat);
-                        if (nameIdEncoder != null) {
+        if (principalAttributes == null || supportedNameFormats == null) {
+            log.error("No attributes for principal " + requestContext.getPrincipalName()
+                    + " support constructions of NameIdentifier");
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Unable to construct NameIdentifier"));
+            throw new ProfileException("No principal attributes support NameIdentifier construction");
+        }
+
+        try {
+            SAML1NameIdentifierEncoder nameIdEncoder;
+
+            for (BaseAttribute<?> attribute : principalAttributes.values()) {
+                for (AttributeEncoder encoder : attribute.getEncoders()) {
+                    if (encoder instanceof SAML1NameIdentifierEncoder) {
+                        nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
+                        if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                             if (log.isDebugEnabled()) {
                                 log.debug("Using attribute " + attribute.getId() + " suppoting name format "
-                                        + nameFormat + " to create the NameIdentifier for principal "
+                                        + nameIdEncoder.getNameFormat()
+                                        + " to create the NameIdentifier for principal "
                                         + requestContext.getPrincipalName());
                             }
                             return nameIdEncoder.encode(attribute);
                         }
                     }
                 }
-            } catch (AttributeEncodingException e) {
-                log.error("Unable to construct NameIdentifier", e);
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                        "Unable to construct NameIdentifier"));
-                throw new ProfileException("Unable to encode NameIdentifier attribute", e);
             }
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+            "Unable to construct NameIdentifier"));
+            throw new ProfileException("No principal attribute supported encoding into the a supported name ID format.");
+        } catch (AttributeEncodingException e) {
+            log.error("Unable to construct NameIdentifier", e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Unable to construct NameIdentifier"));
+            throw new ProfileException("Unable to encode NameIdentifier attribute", e);
         }
 
-        log.error("No attributes for principal " + requestContext.getPrincipalName() 
-                + " support constructions of NameIdentifier");
-        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to construct NameIdentifier"));
-        throw new ProfileException("No principal attributes support NameIdentifier construction");
     }
 
     /**
@@ -681,8 +691,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         if (requestContext.getSamlRequest() instanceof Request) {
             Request samlRequest = (Request) requestContext.getSamlRequest();
             queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
-                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration(),
-                    samlRequest.getAttributeQuery());
+                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), samlRequest
+                            .getAttributeQuery());
         } else {
             queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
                     getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), null);
