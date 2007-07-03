@@ -199,10 +199,10 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             }
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
+            statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
             statements.add(buildAuthenticationStatement(requestContext));
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
-                statements
-                        .add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
+                // TODO support this
             }
 
             samlResponse = buildResponse(requestContext, statements);
@@ -440,8 +440,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
         endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getSamlRequest());
-        endpointSelector.getSupportedIssuerBindings().addAll(
-                getMessageEncoderFactory().getEncoderBuilders().keySet());
+        endpointSelector.getSupportedIssuerBindings().addAll(getMessageEncoderFactory().getEncoderBuilders().keySet());
         relyingPartyEndpoint = endpointSelector.selectEndpoint();
 
         if (relyingPartyEndpoint == null) {
