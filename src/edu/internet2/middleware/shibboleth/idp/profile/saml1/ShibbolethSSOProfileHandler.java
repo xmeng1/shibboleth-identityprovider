@@ -432,14 +432,17 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.debug("Encoding response to SAML request from relying party " + requestContext.getRelyingPartyId());
         }
 
+        Endpoint relyingPartyEndpoint;
+
         BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
         endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
         endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getSamlRequest());
-        endpointSelector.getSupportedIssuerBindings().addAll(getMessageEncoderFactory().getEncoderBuilders().keySet());
-        Endpoint relyingPartyEndpoint = endpointSelector.selectEndpoint();
+        endpointSelector.getSupportedIssuerBindings().addAll(
+                getMessageEncoderFactory().getEncoderBuilders().keySet());
+        relyingPartyEndpoint = endpointSelector.selectEndpoint();
 
         if (relyingPartyEndpoint == null) {
             log.error("Unable to determine endpoint, from metadata, for relying party "
@@ -450,7 +453,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(
                 relyingPartyEndpoint.getBinding());
-
+        encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
         super.populateMessageEncoder(encoder);
         ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
