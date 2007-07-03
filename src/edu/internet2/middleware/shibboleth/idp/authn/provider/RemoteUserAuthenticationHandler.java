@@ -18,12 +18,11 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
+import org.opensaml.util.URLBuilder;
 
 /**
  * Authentication Handler that redirects to servlet protected by a Web Single-Sign-On system.
@@ -59,16 +58,27 @@ public class RemoteUserAuthenticationHandler extends AbstractAuthenticationHandl
 
         // forward control to the servlet.
         try {
-            if(log.isDebugEnabled()){
-                log.debug("Forwarding control to servlet " + servletURL + " which is hopefully container protected.");
+            StringBuilder pathBuilder = new StringBuilder();
+            pathBuilder.append(httpRequest.getContextPath());
+            if (!servletURL.startsWith("/")) {
+                pathBuilder.append("/");
             }
-            RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(servletURL);
-            dispatcher.forward(httpRequest, httpResponse);
+            pathBuilder.append(servletURL);
+
+            URLBuilder urlBuilder = new URLBuilder();
+            urlBuilder.setScheme(httpRequest.getScheme());
+            urlBuilder.setHost(httpRequest.getLocalName());
+            urlBuilder.setPort(httpRequest.getLocalPort());
+            urlBuilder.setPath(pathBuilder.toString());
+
+            if (log.isDebugEnabled()) {
+                log.debug("Redirecting to " + urlBuilder.buildURL());
+            }
+
+            httpResponse.sendRedirect(urlBuilder.buildURL());
             return;
         } catch (IOException ex) {
-            log.error("RemoteUserAuthenticationHandler: Unable to forward control to SSO servlet.", ex);
-        } catch (ServletException ex) {
-            log.error("RemoteUserAuthenticationHandler: Unable to forward control to SSO servlet.", ex);
+            log.error("RemoteUserAuthenticationHandler: Unable to redirect to remote user authentication servlet.", ex);
         }
     }
 }

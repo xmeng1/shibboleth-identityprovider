@@ -45,7 +45,8 @@ public class RemoteUserAuthServlet extends HttpServlet {
         String principalName = httpRequest.getRemoteUser();
 
         if (log.isDebugEnabled()) {
-            log.debug("Remote user identified as " + principalName + " returning control back to authenticate engine");
+            log.debug("Remote user identified as " + principalName
+                            + " returning control back to authentication engine");
         }
         httpRequest.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
         AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
