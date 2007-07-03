@@ -75,6 +75,9 @@
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
+        <auth-constraint> 
+            <role-name>*</role-name> 
+        </auth-constraint>
         <user-data-constraint>
             <transport-guarantee>INTEGRAL</transport-guarantee>
         </user-data-constraint>
@@ -84,4 +87,10 @@
       <auth-method>BASIC</auth-method>
       <realm-name>IdP Password Authentication</realm-name>
     </login-config>
+    
+    <security-role>
+        <description>All Users</description>
+        <role-name>users</role-name>
+    </security-role>
+    
 </web-app>
