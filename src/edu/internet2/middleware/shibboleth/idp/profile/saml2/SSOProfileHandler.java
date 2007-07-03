@@ -442,20 +442,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     protected SubjectLocality buildSubjectLocality(SSORequestContext requestContext) {
         SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
 
-        SSOConfiguration profileConfig = requestContext.getProfileConfiguration();
         HttpServletRequest httpRequest = (HttpServletRequest) requestContext.getProfileRequest().getRawRequest();
-
-        if (profileConfig.getLocalityAddress() != null) {
-            subjectLocality.setAddress(profileConfig.getLocalityAddress());
-        } else {
-            subjectLocality.setAddress(httpRequest.getLocalAddr());
-        }
-
-        if (profileConfig.getLocalityDNSName() != null) {
-            subjectLocality.setDNSName(profileConfig.getLocalityDNSName());
-        } else {
-            subjectLocality.setDNSName(httpRequest.getLocalName());
-        }
+        subjectLocality.setAddress(httpRequest.getRemoteAddr());
+        subjectLocality.setDNSName(httpRequest.getRemoteHost());
 
         return subjectLocality;
     }

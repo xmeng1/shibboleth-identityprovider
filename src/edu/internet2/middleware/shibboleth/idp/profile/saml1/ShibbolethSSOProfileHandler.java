@@ -402,20 +402,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected SubjectLocality buildSubjectLocality(ShibbolethSSORequestContext requestContext) {
         SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
 
-        ShibbolethSSOConfiguration profileConfig = requestContext.getProfileConfiguration();
         HttpServletRequest httpRequest = (HttpServletRequest) requestContext.getProfileRequest().getRawRequest();
-
-        if (profileConfig.getLocalityAddress() != null) {
-            subjectLocality.setIPAddress(profileConfig.getLocalityAddress());
-        } else {
-            subjectLocality.setIPAddress(httpRequest.getLocalAddr());
-        }
-
-        if (profileConfig.getLocalityDNSName() != null) {
-            subjectLocality.setDNSAddress(profileConfig.getLocalityDNSName());
-        } else {
-            subjectLocality.setDNSAddress(httpRequest.getLocalName());
-        }
+        subjectLocality.setIPAddress(httpRequest.getRemoteAddr());
+        subjectLocality.setDNSAddress(httpRequest.getRemoteHost());
 
         return subjectLocality;
     }
