@@ -70,13 +70,18 @@
     <security-constraint>
         <display-name>Shibboleth IdP</display-name>
         <web-resource-collection>
-            <web-resource-name>Shibboleth IdP</web-resource-name>
+            <web-resource-name>remote user authentication</web-resource-name>
             <url-pattern>/Authn/RemoteUser</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method>
         </web-resource-collection>
+        <user-data-constraint>
+            <transport-guarantee>INTEGRAL</transport-guarantee>
+        </user-data-constraint>
     </security-constraint>
     
     <login-config>
       <auth-method>BASIC</auth-method>
-      <realm-name>UID/Password Auth</realm-name>
+      <realm-name>Password Auth</realm-name>
     </login-config>
 </web-app>
