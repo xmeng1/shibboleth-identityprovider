@@ -59,6 +59,9 @@ public class RemoteUserAuthenticationHandler extends AbstractAuthenticationHandl
 
         // forward control to the servlet.
         try {
+            if(log.isDebugEnabled()){
+                log.debug("Forwarding control to servlet " + servletURL + " which is hopefully container protected.");
+            }
             RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(servletURL);
             dispatcher.forward(httpRequest, httpResponse);
             return;

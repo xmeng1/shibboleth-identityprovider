@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
+
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
 
@@ -32,11 +34,19 @@ import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
 public class RemoteUserAuthServlet extends HttpServlet {
 
     /** Serial version UID. */
-    private static final long serialVersionUID = -4073010252382266761L;
+    private static final long serialVersionUID = 1745454095756633626L;
+
+    /** Class logger. */
+    private final Logger log = Logger.getLogger(RemoteUserAuthServlet.class);
 
     /** {@inheritDoc} */
     protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
+        String principalName = httpRequest.getRemoteUser();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Remote user identified as " + principalName + " returning control back to authenticate engine");
+        }
         httpRequest.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
         AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }
