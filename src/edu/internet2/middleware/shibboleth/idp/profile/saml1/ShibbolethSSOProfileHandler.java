@@ -94,15 +94,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 SubjectLocality.DEFAULT_ELEMENT_NAME);
     }
 
-    /**
-     * Convenience method for getting the SAML 1 AuthenticationStatement builder.
-     * 
-     * @return SAML 1 AuthenticationStatement builder
-     */
-    public SAMLObjectBuilder<AuthenticationStatement> getAuthenticationStatementBuilder() {
-        return authnStatementBuilder;
-    }
-
     /** {@inheritDoc} */
     public String getProfileId() {
         return "urn:mace:shibboleth:2.0:idp:profiles:shibboleth:request:sso";
@@ -380,7 +371,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             throws ProfileException {
         ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
 
-        AuthenticationStatement statement = getAuthenticationStatementBuilder().buildObject();
+        AuthenticationStatement statement = authnStatementBuilder.buildObject();
         statement.setAuthenticationInstant(loginContext.getAuthenticationInstant());
         statement.setAuthenticationMethod(loginContext.getAuthenticationMethod());
 

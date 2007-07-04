@@ -117,42 +117,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 SubjectLocality.DEFAULT_ELEMENT_NAME);
     }
 
-    /**
-     * Convenience method for getting the SAML 2 AuthnStatement builder.
-     * 
-     * @return SAML 2 AuthnStatement builder
-     */
-    public SAMLObjectBuilder<AuthnStatement> getAuthnStatementBuilder() {
-        return authnStatementBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 2 AuthnContext builder.
-     * 
-     * @return SAML 2 AuthnContext builder
-     */
-    public SAMLObjectBuilder<AuthnContext> getAuthnContextBuilder() {
-        return authnContextBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 2 AuthnContextClassRef builder.
-     * 
-     * @return SAML 2 AuthnContextClassRef builder
-     */
-    public SAMLObjectBuilder<AuthnContextClassRef> getAuthnContextClassRefBuilder() {
-        return authnContextClassRefBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 2 AuthnContextDeclRef builder.
-     * 
-     * @return SAML 2 AuthnContextDeclRef builder
-     */
-    public SAMLObjectBuilder<AuthnContextDeclRef> getAuthnContextDeclRefBuilder() {
-        return authnContextDeclRefBuilder;
-    }
-
     /** {@inheritDoc} */
     public String getProfileId() {
         return "urn:mace:shibboleth:2.0:idp:profiles:saml2:request:sso";
@@ -375,7 +339,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         AuthnContext authnContext = buildAuthnContext(requestContext);
 
-        AuthnStatement statement = getAuthnStatementBuilder().buildObject();
+        AuthnStatement statement = authnStatementBuilder.buildObject();
         statement.setAuthnContext(authnContext);
         statement.setAuthnInstant(loginContext.getAuthenticationInstant());
 
@@ -400,7 +364,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * @return the built authn context
      */
     protected AuthnContext buildAuthnContext(SSORequestContext requestContext) {
-        AuthnContext authnContext = getAuthnContextBuilder().buildObject();
+        AuthnContext authnContext = authnContextBuilder.buildObject();
 
         Saml2LoginContext loginContext = requestContext.getLoginContext();
         AuthnRequest authnRequest = requestContext.getSamlRequest();
@@ -409,7 +373,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (requestedAuthnContext.getAuthnContextClassRefs() != null) {
                 for (AuthnContextClassRef classRef : requestedAuthnContext.getAuthnContextClassRefs()) {
                     if (classRef.getAuthnContextClassRef().equals(loginContext.getAuthenticationMethod())) {
-                        AuthnContextClassRef ref = getAuthnContextClassRefBuilder().buildObject();
+                        AuthnContextClassRef ref = authnContextClassRefBuilder.buildObject();
                         ref.setAuthnContextClassRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextClassRef(ref);
                     }
@@ -417,14 +381,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             } else if (requestedAuthnContext.getAuthnContextDeclRefs() != null) {
                 for (AuthnContextDeclRef declRef : requestedAuthnContext.getAuthnContextDeclRefs()) {
                     if (declRef.getAuthnContextDeclRef().equals(loginContext.getAuthenticationMethod())) {
-                        AuthnContextDeclRef ref = getAuthnContextDeclRefBuilder().buildObject();
+                        AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
                         ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextDeclRef(ref);
                     }
                 }
             }
         } else {
-            AuthnContextDeclRef ref = getAuthnContextDeclRefBuilder().buildObject();
+            AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
             ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
             authnContext.setAuthnContextDeclRef(ref);
         }

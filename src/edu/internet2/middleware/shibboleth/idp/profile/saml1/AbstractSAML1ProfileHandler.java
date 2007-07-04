@@ -102,9 +102,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     /** Builder of AudienceRestrictionCondition objects. */
     private SAMLObjectBuilder<Audience> audienceBuilder;
 
-    /** Builder of NameIdentifier objects. */
-    private SAMLObjectBuilder<NameIdentifier> nameIdBuilder;
-
     /** Builder of SubjectConfirmation objects. */
     private SAMLObjectBuilder<SubjectConfirmation> subjectConfirmationBuilder;
 
@@ -140,8 +137,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         audienceRestrictionConditionBuilder = (SAMLObjectBuilder<AudienceRestrictionCondition>) getBuilderFactory()
                 .getBuilder(AudienceRestrictionCondition.DEFAULT_ELEMENT_NAME);
         audienceBuilder = (SAMLObjectBuilder<Audience>) getBuilderFactory().getBuilder(Audience.DEFAULT_ELEMENT_NAME);
-        nameIdBuilder = (SAMLObjectBuilder<NameIdentifier>) getBuilderFactory().getBuilder(
-                NameIdentifier.DEFAULT_ELEMENT_NAME);
         subjectConfirmationBuilder = (SAMLObjectBuilder<SubjectConfirmation>) getBuilderFactory().getBuilder(
                 SubjectConfirmation.DEFAULT_ELEMENT_NAME);
         confirmationMethodBuilder = (SAMLObjectBuilder<ConfirmationMethod>) getBuilderFactory().getBuilder(
@@ -153,114 +148,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) getBuilderFactory().getBuilder(
                 StatusMessage.DEFAULT_ELEMENT_NAME);
         signatureBuilder = (XMLObjectBuilder<Signature>) getBuilderFactory().getBuilder(Signature.DEFAULT_ELEMENT_NAME);
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 Response builder.
-     * 
-     * @return SAML 1 Response builder
-     */
-    public SAMLObjectBuilder<Response> getResponseBuilder() {
-        return responseBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 Assertion builder.
-     * 
-     * @return SAML 1 Assertion builder
-     */
-    public SAMLObjectBuilder<Assertion> getAssertionBuilder() {
-        return assertionBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 Conditions builder.
-     * 
-     * @return SAML 1 Conditions builder
-     */
-    public SAMLObjectBuilder<Conditions> getConditionsBuilder() {
-        return conditionsBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 AudienceRestrictionCondition builder.
-     * 
-     * @return SAML 1 AudienceRestrictionCondition builder
-     */
-    public SAMLObjectBuilder<AudienceRestrictionCondition> getAudienceRestrictionConditionBuilder() {
-        return audienceRestrictionConditionBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 Audience builder.
-     * 
-     * @return SAML 1 Audience builder
-     */
-    public SAMLObjectBuilder<Audience> getAudienceBuilder() {
-        return audienceBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 NameIdentifier builder.
-     * 
-     * @return SAML 1 NameIdentifier builder
-     */
-    public SAMLObjectBuilder<NameIdentifier> getNameIdentifierBuilder() {
-        return nameIdBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 SubjectConfirmation builder.
-     * 
-     * @return SAML 1 SubjectConfirmation builder
-     */
-    public SAMLObjectBuilder<SubjectConfirmation> getSubjectConfirmationBuilder() {
-        return subjectConfirmationBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 ConfirmationMethod builder.
-     * 
-     * @return SAML 1 ConfirmationMethod builder
-     */
-    public SAMLObjectBuilder<ConfirmationMethod> getConfirmationMethodBuilder() {
-        return confirmationMethodBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 Subject builder.
-     * 
-     * @return SAML 1 Subject builder
-     */
-    public SAMLObjectBuilder<Subject> getSubjectBuilder() {
-        return subjectBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 Status builder.
-     * 
-     * @return SAML 1 Status builder
-     */
-    public SAMLObjectBuilder<Status> getStatusBuilder() {
-        return statusBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 StatusCode builder.
-     * 
-     * @return SAML 2 StatusCode builder
-     */
-    public SAMLObjectBuilder<StatusCode> getStatusCodeBuilder() {
-        return statusCodeBuilder;
-    }
-
-    /**
-     * Convenience method for getting the SAML 1 StatusMessage builder.
-     * 
-     * @return SAML StatusMessage builder
-     */
-    public SAMLObjectBuilder<StatusMessage> getStatusMessageBuilder() {
-        return statusMessageBuilder;
     }
 
     /**
@@ -309,7 +196,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         // create the SAML response and add the assertion
-        Response samlResponse = getResponseBuilder().buildObject();
+        Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
 
@@ -333,7 +220,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @return the built assertion
      */
     protected Assertion buildAssertion(SAML1ProfileRequestContext requestContext, DateTime issueInstant) {
-        Assertion assertion = getAssertionBuilder().buildObject();
+        Assertion assertion = assertionBuilder.buildObject();
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(issueInstant);
         assertion.setVersion(SAMLVersion.VERSION_11);
@@ -357,7 +244,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     protected Conditions buildConditions(SAML1ProfileRequestContext requestContext, DateTime issueInstant) {
         AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
-        Conditions conditions = getConditionsBuilder().buildObject();
+        Conditions conditions = conditionsBuilder.buildObject();
         conditions.setNotBefore(issueInstant);
         conditions.setNotOnOrAfter(issueInstant.plus(profileConfig.getAssertionLifetime()));
 
@@ -366,9 +253,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         // add audience restrictions
         audiences = profileConfig.getAssertionAudiences();
         if (audiences != null && audiences.size() > 0) {
-            AudienceRestrictionCondition audienceRestriction = getAudienceRestrictionConditionBuilder().buildObject();
+            AudienceRestrictionCondition audienceRestriction = audienceRestrictionConditionBuilder.buildObject();
             for (String audienceUri : audiences) {
-                Audience audience = getAudienceBuilder().buildObject();
+                Audience audience = audienceBuilder.buildObject();
                 audience.setUri(audienceUri);
                 audienceRestriction.getAudiences().add(audience);
             }
@@ -394,13 +281,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         NameIdentifier nameID = buildNameId(requestContext);
         requestContext.setSubjectNameID(nameID);
 
-        ConfirmationMethod method = getConfirmationMethodBuilder().buildObject();
+        ConfirmationMethod method = confirmationMethodBuilder.buildObject();
         method.setConfirmationMethod(confirmationMethod);
 
-        SubjectConfirmation subjectConfirmation = getSubjectConfirmationBuilder().buildObject();
+        SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
         subjectConfirmation.getConfirmationMethods().add(method);
 
-        Subject subject = getSubjectBuilder().buildObject();
+        Subject subject = subjectBuilder.buildObject();
         subject.setNameIdentifier(nameID);
         subject.setSubjectConfirmation(subjectConfirmation);
 
@@ -539,7 +426,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @return the constructed error response
      */
     protected Response buildErrorResponse(SAML1ProfileRequestContext requestContext) {
-        Response samlResponse = getResponseBuilder().buildObject();
+        Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(new DateTime());
         populateStatusResponse(requestContext, samlResponse);
 
@@ -574,20 +461,20 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @return a Status object.
      */
     protected Status buildStatus(QName topLevelCode, QName secondLevelCode, String failureMessage) {
-        Status status = getStatusBuilder().buildObject();
+        Status status = statusBuilder.buildObject();
 
-        StatusCode statusCode = getStatusCodeBuilder().buildObject();
+        StatusCode statusCode = statusCodeBuilder.buildObject();
         statusCode.setValue(topLevelCode);
         status.setStatusCode(statusCode);
 
         if (secondLevelCode != null) {
-            StatusCode secondLevelStatusCode = getStatusCodeBuilder().buildObject();
+            StatusCode secondLevelStatusCode = statusCodeBuilder.buildObject();
             secondLevelStatusCode.setValue(secondLevelCode);
             statusCode.setStatusCode(secondLevelStatusCode);
         }
 
         if (failureMessage != null) {
-            StatusMessage msg = getStatusMessageBuilder().buildObject();
+            StatusMessage msg = statusMessageBuilder.buildObject();
             msg.setMessage(failureMessage);
             status.setStatusMessage(msg);
         }
