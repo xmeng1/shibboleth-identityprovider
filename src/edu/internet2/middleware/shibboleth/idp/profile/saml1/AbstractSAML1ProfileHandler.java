@@ -692,6 +692,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         auditLogEntry.setRequestId(null);
         auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
         auditLogEntry.setResponseId(context.getSamlResponse().getID());
+        if(context.getPrincipalAttributes() != null){
+            auditLogEntry.getReleasedAttributes().addAll(context.getPrincipalAttributes().keySet());
+        }
         getAduitLog().log(Level.CRITICAL, auditLogEntry);
     }
 
