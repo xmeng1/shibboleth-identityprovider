@@ -21,6 +21,11 @@ import javax.xml.namespace.QName;
 import edu.internet2.middleware.shibboleth.common.config.BaseSpringNamespaceHandler;
 import edu.internet2.middleware.shibboleth.common.config.profile.JSPErrorHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.common.config.profile.VelocityErrorHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.authn.RemoteUserAuthenticationHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.SAML1AttributeQueryProfileHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.ShibbolethSSOProfileHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2AttributeQueryProfileHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2SSOProfileHandlerBeanDefinitionParser;
 
 /**
  * Spring namespace handler for profile handler configurations.

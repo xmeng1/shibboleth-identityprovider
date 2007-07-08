@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile;
+package edu.internet2.middleware.shibboleth.idp.config.profile.saml2;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.idp.config.profile.AbstractSAMLProfileHandlerBeanDefinitionParser;
+
 /**
- * Base class for SAML 1 profile handler configuration parsers.
+ * Base class for SAML 2 profile handler configuration parsers.
  */
-public abstract class AbstractSAML1ProfileHandlerBeanDefinitionParser extends
+public abstract class AbstractSAML2ProfileHandlerBeanDefinitionParser extends
         AbstractSAMLProfileHandlerBeanDefinitionParser {
 
     /** {@inheritDoc} */

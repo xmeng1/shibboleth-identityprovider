@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile;
+package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +25,8 @@ import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.w3c.dom.Element;
+
+import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
 
 /**
  * Base class for authentication handler definition parsers.

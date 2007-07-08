@@ -80,6 +80,18 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
+                <xsd:attribute name="outboundBindingEnumeration" default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            An ordered list of outbound bindings supported by this profile handler.  The order
+                            provided establishs the precedence given the bindings such that, from the left to right, 
+                            the first binding also supported by the relying party will be used.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                    <xsd:simpleType>
+                        <xsd:list itemType="xsd:anyURI"/>
+                    </xsd:simpleType>
+                </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -127,6 +139,18 @@
                             should match the URL pattern given in the web.xml
                         </xsd:documentation>
                     </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="outboundBindingEnumeration" default="urn:oasis:names:tc:SAML:1.0:profiles:browser-post">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            An ordered list of outbound bindings supported by this profile handler.  The order
+                            provided establishs the precedence given the bindings such that, from the left to right, 
+                            the first binding also supported by the relying party will be used.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                    <xsd:simpleType>
+                        <xsd:list itemType="xsd:anyURI"/>
+                    </xsd:simpleType>
                 </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile;
+package edu.internet2.middleware.shibboleth.idp.config.profile.saml2;
 
 import javax.xml.namespace.QName;
 
@@ -22,27 +22,29 @@ import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSOProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.AttributeQueryProfileHandler;
 
 /**
- * Spring bean configuration parser for {@link ShibbolethSSOProfileHandler}s.
+ * Spring bean definition parser for {@link HTTPSOAPAttributeQuery} profile handlers.
  */
-public class ShibbolethSSOProfileHandlerBeanDefinitionParser extends AbstractSAML1ProfileHandlerBeanDefinitionParser {
-    
+public class SAML2AttributeQueryProfileHandlerBeanDefinitionParser extends
+        AbstractSAML2ProfileHandlerBeanDefinitionParser {
+
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ShibbolethSSO");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE,
+            "SAML2AttributeQuery");
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
-        return ShibbolethSSOProfileHandler.class;
+        return AttributeQueryProfileHandler.class;
     }
-
+    
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
-                "authenticationManagerPath")));
+        builder.addPropertyReference("securityPolicyFactory", DatatypeHelper.safeTrimOrNullString(config
+                .getAttributeNS(null, "securityPolicyFactoryId")));
     }
-
 }

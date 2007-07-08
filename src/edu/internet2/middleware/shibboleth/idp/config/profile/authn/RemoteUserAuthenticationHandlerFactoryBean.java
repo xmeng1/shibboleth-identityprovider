@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile;
+package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserAuthenticationHandler;
 

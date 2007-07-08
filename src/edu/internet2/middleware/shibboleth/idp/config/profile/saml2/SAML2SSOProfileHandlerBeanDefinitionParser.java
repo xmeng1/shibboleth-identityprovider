@@ -14,33 +14,42 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile;
+package edu.internet2.middleware.shibboleth.idp.config.profile.saml2;
 
 import javax.xml.namespace.QName;
 
 import org.opensaml.xml.util.DatatypeHelper;
+import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.idp.profile.saml1.AttributeQueryProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.SSOProfileHandler;
 
 /**
- * Spring bean definition parser for {@link HTTPSOAPAttributeQuery} profile handlers.
+ * Spring bean definition parser for {@link AuthenticationRequestBrowserPost} profile handlers.
  */
-public class SAML1AttributeQueryProfileHandlerBeanDefinitionParser extends
-        AbstractSAML2ProfileHandlerBeanDefinitionParser {
+public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2ProfileHandlerBeanDefinitionParser {
 
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "SAML1AttributeQuery");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "SAML2SSO");
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
-        return AttributeQueryProfileHandler.class;
+        return SSOProfileHandler.class;
     }
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
+
+        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
+                "authenticationManagerPath")));
+
+        builder.addConstructorArg(XMLHelper.getAttributeValueAsList(config.getAttributeNodeNS(null,
+                "outboundBindingEnumeration")));
+
+        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "decodingBinding")));
 
         builder.addPropertyReference("securityPolicyFactory", DatatypeHelper.safeTrimOrNullString(config
                 .getAttributeNS(null, "securityPolicyFactoryId")));

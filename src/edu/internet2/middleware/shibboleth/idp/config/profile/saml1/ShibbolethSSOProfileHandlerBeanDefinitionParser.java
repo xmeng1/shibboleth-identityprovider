@@ -14,33 +14,40 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile;
+package edu.internet2.middleware.shibboleth.idp.config.profile.saml1;
 
 import javax.xml.namespace.QName;
 
 import org.opensaml.xml.util.DatatypeHelper;
+import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
+import edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSOProfileHandler;
+
 /**
- * Spring bean definition parser for remote user authentication handlers.
+ * Spring bean configuration parser for {@link ShibbolethSSOProfileHandler}s.
  */
-public class RemoteUserAuthenticationHandlerBeanDefinitionParser extends
-        AbstractAuthenticationHandlerBeanDefinitionParser {
-    
+public class ShibbolethSSOProfileHandlerBeanDefinitionParser extends AbstractSAML1ProfileHandlerBeanDefinitionParser {
+
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "RemoteUser");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ShibbolethSSO");
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
-        return RemoteUserAuthenticationHandlerFactoryBean.class;
+        return ShibbolethSSOProfileHandler.class;
     }
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addPropertyValue("protectedServletPath", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(
-                null, "protectedServletPath")));
+        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
+                "authenticationManagerPath")));
+
+        builder.addConstructorArg(XMLHelper.getAttributeValueAsList(config.getAttributeNodeNS(null,
+                "outboundBindingEnumeration")));
     }
+
 }

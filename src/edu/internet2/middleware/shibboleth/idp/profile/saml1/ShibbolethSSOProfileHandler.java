@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -71,21 +72,29 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
+    
+    /** URI of SAML 1 bindings supported for outgoing message encoding. */
+    private ArrayList<String> supportedOutgoingBindings;
 
     /**
      * Constructor.
      * 
      * @param authnManagerPath path to the authentication manager servlet
+     * @param outgoingBindings URIs of SAML 1 bindings supported for outgoing message encoding
      * 
      * @throws IllegalArgumentException thrown if either the authentication manager path or encoding binding URI are
      *             null or empty
      */
-    public ShibbolethSSOProfileHandler(String authnManagerPath) {
+    public ShibbolethSSOProfileHandler(String authnManagerPath, List<String> outgoingBindings) {
         if (DatatypeHelper.isEmpty(authnManagerPath)) {
             throw new IllegalArgumentException("Authentication manager path may not be null");
         }
-
         authenticationManagerPath = authnManagerPath;
+        
+        if(outgoingBindings == null || outgoingBindings.isEmpty()){
+            throw new IllegalArgumentException("List of supported outgoing bindings may not be empty");
+        }
+        supportedOutgoingBindings = new ArrayList<String>(outgoingBindings);
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthenticationStatement>) getBuilderFactory().getBuilder(
                 AuthenticationStatement.DEFAULT_ELEMENT_NAME);
@@ -420,7 +429,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
         endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getSamlRequest());
-        endpointSelector.getSupportedIssuerBindings().addAll(getMessageEncoderFactory().getEncoderBuilders().keySet());
+        endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
         relyingPartyEndpoint = endpointSelector.selectEndpoint();
 
         if (relyingPartyEndpoint == null) {

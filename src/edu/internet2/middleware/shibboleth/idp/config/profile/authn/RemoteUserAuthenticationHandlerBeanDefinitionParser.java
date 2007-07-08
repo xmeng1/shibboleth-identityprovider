@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile;
+package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
 import javax.xml.namespace.QName;
 
@@ -22,28 +22,27 @@ import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.idp.profile.saml2.AttributeQueryProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
 
 /**
- * Spring bean definition parser for {@link HTTPSOAPAttributeQuery} profile handlers.
+ * Spring bean definition parser for remote user authentication handlers.
  */
-public class SAML2AttributeQueryProfileHandlerBeanDefinitionParser extends
-        AbstractSAML2ProfileHandlerBeanDefinitionParser {
-
+public class RemoteUserAuthenticationHandlerBeanDefinitionParser extends
+        AbstractAuthenticationHandlerBeanDefinitionParser {
+    
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE,
-            "SAML2AttributeQuery");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "RemoteUser");
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
-        return AttributeQueryProfileHandler.class;
+        return RemoteUserAuthenticationHandlerFactoryBean.class;
     }
-    
+
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addPropertyReference("securityPolicyFactory", DatatypeHelper.safeTrimOrNullString(config
-                .getAttributeNS(null, "securityPolicyFactoryId")));
+        builder.addPropertyValue("protectedServletPath", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(
+                null, "protectedServletPath")));
     }
 }
