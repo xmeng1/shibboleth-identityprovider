@@ -454,6 +454,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         super.populateMessageEncoder(encoder);
         encoder.setIssuer(requestContext.getAssertingPartyId());
+        encoder.setRelayState(requestContext.getMessageDecoder().getRelayState());
         encoder.setRelyingParty(requestContext.getRelyingPartyMetadata());
         encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
         encoder.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());

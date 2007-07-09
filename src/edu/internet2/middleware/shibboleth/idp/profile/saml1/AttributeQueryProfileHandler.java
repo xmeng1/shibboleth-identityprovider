@@ -236,6 +236,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         }
 
         super.populateMessageEncoder(encoder);
+        encoder.setRelayState(requestContext.getMessageDecoder().getRelayState());
         ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());

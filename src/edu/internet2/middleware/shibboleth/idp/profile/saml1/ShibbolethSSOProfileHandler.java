@@ -443,6 +443,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 relyingPartyEndpoint.getBinding());
         encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
         super.populateMessageEncoder(encoder);
+        encoder.setRelayState(requestContext.getLoginContext().getSpTarget());
         ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
