@@ -272,6 +272,7 @@ public class AuthenticationEngine extends HttpServlet {
             return;
         }
         loginContext.setPrincipalName(principalName);
+        loginContext.setAuthenticationInstant(new DateTime());
 
         String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         Session shibSession = getSessionManager().getSession(shibSessionId);
