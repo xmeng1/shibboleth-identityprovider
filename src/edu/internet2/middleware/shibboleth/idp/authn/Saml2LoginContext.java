@@ -68,15 +68,18 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      * @throws MarshallingException thrown if the given request can not be marshalled and serialized into a string
      */
     public Saml2LoginContext(String relyingParty, AuthnRequest request) throws MarshallingException {
+        super();
+        
         if (relyingParty == null || request == null) {
             throw new IllegalArgumentException("SAML 2 authentication request and relying party ID may not be null");
         }
-
-        serialAuthnRequest = serializeRequest(request);
+        setRelyingParty(relyingParty);
         authnRequest = request;
+        serialAuthnRequest = serializeRequest(request);
+        
         setForceAuth(authnRequest.isForceAuthn());
         setPassiveAuth(authnRequest.isPassive());
-        setRelyingParty(relyingParty);
+        getRequestedAuthenticationMethods().addAll(extractRequestedAuthenticationMethods());
     }
 
     /**
@@ -106,53 +109,6 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         } catch (UnmarshallingException e) {
             return null;
         }
-    }
-
-    /**
-     * This method evaluates a SAML2 {@link RequestedAuthnContext} and returns the list of requested authentication
-     * method URIs.
-     * 
-     * If the AuthnQuery did not contain a RequestedAuthnContext, this method will return <code>null</code>.
-     * 
-     * @return An array of authentication method URIs, or <code>null</code>.
-     */
-    public List<String> getRequestedAuthenticationMethods() {
-        ArrayList<String> requestedMethods = new ArrayList<String>();
-
-        RequestedAuthnContext authnContext = getRequestedAuthenticationContext();
-        if (authnContext == null) {
-            return requestedMethods;
-        }
-
-        // For the immediate future, we only support the "exact" comparator.
-        AuthnContextComparisonTypeEnumeration comparator = authnContext.getComparison();
-        if (comparator != null && comparator != AuthnContextComparisonTypeEnumeration.EXACT) {
-            log.error("Unsupported comparision operator ( " + comparator
-                    + ") in RequestedAuthnContext. Only exact comparisions are supported.");
-            return null;
-        }
-
-        // build a list of all requested authn classes and declrefs
-        List<AuthnContextClassRef> authnClasses = authnContext.getAuthnContextClassRefs();
-        List<AuthnContextDeclRef> authnDeclRefs = authnContext.getAuthnContextDeclRefs();
-
-        if (authnClasses != null) {
-            for (AuthnContextClassRef classRef : authnClasses) {
-                if (classRef != null) {
-                    requestedMethods.add(classRef.getAuthnContextClassRef());
-                }
-            }
-        }
-
-        if (authnDeclRefs != null) {
-            for (AuthnContextDeclRef declRef : authnDeclRefs) {
-                if (declRef != null) {
-                    requestedMethods.add(declRef.getAuthnContextDeclRef());
-                }
-            }
-        }
-
-        return requestedMethods;
     }
 
     /**
@@ -192,5 +148,49 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         } catch (Exception e) {
             throw new UnmarshallingException("Unable to read serialized authentication request");
         }
+    }
+    
+    /**
+     * Extracts the authentication methods requested within the request.
+     * 
+     * @return requested authentication methods
+     */
+    protected List<String> extractRequestedAuthenticationMethods(){
+        ArrayList<String> requestedMethods = new ArrayList<String>();
+
+        RequestedAuthnContext authnContext = getRequestedAuthenticationContext();
+        if (authnContext == null) {
+            return requestedMethods;
+        }
+
+        // For the immediate future, we only support the "exact" comparator.
+        AuthnContextComparisonTypeEnumeration comparator = authnContext.getComparison();
+        if (comparator != null && comparator != AuthnContextComparisonTypeEnumeration.EXACT) {
+            log.error("Unsupported comparision operator ( " + comparator
+                    + ") in RequestedAuthnContext. Only exact comparisions are supported.");
+            return requestedMethods;
+        }
+
+        // build a list of all requested authn classes and declrefs
+        List<AuthnContextClassRef> authnClasses = authnContext.getAuthnContextClassRefs();
+        List<AuthnContextDeclRef> authnDeclRefs = authnContext.getAuthnContextDeclRefs();
+
+        if (authnClasses != null) {
+            for (AuthnContextClassRef classRef : authnClasses) {
+                if (classRef != null) {
+                    requestedMethods.add(classRef.getAuthnContextClassRef());
+                }
+            }
+        }
+
+        if (authnDeclRefs != null) {
+            for (AuthnContextDeclRef declRef : authnDeclRefs) {
+                if (declRef != null) {
+                    requestedMethods.add(declRef.getAuthnContextDeclRef());
+                }
+            }
+        }
+
+        return requestedMethods;
     }
 }
