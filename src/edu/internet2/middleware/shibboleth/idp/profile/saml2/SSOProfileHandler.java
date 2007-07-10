@@ -220,7 +220,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         Response samlResponse;
         try {
-            if (!loginContext.isPrincipalAuthenticated()) {
+            if (loginContext.getPrincipalName() == null) {
                 requestContext
                         .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, null));
                 throw new ProfileException("User failed authentication");
