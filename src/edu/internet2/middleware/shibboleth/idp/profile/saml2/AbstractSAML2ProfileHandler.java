@@ -643,7 +643,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             AuthnRequest authnRequest = (AuthnRequest) requestContext.getSamlRequest();
             if (authnRequest.getNameIDPolicy() != null) {
                 nameFormat = authnRequest.getNameIDPolicy().getFormat();
-                if (assertingPartySupportedFormats.contains(nameFormat)) {
+                if (!DatatypeHelper.isEmpty(nameFormat) && assertingPartySupportedFormats.contains(nameFormat)) {
                     nameFormats.add(nameFormat);
                 } else {
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
