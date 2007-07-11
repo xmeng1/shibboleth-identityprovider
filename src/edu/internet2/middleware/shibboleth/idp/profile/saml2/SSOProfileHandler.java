@@ -255,6 +255,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected MessageDecoder<ServletRequest> decodeRequest(ProfileRequest<ServletRequest> request)
             throws ProfileException {
+        if(log.isDebugEnabled()){
+            log.debug("Decoding message with decoder binding " + decodingBinding);
+        }
         MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(decodingBinding);
         if (decoder == null) {
             log.error("No request decoder was registered for binding type: " + decodingBinding);
