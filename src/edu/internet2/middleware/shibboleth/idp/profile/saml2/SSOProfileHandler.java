@@ -46,7 +46,6 @@ import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -232,8 +231,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(authnStatement);
-            //TODO optional include this
-            statements.add(attributeStatement);
+            //TODO this isn't very effecient, support this flag better
+            if(requestContext.getProfileConfiguration().includeAttributeStatement()){
+                statements.add(attributeStatement);
+            }
 
             samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:bearer", statements);
         } catch (ProfileException e) {

@@ -35,6 +35,7 @@ import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.encoding.MessageEncoder;
+import org.opensaml.saml1.core.AttributeStatement;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
@@ -198,11 +199,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 throw new ProfileException("User failed authentication");
             }
 
+            AuthenticationStatement authnStatement = buildAuthenticationStatement(requestContext);
+            AttributeStatement attributeStatement = buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer");
+            
             ArrayList<Statement> statements = new ArrayList<Statement>();
-            statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer "));
-            statements.add(buildAuthenticationStatement(requestContext));
+            statements.add(authnStatement);
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
-                // TODO support this
+                statements.add(attributeStatement);
             }
 
             samlResponse = buildResponse(requestContext, statements);
