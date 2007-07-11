@@ -25,6 +25,7 @@ import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.decoding.MessageDecoderFactory;
 import org.opensaml.common.binding.encoding.MessageEncoderFactory;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
@@ -158,13 +159,16 @@ public abstract class AbstractSAMLProfileHandler extends
      * @param <StatusType> type of Status object
      */
     protected class SAMLProfileRequestContext<StatusType extends SAMLObject> extends ShibbolethProfileRequestContext {
-
+        
         /** Entity descriptor for the asserting party. */
         private EntityDescriptor assertingPartyMetadata;
 
         /** Role descriptor meatadata for the asserting party. */
         private RoleDescriptor assertingPartyRoleMetadata;
 
+        /** Endpoint of relying party. */
+        private Endpoint relyingPartyEndpoint;
+        
         /** Entity descriptor for the relying party. */
         private EntityDescriptor relyingPartyMetadata;
 
@@ -216,6 +220,24 @@ public abstract class AbstractSAMLProfileHandler extends
          */
         public void setAssertingPartyRoleMetadata(RoleDescriptor descriptor) {
             assertingPartyRoleMetadata = descriptor;
+        }
+        
+        /**
+         * Gets the endpoint for the relying party.
+         * 
+         * @return endpoint for the relying party
+         */
+        public Endpoint getRelyingPartyEndpoint(){
+            return relyingPartyEndpoint;
+        }
+        
+        /**
+         * Sets the endpoint for the relying party.
+         * 
+         * @param endpoint endpoint for the relying party
+         */
+        public void setRelyingPartyEndpoint(Endpoint endpoint){
+            relyingPartyEndpoint = endpoint;
         }
 
         /**

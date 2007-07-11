@@ -49,8 +49,10 @@ import org.opensaml.saml2.core.StatusMessage;
 import org.opensaml.saml2.core.StatusResponseType;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml2.core.SubjectConfirmationData;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.AuthnAuthorityDescriptor;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.NameIDFormat;
 import org.opensaml.saml2.metadata.PDPDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
@@ -108,8 +110,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     /** For building subject. */
     private SAMLObjectBuilder<Subject> subjectBuilder;
 
-    /** For builder subject confirmation. */
+    /** For building subject confirmation. */
     private SAMLObjectBuilder<SubjectConfirmation> subjectConfirmationBuilder;
+
+    /** For building subject confirmation data. */
+    private SAMLObjectBuilder<SubjectConfirmationData> subjectConfirmationDataBuilder;
 
     /** For building conditions. */
     private SAMLObjectBuilder<Conditions> conditionsBuilder;
@@ -143,6 +148,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         subjectBuilder = (SAMLObjectBuilder<Subject>) getBuilderFactory().getBuilder(Subject.DEFAULT_ELEMENT_NAME);
         subjectConfirmationBuilder = (SAMLObjectBuilder<SubjectConfirmation>) getBuilderFactory().getBuilder(
                 SubjectConfirmation.DEFAULT_ELEMENT_NAME);
+        subjectConfirmationDataBuilder = (SAMLObjectBuilder<SubjectConfirmationData>) getBuilderFactory().getBuilder(
+                SubjectConfirmationData.DEFAULT_ELEMENT_NAME);
         conditionsBuilder = (SAMLObjectBuilder<Conditions>) getBuilderFactory().getBuilder(
                 Conditions.DEFAULT_ELEMENT_NAME);
         audienceRestrictionBuilder = (SAMLObjectBuilder<AudienceRestriction>) getBuilderFactory().getBuilder(
@@ -177,21 +184,23 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * Builds a response to the attribute query within the request context.
      * 
      * @param requestContext current request context
-     * @param assertionSubject subject of the assertion within the response
+     * @param subjectConfirmationMethod confirmation method used for the subject
      * @param statements the statements to include in the response
      * 
      * @return the built response
      * 
      * @throws ProfileException thrown if there is a problem creating the SAML response
      */
-    protected Response buildResponse(SAML2ProfileRequestContext requestContext, Subject assertionSubject,
+    protected Response buildResponse(SAML2ProfileRequestContext requestContext, String subjectConfirmationMethod,
             List<Statement> statements) throws ProfileException {
 
         DateTime issueInstant = new DateTime();
 
+        Subject subject = buildSubject(requestContext, subjectConfirmationMethod, issueInstant);
+
         // create the assertion and add the attribute statement
         Assertion assertion = buildAssertion(requestContext, issueInstant);
-        assertion.setSubject(assertionSubject);
+        assertion.setSubject(subject);
         if (statements != null) {
             assertion.getStatements().addAll(statements);
         }
@@ -410,10 +419,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery> queryContext;
 
-        if(requestContext.getSamlRequest() instanceof AttributeQuery){
-        queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
-                requestContext.getRelyingPartyConfiguration(), (AttributeQuery) requestContext.getSamlRequest());
-        }else{
+        if (requestContext.getSamlRequest() instanceof AttributeQuery) {
+            queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
+                    requestContext.getRelyingPartyConfiguration(), (AttributeQuery) requestContext.getSamlRequest());
+        } else {
             queryContext = new ShibbolethSAMLAttributeRequestContext<NameID, AttributeQuery>(getMetadataProvider(),
                     requestContext.getRelyingPartyConfiguration(), null);
         }
@@ -542,20 +551,37 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @param requestContext current request context
      * @param confirmationMethod subject confirmation method used for the subject
+     * @param issueInstant instant the subject confirmation data should reflect for issuance
      * 
      * @return SAML subject for the user for the service provider
      * 
      * @throws ProfileException thrown if a NameID can not be created either because there was a problem encoding the
      *             name ID attribute or because there are no supported name formats
      */
-    protected Subject buildSubject(SAML2ProfileRequestContext requestContext, String confirmationMethod)
-            throws ProfileException {
+    protected Subject buildSubject(SAML2ProfileRequestContext requestContext, String confirmationMethod,
+            DateTime issueInstant) throws ProfileException {
         NameID nameID = buildNameId(requestContext);
         requestContext.setSubjectNameID(nameID);
         // TODO handle encryption
 
+        SubjectConfirmationData confirmationData = subjectConfirmationDataBuilder.buildObject();
+        confirmationData.setAddress(requestContext.getProfileRequest().getRawRequest().getRemoteAddr());
+        confirmationData.setInResponseTo(requestContext.getSamlRequest().getID());
+        confirmationData.setNotOnOrAfter(issueInstant.plus(requestContext.getProfileConfiguration()
+                .getAssertionLifetime()));
+
+        Endpoint relyingPartyEndpoint = requestContext.getRelyingPartyEndpoint();
+        if (relyingPartyEndpoint != null) {
+            if (relyingPartyEndpoint.getResponseLocation() != null) {
+                confirmationData.setRecipient(relyingPartyEndpoint.getResponseLocation());
+            } else {
+                confirmationData.setRecipient(relyingPartyEndpoint.getLocation());
+            }
+        }
+
         SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
         subjectConfirmation.setMethod(confirmationMethod);
+        subjectConfirmation.setSubjectConfirmationData(confirmationData);
 
         Subject subject = subjectBuilder.buildObject();
         subject.setNameID(nameID);
@@ -591,7 +617,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         }
 
         if (principalAttributes == null || supportedNameFormats == null) {
-            log.error("No attributes for principal " + requestContext.getPrincipalName() 
+            log.error("No attributes for principal " + requestContext.getPrincipalName()
                     + " support constructions of NameID");
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
                     "Unable to construct NameID"));
@@ -730,7 +756,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         auditLogEntry.setRequestId(context.getSamlRequest().getID());
         auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
         auditLogEntry.setResponseId(context.getSamlResponse().getID());
-        if(context.getPrincipalAttributes() != null){
+        if (context.getPrincipalAttributes() != null) {
             auditLogEntry.getReleasedAttributes().addAll(context.getPrincipalAttributes().keySet());
         }
         getAduitLog().log(Level.CRITICAL, auditLogEntry);

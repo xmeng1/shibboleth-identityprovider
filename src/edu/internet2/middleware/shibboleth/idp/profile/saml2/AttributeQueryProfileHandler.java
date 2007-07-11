@@ -32,7 +32,6 @@ import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.security.SecurityPolicyException;
 
@@ -84,11 +83,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAttributeStatement(requestContext));
 
-            // create the assertion subject
-            Subject assertionSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches");
-
             // create the SAML response
-            samlResponse = buildResponse(requestContext, assertionSubject, statements);
+            samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches", statements);
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
         }
