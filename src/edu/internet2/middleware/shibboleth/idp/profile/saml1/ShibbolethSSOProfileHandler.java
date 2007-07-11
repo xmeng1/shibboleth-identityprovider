@@ -199,10 +199,12 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 throw new ProfileException("User failed authentication");
             }
 
-            AuthenticationStatement authnStatement = buildAuthenticationStatement(requestContext);
+            //TODO currently attribute query must come first in order to get the principal's attributes, fix this
             AttributeStatement attributeStatement = buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer");
+            AuthenticationStatement authnStatement = buildAuthenticationStatement(requestContext);
             
             ArrayList<Statement> statements = new ArrayList<Statement>();
+            //TODO make this more effecient
             statements.add(authnStatement);
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
                 statements.add(attributeStatement);
