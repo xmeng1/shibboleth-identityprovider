@@ -565,8 +565,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         // TODO handle encryption
 
         SubjectConfirmationData confirmationData = subjectConfirmationDataBuilder.buildObject();
-        ServletRequest httpRequest = requestContext.getProfileRequest().getRawRequest();
-        confirmationData.setAddress(httpRequest.getRemoteAddr());
+        ProfileRequest<ServletRequest> profileRequest = requestContext.getProfileRequest();
+        confirmationData.setAddress(profileRequest.getRawRequest().getRemoteAddr());
         confirmationData.setInResponseTo(requestContext.getSamlRequest().getID());
         confirmationData.setNotOnOrAfter(issueInstant.plus(requestContext.getProfileConfiguration()
                 .getAssertionLifetime()));
