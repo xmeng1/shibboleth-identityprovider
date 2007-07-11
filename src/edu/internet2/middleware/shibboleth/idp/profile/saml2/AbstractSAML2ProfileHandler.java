@@ -642,9 +642,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     }
                 }
             }
-            log.error("No principal attribute supported encoding into the a supported name ID format.");
+            log.error("No principal attribute supported encoding into a supported name ID format.");
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));
-            throw new ProfileException("No principal attribute supported encoding into the a supported name ID format.");
+            throw new ProfileException("No principal attribute supported encoding into a supported name ID format.");
         } catch (AttributeEncodingException e) {
             log.error("Unable to encode NameID attribute", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));
