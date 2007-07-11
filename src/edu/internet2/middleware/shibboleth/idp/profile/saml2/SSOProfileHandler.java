@@ -34,9 +34,7 @@ import org.opensaml.common.binding.decoding.MessageDecoder;
 import org.opensaml.common.binding.encoding.MessageEncoder;
 import org.opensaml.common.binding.security.SAMLSecurityPolicy;
 import org.opensaml.common.xml.SAMLConstants;
-import org.opensaml.saml2.core.SubjectLocality;
 import org.opensaml.saml2.binding.AuthnResponseEndpointSelector;
-import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
@@ -46,6 +44,7 @@ import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.core.SubjectLocality;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -221,19 +220,18 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         Response samlResponse;
         try {
             if (loginContext.getPrincipalName() == null) {
+                log.error("User's login context did not contain a principal, user considered unauthenticiated.");
                 requestContext
                         .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, null));
                 throw new ProfileException("User failed authentication");
             }
-
-            AuthnStatement authnStatement = buildAuthnStatement(requestContext);
-            AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
+            
+            resolveAttributes(requestContext);
             
             ArrayList<Statement> statements = new ArrayList<Statement>();
-            statements.add(authnStatement);
-            //TODO this isn't very effecient, support this flag better
+            statements.add(buildAuthnStatement(requestContext));
             if(requestContext.getProfileConfiguration().includeAttributeStatement()){
-                statements.add(attributeStatement);
+                statements.add(buildAttributeStatement(requestContext));
             }
 
             samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:bearer", statements);

@@ -77,6 +77,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             }
 
             resolvePrincipal(requestContext);
+            resolveAttributes(requestContext);
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));

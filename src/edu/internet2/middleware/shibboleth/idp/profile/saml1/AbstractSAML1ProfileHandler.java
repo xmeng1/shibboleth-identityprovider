@@ -348,7 +348,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                 }
             }
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-            "Unable to construct NameIdentifier"));
+                    "Unable to construct NameIdentifier"));
             throw new ProfileException("No principal attribute supported encoding into the a supported name ID format.");
         } catch (AttributeEncodingException e) {
             log.error("Unable to construct NameIdentifier", e);
@@ -483,6 +483,35 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
+     * Resolved the attributes for the principal.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if attributes can not be resolved
+     */
+    protected void resolveAttributes(SAML1ProfileRequestContext requestContext) throws ProfileException {
+        AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
+        SAML1AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
+
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Resolving attributes for principal " + requestContext.getPrincipalName()
+                        + " of SAML request from relying party " + requestContext.getRelyingPartyId());
+            }
+            Map<String, BaseAttribute> principalAttributes = attributeAuthority
+                    .getAttributes(buildAttributeRequestContext(requestContext));
+
+            requestContext.setPrincipalAttributes(principalAttributes);
+        } catch (AttributeRequestException e) {
+            log.error("Error resolving attributes for SAML request from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error resolving attributes"));
+            throw new ProfileException("Error resolving attributes for SAML request from relying party "
+                    + requestContext.getRelyingPartyId(), e);
+        }
+    }
+
+    /**
      * Executes a query for attributes and builds a SAML attribute statement from the results.
      * 
      * @param requestContext current request context
@@ -504,21 +533,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         SAML1AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("Resolving attributes for principal " + requestContext.getPrincipalName()
-                        + " of SAML request from relying party " + requestContext.getRelyingPartyId());
-            }
-            Map<String, BaseAttribute> principalAttributes = attributeAuthority
-                    .getAttributes(buildAttributeRequestContext(requestContext));
-
-            requestContext.setPrincipalAttributes(principalAttributes);
-
             AttributeStatement statment;
             if (requestContext.getSamlRequest() instanceof AttributeQuery) {
                 statment = attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext.getSamlRequest(),
-                        principalAttributes.values());
+                        requestContext.getPrincipalAttributes().values());
             } else {
-                statment = attributeAuthority.buildAttributeStatement(null, principalAttributes.values());
+                statment = attributeAuthority.buildAttributeStatement(null, requestContext.getPrincipalAttributes()
+                        .values());
             }
 
             Subject statementSubject = buildSubject(requestContext, subjectConfMethod);
@@ -526,11 +547,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
             return statment;
         } catch (AttributeRequestException e) {
-            log.error("Error resolving attributes for SAML request from relying party "
-                    + requestContext.getRelyingPartyId(), e);
+            log.error("Error encoding attributes for principal " + requestContext.getPrincipalName(), e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error resolving attributes"));
-            throw new ProfileException("Error resolving attributes for SAML request from relying party "
-                    + requestContext.getRelyingPartyId(), e);
+            throw new ProfileException("Error encoding attributes for principal " + requestContext.getPrincipalName(),
+                    e);
         }
     }
 
@@ -686,13 +706,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         auditLogEntry.setPrincipalName(context.getPrincipalName());
         auditLogEntry.setAssertingPartyId(context.getAssertingPartyId());
         auditLogEntry.setRelyingPartyId(context.getRelyingPartyId());
-        if(context.getMessageDecoder() != null){
+        if (context.getMessageDecoder() != null) {
             auditLogEntry.setRequestBinding(context.getMessageDecoder().getBindingURI());
         }
         auditLogEntry.setRequestId(null);
         auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
         auditLogEntry.setResponseId(context.getSamlResponse().getID());
-        if(context.getPrincipalAttributes() != null){
+        if (context.getPrincipalAttributes() != null) {
             auditLogEntry.getReleasedAttributes().addAll(context.getPrincipalAttributes().keySet());
         }
         getAduitLog().log(Level.CRITICAL, auditLogEntry);

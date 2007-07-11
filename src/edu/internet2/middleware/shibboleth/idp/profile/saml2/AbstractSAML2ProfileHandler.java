@@ -319,25 +319,15 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         response.setVersion(SAMLVersion.VERSION_20);
         response.setIssuer(buildEntityIssuer(requestContext));
     }
-
+    
     /**
-     * Executes a query for attributes and builds a SAML attribute statement from the results.
+     * Resolves the attributes for the principal.
      * 
      * @param requestContext current request context
      * 
-     * @return attribute statement resulting from the query
-     * 
-     * @throws ProfileException thrown if there is a problem making the query
+     * @throws ProfileException thrown if there is a problem resolved attributes
      */
-    protected AttributeStatement buildAttributeStatement(SAML2ProfileRequestContext requestContext)
-            throws ProfileException {
-
-        if (log.isDebugEnabled()) {
-            log.debug("Creating attribute statement in response to SAML request "
-                    + requestContext.getSamlRequest().getID() + " from relying party "
-                    + requestContext.getRelyingPartyId());
-        }
-
+    protected void resolveAttributes(SAML2ProfileRequestContext requestContext) throws ProfileException{
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
@@ -351,13 +341,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     .getAttributes(buildAttributeRequestContext(requestContext));
 
             requestContext.setPrincipalAttributes(principalAttributes);
-
-            if (requestContext.getSamlRequest() instanceof AttributeQuery) {
-                return attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext.getSamlRequest(),
-                        principalAttributes.values());
-            } else {
-                return attributeAuthority.buildAttributeStatement(null, principalAttributes.values());
-            }
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes for SAML request " + requestContext.getSamlRequest().getID()
                     + " from relying party " + requestContext.getRelyingPartyId(), e);
@@ -365,6 +348,38 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             throw new ProfileException("Error resolving attributes for SAML request "
                     + requestContext.getSamlRequest().getID() + " from relying party "
                     + requestContext.getRelyingPartyId(), e);
+        }
+    }
+
+    /**
+     * Executes a query for attributes and builds a SAML attribute statement from the results.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return attribute statement resulting from the query
+     * 
+     * @throws ProfileException thrown if there is a problem making the query
+     */
+    protected AttributeStatement buildAttributeStatement(SAML2ProfileRequestContext requestContext)
+            throws ProfileException {
+        if (log.isDebugEnabled()) {
+            log.debug("Creating attribute statement in response to SAML request "
+                    + requestContext.getSamlRequest().getID() + " from relying party "
+                    + requestContext.getRelyingPartyId());
+        }
+        AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
+        SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
+        try {
+            if (requestContext.getSamlRequest() instanceof AttributeQuery) {
+                return attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext.getSamlRequest(),
+                        requestContext.getPrincipalAttributes().values());
+            } else {
+                return attributeAuthority.buildAttributeStatement(null, requestContext.getPrincipalAttributes().values());
+            }
+        } catch (AttributeRequestException e) {
+            log.error("Error encoding attributes for principal " + requestContext.getPrincipalName(), e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error resolving attributes"));
+            throw new ProfileException("Error encoding attributes for principal " + requestContext.getPrincipalName(), e);
         }
     }
 

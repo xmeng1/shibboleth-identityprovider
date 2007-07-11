@@ -78,6 +78,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             // Resolve attribute query name id to principal name and place in context
             resolvePrincipal(requestContext);
+            
+            resolveAttributes(requestContext);
 
             // Lookup principal name and attributes, create attribute statement from information
             ArrayList<Statement> statements = new ArrayList<Statement>();
