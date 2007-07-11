@@ -159,8 +159,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                     ShibbolethConstants.SAML11P_NS);
 
             if (relyingPartyRole == null) {
-                relyingPartyRole = requestContext.getRelyingPartyMetadata()
-                        .getSPSSODescriptor(ShibbolethConstants.SAML10P_NS);
+                relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                        ShibbolethConstants.SAML10P_NS);
                 if (relyingPartyRole == null) {
                     throw new MetadataProviderException("Unable to locate SPSSO role descriptor for entity "
                             + requestContext.getRelyingPartyId());
@@ -254,7 +254,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
     /** Basic data structure used to accumulate information as a request is being processed. */
     protected class AttributeQueryContext extends
             SAML1ProfileRequestContext<Request, Response, AttributeQueryConfiguration> {
-        
+
+        /** Current attribute query. */
         private AttributeQuery attributeQuery;
 
         /**
@@ -263,15 +264,26 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
          * @param request current profile request
          * @param response current profile response
          */
-        public AttributeQueryContext(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) {
+        public AttributeQueryContext(ProfileRequest<ServletRequest> request, 
+                ProfileResponse<ServletResponse> response) {
             super(request, response);
         }
-        
-        public AttributeQuery getAttributeQuery(){
+
+        /**
+         * Gets the attribute query of the request.
+         * 
+         * @return attribute query of the request
+         */
+        public AttributeQuery getAttributeQuery() {
             return attributeQuery;
         }
-        
-        public void setAttributeQuery(AttributeQuery query){
+
+        /**
+         * Sets the attribute query of the request.
+         * 
+         * @param query attribute query of the request
+         */
+        public void setAttributeQuery(AttributeQuery query) {
             attributeQuery = query;
         }
     }

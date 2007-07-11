@@ -35,7 +35,6 @@ import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.BindingException;
 import org.opensaml.common.binding.encoding.MessageEncoder;
-import org.opensaml.saml1.core.AttributeStatement;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
