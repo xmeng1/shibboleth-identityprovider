@@ -282,7 +282,7 @@ public abstract class AbstractSAMLProfileHandler extends
          * @param state relay state of the current request
          */
         public void setRelayState(String state){
-            
+            relayState = state;
         }
         
         /**
