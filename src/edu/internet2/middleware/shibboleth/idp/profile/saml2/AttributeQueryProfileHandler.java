@@ -118,7 +118,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
         ProfileRequest<ServletRequest> profileRequest = requestContext.getProfileRequest(); 
         decoder.setRequest(profileRequest.getRawRequest());
-        requestContext.setMessageDecoder(decoder);
+        requestContext.setMessageDecoder(decoder.getBindingURI());
 
         try {
             decoder.decode();
@@ -136,7 +136,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             throw new ProfileException("Message did not meet security policy requirements", e);
         } finally {
             // Set as much information as can be retrieved from the decoded message
-            SAMLSecurityPolicy securityPolicy = requestContext.getMessageDecoder().getSecurityPolicy();
+            SAMLSecurityPolicy securityPolicy = decoder.getSecurityPolicy();
             requestContext.setRelyingPartyId(securityPolicy.getIssuer());
 
             try {
@@ -160,7 +160,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                 requestContext.setProfileConfiguration((AttributeQueryConfiguration) rpConfig
                         .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID));
 
-                requestContext.setSamlRequest((AttributeQuery) requestContext.getMessageDecoder().getSAMLMessage());
+                requestContext.setSamlRequest((AttributeQuery) decoder.getSAMLMessage());
             } catch (MetadataProviderException e) {
                 log.error("Unable to locate metadata for asserting or relying party");
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
@@ -188,11 +188,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         }
 
         super.populateMessageEncoder(encoder);
-        encoder.setRelayState(requestContext.getMessageDecoder().getRelayState());
+        encoder.setRelayState(requestContext.getRelayState());
         ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
-        requestContext.setMessageEncoder(encoder);
+        requestContext.setMessageEncoder(encoder.getBindingURI());
 
         try {
             encoder.encode();

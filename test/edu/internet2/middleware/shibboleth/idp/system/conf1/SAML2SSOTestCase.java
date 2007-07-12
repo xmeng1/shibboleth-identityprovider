@@ -102,7 +102,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
     public void testSecondLeg() throws Exception {
         AuthnRequest authnRequest = buildAuthnRequest("urn:example.org:unitTestFed:sp2");
         
-        Saml2LoginContext loginContext = new Saml2LoginContext("urn:example.org:unitTestFed:sp2", authnRequest);
+        Saml2LoginContext loginContext = new Saml2LoginContext("urn:example.org:unitTestFed:sp2", null, authnRequest);
         loginContext.setAuthenticationInstant(new DateTime());
         loginContext.setAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified");
         loginContext.setPrincipalAuthenticated(true);

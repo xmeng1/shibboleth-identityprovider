@@ -52,6 +52,9 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
 
     /** Class logger. */
     private final Logger log = Logger.getLogger(Saml2LoginContext.class);
+    
+    /** Relay state from authentication request. */
+    private String relayState;
 
     /** Serialized authentication request. */
     private String serialAuthnRequest;
@@ -63,17 +66,19 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      * Creates a new instance of Saml2LoginContext.
      * 
      * @param relyingParty entity ID of the relying party
+     * @param state relay state from incoming authentication request
      * @param request SAML 2.0 Authentication Request
      * 
      * @throws MarshallingException thrown if the given request can not be marshalled and serialized into a string
      */
-    public Saml2LoginContext(String relyingParty, AuthnRequest request) throws MarshallingException {
+    public Saml2LoginContext(String relyingParty, String state, AuthnRequest request) throws MarshallingException {
         super();
         
         if (relyingParty == null || request == null) {
             throw new IllegalArgumentException("SAML 2 authentication request and relying party ID may not be null");
         }
         setRelyingParty(relyingParty);
+        relayState = state;
         authnRequest = request;
         serialAuthnRequest = serializeRequest(request);
         
@@ -95,6 +100,15 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         }
 
         return authnRequest;
+    }
+    
+    /**
+     * Gets the relay state from the orginating authentication request.
+     * 
+     * @return relay state from the orginating authentication request
+     */
+    public String getRelayState(){
+        return relayState;
     }
 
     /**

@@ -281,6 +281,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) throws ProfileException {
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext(request, response);
 
+        requestContext.setRelayState(loginContext.getSpTarget());
+        
         requestContext.setLoginContext(loginContext);
 
         requestContext.setPrincipalName(loginContext.getPrincipalName());
@@ -444,11 +446,11 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 relyingPartyEndpoint.getBinding());
         encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
         super.populateMessageEncoder(encoder);
-        encoder.setRelayState(requestContext.getLoginContext().getSpTarget());
+        encoder.setRelayState(requestContext.getRelayState());
         ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
-        requestContext.setMessageEncoder(encoder);
+        requestContext.setMessageEncoder(encoder.getBindingURI());
 
         try {
             encoder.encode();

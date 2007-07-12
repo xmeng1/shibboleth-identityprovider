@@ -165,6 +165,15 @@ public abstract class AbstractSAMLProfileHandler extends
 
         /** Role descriptor meatadata for the asserting party. */
         private RoleDescriptor assertingPartyRoleMetadata;
+        
+        /** Message decoder URI. */
+        private String messageDecoder;
+        
+        /** Message encoder URI. */
+        private String messageEncoder;
+        
+        /** Request relay state. */
+        private String relayState;
 
         /** Endpoint of relying party. */
         private Endpoint relyingPartyEndpoint;
@@ -220,6 +229,60 @@ public abstract class AbstractSAMLProfileHandler extends
          */
         public void setAssertingPartyRoleMetadata(RoleDescriptor descriptor) {
             assertingPartyRoleMetadata = descriptor;
+        }
+        
+        /**
+         * Gets the URI of the message decoder used to decode the incoming request.
+         * 
+         * @return URI of the message decoder used to decode the incoming request
+         */
+        public String getMessageDecoder(){
+            return messageDecoder;
+        }
+        
+        /**
+         * Sets the URI of the message decoder used to decode the incoming request.
+         * 
+         * @param decoderURI URI of the message decoder used to decode the incoming request
+         */
+        public void setMessageDecoder(String decoderURI){
+            messageDecoder = decoderURI;
+        }
+        
+        /**
+         * Gets the URI of the message encoder used to encode the outgoing response.
+         * 
+         * @return URI of the message encoder used to encode the outgoing response
+         */
+        public String getMessageEncoder(){
+            return messageEncoder;
+        }
+        
+        /**
+         * Sets the URI of the message encoder used to encode the outgoing response.
+         * 
+         * @param encoderURI URI of the message encoder used to encode the outgoing response
+         */
+        public void setMessageEncoder(String encoderURI){
+            messageEncoder = encoderURI;
+        }
+        
+        /**
+         * Gets the relay state of the current request.
+         * 
+         * @return relay state of the current request
+         */
+        public String getRelayState(){
+            return relayState;
+        }
+        
+        /**
+         * Sets the relay state of the current request.
+         * 
+         * @param state relay state of the current request
+         */
+        public void setRelayState(String state){
+            
         }
         
         /**

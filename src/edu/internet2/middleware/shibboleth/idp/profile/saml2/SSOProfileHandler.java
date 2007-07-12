@@ -171,7 +171,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             authnRequest = (AuthnRequest) decoder.getSAMLMessage();
 
-            Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, authnRequest);
+            Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, decoder.getRelayState(), authnRequest);
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
             if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
@@ -294,7 +294,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         SSORequestContext requestContext = new SSORequestContext(request, response);
 
         try {
-            requestContext.setMessageDecoder(getMessageDecoderFactory().getMessageDecoder(decodingBinding));
+            requestContext.setMessageDecoder(decodingBinding);
 
             requestContext.setLoginContext(loginContext);
 
@@ -468,14 +468,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         super.populateMessageEncoder(encoder);
         encoder.setIssuer(requestContext.getAssertingPartyId());
-        encoder.setRelayState(requestContext.getMessageDecoder().getRelayState());
+        encoder.setRelayState(requestContext.getRelayState());
         encoder.setRelyingParty(requestContext.getRelyingPartyMetadata());
         encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
         encoder.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
         ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
         encoder.setResponse(profileResponse.getRawResponse());
         encoder.setSamlMessage(requestContext.getSamlResponse());
-        requestContext.setMessageEncoder(encoder);
+        requestContext.setMessageEncoder(encoder.getBindingURI());
 
         try {
             encoder.encode();
