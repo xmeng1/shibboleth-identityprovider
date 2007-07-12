@@ -172,6 +172,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             authnRequest = (AuthnRequest) decoder.getSAMLMessage();
 
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, decoder.getRelayState(), authnRequest);
+            if(log.isDebugEnabled()){
+                log.debug("\n\nRelayState : " + loginContext.getRelayState());
+            }
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
             if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
@@ -296,6 +299,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         try {
             requestContext.setMessageDecoder(decodingBinding);
             
+            if(log.isDebugEnabled()){
+                log.debug("\n\nRelayState : " + loginContext.getRelayState());
+            }
             requestContext.setRelayState(loginContext.getRelayState());
 
             requestContext.setLoginContext(loginContext);
