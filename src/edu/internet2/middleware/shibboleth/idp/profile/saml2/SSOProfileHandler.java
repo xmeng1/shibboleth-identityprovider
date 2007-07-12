@@ -295,6 +295,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         try {
             requestContext.setMessageDecoder(decodingBinding);
+            
+            requestContext.setRelayState(loginContext.getRelayState());
 
             requestContext.setLoginContext(loginContext);
 
