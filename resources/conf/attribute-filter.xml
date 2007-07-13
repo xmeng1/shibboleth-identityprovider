@@ -8,12 +8,25 @@
                                                 urn:mace:shibboleth:2.0:afp:mf:basic classpath:/schema/shibboleth-2.0-afp-mf-basic.xsd ">
 
     <!-- 
+        Release the principal, which is used as our SAML 1 & 2 name identifiers to anyone.
+    -->
+    <AttributeFilterPolicy id="releasePrincipalToAnyone">
+        <PolicyRequirementRule xsi:type="basic:ANY" />
+        
+        <AttributeRule attributeID="principalName">
+            <PermitValueRule xsi:type="basic:ANY" />
+        </AttributeRule>
+        
+    </AttributeFilterPolicy>
+    
+
+    <!-- 
           Releases to anyone:
             * any value of uid
             * only the member value of affiliation
     -->
     <!--
-    <AttributeFilterPolicy id="ReleaseToAnyone">
+    <AttributeFilterPolicy id="releaseToAnyone">
         <PolicyRequirementRule xsi:type="basic:ANY" />
         
         <AttributeRule attributeID="uid">
@@ -37,7 +50,7 @@
             * any value of full name
     -->
     <!--
-    <AttributeFilterPolicy id="ReleaseToSP1">
+    <AttributeFilterPolicy id="releaseToSP1">
         <PolicyRequirementRule value="urn:example.org:myFederation:sp1" 
                                xsi:type="basic:AttributeRequesterString" />
         

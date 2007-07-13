@@ -17,6 +17,15 @@
     <!--      Attribute Definitions                 -->
     <!-- ========================================== -->
     
+    <!-- Release the Principal as an attribute and encode it as the SAML 1 and 2 name IDs -->
+    <resolver:AttributeDefinition id="principalName" xsi:type="ad:PrincipalName">
+        <resolver:AttributeEncoder xsi:type="enc:SAML1StringNameIdentifier"
+                                   nameFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
+
+        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID"
+                                   nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
+   </resolver:AttributeDefinition>
+    
     <!-- Example attribute defintions -->
     <!--
     <resolver:AttributeDefinition id="uid" xsi:type="ad:Simple">
@@ -128,7 +137,11 @@
     <!--      Principal Connectors                  -->
     <!-- ========================================== -->
     <resolver:PrincipalConnector xsi:type="pc:Direct" 
-                                 id="directPC"
+                                 id="saml1UnspecDirect"
                                  nameIDFormat="urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified" />
+                                 
+    <resolver:PrincipalConnector xsi:type="pc:Direct" 
+                                 id="saml2UnspecDirect"
+                                 nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 
 </AttributeResolver>

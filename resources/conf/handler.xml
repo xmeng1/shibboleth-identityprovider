@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<ProfileHandlerGroup xmlns="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<ProfileHandlerGroup xmlns="urn:mace:shibboleth:2.0:idp:profile-handler"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                      xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:profile-handler classpath:/schema/shibboleth-2.0-idp-profile-handler.xsd">
 
     <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
@@ -14,11 +15,15 @@
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML1AttributeQuery">
-        <RequestPath>/saml1/SOAP/SSO</RequestPath>
+        <RequestPath>/saml1/SOAP/AttributeQuery</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML2SSO">
-        <RequestPath>/saml2/SSO</RequestPath>
+        <RequestPath>/saml2/POST/SSO</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="SAML2SSO" decodingBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect">
+        <RequestPath>/saml2/Redirect/SSO</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML2AttributeQuery">

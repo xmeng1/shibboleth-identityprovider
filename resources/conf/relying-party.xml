@@ -20,8 +20,6 @@
     <!-- ========================================== -->
     <!--      Relying Party Configurations          -->
     <!-- ========================================== -->
-    
-    <!--
     <AnonymousRelyingParty provider="http://example.org/IdP" />
     
     <DefaultRelyingParty provider="http://example.org/IdP" />
@@ -33,7 +31,6 @@
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
     </RelyingParty>
-    -->
     
     
     <!-- ========================================== -->
