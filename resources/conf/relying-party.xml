@@ -40,7 +40,7 @@
     <!-- MetadataProvider reading metadata from a URL. -->
     <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
     <!--
-    <MetadataProvider id="URLMD" xsi:type="FileBackedURLMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
+    <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
                       metadataURL="http://example.org/my/metadata/file.xml" backingFile="/path/to/temp/location" />
     -->
                   
@@ -73,7 +73,7 @@
     <!-- MetadataProvider the combining other MetadataProviders -->
     <!--
     <MetadataProvider id="ExampleMD" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-        <MetadataProvider id="URLMD" xsi:type="FileBackedURLMetadataProvider"
+        <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider"
                       metadataURL="http://example.org/my/metadata" backingFile="/path/to/temp/location" />
         <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" metadataFile="/path/to/metadata/file.xml" />
     </MetadataProvider>
