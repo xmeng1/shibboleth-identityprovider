@@ -16,6 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
+import javax.security.auth.Subject;
+
 import org.joda.time.DateTime;
 
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
@@ -25,6 +27,9 @@ import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInfor
  */
 public class AuthenticationMethodInformationImpl implements AuthenticationMethodInformation {
 
+    /** Subject created by this authentication mechanism. */
+    private Subject authenticationSubject;
+    
     /** The authentication method (a URI). */
     private String authenticationMethod;
 
@@ -54,6 +59,32 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
         authenticationInstant = instant;
         authenticationDuration = duration;
         expirationInstant = instant.plus(duration);
+    }
+    
+    /**
+     * Default constructor.
+     * 
+     * @param subject Subject created by the authentication method
+     * @param method The unique identifier for the authentication method.
+     * @param instant The time the user authenticated with this member.
+     * @param duration The duration of this authentication method.
+     */
+    public AuthenticationMethodInformationImpl(Subject subject, String method, DateTime instant, long duration) {
+
+        if (method == null || instant == null || duration < 0) {
+            throw new IllegalArgumentException("Authentication method, instant, and duration may not be null");
+        }
+
+        authenticationSubject = subject;
+        authenticationMethod = method;
+        authenticationInstant = instant;
+        authenticationDuration = duration;
+        expirationInstant = instant.plus(duration);
+    }
+    
+    /** {@inheritDoc} */
+    public Subject getAuthenticationSubject() {
+        return authenticationSubject;
     }
 
     /** {@inheritDoc} */

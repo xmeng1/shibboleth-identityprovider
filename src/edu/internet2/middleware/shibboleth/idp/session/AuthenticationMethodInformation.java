@@ -16,12 +16,21 @@
 
 package edu.internet2.middleware.shibboleth.idp.session;
 
+import javax.security.auth.Subject;
+
 import org.joda.time.DateTime;
 
 /**
  * Information about an authentication method employed by a user.
  */
 public interface AuthenticationMethodInformation {
+    
+    /**
+     * Gets the Subject created by this authentication method.
+     * 
+     * @return subject created by this authentication method
+     */
+    public Subject getAuthenticationSubject();
 
     /**
      * Gets the unique identifier for the authentication method.

@@ -18,8 +18,11 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.util.List;
 
+import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 
 /**
  * Authentication handlers authenticate a user in an implementation specific manner. Some examples of this might be by
@@ -27,10 +30,16 @@ import javax.servlet.http.HttpServletResponse;
  * certificate or one-time password.
  * 
  * After the handler has authenticated the user it <strong>MUST</strong> bind the user's principal name to the
- * {@link HttpServletRequest} attribute identified by {@link AuthenticationHandler#PRINCIPAL_NAME_KEY}. The handler may
- * also bind an error message, if an error occurred during authentication to the request attribute identified by
- * {@link AuthenticationHandler#AUTHENTICATION_ERROR_KEY}. Finally, the handler must return control to the
- * authentication engine by invoking
+ * {@link HttpServletRequest} attribute identified by {@link AuthenticationHandler#PRINCIPAL_NAME_KEY}.
+ * 
+ * The handler may bind a {@link Subject} to the attribute identified by {@link #SUBJECT_KEY} if one was created during
+ * the authentication process. This Subject is stored in the {@link AuthenticationMethodInformation}, created for this
+ * authentication, in the user's session.
+ * 
+ * The handler may also bind an error message, if an error occurred during authentication to the request attribute
+ * identified by {@link AuthenticationHandler#AUTHENTICATION_ERROR_KEY}.
+ * 
+ * Finally, the handler must return control to the authentication engine by invoking
  * {@link AuthenticationEngine#returnToAuthenticationEngine(HttpServletRequest, HttpServletResponse)}. After which the
  * authentication handler must immediately return.
  * 
@@ -43,6 +52,9 @@ public interface AuthenticationHandler {
     /** Request attribute to which user's principal name should be bound. */
     public static final String PRINCIPAL_NAME_KEY = "principal";
 
+    /** Request attribute to which user's subject should be bound. */
+    public static final String SUBJECT_KEY = "subject";
+
     /** Request attribute to which an error message may be bound. */
     public static final String AUTHENTICATION_ERROR_KEY = "authnError";
 
@@ -52,7 +64,7 @@ public interface AuthenticationHandler {
      * @return authentication methods this handler supports
      */
     public List<String> getSupportedAuthenticationMethods();
-    
+
     /**
      * Gets the length of time, in milliseconds, after which a user authenticated by this handler should be
      * re-authenticated.

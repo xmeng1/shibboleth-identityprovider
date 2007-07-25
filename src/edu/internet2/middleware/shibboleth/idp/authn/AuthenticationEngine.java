@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -129,8 +130,8 @@ public class AuthenticationEngine extends HttpServlet {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Processing incoming request");
         }
-        
-        if(httpResponse.isCommitted()){
+
+        if (httpResponse.isCommitted()) {
             LOG.error("HTTP Response already committed");
         }
 
@@ -169,7 +170,7 @@ public class AuthenticationEngine extends HttpServlet {
             }
             authenticateUserWithoutActiveMethod2(httpRequest, httpResponse);
         }
-        
+
         return;
     }
 
@@ -212,21 +213,19 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
-    protected void authenticateUserWithoutActiveMethod1(HttpServletRequest httpRequest, 
-            HttpServletResponse httpResponse) {
+    protected void authenticateUserWithoutActiveMethod1(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         HttpSession httpSession = httpRequest.getSession();
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Selecting appropriate authentication method for request.");
         }
-        Pair<String, AuthenticationHandler> handler = getProfileHandlerManager().getAuthenticationHandler(
-                loginContext);
+        Pair<String, AuthenticationHandler> handler = getProfileHandlerManager().getAuthenticationHandler(loginContext);
 
         if (handler == null) {
             loginContext.setPrincipalAuthenticated(false);
             loginContext.setAuthenticationFailureMessage("No AuthenticationHandler satisfys the request from: "
-                            + loginContext.getRelyingPartyId());
+                    + loginContext.getRelyingPartyId());
             LOG.error("No AuthenticationHandler satisfies the request from relying party: "
                     + loginContext.getRelyingPartyId());
             returnToProfileHandler(loginContext, httpRequest, httpResponse);
@@ -257,8 +256,7 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
-    protected void authenticateUserWithoutActiveMethod2(HttpServletRequest httpRequest, 
-            HttpServletResponse httpResponse) {
+    protected void authenticateUserWithoutActiveMethod2(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         HttpSession httpSession = httpRequest.getSession();
 
         String principalName = (String) httpRequest.getAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY);
@@ -298,8 +296,10 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.debug("Recording authentication and service information in Shibboleth session for principal: "
                     + principalName);
         }
-        AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(loginContext
+        Subject subject = (Subject) httpRequest.getAttribute(AuthenticationHandler.SUBJECT_KEY);
+        AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(subject, loginContext
                 .getAuthenticationMethod(), new DateTime(), loginContext.getAuthenticationDuration());
+
         shibSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);
 
         ServiceInformation serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(),
