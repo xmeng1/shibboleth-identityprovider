@@ -268,7 +268,7 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="protectedServletPath" type="xsd:string" default="/Authn/UserPassword">
+                <xsd:attribute name="authenticationServletURL" type="xsd:string" default="/Authn/UserPassword">
                     <xsd:annotation>
                         <xsd:documentation>
                             The servlet context path to the
