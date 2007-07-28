@@ -46,7 +46,7 @@
             <xsd:extension base="RequestURIMappedProfileHandlerType" />
         </xsd:complexContent>
     </xsd:complexType>
-    
+
     <xsd:complexType name="SAML2SSO">
         <xsd:annotation>
             <xsd:documentation>Configuration type for SAML 2 SSO profile handlers.</xsd:documentation>
@@ -80,16 +80,17 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="outboundBindingEnumeration" default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
+                <xsd:attribute name="outboundBindingEnumeration"
+                    default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
                     <xsd:annotation>
                         <xsd:documentation>
-                            An ordered list of outbound bindings supported by this profile handler.  The order
-                            provided establishs the precedence given the bindings such that, from the left to right, 
-                            the first binding also supported by the relying party will be used.
+                            An ordered list of outbound bindings supported by this profile handler. The order provided
+                            establishs the precedence given the bindings such that, from the left to right, the first
+                            binding also supported by the relying party will be used.
                         </xsd:documentation>
                     </xsd:annotation>
                     <xsd:simpleType>
-                        <xsd:list itemType="xsd:anyURI"/>
+                        <xsd:list itemType="xsd:anyURI" />
                     </xsd:simpleType>
                 </xsd:attribute>
             </xsd:extension>
@@ -140,22 +141,23 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="outboundBindingEnumeration" default="urn:oasis:names:tc:SAML:1.0:profiles:browser-post">
+                <xsd:attribute name="outboundBindingEnumeration"
+                    default="urn:oasis:names:tc:SAML:1.0:profiles:browser-post">
                     <xsd:annotation>
                         <xsd:documentation>
-                            An ordered list of outbound bindings supported by this profile handler.  The order
-                            provided establishs the precedence given the bindings such that, from the left to right, 
-                            the first binding also supported by the relying party will be used.
+                            An ordered list of outbound bindings supported by this profile handler. The order provided
+                            establishs the precedence given the bindings such that, from the left to right, the first
+                            binding also supported by the relying party will be used.
                         </xsd:documentation>
                     </xsd:annotation>
                     <xsd:simpleType>
-                        <xsd:list itemType="xsd:anyURI"/>
+                        <xsd:list itemType="xsd:anyURI" />
                     </xsd:simpleType>
                 </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
-    
+
     <xsd:complexType name="SAML1AttributeQuery">
         <xsd:annotation>
             <xsd:documentation>Configuration type for SAML 1 Attribute Query profile handlers.</xsd:documentation>
@@ -246,6 +248,32 @@
                             The servlet context path to the
                             edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserAuthServlet instance
                             protected by the container or web server.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="UsernamePassword">
+        <xsd:complexContent>
+            <xsd:extension base="AuthenticationHandlerType">
+                <xsd:attribute name="jaasConfigurationLocation" type="xsd:anyURI">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Location of the JAAS configuration. If this attribute is used it will usually contain a file
+                            URL to a configuration on the local filesystem. However, this attribute need not be used and
+                            this information can be set within the VM in any manner supported by the JVM/container
+                            implementation.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="protectedServletPath" type="xsd:string" default="/Authn/UserPassword">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The servlet context path to the
+                            edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordAuthenticationServlet
+                            that will authenticate the user.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>

@@ -78,7 +78,7 @@ public class RemoteUserAuthenticationHandler extends AbstractAuthenticationHandl
             httpResponse.sendRedirect(urlBuilder.buildURL());
             return;
         } catch (IOException ex) {
-            log.error("RemoteUserAuthenticationHandler: Unable to redirect to remote user authentication servlet.", ex);
+            log.error("Unable to redirect to remote user authentication servlet.", ex);
         }
     }
 }
