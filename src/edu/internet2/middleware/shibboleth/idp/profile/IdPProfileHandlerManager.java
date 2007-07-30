@@ -104,7 +104,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
 
         String requestPath = ((HttpServletRequest) request).getPathInfo();
         if (log.isDebugEnabled()) {
-            log.debug(getServiceName() + ": Looking up profile handler for request path: " + requestPath);
+            log.debug(getId() + ": Looking up profile handler for request path: " + requestPath);
         }
         Lock readLock = getReadWriteLock().readLock();
         readLock.lock();
@@ -113,12 +113,12 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
 
         if (handler != null) {
             if (log.isDebugEnabled()) {
-                log.debug(getServiceName() + ": Located profile handler of the following type for request path "
+                log.debug(getId() + ": Located profile handler of the following type for request path "
                         + requestPath + ": " + handler.getClass().getName());
             }
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(getServiceName() + ": No profile handler registered for request path " + requestPath);
+                log.debug(getId() + ": No profile handler registered for request path " + requestPath);
             }
         }
         return handler;
@@ -143,7 +143,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
      */
     public Pair<String, AuthenticationHandler> getAuthenticationHandler(LoginContext loginContext) {
         if (log.isDebugEnabled()) {
-            log.debug(getServiceName() + ": Looking up authentication method for relying party "
+            log.debug(getId() + ": Looking up authentication method for relying party "
                     + loginContext.getRelyingPartyId());
         }
         List<String> requestedMethods = loginContext.getRequestedAuthenticationMethods();
@@ -151,19 +151,19 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
             AuthenticationHandler candidateHandler;
             for (String requestedMethod : requestedMethods) {
                 if (log.isDebugEnabled()) {
-                    log.debug(getServiceName() + ": Checking for authentication handler for method " + requestedMethod
+                    log.debug(getId() + ": Checking for authentication handler for method " + requestedMethod
                             + " which was requested for relying party " + loginContext.getRelyingPartyId());
                 }
                 candidateHandler = authenticationHandlers.get(requestedMethod);
                 if (candidateHandler != null) {
                     if (log.isDebugEnabled()) {
-                        log.debug(getServiceName() + ": Authentication handler for method " + requestedMethod
+                        log.debug(getId() + ": Authentication handler for method " + requestedMethod
                                 + " for relying party " + loginContext.getRelyingPartyId()
                                 + " found.  Checking if it meets othe criteria.");
                     }
                     if(loginContext.getPassiveAuth() && !candidateHandler.supportsPassive()){
                         if (log.isDebugEnabled()) {
-                            log.debug(getServiceName() + ": Authentication handler for method " + requestedMethod
+                            log.debug(getId() + ": Authentication handler for method " + requestedMethod
                                     + " for relying party " + loginContext.getRelyingPartyId()
                                     + " does not meet required support for passive auth.  Skipping it");
                         }
@@ -171,7 +171,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
                     }
                     
                     if (log.isDebugEnabled()) {
-                        log.debug(getServiceName() + ": Authentication handler for method " + requestedMethod
+                        log.debug(getId() + ": Authentication handler for method " + requestedMethod
                                 + " for relying party " + loginContext.getRelyingPartyId()
                                 + " meets all requirements, using it.");
                     }
@@ -179,7 +179,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
                 }
             }
         } else {
-            log.error(getServiceName() + ": No requested authentication methods for relying party "
+            log.error(getId() + ": No requested authentication methods for relying party "
                     + loginContext.getRelyingPartyId());
         }
 
@@ -198,7 +198,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     /** {@inheritDoc} */
     protected void newContextCreated(ApplicationContext newServiceContext) {
         if (log.isDebugEnabled()) {
-            log.debug(getServiceName() + ": Loading new configuration into service");
+            log.debug(getId() + ": Loading new configuration into service");
         }
         Lock writeLock = getReadWriteLock().writeLock();
         writeLock.lock();
@@ -216,12 +216,12 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     protected void loadNewErrorHandler(ApplicationContext newServiceContext) {
         String[] errorBeanNames = newServiceContext.getBeanNamesForType(AbstractErrorHandler.class);
         if (log.isDebugEnabled()) {
-            log.debug(getServiceName() + ": Loading " + errorBeanNames.length + " new error handler.");
+            log.debug(getId() + ": Loading " + errorBeanNames.length + " new error handler.");
         }
 
         errorHandler = (AbstractErrorHandler) newServiceContext.getBean(errorBeanNames[0]);
         if (log.isDebugEnabled()) {
-            log.debug(getServiceName() + ": Loaded new error handler of type: " + errorHandler.getClass().getName());
+            log.debug(getId() + ": Loaded new error handler of type: " + errorHandler.getClass().getName());
         }
     }
 
@@ -233,7 +233,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     protected void loadNewProfileHandlers(ApplicationContext newServiceContext) {
         String[] profileBeanNames = newServiceContext.getBeanNamesForType(AbstractRequestURIMappedProfileHandler.class);
         if (log.isDebugEnabled()) {
-            log.debug(getServiceName() + ": Loading " + profileBeanNames.length + " new profile handlers.");
+            log.debug(getId() + ": Loading " + profileBeanNames.length + " new profile handlers.");
         }
 
         profileHandlers.clear();
@@ -243,7 +243,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
             for (String requestPath : profileHandler.getRequestPaths()) {
                 profileHandlers.put(requestPath, profileHandler);
                 if (log.isDebugEnabled()) {
-                    log.debug(getServiceName() + ": Loaded profile handler of type "
+                    log.debug(getId() + ": Loaded profile handler of type "
                                     + profileHandler.getClass().getName() + " handling requests to request path "
                                     + requestPath);
                 }
@@ -259,7 +259,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     protected void loadNewAuthenticationHandlers(ApplicationContext newServiceContext) {
         String[] authnBeanNames = newServiceContext.getBeanNamesForType(AuthenticationHandler.class);
         if (log.isDebugEnabled()) {
-            log.debug(getServiceName() + ": Loading " + authnBeanNames.length + " new authentication handlers.");
+            log.debug(getId() + ": Loading " + authnBeanNames.length + " new authentication handlers.");
         }
 
         authenticationHandlers.clear();
@@ -267,7 +267,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
         for (String authnBeanName : authnBeanNames) {
             authnHandler = (AuthenticationHandler) newServiceContext.getBean(authnBeanName);
             if (log.isDebugEnabled()) {
-                log.debug(getServiceName() + ": Loading authentication handler of type "
+                log.debug(getId() + ": Loading authentication handler of type "
                         + authnHandler.getClass().getName() + " supporting authentication methods: "
                         + authnHandler.getSupportedAuthenticationMethods());
             }
