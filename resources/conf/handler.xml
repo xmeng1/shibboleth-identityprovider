@@ -33,5 +33,10 @@
     <AuthenticationHandler xsi:type="RemoteUser">
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
     </AuthenticationHandler>
+    
+    <AuthenticationHandler xsi:type="UsernamePassword" 
+                           jaasConfigurationLocation="file://$IDP_HOME/conf/login.confg">
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
+    </AuthenticationHandler>
 
 </ProfileHandlerGroup>

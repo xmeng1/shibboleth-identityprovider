@@ -66,12 +66,24 @@
         <servlet-name>RemoteUserAuthHandler</servlet-name>
         <url-pattern>/Authn/RemoteUser</url-pattern>
     </servlet-mapping>
+    
+    <!-- Servlet for doing Username/Password authentication -->
+    <servlet>
+        <servlet-name>UsernamePasswordAuthHandler</servlet-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordAuthenticationServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>UsernamePasswordAuthHandler</servlet-name>
+        <url-pattern>/Authn/UserPassword</url-pattern>
+    </servlet-mapping>
 
     <security-constraint>
         <display-name>Shibboleth IdP</display-name>
         <web-resource-collection>
-            <web-resource-name>remote user authentication</web-resource-name>
+            <web-resource-name>user authentication</web-resource-name>
             <url-pattern>/Authn/RemoteUser</url-pattern>
+            <url-pattern>/Authn/UserPassword</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
@@ -79,7 +91,7 @@
             <role-name>*</role-name> 
         </auth-constraint>
         <user-data-constraint>
-            <transport-guarantee>INTEGRAL</transport-guarantee>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
     </security-constraint>
     
