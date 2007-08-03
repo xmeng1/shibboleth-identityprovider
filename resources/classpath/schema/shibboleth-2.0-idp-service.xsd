@@ -13,33 +13,12 @@
 
     <complexType name="IdPConfigType">
         <sequence>
-            <element name="LoggingConfiguration" type="idpconf:LoggingConfigurationType" minOccurs="0">
-                <annotation>
-                    <documentation>
-                        Location, on the filesystem, where the Log4j configuration file is located.
-                    </documentation>
-                </annotation>
-            </element>
             <element ref="service:Service" minOccurs="0" maxOccurs="unbounded">
                 <annotation>
                     <documentation>List of IdP configured services.</documentation>
                 </annotation>
             </element>
         </sequence>
-    </complexType>
-
-    <complexType name="LoggingConfigurationType">
-        <simpleContent>
-            <extension base="string">
-                <attribute name="timerId" type="string" default="shibboleth.TaskTimer">
-                    <annotation>
-                        <documentation>
-                            Component ID for the task timer used to schedule configuration file polling.
-                        </documentation>
-                    </annotation>
-                </attribute>
-            </extension>
-        </simpleContent>
     </complexType>
 
 </schema>

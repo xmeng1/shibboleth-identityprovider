@@ -25,33 +25,16 @@ import edu.internet2.middleware.shibboleth.common.config.BaseService;
  */
 public class IdPServicesBean {
 
-    /** Logging service for the IdP. */
-    private IdPLoggingService loggingService;
-
     /** Serivce components loaded into the IdP. */
     private List<BaseService> services;
 
     /**
      * Constructor.
      * 
-     * @param logging logging service for the IdP
      * @param loadedServices service components loaded into the IdP
      */
     public IdPServicesBean(List<BaseService> loadedServices) {
         services = loadedServices;
-    }
-
-    /**
-     * Gets the logging service for the IdP.
-     * 
-     * @return logging service for the IdP
-     */
-    public IdPLoggingService getLoggingService() {
-        return loggingService;
-    }
-    
-    public void setLoggingService(IdPLoggingService service){
-        loggingService = service;
     }
 
     /**

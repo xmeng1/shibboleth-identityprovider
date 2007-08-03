@@ -31,8 +31,5 @@ public class IdPServicesNamespaceHandler extends BaseSpringNamespaceHandler {
         IdPConfigBeanDefinitionParser parser = new IdPConfigBeanDefinitionParser();
         registerBeanDefinitionParser(IdPConfigBeanDefinitionParser.ELEMENT_NAME, parser);
         registerBeanDefinitionParser(IdPConfigBeanDefinitionParser.SCHEMA_TYPE, parser);
-
-        registerBeanDefinitionParser(IdPLoggingServiceBeanDefinitionParser.ELEMENT_NAME,
-                new IdPLoggingServiceBeanDefinitionParser());
     }
 }
