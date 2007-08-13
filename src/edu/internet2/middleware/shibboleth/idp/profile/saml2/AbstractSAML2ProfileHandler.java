@@ -21,11 +21,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletRequest;
-
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
-import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
@@ -40,7 +37,6 @@ import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.ProxyRestriction;
-import org.opensaml.saml2.core.RequestAbstractType;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.Status;
@@ -71,14 +67,10 @@ import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEn
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML2NameIDAttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
-import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
-import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** Common implementation details for profile handlers. */
 public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHandler {
@@ -167,7 +159,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if the major version of the SAML request is not 2
      */
-    protected void checkSamlVersion(BaseSAML2ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected void checkSamlVersion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         SAMLVersion version = requestContext.getInboundSAMLMessage().getVersion();
         if (version.getMajorVersion() < 2) {
             requestContext.setFailureStatus(buildStatus(StatusCode.VERSION_MISMATCH_URI,
@@ -191,8 +183,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem creating the SAML response
      */
-    protected Response buildResponse(BaseSAML2ProfileRequestContext<?,?,?> requestContext, String subjectConfirmationMethod,
-            List<Statement> statements) throws ProfileException {
+    protected Response buildResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext,
+            String subjectConfirmationMethod, List<Statement> statements) throws ProfileException {
 
         DateTime issueInstant = new DateTime();
 
@@ -229,7 +221,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return the built assertion
      */
-    protected Assertion buildAssertion(BaseSAML2ProfileRequestContext<?,?,?> requestContext, DateTime issueInstant) {
+    protected Assertion buildAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, DateTime issueInstant) {
         Assertion assertion = assertionBuilder.buildObject();
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(issueInstant);
@@ -249,7 +241,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return the built issuer
      */
-    protected Issuer buildEntityIssuer(BaseSAML2ProfileRequestContext<?,?,?> requestContext) {
+    protected Issuer buildEntityIssuer(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) {
         Issuer issuer = issuerBuilder.buildObject();
         issuer.setFormat(Issuer.ENTITY);
         issuer.setValue(requestContext.getAssertingPartyEntityId());
@@ -266,7 +258,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return constructed conditions
      */
-    protected Conditions buildConditions(BaseSAML2ProfileRequestContext<?,?,?> requestContext, DateTime issueInstant) {
+    protected Conditions buildConditions(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, DateTime issueInstant) {
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
         Conditions conditions = conditionsBuilder.buildObject();
@@ -311,7 +303,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @param requestContext current request context
      * @param response the response to populate
      */
-    protected void populateStatusResponse(BaseSAML2ProfileRequestContext<?,?,?> requestContext, StatusResponseType response) {
+    protected void populateStatusResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext,
+            StatusResponseType response) {
         response.setID(getIdGenerator().generateIdentifier());
         if (requestContext.getInboundSAMLMessage() != null) {
             response.setInResponseTo(requestContext.getInboundSAMLMessageId());
@@ -319,7 +312,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         response.setVersion(SAMLVersion.VERSION_20);
         response.setIssuer(buildEntityIssuer(requestContext));
     }
-    
+
     /**
      * Resolves the attributes for the principal.
      * 
@@ -327,7 +320,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem resolved attributes
      */
-    protected void resolveAttributes(BaseSAML2ProfileRequestContext<?,?,?> requestContext) throws ProfileException{
+    protected void resolveAttributes(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
@@ -337,8 +330,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                         + " of SAML request " + requestContext.getInboundSAMLMessageId() + " from relying party "
                         + requestContext.getRelyingPartyEntityId());
             }
-            Map<String, BaseAttribute> principalAttributes = attributeAuthority
-                    .getAttributes(buildAttributeRequestContext(requestContext));
+            Map<String, BaseAttribute> principalAttributes = attributeAuthority.getAttributes(requestContext);
 
             requestContext.setPrincipalAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
@@ -360,7 +352,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem making the query
      */
-    protected AttributeStatement buildAttributeStatement(BaseSAML2ProfileRequestContext<?,?,?> requestContext)
+    protected AttributeStatement buildAttributeStatement(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Creating attribute statement in response to SAML request "
@@ -371,15 +363,17 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
         try {
             if (requestContext.getInboundSAMLMessage() instanceof AttributeQuery) {
-                return attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext.getInboundSAMLMessage(),
-                        requestContext.getPrincipalAttributes().values());
+                return attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext
+                        .getInboundSAMLMessage(), requestContext.getPrincipalAttributes().values());
             } else {
-                return attributeAuthority.buildAttributeStatement(null, requestContext.getPrincipalAttributes().values());
+                return attributeAuthority.buildAttributeStatement(null, requestContext.getPrincipalAttributes()
+                        .values());
             }
         } catch (AttributeRequestException e) {
             log.error("Error encoding attributes for principal " + requestContext.getPrincipalName(), e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error resolving attributes"));
-            throw new ProfileException("Error encoding attributes for principal " + requestContext.getPrincipalName(), e);
+            throw new ProfileException("Error encoding attributes for principal " + requestContext.getPrincipalName(),
+                    e);
         }
     }
 
@@ -390,7 +384,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if the principal name can not be resolved
      */
-    protected void resolvePrincipal(BaseSAML2ProfileRequestContext<RequestAbstractType, StatusResponseType, AbstractSAML2ProfileConfiguration> requestContext) throws ProfileException {
+    protected void resolvePrincipal(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         if (profileConfiguration == null) {
             log.error("Unable to resolve principal, no SAML 2 profile configuration for relying party "
@@ -404,8 +398,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
         if (log.isDebugEnabled()) {
-            log.debug("Resolving principal name for subject of SAML request " + requestContext.getInboundSAMLMessageId()
-                    + " from relying party " + requestContext.getRelyingPartyEntityId());
+            log.debug("Resolving principal name for subject of SAML request "
+                    + requestContext.getInboundSAMLMessageId() + " from relying party "
+                    + requestContext.getRelyingPartyEntityId());
         }
 
         try {
@@ -432,7 +427,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @throws ProfileException thrown if the metadata can not be located for the relying party or, if signing is
      *             required, if a signing credential is not configured
      */
-    protected void signAssertion(BaseSAML2ProfileRequestContext<?,?,?> requestContext, Assertion assertion)
+    protected void signAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion)
             throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Determining if SAML assertion to relying party " + requestContext.getRelyingPartyEntityId()
@@ -533,10 +528,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @throws ProfileException thrown if a NameID can not be created either because there was a problem encoding the
      *             name ID attribute or because there are no supported name formats
      */
-    protected Subject buildSubject(BaseSAML2ProfileRequestContext<?,?,?> requestContext, String confirmationMethod,
+    protected Subject buildSubject(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, String confirmationMethod,
             DateTime issueInstant) throws ProfileException {
         NameID nameID = buildNameId(requestContext);
-        requestContext.setSubjectNameID(nameID);
+        requestContext.setSubjectNameIdentifier(nameID);
         // TODO handle encryption
 
         SubjectConfirmationData confirmationData = subjectConfirmationDataBuilder.buildObject();
@@ -580,7 +575,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @throws ProfileException thrown if a NameID can not be created either because there was a problem encoding the
      *             name ID attribute or because there are no supported name formats
      */
-    protected NameID buildNameId(BaseSAML2ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Building assertion NameID for principal/relying party:" + requestContext.getPrincipalName()
                     + "/" + requestContext.getRelyingPartyEntityId());
@@ -636,7 +631,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem determing the NameID format to use
      */
-    protected List<String> getNameFormats(BaseSAML2ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected List<String> getNameFormats(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
+            throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
         List<String> assertingPartySupportedFormats = getEntitySupportedFormats(requestContext
@@ -708,7 +704,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return the constructed error response
      */
-    protected Response buildErrorResponse(BaseSAML2ProfileRequestContext<?,?,?> requestContext) {
+    protected Response buildErrorResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) {
         Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(new DateTime());
         populateStatusResponse(requestContext, samlResponse);
@@ -723,7 +719,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @param context current request context
      */
-    protected void writeAuditLogEntry(BaseSAML2ProfileRequestContext<?,?,?> context) {
+    protected void writeAuditLogEntry(BaseSAML2ProfileRequestContext<?, ?, ?> context) {
         AuditLogEntry auditLogEntry = new AuditLogEntry();
         auditLogEntry.setMessageProfile(getProfileId());
         auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());

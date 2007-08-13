@@ -38,7 +38,6 @@ import org.opensaml.saml1.core.AudienceRestrictionCondition;
 import org.opensaml.saml1.core.Conditions;
 import org.opensaml.saml1.core.ConfirmationMethod;
 import org.opensaml.saml1.core.NameIdentifier;
-import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.RequestAbstractType;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.ResponseAbstractType;
@@ -66,13 +65,10 @@ import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEn
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML1NameIdentifierEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
-import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
-import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** Common implementation details for profile handlers. */
 public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHandler {
@@ -153,7 +149,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if the major version of the SAML request is not 1
      */
-    protected void checkSamlVersion(BaseSAML1ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected void checkSamlVersion(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         SAMLObject samlObject = requestContext.getInboundSAMLMessage();
 
         if (samlObject instanceof RequestAbstractType) {
@@ -180,7 +176,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem creating the SAML response
      */
-    protected Response buildResponse(BaseSAML1ProfileRequestContext<?,?,?> requestContext, List<Statement> statements)
+    protected Response buildResponse(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext, List<Statement> statements)
             throws ProfileException {
 
         DateTime issueInstant = new DateTime();
@@ -215,7 +211,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return the built assertion
      */
-    protected Assertion buildAssertion(BaseSAML1ProfileRequestContext<?,?,?> requestContext, DateTime issueInstant) {
+    protected Assertion buildAssertion(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext, DateTime issueInstant) {
         Assertion assertion = assertionBuilder.buildObject();
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(issueInstant);
@@ -237,7 +233,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return constructed conditions
      */
-    protected Conditions buildConditions(BaseSAML1ProfileRequestContext<?,?,?> requestContext, DateTime issueInstant) {
+    protected Conditions buildConditions(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext, DateTime issueInstant) {
         AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
         Conditions conditions = conditionsBuilder.buildObject();
@@ -272,10 +268,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @throws ProfileException thrown if a NameID can not be created either because there was a problem encoding the
      *             name ID attribute or because there are no supported name formats
      */
-    protected Subject buildSubject(BaseSAML1ProfileRequestContext<?,?,?> requestContext, String confirmationMethod)
+    protected Subject buildSubject(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext, String confirmationMethod)
             throws ProfileException {
         NameIdentifier nameID = buildNameId(requestContext);
-        requestContext.setSubjectNameID(nameID);
+        requestContext.setSubjectNameIdentifier(nameID);
 
         ConfirmationMethod method = confirmationMethodBuilder.buildObject();
         method.setConfirmationMethod(confirmationMethod);
@@ -304,7 +300,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @throws ProfileException thrown if a NameIdentifier can not be created either because there was a problem
      *             encoding the name ID attribute or because there are no supported name formats
      */
-    protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
+            throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Building assertion NameIdentifier to relying party " + requestContext.getRelyingPartyEntityId()
                     + " for principal " + requestContext.getPrincipalName());
@@ -364,7 +361,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem determing the NameIdentifier format to use
      */
-    protected List<String> getNameFormats(BaseSAML1ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected List<String> getNameFormats(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
+            throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
         RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyRoleMetadata();
@@ -421,7 +419,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return the constructed error response
      */
-    protected Response buildErrorResponse(BaseSAML1ProfileRequestContext<?,?,?> requestContext) {
+    protected Response buildErrorResponse(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext) {
         Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(new DateTime());
         populateStatusResponse(requestContext, samlResponse);
@@ -437,7 +435,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @param requestContext current request context
      * @param response the response to populate
      */
-    protected void populateStatusResponse(BaseSAML1ProfileRequestContext<?,?,?> requestContext, ResponseAbstractType response) {
+    protected void populateStatusResponse(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext,
+            ResponseAbstractType response) {
         response.setID(getIdGenerator().generateIdentifier());
 
         SAMLObject samlMessage = requestContext.getInboundSAMLMessage();
@@ -485,7 +484,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if attributes can not be resolved
      */
-    protected void resolveAttributes(BaseSAML1ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected void resolveAttributes(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML1AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
@@ -494,8 +493,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                 log.debug("Resolving attributes for principal " + requestContext.getPrincipalName()
                         + " of SAML request from relying party " + requestContext.getRelyingPartyEntityId());
             }
-            Map<String, BaseAttribute> principalAttributes = attributeAuthority
-                    .getAttributes(buildAttributeRequestContext(requestContext));
+            Map<String, BaseAttribute> principalAttributes = attributeAuthority.getAttributes(requestContext);
 
             requestContext.setPrincipalAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
@@ -517,7 +515,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if there is a problem making the query
      */
-    protected AttributeStatement buildAttributeStatement(BaseSAML1ProfileRequestContext<?,?,?> requestContext,
+    protected AttributeStatement buildAttributeStatement(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext,
             String subjectConfMethod) throws ProfileException {
 
         if (log.isDebugEnabled()) {
@@ -531,8 +529,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         try {
             AttributeStatement statment;
             if (requestContext.getInboundSAMLMessage() instanceof AttributeQuery) {
-                statment = attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext.getInboundSAMLMessage(),
-                        requestContext.getPrincipalAttributes().values());
+                statment = attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext
+                        .getInboundSAMLMessage(), requestContext.getPrincipalAttributes().values());
             } else {
                 statment = attributeAuthority.buildAttributeStatement(null, requestContext.getPrincipalAttributes()
                         .values());
@@ -557,7 +555,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException thrown if the principal name can not be resolved
      */
-    protected void resolvePrincipal(BaseSAML1ProfileRequestContext<?,?,?> requestContext) throws ProfileException {
+    protected void resolvePrincipal(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML1AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
@@ -567,7 +565,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         try {
-            String principal = attributeAuthority.getPrincipal(buildAttributeRequestContext(requestContext));
+            String principal = attributeAuthority.getPrincipal(requestContext);
             requestContext.setPrincipalName(principal);
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes for SAML request from relying party "
@@ -580,49 +578,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
-     * Creates an attribute query context from the current profile request context.
-     * 
-     * @param requestContext current profile request
-     * 
-     * @return created query context
-     */
-    protected ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> buildAttributeRequestContext(
-            BaseSAML1ProfileRequestContext<?,?,?> requestContext) {
-
-        ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery> queryContext;
-
-        if (requestContext.getInboundSAMLMessage() instanceof Request) {
-            Request samlRequest = (Request) requestContext.getInboundSAMLMessage();
-            queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
-                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), samlRequest
-                            .getAttributeQuery());
-        } else {
-            queryContext = new ShibbolethSAMLAttributeRequestContext<NameIdentifier, AttributeQuery>(
-                    getMetadataProvider(), requestContext.getRelyingPartyConfiguration(), null);
-        }
-
-        queryContext.setAttributeRequester(requestContext.getAssertingPartyEntityId());
-        queryContext.setPrincipalName(requestContext.getPrincipalName());
-        queryContext.setProfileConfiguration(requestContext.getProfileConfiguration());
-        queryContext.setRequest(requestContext.getProfileRequest());
-
-        Session userSession = getSessionManager().getSession(getUserSessionId(requestContext.getProfileRequest()));
-        if (userSession != null) {
-            queryContext.setUserSession(userSession);
-            ServiceInformation serviceInfo = userSession.getServicesInformation().get(
-                    requestContext.getRelyingPartyEntityId());
-            if (serviceInfo != null) {
-                String principalAuthenticationMethod = serviceInfo.getAuthenticationMethod().getAuthenticationMethod();
-
-                requestContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
-                queryContext.setPrincipalAuthenticationMethod(principalAuthenticationMethod);
-            }
-        }
-
-        return queryContext;
-    }
-
-    /**
      * Signs the given assertion if either the current profile configuration or the relying party configuration contains
      * signing credentials.
      * 
@@ -632,7 +587,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * @throws ProfileException thrown if the metadata can not be located for the relying party or, if signing is
      *             required, if a signing credential is not configured
      */
-    protected void signAssertion(BaseSAML1ProfileRequestContext<?,?,?> requestContext, Assertion assertion)
+    protected void signAssertion(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion)
             throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Determining if SAML assertion to relying party " + requestContext.getRelyingPartyEntityId()
@@ -695,16 +650,16 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @param context current request context
      */
-    protected void writeAuditLogEntry(BaseSAML1ProfileRequestContext<?,?,?> context) {
+    protected void writeAuditLogEntry(BaseSAML1ProfileRequestContext<?, ?, ?> context) {
         AuditLogEntry auditLogEntry = new AuditLogEntry();
         auditLogEntry.setMessageProfile(getProfileId());
         auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
         auditLogEntry.setPrincipalName(context.getPrincipalName());
         auditLogEntry.setAssertingPartyId(context.getAssertingPartyEntityId());
         auditLogEntry.setRelyingPartyId(context.getRelyingPartyEntityId());
-        auditLogEntry.setRequestBinding(context.getMessageDecoder());
+        auditLogEntry.setRequestBinding(getMessageDecoder().getBindingURI());
         auditLogEntry.setRequestId(null);
-        auditLogEntry.setResponseBinding(context.getMessageEncoder());
+        auditLogEntry.setResponseBinding(getMessageEncoder().getBindingURI());
         auditLogEntry.setResponseId(context.getOutboundSAMLMessageId());
         if (context.getReleasedPrincipalAttributeIds() != null) {
             auditLogEntry.getReleasedAttributes().addAll(context.getReleasedPrincipalAttributeIds());

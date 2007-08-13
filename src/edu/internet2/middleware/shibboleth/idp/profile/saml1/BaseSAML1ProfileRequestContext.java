@@ -6,8 +6,7 @@ import org.opensaml.saml1.core.RequestAbstractType;
 import org.opensaml.saml1.core.ResponseAbstractType;
 import org.opensaml.saml1.core.Status;
 
-import edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAMLAttributeRequestContext;
-import edu.internet2.middleware.shibboleth.common.profile.provider.BaseShibbolethProfileRequestContext;
+import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 
 /**
@@ -18,8 +17,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.Ab
  * @param <ProfileConfigurationType> configuration type for this profile
  */
 public abstract class BaseSAML1ProfileRequestContext<RequestType extends RequestAbstractType, ResponseType extends ResponseAbstractType, ProfileConfigurationType extends AbstractSAML1ProfileConfiguration>
-        extends BaseShibbolethProfileRequestContext<RequestType, ResponseType, ProfileConfigurationType>
-        implements ShibbolethSAMLAttributeRequestContext<NameIdentifier, RequestType, ResponseType, ProfileConfigurationType> {
+        extends BaseSAMLProfileRequestContext<RequestType, ResponseType, NameIdentifier, ProfileConfigurationType> {
 
     /** The request failure status. */
     private Status failureStatus;
