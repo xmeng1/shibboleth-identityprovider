@@ -16,12 +16,10 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import org.opensaml.ws.transport.http.HTTPInTransport;
+import org.opensaml.ws.transport.http.HTTPOutTransport;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
  * SAML 2.0 Artifact resolution profile handler.
@@ -29,15 +27,14 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
-    public String getProfileId() {
+    public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         // TODO Auto-generated method stub
-        return null;
+
     }
 
     /** {@inheritDoc} */
-    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
-            throws ProfileException {
+    public String getProfileId() {
         // TODO Auto-generated method stub
-
+        return null;
     }
 }

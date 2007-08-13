@@ -16,17 +16,25 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
+import org.opensaml.ws.transport.http.HTTPInTransport;
+import org.opensaml.ws.transport.http.HTTPOutTransport;
+
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 
 /**
  * SAML 2.0 Logout Request profile handler.
  */
-public abstract class LogoutRequest extends AbstractSAML2ProfileHandler {
+public class LogoutRequest extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
-    public void processRequest(ProfileRequest request, ProfileResponse response) throws ProfileException {
+    public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         // TODO Auto-generated method stub
+
+    }
+
+    /** {@inheritDoc} */
+    public String getProfileId() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

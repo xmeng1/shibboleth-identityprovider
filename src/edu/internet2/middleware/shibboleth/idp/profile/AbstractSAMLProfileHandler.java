@@ -16,23 +16,17 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.IdentifierGenerator;
-import org.opensaml.common.SAMLObject;
-import org.opensaml.common.binding.decoding.MessageDecoderFactory;
-import org.opensaml.common.binding.encoding.MessageEncoderFactory;
-import org.opensaml.saml2.metadata.Endpoint;
-import org.opensaml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
+import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.ws.transport.InTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -49,15 +43,24 @@ public abstract class AbstractSAMLProfileHandler extends
     /** Generator of IDs which may be used for SAML assertions, requests, etc. */
     private IdentifierGenerator idGenerator;
 
-    /** Factory of message decoders. */
-    private MessageDecoderFactory decoderFactory;
+    /** Decoder used to extract message information from the inbound transport. */
+    private SAMLMessageDecoder messageDecoder;
 
-    /** Factory of message encoders. */
-    private MessageEncoderFactory encoderFactory;
+    /** Encoder used to bind information to the outbound message transport. */
+    private SAMLMessageEncoder messageEncoder;
 
     /** Constructor. */
     protected AbstractSAMLProfileHandler() {
         super();
+    }
+
+    /**
+     * Gets the audit log for this handler.
+     * 
+     * @return audit log for this handler
+     */
+    protected Logger getAduitLog() {
+        return auditLog;
     }
 
     /**
@@ -70,48 +73,21 @@ public abstract class AbstractSAMLProfileHandler extends
     }
 
     /**
-     * Gets an ID generator which may be used for SAML assertions, requests, etc.
+     * Gets the decoder used to extract message information from the inbound transport.
      * 
-     * @param generator an ID generator which may be used for SAML assertions, requests, etc
+     * @return decoder used to extract message information from the inbound transport
      */
-    public void setIdGenerator(IdentifierGenerator generator) {
-        idGenerator = generator;
+    public SAMLMessageDecoder getMessageDecoder() {
+        return messageDecoder;
     }
 
     /**
-     * Gets the factory used to build new message decoders.
+     * Gets the encoder used to bind information to the outbound message transport.
      * 
-     * @return factory used to build new message decoders
+     * @return encoder used to bind information to the outbound message transport
      */
-    public MessageDecoderFactory getMessageDecoderFactory() {
-        return decoderFactory;
-    }
-
-    /**
-     * Sets the factory used to build new message decoders.
-     * 
-     * @param factory factory used to build new message decoders
-     */
-    public void setMessageDecoderFactory(MessageDecoderFactory factory) {
-        decoderFactory = factory;
-    }
-
-    /**
-     * Gets the factory used to build message encoders.
-     * 
-     * @return factory used to build message encoders
-     */
-    public MessageEncoderFactory getMessageEncoderFactory() {
-        return encoderFactory;
-    }
-
-    /**
-     * Sets the factory used to build message encoders.
-     * 
-     * @param factory factory used to build message encoders
-     */
-    public void setMessageEncoderFactory(MessageEncoderFactory factory) {
-        encoderFactory = factory;
+    public SAMLMessageEncoder getMessageEncoder() {
+        return messageEncoder;
     }
 
     /**
@@ -129,214 +105,58 @@ public abstract class AbstractSAMLProfileHandler extends
     }
 
     /**
-     * Gets the audit log for this handler.
-     * 
-     * @return audit log for this handler
-     */
-    protected Logger getAduitLog() {
-        return auditLog;
-    }
-
-    /**
      * Gets the user's session ID from the current request.
      * 
-     * @param request current request
+     * @param inTransport current inbound transport
      * 
      * @return user's session ID
      */
-    protected String getUserSessionId(ProfileRequest<ServletRequest> request) {
-        HttpServletRequest rawRequest = (HttpServletRequest) request.getRawRequest();
+    protected String getUserSessionId(InTransport inTransport) {
+        HttpServletRequest rawRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+
         if (rawRequest != null) {
             return (String) rawRequest.getSession().getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         }
 
         return null;
     }
+    
+    /**
+     * Gets the user's session, if there is one.
+     * 
+     * @param inTransport current inbound transport
+     * 
+     * @return user's session
+     */
+    protected Session getUserSession(InTransport inTransport){
+        String sessionId = getUserSessionId(inTransport);
+        return getSessionManager().getSession(sessionId);
+    }
 
     /**
-     * Contextual object used to accumlate information as profile requests are being processed.
+     * Gets an ID generator which may be used for SAML assertions, requests, etc.
      * 
-     * @param <StatusType> type of Status object
+     * @param generator an ID generator which may be used for SAML assertions, requests, etc
      */
-    protected class SAMLProfileRequestContext<StatusType extends SAMLObject> extends ShibbolethProfileRequestContext {
-        
-        /** Entity descriptor for the asserting party. */
-        private EntityDescriptor assertingPartyMetadata;
+    public void setIdGenerator(IdentifierGenerator generator) {
+        idGenerator = generator;
+    }
 
-        /** Role descriptor meatadata for the asserting party. */
-        private RoleDescriptor assertingPartyRoleMetadata;
-        
-        /** Message decoder URI. */
-        private String messageDecoder;
-        
-        /** Message encoder URI. */
-        private String messageEncoder;
-        
-        /** Request relay state. */
-        private String relayState;
+    /**
+     * Sets the decoder used to extract message information from the inbound transport.
+     * 
+     * @param decoder decoder used to extract message information from the inbound transport
+     */
+    public void setMessageDecoder(SAMLMessageDecoder decoder) {
+        messageDecoder = decoder;
+    }
 
-        /** Endpoint of relying party. */
-        private Endpoint relyingPartyEndpoint;
-        
-        /** Entity descriptor for the relying party. */
-        private EntityDescriptor relyingPartyMetadata;
-
-        /** Role descriptor meatadata for the relying party. */
-        private RoleDescriptor relyingPartyRoleMetadata;
-
-        /**
-         * Constructor.
-         * 
-         * @param request current profile request
-         * @param response current profile response
-         */
-        public SAMLProfileRequestContext(ProfileRequest<ServletRequest> request,
-                ProfileResponse<ServletResponse> response) {
-            super(request, response);
-        }
-
-        /**
-         * Gets the metadata for the asserting party.
-         * 
-         * @return metadata for the asserting party
-         */
-        public EntityDescriptor getAssertingPartyMetadata() {
-            return assertingPartyMetadata;
-        }
-
-        /**
-         * Sets the metadata for the asserting party.
-         * 
-         * @param metadata metadata for the asserting party
-         */
-        public void setAssertingPartyMetadata(EntityDescriptor metadata) {
-            assertingPartyMetadata = metadata;
-        }
-
-        /**
-         * Gets the role descriptor for the asserting party.
-         * 
-         * @return role descriptor for the asserting party
-         */
-        public RoleDescriptor getAssertingPartyRoleMetadata() {
-            return assertingPartyRoleMetadata;
-        }
-
-        /**
-         * Sets the role descriptor for the asserting party.
-         * 
-         * @param descriptor role descriptor for the asserting party
-         */
-        public void setAssertingPartyRoleMetadata(RoleDescriptor descriptor) {
-            assertingPartyRoleMetadata = descriptor;
-        }
-        
-        /**
-         * Gets the URI of the message decoder used to decode the incoming request.
-         * 
-         * @return URI of the message decoder used to decode the incoming request
-         */
-        public String getMessageDecoder(){
-            return messageDecoder;
-        }
-        
-        /**
-         * Sets the URI of the message decoder used to decode the incoming request.
-         * 
-         * @param decoderURI URI of the message decoder used to decode the incoming request
-         */
-        public void setMessageDecoder(String decoderURI){
-            messageDecoder = decoderURI;
-        }
-        
-        /**
-         * Gets the URI of the message encoder used to encode the outgoing response.
-         * 
-         * @return URI of the message encoder used to encode the outgoing response
-         */
-        public String getMessageEncoder(){
-            return messageEncoder;
-        }
-        
-        /**
-         * Sets the URI of the message encoder used to encode the outgoing response.
-         * 
-         * @param encoderURI URI of the message encoder used to encode the outgoing response
-         */
-        public void setMessageEncoder(String encoderURI){
-            messageEncoder = encoderURI;
-        }
-        
-        /**
-         * Gets the relay state of the current request.
-         * 
-         * @return relay state of the current request
-         */
-        public String getRelayState(){
-            return relayState;
-        }
-        
-        /**
-         * Sets the relay state of the current request.
-         * 
-         * @param state relay state of the current request
-         */
-        public void setRelayState(String state){
-            relayState = state;
-        }
-        
-        /**
-         * Gets the endpoint for the relying party.
-         * 
-         * @return endpoint for the relying party
-         */
-        public Endpoint getRelyingPartyEndpoint(){
-            return relyingPartyEndpoint;
-        }
-        
-        /**
-         * Sets the endpoint for the relying party.
-         * 
-         * @param endpoint endpoint for the relying party
-         */
-        public void setRelyingPartyEndpoint(Endpoint endpoint){
-            relyingPartyEndpoint = endpoint;
-        }
-
-        /**
-         * Gets the metadata for the relying party.
-         * 
-         * @return metadata for the relying party
-         */
-        public EntityDescriptor getRelyingPartyMetadata() {
-            return relyingPartyMetadata;
-        }
-
-        /**
-         * Sets the metadata for the relying party.
-         * 
-         * @param metadata metadata for the relying party
-         */
-        public void setRelyingPartyMetadata(EntityDescriptor metadata) {
-            relyingPartyMetadata = metadata;
-        }
-
-        /**
-         * Gets the role descriptor for the relying party.
-         * 
-         * @return role descriptor for the relying party
-         */
-        public RoleDescriptor getRelyingPartyRoleMetadata() {
-            return relyingPartyRoleMetadata;
-        }
-
-        /**
-         * Sets the role descriptor for the relying party.
-         * 
-         * @param descriptor role descriptor for the relying party
-         */
-        public void setRelyingPartyRoleMetadata(RoleDescriptor descriptor) {
-            relyingPartyRoleMetadata = descriptor;
-        }
+    /**
+     * Sets the encoder used to bind information to the outbound message transport.
+     * 
+     * @param encoder encoder used to bind information to the outbound message transport
+     */
+    public void setMessageEncoder(SAMLMessageEncoder encoder) {
+        messageEncoder = encoder;
     }
 }

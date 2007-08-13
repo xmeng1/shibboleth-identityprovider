@@ -237,7 +237,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
         }
 
         profileHandlers.clear();
-        AbstractRequestURIMappedProfileHandler profileHandler;
+        AbstractRequestURIMappedProfileHandler<?,?> profileHandler;
         for (String profileBeanName : profileBeanNames) {
             profileHandler = (AbstractRequestURIMappedProfileHandler) newServiceContext.getBean(profileBeanName);
             for (String requestPath : profileHandler.getRequestPaths()) {

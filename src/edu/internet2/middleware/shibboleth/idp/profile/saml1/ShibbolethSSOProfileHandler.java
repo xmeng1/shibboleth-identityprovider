@@ -24,8 +24,6 @@ import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -33,8 +31,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
-import org.opensaml.common.binding.BindingException;
-import org.opensaml.common.binding.encoding.MessageEncoder;
+import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
@@ -44,16 +41,23 @@ import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml1.core.SubjectLocality;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
-import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.ws.message.encoder.MessageEncodingException;
+import org.opensaml.ws.transport.http.HTTPInTransport;
+import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.util.DatatypeHelper;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConstants;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
@@ -72,7 +76,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
-    
+
     /** URI of SAML 1 bindings supported for outgoing message encoding. */
     private ArrayList<String> supportedOutgoingBindings;
 
@@ -90,8 +94,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             throw new IllegalArgumentException("Authentication manager path may not be null");
         }
         authenticationManagerPath = authnManagerPath;
-        
-        if(outgoingBindings == null || outgoingBindings.isEmpty()){
+
+        if (outgoingBindings == null || outgoingBindings.isEmpty()) {
             throw new IllegalArgumentException("List of supported outgoing bindings may not be empty");
         }
         supportedOutgoingBindings = new ArrayList<String>(outgoingBindings);
@@ -109,27 +113,24 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     }
 
     /** {@inheritDoc} */
-    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
-            throws ProfileException {
-
-        if (response.getRawResponse().isCommitted()) {
-            log.error("HTTP Response already committed");
-        }
-
+    public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Processing incomming request");
         }
-        HttpSession httpSession = ((HttpServletRequest) request.getRawRequest()).getSession(true);
+
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpSession httpSession = httpRequest.getSession();
+
         if (httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY) == null) {
             if (log.isDebugEnabled()) {
                 log.debug("User session does not contain a login context, processing as first leg of request");
             }
-            performAuthentication(request, response);
+            performAuthentication(inTransport, outTransport);
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("User session contains a login context, processing as second leg of request");
             }
-            completeAuthenticationRequest(request, response);
+            completeAuthenticationRequest(inTransport, outTransport);
         }
     }
 
@@ -137,17 +138,17 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * Creates a {@link LoginContext} an sends the request off to the AuthenticationManager to begin the process of
      * authenticating the user.
      * 
-     * @param request current request
-     * @param response current response
+     * @param inTransport inbound message transport
+     * @param outTransport outbound message transport
      * 
      * @throws ProfileException thrown if there is a problem creating the login context and transferring control to the
      *             authentication manager
      */
-    protected void performAuthentication(ProfileRequest<ServletRequest> request,
-            ProfileResponse<ServletResponse> response) throws ProfileException {
+    protected void performAuthentication(HTTPInTransport inTransport, HTTPOutTransport outTransport)
+            throws ProfileException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request.getRawRequest();
-        HttpServletResponse httpResponse = (HttpServletResponse) response.getRawResponse();
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
         HttpSession httpSession = httpRequest.getSession(true);
 
         LoginContext loginContext = buildLoginContext(httpRequest);
@@ -176,20 +177,21 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * Creates a response to the Shibboleth SSO and sends the user, with response in tow, back to the relying party
      * after they've been authenticated.
      * 
-     * @param request current request
-     * @param response current response
+     * @param inTransport inbound message transport
+     * @param outTransport outbound message transport
      * 
      * @throws ProfileException thrown if the response can not be created and sent back to the relying party
      */
-    protected void completeAuthenticationRequest(ProfileRequest<ServletRequest> request,
-            ProfileResponse<ServletResponse> response) throws ProfileException {
-        HttpSession httpSession = ((HttpServletRequest) request.getRawRequest()).getSession(true);
+    protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
+            throws ProfileException {
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpSession httpSession = httpRequest.getSession(true);
 
         ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) httpSession
                 .getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
-        ShibbolethSSORequestContext requestContext = buildRequestContext(loginContext, request, response);
+        ShibbolethSSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
         Response samlResponse;
         try {
@@ -197,9 +199,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "User failed authentication"));
                 throw new ProfileException("User failed authentication");
             }
-            
+
             resolveAttributes(requestContext);
-            
+
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthenticationStatement(requestContext));
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
@@ -211,7 +213,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             samlResponse = buildErrorResponse(requestContext);
         }
 
-        requestContext.setSamlResponse(samlResponse);
+        requestContext.setOutboundSAMLMessage(samlResponse);
+        requestContext.setOutboundSAMLMessageId(samlResponse.getID());
+        requestContext.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
         encodeResponse(requestContext);
         writeAuditLogEntry(requestContext);
     }
@@ -270,104 +274,95 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * Creates an authentication request context from the current environmental information.
      * 
      * @param loginContext current login context
-     * @param request current request
-     * @param response current response
+     * @param in inbound transport
+     * @param out outbount transport
      * 
      * @return created authentication request context
      * 
-     * @throws ProfileException thrown if asserting and relying party metadata can not be located
+     * @throws ProfileException thrown if there is a problem creating the context
      */
     protected ShibbolethSSORequestContext buildRequestContext(ShibbolethSSOLoginContext loginContext,
-            ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) throws ProfileException {
-        ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext(request, response);
+            HTTPInTransport in, HTTPOutTransport out) throws ProfileException {
+        ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
 
-        requestContext.setRelayState(loginContext.getSpTarget());
-        
-        requestContext.setLoginContext(loginContext);
-
-        requestContext.setPrincipalName(loginContext.getPrincipalName());
-
-        requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
-
-        String relyingPartyId = loginContext.getRelyingPartyId();
-
-        requestContext.setRelyingPartyId(relyingPartyId);
-
-        populateRelyingPartyData(requestContext);
-
-        populateAssertingPartyData(requestContext);
-
-        return requestContext;
-    }
-
-    /**
-     * Populates the relying party entity and role metadata and relying party configuration data.
-     * 
-     * @param requestContext current request context with relying party ID populated
-     * 
-     * @throws ProfileException thrown if metadata can not be located for the relying party
-     */
-    protected void populateRelyingPartyData(ShibbolethSSORequestContext requestContext) throws ProfileException {
         try {
-            requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(
-                    requestContext.getRelyingPartyId()));
+            requestContext.setLoginContext(loginContext);
+            requestContext.setPrincipalName(loginContext.getPrincipalName());
+            requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
+            requestContext.setUserSession(getUserSession(in));
+            requestContext.setRelayState(loginContext.getSpTarget());
 
-            RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                    ShibbolethConstants.SAML11P_NS);
+            requestContext.setMessageInTransport(in);
+            requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
 
-            if (relyingPartyRole == null) {
-                relyingPartyRole = requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                        ShibbolethConstants.SAML10P_NS);
-                if (relyingPartyRole == null) {
-                    throw new MetadataProviderException("Unable to locate SPSSO role descriptor for entity "
-                            + requestContext.getRelyingPartyId());
-                }
-            }
-            requestContext.setRelyingPartyRoleMetadata(relyingPartyRole);
+            MetadataProvider metadataProvider = getMetadataProvider();
+            requestContext.setMetadataProvider(metadataProvider);
 
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(requestContext.getRelyingPartyId());
+            String relyingPartyId = loginContext.getRelyingPartyId();
+            requestContext.setRelyingPartyEntityId(relyingPartyId);
+            EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
+            requestContext.setRelyingPartyMetadata(relyingPartyMetadata);
+            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setRelyingPartyRoleMetadata(relyingPartyMetadata
+                    .getSPSSODescriptor(SAMLConstants.SAML11P_NS));
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             requestContext.setRelyingPartyConfiguration(rpConfig);
+            requestContext.setRelyingPartyEndpoint(selectEndpoint(requestContext));
 
-            requestContext.setProfileConfiguration((ShibbolethSSOConfiguration) rpConfig
-                    .getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID));
+            String assertingPartyId = rpConfig.getProviderId();
+            requestContext.setAssertingPartyEntityId(assertingPartyId);
+            EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
+            requestContext.setAssertingPartyMetadata(assertingPartyMetadata);
+            requestContext.setAssertingPartyRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setAssertingPartyRoleMetadata(assertingPartyMetadata
+                    .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
 
+            requestContext.setMessageOutTransport(out);
+            requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+            ShibbolethSSOConfiguration profileConfig = (ShibbolethSSOConfiguration) rpConfig
+                    .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
+            requestContext.setProfileConfiguration(profileConfig);
+            if (profileConfig.getSigningCredential() != null) {
+                requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+            } else if (rpConfig.getDefaultSigningCredential() != null) {
+                requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+            }
+
+            return requestContext;
         } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for relying party " + requestContext.getRelyingPartyId());
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                    "Unable to locate metadata for relying party " + requestContext.getRelyingPartyId()));
-            throw new ProfileException("Unable to locate metadata for relying party "
-                    + requestContext.getRelyingPartyId());
+            log.error("Unable to locate metadata for asserting or relying party");
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
+            throw new ProfileException("Error locating party metadata");
         }
     }
 
     /**
-     * Populates the asserting party entity and role metadata.
+     * Selects the appropriate endpoint for the relying party and stores it in the request context.
      * 
-     * @param requestContext current request context with relying party configuration populated
+     * @param requestContext current request context
      * 
-     * @throws ProfileException thrown if metadata can not be located for the asserting party
+     * @return Endpoint selected from the information provided in the request context
      */
-    protected void populateAssertingPartyData(ShibbolethSSORequestContext requestContext) throws ProfileException {
-        String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
+    protected Endpoint selectEndpoint(ShibbolethSSORequestContext requestContext) {
+        ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
 
-        try {
-            requestContext.setAssertingPartyId(assertingPartyId);
-
-            requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(assertingPartyId));
-
-            RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyMetadata().getIDPSSODescriptor(
-                    ShibbolethConstants.SHIB_SSO_PROFILE_URI);
-            if (assertingPartyRole == null) {
-                throw new MetadataProviderException("Unable to locate IDPSSO role descriptor for entity "
-                        + assertingPartyId);
-            }
-            requestContext.setAssertingPartyRoleMetadata(assertingPartyRole);
-        } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for asserting party " + assertingPartyId);
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                    "Unable to locate metadata for relying party " + assertingPartyId));
-            throw new ProfileException("Unable to locate metadata for relying party " + assertingPartyId);
+        if (loginContext.getSpAssertionConsumerService() != null) {
+            SAMLObjectBuilder<AssertionConsumerService> acsBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory()
+                    .getBuilder(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            AssertionConsumerService acsEndpoint = acsBuilder.buildObject();
+            acsEndpoint.setBinding(getMessageEncoder().getBindingURI());
+            acsEndpoint.setLocation(loginContext.getSpAssertionConsumerService());
+            return acsEndpoint;
         }
+
+        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+        endpointSelector.setMetadataProvider(getMetadataProvider());
+        endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
+        endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
+        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+        endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
+        return endpointSelector.selectEndpoint();
     }
 
     /**
@@ -405,9 +400,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected SubjectLocality buildSubjectLocality(ShibbolethSSORequestContext requestContext) {
         SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
 
-        HttpServletRequest httpRequest = (HttpServletRequest) requestContext.getProfileRequest().getRawRequest();
-        subjectLocality.setIPAddress(httpRequest.getRemoteAddr());
-        subjectLocality.setDNSAddress(httpRequest.getRemoteHost());
+        HTTPInTransport inTransport = (HTTPInTransport) requestContext.getMessageInTransport();
+        subjectLocality.setIPAddress(inTransport.getPeerAddress());
+        subjectLocality.setDNSAddress(inTransport.getPeerDomainName());
 
         return subjectLocality;
     }
@@ -421,62 +416,24 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      */
     protected void encodeResponse(ShibbolethSSORequestContext requestContext) throws ProfileException {
         if (log.isDebugEnabled()) {
-            log.debug("Encoding response to SAML request from relying party " + requestContext.getRelyingPartyId());
+            log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
+                    + " from relying party " + requestContext.getRelyingPartyEntityId());
         }
-
-        Endpoint relyingPartyEndpoint;
-
-        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
-        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-        endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
-        endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
-        endpointSelector.setSamlRequest(requestContext.getSamlRequest());
-        endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
-        relyingPartyEndpoint = endpointSelector.selectEndpoint();
-
-        if (relyingPartyEndpoint == null) {
-            log.error("Unable to determine endpoint, from metadata, for relying party "
-                    + requestContext.getRelyingPartyId() + " acting in SPSSO role");
-            throw new ProfileException("Unable to determine endpoint, from metadata, for relying party "
-                    + requestContext.getRelyingPartyId() + " acting in SPSSO role");
-        }
-
-        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(
-                relyingPartyEndpoint.getBinding());
-        encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
-        super.populateMessageEncoder(encoder);
-        encoder.setRelayState(requestContext.getRelayState());
-        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
-        encoder.setResponse(profileResponse.getRawResponse());
-        encoder.setSamlMessage(requestContext.getSamlResponse());
-        requestContext.setMessageEncoder(encoder.getBindingURI());
 
         try {
-            encoder.encode();
-        } catch (BindingException e) {
+            getMessageEncoder().encode(requestContext);
+        } catch (MessageEncodingException e) {
             throw new ProfileException("Unable to encode response to relying party: "
-                    + requestContext.getRelyingPartyId(), e);
+                    + requestContext.getRelyingPartyEntityId(), e);
         }
     }
 
     /** Represents the internal state of a Shibboleth SSO Request while it's being processed by the IdP. */
     protected class ShibbolethSSORequestContext extends
-            SAML1ProfileRequestContext<Request, Response, ShibbolethSSOConfiguration> {
+            BaseSAML1ProfileRequestContext<Request, Response, ShibbolethSSOConfiguration> {
 
         /** Current login context. */
         private ShibbolethSSOLoginContext loginContext;
-
-        /**
-         * Constructor.
-         * 
-         * @param request current profile request
-         * @param response current profile response
-         */
-        public ShibbolethSSORequestContext(ProfileRequest<ServletRequest> request,
-                ProfileResponse<ServletResponse> response) {
-            super(request, response);
-        }
 
         /**
          * Gets the current login context.

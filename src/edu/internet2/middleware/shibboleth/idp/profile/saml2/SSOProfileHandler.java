@@ -22,17 +22,11 @@ import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObjectBuilder;
-import org.opensaml.common.binding.BindingException;
-import org.opensaml.common.binding.decoding.MessageDecoder;
-import org.opensaml.common.binding.encoding.MessageEncoder;
-import org.opensaml.common.binding.security.SAMLSecurityPolicy;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.AuthnResponseEndpointSelector;
 import org.opensaml.saml2.core.AuthnContext;
@@ -47,14 +41,22 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.SubjectLocality;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.ws.message.decoder.MessageDecodingException;
+import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.security.SecurityPolicyException;
+import org.opensaml.ws.transport.http.HTTPInTransport;
+import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.UnmarshallingException;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
@@ -84,7 +86,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
-    
+
     /** URI of SAML 2 bindings supported for outgoing messaged encoding. */
     private ArrayList<String> supportedOutgoingBindings;
 
@@ -106,12 +108,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             throw new IllegalArgumentException("AuthN manager path or decoding bindings URI may not be null");
         }
         authenticationManagerPath = authnManagerPath;
-        
-        if(outgoingBindings == null || outgoingBindings.isEmpty()){
+
+        if (outgoingBindings == null || outgoingBindings.isEmpty()) {
             throw new IllegalArgumentException("List of supported outgoing bindings may not be empty");
         }
         supportedOutgoingBindings = new ArrayList<String>(outgoingBindings);
-        
+
         decodingBinding = decoder;
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) getBuilderFactory().getBuilder(
@@ -132,14 +134,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /** {@inheritDoc} */
-    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
-            throws ProfileException {
+    public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
+        HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpSession httpSession = servletRequest.getSession();
 
-        HttpSession httpSession = ((HttpServletRequest) request.getRawRequest()).getSession(true);
         if (httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY) == null) {
-            performAuthentication(request, response);
+            performAuthentication(inTransport, outTransport);
         } else {
-            completeAuthenticationRequest(request, response);
+            completeAuthenticationRequest(inTransport, outTransport);
         }
     }
 
@@ -147,52 +149,47 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * Creates a {@link Saml2LoginContext} an sends the request off to the AuthenticationManager to begin the process of
      * authenticating the user.
      * 
-     * @param request current request
-     * @param response current response
+     * @param inTransport inbound request transport
+     * @param outTransport outbound response transport
      * 
      * @throws ProfileException thrown if there is a problem creating the login context and transferring control to the
      *             authentication manager
      */
-    protected void performAuthentication(ProfileRequest<ServletRequest> request,
-            ProfileResponse<ServletResponse> response) throws ProfileException {
-        HttpServletRequest httpRequest = (HttpServletRequest) request.getRawRequest();
+    protected void performAuthentication(HTTPInTransport inTransport, HTTPOutTransport outTransport)
+            throws ProfileException {
+        HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
-        AuthnRequest authnRequest = null;
         try {
-            MessageDecoder<ServletRequest> decoder = decodeRequest(request);
-            SAMLSecurityPolicy securityPolicy = decoder.getSecurityPolicy();
+            SSORequestContext requestContext = decodeRequest(inTransport, outTransport);
 
-            String relyingParty = securityPolicy.getIssuer();
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingParty);
+            String relyingPartyId = requestContext.getRelyingPartyEntityId();
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             if (rpConfig == null) {
-                log.error("No relying party configuration for " + relyingParty);
-                throw new ProfileException("No relying party configuration for " + relyingParty);
+                log.error("No relying party configuration for " + relyingPartyId);
+                throw new ProfileException("No relying party configuration for " + relyingPartyId);
             }
 
-            authnRequest = (AuthnRequest) decoder.getSAMLMessage();
-
-            Saml2LoginContext loginContext = new Saml2LoginContext(relyingParty, decoder.getRelayState(), authnRequest);
+            Saml2LoginContext loginContext = new Saml2LoginContext(relyingPartyId, requestContext.getRelayState(),
+                    requestContext.getInboundSAMLMessage());
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
-            loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
+            loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(servletRequest));
             if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
                 loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
             }
 
-            HttpSession httpSession = httpRequest.getSession();
+            HttpSession httpSession = servletRequest.getSession();
             httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
-            RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authenticationManagerPath);
-            dispatcher.forward(httpRequest, response.getRawResponse());
+            RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
+            dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
         } catch (MarshallingException e) {
             log.error("Unable to marshall authentication request context");
             throw new ProfileException("Unable to marshall authentication request context", e);
         } catch (IOException ex) {
-            log.error("Error forwarding SAML 2 AuthnRequest " + authnRequest.getID() + " to AuthenticationManager", ex);
-            throw new ProfileException("Error forwarding SAML 2 AuthnRequest " + authnRequest.getID()
-                    + " to AuthenticationManager", ex);
+            log.error("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
+            throw new ProfileException("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
         } catch (ServletException ex) {
-            log.error("Error forwarding SAML 2 AuthnRequest " + authnRequest.getID() + " to AuthenticationManager", ex);
-            throw new ProfileException("Error forwarding SAML 2 AuthnRequest " + authnRequest.getID()
-                    + " to AuthenticationManager", ex);
+            log.error("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
+            throw new ProfileException("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
         }
     }
 
@@ -200,20 +197,20 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * Creates a response to the {@link AuthnRequest} and sends the user, with response in tow, back to the relying
      * party after they've been authenticated.
      * 
-     * @param request current request
-     * @param response current response
+     * @param inTransport inbound message transport
+     * @param outTransport outbound message transport
      * 
      * @throws ProfileException thrown if the response can not be created and sent back to the relying party
      */
-    protected void completeAuthenticationRequest(ProfileRequest<ServletRequest> request,
-            ProfileResponse<ServletResponse> response) throws ProfileException {
-
-        HttpSession httpSession = ((HttpServletRequest) request.getRawRequest()).getSession(true);
+    protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
+            throws ProfileException {
+        HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpSession httpSession = servletRequest.getSession();
 
         Saml2LoginContext loginContext = (Saml2LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
-        SSORequestContext requestContext = buildRequestContext(loginContext, request, response);
+        SSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
         checkSamlVersion(requestContext);
 
@@ -225,12 +222,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                         .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, null));
                 throw new ProfileException("User failed authentication");
             }
-            
+
             resolveAttributes(requestContext);
-            
+
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthnStatement(requestContext));
-            if(requestContext.getProfileConfiguration().includeAttributeStatement()){
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
                 statements.add(buildAttributeStatement(requestContext));
             }
 
@@ -239,37 +236,38 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             samlResponse = buildErrorResponse(requestContext);
         }
 
-        requestContext.setSamlResponse(samlResponse);
+        requestContext.setOutboundSAMLMessage(samlResponse);
+        requestContext.setOutboundSAMLMessageId(samlResponse.getID());
+        requestContext.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
         encodeResponse(requestContext);
         writeAuditLogEntry(requestContext);
     }
 
     /**
-     * Creates an appropriate message decoder, populates it, and decodes the incoming request.
+     * Decodes an incoming request and stores the information in a created request context.
      * 
-     * @param request current request
+     * @param inTransport inbound transport
+     * @param outTransport outbound transport
      * 
-     * @return message decoder containing the decoded message and other stateful information
+     * @return request context with decoded information
      * 
      * @throws ProfileException thrown if the incomming message failed decoding
      */
-    protected MessageDecoder<ServletRequest> decodeRequest(ProfileRequest<ServletRequest> request)
+    protected SSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        if(log.isDebugEnabled()){
+        if (log.isDebugEnabled()) {
             log.debug("Decoding message with decoder binding " + decodingBinding);
         }
-        MessageDecoder<ServletRequest> decoder = getMessageDecoderFactory().getMessageDecoder(decodingBinding);
-        if (decoder == null) {
-            log.error("No request decoder was registered for binding type: " + decodingBinding);
-            throw new ProfileException("No request decoder was registered for binding type: " + decodingBinding);
-        }
 
-        populateMessageDecoder(decoder);
-        decoder.setRequest(request.getRawRequest());
+        SSORequestContext requestContext = new SSORequestContext();
+        requestContext.setMessageInTransport(inTransport);
+        requestContext.setMessageOutTransport(outTransport);
+        requestContext.setMetadataProvider(getMetadataProvider());
+
         try {
-            decoder.decode();
-            return decoder;
-        } catch (BindingException e) {
+            getMessageDecoder().decode(requestContext);
+            return requestContext;
+        } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);
             throw new ProfileException("Error decoding authentication request message", e);
         } catch (SecurityPolicyException e) {
@@ -282,53 +280,62 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * Creates an authentication request context from the current environmental information.
      * 
      * @param loginContext current login context
-     * @param request current request
-     * @param response current response
+     * @param in inbound transport
+     * @param out outbount transport
      * 
      * @return created authentication request context
      * 
      * @throws ProfileException thrown if there is a problem creating the context
      */
-    protected SSORequestContext buildRequestContext(Saml2LoginContext loginContext,
-            ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) throws ProfileException {
-        SSORequestContext requestContext = new SSORequestContext(request, response);
+    protected SSORequestContext buildRequestContext(Saml2LoginContext loginContext, HTTPInTransport in,
+            HTTPOutTransport out) throws ProfileException {
+        SSORequestContext requestContext = new SSORequestContext();
 
         try {
-            requestContext.setMessageDecoder(decodingBinding);
-
+            requestContext.setLoginContext(loginContext);
+            requestContext.setPrincipalName(loginContext.getPrincipalName());
+            requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
+            requestContext.setUserSession(getUserSession(in));
             requestContext.setRelayState(loginContext.getRelayState());
 
-            requestContext.setLoginContext(loginContext);
+            requestContext.setMessageInTransport(in);
+            requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+            requestContext.setInboundMessage(loginContext.getAuthenticationRequest());
+            requestContext.setInboundSAMLMessage(loginContext.getAuthenticationRequest());
+            requestContext.setInboundSAMLMessageId(loginContext.getAuthenticationRequest().getID());
+
+            MetadataProvider metadataProvider = getMetadataProvider();
+            requestContext.setMetadataProvider(metadataProvider);
 
             String relyingPartyId = loginContext.getRelyingPartyId();
-            AuthnRequest authnRequest = loginContext.getAuthenticationRequest();
-
-            requestContext.setRelyingPartyId(relyingPartyId);
-
-            requestContext.setRelyingPartyMetadata(getMetadataProvider().getEntityDescriptor(relyingPartyId));
-
-            requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
-                    SAMLConstants.SAML20P_NS));
-
+            requestContext.setRelyingPartyEntityId(relyingPartyId);
+            EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
+            requestContext.setRelyingPartyMetadata(relyingPartyMetadata);
+            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setRelyingPartyRoleMetadata(relyingPartyMetadata
+                    .getSPSSODescriptor(SAMLConstants.SAML20P_NS));
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             requestContext.setRelyingPartyConfiguration(rpConfig);
+            requestContext.setRelyingPartyEndpoint(selectEndpoint(requestContext));
 
-            requestContext.setAssertingPartyId(requestContext.getRelyingPartyConfiguration().getProviderId());
+            String assertingPartyId = rpConfig.getProviderId();
+            requestContext.setAssertingPartyEntityId(assertingPartyId);
+            EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
+            requestContext.setAssertingPartyMetadata(assertingPartyMetadata);
+            requestContext.setAssertingPartyRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setAssertingPartyRoleMetadata(assertingPartyMetadata
+                    .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
 
-            requestContext.setAssertingPartyMetadata(getMetadataProvider().getEntityDescriptor(
-                    requestContext.getAssertingPartyId()));
-
-            requestContext.setAssertingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getIDPSSODescriptor(
-                    SAMLConstants.SAML20P_NS));
-
-            requestContext.setPrincipalName(loginContext.getPrincipalName());
-
-            requestContext.setProfileConfiguration((SSOConfiguration) rpConfig
-                    .getProfileConfiguration(SSOConfiguration.PROFILE_ID));
-
-            requestContext.setSamlRequest(authnRequest);
-            
-            selectEndpoint(requestContext);
+            requestContext.setMessageOutTransport(out);
+            requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+            SSOConfiguration profileConfig = (SSOConfiguration) rpConfig
+                    .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
+            requestContext.setProfileConfiguration(profileConfig);
+            if (profileConfig.getSigningCredential() != null) {
+                requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+            } else if (rpConfig.getDefaultSigningCredential() != null) {
+                requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+            }
 
             return requestContext;
         } catch (UnmarshallingException e) {
@@ -384,7 +391,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         AuthnContext authnContext = authnContextBuilder.buildObject();
 
         Saml2LoginContext loginContext = requestContext.getLoginContext();
-        AuthnRequest authnRequest = requestContext.getSamlRequest();
+        AuthnRequest authnRequest = requestContext.getInboundSAMLMessage();
         RequestedAuthnContext requestedAuthnContext = authnRequest.getRequestedAuthnContext();
         if (requestedAuthnContext != null) {
             if (requestedAuthnContext.getAuthnContextClassRefs() != null) {
@@ -421,29 +428,30 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * @return subject locality for the authentication statement
      */
     protected SubjectLocality buildSubjectLocality(SSORequestContext requestContext) {
+        HTTPInTransport transport = (HTTPInTransport) requestContext.getMessageInTransport();
         SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
-
-        HttpServletRequest httpRequest = (HttpServletRequest) requestContext.getProfileRequest().getRawRequest();
-        subjectLocality.setAddress(httpRequest.getRemoteAddr());
-        subjectLocality.setDNSName(httpRequest.getRemoteHost());
+        subjectLocality.setAddress(transport.getPeerAddress());
+        subjectLocality.setDNSName(transport.getPeerDomainName());
 
         return subjectLocality;
     }
-    
+
     /**
      * Selects the appropriate endpoint for the relying party and stores it in the request context.
      * 
      * @param requestContext current request context
+     * 
+     * @return Endpoint selected from the information provided in the request context
      */
-    protected void selectEndpoint(SSORequestContext requestContext){
+    protected Endpoint selectEndpoint(SSORequestContext requestContext) {
         AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
         endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
         endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
-        endpointSelector.setSamlRequest(requestContext.getSamlRequest());
+        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
         endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
-        requestContext.setRelyingPartyEndpoint(endpointSelector.selectEndpoint());
+        return endpointSelector.selectEndpoint();
     }
 
     /**
@@ -455,53 +463,23 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void encodeResponse(SSORequestContext requestContext) throws ProfileException {
         if (log.isDebugEnabled()) {
-            log.debug("Encoding response to SAML request " + requestContext.getSamlRequest().getID()
-                    + " from relying party " + requestContext.getRelyingPartyId());
+            log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
+                    + " from relying party " + requestContext.getRelyingPartyEntityId());
         }
-
-        Endpoint relyingPartyEndpoint = requestContext.getRelyingPartyEndpoint();
-        MessageEncoder<ServletResponse> encoder = getMessageEncoderFactory().getMessageEncoder(
-                relyingPartyEndpoint.getBinding());
-        if (encoder == null) {
-            log.error("No response encoder was registered for binding type: " + relyingPartyEndpoint.getBinding());
-            throw new ProfileException("No response encoder was registered for binding type: "
-                    + relyingPartyEndpoint.getBinding());
-        }
-
-        super.populateMessageEncoder(encoder);
-        encoder.setIssuer(requestContext.getAssertingPartyId());
-        encoder.setRelayState(requestContext.getRelayState());
-        encoder.setRelyingParty(requestContext.getRelyingPartyMetadata());
-        encoder.setRelyingPartyEndpoint(relyingPartyEndpoint);
-        encoder.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
-        ProfileResponse<ServletResponse> profileResponse = requestContext.getProfileResponse();
-        encoder.setResponse(profileResponse.getRawResponse());
-        encoder.setSamlMessage(requestContext.getSamlResponse());
-        requestContext.setMessageEncoder(encoder.getBindingURI());
 
         try {
-            encoder.encode();
-        } catch (BindingException e) {
+            getMessageEncoder().encode(requestContext);
+        } catch (MessageEncodingException e) {
             throw new ProfileException("Unable to encode response to relying party: "
-                    + requestContext.getRelyingPartyId(), e);
+                    + requestContext.getRelyingPartyEntityId(), e);
         }
     }
 
     /** Represents the internal state of a SAML 2.0 SSO Request while it's being processed by the IdP. */
-    protected class SSORequestContext extends SAML2ProfileRequestContext<AuthnRequest, Response, SSOConfiguration> {
+    protected class SSORequestContext extends BaseSAML2ProfileRequestContext<AuthnRequest, Response, SSOConfiguration> {
 
         /** Current login context. */
         private Saml2LoginContext loginContext;
-
-        /**
-         * Constructor.
-         * 
-         * @param request current profile request
-         * @param response current profile response
-         */
-        public SSORequestContext(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response) {
-            super(request, response);
-        }
 
         /**
          * Gets the current login context.

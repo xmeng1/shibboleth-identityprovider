@@ -17,16 +17,12 @@
 package edu.internet2.middleware.shibboleth.idp.profile;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import java.io.OutputStreamWriter;
 
 import org.apache.log4j.Logger;
+import org.opensaml.ws.transport.InTransport;
+import org.opensaml.ws.transport.OutTransport;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractRequestURIMappedProfileHandler;
 
 /**
@@ -44,11 +40,10 @@ public class StatusProfileHandler extends AbstractRequestURIMappedProfileHandler
     }
 
     /** {@inheritDoc} */
-    public void processRequest(ProfileRequest<ServletRequest> request, ProfileResponse<ServletResponse> response)
-            throws ProfileException {
+    public void processRequest(InTransport in, OutTransport out) {
         try {
-            PrintWriter out = response.getRawResponse().getWriter();
-            out.write("ok");
+            OutputStreamWriter writer = new OutputStreamWriter(out.getOutgoingStream());
+            writer.write("ok");
         } catch (IOException e) {
             log.error("Unable to write response", e);
         }
