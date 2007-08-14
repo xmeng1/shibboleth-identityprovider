@@ -20,9 +20,12 @@ import javax.servlet.http.HttpSession;
 
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
-import org.opensaml.saml2.binding.decoding.HTTPPostDecoder;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.Issuer;
+import org.opensaml.ws.transport.http.HTTPInTransport;
+import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.util.Base64;
@@ -34,12 +37,7 @@ import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
-import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
-import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileRequest;
-import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileResponse;
 
 /**
  * 
@@ -53,7 +51,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setPathInfo("/IdP/saml2/SSONoAuth");
-        servletRequest.setParameter(HTTPPostDecoder.REQUEST_PARAM, Base64.encodeBytes(authnRequestString.getBytes()));
+        servletRequest.setParameter("SAMLRequest", Base64.encodeBytes(authnRequestString.getBytes()));
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
@@ -63,8 +61,8 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         assertNotNull(handler);
 
         // Process request
-        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
-        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
 
         try {
             handler.processRequest(profileRequest, profileResponse);
@@ -80,7 +78,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setPathInfo("/IdP/saml2/SSONoAuth");
-        servletRequest.setParameter(HTTPPostDecoder.REQUEST_PARAM, Base64.encodeBytes(authnRequestString.getBytes()));
+        servletRequest.setParameter("SAMLRequest", Base64.encodeBytes(authnRequestString.getBytes()));
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
@@ -90,8 +88,8 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         assertNotNull(handler);
 
         // Process request
-        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
-        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
 
         HttpSession session = servletRequest.getSession();
@@ -101,16 +99,16 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
 
     public void testSecondLeg() throws Exception {
         AuthnRequest authnRequest = buildAuthnRequest("urn:example.org:unitTestFed:sp2");
-        
+
         Saml2LoginContext loginContext = new Saml2LoginContext("urn:example.org:unitTestFed:sp2", null, authnRequest);
         loginContext.setAuthenticationInstant(new DateTime());
         loginContext.setAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified");
         loginContext.setPrincipalAuthenticated(true);
-        loginContext.setPrincipalName("testUser");        
+        loginContext.setPrincipalName("testUser");
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         servletRequest.setPathInfo("/IdP/saml2/SSONoAuth");
-        
+
         HttpSession session = servletRequest.getSession();
         session.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
 
@@ -122,8 +120,8 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         assertNotNull(handler);
 
         // Process request
-        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
-        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
 
         System.out.println(servletResponse.getContentAsString());

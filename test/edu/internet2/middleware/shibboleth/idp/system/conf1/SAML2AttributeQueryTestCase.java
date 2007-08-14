@@ -29,6 +29,10 @@ import org.opensaml.saml2.core.Subject;
 import org.opensaml.ws.soap.common.SOAPObjectBuilder;
 import org.opensaml.ws.soap.soap11.Body;
 import org.opensaml.ws.soap.soap11.Envelope;
+import org.opensaml.ws.transport.http.HTTPInTransport;
+import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.util.XMLHelper;
@@ -38,10 +42,6 @@ import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileRequest;
-import edu.internet2.middleware.shibboleth.common.profile.ProfileResponse;
-import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileRequest;
-import edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileResponse;
 
 /**
  * A system test that meant to simulate various types of SAML 2 attribute queries.
@@ -65,8 +65,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         assertNotNull(handler);
 
         // Process request
-        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
-        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
@@ -91,8 +91,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         assertNotNull(handler);
 
         // Process request
-        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
-        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
@@ -117,8 +117,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         assertNotNull(handler);
 
         // Process request
-        ProfileRequest profileRequest = new ShibbolethProfileRequest(servletRequest);
-        ProfileResponse profileResponse = new ShibbolethProfileResponse(servletResponse);
+        HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();

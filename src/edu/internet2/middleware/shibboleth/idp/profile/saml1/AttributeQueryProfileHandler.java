@@ -133,18 +133,18 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 requestContext.setInboundSAMLMessageIssueInstant(attributeRequest.getIssueInstant());
 
                 String relyingPartyId = requestContext.getRelyingPartyEntityId();
-                requestContext.setRelyingPartyMetadata(metadataProvider.getEntityDescriptor(relyingPartyId));
-                requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setRelyingPartyRoleMetadata(requestContext.getRelyingPartyMetadata().getSPSSODescriptor(
+                requestContext.setPeerEntityMetadata(metadataProvider.getEntityDescriptor(relyingPartyId));
+                requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setPeerEntityRoleMetadata(requestContext.getPeerEntityMetadata().getSPSSODescriptor(
                         SAMLConstants.SAML10P_NS));
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
                 requestContext.setAssertingPartyEntityId(assertingPartyId);
-                requestContext.setAssertingPartyMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
-                requestContext.setAssertingPartyRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setAssertingPartyRoleMetadata(requestContext.getAssertingPartyMetadata()
+                requestContext.setLocalEntityMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
+                requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setLocalEntityRoleMetadata(requestContext.getLocalEntityMetadata()
                         .getAttributeAuthorityDescriptor(SAMLConstants.SAML10P_NS));
 
                 AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig

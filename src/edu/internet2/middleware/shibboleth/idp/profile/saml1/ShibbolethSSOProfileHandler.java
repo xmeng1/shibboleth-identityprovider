@@ -301,20 +301,20 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             String relyingPartyId = loginContext.getRelyingPartyId();
             requestContext.setRelyingPartyEntityId(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
-            requestContext.setRelyingPartyMetadata(relyingPartyMetadata);
-            requestContext.setRelyingPartyRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setRelyingPartyRoleMetadata(relyingPartyMetadata
+            requestContext.setPeerEntityMetadata(relyingPartyMetadata);
+            requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
                     .getSPSSODescriptor(SAMLConstants.SAML11P_NS));
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             requestContext.setRelyingPartyConfiguration(rpConfig);
-            requestContext.setRelyingPartyEndpoint(selectEndpoint(requestContext));
+            requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
             String assertingPartyId = rpConfig.getProviderId();
             requestContext.setAssertingPartyEntityId(assertingPartyId);
             EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
-            requestContext.setAssertingPartyMetadata(assertingPartyMetadata);
-            requestContext.setAssertingPartyRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setAssertingPartyRoleMetadata(assertingPartyMetadata
+            requestContext.setLocalEntityMetadata(assertingPartyMetadata);
+            requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
                     .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
 
             requestContext.setMessageOutTransport(out);
@@ -358,8 +358,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setRelyingParty(requestContext.getRelyingPartyMetadata());
-        endpointSelector.setRelyingPartyRole(requestContext.getRelyingPartyRoleMetadata());
+        endpointSelector.setRelyingParty(requestContext.getPeerEntityMetadata());
+        endpointSelector.setRelyingPartyRole(requestContext.getPeerEntityRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
         endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
         return endpointSelector.selectEndpoint();

@@ -365,11 +365,11 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
-        RoleDescriptor assertingPartyRole = requestContext.getAssertingPartyRoleMetadata();
+        RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
         List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
 
         if (nameFormats.isEmpty()) {
-            RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyRoleMetadata();
+            RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
             List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
 
             assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
@@ -495,7 +495,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             }
             Map<String, BaseAttribute> principalAttributes = attributeAuthority.getAttributes(requestContext);
 
-            requestContext.setPrincipalAttributes(principalAttributes);
+            requestContext.setAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes for SAML request from relying party "
                     + requestContext.getRelyingPartyEntityId(), e);
@@ -596,7 +596,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         boolean signAssertion = false;
 
-        RoleDescriptor relyingPartyRole = requestContext.getRelyingPartyRoleMetadata();
+        RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
         AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
         if (relyingPartyRole instanceof SPSSODescriptor) {
@@ -661,8 +661,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         auditLogEntry.setRequestId(null);
         auditLogEntry.setResponseBinding(getMessageEncoder().getBindingURI());
         auditLogEntry.setResponseId(context.getOutboundSAMLMessageId());
-        if (context.getReleasedPrincipalAttributeIds() != null) {
-            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedPrincipalAttributeIds());
+        if (context.getReleasedAttributes() != null) {
+            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
         }
         getAduitLog().log(Level.CRITICAL, auditLogEntry);
     }

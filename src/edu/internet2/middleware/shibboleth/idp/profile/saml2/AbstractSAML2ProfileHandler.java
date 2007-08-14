@@ -332,7 +332,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             }
             Map<String, BaseAttribute> principalAttributes = attributeAuthority.getAttributes(requestContext);
 
-            requestContext.setPrincipalAttributes(principalAttributes);
+            requestContext.setAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes for SAML request " + requestContext.getInboundSAMLMessageId()
                     + " from relying party " + requestContext.getRelyingPartyEntityId(), e);
@@ -438,8 +438,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
-        if (requestContext.getRelyingPartyRoleMetadata() instanceof SPSSODescriptor) {
-            SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getRelyingPartyRoleMetadata();
+        if (requestContext.getPeerEntityRoleMetadata() instanceof SPSSODescriptor) {
+            SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getPeerEntityRoleMetadata();
             if (ssoDescriptor.getWantAssertionsSigned() != null) {
                 signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
                 if (log.isDebugEnabled()) {
@@ -541,7 +541,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         confirmationData.setNotOnOrAfter(issueInstant.plus(requestContext.getProfileConfiguration()
                 .getAssertionLifetime()));
 
-        Endpoint relyingPartyEndpoint = requestContext.getRelyingPartyEndpoint();
+        Endpoint relyingPartyEndpoint = requestContext.getPeerEntityEndpoint();
         if (relyingPartyEndpoint != null) {
             if (relyingPartyEndpoint.getResponseLocation() != null) {
                 confirmationData.setRecipient(relyingPartyEndpoint.getResponseLocation());
@@ -636,7 +636,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         ArrayList<String> nameFormats = new ArrayList<String>();
 
         List<String> assertingPartySupportedFormats = getEntitySupportedFormats(requestContext
-                .getAssertingPartyRoleMetadata());
+                .getLocalEntityRoleMetadata());
 
         String nameFormat = null;
         if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
@@ -655,7 +655,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         if (nameFormats.isEmpty()) {
             List<String> relyingPartySupportedFormats = getEntitySupportedFormats(requestContext
-                    .getRelyingPartyRoleMetadata());
+                    .getPeerEntityRoleMetadata());
 
             assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
             nameFormats.addAll(assertingPartySupportedFormats);
@@ -730,8 +730,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         auditLogEntry.setRequestId(context.getInboundSAMLMessageId());
         auditLogEntry.setResponseBinding(getMessageEncoder().getBindingURI());
         auditLogEntry.setResponseId(context.getOutboundSAMLMessageId());
-        if (context.getReleasedPrincipalAttributeIds() != null) {
-            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedPrincipalAttributeIds());
+        if (context.getReleasedAttributes() != null) {
+            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
         }
         getAduitLog().log(Level.CRITICAL, auditLogEntry);
     }
