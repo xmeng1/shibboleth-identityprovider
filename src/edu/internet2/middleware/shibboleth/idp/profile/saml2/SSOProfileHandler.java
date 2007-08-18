@@ -87,9 +87,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
-    /** URI of SAML 2 bindings supported for outgoing messaged encoding. */
-    private ArrayList<String> supportedOutgoingBindings;
-
     /** URI of request decoder. */
     private String decodingBinding;
 
@@ -108,11 +105,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             throw new IllegalArgumentException("AuthN manager path or decoding bindings URI may not be null");
         }
         authenticationManagerPath = authnManagerPath;
-
-        if (outgoingBindings == null || outgoingBindings.isEmpty()) {
-            throw new IllegalArgumentException("List of supported outgoing bindings may not be empty");
-        }
-        supportedOutgoingBindings = new ArrayList<String>(outgoingBindings);
 
         decodingBinding = decoder;
 
@@ -452,7 +444,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         endpointSelector.setRelyingParty(requestContext.getPeerEntityMetadata());
         endpointSelector.setRelyingPartyRole(requestContext.getPeerEntityRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
-        endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
+        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
         return endpointSelector.selectEndpoint();
     }
 
