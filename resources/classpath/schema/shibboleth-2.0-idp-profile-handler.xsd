@@ -61,38 +61,6 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="decodingBinding" type="xsd:anyURI"
-                    default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            The URI of the binding used when decoding requests from relying parties.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                </xsd:attribute>
-                <xsd:attribute name="securityPolicyFactoryId" type="xsd:string"
-                    default="shibboleth.SAML2SSOMessageSecurityPolicyFactory">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            The component ID of the security policy factory to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                </xsd:attribute>
-                <xsd:attribute name="outboundBindingEnumeration"
-                    default="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            An ordered list of outbound bindings supported by this profile handler. The order provided
-                            establishs the precedence given the bindings such that, from the left to right, the first
-                            binding also supported by the relying party will be used.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                    <xsd:simpleType>
-                        <xsd:list itemType="xsd:anyURI" />
-                    </xsd:simpleType>
-                </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -102,19 +70,7 @@
             <xsd:documentation>Configuration type for SAML 2 Attribute Query profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="SAML2ProfileHandler">
-                <xsd:attribute name="securityPolicyFactoryId" type="xsd:string"
-                    default="shibboleth.SAML2AttributeQueryMessageSecurityPolicyFactory">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            The component ID of the security policy factory to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                </xsd:attribute>
-            </xsd:extension>
+            <xsd:extension base="SAML2ProfileHandler" />
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -141,19 +97,6 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="outboundBindingEnumeration"
-                    default="urn:oasis:names:tc:SAML:1.0:profiles:browser-post">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            An ordered list of outbound bindings supported by this profile handler. The order provided
-                            establishs the precedence given the bindings such that, from the left to right, the first
-                            binding also supported by the relying party will be used.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                    <xsd:simpleType>
-                        <xsd:list itemType="xsd:anyURI" />
-                    </xsd:simpleType>
-                </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -163,19 +106,7 @@
             <xsd:documentation>Configuration type for SAML 1 Attribute Query profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="SAML1ProfileHandler">
-                <xsd:attribute name="securityPolicyFactoryId" type="xsd:string"
-                    default="shibboleth.SAML1AttributeQueryMessageSecurityPolicyFactory">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            The component ID of the security policy factory to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                </xsd:attribute>
-            </xsd:extension>
+            <xsd:extension base="SAML1ProfileHandler" />
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -194,28 +125,6 @@
         </xsd:annotation>
         <xsd:complexContent>
             <xsd:extension base="IdPProfileHandlerType">
-                <xsd:attribute name="messageDecoderFactoryId" type="xsd:string"
-                    default="shibboleth.MessageDecoderFactory">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            The component ID of the message decoder to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                </xsd:attribute>
-                <xsd:attribute name="messageEncoderFactoryId" type="xsd:string"
-                    default="shibboleth.MessageEncoderFactory">
-                    <xsd:annotation>
-                        <xsd:documentation>
-                            The component ID of the message encoder to use with the profile handler.
-
-                            This setting should not be changed from its default unless the deployer fully understands
-                            the inter-relationship between IdP components.
-                        </xsd:documentation>
-                    </xsd:annotation>
-                </xsd:attribute>
                 <xsd:attribute name="idGeneratorId" type="xsd:string" default="shibboleth.IdGenerator">
                     <xsd:annotation>
                         <xsd:documentation>
@@ -225,6 +134,25 @@
                             the inter-relationship between IdP components.
                         </xsd:documentation>
                     </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="inboundBinding" type="xsd:anyURI" use="required">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The SAML message binding used by inbound messages.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="outboundBindingEnumeration" >
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            An ordered list of outbound bindings supported by this profile handler. The order provided
+                            establishes the precedence given the bindings such that, from the left to right, the first
+                            binding also supported by the relying party will be used.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                    <xsd:simpleType>
+                        <xsd:list itemType="xsd:anyURI" />
+                    </xsd:simpleType>
                 </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>

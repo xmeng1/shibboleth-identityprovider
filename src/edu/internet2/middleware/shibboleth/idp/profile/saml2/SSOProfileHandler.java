@@ -27,6 +27,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.AuthnResponseEndpointSelector;
 import org.opensaml.saml2.core.AuthnContext;
@@ -47,7 +48,6 @@ import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
-import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -162,7 +162,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         try {
             SSORequestContext requestContext = decodeRequest(inTransport, outTransport);
 
-            String relyingPartyId = requestContext.getRelyingPartyEntityId();
+            String relyingPartyId = requestContext.getPeerEntityId();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             if (rpConfig == null) {
                 log.error("No relying party configuration for " + relyingPartyId);
@@ -228,6 +228,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthnStatement(requestContext));
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
+                requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
                 statements.add(buildAttributeStatement(requestContext));
             }
 
@@ -260,12 +261,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         }
 
         SSORequestContext requestContext = new SSORequestContext();
-        requestContext.setMessageInTransport(inTransport);
-        requestContext.setMessageOutTransport(outTransport);
+        requestContext.setInboundMessageTransport(inTransport);
+        requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setMetadataProvider(getMetadataProvider());
 
         try {
-            getMessageDecoder().decode(requestContext);
+            SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
+            requestContext.setMessageDecoder(decoder);
+            decoder.decode(requestContext);
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);
@@ -298,7 +301,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setUserSession(getUserSession(in));
             requestContext.setRelayState(loginContext.getRelayState());
 
-            requestContext.setMessageInTransport(in);
+            requestContext.setInboundMessageTransport(in);
             requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
             requestContext.setInboundMessage(loginContext.getAuthenticationRequest());
             requestContext.setInboundSAMLMessage(loginContext.getAuthenticationRequest());
@@ -308,25 +311,24 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setMetadataProvider(metadataProvider);
 
             String relyingPartyId = loginContext.getRelyingPartyId();
-            requestContext.setRelyingPartyEntityId(relyingPartyId);
+            requestContext.setPeerEntityId(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
             requestContext.setPeerEntityMetadata(relyingPartyMetadata);
             requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
-                    .getSPSSODescriptor(SAMLConstants.SAML20P_NS));
+            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML20P_NS));
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             requestContext.setRelyingPartyConfiguration(rpConfig);
             requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
             String assertingPartyId = rpConfig.getProviderId();
-            requestContext.setAssertingPartyEntityId(assertingPartyId);
+            requestContext.setLocalEntityId(assertingPartyId);
             EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
             requestContext.setLocalEntityMetadata(assertingPartyMetadata);
             requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
             requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
                     .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
 
-            requestContext.setMessageOutTransport(out);
+            requestContext.setOutboundMessageTransport(out);
             requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
             SSOConfiguration profileConfig = (SSOConfiguration) rpConfig
                     .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
@@ -428,7 +430,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * @return subject locality for the authentication statement
      */
     protected SubjectLocality buildSubjectLocality(SSORequestContext requestContext) {
-        HTTPInTransport transport = (HTTPInTransport) requestContext.getMessageInTransport();
+        HTTPInTransport transport = (HTTPInTransport) requestContext.getInboundMessageTransport();
         SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
         subjectLocality.setAddress(transport.getPeerAddress());
         subjectLocality.setDNSName(transport.getPeerDomainName());
@@ -452,27 +454,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
         endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
         return endpointSelector.selectEndpoint();
-    }
-
-    /**
-     * Encodes the request's SAML response and writes it to the servlet response.
-     * 
-     * @param requestContext current request context
-     * 
-     * @throws ProfileException thrown if no message encoder is registered for this profiles binding
-     */
-    protected void encodeResponse(SSORequestContext requestContext) throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
-                    + " from relying party " + requestContext.getRelyingPartyEntityId());
-        }
-
-        try {
-            getMessageEncoder().encode(requestContext);
-        } catch (MessageEncodingException e) {
-            throw new ProfileException("Unable to encode response to relying party: "
-                    + requestContext.getRelyingPartyEntityId(), e);
-        }
     }
 
     /** Represents the internal state of a SAML 2.0 SSO Request while it's being processed by the IdP. */

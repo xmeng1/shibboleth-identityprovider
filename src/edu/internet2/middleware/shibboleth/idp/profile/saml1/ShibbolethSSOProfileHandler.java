@@ -17,10 +17,7 @@
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -30,7 +27,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObjectBuilder;
-import org.opensaml.common.binding.BasicEndpointSelector;
+import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Request;
@@ -46,7 +43,8 @@ import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
-import org.opensaml.ws.message.encoder.MessageEncodingException;
+import org.opensaml.ws.message.decoder.MessageDecodingException;
+import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
@@ -77,28 +75,19 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
-    /** URI of SAML 1 bindings supported for outgoing message encoding. */
-    private ArrayList<String> supportedOutgoingBindings;
-
     /**
      * Constructor.
      * 
      * @param authnManagerPath path to the authentication manager servlet
-     * @param outgoingBindings URIs of SAML 1 bindings supported for outgoing message encoding
      * 
      * @throws IllegalArgumentException thrown if either the authentication manager path or encoding binding URI are
      *             null or empty
      */
-    public ShibbolethSSOProfileHandler(String authnManagerPath, List<String> outgoingBindings) {
+    public ShibbolethSSOProfileHandler(String authnManagerPath) {
         if (DatatypeHelper.isEmpty(authnManagerPath)) {
             throw new IllegalArgumentException("Authentication manager path may not be null");
         }
         authenticationManagerPath = authnManagerPath;
-
-        if (outgoingBindings == null || outgoingBindings.isEmpty()) {
-            throw new IllegalArgumentException("List of supported outgoing bindings may not be empty");
-        }
-        supportedOutgoingBindings = new ArrayList<String>(outgoingBindings);
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthenticationStatement>) getBuilderFactory().getBuilder(
                 AuthenticationStatement.DEFAULT_ELEMENT_NAME);
@@ -151,7 +140,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
         HttpSession httpSession = httpRequest.getSession(true);
 
-        LoginContext loginContext = buildLoginContext(httpRequest);
+        ShibbolethSSORequestContext requestContext = decodeRequest(inTransport, outTransport);
+        ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
+
         if (getRelyingPartyConfiguration(loginContext.getRelyingPartyId()) == null) {
             log.error("Shibboleth SSO profile is not configured for relying party " + loginContext.getRelyingPartyId());
             throw new ProfileException("Shibboleth SSO profile is not configured for relying party "
@@ -171,6 +162,47 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
         }
+    }
+
+    /**
+     * Decodes an incoming request and populates a created request context with the resultant information.
+     * 
+     * @param inTransport inbound message transport
+     * @param outTransport outbound message transport
+     * 
+     * @return the created request context
+     * 
+     * @throws ProfileException throw if there is a problem decoding the request
+     */
+    protected ShibbolethSSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
+            throws ProfileException {
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+
+        ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
+        requestContext.setInboundMessageTransport(inTransport);
+        requestContext.setOutboundMessageTransport(outTransport);
+
+        SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
+        requestContext.setMessageDecoder(decoder);
+        try {
+            decoder.decode(requestContext);
+        } catch (MessageDecodingException e) {
+            log.error("Error decoding Shibboleth SSO request", e);
+            throw new ProfileException("Error decoding Shibboleth SSO request", e);
+        } catch (SecurityPolicyException e) {
+            log.error("Shibboleth SSO request does not meet security policy requirements", e);
+            throw new ProfileException("Shibboleth SSO request does not meet security policy requirements", e);
+        }
+
+        ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
+        loginContext.setRelyingParty(requestContext.getPeerEntityId());
+        loginContext.setSpAssertionConsumerService(requestContext.getSpAssertionConsumerService());
+        loginContext.setRelyingParty(requestContext.getRelayState());
+        loginContext.setAuthenticationEngineURL(authenticationManagerPath);
+        loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
+        requestContext.setLoginContext(loginContext);
+
+        return requestContext;
     }
 
     /**
@@ -205,6 +237,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthenticationStatement(requestContext));
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
+                requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
                 statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer"));
             }
 
@@ -218,56 +251,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
         encodeResponse(requestContext);
         writeAuditLogEntry(requestContext);
-    }
-
-    /**
-     * Creates a login context from the incoming HTTP request.
-     * 
-     * @param request current HTTP request
-     * 
-     * @return the constructed login context
-     * 
-     * @throws ProfileException thrown if the incomming request did not contain a providerId, shire, and target
-     *             parameter
-     */
-    protected ShibbolethSSOLoginContext buildLoginContext(HttpServletRequest request) throws ProfileException {
-        ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
-
-        try {
-            String providerId = DatatypeHelper.safeTrimOrNullString(request.getParameter("providerId"));
-            if (providerId == null) {
-                log.error("No providerId parameter in Shibboleth SSO request");
-                throw new ProfileException("No providerId parameter in Shibboleth SSO request");
-            }
-            loginContext.setRelyingParty(URLDecoder.decode(providerId, "UTF-8"));
-
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(providerId);
-            if (rpConfig == null) {
-                log.error("No relying party configuration available for " + providerId);
-                throw new ProfileException("No relying party configuration available for " + providerId);
-            }
-            loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
-
-            String acs = DatatypeHelper.safeTrimOrNullString(request.getParameter("shire"));
-            if (acs == null) {
-                log.error("No shire parameter in Shibboleth SSO request");
-                throw new ProfileException("No shire parameter in Shibboleth SSO request");
-            }
-            loginContext.setSpAssertionConsumerService(URLDecoder.decode(acs, "UTF-8"));
-
-            String target = DatatypeHelper.safeTrimOrNullString(request.getParameter("target"));
-            if (target == null) {
-                log.error("No target parameter in Shibboleth SSO request");
-                throw new ProfileException("No target parameter in Shibboleth SSO request");
-            }
-            loginContext.setSpTarget(URLDecoder.decode(target, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            // UTF-8 encoding required to be supported by all JVMs.
-        }
-
-        loginContext.setAuthenticationEngineURL(authenticationManagerPath);
-        loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(request));
-        return loginContext;
     }
 
     /**
@@ -292,32 +275,31 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setUserSession(getUserSession(in));
             requestContext.setRelayState(loginContext.getSpTarget());
 
-            requestContext.setMessageInTransport(in);
+            requestContext.setInboundMessageTransport(in);
             requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
 
             MetadataProvider metadataProvider = getMetadataProvider();
             requestContext.setMetadataProvider(metadataProvider);
 
             String relyingPartyId = loginContext.getRelyingPartyId();
-            requestContext.setRelyingPartyEntityId(relyingPartyId);
+            requestContext.setPeerEntityId(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
             requestContext.setPeerEntityMetadata(relyingPartyMetadata);
             requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
-                    .getSPSSODescriptor(SAMLConstants.SAML11P_NS));
+            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML11P_NS));
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             requestContext.setRelyingPartyConfiguration(rpConfig);
             requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
             String assertingPartyId = rpConfig.getProviderId();
-            requestContext.setAssertingPartyEntityId(assertingPartyId);
+            requestContext.setLocalEntityId(assertingPartyId);
             EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
             requestContext.setLocalEntityMetadata(assertingPartyMetadata);
             requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
             requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
                     .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
 
-            requestContext.setMessageOutTransport(out);
+            requestContext.setOutboundMessageTransport(out);
             requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
             ShibbolethSSOConfiguration profileConfig = (ShibbolethSSOConfiguration) rpConfig
                     .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
@@ -346,22 +328,15 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected Endpoint selectEndpoint(ShibbolethSSORequestContext requestContext) {
         ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
 
-        if (loginContext.getSpAssertionConsumerService() != null) {
-            SAMLObjectBuilder<AssertionConsumerService> acsBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory()
-                    .getBuilder(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-            AssertionConsumerService acsEndpoint = acsBuilder.buildObject();
-            acsEndpoint.setBinding(getMessageEncoder().getBindingURI());
-            acsEndpoint.setLocation(loginContext.getSpAssertionConsumerService());
-            return acsEndpoint;
-        }
-
-        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+        ShibbolethSSOEndpointSelector endpointSelector = new ShibbolethSSOEndpointSelector();
+        endpointSelector.setSpAssertionConsumerService(loginContext.getSpAssertionConsumerService());
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
         endpointSelector.setRelyingParty(requestContext.getPeerEntityMetadata());
         endpointSelector.setRelyingPartyRole(requestContext.getPeerEntityRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
-        endpointSelector.getSupportedIssuerBindings().addAll(supportedOutgoingBindings);
+        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+
         return endpointSelector.selectEndpoint();
     }
 
@@ -400,37 +375,22 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected SubjectLocality buildSubjectLocality(ShibbolethSSORequestContext requestContext) {
         SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
 
-        HTTPInTransport inTransport = (HTTPInTransport) requestContext.getMessageInTransport();
+        HTTPInTransport inTransport = (HTTPInTransport) requestContext.getInboundMessageTransport();
         subjectLocality.setIPAddress(inTransport.getPeerAddress());
         subjectLocality.setDNSAddress(inTransport.getPeerDomainName());
 
         return subjectLocality;
     }
 
-    /**
-     * Encodes the request's SAML response and writes it to the servlet response.
-     * 
-     * @param requestContext current request context
-     * 
-     * @throws ProfileException thrown if no message encoder is registered for this profiles binding
-     */
-    protected void encodeResponse(ShibbolethSSORequestContext requestContext) throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
-                    + " from relying party " + requestContext.getRelyingPartyEntityId());
-        }
-
-        try {
-            getMessageEncoder().encode(requestContext);
-        } catch (MessageEncodingException e) {
-            throw new ProfileException("Unable to encode response to relying party: "
-                    + requestContext.getRelyingPartyEntityId(), e);
-        }
-    }
-
     /** Represents the internal state of a Shibboleth SSO Request while it's being processed by the IdP. */
-    protected class ShibbolethSSORequestContext extends
+    public class ShibbolethSSORequestContext extends
             BaseSAML1ProfileRequestContext<Request, Response, ShibbolethSSOConfiguration> {
+
+        /** Time since the epoch. */
+        private long time;
+
+        /** SP-provide assertion consumer service URL. */
+        private String spAssertionConsumerService;
 
         /** Current login context. */
         private ShibbolethSSOLoginContext loginContext;
@@ -451,6 +411,42 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
          */
         public void setLoginContext(ShibbolethSSOLoginContext context) {
             loginContext = context;
+        }
+
+        /**
+         * Gets the SP-provided assertion consumer service URL.
+         * 
+         * @return SP-provided assertion consumer service URL
+         */
+        public String getSpAssertionConsumerService() {
+            return spAssertionConsumerService;
+        }
+
+        /**
+         * Sets the SP-provided assertion consumer service URL.
+         * 
+         * @param acs SP-provided assertion consumer service URL
+         */
+        public void setSpAssertionConsumerService(String acs) {
+            spAssertionConsumerService = acs;
+        }
+
+        /**
+         * Sets the time since the epoch.
+         * 
+         * @return time since the epoch
+         */
+        public long getTime() {
+            return time;
+        }
+
+        /**
+         * Sets the time since the epoch.
+         * 
+         * @param time time since the epoch
+         */
+        public void setTime(long time) {
+            this.time = time;
         }
     }
 }

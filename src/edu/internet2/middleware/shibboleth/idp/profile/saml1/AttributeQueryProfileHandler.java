@@ -19,18 +19,21 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
+import org.opensaml.common.binding.BasicEndpointSelector;
+import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
-import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -60,16 +63,17 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         try {
             if (requestContext.getRelyingPartyConfiguration() == null) {
                 log.error("SAML 1 Attribute Query profile is not configured for relying party "
-                        + requestContext.getRelyingPartyEntityId());
+                        + requestContext.getPeerEntityId());
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
                         "SAML 1 Attribute Query profile is not configured for relying party "
-                                + requestContext.getRelyingPartyEntityId()));
+                                + requestContext.getPeerEntityId()));
                 samlResponse = buildErrorResponse(requestContext);
             }
 
             resolvePrincipal(requestContext);
             resolveAttributes(requestContext);
-
+            requestContext.setReleasedAttributes(requestContext.getPrincipalAttributes().keySet());
+            
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
 
@@ -84,7 +88,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         encodeResponse(requestContext);
         writeAuditLogEntry(requestContext);
     }
-    
+
     /**
      * Decodes an incoming request and populates a created request context with the resultant information.
      * 
@@ -104,14 +108,19 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         MetadataProvider metadataProvider = getMetadataProvider();
 
         AttributeQueryContext requestContext = new AttributeQueryContext();
-        requestContext.setMessageInTransport(inTransport);
+        requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML11P_NS);
-        requestContext.setMessageOutTransport(outTransport);
+        requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
         requestContext.setMetadataProvider(metadataProvider);
 
         try {
-            getMessageDecoder().decode(requestContext);
+            SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
+            if (decoder == null) {
+                throw new ProfileException("No message decoder configured for inbound binding " + getInboundBinding());
+            }
+            requestContext.setMessageDecoder(decoder);
+            decoder.decode(requestContext);
             if (log.isDebugEnabled()) {
                 log.debug("Decoded request");
             }
@@ -132,16 +141,17 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 requestContext.setInboundSAMLMessageId(attributeRequest.getID());
                 requestContext.setInboundSAMLMessageIssueInstant(attributeRequest.getIssueInstant());
 
-                String relyingPartyId = requestContext.getRelyingPartyEntityId();
+                String relyingPartyId = requestContext.getPeerEntityId();
                 requestContext.setPeerEntityMetadata(metadataProvider.getEntityDescriptor(relyingPartyId));
                 requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
                 requestContext.setPeerEntityRoleMetadata(requestContext.getPeerEntityMetadata().getSPSSODescriptor(
                         SAMLConstants.SAML10P_NS));
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
+                requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
-                requestContext.setAssertingPartyEntityId(assertingPartyId);
+                requestContext.setLocalEntityId(assertingPartyId);
                 requestContext.setLocalEntityMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
                 requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
                 requestContext.setLocalEntityRoleMetadata(requestContext.getLocalEntityMetadata()
@@ -158,32 +168,30 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
             } catch (MetadataProviderException e) {
                 log.error("Unable to locate metadata for asserting or relying party");
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                        "Error locating party metadata"));
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
                 throw new ProfileException("Error locating party metadata");
             }
         }
     }
 
     /**
-     * Encodes the request's SAML response and writes it to the servlet response.
+     * Selects the appropriate endpoint for the relying party and stores it in the request context.
      * 
      * @param requestContext current request context
      * 
-     * @throws ProfileException thrown if no message encoder is registered for this profiles binding
+     * @return Endpoint selected from the information provided in the request context
      */
-    protected void encodeResponse(AttributeQueryContext requestContext) throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
-                    + " from relying party " + requestContext.getRelyingPartyEntityId());
-        }
+    protected Endpoint selectEndpoint(AttributeQueryContext requestContext) {
+        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+        endpointSelector.setMetadataProvider(getMetadataProvider());
+        endpointSelector.setRelyingParty(requestContext.getPeerEntityMetadata());
+        endpointSelector.setRelyingPartyRole(requestContext.getPeerEntityRoleMetadata());
+        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
 
-        try {
-            getMessageEncoder().encode(requestContext);
-        } catch (MessageEncodingException e) {
-            throw new ProfileException("Unable to encode response to relying party: "
-                    + requestContext.getRelyingPartyEntityId(), e);
-        }
+        return endpointSelector.selectEndpoint();
     }
 
     /** Basic data structure used to accumulate information as a request is being processed. */

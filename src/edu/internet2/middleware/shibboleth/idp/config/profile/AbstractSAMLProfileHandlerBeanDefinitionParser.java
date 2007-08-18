@@ -17,6 +17,7 @@
 package edu.internet2.middleware.shibboleth.idp.config.profile;
 
 import org.apache.log4j.Logger;
+import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
@@ -38,12 +39,15 @@ public abstract class AbstractSAMLProfileHandlerBeanDefinitionParser extends
         }
         super.doParse(config, builder);
 
-        builder.addPropertyReference("messageDecoderFactory", config.getAttributeNS(null,
-                "messageDecoderFactoryId"));
-
-        builder.addPropertyReference("messageEncoderFactory", config.getAttributeNS(null,
-                "messageEncoderFactoryId"));
-
         builder.addPropertyReference("idGenerator", config.getAttributeNS(null, "idGeneratorId"));
+
+        builder.addPropertyReference("messageDecoders", "shibboleth.MessageDecoders");
+
+        builder.addPropertyReference("messageEncoders", "shibboleth.MessageEncoders");
+
+        builder.addPropertyValue("inboundBinding", config.getAttributeNodeNS(null, "inboundBinding"));
+
+        builder.addPropertyValue("supportedOutboundBindings", XMLHelper.getAttributeValueAsList(config
+                .getAttributeNodeNS(null, "outboundBindingEnumeration")));
     }
 }

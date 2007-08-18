@@ -43,8 +43,5 @@ public class SAML2AttributeQueryProfileHandlerBeanDefinitionParser extends
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
-
-        builder.addPropertyReference("securityPolicyFactory", DatatypeHelper.safeTrimOrNullString(config
-                .getAttributeNS(null, "securityPolicyFactoryId")));
     }
 }

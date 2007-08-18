@@ -216,7 +216,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         assertion.setID(getIdGenerator().generateIdentifier());
         assertion.setIssueInstant(issueInstant);
         assertion.setVersion(SAMLVersion.VERSION_11);
-        assertion.setIssuer(requestContext.getAssertingPartyEntityId());
+        assertion.setIssuer(requestContext.getLocalEntityId());
 
         Conditions conditions = buildConditions(requestContext, issueInstant);
         assertion.setConditions(conditions);
@@ -303,7 +303,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
         if (log.isDebugEnabled()) {
-            log.debug("Building assertion NameIdentifier to relying party " + requestContext.getRelyingPartyEntityId()
+            log.debug("Building assertion NameIdentifier to relying party " + requestContext.getPeerEntityId()
                     + " for principal " + requestContext.getPrincipalName());
         }
         Map<String, BaseAttribute> principalAttributes = requestContext.getPrincipalAttributes();
@@ -491,17 +491,17 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         try {
             if (log.isDebugEnabled()) {
                 log.debug("Resolving attributes for principal " + requestContext.getPrincipalName()
-                        + " of SAML request from relying party " + requestContext.getRelyingPartyEntityId());
+                        + " of SAML request from relying party " + requestContext.getPeerEntityId());
             }
             Map<String, BaseAttribute> principalAttributes = attributeAuthority.getAttributes(requestContext);
 
             requestContext.setAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes for SAML request from relying party "
-                    + requestContext.getRelyingPartyEntityId(), e);
+                    + requestContext.getPeerEntityId(), e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error resolving attributes"));
             throw new ProfileException("Error resolving attributes for SAML request from relying party "
-                    + requestContext.getRelyingPartyEntityId(), e);
+                    + requestContext.getPeerEntityId(), e);
         }
     }
 
@@ -520,7 +520,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         if (log.isDebugEnabled()) {
             log.debug("Creating attribute statement in response to SAML request from relying party "
-                    + requestContext.getRelyingPartyEntityId());
+                    + requestContext.getPeerEntityId());
         }
 
         AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
@@ -561,7 +561,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         if (log.isDebugEnabled()) {
             log.debug("Resolving principal name for subject of SAML request from relying party "
-                    + requestContext.getRelyingPartyEntityId());
+                    + requestContext.getPeerEntityId());
         }
 
         try {
@@ -569,11 +569,11 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             requestContext.setPrincipalName(principal);
         } catch (AttributeRequestException e) {
             log.error("Error resolving attributes for SAML request from relying party "
-                    + requestContext.getRelyingPartyEntityId(), e);
+                    + requestContext.getPeerEntityId(), e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
                     "Error resolving principal"));
             throw new ProfileException("Error resolving attributes for SAML request from relying party "
-                    + requestContext.getRelyingPartyEntityId(), e);
+                    + requestContext.getPeerEntityId(), e);
         }
     }
 
@@ -590,7 +590,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     protected void signAssertion(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion)
             throws ProfileException {
         if (log.isDebugEnabled()) {
-            log.debug("Determining if SAML assertion to relying party " + requestContext.getRelyingPartyEntityId()
+            log.debug("Determining if SAML assertion to relying party " + requestContext.getPeerEntityId()
                     + " should be signed");
         }
 
@@ -604,7 +604,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             if (ssoDescriptor.getWantAssertionsSigned() != null) {
                 signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
                 if (log.isDebugEnabled()) {
-                    log.debug("Entity metadata for relying party " + requestContext.getRelyingPartyEntityId()
+                    log.debug("Entity metadata for relying party " + requestContext.getPeerEntityId()
                             + " indicates to sign assertions: " + signAssertion);
                 }
             }
@@ -621,7 +621,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         if (log.isDebugEnabled()) {
             log.debug("Determining signing credntial for assertion to relying party "
-                    + requestContext.getRelyingPartyEntityId());
+                    + requestContext.getPeerEntityId());
         }
         Credential signatureCredential = profileConfig.getSigningCredential();
         if (signatureCredential == null) {
@@ -635,7 +635,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Signing assertion to relying party " + requestContext.getRelyingPartyEntityId());
+            log.debug("Signing assertion to relying party " + requestContext.getPeerEntityId());
         }
         SAMLObjectContentReference contentRef = new SAMLObjectContentReference(assertion);
         Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
@@ -643,27 +643,5 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         assertion.setSignature(signature);
 
         Signer.signObject(signature);
-    }
-
-    /**
-     * Writes an aduit log entry indicating the successful response to the attribute request.
-     * 
-     * @param context current request context
-     */
-    protected void writeAuditLogEntry(BaseSAML1ProfileRequestContext<?, ?, ?> context) {
-        AuditLogEntry auditLogEntry = new AuditLogEntry();
-        auditLogEntry.setMessageProfile(getProfileId());
-        auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
-        auditLogEntry.setPrincipalName(context.getPrincipalName());
-        auditLogEntry.setAssertingPartyId(context.getAssertingPartyEntityId());
-        auditLogEntry.setRelyingPartyId(context.getRelyingPartyEntityId());
-        auditLogEntry.setRequestBinding(getMessageDecoder().getBindingURI());
-        auditLogEntry.setRequestId(null);
-        auditLogEntry.setResponseBinding(getMessageEncoder().getBindingURI());
-        auditLogEntry.setResponseId(context.getOutboundSAMLMessageId());
-        if (context.getReleasedAttributes() != null) {
-            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
-        }
-        getAduitLog().log(Level.CRITICAL, auditLogEntry);
     }
 }
