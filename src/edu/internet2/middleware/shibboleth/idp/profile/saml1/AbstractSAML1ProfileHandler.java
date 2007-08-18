@@ -29,7 +29,6 @@ import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.impl.SAMLObjectContentReference;
-import org.opensaml.log.Level;
 import org.opensaml.saml1.core.Assertion;
 import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.AttributeStatement;
@@ -65,7 +64,6 @@ import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEn
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML1NameIdentifierEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
-import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
