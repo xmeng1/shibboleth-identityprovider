@@ -55,6 +55,8 @@ import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.xml.XMLObjectBuilder;
+import org.opensaml.xml.security.SecurityException;
+import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.Signer;
@@ -477,6 +479,16 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         SAMLObjectContentReference contentRef = new SAMLObjectContentReference(assertion);
         Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
         signature.getContentReferences().add(contentRef);
+        
+        signature.setSigningCredential(signatureCredential);
+        try {
+            //TODO pull SecurityConfiguration from SAMLMessageContext?  needs to be added
+            //TODO how to pull what keyInfoGenName to use?
+            SecurityHelper.prepareSignatureParams(signature, signatureCredential, null, null);
+        } catch (SecurityException e) {
+            throw new ProfileException("Error preparing signature for signing", e);
+        }
+        
         assertion.setSignature(signature);
 
         Signer.signObject(signature);
