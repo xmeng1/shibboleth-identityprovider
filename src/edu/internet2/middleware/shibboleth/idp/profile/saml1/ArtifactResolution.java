@@ -27,8 +27,10 @@ import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml1.binding.SAML1ArtifactMessageContext;
 import org.opensaml.saml1.core.Assertion;
 import org.opensaml.saml1.core.AssertionArtifact;
+import org.opensaml.saml1.core.NameIdentifier;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Status;
@@ -272,9 +274,10 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         return samlResponse;
     }
 
-    /** Represents the internal state of a SAML 2.0 Artiface resolver request while it's being processed by the IdP. */
+    /** Represents the internal state of a SAML 1 Artiface resolver request while it's being processed by the IdP. */
     public class ArtifactResolutionRequestContext extends
-            BaseSAML1ProfileRequestContext<Request, Response, ArtifactResolutionConfiguration> {
+            BaseSAML1ProfileRequestContext<Request, Response, ArtifactResolutionConfiguration> implements
+            SAML1ArtifactMessageContext<Request, Response, NameIdentifier> {
 
         /** Artifact to be resolved. */
         private Collection<String> artifacts;

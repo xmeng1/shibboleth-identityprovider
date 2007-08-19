@@ -56,7 +56,7 @@ public class ShibbolethSSODecoder extends BaseMessageDecoder implements SAMLMess
         ShibbolethSSORequestContext requestContext = (ShibbolethSSORequestContext) messageContext;
         HTTPInTransport transport = (HTTPInTransport) messageContext.getInboundMessage();
 
-        String providerId = DatatypeHelper.safeTrimOrNullString(transport.getParameter("providerId"));
+        String providerId = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("providerId"));
         if (providerId == null) {
             log.error("No providerId parameter given in Shibboleth SSO authentication request.");
             throw new MessageDecodingException(
@@ -64,21 +64,21 @@ public class ShibbolethSSODecoder extends BaseMessageDecoder implements SAMLMess
         }
         requestContext.setPeerEntityId(providerId);
 
-        String shire = DatatypeHelper.safeTrimOrNullString(transport.getParameter("shire"));
+        String shire = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("shire"));
         if (shire == null) {
             log.error("No shire parameter given in Shibboleth SSO authentication request.");
             throw new MessageDecodingException("No shire parameter given in Shibboleth SSO authentication request.");
         }
         requestContext.setSpAssertionConsumerService(shire);
 
-        String target = DatatypeHelper.safeTrimOrNullString(transport.getParameter("target"));
+        String target = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("target"));
         if (target == null) {
             log.error("No target parameter given in Shibboleth SSO authentication request.");
             throw new MessageDecodingException("No target parameter given in Shibboleth SSO authentication request.");
         }
         requestContext.setRelayState(target);
 
-        String timeStr = DatatypeHelper.safeTrimOrNullString(transport.getParameter("time"));
+        String timeStr = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("time"));
         if (timeStr != null) {
             long time = Long.parseLong(timeStr);
             requestContext.setTime(time);

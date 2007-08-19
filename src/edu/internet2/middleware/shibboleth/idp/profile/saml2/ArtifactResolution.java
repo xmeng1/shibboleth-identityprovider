@@ -25,8 +25,10 @@ import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.binding.SAML2ArtifactMessageContext;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
@@ -95,7 +97,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
                         "Unknown artifact."));
             }
-            
+
             if (!artifactEntry.getIssuerId().equals(requestContext.getLocalEntityId())) {
                 log.error("Artifact issuer mismatch.  Artifact issued by " + artifactEntry.getIssuerId()
                         + " but IdP has entity ID of " + requestContext.getLocalEntityId());
@@ -243,11 +245,11 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
 
-        if(requestContext.getFailureStatus() == null){
+        if (requestContext.getFailureStatus() == null) {
             Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
             samlResponse.setStatus(status);
             samlResponse.setMessage(requestContext.getReferencedMessage());
-        }else{
+        } else {
             samlResponse.setStatus(requestContext.getFailureStatus());
         }
 
@@ -273,7 +275,8 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
     /** Represents the internal state of a SAML 2.0 Artiface resolver request while it's being processed by the IdP. */
     public class ArtifactResolutionRequestContext extends
-            BaseSAML2ProfileRequestContext<ArtifactResolve, ArtifactResponse, ArtifactResolutionConfiguration> {
+            BaseSAML2ProfileRequestContext<ArtifactResolve, ArtifactResponse, ArtifactResolutionConfiguration>
+            implements SAML2ArtifactMessageContext<ArtifactResolve, ArtifactResponse, NameID> {
 
         /** Artifact to be resolved. */
         private String artifact;
