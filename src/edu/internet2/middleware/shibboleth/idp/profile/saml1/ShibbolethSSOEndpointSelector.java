@@ -65,7 +65,7 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
      * @return endpoint corresponding to the SP-provdided ACS URL
      */
     protected Endpoint selectEndpointByACS() {
-        List<Endpoint> endpoints = getRelyingPartyRole().getEndpoints();
+        List<Endpoint> endpoints = getEntityRoleMetadata().getEndpoints();
         if (endpoints != null) {
             for (Endpoint endpoint : endpoints) {
                 if (endpoint.getLocation().equalsIgnoreCase(spAssertionConsumerService)

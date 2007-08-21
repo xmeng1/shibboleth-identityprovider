@@ -28,8 +28,8 @@ import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.binding.SAML1ArtifactMessageContext;
+import org.opensaml.saml1.binding.artifact.AbstractSAML1Artifact;
 import org.opensaml.saml1.core.Assertion;
-import org.opensaml.saml1.core.AssertionArtifact;
 import org.opensaml.saml1.core.NameIdentifier;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
@@ -154,13 +154,6 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             // Set as much information as can be retrieved from the decoded message
             try {
                 Request samlRequest = requestContext.getInboundSAMLMessage();
-                if (samlRequest.getAssertionArtifacts() != null) {
-                    ArrayList<String> artifacts = new ArrayList<String>();
-                    for (AssertionArtifact artifact : samlRequest.getAssertionArtifacts()) {
-                        artifacts.add(artifact.getAssertionArtifact());
-                    }
-                    requestContext.setArtifacts(artifacts);
-                }
                 requestContext.setInboundSAMLMessageId(samlRequest.getID());
                 requestContext.setInboundSAMLMessageIssueInstant(samlRequest.getIssueInstant());
 
@@ -208,8 +201,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setRelyingParty(requestContext.getPeerEntityMetadata());
-        endpointSelector.setRelyingPartyRole(requestContext.getPeerEntityRoleMetadata());
+        endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+        endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
         endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
         return endpointSelector.selectEndpoint();
@@ -221,13 +214,13 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
      * @param requestContext current request context
      */
     protected void derferenceArtifacts(ArtifactResolutionRequestContext requestContext) {
-        Collection<String> artifacts = requestContext.getArtifacts();
+        Collection<AbstractSAML1Artifact> artifacts = requestContext.getArtifacts();
         if (artifacts != null) {
             ArrayList<Assertion> assertions = new ArrayList<Assertion>();
             SAMLArtifactMapEntry artifactEntry;
 
-            for (String artifact : artifacts) {
-                artifactEntry = artifactMap.peek(artifact.getBytes());
+            for (AbstractSAML1Artifact artifact : artifacts) {
+                artifactEntry = artifactMap.peek(artifact.getArtifactBytes());
                 if (artifactEntry == null || artifactEntry.isExpired()) {
                     log.error("Unknown artifact.");
                 }
@@ -242,7 +235,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
                             + artifactEntry.getRelyingPartyId() + " but was resolve request came from "
                             + requestContext.getPeerEntityId());
                 }
-                artifactMap.get(artifact.getBytes());
+                artifactMap.get(artifact.getArtifactBytes());
                 assertions.add((Assertion) artifactEntry.getSamlMessage());
             }
             requestContext.setReferencedAssertions(assertions);
@@ -280,7 +273,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             SAML1ArtifactMessageContext<Request, Response, NameIdentifier> {
 
         /** Artifact to be resolved. */
-        private Collection<String> artifacts;
+        private Collection<AbstractSAML1Artifact> artifacts;
 
         /** Message referenced by the SAML artifact. */
         private Collection<Assertion> referencedAssertions;
@@ -290,7 +283,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
          * 
          * @return artifacts to be resolved
          */
-        public Collection<String> getArtifacts() {
+        public Collection<AbstractSAML1Artifact> getArtifacts() {
             return artifacts;
         }
 
@@ -299,7 +292,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
          * 
          * @param artifacts artifacts to be resolved
          */
-        public void setArtifacts(Collection<String> artifacts) {
+        public void setArtifacts(Collection<AbstractSAML1Artifact> artifacts) {
             this.artifacts = artifacts;
         }
 

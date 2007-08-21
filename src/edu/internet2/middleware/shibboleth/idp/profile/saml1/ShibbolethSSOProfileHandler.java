@@ -332,8 +332,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         endpointSelector.setSpAssertionConsumerService(loginContext.getSpAssertionConsumerService());
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setRelyingParty(requestContext.getPeerEntityMetadata());
-        endpointSelector.setRelyingPartyRole(requestContext.getPeerEntityRoleMetadata());
+        endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+        endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
         endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
 
