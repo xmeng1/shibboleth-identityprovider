@@ -1,4 +1,4 @@
-<project name="Shibboleth Identity Provider" basedir="." default="package">
+<project name="Shibboleth Identity Provider" basedir="." default="install">
 	
 	<!-- User based property file that overrides any property below -->
 	<property file="${user.name}-build.properties" />
@@ -184,7 +184,6 @@
 			</filterset>
 		</copy>
 
-		<symlink link="${idp.home}/bin/aacli.sh" resource="shib-tools.sh" overwrite="true" />
 		<chmod file="${idp.home}/bin/*.sh" perm="+x" />
 
 		<copy todir="${webinf-temp.dir}">

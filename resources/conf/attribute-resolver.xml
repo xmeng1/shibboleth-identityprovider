@@ -18,57 +18,57 @@
     <!-- ========================================== -->
     
     <!-- Release the Principal as an attribute and encode it as the SAML 1 and 2 name IDs -->
-    <resolver:AttributeDefinition id="principalName" xsi:type="ad:PrincipalName">
-        <resolver:AttributeEncoder xsi:type="enc:SAML1StringNameIdentifier"
+    <resolver:AttributeDefinition id="principalName" xsi:type="PrincipalName" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
+        <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    nameFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
 
-        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID"
+        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
    </resolver:AttributeDefinition>
     
     <!-- Example attribute defintions -->
     <!--
-    <resolver:AttributeDefinition id="uid" xsi:type="ad:Simple">
+    <resolver:AttributeDefinition id="uid" xsi:type="Simple"  xmlns="urn:mace:shibboleth:2.0:resolver:ad">
         <resolver:DataConnectorDependency ref="myLDAP" />
         
-        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" />
+        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder" />
         
-        <resolver:AttributeEncoder xsi:type="enc:SAML1StringNameIdentifier" />
+        <resolver:AttributeEncoder xsi:type="enc:SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder" />
     </resolver:AttributeDefinition>
     -->
     
     <!--
-    <resolver:AttributeDefinition id="scopedPrimaryAffiliation" xsi:type="ad:Scoped"
+    <resolver:AttributeDefinition id="scopedPrimaryAffiliation" xsi:type="Scoped"  xmlns="urn:mace:shibboleth:2.0:resolver:ad"
                                   scope="example.org"
                                   sourceAttributeID="eduPersonPrimaryAffiliation">
         <resolver:DataConnectorDependency ref="myLDAP" />
         
-        <resolver:AttributeEncoder xsi:type="enc:SAML1ScopedString"
+        <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
         
-        <resolver:AttributeEncoder xsi:type="enc:SAML2ScopedString"
+        <resolver:AttributeEncoder xsi:type="SAML2ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
 
     </resolver:AttributeDefinition>
     -->
     
     <!--
-    <resolver:AttributeDefinition id="affiliation" xsi:type="ad:Simple"
+    <resolver:AttributeDefinition id="affiliation" xsi:type="Simple"  xmlns="urn:mace:shibboleth:2.0:resolver:ad"
                                    sourceAttribute="eduPersonAffiliation">
         <resolver:DataConnectorDependency ref="staticAttributes" />
         <resolver:DataConnectorDependency ref="myLDAP" />
         
-        <resolver:AttributeEncoder xsi:type="enc:SAML1String"
+        <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    name="urn:mace:dir:attribute-def:eduPersondAffiliation"/>
         
-        <resolver:AttributeEncoder xsi:type="enc:SAML2String"
+        <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    name="urn:oid:1.3.6.1.4.1.5923.1.1.1.1"
                                    friendlyName="eduPersonAffiliation"/>
     </resolver:AttributeDefinition>
     -->
     
     <!--
-    <resolver:AttributeDefinition id="fullName" xsi:type="Script" >
+    <resolver:AttributeDefinition id="fullName" xsi:type="Script" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
         <resolver:DataConnectorDependency ref="myLDAP" />
         
         <Script>
@@ -88,47 +88,47 @@
     
     <!-- Example Static Connector -->
     <!--
-    <resolver:DataConnector id="staticAttributes" xsi:type="dc:Static">
-        <dc:Attribute id="eduPersonAffiliation">
-            <dc:Value>member</dc:Value>
-        </dc:Attribute>
-        <dc:Attribute id="eduPersonEntitlement">
-            <dc:Value>urn:example.org:entitlement:entitlement1</dc:Value>
-            <dc:Value>urn:mace:dir:entitlement:common-lib-terms</dc:Value>
-        </dc:Attribute>
+    <resolver:DataConnector id="staticAttributes" xsi:type="Static" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
+        <Attribute id="eduPersonAffiliation">
+            <Value>member</Value>
+        </Attribute>
+        <Attribute id="eduPersonEntitlement">
+            <Value>urn:example.org:entitlement:entitlement1</Value>
+            <Value>urn:mace:dir:entitlement:common-lib-terms</Value>
+        </Attribute>
     </resolver:DataConnector>
     -->
     
     <!-- Example Relational Database Connector -->
     <!--
-    <resolver:DataConnector id="mySIS" xsi:type="dc:RelationalDatabase">
-        <dc:ApplicationManagedConnection jdbcDriver="oracle.jdbc.driver.OracleDriver"
-                                         jdbcUrl="jdbc:oracle:thin:@db.example.org:1521:SomeDB"
-                                         jdbcUserName="myid"
-                                         jdbcPassword="mypassword" />
-        <dc:QueryTemplate>
+    <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
+        <ApplicationManagedConnection jdbcDriver="oracle.jdbc.driver.OracleDriver"
+                                      jdbcUrl="jdbc:oracle:thin:@db.example.org:1521:SomeDB"
+                                      jdbcUserName="myid"
+                                      jdbcPassword="mypassword" />
+        <QueryTemplate>
             <![CDATA[
                  SELECT * FROM student WHERE gzbtpid = ${principal}
              ]]>
-        </dc:QueryTemplate>
+        </QueryTemplate>
     
-        <dc:Column columnName="gzbtpid" attributeID="uid"/>
-        <dc:Column columnName="fqlft" attributeID="gpa" type="Float"/>
+        <Column columnName="gzbtpid" attributeID="uid"/>
+        <Column columnName="fqlft" attributeID="gpa" type="Float"/>
     </resolver:DataConnector>
     -->
     
     <!-- Example LDAP Connector -->
     <!--
-    <resolver:DataConnector id="myLDAP" xsi:type="LDAPDirectory"
+    <resolver:DataConnector id="myLDAP" xsi:type="LDAPDirectory" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
                             ldapUrl="ldap://ldap.example.org"
                             baseDN="ou=people,dc=example,dc=org"
                             principal="uid=myservice,ou=system"
                             principalCredential="myServicePassword">
-        <dc:FilterTemplate>
+        <FilterTemplate>
             <![CDATA[
                 (uid=${principal})
             ]]>
-        </dc:FilterTemplate>
+        </FilterTemplate>
     
     </resolver:DataConnector>
     -->
@@ -136,11 +136,11 @@
     <!-- ========================================== -->
     <!--      Principal Connectors                  -->
     <!-- ========================================== -->
-    <resolver:PrincipalConnector xsi:type="pc:Direct" 
+    <resolver:PrincipalConnector xsi:type="Direct" xmlns:pc="urn:mace:shibboleth:2.0:resolver:pc"
                                  id="saml1UnspecDirect"
                                  nameIDFormat="urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified" />
                                  
-    <resolver:PrincipalConnector xsi:type="pc:Direct" 
+    <resolver:PrincipalConnector xsi:type="Direct" xmlns:pc="urn:mace:shibboleth:2.0:resolver:pc"
                                  id="saml2UnspecDirect"
                                  nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 

@@ -9,9 +9,6 @@ declare LIBDIR
 LOCATION=$0
 LOCATION=${LOCATION%/*}
 
-COMMAND=$0
-COMMAND=${COMMAND##*/}
-
 if [ -z "$JAVA_HOME" ] ; then
   echo "ERROR: JAVA_HOME environment variable is not set."
   exit
@@ -43,10 +40,4 @@ do
     fi
 done
 
-case "$COMMAND" in
-  
-  aacli.sh)
-    "$JAVACMD" '-classpath' "$LOCALCLASSPATH" 'edu.internet2.middleware.shibboleth.common.attribute.AttributeAuthorityCLI' "$@"
-  ;;
-
-esac
+"$JAVACMD" '-classpath' "$LOCALCLASSPATH" 'edu.internet2.middleware.shibboleth.common.attribute.AttributeAuthorityCLI' "$@"
