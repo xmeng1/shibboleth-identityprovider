@@ -45,10 +45,5 @@ public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2Pro
 
         builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
                 "authenticationManagerPath")));
-
-        builder.addConstructorArg(XMLHelper.getAttributeValueAsList(config.getAttributeNodeNS(null,
-                "outboundBindingEnumeration")));
-
-        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "decodingBinding")));
     }
 }

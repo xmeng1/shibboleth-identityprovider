@@ -19,7 +19,6 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.saml1;
 import javax.xml.namespace.QName;
 
 import org.opensaml.xml.util.DatatypeHelper;
-import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
@@ -45,9 +44,6 @@ public class ShibbolethSSOProfileHandlerBeanDefinitionParser extends AbstractSAM
 
         builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
                 "authenticationManagerPath")));
-
-        builder.addConstructorArg(XMLHelper.getAttributeValueAsList(config.getAttributeNodeNS(null,
-                "outboundBindingEnumeration")));
     }
 
 }

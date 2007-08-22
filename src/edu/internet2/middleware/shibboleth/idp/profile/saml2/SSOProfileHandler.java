@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -94,19 +93,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * Constructor.
      * 
      * @param authnManagerPath path to the authentication manager servlet
-     * @param outgoingBindings URIs of SAML 2 bindings supported for outgoing message encoding
-     * @param decoder URI of the request decoder to use
      */
     @SuppressWarnings("unchecked")
-    public SSOProfileHandler(String authnManagerPath, List<String> outgoingBindings, String decoder) {
+    public SSOProfileHandler(String authnManagerPath) {
         super();
 
-        if (authnManagerPath == null || decoder == null) {
-            throw new IllegalArgumentException("AuthN manager path or decoding bindings URI may not be null");
-        }
         authenticationManagerPath = authnManagerPath;
-
-        decodingBinding = decoder;
 
         authnStatementBuilder = (SAMLObjectBuilder<AuthnStatement>) getBuilderFactory().getBuilder(
                 AuthnStatement.DEFAULT_ELEMENT_NAME);

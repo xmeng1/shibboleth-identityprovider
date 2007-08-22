@@ -136,11 +136,11 @@
     <!-- ========================================== -->
     <!--      Principal Connectors                  -->
     <!-- ========================================== -->
-    <resolver:PrincipalConnector xsi:type="Direct" xmlns:pc="urn:mace:shibboleth:2.0:resolver:pc"
+    <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
                                  id="saml1UnspecDirect"
                                  nameIDFormat="urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified" />
                                  
-    <resolver:PrincipalConnector xsi:type="Direct" xmlns:pc="urn:mace:shibboleth:2.0:resolver:pc"
+    <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
                                  id="saml2UnspecDirect"
                                  nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 

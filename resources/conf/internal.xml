@@ -12,7 +12,7 @@
             <list>
                 <bean id="shibMetadataExtensions" class="org.opensaml.util.resource.ClasspathResource">
                     <constructor-arg value="/shibboleth-metadata-ext-config.xml" />
-                </bean>   
+                </bean>
             </list>
         </constructor-arg>
     </bean>
@@ -101,7 +101,8 @@
             <key>
                 <value>urn:oasis:names:tc:SAML:1.0:profiles:artifact-01</value>
             </key>
-            <bean id="shibboleth.SAML1HttpArtifactDecoder" class="org.opensaml.saml1.binding.encoding.HTTPArtifactDecoder">
+            <bean id="shibboleth.SAML1HttpArtifactDecoder"
+                class="org.opensaml.saml1.binding.encoding.HTTPArtifactDecoder">
             </bean>
         </entry>
         <entry>
@@ -110,7 +111,7 @@
             </key>
             <bean id="shibboleth.SAML1HttpSoap11Decoder"
                 class="org.opensaml.saml1.binding.decoding.HTTPSOAP11Decoder">
-                <property name="parser" ref="shibboleth.ParserPool" />
+                <constructor-arg ref="shibboleth.ParserPool" />
             </bean>
         </entry>
         <entry>
@@ -118,7 +119,7 @@
                 <value>urn:mace:shibboleth:1.0:profiles:AuthnRequest</value>
             </key>
             <bean id="shibboleth.ShibbolethSSODecoder"
-                class="org.opensaml.saml1.binding.decoding.ShibbolethSSODecoder">
+                class="edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSODecoder">
             </bean>
         </entry>
     </util:map>
@@ -167,7 +168,8 @@
             <key>
                 <value>urn:oasis:names:tc:SAML:1.0:profiles:artifact-01</value>
             </key>
-            <bean id="shibboleth.SAML1HttpArtifactEncoder" class="org.opensaml.saml1.binding.encoding.HTTPArtifactEncoder">
+            <bean id="shibboleth.SAML1HttpArtifactEncoder"
+                class="org.opensaml.saml1.binding.encoding.HTTPArtifactEncoder">
             </bean>
         </entry>
         <entry>
@@ -175,7 +177,7 @@
                 <value>urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding</value>
             </key>
             <bean id="shibboleth.SAML1HttpSoap11EncoderBuilder"
-                class="org.opensaml.saml1.binding.encoding.HTTPSOAP11EncoderBuilder" />
+                class="org.opensaml.saml1.binding.encoding.HTTPSOAP11Encoder" />
         </entry>
     </util:map>
 
