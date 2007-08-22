@@ -17,6 +17,7 @@
 package edu.internet2.middleware.shibboleth.idp.config.profile;
 
 import org.apache.log4j.Logger;
+import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
@@ -45,7 +46,8 @@ public abstract class AbstractSAMLProfileHandlerBeanDefinitionParser extends
 
         builder.addPropertyReference("messageEncoders", "shibboleth.MessageEncoders");
 
-        builder.addPropertyValue("inboundBinding", config.getAttributeNodeNS(null, "inboundBinding"));
+        builder.addPropertyValue("inboundBinding", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
+                "inboundBinding")));
 
         builder.addPropertyValue("supportedOutboundBindings", XMLHelper.getAttributeValueAsList(config
                 .getAttributeNodeNS(null, "outboundBindingEnumeration")));
