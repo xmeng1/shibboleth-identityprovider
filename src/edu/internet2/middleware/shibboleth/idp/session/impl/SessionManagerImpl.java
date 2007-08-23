@@ -17,8 +17,11 @@
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
 import java.net.InetAddress;
-import java.util.HashMap;
 
+import org.joda.time.DateTime;
+import org.opensaml.util.storage.ExpiringObject;
+import org.opensaml.util.storage.StorageService;
+import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -29,20 +32,48 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * Manager of IdP sessions.
- * 
- * TODO change session map to use storage api
  */
 public class SessionManagerImpl implements SessionManager<Session>, ApplicationContextAware {
 
     /** Spring context used to publish login and logout events. */
     private ApplicationContext appCtx;
     
-    /** Currently active sessions. */
-    private HashMap<String, Session> activeSessions;
+    /** Backing service used to store sessions. */
+    private StorageService<String, SessionManagerEntry> sessionStore;
     
-    /** Constructor. */
-    public SessionManagerImpl(){
-        activeSessions = new  HashMap<String, Session>();
+    /** Parition in which entries are stored. */
+    private String partition;
+    
+    /** Lifetime, in milliseconds, of session. */
+    private long sessionLifetime;
+    
+    /**
+     * Constructor.
+     *
+     * @param storageService service used to store sessions
+     * @param lifetime lifetime, in milliseconds, of sessions
+     */
+    public SessionManagerImpl(StorageService<String, SessionManagerEntry> storageService, long lifetime){
+        sessionStore = storageService;
+        partition = "session";
+        sessionLifetime = lifetime;
+    }
+    
+    /**
+     * Constructor.
+     *
+     * @param storageService service used to store session
+     * @param storageParition partition in which sessions are stored
+     * @param lifetime lifetime, in milliseconds, of sessions
+     */
+    public SessionManagerImpl(StorageService<String, SessionManagerEntry> storageService, String storageParition, long lifetime){
+        sessionStore = storageService;
+        if(!DatatypeHelper.isEmpty(storageParition)){
+            partition = DatatypeHelper.safeTrim(storageParition);
+        }else{
+            partition = "session";
+        }
+        sessionLifetime = lifetime;
     }
     
     /** {@inheritDoc} */
@@ -52,22 +83,90 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     
     /** {@inheritDoc} */
     public Session createSession(InetAddress presenter, String principal) {
-        SessionImpl session = new SessionImpl(presenter, principal);
-        activeSessions.put(session.getSessionID(), session);
+        Session session = new SessionImpl(presenter, principal);
+        SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
+        sessionStore.put(partition, session.getSessionID(), sessionEntry);
         appCtx.publishEvent(new LoginEvent(session));
         return session;
     }
 
     /** {@inheritDoc} */
     public void destroySession(String sessionID) {
-        Session session = activeSessions.remove(sessionID);
-        if(session != null){
-            appCtx.publishEvent(new LogoutEvent(session));
+        SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID);
+        if(sessionEntry != null){
+            appCtx.publishEvent(new LogoutEvent(sessionEntry.getSession()));
         }
     }
 
     /** {@inheritDoc} */
     public Session getSession(String sessionID) {
-        return activeSessions.get(sessionID);
+        SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID); 
+        if(sessionEntry.isExpired()){
+            destroySession(sessionEntry.getSessionId());
+            return null;
+        }else{
+            return sessionEntry.getSession();
+        }
+    }
+    
+    /**
+     * Session store entry.
+     */
+    public class SessionManagerEntry implements ExpiringObject {
+        
+        /** User's session. */
+        private Session userSession;
+        
+        /** Manager that owns the session. */
+        private SessionManager<Session> sessionManager;
+        
+        /** Time this entry expires. */
+        private DateTime expirationTime;
+        
+        /**
+         * Constructor.
+         *
+         * @param manager manager that owns the session
+         * @param session user session
+         * @param sessionLifetime lifetime of session
+         */
+        public SessionManagerEntry(SessionManager<Session> manager, Session session, long sessionLifetime){
+            sessionManager = manager;
+            userSession = session;
+            expirationTime = new DateTime().plus(sessionLifetime);
+        }
+        
+        /**
+         * Gets the user session.
+         * 
+         * @return user session
+         */
+        public Session getSession(){
+            return userSession;
+        }
+        
+        /**
+         * Gets the ID of the user session.
+         * 
+         * @return ID of the user session
+         */
+        public String getSessionId(){
+            return userSession.getSessionID();
+        }
+
+        /** {@inheritDoc} */
+        public DateTime getExpirationTime() {
+            return expirationTime;
+        }
+
+        /** {@inheritDoc} */
+        public boolean isExpired() {
+            return expirationTime.isBeforeNow();
+        }
+        
+        /** {@inheritDoc} */
+        public void onExpire() {
+            sessionManager.destroySession(userSession.getSessionID());
+        }
     }
 }
