@@ -36,7 +36,7 @@
     <servlet>
         <servlet-name>ProfileRequestDispatcher</servlet-name>
         <servlet-class>
-            edu.internet2.middleware.shibboleth.idp.profile.ShibbolethProfileRequestDispatcher
+            edu.internet2.middleware.shibboleth.common.profile.ProfileRequestDispatcherServlet
         </servlet-class>
     </servlet>
 

@@ -44,6 +44,7 @@ public class StatusProfileHandler extends AbstractRequestURIMappedProfileHandler
         try {
             OutputStreamWriter writer = new OutputStreamWriter(out.getOutgoingStream());
             writer.write("ok");
+            writer.flush();
         } catch (IOException e) {
             log.error("Unable to write response", e);
         }

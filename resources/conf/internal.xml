@@ -40,10 +40,6 @@
         <constructor-arg ref="shibboleth.VelocityEngine" />
     </bean>
 
-    <bean id="shibboleth.TaskTimer" class="java.util.Timer" destroy-method="cancel">
-        <constructor-arg value="true" type="boolean" />
-    </bean>
-
     <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool">
         <property name="maxPoolSize" value="50" />
         <property name="createBuildersAtPoolLimit" value="true" />
@@ -51,6 +47,23 @@
         <property name="ignoreComments" value="true" />
         <property name="ignoreElementContentWhitespace" value="true" />
         <property name="namespaceAware" value="true" />
+    </bean>
+    
+    <bean id="shibboleth.TaskTimer" class="java.util.Timer" destroy-method="cancel">
+        <constructor-arg value="true" type="boolean" />
+    </bean>
+    
+    <bean id="shibboleth.StorageService" class="org.opensaml.util.storage.MapBasedStorageService" />
+    
+    <bean id="shibboleth.StorageServiceSweeper" class="org.opensaml.util.storage.ExpiringObjectStorageServiceSweeper">
+        <constructor-arg ref="shibboleth.TaskTimer" />
+        <constructor-arg ref="shibboleth.StorageService" />
+        <constructor-arg value="600000" />
+    </bean>
+    
+    <bean id="shibboleth.ArtifactMap" class="org.opensaml.common.binding.artifact.BasicSAMLArtifactMap">
+        <constructor-arg ref="shibboleth.StorageService" />
+        <constructor-arg type="long" value="300000" />
     </bean>
 
     <util:map id="shibboleth.MessageDecoders">
@@ -147,6 +160,9 @@
             </key>
             <bean id="shibboleth.SAML2HTTPArtifactEncoder"
                 class="org.opensaml.saml2.binding.decoding.HTTPArtifactEncoder">
+                <constructor-arg ref="shibboleth.ArtifactMap" />
+                <constructor-arg ref="shibboleth.VelocityEngine" />
+                <constructor-arg value="/templates/saml2-post-artifact-binding.vm" />
             </bean>
         </entry>
         <entry>
@@ -170,6 +186,7 @@
             </key>
             <bean id="shibboleth.SAML1HttpArtifactEncoder"
                 class="org.opensaml.saml1.binding.encoding.HTTPArtifactEncoder">
+                <constructor-arg ref="shibboleth.ArtifactMap" />
             </bean>
         </entry>
         <entry>

@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
-import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
@@ -28,7 +27,6 @@ import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.SAML2ArtifactMessageContext;
 import org.opensaml.saml2.binding.artifact.AbstractSAML2Artifact;
-import org.opensaml.saml2.binding.artifact.SAML2ArtifactBuilderFactory;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.NameID;
@@ -44,7 +42,6 @@ import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
-import org.opensaml.xml.util.Base64;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
@@ -95,7 +92,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
             checkSamlVersion(requestContext);
 
-            SAMLArtifactMapEntry artifactEntry = artifactMap.peek(requestContext.getArtifact().getArtifactBytes());
+            SAMLArtifactMapEntry artifactEntry = artifactMap.get(requestContext.getArtifact().getArtifactBytes());
             if (artifactEntry == null || artifactEntry.isExpired()) {
                 log.error("Unknown artifact.");
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
@@ -115,7 +112,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
                         "Artifact requester mismatch."));
             }
-            artifactMap.get(requestContext.getArtifact().getArtifactBytes());
+            artifactMap.remove(requestContext.getArtifact().getArtifactBytes());
             SAMLObject referencedMessage = artifactEntry.getSamlMessage();
             requestContext.setReferencedMessage(referencedMessage);
 

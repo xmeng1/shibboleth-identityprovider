@@ -220,7 +220,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             SAMLArtifactMapEntry artifactEntry;
 
             for (AbstractSAML1Artifact artifact : artifacts) {
-                artifactEntry = artifactMap.peek(artifact.getArtifactBytes());
+                artifactEntry = artifactMap.get(artifact.getArtifactBytes());
                 if (artifactEntry == null || artifactEntry.isExpired()) {
                     log.error("Unknown artifact.");
                 }
@@ -235,7 +235,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
                             + artifactEntry.getRelyingPartyId() + " but was resolve request came from "
                             + requestContext.getPeerEntityId());
                 }
-                artifactMap.get(artifact.getArtifactBytes());
+                artifactMap.remove(artifact.getArtifactBytes());
                 assertions.add((Assertion) artifactEntry.getSamlMessage());
             }
             requestContext.setReferencedAssertions(assertions);
