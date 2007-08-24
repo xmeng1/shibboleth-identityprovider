@@ -157,6 +157,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                 AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig
                         .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
                 requestContext.setProfileConfiguration(profileConfig);
+                requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
                 if (profileConfig.getSigningCredential() != null) {
                     requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
                 } else if (rpConfig.getDefaultSigningCredential() != null) {

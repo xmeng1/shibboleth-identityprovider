@@ -304,6 +304,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             ShibbolethSSOConfiguration profileConfig = (ShibbolethSSOConfiguration) rpConfig
                     .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
             requestContext.setProfileConfiguration(profileConfig);
+            requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
             if (profileConfig.getSigningCredential() != null) {
                 requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
             } else if (rpConfig.getDefaultSigningCredential() != null) {

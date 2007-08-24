@@ -317,6 +317,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             SSOConfiguration profileConfig = (SSOConfiguration) rpConfig
                     .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
             requestContext.setProfileConfiguration(profileConfig);
+            requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
             if (profileConfig.getSigningCredential() != null) {
                 requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
             } else if (rpConfig.getDefaultSigningCredential() != null) {
