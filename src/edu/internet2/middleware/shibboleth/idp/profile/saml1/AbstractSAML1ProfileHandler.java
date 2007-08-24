@@ -638,9 +638,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         if (log.isDebugEnabled()) {
             log.debug("Signing assertion to relying party " + requestContext.getPeerEntityId());
         }
-        SAMLObjectContentReference contentRef = new SAMLObjectContentReference(assertion);
         Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
-        signature.getContentReferences().add(contentRef);
         
         signature.setSigningCredential(signatureCredential);
         try {
