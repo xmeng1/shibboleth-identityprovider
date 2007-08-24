@@ -21,12 +21,10 @@ if defined CLASSPATH (
   set LOCALCLASSPATH=%CLASSPATH%
 )
 
-REM add in the dependency .jar files
-for %%i in (%ANT_HOME%\build-lib\*.jar) do (
-	call %ANT_HOME%\tools\cpappend.bat %%i
-)
-for %%i in (%ANT_HOME%\lib\*.jar) do (
-	call %ANT_HOME%\tools\cpappend.bat %%i
+REM add in the dependency .jar files 
+
+for %%i in ("%IDP_HOME%\lib\*.jar") do (
+	call "%IDP_HOME%\bin\cpappend.bat" %%i
 )
 
 if exist %JAVA_HOME%\lib\tools.jar (
@@ -36,5 +34,7 @@ if exist %JAVA_HOME%\lib\tools.jar (
 if exist %JAVA_HOME%\lib\classes.zip (
     set LOCALCLASSPATH=%LOCALCLASSPATH%;%JAVA_HOME%\lib\classes.zip
 )
+
+REM Go to it !
 
 %JAVACMD% -cp "%LOCALCLASSPATH%" edu.internet2.middleware.shibboleth.common.attribute.AttributeAuthorityCLI %*
