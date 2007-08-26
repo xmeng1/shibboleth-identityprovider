@@ -29,7 +29,7 @@
     <!-- Example attribute defintions -->
     <!--
     <resolver:AttributeDefinition id="uid" xsi:type="Simple"  xmlns="urn:mace:shibboleth:2.0:resolver:ad">
-        <resolver:DataConnectorDependency ref="myLDAP" />
+        <resolver:Dependency ref="myLDAP" />
         
         <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder" />
         
@@ -41,7 +41,7 @@
     <resolver:AttributeDefinition id="scopedPrimaryAffiliation" xsi:type="Scoped"  xmlns="urn:mace:shibboleth:2.0:resolver:ad"
                                   scope="example.org"
                                   sourceAttributeID="eduPersonPrimaryAffiliation">
-        <resolver:DataConnectorDependency ref="myLDAP" />
+        <resolver:Dependency ref="myLDAP" />
         
         <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
@@ -55,8 +55,8 @@
     <!--
     <resolver:AttributeDefinition id="affiliation" xsi:type="Simple"  xmlns="urn:mace:shibboleth:2.0:resolver:ad"
                                    sourceAttribute="eduPersonAffiliation">
-        <resolver:DataConnectorDependency ref="staticAttributes" />
-        <resolver:DataConnectorDependency ref="myLDAP" />
+        <resolver:Dependency ref="staticAttributes" />
+        <resolver:Dependency ref="myLDAP" />
         
         <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    name="urn:mace:dir:attribute-def:eduPersondAffiliation"/>
@@ -69,7 +69,7 @@
     
     <!--
     <resolver:AttributeDefinition id="fullName" xsi:type="Script" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
-        <resolver:DataConnectorDependency ref="myLDAP" />
+        <resolver:Dependency ref="myLDAP" />
         
         <Script>
             <![CDATA[
