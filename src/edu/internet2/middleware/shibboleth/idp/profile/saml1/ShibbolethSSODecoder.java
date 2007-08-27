@@ -54,7 +54,7 @@ public class ShibbolethSSODecoder extends BaseMessageDecoder implements SAMLMess
         }
 
         ShibbolethSSORequestContext requestContext = (ShibbolethSSORequestContext) messageContext;
-        HTTPInTransport transport = (HTTPInTransport) messageContext.getInboundMessage();
+        HTTPInTransport transport = (HTTPInTransport) messageContext.getInboundMessageTransport();
 
         String providerId = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("providerId"));
         if (providerId == null) {
