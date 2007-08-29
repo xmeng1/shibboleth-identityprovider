@@ -81,7 +81,7 @@
     </MetadataProvider>
     -->
     
-    <security:SecurityPolicy id="DefaultPolicy" xsi:type="security:SecurityPolicyType">
+    <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
         <security:Rule xsi:type="samlsec:SAML1Protocol"/>
         <security:Rule xsi:type="samlsec:SAML2Protocol"/>
         <security:Rule xsi:type="samlsec:Replay"/>
