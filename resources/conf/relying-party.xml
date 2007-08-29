@@ -79,4 +79,12 @@
     </MetadataProvider>
     -->
     
+    <security:SecurityPolicy id="DefaultPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="SAML1Protocol"/>
+        <security:Rule xsi:type="SAML2Protocol"/>
+        <security:Rule xsi:type="Replay"/>
+        <security:Rule xsi:type="IssueInstant"/>
+        <security:Rule xsi:type="MandatoryIssuer"/>
+    </security:SecurityPolicy>
+    
 </RelyingPartyGroup>
