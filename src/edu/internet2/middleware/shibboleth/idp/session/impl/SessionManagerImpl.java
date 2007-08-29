@@ -92,6 +92,10 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
     /** {@inheritDoc} */
     public void destroySession(String sessionID) {
+        if(sessionID == null){
+            return;
+        }
+        
         SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID);
         if(sessionEntry != null){
             appCtx.publishEvent(new LogoutEvent(sessionEntry.getSession()));
@@ -100,6 +104,10 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
     /** {@inheritDoc} */
     public Session getSession(String sessionID) {
+        if(sessionID == null){
+            return null;
+        }
+        
         SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID);
         if(sessionEntry == null){
             return null;
