@@ -10,11 +10,13 @@
                    xmlns:saml="urn:mace:shibboleth:2.0:relying-party:saml"
                    xmlns:metadata="urn:mace:shibboleth:2.0:metadata"
                    xmlns:security="urn:mace:shibboleth:2.0:security"
+                   xmlns:samlsec="urn:mace:shibboleth:2.0:security:saml"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd
                                        urn:mace:shibboleth:2.0:relying-party:saml classpath:/schema/shibboleth-2.0-relying-party-saml.xsd
                                        urn:mace:shibboleth:2.0:metadata classpath:/schema/shibboleth-2.0-metadata.xsd
                                        urn:mace:shibboleth:2.0:security classpath:/schema/shibboleth-2.0-security.xsd
+                                       urn:mace:shibboleth:2.0:security:saml classpath:/schema/shibboleth-2.0-security-policy-saml.xsd
                                        urn:oasis:names:tc:SAML:2.0:metadata classpath:/schema/saml-schema-metadata-2.0.xsd">
                                        
     <!-- ========================================== -->
@@ -41,14 +43,14 @@
     <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
     <!--
     <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                      metadataURL="http://example.org/my/metadata/file.xml" backingFile="/path/to/temp/location" />
+                      metadataURL="http://example.org/my/metadata/file.xml" backingFile="$IDP_HOME$/temp/metadata/somefile.xml" />
     -->
                   
     <!-- MetadataProvider reading metadata from the filesystem -->
     <!-- Fill in metadataFile attribute with deployment specific information -->
     <!--
     <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                      metadataFile="/path/to/metadata/file.xml" />
+                      metadataFile="$IDP_HOME$/metadata/somefile.xml" />
     -->
     
     <!-- MetadataProvider defining metadata inline -->
@@ -80,11 +82,11 @@
     -->
     
     <security:SecurityPolicy id="DefaultPolicy" xsi:type="security:SecurityPolicyType">
-        <security:Rule xsi:type="SAML1Protocol"/>
-        <security:Rule xsi:type="SAML2Protocol"/>
-        <security:Rule xsi:type="Replay"/>
-        <security:Rule xsi:type="IssueInstant"/>
-        <security:Rule xsi:type="MandatoryIssuer"/>
+        <security:Rule xsi:type="samlsec:SAML1Protocol"/>
+        <security:Rule xsi:type="samlsec:SAML2Protocol"/>
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
     </security:SecurityPolicy>
     
 </RelyingPartyGroup>
