@@ -197,7 +197,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
         loginContext.setRelyingParty(requestContext.getPeerEntityId());
         loginContext.setSpAssertionConsumerService(requestContext.getSpAssertionConsumerService());
-        loginContext.setRelyingParty(requestContext.getRelayState());
+        loginContext.setSpTarget(requestContext.getRelayState());
         loginContext.setAuthenticationEngineURL(authenticationManagerPath);
         loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
         requestContext.setLoginContext(loginContext);
