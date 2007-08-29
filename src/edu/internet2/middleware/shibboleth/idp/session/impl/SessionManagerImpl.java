@@ -100,7 +100,11 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
     /** {@inheritDoc} */
     public Session getSession(String sessionID) {
-        SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID); 
+        SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID);
+        if(sessionEntry == null){
+            return null;
+        }
+        
         if(sessionEntry.isExpired()){
             destroySession(sessionEntry.getSessionId());
             return null;
