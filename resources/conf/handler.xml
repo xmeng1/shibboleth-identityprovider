@@ -48,7 +48,7 @@
     </AuthenticationHandler>
     
     <AuthenticationHandler xsi:type="UsernamePassword" 
-                           jaasConfigurationLocation="file://$IDP_HOME/conf/login.config">
+                           jaasConfigurationLocation="file://$IDP_HOME$/conf/login.config">
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
     </AuthenticationHandler>
 
