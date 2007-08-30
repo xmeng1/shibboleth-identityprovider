@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.xml.util.DatatypeHelper;
@@ -28,6 +29,9 @@ import org.opensaml.xml.util.DatatypeHelper;
  * used.
  */
 public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
+
+    /** Class logger. */
+    private final Logger log = Logger.getLogger(ShibbolethSSOEndpointSelector.class);
 
     /** Assertion consumer service URL provided by SP. */
     private String spAssertionConsumerService;
@@ -66,10 +70,16 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
      */
     protected Endpoint selectEndpointByACS() {
         List<Endpoint> endpoints = getEntityRoleMetadata().getEndpoints();
-        if (endpoints != null) {
+        if (log.isDebugEnabled()) {
+            log.debug("Relying party role contains " + endpoints.size() + "endpoints");
+            log.debug("Selecting endpoint from metadata corresponding to provided ACS URL: "
+                    + getSpAssertionConsumerService());
+        }
+        if (endpoints != null && endpoints.size() > 0) {
             for (Endpoint endpoint : endpoints) {
-                if (endpoint.getLocation().equalsIgnoreCase(spAssertionConsumerService)
-                        || endpoint.getResponseLocation().equalsIgnoreCase(spAssertionConsumerService)) {
+                if (endpoint != null
+                        && (endpoint.getLocation().equalsIgnoreCase(spAssertionConsumerService) || endpoint
+                                .getResponseLocation().equalsIgnoreCase(spAssertionConsumerService))) {
                     return endpoint;
                 }
             }
