@@ -71,15 +71,22 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
     protected Endpoint selectEndpointByACS() {
         List<Endpoint> endpoints = getEntityRoleMetadata().getEndpoints();
         if (log.isDebugEnabled()) {
-            log.debug("Relying party role contains " + endpoints.size() + "endpoints");
+            log.debug("Relying party role contains " + endpoints.size() + " endpoints");
             log.debug("Selecting endpoint from metadata corresponding to provided ACS URL: "
                     + getSpAssertionConsumerService());
         }
         if (endpoints != null && endpoints.size() > 0) {
             for (Endpoint endpoint : endpoints) {
-                if (endpoint != null
-                        && (endpoint.getLocation().equalsIgnoreCase(spAssertionConsumerService) || endpoint
-                                .getResponseLocation().equalsIgnoreCase(spAssertionConsumerService))) {
+                if(endpoint == null){
+                    continue;
+                }
+                
+                if(endpoint.getLocation().equalsIgnoreCase(spAssertionConsumerService)){
+                    return endpoint;
+                }
+                
+                if(!DatatypeHelper.isEmpty(endpoint.getResponseLocation()) && endpoint
+                                .getResponseLocation().equalsIgnoreCase(spAssertionConsumerService)){
                     return endpoint;
                 }
             }
