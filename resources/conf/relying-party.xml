@@ -20,18 +20,6 @@
                                        urn:oasis:names:tc:SAML:2.0:metadata classpath:/schema/saml-schema-metadata-2.0.xsd">
                                        
     <!-- ========================================== -->
-    <!--     Security Configurations                -->
-    <!-- ========================================== -->
-    <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
-        <security:Rule xsi:type="samlsec:SAML1Protocol"/>
-        <security:Rule xsi:type="samlsec:SAML2Protocol"/>
-        <security:Rule xsi:type="samlsec:Replay"/>
-        <security:Rule xsi:type="samlsec:IssueInstant"/>
-        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
-    </security:SecurityPolicy>
-    
-                                       
-    <!-- ========================================== -->
     <!--      Relying Party Configurations          -->
     <!-- ========================================== -->
     <AnonymousRelyingParty provider="http://example.org/IdP" />
@@ -92,5 +80,16 @@
         <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" metadataFile="/path/to/metadata/file.xml" />
     </MetadataProvider>
     -->
+    
+    <!-- ========================================== -->
+    <!--     Security Configurations                -->
+    <!-- ========================================== -->
+    <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:SAML1Protocol"/>
+        <security:Rule xsi:type="samlsec:SAML2Protocol"/>
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
     
 </RelyingPartyGroup>
