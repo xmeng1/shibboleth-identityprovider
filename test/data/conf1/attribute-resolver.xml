@@ -12,34 +12,136 @@
                                        urn:mace:shibboleth:2.0:resolver:ad classpath:/schema/shibboleth-2.0-attribute-resolver-ad.xsd
                                        urn:mace:shibboleth:2.0:resolver:dc classpath:/schema/shibboleth-2.0-attribute-resolver-dc.xsd
                                        urn:mace:shibboleth:2.0:attribute:encoder classpath:/schema/shibboleth-2.0-attribute-encoder.xsd">
-                                       
-    <resolver:AttributeDefinition xsi:type="ad:Simple" id="uid">
-        <resolver:DataConnectorDependency ref="static" />
-        <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" />
-    </resolver:AttributeDefinition>
+
+    <!-- ========================================== -->
+    <!--      Attribute Definitions                 -->
+    <!-- ========================================== -->
     
-    <resolver:AttributeDefinition xsi:type="ad:Simple" id="cn">
-        <resolver:DataConnectorDependency ref="static" />
-    </resolver:AttributeDefinition>
+    <!-- Release the Principal as an attribute and encode it as the SAML 1 and 2 name IDs -->
+    <resolver:AttributeDefinition id="principalName" xsi:type="PrincipalName" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
+        <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                                   nameFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
+
+        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                                   nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
+   </resolver:AttributeDefinition>
     
-    <resolver:AttributeDefinition xsi:type="ad:Simple" id="email">
-        <resolver:DataConnectorDependency ref="static" />
+    <!-- Example attribute defintions -->
+    <!--
+    <resolver:AttributeDefinition id="uid" xsi:type="Simple"  xmlns="urn:mace:shibboleth:2.0:resolver:ad">
+        <resolver:Dependency ref="myLDAP" />
+        
+        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder" />
+        
+        <resolver:AttributeEncoder xsi:type="enc:SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder" />
     </resolver:AttributeDefinition>
-                                       
-    <resolver:DataConnector xsi:type="dc:Static" id="static">
-        <dc:Attribute id="uid">
-            <dc:Value>testUser</dc:Value>
-        </dc:Attribute>
-        <dc:Attribute id="cn">
-            <dc:Value>Test User</dc:Value>
-        </dc:Attribute>
-        <dc:Attribute id="email">
-            <dc:Value>t.user@example.org</dc:Value>
-        </dc:Attribute>
+    -->
+    
+    <!--
+    <resolver:AttributeDefinition id="scopedPrimaryAffiliation" xsi:type="Scoped"  xmlns="urn:mace:shibboleth:2.0:resolver:ad"
+                                  scope="example.org"
+                                  sourceAttributeID="eduPersonPrimaryAffiliation">
+        <resolver:Dependency ref="myLDAP" />
+        
+        <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                                   name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
+        
+        <resolver:AttributeEncoder xsi:type="SAML2ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                                   name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation"/>
+
+    </resolver:AttributeDefinition>
+    -->
+    
+    <!--
+    <resolver:AttributeDefinition id="affiliation" xsi:type="Simple"  xmlns="urn:mace:shibboleth:2.0:resolver:ad"
+                                   sourceAttribute="eduPersonAffiliation">
+        <resolver:Dependency ref="staticAttributes" />
+        <resolver:Dependency ref="myLDAP" />
+        
+        <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                                   name="urn:mace:dir:attribute-def:eduPersondAffiliation"/>
+        
+        <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                                   name="urn:oid:1.3.6.1.4.1.5923.1.1.1.1"
+                                   friendlyName="eduPersonAffiliation"/>
+    </resolver:AttributeDefinition>
+    -->
+    
+    <!--
+    <resolver:AttributeDefinition id="fullName" xsi:type="Script" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
+        <resolver:Dependency ref="myLDAP" />
+        
+        <Script>
+            <![CDATA[
+                importPackage(Packages.edu.internet2.middleware.shibboleth.common.attribute.provider);
+                fullname = new BasicAttribute("fullname");
+                fullname.getValues().add(givenName.getValues().first() + " " + sn.getValues().first());
+            ]]>
+        </Script>
+    </resolver:AttributeDefinition>
+    -->
+    
+    
+    <!-- ========================================== -->
+    <!--      Data Connectors                       -->
+    <!-- ========================================== -->
+    
+    <!-- Example Static Connector -->
+    <!--
+    <resolver:DataConnector id="staticAttributes" xsi:type="Static" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
+        <Attribute id="eduPersonAffiliation">
+            <Value>member</Value>
+        </Attribute>
+        <Attribute id="eduPersonEntitlement">
+            <Value>urn:example.org:entitlement:entitlement1</Value>
+            <Value>urn:mace:dir:entitlement:common-lib-terms</Value>
+        </Attribute>
     </resolver:DataConnector>
+    -->
     
-    <resolver:PrincipalConnector xsi:type="pc:Direct" 
-                                 id="directPC"
+    <!-- Example Relational Database Connector -->
+    <!--
+    <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
+        <ApplicationManagedConnection jdbcDriver="oracle.jdbc.driver.OracleDriver"
+                                      jdbcUrl="jdbc:oracle:thin:@db.example.org:1521:SomeDB"
+                                      jdbcUserName="myid"
+                                      jdbcPassword="mypassword" />
+        <QueryTemplate>
+            <![CDATA[
+                 SELECT * FROM student WHERE gzbtpid = ${principal}
+             ]]>
+        </QueryTemplate>
+    
+        <Column columnName="gzbtpid" attributeID="uid"/>
+        <Column columnName="fqlft" attributeID="gpa" type="Float"/>
+    </resolver:DataConnector>
+    -->
+    
+    <!-- Example LDAP Connector -->
+    <!--
+    <resolver:DataConnector id="myLDAP" xsi:type="LDAPDirectory" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
+                            ldapUrl="ldap://ldap.example.org"
+                            baseDN="ou=people,dc=example,dc=org"
+                            principal="uid=myservice,ou=system"
+                            principalCredential="myServicePassword">
+        <FilterTemplate>
+            <![CDATA[
+                (uid=${principal})
+            ]]>
+        </FilterTemplate>
+    
+    </resolver:DataConnector>
+    -->
+    
+    <!-- ========================================== -->
+    <!--      Principal Connectors                  -->
+    <!-- ========================================== -->
+    <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
+                                 id="saml1UnspecDirect"
                                  nameIDFormat="urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified" />
+                                 
+    <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
+                                 id="saml2UnspecDirect"
+                                 nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 
 </AttributeResolver>
