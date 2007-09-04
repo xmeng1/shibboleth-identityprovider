@@ -35,13 +35,13 @@ import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.DatatypeHelper;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
 /**
  * This servlet should be protected by a filter which populates REMOTE_USER. The serlvet will then set the remote user
  * field in a LoginContext.
  */
-public class UsernamePasswordAuthenticationServlet extends HttpServlet {
+public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Serial version UID. */
     private static final long serialVersionUID = -572799841125956990L;
@@ -133,8 +133,8 @@ public class UsernamePasswordAuthenticationServlet extends HttpServlet {
             
             Subject subject = jaasLoginCtx.getSubject();
             Principal principal = subject.getPrincipals().iterator().next();
-            request.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, principal.getName());
-            request.setAttribute(AuthenticationHandler.SUBJECT_KEY, jaasLoginCtx.getSubject());
+            request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
+            request.setAttribute(LoginHandler.SUBJECT_KEY, jaasLoginCtx.getSubject());
 
             return true;
         } catch (LoginException e) {

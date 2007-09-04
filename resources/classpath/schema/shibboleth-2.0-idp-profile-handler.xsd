@@ -32,7 +32,7 @@
             <xsd:sequence>
                 <xsd:element name="ErrorHandler" type="ErrorHandlerType" />
                 <xsd:element name="ProfileHandler" type="RequestHandlerType" minOccurs="0" maxOccurs="unbounded" />
-                <xsd:element name="AuthenticationHandler" type="AuthenticationHandlerType" minOccurs="0"
+                <xsd:element name="LoginHandler" type="LoginHandlerType" minOccurs="0"
                     maxOccurs="unbounded" />
             </xsd:sequence>
         </xsd:complexType>
@@ -169,7 +169,7 @@
 
     <xsd:complexType name="RemoteUser">
         <xsd:complexContent>
-            <xsd:extension base="AuthenticationHandlerType">
+            <xsd:extension base="LoginHandlerType">
                 <xsd:attribute name="protectedServletPath" type="xsd:string" default="/Authn/RemoteUser">
                     <xsd:annotation>
                         <xsd:documentation>
@@ -185,7 +185,7 @@
 
     <xsd:complexType name="UsernamePassword">
         <xsd:complexContent>
-            <xsd:extension base="AuthenticationHandlerType">
+            <xsd:extension base="LoginHandlerType">
                 <xsd:attribute name="jaasConfigurationLocation" type="xsd:anyURI">
                     <xsd:annotation>
                         <xsd:documentation>
@@ -209,7 +209,7 @@
         </xsd:complexContent>
     </xsd:complexType>
 
-    <xsd:complexType name="AuthenticationHandlerType" abstract="true">
+    <xsd:complexType name="LoginHandlerType" abstract="true">
         <xsd:annotation>
             <xsd:documentation>Base type for authentication handler types.</xsd:documentation>
         </xsd:annotation>

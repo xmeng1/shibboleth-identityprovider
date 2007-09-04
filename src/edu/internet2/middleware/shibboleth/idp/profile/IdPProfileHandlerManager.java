@@ -35,7 +35,7 @@ import edu.internet2.middleware.shibboleth.common.profile.AbstractErrorHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractRequestURIMappedProfileHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 
 /**
@@ -54,7 +54,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     private Map<String, AbstractRequestURIMappedProfileHandler> profileHandlers;
 
     /** Map of authentication methods to authentication handlers. */
-    private Map<String, AuthenticationHandler> authenticationHandlers;
+    private Map<String, LoginHandler> authenticationHandlers;
 
     /**
      * Constructor. Configuration resources are not monitored for changes.
@@ -64,7 +64,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     public IdPProfileHandlerManager(List<Resource> configurations) {
         super(configurations);
         profileHandlers = new HashMap<String, AbstractRequestURIMappedProfileHandler>();
-        authenticationHandlers = new HashMap<String, AuthenticationHandler>();
+        authenticationHandlers = new HashMap<String, LoginHandler>();
     }
 
     /**
@@ -78,7 +78,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     public IdPProfileHandlerManager(List<Resource> configurations, Timer timer, long pollingFrequency) {
         super(timer, configurations, pollingFrequency);
         profileHandlers = new HashMap<String, AbstractRequestURIMappedProfileHandler>();
-        authenticationHandlers = new HashMap<String, AuthenticationHandler>();
+        authenticationHandlers = new HashMap<String, LoginHandler>();
     }
 
     /** {@inheritDoc} */
@@ -141,14 +141,14 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
      * 
      * @return authentication method URI and handler appropriate for given login context
      */
-    public Pair<String, AuthenticationHandler> getAuthenticationHandler(LoginContext loginContext) {
+    public Pair<String, LoginHandler> getAuthenticationHandler(LoginContext loginContext) {
         if (log.isDebugEnabled()) {
             log.debug(getId() + ": Looking up authentication method for relying party "
                     + loginContext.getRelyingPartyId());
         }
         List<String> requestedMethods = loginContext.getRequestedAuthenticationMethods();
         if (requestedMethods != null) {
-            AuthenticationHandler candidateHandler;
+            LoginHandler candidateHandler;
             for (String requestedMethod : requestedMethods) {
                 if (log.isDebugEnabled()) {
                     log.debug(getId() + ": Checking for authentication handler for method " + requestedMethod
@@ -175,7 +175,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
                                 + " for relying party " + loginContext.getRelyingPartyId()
                                 + " meets all requirements, using it.");
                     }
-                    return new Pair<String, AuthenticationHandler>(requestedMethod, candidateHandler);
+                    return new Pair<String, LoginHandler>(requestedMethod, candidateHandler);
                 }
             }
         } else {
@@ -191,7 +191,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
      * 
      * @return registered authentication handlers
      */
-    public Map<String, AuthenticationHandler> getAuthenticationHandlers() {
+    public Map<String, LoginHandler> getAuthenticationHandlers() {
         return authenticationHandlers;
     }
 
@@ -257,15 +257,15 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
      * @param newServiceContext newly created application context
      */
     protected void loadNewAuthenticationHandlers(ApplicationContext newServiceContext) {
-        String[] authnBeanNames = newServiceContext.getBeanNamesForType(AuthenticationHandler.class);
+        String[] authnBeanNames = newServiceContext.getBeanNamesForType(LoginHandler.class);
         if (log.isDebugEnabled()) {
             log.debug(getId() + ": Loading " + authnBeanNames.length + " new authentication handlers.");
         }
 
         authenticationHandlers.clear();
-        AuthenticationHandler authnHandler;
+        LoginHandler authnHandler;
         for (String authnBeanName : authnBeanNames) {
-            authnHandler = (AuthenticationHandler) newServiceContext.getBean(authnBeanName);
+            authnHandler = (LoginHandler) newServiceContext.getBean(authnBeanName);
             if (log.isDebugEnabled()) {
                 log.debug(getId() + ": Loading authentication handler of type "
                         + authnHandler.getClass().getName() + " supporting authentication methods: "

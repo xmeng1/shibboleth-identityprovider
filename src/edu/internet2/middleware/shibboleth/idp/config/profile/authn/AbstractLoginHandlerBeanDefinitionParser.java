@@ -31,10 +31,10 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerName
 /**
  * Base class for authentication handler definition parsers.
  */
-public abstract class AbstractAuthenticationHandlerBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
+public abstract class AbstractLoginHandlerBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
     /** Class logger. */
-    private static Logger log = Logger.getLogger(AbstractAuthenticationHandlerBeanDefinitionParser.class);
+    private static Logger log = Logger.getLogger(AbstractLoginHandlerBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {

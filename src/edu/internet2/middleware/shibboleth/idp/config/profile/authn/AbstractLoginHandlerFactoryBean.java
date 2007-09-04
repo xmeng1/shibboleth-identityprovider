@@ -20,12 +20,12 @@ import java.util.List;
 
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 
-import edu.internet2.middleware.shibboleth.idp.authn.provider.AbstractAuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.provider.AbstractLoginHandler;
 
 /**
  * Base class for authentication handler factory beans.
  */
-public abstract class AbstractAuthenticationHandlerFactoryBean extends AbstractFactoryBean {
+public abstract class AbstractLoginHandlerFactoryBean extends AbstractFactoryBean {
 
     /** Authentication methods supported by the handler. */
     private List<String> authenticationMethods;
@@ -74,7 +74,7 @@ public abstract class AbstractAuthenticationHandlerFactoryBean extends AbstractF
      * 
      * @param handler the authentication handler to populate
      */
-    protected void populateHandler(AbstractAuthenticationHandler handler) {
+    protected void populateHandler(AbstractLoginHandler handler) {
         if (authenticationMethods != null) {
             handler.getSupportedAuthenticationMethods().addAll(authenticationMethods);
         }

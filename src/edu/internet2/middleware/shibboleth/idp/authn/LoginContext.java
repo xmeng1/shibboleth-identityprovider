@@ -38,7 +38,7 @@ import org.joda.time.DateTime;
  * LoginContexts should be created by a profile handler when authentication is needed. Once control has returned to the
  * profile handler, it should remove the LoginContext from the HttpSession.
  * 
- * The {@link AuthenticationEngine} or an {@link AuthenticationHandler} should set the
+ * The {@link AuthenticationEngine} or an {@link LoginHandler} should set the
  * {@link LoginContext#setAuthenticationAttempted()}, {@link LoginContext#setPrincipalAuthenticated(boolean)},
  * {@link LoginContext#setAuthnFailure(String)}, {@link LoginContext#{setAuthenticationDuration(long)}
  * {@link LoginContext#setAuthenticationInstant(DateTime)} appropriately.
@@ -230,7 +230,7 @@ public class LoginContext implements Serializable {
     /**
      * Set if authentication has been attempted.
      * 
-     * This method should be called by an {@link AuthenticationHandler} while processing a request.
+     * This method should be called by an {@link LoginHandler} while processing a request.
      */
     public void setAuthenticationAttempted() {
         authnAttempted = true;

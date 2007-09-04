@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
 /**
  * Extracts the REMOTE_USER and places it in a request attribute to be used by the authentication engine.
@@ -48,7 +48,7 @@ public class RemoteUserAuthServlet extends HttpServlet {
             log.debug("Remote user identified as " + principalName
                             + " returning control back to authentication engine");
         }
-        httpRequest.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
+        httpRequest.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
         AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }
 }

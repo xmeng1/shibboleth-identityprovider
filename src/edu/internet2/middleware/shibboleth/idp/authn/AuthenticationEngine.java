@@ -220,7 +220,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Selecting appropriate authentication method for request.");
         }
-        Pair<String, AuthenticationHandler> handler = getProfileHandlerManager().getAuthenticationHandler(loginContext);
+        Pair<String, LoginHandler> handler = getProfileHandlerManager().getAuthenticationHandler(loginContext);
 
         if (handler == null) {
             loginContext.setPrincipalAuthenticated(false);
@@ -259,7 +259,7 @@ public class AuthenticationEngine extends HttpServlet {
     protected void authenticateUserWithoutActiveMethod2(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         HttpSession httpSession = httpRequest.getSession();
 
-        String principalName = (String) httpRequest.getAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY);
+        String principalName = (String) httpRequest.getAttribute(LoginHandler.PRINCIPAL_NAME_KEY);
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         if (DatatypeHelper.isEmpty(principalName)) {
             loginContext.setPrincipalAuthenticated(false);
@@ -296,7 +296,7 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.debug("Recording authentication and service information in Shibboleth session for principal: "
                     + principalName);
         }
-        Subject subject = (Subject) httpRequest.getAttribute(AuthenticationHandler.SUBJECT_KEY);
+        Subject subject = (Subject) httpRequest.getAttribute(LoginHandler.SUBJECT_KEY);
         AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(subject, loginContext
                 .getAuthenticationMethod(), new DateTime(), loginContext.getAuthenticationDuration());
 

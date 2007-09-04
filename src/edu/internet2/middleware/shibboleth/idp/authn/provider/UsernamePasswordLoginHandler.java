@@ -33,10 +33,10 @@ import org.opensaml.util.URLBuilder;
  * If an Authentication Context Class or DeclRef URI is not specified, it will default to
  * "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport".
  */
-public class UsernamePasswordAuthenticationHandler extends AbstractAuthenticationHandler {
+public class UsernamePasswordLoginHandler extends AbstractLoginHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(UsernamePasswordAuthenticationHandler.class);
+    private final Logger log = Logger.getLogger(UsernamePasswordLoginHandler.class);
 
     /** The URL of the servlet used to perform authentication. */
     private String authenticationServletURL;
@@ -46,7 +46,7 @@ public class UsernamePasswordAuthenticationHandler extends AbstractAuthenticatio
      *
      * @param servletURL URL to the authentication servlet
      */
-    public UsernamePasswordAuthenticationHandler(String servletURL){
+    public UsernamePasswordLoginHandler(String servletURL){
         super();
         setSupportsPassive(false);
         setSupportsForceAuthentication(true);

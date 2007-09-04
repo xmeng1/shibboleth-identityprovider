@@ -27,10 +27,10 @@ import org.opensaml.util.URLBuilder;
 /**
  * Authentication Handler that redirects to servlet protected by a Web Single-Sign-On system.
  */
-public class RemoteUserAuthenticationHandler extends AbstractAuthenticationHandler {
+public class RemoteUserLoginHandler extends AbstractLoginHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(RemoteUserAuthenticationHandler.class);
+    private final Logger log = Logger.getLogger(RemoteUserLoginHandler.class);
 
     /** The URL of the SSO-protected servlet. */
     private String servletURL;

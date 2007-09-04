@@ -59,7 +59,7 @@
     <!-- Servlet protected by container user for RemoteUser authentication -->
     <servlet>
         <servlet-name>RemoteUserAuthHandler</servlet-name>
-        <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserAuthServlet</servlet-class>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserLoginServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
@@ -70,7 +70,7 @@
     <!-- Servlet for doing Username/Password authentication -->
     <servlet>
         <servlet-name>UsernamePasswordAuthHandler</servlet-name>
-        <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordAuthenticationServlet</servlet-class>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordLoginServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>

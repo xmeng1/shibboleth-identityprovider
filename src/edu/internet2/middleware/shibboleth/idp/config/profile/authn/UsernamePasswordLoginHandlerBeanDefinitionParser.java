@@ -18,6 +18,8 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
 import javax.xml.namespace.QName;
 
+import org.apache.log4j.Logger;
+import org.opensaml.log.Level;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
@@ -25,24 +27,31 @@ import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
 
 /**
- * Spring bean definition parser for remote user authentication handlers.
+ * Spring bean definition parser for username/password authentication handlers.
  */
-public class RemoteUserAuthenticationHandlerBeanDefinitionParser extends
-        AbstractAuthenticationHandlerBeanDefinitionParser {
-    
+public class UsernamePasswordLoginHandlerBeanDefinitionParser extends
+        AbstractLoginHandlerBeanDefinitionParser {
+
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "RemoteUser");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "UsernamePassword");
+    
+    /** Class logger. */
+    private final Logger log = Logger.getLogger("UsernamePasswordAuthenticationHandlerBeanDefinitionParser");
 
     /** {@inheritDoc} */
-    protected Class getBeanClass(Element arg0) {
-        return RemoteUserAuthenticationHandlerFactoryBean.class;
+    protected Class getBeanClass(Element element) {
+        return UsernamePasswordLoginHandlerFactoryBean.class;
     }
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addPropertyValue("protectedServletPath", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(
-                null, "protectedServletPath")));
+        builder.addPropertyValue("authenticationServletURL", DatatypeHelper.safeTrim(config.getAttributeNS(null,
+                "authenticationServletURL")));
+
+        String jaasConfigurationURL = DatatypeHelper.safeTrim(config.getAttributeNS(null, "jaasConfigurationLocation"));
+        log.log(Level.CRITICAL, "Setting JAAS configuration file to: " + jaasConfigurationURL);
+        System.setProperty("java.security.auth.login.config", jaasConfigurationURL);
     }
 }

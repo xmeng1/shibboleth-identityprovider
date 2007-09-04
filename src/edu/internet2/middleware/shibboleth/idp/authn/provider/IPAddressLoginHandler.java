@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 
 /**
@@ -47,10 +47,10 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
  * If an Authentication Context Class or DeclRef URI is not specified, it will default to
  * "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol".
  */
-public class IPAddressAuthenticationHandler extends AbstractAuthenticationHandler {
+public class IPAddressLoginHandler extends AbstractLoginHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(IPAddressAuthenticationHandler.class);
+    private final Logger log = Logger.getLogger(IPAddressLoginHandler.class);
 
     /** The URI of the AuthnContextDeclRef or the AuthnContextClass. */
     private String authnMethodURI = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol";
@@ -81,7 +81,7 @@ public class IPAddressAuthenticationHandler extends AbstractAuthenticationHandle
 
         for (String addr : entries) {
             try {
-                ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressAuthenticationHandler.IPEntry(addr));
+                ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressLoginHandler.IPEntry(addr));
             } catch (UnknownHostException ex) {
                 log.error("IPAddressHandler: Error parsing entry \"" + addr + "\". Ignoring.");
             }
@@ -133,7 +133,7 @@ public class IPAddressAuthenticationHandler extends AbstractAuthenticationHandle
         boolean ipAllowed = searchIpList(request);
 
         if (ipAllowed) {
-            request.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, username);
+            request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
         }
     }
 
@@ -142,7 +142,7 @@ public class IPAddressAuthenticationHandler extends AbstractAuthenticationHandle
         boolean ipDenied = searchIpList(request);
 
         if (!ipDenied) {
-            request.setAttribute(AuthenticationHandler.PRINCIPAL_NAME_KEY, username);
+            request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
         }
     }
 

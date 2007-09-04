@@ -30,14 +30,14 @@ import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInfor
  * certificate or one-time password.
  * 
  * After the handler has authenticated the user it <strong>MUST</strong> bind the user's principal name to the
- * {@link HttpServletRequest} attribute identified by {@link AuthenticationHandler#PRINCIPAL_NAME_KEY}.
+ * {@link HttpServletRequest} attribute identified by {@link LoginHandler#PRINCIPAL_NAME_KEY}.
  * 
  * The handler may bind a {@link Subject} to the attribute identified by {@link #SUBJECT_KEY} if one was created during
  * the authentication process. This Subject is stored in the {@link AuthenticationMethodInformation}, created for this
  * authentication, in the user's session.
  * 
  * The handler may also bind an error message, if an error occurred during authentication to the request attribute
- * identified by {@link AuthenticationHandler#AUTHENTICATION_ERROR_KEY}.
+ * identified by {@link LoginHandler#AUTHENTICATION_ERROR_KEY}.
  * 
  * Finally, the handler must return control to the authentication engine by invoking
  * {@link AuthenticationEngine#returnToAuthenticationEngine(HttpServletRequest, HttpServletResponse)}. After which the
@@ -47,7 +47,7 @@ import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInfor
  * persists past the process of authenticating the user, that is no additional session data may be added and no existing
  * session data may be changed when the handler returns control to the authentication engine.
  */
-public interface AuthenticationHandler {
+public interface LoginHandler {
 
     /** Request attribute to which user's principal name should be bound. */
     public static final String PRINCIPAL_NAME_KEY = "principal";
@@ -94,13 +94,4 @@ public interface AuthenticationHandler {
      * @param httpResponse response to user
      */
     public void login(HttpServletRequest httpRequest, HttpServletResponse httpResponse);
-
-    /**
-     * Logs out the given user from the authentication mechanism represented by this handler.
-     * 
-     * @param request user request
-     * @param response response to user
-     * @param principal principal named as returned during authentication
-     */
-    public void logout(HttpServletRequest request, HttpServletResponse response, String principal);
 }

@@ -19,15 +19,12 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
 /**
  * Base class for authentication handlers.
  */
-public abstract class AbstractAuthenticationHandler implements AuthenticationHandler {
+public abstract class AbstractLoginHandler implements LoginHandler {
     
     /** Authentication methods this handler supports. */
     private ArrayList<String> supportedAuthenticationMethods;
@@ -42,7 +39,7 @@ public abstract class AbstractAuthenticationHandler implements AuthenticationHan
     private boolean supportsPassive;
     
     /** Constructor. */
-    protected AbstractAuthenticationHandler(){
+    protected AbstractLoginHandler(){
         supportedAuthenticationMethods = new ArrayList<String>();
     }
     
@@ -91,10 +88,5 @@ public abstract class AbstractAuthenticationHandler implements AuthenticationHan
      */
     public void setSupportsPassive(boolean supported) {
         supportsPassive = supported;
-    }
-
-    /** {@inheritDoc} */
-    public void logout(HttpServletRequest request, HttpServletResponse response, String principal) {
-        // logout not yet supported
     }
 }

@@ -16,12 +16,12 @@
 
 package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
-import edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordAuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordLoginHandler;
 
 /**
- * Factory bean for {@link UsernamePasswordAuthenticationHandler}s.
+ * Factory bean for {@link UsernamePasswordLoginHandler}s.
  */
-public class UsernamePasswordAuthenticationHandlerFactoryBean extends AbstractAuthenticationHandlerFactoryBean {
+public class UsernamePasswordLoginHandlerFactoryBean extends AbstractLoginHandlerFactoryBean {
 
     /** URL to authentication servlet. */
     private String authenticationServletURL;
@@ -46,7 +46,7 @@ public class UsernamePasswordAuthenticationHandlerFactoryBean extends AbstractAu
 
     /** {@inheritDoc} */
     protected Object createInstance() throws Exception {
-        UsernamePasswordAuthenticationHandler handler = new UsernamePasswordAuthenticationHandler(
+        UsernamePasswordLoginHandler handler = new UsernamePasswordLoginHandler(
                 authenticationServletURL);
 
         populateHandler(handler);
@@ -56,6 +56,6 @@ public class UsernamePasswordAuthenticationHandlerFactoryBean extends AbstractAu
 
     /** {@inheritDoc} */
     public Class getObjectType() {
-        return UsernamePasswordAuthenticationHandler.class;
+        return UsernamePasswordLoginHandler.class;
     }
 }

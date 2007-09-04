@@ -20,7 +20,7 @@ import java.util.List;
 
 import edu.internet2.middleware.shibboleth.common.profile.AbstractErrorHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
 /**
  * Container for a single profile handler group configuration.
@@ -33,8 +33,8 @@ public class ProfileHandlerGroup {
     /** List of profile handlers for the group. */
     private List<ProfileHandler> profileHandlers;
     
-    /** List of authentication handlers for the group. */
-    private List<AuthenticationHandler> authenticationHandlers;
+    /** List of login handlers for the group. */
+    private List<LoginHandler> loginHandlers;
 
     /**
      * Gets the error handler for the group.
@@ -73,12 +73,12 @@ public class ProfileHandlerGroup {
     }
     
     /**
-     * Gets the authentication handlers for the group.
+     * Gets the login handlers for the group.
      * 
      * @return authentication handlers for the group
      */
-    public List<AuthenticationHandler> getAuthenticationHandlers() {
-        return authenticationHandlers;
+    public List<LoginHandler> getLoginHandlers() {
+        return loginHandlers;
     }
 
     /**
@@ -86,7 +86,7 @@ public class ProfileHandlerGroup {
      * 
      * @param handlers authentication handlers for the group
      */
-    public void setAuthenticationHandlers(List<AuthenticationHandler> handlers) {
-        authenticationHandlers = handlers;
+    public void setLoginHandlers(List<LoginHandler> handlers) {
+        loginHandlers = handlers;
     }
 }

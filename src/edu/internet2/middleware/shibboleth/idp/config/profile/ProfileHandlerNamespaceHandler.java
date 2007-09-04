@@ -21,8 +21,8 @@ import javax.xml.namespace.QName;
 import edu.internet2.middleware.shibboleth.common.config.BaseSpringNamespaceHandler;
 import edu.internet2.middleware.shibboleth.common.config.profile.JSPErrorHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.common.config.profile.VelocityErrorHandlerBeanDefinitionParser;
-import edu.internet2.middleware.shibboleth.idp.config.profile.authn.RemoteUserAuthenticationHandlerBeanDefinitionParser;
-import edu.internet2.middleware.shibboleth.idp.config.profile.authn.UsernamePasswordAuthenticationHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.authn.RemoteUserLoginHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.authn.UsernamePasswordLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.SAML1AttributeQueryProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.ShibbolethSSOProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2AttributeQueryProfileHandlerBeanDefinitionParser;
@@ -65,10 +65,10 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
         registerBeanDefinitionParser(SAML2SSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SSOProfileHandlerBeanDefinitionParser());
 
-        registerBeanDefinitionParser(RemoteUserAuthenticationHandlerBeanDefinitionParser.SCHEMA_TYPE,
-                new RemoteUserAuthenticationHandlerBeanDefinitionParser());
+        registerBeanDefinitionParser(RemoteUserLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new RemoteUserLoginHandlerBeanDefinitionParser());
 
-        registerBeanDefinitionParser(UsernamePasswordAuthenticationHandlerBeanDefinitionParser.SCHEMA_TYPE,
-                new UsernamePasswordAuthenticationHandlerBeanDefinitionParser());
+        registerBeanDefinitionParser(UsernamePasswordLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new UsernamePasswordLoginHandlerBeanDefinitionParser());
     }
 }

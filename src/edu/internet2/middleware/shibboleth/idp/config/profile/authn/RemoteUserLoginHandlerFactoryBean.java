@@ -16,19 +16,19 @@
 
 package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
-import edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserAuthenticationHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserLoginHandler;
 
 /**
- * Spring factory for {@link RemoteUserAuthenticationHandler}.
+ * Spring factory for {@link RemoteUserLoginHandler}.
  */
-public class RemoteUserAuthenticationHandlerFactoryBean extends AbstractAuthenticationHandlerFactoryBean {
+public class RemoteUserLoginHandlerFactoryBean extends AbstractLoginHandlerFactoryBean {
 
     /** Path to protected servlet. */
     private String protectedServletPath;
 
     /** {@inheritDoc} */
     public Class getObjectType() {
-        return RemoteUserAuthenticationHandler.class;
+        return RemoteUserLoginHandler.class;
     }
 
     /**
@@ -51,7 +51,7 @@ public class RemoteUserAuthenticationHandlerFactoryBean extends AbstractAuthenti
 
     /** {@inheritDoc} */
     protected Object createInstance() throws Exception {
-        RemoteUserAuthenticationHandler handler = new RemoteUserAuthenticationHandler();
+        RemoteUserLoginHandler handler = new RemoteUserLoginHandler();
         handler.setServletURL(getProtectedServletPath());
         populateHandler(handler);
         return handler;
