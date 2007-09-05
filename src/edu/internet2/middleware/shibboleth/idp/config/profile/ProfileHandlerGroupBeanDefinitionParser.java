@@ -61,11 +61,11 @@ public class ProfileHandlerGroupBeanDefinitionParser extends AbstractBeanDefinit
         }
         builder.addPropertyValue("profileHandlers", SpringConfigurationUtils.parseCustomElements(children, context));
 
-        children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "AuthenticationHandler"));
+        children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "LoginHandler"));
         if(log.isDebugEnabled()){
-            log.debug(children.size() + " authentication handler definitions found");
+            log.debug(children.size() + " login handler definitions found");
         }
-        builder.addPropertyValue("authenticationHandlers", SpringConfigurationUtils.parseCustomElements(children,
+        builder.addPropertyValue("loginHandlers", SpringConfigurationUtils.parseCustomElements(children,
                 context));
 
         return builder.getBeanDefinition();

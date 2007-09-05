@@ -43,13 +43,13 @@
         <RequestPath>/saml2/SOAP/AttributeQuery</RequestPath>
     </ProfileHandler>
     
-    <AuthenticationHandler xsi:type="RemoteUser">
+    <LoginHandler xsi:type="RemoteUser">
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
-    </AuthenticationHandler>
+    </LoginHandler>
     
-    <AuthenticationHandler xsi:type="UsernamePassword" 
+    <LoginHandler xsi:type="UsernamePassword" 
                            jaasConfigurationLocation="file://$IDP_HOME$/conf/login.config">
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
-    </AuthenticationHandler>
+    </LoginHandler>
 
 </ProfileHandlerGroup>
