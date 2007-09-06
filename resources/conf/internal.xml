@@ -123,14 +123,6 @@
         </entry>
         <entry>
             <key>
-                <value>urn:oasis:names:tc:SAML:1.0:profiles:artifact-01</value>
-            </key>
-            <bean id="shibboleth.SAML1HttpArtifactDecoder"
-                class="org.opensaml.saml1.binding.decoding.HTTPArtifactDecoder">
-            </bean>
-        </entry>
-        <entry>
-            <key>
                 <value>urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding</value>
             </key>
             <bean id="shibboleth.SAML1HttpSoap11Decoder"

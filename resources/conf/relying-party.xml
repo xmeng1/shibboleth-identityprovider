@@ -26,8 +26,8 @@
     
     <DefaultRelyingParty provider="http://example.org/IdP" />
     
-    <RelyingParty id="urn:example.org:myFederation"
-                  provider="urn:example.org:myFederation:idp1">
+    <RelyingParty id="urn:example.org"
+                  provider="http://idp.example.org">
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
