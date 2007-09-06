@@ -71,6 +71,11 @@
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg type="long" value="300000" />
     </bean>
+    
+    <bean id="shibboleth.ReplayCache" class="org.opensaml.util.storage.ReplayCache">
+        <constructor-arg ref="shibboleth.StorageService" />
+        <constructor-arg type="long" value="300000" />
+    </bean>
 
     <util:map id="shibboleth.MessageDecoders">
         <entry>

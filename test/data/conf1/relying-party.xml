@@ -89,11 +89,10 @@
     <!--     Security Configurations                -->
     <!-- ========================================== -->
     <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
-    <!-- 
         <security:Rule xsi:type="samlsec:SAML1Protocol"/>
         <security:Rule xsi:type="samlsec:SAML2Protocol"/>
+        <security:Rule xsi:type="samlsec:Replay"/>
         <security:Rule xsi:type="samlsec:IssueInstant"/>
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
-    -->
     </security:SecurityPolicy>
 </RelyingPartyGroup>
