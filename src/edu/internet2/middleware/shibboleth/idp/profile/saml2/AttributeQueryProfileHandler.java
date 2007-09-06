@@ -109,11 +109,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         MetadataProvider metadataProvider = getMetadataProvider();
 
         AttributeQueryContext requestContext = new AttributeQueryContext();
+        requestContext.setMetadataProvider(metadataProvider);
+        
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+        requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+
+        
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
-        requestContext.setMetadataProvider(metadataProvider);
 
         try {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
@@ -135,15 +139,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {
-                AttributeQuery attributeQuery = requestContext.getInboundSAMLMessage();
-                requestContext.setInboundSAMLMessageId(attributeQuery.getID());
-                requestContext.setInboundSAMLMessageIssueInstant(attributeQuery.getIssueInstant());
-
                 String relyingPartyId = requestContext.getPeerEntityId();
-                requestContext.setPeerEntityMetadata(metadataProvider.getEntityDescriptor(relyingPartyId));
-                requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setPeerEntityRoleMetadata(requestContext.getPeerEntityMetadata().getSPSSODescriptor(
-                        SAMLConstants.SAML20P_NS));
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
 

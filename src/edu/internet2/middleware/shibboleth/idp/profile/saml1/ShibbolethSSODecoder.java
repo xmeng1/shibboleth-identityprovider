@@ -18,8 +18,8 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import org.apache.log4j.Logger;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
+import org.opensaml.saml1.binding.decoding.BaseSAML1MessageDecoder;
 import org.opensaml.ws.message.MessageContext;
-import org.opensaml.ws.message.decoder.BaseMessageDecoder;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.xml.util.DatatypeHelper;
@@ -29,7 +29,7 @@ import edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSOProfil
 /**
  * Shibboleth 1.0 SSO authentication request message decoder.
  */
-public class ShibbolethSSODecoder extends BaseMessageDecoder implements SAMLMessageDecoder {
+public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAMLMessageDecoder {
 
     /** Class logger. */
     private final Logger log = Logger.getLogger(ShibbolethSSODecoder.class);
@@ -83,5 +83,7 @@ public class ShibbolethSSODecoder extends BaseMessageDecoder implements SAMLMess
             long time = Long.parseLong(timeStr);
             requestContext.setTime(time);
         }
+        
+        populateMessageContext(requestContext);
     }
 }

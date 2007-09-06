@@ -108,11 +108,14 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         MetadataProvider metadataProvider = getMetadataProvider();
 
         AttributeQueryContext requestContext = new AttributeQueryContext();
+        requestContext.setMetadataProvider(metadataProvider);
+        
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML11P_NS);
+        requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+        
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
-        requestContext.setMetadataProvider(metadataProvider);
 
         try {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
@@ -138,14 +141,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             // Set as much information as can be retrieved from the decoded message
             try {
                 Request attributeRequest = requestContext.getInboundSAMLMessage();
-                requestContext.setInboundSAMLMessageId(attributeRequest.getID());
-                requestContext.setInboundSAMLMessageIssueInstant(attributeRequest.getIssueInstant());
 
-                String relyingPartyId = requestContext.getPeerEntityId();
-                requestContext.setPeerEntityMetadata(metadataProvider.getEntityDescriptor(relyingPartyId));
-                requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setPeerEntityRoleMetadata(requestContext.getPeerEntityMetadata().getSPSSODescriptor(
-                        SAMLConstants.SAML10P_NS));
+                String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
                 requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));

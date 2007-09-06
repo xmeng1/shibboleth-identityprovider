@@ -179,8 +179,14 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
+        requestContext.setMetadataProvider(getMetadataProvider());
+        
         requestContext.setInboundMessageTransport(inTransport);
+        requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);        
+        requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+        
         requestContext.setOutboundMessageTransport(outTransport);
+        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
         SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
         requestContext.setMessageDecoder(decoder);

@@ -245,9 +245,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         }
 
         SSORequestContext requestContext = new SSORequestContext();
-        requestContext.setInboundMessageTransport(inTransport);
-        requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setMetadataProvider(getMetadataProvider());
+        
+        requestContext.setInboundMessageTransport(inTransport);
+        requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+        requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+        
+        requestContext.setOutboundMessageTransport(outTransport);
+        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
         try {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
