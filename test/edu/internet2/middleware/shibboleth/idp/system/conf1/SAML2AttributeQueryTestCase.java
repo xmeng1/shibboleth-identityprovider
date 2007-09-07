@@ -24,7 +24,6 @@ import org.opensaml.common.SAMLVersion;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.NameID;
-import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.ws.soap.common.SOAPObjectBuilder;
 import org.opensaml.ws.soap.soap11.Body;
@@ -48,13 +47,13 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
  */
 public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
-    /** Tests a request where the Issuer can not be authenticated. */
-    public void testUnathenticatedIssuer() throws Exception {
-        AttributeQuery query = buildAttributeQuery("urn:example.org:unitTest:sp1");
+    /** Tests that the attribute query handler correctly handles an incomming query. */
+    public void testAttributeQuery() throws Exception{
+        AttributeQuery query = buildAttributeQuery("urn:example.org:sp1");
         String soapMessage = getSOAPMessage(query);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/IdP/saml2/SOAP/AttributeQuery");
+        servletRequest.setPathInfo("/saml2/SOAP/AttributeQuery");
         servletRequest.setContent(soapMessage.getBytes());
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
@@ -70,17 +69,18 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains(StatusCode.RESPONDER_URI));
-        assertTrue(response.contains(StatusCode.REQUEST_DENIED_URI));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Success"));
+        assertTrue(response.contains("Name=\"principalName\""));
+        assertTrue(response.contains("testUser"));
     }
-
-    /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
-    public void testAuthenticatedIssuerNoProfileConfiguration() throws Exception {
-        AttributeQuery query = buildAttributeQuery("urn:example.org:unitTest:sp1");
+    
+    /** Tests that the attribute query handler correctly fails out if the profile is not configured. */
+    public void testAuthenticationWithoutConfiguredQuery() throws Exception{
+        AttributeQuery query = buildAttributeQuery("urn:example.org:BogusSP");
         String soapMessage = getSOAPMessage(query);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/IdP/saml2/SOAP/AttributeQueryNoAuth");
+        servletRequest.setPathInfo("/saml2/SOAP/AttributeQuery");
         servletRequest.setContent(soapMessage.getBytes());
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
@@ -94,37 +94,10 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
         HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
-
+            
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains(StatusCode.RESPONDER_URI));
-        assertTrue(response.contains(StatusCode.REQUEST_DENIED_URI));
-    }
-
-    /** Test a request where the Issuer is authenticated and has not requested any specific attributes. */
-    public void testAuthenticatedIssuerNoRequestAttributes() throws Exception {
-        AttributeQuery query = buildAttributeQuery("urn:example.org:unitTestFed:sp2");
-        String soapMessage = getSOAPMessage(query);
-
-        MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/IdP/saml2/SOAP/AttributeQueryNoAuth");
-        servletRequest.setContent(soapMessage.getBytes());
-
-        MockHttpServletResponse servletResponse = new MockHttpServletResponse();
-
-        ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
-                "shibboleth.HandlerManager");
-        ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
-        assertNotNull(handler);
-
-        // Process request
-        HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
-        handler.processRequest(profileRequest, profileResponse);
-
-        String response = servletResponse.getContentAsString();
-        assertTrue(response.contains(StatusCode.SUCCESS_URI));
-        assertTrue(response.contains("Name=\"cn\""));
-        assertTrue(response.contains("Name=\"uid\""));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Responder"));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
     }
 
     /**

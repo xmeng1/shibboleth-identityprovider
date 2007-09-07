@@ -19,13 +19,17 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
+import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -43,6 +47,17 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** Class logger. */
     private static Logger log = Logger.getLogger(AttributeQueryProfileHandler.class);
+    
+    /** Builder of assertion consumer service endpoints. */
+    private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
+
+    /** Constructor. */
+    public AttributeQueryProfileHandler() {
+        super();
+
+        acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
+                AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+    }
 
     /** {@inheritDoc} */
     public String getProfileId() {
@@ -56,7 +71,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         AttributeQueryContext requestContext = decodeRequest(inTransport, outTransport);
 
         try {
-            if (requestContext.getRelyingPartyConfiguration() == null) {
+            if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 2 Attribute Query profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
@@ -139,9 +154,13 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {
+                AttributeQuery query = requestContext.getInboundSAMLMessage();
+                requestContext.setSubjectNameIdentifier(query.getSubject().getNameID());
+                
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
+                requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
                 requestContext.setLocalEntityId(assertingPartyId);
@@ -152,14 +171,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
                 AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig
                         .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
-                requestContext.setProfileConfiguration(profileConfig);
-                requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-                if (profileConfig.getSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-                } else if (rpConfig.getDefaultSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                if(profileConfig != null){
+                    requestContext.setProfileConfiguration(profileConfig);
+                    requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
+                    if (profileConfig.getSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+                    } else if (rpConfig.getDefaultSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                    }
                 }
-
             } catch (MetadataProviderException e) {
                 log.error("Unable to locate metadata for asserting or relying party");
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
@@ -167,6 +187,33 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                 throw new ProfileException("Error locating party metadata");
             }
         }
+    }
+    
+    /**
+     * Selects the appropriate endpoint for the relying party and stores it in the request context.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return Endpoint selected from the information provided in the request context
+     */
+    protected Endpoint selectEndpoint(AttributeQueryContext requestContext) {
+        Endpoint endpoint;
+
+        if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
+            endpoint = acsEndpointBuilder.buildObject();
+            endpoint.setBinding(SAMLConstants.SAML2_SOAP11_BINDING_URI);
+        } else {
+            BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+            endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            endpointSelector.setMetadataProvider(getMetadataProvider());
+            endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+            endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
+            endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+            endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+            endpoint = endpointSelector.selectEndpoint();
+        }
+
+        return endpoint;
     }
 
     /** Basic data structure used to accumulate information as a request is being processed. */
