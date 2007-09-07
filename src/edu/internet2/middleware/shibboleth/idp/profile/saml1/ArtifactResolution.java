@@ -84,12 +84,12 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         try {
             if (requestContext.getRelyingPartyConfiguration() == null) {
                 log.error("SAML 1 Artifact resolution profile is not configured for relying party "
-                        + requestContext.getPeerEntityId());
+                        + requestContext.getInboundMessageIssuer());
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS, StatusCode.REQUEST_DENIED,
                         "SAML 1 Artifact resolution profile is not configured for relying party "
-                                + requestContext.getPeerEntityId()));
+                                + requestContext.getInboundMessageIssuer()));
                 throw new ProfileException("SAML 1 Artifact resolution profile is not configured for relying party "
-                        + requestContext.getPeerEntityId());
+                        + requestContext.getInboundMessageIssuer());
             }
 
             checkSamlVersion(requestContext);
@@ -226,10 +226,10 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
                             + " but IdP has entity ID of " + requestContext.getLocalEntityId());
                 }
 
-                if (!artifactEntry.getRelyingPartyId().equals(requestContext.getPeerEntityId())) {
+                if (!artifactEntry.getRelyingPartyId().equals(requestContext.getInboundMessageIssuer())) {
                     log.error("Artifact requester mismatch.  Artifact was issued to "
                             + artifactEntry.getRelyingPartyId() + " but was resolve request came from "
-                            + requestContext.getPeerEntityId());
+                            + requestContext.getInboundMessageIssuer());
                 }
                 artifactMap.remove(artifact.getArtifactBytes());
                 assertions.add((Assertion) artifactEntry.getSamlMessage());

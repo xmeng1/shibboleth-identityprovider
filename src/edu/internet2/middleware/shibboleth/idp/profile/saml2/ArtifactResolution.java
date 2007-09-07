@@ -82,12 +82,12 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         try {
             if (requestContext.getRelyingPartyConfiguration() == null) {
                 log.error("SAML 2 Artifact Resolve profile is not configured for relying party "
-                        + requestContext.getPeerEntityId());
+                        + requestContext.getInboundMessageIssuer());
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
                         "SAML 2 Artifact Resolve profile is not configured for relying party "
-                                + requestContext.getPeerEntityId()));
+                                + requestContext.getInboundMessageIssuer()));
                 throw new ProfileException("SAML 2 Artifact Resolve profile is not configured for relying party "
-                        + requestContext.getPeerEntityId());
+                        + requestContext.getInboundMessageIssuer());
             }
 
             checkSamlVersion(requestContext);
@@ -106,9 +106,9 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
                         "Artifact issuer mismatch."));
             }
 
-            if (!artifactEntry.getRelyingPartyId().equals(requestContext.getPeerEntityId())) {
+            if (!artifactEntry.getRelyingPartyId().equals(requestContext.getInboundMessageIssuer())) {
                 log.error("Artifact requester mismatch.  Artifact was issued to " + artifactEntry.getRelyingPartyId()
-                        + " but was resolve request came from " + requestContext.getPeerEntityId());
+                        + " but was resolve request came from " + requestContext.getInboundMessageIssuer());
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
                         "Artifact requester mismatch."));
             }
@@ -179,7 +179,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {
-                String relyingPartyId = requestContext.getPeerEntityId();
+                String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
 

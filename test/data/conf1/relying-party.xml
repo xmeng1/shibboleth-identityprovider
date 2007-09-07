@@ -57,6 +57,7 @@
                 <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
                     <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
                     <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post" Location="https://example.org/mySP" index="0"/>
+                    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://example.org/mySP" index="0"/>
                     <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />
                     <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0" />
                 </SPSSODescriptor>

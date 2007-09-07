@@ -61,7 +61,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
         assertEquals(false, loginContext.getPassiveAuth());
         assertEquals("/AuthnEngine", loginContext.getAuthenticationEngineURL());
         assertEquals("/shibboleth/SSO", loginContext.getProfileHandlerURL());
-        assertEquals("urn:example.org:sp", loginContext.getRelyingPartyId());
+        assertEquals("urn:example.org:sp1", loginContext.getRelyingPartyId());
         assertEquals(0, loginContext.getRequestedAuthenticationMethods().size());
         assertEquals("https://example.org/mySP", loginContext.getSpAssertionConsumerService());
         assertEquals("https://example.org/mySP", loginContext.getSpTarget());

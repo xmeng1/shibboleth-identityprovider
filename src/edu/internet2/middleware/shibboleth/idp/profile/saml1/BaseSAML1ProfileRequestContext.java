@@ -1,8 +1,8 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
+import org.opensaml.common.SAMLObject;
 import org.opensaml.saml1.core.NameIdentifier;
-import org.opensaml.saml1.core.RequestAbstractType;
 import org.opensaml.saml1.core.ResponseAbstractType;
 import org.opensaml.saml1.core.Status;
 
@@ -16,7 +16,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.Ab
  * @param <ResponseType> type of SAML 1 response
  * @param <ProfileConfigurationType> configuration type for this profile
  */
-public abstract class BaseSAML1ProfileRequestContext<RequestType extends RequestAbstractType, ResponseType extends ResponseAbstractType, ProfileConfigurationType extends AbstractSAML1ProfileConfiguration>
+public abstract class BaseSAML1ProfileRequestContext<RequestType extends SAMLObject, ResponseType extends ResponseAbstractType, ProfileConfigurationType extends AbstractSAML1ProfileConfiguration>
         extends BaseSAMLProfileRequestContext<RequestType, ResponseType, NameIdentifier, ProfileConfigurationType> {
 
     /** The request failure status. */

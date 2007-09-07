@@ -19,11 +19,11 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
+import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AttributeQuery;
-import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
@@ -50,6 +50,17 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
     /** Class logger. */
     private final Logger log = Logger.getLogger(AttributeQueryProfileHandler.class);
 
+    /** Builder of assertion consumer service endpoints. */
+    private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
+
+    /** Constructor. */
+    public AttributeQueryProfileHandler() {
+        super();
+
+        acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
+                AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+    }
+
     /** {@inheritDoc} */
     public String getProfileId() {
         return "urn:mace:shibboleth:2.0:idp:profiles:saml1:query:attribute";
@@ -61,23 +72,24 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
         Response samlResponse;
         try {
-            if (requestContext.getRelyingPartyConfiguration() == null) {
+            if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 1 Attribute Query profile is not configured for relying party "
-                        + requestContext.getPeerEntityId());
+                        + requestContext.getInboundMessageIssuer());
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
                         "SAML 1 Attribute Query profile is not configured for relying party "
-                                + requestContext.getPeerEntityId()));
+                                + requestContext.getInboundMessageIssuer()));
                 samlResponse = buildErrorResponse(requestContext);
+            }else{
+                resolvePrincipal(requestContext);
+                resolveAttributes(requestContext);
+                requestContext.setReleasedAttributes(requestContext.getPrincipalAttributes().keySet());
+    
+                ArrayList<Statement> statements = new ArrayList<Statement>();
+                statements.add(buildAttributeStatement(requestContext, 
+                        "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
+    
+                samlResponse = buildResponse(requestContext, statements);
             }
-
-            resolvePrincipal(requestContext);
-            resolveAttributes(requestContext);
-            requestContext.setReleasedAttributes(requestContext.getPrincipalAttributes().keySet());
-            
-            ArrayList<Statement> statements = new ArrayList<Statement>();
-            statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
-
-            samlResponse = buildResponse(requestContext, statements);
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
         }
@@ -109,11 +121,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
         AttributeQueryContext requestContext = new AttributeQueryContext();
         requestContext.setMetadataProvider(metadataProvider);
-        
+
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML11P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-        
+
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
@@ -140,7 +152,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {
-                Request attributeRequest = requestContext.getInboundSAMLMessage();
+                AttributeQuery query = requestContext.getInboundSAMLMessage();
+                requestContext.setSubjectNameIdentifier(query.getSubject().getNameIdentifier());
 
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
@@ -152,16 +165,18 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 requestContext.setLocalEntityMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
                 requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
                 requestContext.setLocalEntityRoleMetadata(requestContext.getLocalEntityMetadata()
-                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML10P_NS));
+                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML11P_NS));
 
                 AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig
                         .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
-                requestContext.setProfileConfiguration(profileConfig);
-                requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-                if (profileConfig.getSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-                } else if (rpConfig.getDefaultSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                if (profileConfig != null) {
+                    requestContext.setProfileConfiguration(profileConfig);
+                    requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
+                    if (profileConfig.getSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+                    } else if (rpConfig.getDefaultSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                    }
                 }
 
             } catch (MetadataProviderException e) {
@@ -181,40 +196,26 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
      * @return Endpoint selected from the information provided in the request context
      */
     protected Endpoint selectEndpoint(AttributeQueryContext requestContext) {
-        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
-        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-        endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
-        endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
-        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
-        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+        Endpoint endpoint;
 
-        return endpointSelector.selectEndpoint();
+        if (getInboundBinding().equals(SAMLConstants.SAML1_SOAP11_BINDING_URI)) {
+            endpoint = acsEndpointBuilder.buildObject();
+            endpoint.setBinding(SAMLConstants.SAML1_SOAP11_BINDING_URI);
+        } else {
+            BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+            endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            endpointSelector.setMetadataProvider(getMetadataProvider());
+            endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+            endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
+            endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+            endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+            endpoint = endpointSelector.selectEndpoint();
+        }
+
+        return endpoint;
     }
 
     /** Basic data structure used to accumulate information as a request is being processed. */
     protected class AttributeQueryContext extends
-            BaseSAML1ProfileRequestContext<Request, Response, AttributeQueryConfiguration> {
-
-        /** Current attribute query. */
-        private AttributeQuery attributeQuery;
-
-        /**
-         * Gets the attribute query of the request.
-         * 
-         * @return attribute query of the request
-         */
-        public AttributeQuery getAttributeQuery() {
-            return attributeQuery;
-        }
-
-        /**
-         * Sets the attribute query of the request.
-         * 
-         * @param query attribute query of the request
-         */
-        public void setAttributeQuery(AttributeQuery query) {
-            attributeQuery = query;
-        }
-    }
+            BaseSAML1ProfileRequestContext<AttributeQuery, Response, AttributeQueryConfiguration> {}
 }

@@ -222,7 +222,7 @@ public abstract class AbstractSAMLProfileHandler extends
     protected void encodeResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         if (log.isDebugEnabled()) {
             log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
-                    + " from relying party " + requestContext.getPeerEntityId());
+                    + " from relying party " + requestContext.getInboundMessageIssuer());
         }
 
         try {
@@ -235,7 +235,7 @@ public abstract class AbstractSAMLProfileHandler extends
             encoder.encode(requestContext);
         } catch (MessageEncodingException e) {
             throw new ProfileException("Unable to encode response to relying party: "
-                    + requestContext.getPeerEntityId(), e);
+                    + requestContext.getInboundMessageIssuer(), e);
         }
     }
     
@@ -250,7 +250,7 @@ public abstract class AbstractSAMLProfileHandler extends
         auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
         auditLogEntry.setPrincipalName(context.getPrincipalName());
         auditLogEntry.setAssertingPartyId(context.getLocalEntityId());
-        auditLogEntry.setRelyingPartyId(context.getPeerEntityId());
+        auditLogEntry.setRelyingPartyId(context.getInboundMessageIssuer());
         auditLogEntry.setRequestBinding(context.getMessageDecoder().getBindingURI());
         auditLogEntry.setRequestId(context.getInboundSAMLMessageId());
         auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
