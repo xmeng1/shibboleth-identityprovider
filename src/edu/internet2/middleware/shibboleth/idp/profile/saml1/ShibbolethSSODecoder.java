@@ -17,6 +17,8 @@
 package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
+import org.joda.time.chrono.ISOChronology;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.saml1.binding.decoding.BaseSAML1MessageDecoder;
 import org.opensaml.ws.message.MessageContext;
@@ -62,7 +64,7 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
             throw new MessageDecodingException(
                     "No providerId parameter given in Shibboleth SSO authentication request.");
         }
-        requestContext.setPeerEntityId(providerId);
+        requestContext.setInboundMessageIssuer(providerId);
 
         String shire = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("shire"));
         if (shire == null) {
@@ -81,9 +83,9 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
         String timeStr = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("time"));
         if (timeStr != null) {
             long time = Long.parseLong(timeStr);
-            requestContext.setTime(time);
+            requestContext.setInboundSAMLMessageIssueInstant(new DateTime(time, ISOChronology.getInstanceUTC()));
         }
         
-        populateMessageContext(requestContext);
+        populateRelyingPartyMetadata(requestContext);
     }
 }

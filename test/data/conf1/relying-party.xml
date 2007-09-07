@@ -22,75 +22,54 @@
     <!-- ========================================== -->
     <!--      Relying Party Configurations          -->
     <!-- ========================================== -->
-    <!-- 
     <AnonymousRelyingParty provider="http://example.org/IdP" />
     
     <DefaultRelyingParty provider="http://example.org/IdP" />
-    -->
         
-    <RelyingParty id="urn:example.org:myFederation"
-                  provider="urn:example.org:myFederation:idp1">
+    <RelyingParty id="urn:example.org"
+                  provider="urn:example.org:idp1">
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
-        <!-- 
         <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
-        -->
     </RelyingParty>
+    
+    <RelyingParty id="urn:example.org:BogusSP"
+                  provider="urn:example.org:idp1" />
     
     
     <!-- ========================================== -->
     <!--      Metadata Configuration                -->
     <!-- ========================================== -->
-
-    <!-- MetadataProvider reading metadata from a URL. -->
-    <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
-    <!--
-    <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                      metadataURL="http://example.org/my/metadata/file.xml" backingFile="$IDP_HOME$/temp/metadata/somefile.xml" />
-    -->
-                  
-    <!-- MetadataProvider reading metadata from the filesystem -->
-    <!-- Fill in metadataFile attribute with deployment specific information -->
-    <!--
-    <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                      metadataFile="$IDP_HOME$/metadata/somefile.xml" />
-    -->
-    
-    <!-- MetadataProvider defining metadata inline -->
-    <!--
     <MetadataProvider id="InlineMD" xsi:type="InlineMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-        <EntitiesDescriptor Name="urn:example.org:myFederation" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
-            <EntityDescriptor entityID="urn:example.org:myFederation:idp1">
-                <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    
+        <EntitiesDescriptor Name="urn:example.org" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+        
+            <EntityDescriptor entityID="urn:example.org:idp1">
+                <IDPSSODescriptor protocolSupportEnumeration="urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+                    <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+                    <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" Location="https://example.org/myIdP"/>
                     <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/myIdP" />
                 </IDPSSODescriptor>
             </EntityDescriptor>
-            <EntityDescriptor entityID="urn:example.org:myFederation:sp1">
-                <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+            
+            <EntityDescriptor entityID="urn:example.org:sp1">
+                <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+                    <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+                    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post" Location="https://example.org/mySP" index="0"/>
                     <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />
                     <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0" />
                 </SPSSODescriptor>
             </EntityDescriptor>
+            
         </EntitiesDescriptor>
+        
     </MetadataProvider>
-    -->
-    
-    <!-- MetadataProvider the combining other MetadataProviders -->
-    <!--
-    <MetadataProvider id="ExampleMD" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-        <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider"
-                      metadataURL="http://example.org/my/metadata" backingFile="/path/to/temp/location" />
-        <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" metadataFile="/path/to/metadata/file.xml" />
-    </MetadataProvider>
-    -->
     
     <!-- ========================================== -->
     <!--     Security Configurations                -->
     <!-- ========================================== -->
     <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
-        <security:Rule xsi:type="samlsec:SAML1Protocol"/>
-        <security:Rule xsi:type="samlsec:SAML2Protocol"/>
         <security:Rule xsi:type="samlsec:Replay"/>
         <security:Rule xsi:type="samlsec:IssueInstant"/>
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>

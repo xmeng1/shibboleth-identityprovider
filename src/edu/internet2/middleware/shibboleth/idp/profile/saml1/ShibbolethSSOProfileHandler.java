@@ -55,7 +55,6 @@ import edu.internet2.middleware.shibboleth.common.ShibbolethConstants;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
@@ -143,7 +142,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSORequestContext requestContext = decodeRequest(inTransport, outTransport);
         ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
 
-        if (getRelyingPartyConfiguration(loginContext.getRelyingPartyId()) == null) {
+        RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(loginContext.getRelyingPartyId());
+        ShibbolethSSOConfiguration ssoConfig = (ShibbolethSSOConfiguration) rpConfig.getProfileConfigurations().get(ShibbolethSSOConfiguration.PROFILE_ID);
+        if (ssoConfig == null) {
             log.error("Shibboleth SSO profile is not configured for relying party " + loginContext.getRelyingPartyId());
             throw new ProfileException("Shibboleth SSO profile is not configured for relying party "
                     + loginContext.getRelyingPartyId());
@@ -201,7 +202,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         }
 
         ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
-        loginContext.setRelyingParty(requestContext.getPeerEntityId());
+        loginContext.setRelyingParty(requestContext.getInboundMessageIssuer());
         loginContext.setSpAssertionConsumerService(requestContext.getSpAssertionConsumerService());
         loginContext.setSpTarget(requestContext.getRelayState());
         loginContext.setAuthenticationEngineURL(authenticationManagerPath);
@@ -275,6 +276,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
 
         try {
+            requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
+            
             requestContext.setLoginContext(loginContext);
             requestContext.setPrincipalName(loginContext.getPrincipalName());
             requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
@@ -288,7 +291,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setMetadataProvider(metadataProvider);
 
             String relyingPartyId = loginContext.getRelyingPartyId();
-            requestContext.setPeerEntityId(relyingPartyId);
+            requestContext.setInboundMessageIssuer(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
             requestContext.setPeerEntityMetadata(relyingPartyMetadata);
             requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
@@ -393,9 +396,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     public class ShibbolethSSORequestContext extends
             BaseSAML1ProfileRequestContext<Request, Response, ShibbolethSSOConfiguration> {
 
-        /** Time since the epoch. */
-        private long time;
-
         /** SP-provide assertion consumer service URL. */
         private String spAssertionConsumerService;
 
@@ -436,24 +436,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
          */
         public void setSpAssertionConsumerService(String acs) {
             spAssertionConsumerService = acs;
-        }
-
-        /**
-         * Sets the time since the epoch.
-         * 
-         * @return time since the epoch
-         */
-        public long getTime() {
-            return time;
-        }
-
-        /**
-         * Sets the time since the epoch.
-         * 
-         * @param time time since the epoch
-         */
-        public void setTime(long time) {
-            this.time = time;
         }
     }
 }

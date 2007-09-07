@@ -50,7 +50,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         String authnRequestString = getSamlRequestString(authnRequest);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/IdP/saml2/SSONoAuth");
+        servletRequest.setPathInfo("/saml2/POST/SSO");
         servletRequest.setParameter("SAMLRequest", Base64.encodeBytes(authnRequestString.getBytes()));
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
@@ -77,7 +77,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         String authnRequestString = getSamlRequestString(authnRequest);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/IdP/saml2/SSONoAuth");
+        servletRequest.setPathInfo("/saml2/POST/SSO");
         servletRequest.setParameter("SAMLRequest", Base64.encodeBytes(authnRequestString.getBytes()));
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
@@ -107,7 +107,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         loginContext.setPrincipalName("testUser");
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/IdP/saml2/SSONoAuth");
+        servletRequest.setPathInfo("/saml2/POST/SSO");
 
         HttpSession session = servletRequest.getSession();
         session.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);

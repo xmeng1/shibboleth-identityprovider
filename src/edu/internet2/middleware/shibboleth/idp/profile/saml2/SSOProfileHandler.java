@@ -146,7 +146,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         try {
             SSORequestContext requestContext = decodeRequest(inTransport, outTransport);
 
-            String relyingPartyId = requestContext.getPeerEntityId();
+            String relyingPartyId = requestContext.getInboundMessageIssuer();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             if (rpConfig == null) {
                 log.error("No relying party configuration for " + relyingPartyId);
@@ -300,7 +300,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setMetadataProvider(metadataProvider);
 
             String relyingPartyId = loginContext.getRelyingPartyId();
-            requestContext.setPeerEntityId(relyingPartyId);
+            requestContext.setInboundMessageIssuer(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
             requestContext.setPeerEntityMetadata(relyingPartyMetadata);
             requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
