@@ -56,6 +56,7 @@ import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.UnmarshallingException;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
@@ -148,9 +149,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             String relyingPartyId = requestContext.getInboundMessageIssuer();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-            if (rpConfig == null) {
-                log.error("No relying party configuration for " + relyingPartyId);
-                throw new ProfileException("No relying party configuration for " + relyingPartyId);
+            ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(SSOConfiguration.PROFILE_ID);
+            if (ssoConfig == null) {
+                log.error("SAML 2 SSO profile is not configured for relying party " + requestContext.getInboundMessageIssuer());
+                throw new ProfileException("SAML 2 SSO profile is not configured for relying party "
+                        + requestContext.getInboundMessageIssuer());
             }
 
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingPartyId, requestContext.getRelayState(),
@@ -284,6 +287,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         SSORequestContext requestContext = new SSORequestContext();
 
         try {
+            requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
+            
             requestContext.setLoginContext(loginContext);
             requestContext.setPrincipalName(loginContext.getPrincipalName());
             requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());

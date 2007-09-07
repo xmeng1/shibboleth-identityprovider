@@ -53,6 +53,7 @@ import org.opensaml.xml.util.DatatypeHelper;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConstants;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
@@ -143,7 +144,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
 
         RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(loginContext.getRelyingPartyId());
-        ShibbolethSSOConfiguration ssoConfig = (ShibbolethSSOConfiguration) rpConfig.getProfileConfigurations().get(ShibbolethSSOConfiguration.PROFILE_ID);
+        ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID);
         if (ssoConfig == null) {
             log.error("Shibboleth SSO profile is not configured for relying party " + loginContext.getRelyingPartyId());
             throw new ProfileException("Shibboleth SSO profile is not configured for relying party "
