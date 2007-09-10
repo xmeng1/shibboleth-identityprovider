@@ -108,7 +108,7 @@
                                       jdbcPassword="mypassword" />
         <QueryTemplate>
             <![CDATA[
-                 SELECT * FROM student WHERE gzbtpid = ${principal}
+                 SELECT * FROM student WHERE gzbtpid = $requestContext.principalName
              ]]>
         </QueryTemplate>
     
@@ -126,7 +126,7 @@
                             principalCredential="myServicePassword">
         <FilterTemplate>
             <![CDATA[
-                (uid=${principal})
+                (uid=$requestContext.principalName)
             ]]>
         </FilterTemplate>
     
