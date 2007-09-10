@@ -166,6 +166,7 @@
 		<copy todir="${idp.home}/lib" preservelastmodified="true">
 			<fileset dir="${lib.dir}" />
 			<fileset file="${dist.dir}/${jar.name}" />
+			<fileset file="${build-lib.dir}/servlet-2.4.jar" />
 		</copy>
 
 		<copy todir="${idp.home}/conf" preservelastmodified="true" overwrite="${idp.overwrite-config}">
