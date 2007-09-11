@@ -26,6 +26,7 @@ import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.log.Level;
+import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.transport.InTransport;
@@ -226,8 +227,16 @@ public abstract class AbstractSAMLProfileHandler extends
         }
 
         try {
+            Endpoint peerEndpoint = requestContext.getPeerEntityEndpoint();
+            if(peerEndpoint == null){
+                log.error("No return endpoint available for relying party " + requestContext.getInboundMessageIssuer());
+                throw new ProfileException("No peer endpoint available to which to send SAML response");
+            }
+            
             SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
             if (encoder == null) {
+                log.error("No outbound message encoder configured for binding "
+                        + requestContext.getPeerEntityEndpoint().getBinding());
                 throw new ProfileException("No outbound message encoder configured for binding "
                         + requestContext.getPeerEntityEndpoint().getBinding());
             }

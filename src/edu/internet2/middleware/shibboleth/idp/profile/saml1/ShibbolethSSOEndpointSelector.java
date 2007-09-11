@@ -92,6 +92,9 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
             }
         }
 
+        if(log.isDebugEnabled()){
+            log.debug("No endpoint meets selection criteria for SAML entity " + getEntityMetadata().getEntityID());
+        }
         return null;
     }
 }
