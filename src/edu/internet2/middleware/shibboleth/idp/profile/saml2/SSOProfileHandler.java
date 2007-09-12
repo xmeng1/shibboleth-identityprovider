@@ -121,7 +121,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        HttpSession httpSession = servletRequest.getSession();
+        HttpSession httpSession = servletRequest.getSession(true);
 
         if (httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY) == null) {
             performAuthentication(inTransport, outTransport);
@@ -156,6 +156,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                         + requestContext.getInboundMessageIssuer());
             }
 
+            log.debug("Creating login context and transferring control to authentication engine");
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingPartyId, requestContext.getRelayState(),
                     requestContext.getInboundSAMLMessage());
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);

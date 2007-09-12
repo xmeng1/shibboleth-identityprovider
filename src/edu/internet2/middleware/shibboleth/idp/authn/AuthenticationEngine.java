@@ -85,6 +85,9 @@ public class AuthenticationEngine extends HttpServlet {
         }
         HttpSession httpSession = httpRequest.getSession();
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        if(loginContext == null){
+            LOG.error("User HttpSession did not contain a login context.  Unable to return to authentication engine");
+        }
         forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
     }
 
