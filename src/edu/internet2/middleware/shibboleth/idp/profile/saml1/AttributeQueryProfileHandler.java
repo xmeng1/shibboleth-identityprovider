@@ -24,6 +24,7 @@ import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AttributeQuery;
+import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
@@ -152,7 +153,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {
-                AttributeQuery query = requestContext.getInboundSAMLMessage();
+                Request request = requestContext.getInboundSAMLMessage();
+                AttributeQuery query = request.getAttributeQuery();
                 requestContext.setSubjectNameIdentifier(query.getSubject().getNameIdentifier());
 
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
@@ -217,5 +219,5 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** Basic data structure used to accumulate information as a request is being processed. */
     protected class AttributeQueryContext extends
-            BaseSAML1ProfileRequestContext<AttributeQuery, Response, AttributeQueryConfiguration> {}
+            BaseSAML1ProfileRequestContext<Request, Response, AttributeQueryConfiguration> {}
 }
