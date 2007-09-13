@@ -7,7 +7,8 @@
 <html>
 
 <body>
-	<h1>ERROR</h1>
+	<img src="images/logo.jpg" />
+	<h3>ERROR</h3>
 	Error Message: <%= error.getMessage() %>
 	
 </body>
