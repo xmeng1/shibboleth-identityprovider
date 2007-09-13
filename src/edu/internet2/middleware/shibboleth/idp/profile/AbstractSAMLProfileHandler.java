@@ -221,18 +221,13 @@ public abstract class AbstractSAMLProfileHandler extends
      * @throws ProfileException thrown if no message encoder is registered for this profiles binding
      */
     protected void encodeResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
-                    + " from relying party " + requestContext.getInboundMessageIssuer());
-        }
-
         try {
             Endpoint peerEndpoint = requestContext.getPeerEntityEndpoint();
-            if(peerEndpoint == null){
+            if (peerEndpoint == null) {
                 log.error("No return endpoint available for relying party " + requestContext.getInboundMessageIssuer());
                 throw new ProfileException("No peer endpoint available to which to send SAML response");
             }
-            
+
             SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
             if (encoder == null) {
                 log.error("No outbound message encoder configured for binding "
@@ -240,6 +235,13 @@ public abstract class AbstractSAMLProfileHandler extends
                 throw new ProfileException("No outbound message encoder configured for binding "
                         + requestContext.getPeerEntityEndpoint().getBinding());
             }
+
+            if (log.isDebugEnabled()) {
+                log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
+                        + " from relying party " + requestContext.getInboundMessageIssuer() + " with outbound binding "
+                        + encoder.getBindingURI());
+            }
+
             requestContext.setMessageEncoder(encoder);
             encoder.encode(requestContext);
         } catch (MessageEncodingException e) {
@@ -247,7 +249,7 @@ public abstract class AbstractSAMLProfileHandler extends
                     + requestContext.getInboundMessageIssuer(), e);
         }
     }
-    
+
     /**
      * Writes an aduit log entry indicating the successful response to the attribute request.
      * 
