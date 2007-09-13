@@ -161,13 +161,23 @@
 		<mkdir dir="${idp.home}/logs" />
 		<mkdir dir="${idp.home}/bin" />
 		<mkdir dir="${idp.home}/war" />
-		<mkdir dir="${idp.home}/temp/metadata" />
+		<mkdir dir="${idp.home}/metadata" />
 
 		<copy todir="${idp.home}/lib" preservelastmodified="true">
 			<fileset dir="${lib.dir}" />
 			<fileset file="${dist.dir}/${jar.name}" />
 			<fileset file="${build-lib.dir}/servlet-2.4.jar" />
 		</copy>
+		
+		<if>
+			<available file="${idp.home}/conf" />
+			<then>
+				<mkdir dir="${idp.home}/conf.bak" />
+				<copy todir="${idp.home}/conf.bak" preservelastmodified="true">
+					<fileset dir="${idp.home}/conf" />
+				</copy>
+			</then>
+		</if>
 
 		<copy todir="${idp.home}/conf" preservelastmodified="true" overwrite="${idp.overwrite-config}">
 			<fileset dir="${conf.dir}" />
