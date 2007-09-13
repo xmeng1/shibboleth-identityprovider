@@ -73,6 +73,23 @@
             <xsd:extension base="SAML2ProfileHandler" />
         </xsd:complexContent>
     </xsd:complexType>
+    
+    <xsd:complexType name="SAML2ArtifactResolution">
+        <xsd:annotation>
+            <xsd:documentation>Configuration type for SAML 2 artifact resolution profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAML2ProfileHandler">
+                <xsd:attribute name="artifactMapRef" type="xsd:string" default="shibboleth.ArtifactMap">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Reference to SAMLArtifactMap used by handler to resolve artifact strings into artifact objects.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
 
     <xsd:complexType name="SAML2ProfileHandler" abstract="true">
         <xsd:annotation>
@@ -107,6 +124,23 @@
         </xsd:annotation>
         <xsd:complexContent>
             <xsd:extension base="SAML1ProfileHandler" />
+        </xsd:complexContent>
+    </xsd:complexType>
+    
+    <xsd:complexType name="SAML1ArtifactResolution">
+        <xsd:annotation>
+            <xsd:documentation>Configuration type for SAML 1 artifact resolution profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAML1ProfileHandler">
+                <xsd:attribute name="artifactMapRef" type="xsd:string" default="shibboleth.ArtifactMap">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Reference to SAMLArtifactMap used by handler to resolve artifact strings into artifact objects.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
 

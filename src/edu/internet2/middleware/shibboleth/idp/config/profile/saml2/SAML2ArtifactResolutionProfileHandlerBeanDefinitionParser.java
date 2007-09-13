@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.internet2.middleware.shibboleth.idp.config.profile.saml1;
+package edu.internet2.middleware.shibboleth.idp.config.profile.saml2;
 
 import javax.xml.namespace.QName;
 
@@ -22,25 +22,27 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
-import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.AbstractSAML2ProfileHandlerBeanDefinitionParser;
-import edu.internet2.middleware.shibboleth.idp.profile.saml1.AttributeQueryProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.ArtifactResolution;
 
 /**
- * Spring bean definition parser for {@link HTTPSOAPAttributeQuery} profile handlers.
+ * Spring bean definition parser for {@link ArtifactResolution}.
  */
-public class SAML1AttributeQueryProfileHandlerBeanDefinitionParser extends
+public class SAML2ArtifactResolutionProfileHandlerBeanDefinitionParser extends
         AbstractSAML2ProfileHandlerBeanDefinitionParser {
 
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "SAML1AttributeQuery");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE,
+            "SAML2ArtifactResolution");
 
     /** {@inheritDoc} */
-    protected Class getBeanClass(Element arg0) {
-        return AttributeQueryProfileHandler.class;
+    protected Class getBeanClass(Element element) {
+        return ArtifactResolution.class;
     }
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
+
+        builder.addConstructorArgReference(config.getAttributeNS(null, "artifactMapRef"));
     }
 }

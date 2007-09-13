@@ -61,9 +61,16 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
     /** Artifact response object builder. */
     private SAMLObjectBuilder<ArtifactResponse> responseBuilder;
 
-    /** Constructor. */
-    public ArtifactResolution() {
+    /**
+     * Constructor.
+     * 
+     * @param map ArtifactMap used to lookup artifacts to be resolved.
+     */
+    public ArtifactResolution(SAMLArtifactMap map) {
         super();
+        
+        artifactMap = map;
+        
         responseBuilder = (SAMLObjectBuilder<ArtifactResponse>) getBuilderFactory().getBuilder(
                 ArtifactResponse.DEFAULT_ELEMENT_NAME);
     }
@@ -292,10 +299,10 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         /**
          * Sets the artifact to be resolved.
          * 
-         * @param artifact artifact to be resolved
+         * @param saml2Artifact artifact to be resolved
          */
-        public void setArtifact(AbstractSAML2Artifact artifact) {
-            this.artifact = artifact;
+        public void setArtifact(AbstractSAML2Artifact saml2Artifact) {
+            this.artifact = saml2Artifact;
         }
 
         /**

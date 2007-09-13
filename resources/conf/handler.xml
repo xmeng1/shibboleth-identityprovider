@@ -23,6 +23,12 @@
         <RequestPath>/saml1/SOAP/AttributeQuery</RequestPath>
     </ProfileHandler>
     
+    <ProfileHandler xsi:type="SAML1ArtifactResolution" 
+                    inboundBinding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
+                    outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding">
+        <RequestPath>/saml1/SOAP/ArtifactResolution</RequestPath>
+    </ProfileHandler>
+    
     <ProfileHandler xsi:type="SAML2SSO" 
                     inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST 
@@ -41,6 +47,12 @@
                     inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
         <RequestPath>/saml2/SOAP/AttributeQuery</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML2ArtifactResolution" 
+                    inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+                    outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
+        <RequestPath>/saml2/SOAP/ArtifactResolution</RequestPath>
     </ProfileHandler>
     
     <LoginHandler xsi:type="RemoteUser">

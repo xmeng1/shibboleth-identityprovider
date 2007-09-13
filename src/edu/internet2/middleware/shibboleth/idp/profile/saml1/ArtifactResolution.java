@@ -51,7 +51,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ArtifactResolutionConfiguration;
 
 /**
- * SAML 2.0 Artifact resolution profile handler.
+ * SAML 1 Artifact resolution profile handler.
  */
 public class ArtifactResolution extends AbstractSAML1ProfileHandler {
 
@@ -64,9 +64,16 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
     /** Map artifacts to SAML messages. */
     private SAMLArtifactMap artifactMap;
 
-    /** Constructor. */
-    public ArtifactResolution() {
+    /**
+     * Constructor.
+     * 
+     * @param map ArtifactMap used to lookup artifacts to be resolved.
+     */
+    public ArtifactResolution(SAMLArtifactMap map) {
         super();
+
+        artifactMap = map;
+
         responseBuilder = (SAMLObjectBuilder<Response>) getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
     }
 
@@ -128,11 +135,11 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
 
         ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
         requestContext.setMetadataProvider(metadataProvider);
-        
+
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML11P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-        
+
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
@@ -157,7 +164,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             // Set as much information as can be retrieved from the decoded message
             try {
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
-                
+
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
 

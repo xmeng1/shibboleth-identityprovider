@@ -22,25 +22,27 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
-import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.AbstractSAML2ProfileHandlerBeanDefinitionParser;
-import edu.internet2.middleware.shibboleth.idp.profile.saml1.AttributeQueryProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.profile.saml1.ArtifactResolution;
 
 /**
- * Spring bean definition parser for {@link HTTPSOAPAttributeQuery} profile handlers.
+ * Spring bean definition parser for {@link ArtifactResolution}.
  */
-public class SAML1AttributeQueryProfileHandlerBeanDefinitionParser extends
-        AbstractSAML2ProfileHandlerBeanDefinitionParser {
+public class SAML1ArtifactResolutionProfileHanderBeanDefinitionParser extends
+        AbstractSAML1ProfileHandlerBeanDefinitionParser {
 
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "SAML1AttributeQuery");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE,
+            "SAML1ArtifactResolution");
 
     /** {@inheritDoc} */
-    protected Class getBeanClass(Element arg0) {
-        return AttributeQueryProfileHandler.class;
+    protected Class getBeanClass(Element element) {
+        return ArtifactResolution.class;
     }
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
+
+        builder.addConstructorArgReference(config.getAttributeNS(null, "artifactMapRef"));
     }
 }

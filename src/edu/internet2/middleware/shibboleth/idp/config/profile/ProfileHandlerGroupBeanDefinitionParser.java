@@ -36,11 +36,11 @@ import edu.internet2.middleware.shibboleth.common.config.SpringConfigurationUtil
  */
 public class ProfileHandlerGroupBeanDefinitionParser extends AbstractBeanDefinitionParser {
     
-    /** Class logger. */
-    private static Logger log = Logger.getLogger(ProfileHandlerGroupBeanDefinitionParser.class);
-
     /** Schema type name. */
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandlerGroup");
+    
+    /** Class logger. */
+    private static Logger log = Logger.getLogger(ProfileHandlerGroupBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
     protected AbstractBeanDefinition parseInternal(Element config, ParserContext context) {
