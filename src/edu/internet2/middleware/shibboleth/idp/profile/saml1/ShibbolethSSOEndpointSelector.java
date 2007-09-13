@@ -77,7 +77,7 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
         }
         if (endpoints != null && endpoints.size() > 0) {
             for (Endpoint endpoint : endpoints) {
-                if(endpoint == null){
+                if(endpoint == null || !getSupportedIssuerBindings().contains(endpoint.getBinding())){
                     continue;
                 }
                 
