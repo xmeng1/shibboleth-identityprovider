@@ -30,8 +30,10 @@
                   provider="http://idp.example.org">
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" />
     </RelyingParty>
     
     
