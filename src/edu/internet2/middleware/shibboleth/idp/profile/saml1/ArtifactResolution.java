@@ -163,8 +163,11 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {
-                String relyingPartyId = requestContext.getInboundMessageIssuer();
+                AbstractSAML1Artifact artifact = requestContext.getArtifacts().iterator().next();
+                SAMLArtifactMapEntry artifactEntry = artifactMap.get(artifact.getArtifactBytes());
+                String relyingPartyId = artifactEntry.getRelyingPartyId();
 
+                requestContext.setInboundMessageIssuer(relyingPartyId);
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
 
