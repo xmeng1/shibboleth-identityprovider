@@ -36,6 +36,11 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
     /** Class logger. */
     private final Logger log = Logger.getLogger(ShibbolethSSODecoder.class);
 
+    /** Constructor. */
+    public ShibbolethSSODecoder(){
+        super(null);
+    }
+    
     /** {@inheritDoc} */
     public String getBindingURI() {
         return "urn:mace:shibboleth:1.0:profiles:AuthnRequest";
