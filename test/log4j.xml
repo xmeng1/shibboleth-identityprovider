@@ -71,17 +71,12 @@
         <priority value="CRITICAL" />
     </category>
     
-
-    <category name="edu.internet2.middleware.shibboleth.idp">
-        <priority value="DEBUG" />
+    <category name="edu.internet2.middleware.shibboleth">
+        <priority value="WARN" />
     </category>
 
-    <category name="edu.internet2.middleware.shibboleth.common">
-        <priority value="DEBUG" />
-    </category>
-
-    <category name="org.opensaml.resource">
-        <priority value="DEBUG" />
+    <category name="org.opensaml">
+        <priority value="WARN" />
     </category>
 
     <category name="org.springframework">

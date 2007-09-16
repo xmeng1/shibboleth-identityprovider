@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -28,8 +29,8 @@ import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.binding.SAML1ArtifactMessageContext;
-import org.opensaml.saml1.binding.artifact.AbstractSAML1Artifact;
 import org.opensaml.saml1.core.Assertion;
+import org.opensaml.saml1.core.AssertionArtifact;
 import org.opensaml.saml1.core.NameIdentifier;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
@@ -61,6 +62,9 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
     /** Builder of Response objects. */
     private SAMLObjectBuilder<Response> responseBuilder;
 
+    /** Builder of assertion consumer service endpoints. */
+    private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
+
     /** Map artifacts to SAML messages. */
     private SAMLArtifactMap artifactMap;
 
@@ -75,6 +79,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         artifactMap = map;
 
         responseBuilder = (SAMLObjectBuilder<Response>) getBuilderFactory().getBuilder(Response.DEFAULT_ELEMENT_NAME);
+        acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
+                AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
 
     /** {@inheritDoc} */
@@ -100,6 +106,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             }
 
             checkSamlVersion(requestContext);
+
+            derferenceArtifacts(requestContext);
 
             // create the SAML response
             samlResponse = buildArtifactResponse(requestContext);
@@ -166,6 +174,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
+                requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
                 requestContext.setLocalEntityId(assertingPartyId);
@@ -200,48 +209,59 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
      * @return Endpoint selected from the information provided in the request context
      */
     protected Endpoint selectEndpoint(ArtifactResolutionRequestContext requestContext) {
-        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
-        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-        endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
-        endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
-        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
-        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
-        return endpointSelector.selectEndpoint();
+        Endpoint endpoint;
+
+        if (getInboundBinding().equals(SAMLConstants.SAML1_SOAP11_BINDING_URI)) {
+            endpoint = acsEndpointBuilder.buildObject();
+            endpoint.setBinding(SAMLConstants.SAML1_SOAP11_BINDING_URI);
+        } else {
+            BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+            endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            endpointSelector.setMetadataProvider(getMetadataProvider());
+            endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+            endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
+            endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+            endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+            endpoint = endpointSelector.selectEndpoint();
+        }
+
+        return endpoint;
     }
 
     /**
-     * Derferences the provided artifacts and stores them in the request context.
+     * Derferences the artifacts within the incomming request and stores them in the request context.
      * 
      * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if the incomming request does not contain any {@link AssertionArtifact}s.
      */
-    protected void derferenceArtifacts(ArtifactResolutionRequestContext requestContext) {
-        Collection<AbstractSAML1Artifact> artifacts = requestContext.getArtifacts();
-        if (artifacts != null) {
-            ArrayList<Assertion> assertions = new ArrayList<Assertion>();
-            SAMLArtifactMapEntry artifactEntry;
+    protected void derferenceArtifacts(ArtifactResolutionRequestContext requestContext) throws ProfileException {
+        Request request = requestContext.getInboundSAMLMessage();
+        List<AssertionArtifact> assertionArtifacts = request.getAssertionArtifacts();
 
-            for (AbstractSAML1Artifact artifact : artifacts) {
-                artifactEntry = artifactMap.get(artifact.getArtifactBytes());
-                if (artifactEntry == null || artifactEntry.isExpired()) {
-                    log.error("Unknown artifact.");
-                }
-
-                if (!artifactEntry.getIssuerId().equals(requestContext.getLocalEntityId())) {
-                    log.error("Artifact issuer mismatch.  Artifact issued by " + artifactEntry.getIssuerId()
-                            + " but IdP has entity ID of " + requestContext.getLocalEntityId());
-                }
-
-                if (!artifactEntry.getRelyingPartyId().equals(requestContext.getInboundMessageIssuer())) {
-                    log.error("Artifact requester mismatch.  Artifact was issued to "
-                            + artifactEntry.getRelyingPartyId() + " but was resolve request came from "
-                            + requestContext.getInboundMessageIssuer());
-                }
-                artifactMap.remove(artifact.getArtifactBytes());
-                assertions.add((Assertion) artifactEntry.getSamlMessage());
-            }
-            requestContext.setReferencedAssertions(assertions);
+        if (assertionArtifacts == null || assertionArtifacts.size() == 0) {
+            log.error("No AssertionArtifacts available in request");
+            throw new ProfileException("No AssertionArtifacts available in request");
         }
+
+        ArrayList<Assertion> assertions = new ArrayList<Assertion>();
+        SAMLArtifactMapEntry artifactEntry;
+        for (AssertionArtifact assertionArtifact : assertionArtifacts) {
+            artifactEntry = artifactMap.get(assertionArtifact.getAssertionArtifact());
+            if (artifactEntry == null || artifactEntry.isExpired()) {
+                log.error("Unknown artifact.");
+            }
+
+            if (!artifactEntry.getIssuerId().equals(requestContext.getLocalEntityId())) {
+                log.error("Artifact issuer mismatch.  Artifact issued by " + artifactEntry.getIssuerId()
+                        + " but IdP has entity ID of " + requestContext.getLocalEntityId());
+            }
+
+            artifactMap.remove(assertionArtifact.getAssertionArtifact());
+            assertions.add((Assertion) artifactEntry.getSamlMessage());
+        }
+        
+        requestContext.setReferencedAssertions(assertions);
     }
 
     /**
@@ -275,27 +295,19 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             SAML1ArtifactMessageContext<Request, Response, NameIdentifier> {
 
         /** Artifact to be resolved. */
-        private Collection<AbstractSAML1Artifact> artifacts;
+        private Collection<String> artifacts;
 
         /** Message referenced by the SAML artifact. */
         private Collection<Assertion> referencedAssertions;
 
-        /**
-         * Gets the artifacts to be resolved.
-         * 
-         * @return artifacts to be resolved
-         */
-        public Collection<AbstractSAML1Artifact> getArtifacts() {
+        /** {@inheritDoc} */
+        public Collection<String> getArtifacts() {
             return artifacts;
         }
 
-        /**
-         * Sets the artifacts to be resolved.
-         * 
-         * @param artifacts artifacts to be resolved
-         */
-        public void setArtifacts(Collection<AbstractSAML1Artifact> artifacts) {
-            this.artifacts = artifacts;
+        /** {@inheritDoc} */
+        public void setArtifacts(Collection<String> encodedArtifacts) {
+            this.artifacts = encodedArtifacts;
         }
 
         /**

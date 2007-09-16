@@ -118,6 +118,7 @@
                 <value>urn:oasis:names:tc:SAML:1.0:profiles:browser-post</value>
             </key>
             <bean id="shibboleth.SAML1HttpPostDecoder" class="org.opensaml.saml1.binding.decoding.HTTPPostDecoder">
+                <constructor-arg ref="shibboleth.ArtifactMap" />
                 <constructor-arg ref="shibboleth.ParserPool" />
             </bean>
         </entry>
@@ -127,6 +128,7 @@
             </key>
             <bean id="shibboleth.SAML1HttpSoap11Decoder"
                 class="org.opensaml.saml1.binding.decoding.HTTPSOAP11Decoder">
+                <constructor-arg ref="shibboleth.ArtifactMap" />
                 <constructor-arg ref="shibboleth.ParserPool" />
             </bean>
         </entry>

@@ -99,7 +99,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
             checkSamlVersion(requestContext);
 
-            SAMLArtifactMapEntry artifactEntry = artifactMap.get(requestContext.getArtifact().getArtifactBytes());
+            SAMLArtifactMapEntry artifactEntry = artifactMap.get(requestContext.getArtifact().base64Encode());
             if (artifactEntry == null || artifactEntry.isExpired()) {
                 log.error("Unknown artifact.");
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
@@ -119,7 +119,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
                         "Artifact requester mismatch."));
             }
-            artifactMap.remove(requestContext.getArtifact().getArtifactBytes());
+            artifactMap.remove(requestContext.getArtifact().base64Encode());
             SAMLObject referencedMessage = artifactEntry.getSamlMessage();
             requestContext.setReferencedMessage(referencedMessage);
 

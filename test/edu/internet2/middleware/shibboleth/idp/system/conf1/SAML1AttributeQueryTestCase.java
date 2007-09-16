@@ -18,9 +18,11 @@ package edu.internet2.middleware.shibboleth.idp.system.conf1;
 
 import java.io.StringWriter;
 
+import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.NameIdentifier;
+import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Subject;
 import org.opensaml.ws.soap.common.SOAPObjectBuilder;
 import org.opensaml.ws.soap.soap11.Body;
@@ -136,10 +138,16 @@ public class SAML1AttributeQueryTestCase extends BaseConf1TestCase {
      */
     @SuppressWarnings("unchecked")
     protected String getSOAPMessage(AttributeQuery query) throws MarshallingException {
+        SAMLObjectBuilder<Request> requestBuilder = (SAMLObjectBuilder<Request>)builderFactory.getBuilder(Request.DEFAULT_ELEMENT_NAME);
+        Request request = requestBuilder.buildObject();
+        request.setQuery(query);
+        request.setIssueInstant(new DateTime());
+        request.setID("1");
+        
         SOAPObjectBuilder<Body> bodyBuilder = (SOAPObjectBuilder<Body>) builderFactory
                 .getBuilder(Body.DEFAULT_ELEMENT_NAME);
         Body body = bodyBuilder.buildObject();
-        body.getUnknownXMLObjects().add(query);
+        body.getUnknownXMLObjects().add(request);
 
         SOAPObjectBuilder<Envelope> envelopeBuilder = (SOAPObjectBuilder<Envelope>) builderFactory
                 .getBuilder(Envelope.DEFAULT_ELEMENT_NAME);
