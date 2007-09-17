@@ -81,9 +81,4 @@ public class UsernamePasswordLoginHandler extends AbstractLoginHandler {
         }
 
     }
-
-    /** {@inheritDoc} */
-    public void logout(final HttpServletRequest request, final HttpServletResponse response, String principal) {
-        return;
-    }
 }

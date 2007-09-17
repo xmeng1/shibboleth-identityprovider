@@ -26,6 +26,7 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,7 +52,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Name of JAAS configuration used to authenticate users. */
     private final String jaasConfigName = "ShibUserPassAuth";
-    
+
     /** Login page name. */
     private final String loginPage = "login.jsp";
 
@@ -61,31 +62,31 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     /** HTTP request parameter containing the user's password. */
     private final String passwordAttribute = "j_password";
 
-    /** {@inheritDoc} */
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+            IOException {
         String username = DatatypeHelper.safeTrimOrNullString(request.getParameter(usernameAttribute));
         String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
 
-        if(username == null || password == null){
+        if (username == null || password == null) {
             redirectToLoginPage(request, response);
             return;
         }
-        
-        if(authenticateUser(request)){
+
+        if (authenticateUser(request)) {
             AuthenticationEngine.returnToAuthenticationEngine(request, response);
-        }else{
+        } else {
             redirectToLoginPage(request, response);
             return;
         }
     }
-    
+
     /**
      * Sends the user to the login page.
      * 
      * @param request current request
      * @param response current response
      */
-    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response){
+    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response) {
         try {
             StringBuilder pathBuilder = new StringBuilder();
             pathBuilder.append(request.getContextPath());
@@ -110,8 +111,8 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     }
 
     /**
-     * Authenticate a username and password against JAAS.  If authentication succeeds the principal name and 
-     * subject are placed into the request in their respective attributes.
+     * Authenticate a username and password against JAAS. If authentication succeeds the principal name and subject are
+     * placed into the request in their respective attributes.
      * 
      * @param request current authentication request
      * 
@@ -130,7 +131,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             jaasLoginCtx.login();
             log.debug("Successfully authenticated user " + username);
-            
+
             Subject subject = jaasLoginCtx.getSubject();
             Principal principal = subject.getPrincipals().iterator().next();
             request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
