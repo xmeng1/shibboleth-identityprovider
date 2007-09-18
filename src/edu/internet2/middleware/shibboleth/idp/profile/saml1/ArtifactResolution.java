@@ -95,7 +95,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         ArtifactResolutionRequestContext requestContext = decodeRequest(inTransport, outTransport);
 
         try {
-            if (requestContext.getRelyingPartyConfiguration() == null) {
+            if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 1 Artifact resolution profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS, StatusCode.REQUEST_DENIED,
@@ -185,11 +185,13 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
 
                 ArtifactResolutionConfiguration profileConfig = (ArtifactResolutionConfiguration) rpConfig
                         .getProfileConfiguration(ArtifactResolutionConfiguration.PROFILE_ID);
-                requestContext.setProfileConfiguration(profileConfig);
-                if (profileConfig.getSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-                } else if (rpConfig.getDefaultSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                if(profileConfig != null){
+                    requestContext.setProfileConfiguration(profileConfig);
+                    if (profileConfig.getSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+                    } else if (rpConfig.getDefaultSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                    }
                 }
 
             } catch (MetadataProviderException e) {

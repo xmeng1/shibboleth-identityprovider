@@ -26,7 +26,6 @@ import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.SAML2ArtifactMessageContext;
-import org.opensaml.saml2.binding.artifact.AbstractSAML2Artifact;
 import org.opensaml.saml2.core.ArtifactResolve;
 import org.opensaml.saml2.core.ArtifactResponse;
 import org.opensaml.saml2.core.NameID;
@@ -60,6 +59,9 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
     /** Artifact response object builder. */
     private SAMLObjectBuilder<ArtifactResponse> responseBuilder;
+    
+    /** Builder of assertion consumer service endpoints. */
+    private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
     /**
      * Constructor.
@@ -73,6 +75,8 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         
         responseBuilder = (SAMLObjectBuilder<ArtifactResponse>) getBuilderFactory().getBuilder(
                 ArtifactResponse.DEFAULT_ELEMENT_NAME);
+        acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
+                AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
 
     /** {@inheritDoc} */
@@ -87,7 +91,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         ArtifactResolutionRequestContext requestContext = decodeRequest(inTransport, outTransport);
 
         try {
-            if (requestContext.getRelyingPartyConfiguration() == null) {
+            if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 2 Artifact Resolve profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
@@ -99,7 +103,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
             checkSamlVersion(requestContext);
 
-            SAMLArtifactMapEntry artifactEntry = artifactMap.get(requestContext.getArtifact().base64Encode());
+            SAMLArtifactMapEntry artifactEntry = artifactMap.get(requestContext.getArtifact());
             if (artifactEntry == null || artifactEntry.isExpired()) {
                 log.error("Unknown artifact.");
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
@@ -119,7 +123,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
                         "Artifact requester mismatch."));
             }
-            artifactMap.remove(requestContext.getArtifact().base64Encode());
+            artifactMap.remove(requestContext.getArtifact());
             SAMLObject referencedMessage = artifactEntry.getSamlMessage();
             requestContext.setReferencedMessage(referencedMessage);
 
@@ -186,9 +190,12 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {
+                requestContext.setArtifact(requestContext.getInboundSAMLMessage().getArtifact().getArtifact());
+                
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
+                requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
                 requestContext.setLocalEntityId(assertingPartyId);
@@ -199,11 +206,13 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
                 ArtifactResolutionConfiguration profileConfig = (ArtifactResolutionConfiguration) rpConfig
                         .getProfileConfiguration(ArtifactResolutionConfiguration.PROFILE_ID);
-                requestContext.setProfileConfiguration(profileConfig);
-                if (profileConfig.getSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-                } else if (rpConfig.getDefaultSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                if(profileConfig != null){
+                    requestContext.setProfileConfiguration(profileConfig);
+                    if (profileConfig.getSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+                    } else if (rpConfig.getDefaultSigningCredential() != null) {
+                        requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                    }
                 }
 
             } catch (MetadataProviderException e) {
@@ -223,14 +232,23 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
      * @return Endpoint selected from the information provided in the request context
      */
     protected Endpoint selectEndpoint(ArtifactResolutionRequestContext requestContext) {
-        BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
-        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-        endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
-        endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
-        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
-        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
-        return endpointSelector.selectEndpoint();
+        Endpoint endpoint;
+
+        if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
+            endpoint = acsEndpointBuilder.buildObject();
+            endpoint.setBinding(SAMLConstants.SAML2_SOAP11_BINDING_URI);
+        } else {
+            BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
+            endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            endpointSelector.setMetadataProvider(getMetadataProvider());
+            endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+            endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
+            endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+            endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+            endpoint = endpointSelector.selectEndpoint();
+        }
+        
+        return endpoint;
     }
 
     /**
@@ -282,26 +300,18 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             implements SAML2ArtifactMessageContext<ArtifactResolve, ArtifactResponse, NameID> {
 
         /** Artifact to be resolved. */
-        private AbstractSAML2Artifact artifact;
+        private String artifact;
 
         /** Message referenced by the SAML artifact. */
         private SAMLObject referencedMessage;
 
-        /**
-         * Gets the artifact to be resolved.
-         * 
-         * @return artifact to be resolved
-         */
-        public AbstractSAML2Artifact getArtifact() {
+        /** {@inheritDoc} */
+        public String getArtifact() {
             return artifact;
         }
 
-        /**
-         * Sets the artifact to be resolved.
-         * 
-         * @param saml2Artifact artifact to be resolved
-         */
-        public void setArtifact(AbstractSAML2Artifact saml2Artifact) {
+        /** {@inheritDoc} */
+        public void setArtifact(String saml2Artifact) {
             this.artifact = saml2Artifact;
         }
 

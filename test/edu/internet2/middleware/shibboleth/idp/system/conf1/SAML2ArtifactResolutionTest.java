@@ -17,16 +17,19 @@
 package edu.internet2.middleware.shibboleth.idp.system.conf1;
 
 import java.io.StringWriter;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
-import org.opensaml.saml1.binding.artifact.SAML1ArtifactType0002;
-import org.opensaml.saml1.core.Assertion;
-import org.opensaml.saml1.core.AssertionArtifact;
-import org.opensaml.saml1.core.Request;
+import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004;
+import org.opensaml.saml2.core.Artifact;
+import org.opensaml.saml2.core.ArtifactResolve;
+import org.opensaml.saml2.core.Assertion;
+import org.opensaml.saml2.core.Issuer;
+import org.opensaml.saml2.core.Response;
 import org.opensaml.ws.soap.common.SOAPObjectBuilder;
 import org.opensaml.ws.soap.soap11.Body;
 import org.opensaml.ws.soap.soap11.Envelope;
@@ -40,13 +43,14 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 
 /**
  * 
  */
-public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
+public class SAML2ArtifactResolutionTest extends BaseConf1TestCase {
 
     public void testArtifactResolution() throws Exception {
         String relyingPartyId = "urn:example.org:sp1";
@@ -54,7 +58,7 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
         String soapMessage = buildRequestMessage(relyingPartyId, artifactEntry.getArtifact());
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/saml1/SOAP/ArtifactResolution");
+        servletRequest.setPathInfo("/saml2/SOAP/ArtifactResolution");
         servletRequest.setContent(soapMessage.getBytes());
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
@@ -70,17 +74,18 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("samlp:Success"));
+        assertTrue(response.contains("samlp:ArtifactResponse"));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Success"));
         assertTrue(response.contains("saml:Assertion"));
     }
     
-    public void testWithoutConfiguration() throws Exception {
+    public void testWithoutConfiguration() throws Exception{
         String relyingPartyId = "urn:example.org:BogusSP";
         SAMLArtifactMapEntry artifactEntry = stageArtifact(relyingPartyId);
         String soapMessage = buildRequestMessage(relyingPartyId, artifactEntry.getArtifact());
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
-        servletRequest.setPathInfo("/saml1/SOAP/ArtifactResolution");
+        servletRequest.setPathInfo("/saml2/SOAP/ArtifactResolution");
         servletRequest.setContent(soapMessage.getBytes());
 
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
@@ -94,10 +99,9 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
         HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
         handler.processRequest(profileRequest, profileResponse);
-
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("samlp:Success"));
-        assertTrue(response.contains("samlp:RequestDenied"));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Success"));
+        assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:RequestDenied"));
     }
 
     @SuppressWarnings("unchecked")
@@ -106,29 +110,44 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
                 .getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
         Assertion assertion = assetionBuilder.buildObject();
 
+        SAMLObjectBuilder<Response> responseBuilder = (SAMLObjectBuilder<Response>) builderFactory
+                .getBuilder(Response.DEFAULT_ELEMENT_NAME);
+        Response response = responseBuilder.buildObject();
+        response.getAssertions().add(assertion);
+
         SecureRandom handleGenerator = SecureRandom.getInstance("SHA1PRNG");
+        byte[] endpointIndex = { 0, 1 };
+        MessageDigest sha1Digester = MessageDigest.getInstance("SHA-1");
+        byte[] source = sha1Digester.digest(relyingPartyId.getBytes());
         byte[] assertionHandle = new byte[20];
         handleGenerator.nextBytes(assertionHandle);
-        SAML1ArtifactType0002 artifact = new SAML1ArtifactType0002(assertionHandle, relyingPartyId);
+        SAML2ArtifactType0004 artifact = new SAML2ArtifactType0004(endpointIndex, source, assertionHandle);
 
         SAMLArtifactMap artifactMap = (SAMLArtifactMap) getApplicationContext().getBean("shibboleth.ArtifactMap");
-        artifactMap.put(artifact.base64Encode(), relyingPartyId, "urn:example.org:idp1", assertion);
+        artifactMap.put(artifact.base64Encode(), relyingPartyId, "urn:example.org:idp1", response);
         return artifactMap.get(artifact.base64Encode());
     }
 
     @SuppressWarnings("unchecked")
     protected String buildRequestMessage(String relyingPartyId, String artifact) throws Exception {
-        SAMLObjectBuilder<AssertionArtifact> assertionArtifactBuilder = (SAMLObjectBuilder<AssertionArtifact>) builderFactory
-                .getBuilder(AssertionArtifact.DEFAULT_ELEMENT_NAME);
-        AssertionArtifact aa = assertionArtifactBuilder.buildObject();
-        aa.setAssertionArtifact(artifact);
+        SAMLObjectBuilder<Artifact> artifactBuilder = (SAMLObjectBuilder<Artifact>) builderFactory
+                .getBuilder(Artifact.DEFAULT_ELEMENT_NAME);
+        Artifact samlArt = artifactBuilder.buildObject();
+        samlArt.setArtifact(artifact);
 
-        SAMLObjectBuilder<Request> requestBuilder = (SAMLObjectBuilder<Request>) builderFactory
-                .getBuilder(Request.DEFAULT_ELEMENT_NAME);
-        Request request = requestBuilder.buildObject();
+        SAMLObjectBuilder<Issuer> issuerBuilder = (SAMLObjectBuilder<Issuer>) builderFactory
+                .getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+        Issuer issuer = issuerBuilder.buildObject();
+        issuer.setFormat(Issuer.ENTITY);
+        issuer.setValue(relyingPartyId);
+
+        SAMLObjectBuilder<ArtifactResolve> requestBuilder = (SAMLObjectBuilder<ArtifactResolve>) builderFactory
+                .getBuilder(ArtifactResolve.DEFAULT_ELEMENT_NAME);
+        ArtifactResolve request = requestBuilder.buildObject();
         request.setID("1");
+        request.setIssuer(issuer);
         request.setIssueInstant(new DateTime());
-        request.getAssertionArtifacts().add(aa);
+        request.setArtifact(samlArt);
 
         SOAPObjectBuilder<Body> bodyBuilder = (SOAPObjectBuilder<Body>) builderFactory
                 .getBuilder(Body.DEFAULT_ELEMENT_NAME);
