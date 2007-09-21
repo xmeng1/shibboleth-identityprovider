@@ -78,6 +78,7 @@
         <url-pattern>/Authn/UserPassword</url-pattern>
     </servlet-mapping>
 
+	<!--
     <security-constraint>
         <display-name>Shibboleth IdP</display-name>
         <web-resource-collection>
@@ -104,5 +105,6 @@
         <description>All Users</description>
         <role-name>users</role-name>
     </security-role>
+	-->
     
 </web-app>
