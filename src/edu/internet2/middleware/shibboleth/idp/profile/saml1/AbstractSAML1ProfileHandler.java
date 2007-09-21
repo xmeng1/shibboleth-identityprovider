@@ -341,6 +341,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             }
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
                     "Unable to construct NameIdentifier"));
+            log.error("No principal attribute supported encoding into the a supported name ID format.");
             throw new ProfileException("No principal attribute supported encoding into the a supported name ID format.");
         } catch (AttributeEncodingException e) {
             log.error("Unable to construct NameIdentifier", e);
