@@ -78,33 +78,43 @@
         <url-pattern>/Authn/UserPassword</url-pattern>
     </servlet-mapping>
 
-	<!--
+<!-- Uncommonent if to use container managed authentication -->
+<!--
     <security-constraint>
         <display-name>Shibboleth IdP</display-name>
         <web-resource-collection>
             <web-resource-name>user authentication</web-resource-name>
             <url-pattern>/Authn/RemoteUser</url-pattern>
-            <url-pattern>/Authn/UserPassword</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
         <auth-constraint> 
-            <role-name>*</role-name> 
+            <role-name>users</role-name> 
         </auth-constraint>
         <user-data-constraint>
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
     </security-constraint>
-    
+-->
+
+<!-- Uncomment if you want BASIC auth managed by the container -->
+<!--
     <login-config>
       <auth-method>BASIC</auth-method>
       <realm-name>IdP Password Authentication</realm-name>
     </login-config>
-    
-    <security-role>
-        <description>All Users</description>
-        <role-name>users</role-name>
-    </security-role>
-	-->
-    
+-->
+
+<!-- Uncomment if you want form-based auth managed by the container -->
+<!--
+    <login-config>
+        <auth-method>FORM</auth-method>
+        <realm-name>IdP Password Authentication</realm-name>
+        <form-login-config>
+            <form-login-page>/login.jsp</form-login-page>
+            <form-error-page>/error.jsp</form-error-page>
+        </form-login-config>
+    </login-config>
+-->
+
 </web-app>
