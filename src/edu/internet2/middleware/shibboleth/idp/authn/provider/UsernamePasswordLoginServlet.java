@@ -18,6 +18,8 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -34,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.opensaml.xml.util.Pair;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
@@ -55,6 +58,9 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Login page name. */
     private final String loginPage = "login.jsp";
+    
+    /** Parameter name to indicate login failure. */
+    private final String failureParam = "loginFailed";
 
     /** HTTP request parameter containing the user name. */
     private final String usernameAttribute = "j_username";
@@ -62,20 +68,23 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     /** HTTP request parameter containing the user's password. */
     private final String passwordAttribute = "j_password";
 
+    /** {@inheritDoc} */
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
             IOException {
         String username = DatatypeHelper.safeTrimOrNullString(request.getParameter(usernameAttribute));
         String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
 
         if (username == null || password == null) {
-            redirectToLoginPage(request, response);
+            redirectToLoginPage(request, response, null);
             return;
         }
 
         if (authenticateUser(request)) {
             AuthenticationEngine.returnToAuthenticationEngine(request, response);
         } else {
-            redirectToLoginPage(request, response);
+            List<Pair<String, String>> queryParams = new ArrayList<Pair<String, String>>();
+            queryParams.add(new Pair<String, String>(failureParam, "true"));
+            redirectToLoginPage(request, response, queryParams);
             return;
         }
     }
@@ -85,8 +94,10 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      * 
      * @param request current request
      * @param response current response
+     * @param queryParams query parameters to pass to the login page
      */
-    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response) {
+    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response,
+            List<Pair<String, String>> queryParams) {
         try {
             StringBuilder pathBuilder = new StringBuilder();
             pathBuilder.append(request.getContextPath());
@@ -98,7 +109,10 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             urlBuilder.setHost(request.getLocalName());
             urlBuilder.setPort(request.getLocalPort());
             urlBuilder.setPath(pathBuilder.toString());
-
+            if (queryParams != null) {
+                urlBuilder.getQueryParams().addAll(queryParams);
+            }
+            
             if (log.isDebugEnabled()) {
                 log.debug("Redirecting to login page " + urlBuilder.buildURL());
             }
@@ -147,7 +161,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     }
 
     /**
-     * A callback handler that provides static name and password data to a JAAS loging process.
+     * A callback handler that provides static name and password data to a JAAS login process.
      * 
      * This handler only supports {@link NameCallback} and {@link PasswordCallback}.
      */
