@@ -143,6 +143,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     protected void performAuthentication(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpSession httpSession = servletRequest.getSession();
 
         try {
             SSORequestContext requestContext = decodeRequest(inTransport, outTransport);
@@ -164,8 +165,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
                 loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
             }
-
-            HttpSession httpSession = servletRequest.getSession();
+            
             httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
             RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
@@ -178,6 +178,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         } catch (ServletException ex) {
             log.error("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
+        } finally {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         }
     }
 
