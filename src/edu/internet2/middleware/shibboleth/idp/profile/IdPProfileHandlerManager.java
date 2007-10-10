@@ -142,6 +142,10 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
      * @return authentication method URI and handler appropriate for given login context
      */
     public Pair<String, LoginHandler> getAuthenticationHandler(LoginContext loginContext) {
+        if (loginContext == null) {
+            return null;
+        }
+        
         if (log.isDebugEnabled()) {
             log.debug(getId() + ": Looking up authentication method for relying party "
                     + loginContext.getRelyingPartyId());
