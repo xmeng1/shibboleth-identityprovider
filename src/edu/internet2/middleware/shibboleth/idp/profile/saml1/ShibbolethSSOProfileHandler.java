@@ -159,13 +159,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             dispatcher.forward(httpRequest, httpResponse);
             return;
         } catch (IOException ex) {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
         } catch (ServletException ex) {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
-        } finally {
-            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         }
     }
 

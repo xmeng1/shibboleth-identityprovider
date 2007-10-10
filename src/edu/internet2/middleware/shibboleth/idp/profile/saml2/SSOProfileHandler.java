@@ -170,16 +170,17 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
         } catch (MarshallingException e) {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Unable to marshall authentication request context");
             throw new ProfileException("Unable to marshall authentication request context", e);
         } catch (IOException ex) {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
         } catch (ServletException ex) {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
-        } finally {
-            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         }
     }
 
