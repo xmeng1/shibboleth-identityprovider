@@ -125,7 +125,12 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
             handleDefaultAllow(httpRequest, httpResponse);
         }
 
-        AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
+        try {
+            AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
+        } catch (ServletException e) {
+            // this shouldn't ever happen since the handler can only be accessed through the authentication engine
+            return;
+        }
     }
 
     protected void handleDefaultDeny(HttpServletRequest request, HttpServletResponse response) {

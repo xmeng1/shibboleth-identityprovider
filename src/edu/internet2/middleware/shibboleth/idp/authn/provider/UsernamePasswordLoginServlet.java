@@ -80,7 +80,12 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
         }
 
         if (authenticateUser(request)) {
-            AuthenticationEngine.returnToAuthenticationEngine(request, response);
+            try {
+                AuthenticationEngine.returnToAuthenticationEngine(request, response);
+            } catch (ServletException e) {
+                throw new ServletException("Unable to return to authentication engine.  "
+                        + "Authentication servlet should not be accessed directly.");
+            }
         } else {
             List<Pair<String, String>> queryParams = new ArrayList<Pair<String, String>>();
             queryParams.add(new Pair<String, String>(failureParam, "true"));

@@ -78,15 +78,20 @@ public class AuthenticationEngine extends HttpServlet {
      * 
      * @param httpRequest current http request
      * @param httpResponse current http response
+     * 
+     * @throws ServletException thrown if unable to return to authentication engine
      */
-    public static void returnToAuthenticationEngine(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    public static void returnToAuthenticationEngine(HttpServletRequest httpRequest, HttpServletResponse httpResponse)
+            throws ServletException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Returning control to authentication engine");
         }
         HttpSession httpSession = httpRequest.getSession();
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        if(loginContext == null){
+        if (loginContext == null) {
             LOG.error("User HttpSession did not contain a login context.  Unable to return to authentication engine");
+            throw new ServletException(
+                    "User HttpSession did not contain a login context.  Unable to return to authentication engine");
         }
         forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
     }

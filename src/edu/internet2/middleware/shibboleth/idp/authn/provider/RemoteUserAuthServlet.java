@@ -49,6 +49,13 @@ public class RemoteUserAuthServlet extends HttpServlet {
                             + " returning control back to authentication engine");
         }
         httpRequest.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
-        AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
+
+        try {
+            AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
+        } catch (ServletException e) {
+            throw new ServletException("Unable to return to authentication engine.  "
+                    + "Authentication servlet should not be accessed directly.");
+        }
+
     }
 }
