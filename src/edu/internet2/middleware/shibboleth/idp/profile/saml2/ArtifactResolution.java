@@ -34,6 +34,7 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -59,7 +60,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
     /** Artifact response object builder. */
     private SAMLObjectBuilder<ArtifactResponse> responseBuilder;
-    
+
     /** Builder of assertion consumer service endpoints. */
     private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
@@ -70,9 +71,9 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
      */
     public ArtifactResolution(SAMLArtifactMap map) {
         super();
-        
+
         artifactMap = map;
-        
+
         responseBuilder = (SAMLObjectBuilder<ArtifactResponse>) getBuilderFactory().getBuilder(
                 ArtifactResponse.DEFAULT_ELEMENT_NAME);
         acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
@@ -161,12 +162,11 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
         ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
         requestContext.setMetadataProvider(metadataProvider);
-        
+
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
 
-        
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
@@ -191,7 +191,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             // Set as much information as can be retrieved from the decoded message
             try {
                 requestContext.setArtifact(requestContext.getInboundSAMLMessage().getArtifact().getArtifact());
-                
+
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
@@ -199,14 +199,19 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
                 requestContext.setLocalEntityId(assertingPartyId);
-                requestContext.setLocalEntityMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
+                EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
+                if (assertingPartyMetadata == null) {
+                    throw new MetadataProviderException("Unable to locate metadata for asserting party "
+                            + assertingPartyId);
+                }
+                requestContext.setLocalEntityMetadata(assertingPartyMetadata);
                 requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setLocalEntityRoleMetadata(requestContext.getLocalEntityMetadata()
+                requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
                         .getAttributeAuthorityDescriptor(SAMLConstants.SAML20P_NS));
 
                 ArtifactResolutionConfiguration profileConfig = (ArtifactResolutionConfiguration) rpConfig
                         .getProfileConfiguration(ArtifactResolutionConfiguration.PROFILE_ID);
-                if(profileConfig != null){
+                if (profileConfig != null) {
                     requestContext.setProfileConfiguration(profileConfig);
                     if (profileConfig.getSigningCredential() != null) {
                         requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
@@ -216,7 +221,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
                 }
 
             } catch (MetadataProviderException e) {
-                log.error("Unable to locate metadata for asserting or relying party");
+                log.error(e.getMessage());
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
                         "Error locating party metadata"));
                 throw new ProfileException("Error locating party metadata");
@@ -247,7 +252,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
             endpoint = endpointSelector.selectEndpoint();
         }
-        
+
         return endpoint;
     }
 

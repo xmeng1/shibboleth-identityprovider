@@ -211,11 +211,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (loginContext.getPrincipalName() == null) {
                 log.error("User's login context did not contain a principal, user considered unauthenticiated.");
                 if (loginContext.getPassiveAuth()) {
-                    requestContext
-                        .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI, null));
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI,
+                            null));
                 } else {
-                    requestContext
-                        .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, null));
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
+                            null));
                 }
                 throw new ProfileException("User failed authentication");
             }
