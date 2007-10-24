@@ -152,7 +152,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(SSOConfiguration.PROFILE_ID);
             if (ssoConfig == null) {
-                log.error("SAML 2 SSO profile is not configured for relying party " + requestContext.getInboundMessageIssuer());
+                log.error("SAML 2 SSO profile is not configured for relying party "
+                        + requestContext.getInboundMessageIssuer());
                 throw new ProfileException("SAML 2 SSO profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
             }
@@ -165,7 +166,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
                 loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
             }
-            
+
             httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
             RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
@@ -258,11 +259,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         SSORequestContext requestContext = new SSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
-        
+
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-        
+
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
@@ -297,13 +298,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         try {
             requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
-            
+
             requestContext.setLoginContext(loginContext);
             requestContext.setPrincipalName(loginContext.getPrincipalName());
             requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
             requestContext.setUserSession(getUserSession(in));
             requestContext.setRelayState(loginContext.getRelayState());
 
+            // inbound message
             requestContext.setInboundMessageTransport(in);
             requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
             requestContext.setInboundMessage(loginContext.getAuthenticationRequest());
@@ -313,9 +315,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             MetadataProvider metadataProvider = getMetadataProvider();
             requestContext.setMetadataProvider(metadataProvider);
 
+            // relying party
             String relyingPartyId = loginContext.getRelyingPartyId();
             requestContext.setInboundMessageIssuer(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
+            if (relyingPartyMetadata == null) {
+                throw new MetadataProviderException("Unable to locate metadata for relying party " + relyingPartyId);
+            }
             requestContext.setPeerEntityMetadata(relyingPartyMetadata);
             requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
             requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML20P_NS));
@@ -323,14 +329,19 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setRelyingPartyConfiguration(rpConfig);
             requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
+            // asserting party
             String assertingPartyId = rpConfig.getProviderId();
             requestContext.setLocalEntityId(assertingPartyId);
             EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
+            if (assertingPartyMetadata == null) {
+                throw new MetadataProviderException("Unable to locate metadata for asserting party " + assertingPartyId);
+            }
             requestContext.setLocalEntityMetadata(assertingPartyMetadata);
             requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
             requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
                     .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
 
+            // outbound message
             requestContext.setOutboundMessageTransport(out);
             requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
             SSOConfiguration profileConfig = (SSOConfiguration) rpConfig
@@ -350,7 +361,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                     "Error recovering request state"));
             throw new ProfileException("Error recovering request state", e);
         } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for asserting or relying party");
+            log.error(e.getMessage());
             requestContext
                     .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error locating party metadata"));
             throw new ProfileException("Error locating party metadata");

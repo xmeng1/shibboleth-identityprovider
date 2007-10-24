@@ -185,11 +185,11 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
-        
+
         requestContext.setInboundMessageTransport(inTransport);
-        requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);        
+        requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-        
+
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
@@ -282,22 +282,27 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         try {
             requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
-            
+
             requestContext.setLoginContext(loginContext);
             requestContext.setPrincipalName(loginContext.getPrincipalName());
             requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
             requestContext.setUserSession(getUserSession(in));
             requestContext.setRelayState(loginContext.getSpTarget());
 
+            // inbound message
             requestContext.setInboundMessageTransport(in);
             requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
 
             MetadataProvider metadataProvider = getMetadataProvider();
             requestContext.setMetadataProvider(metadataProvider);
 
+            // relying party
             String relyingPartyId = loginContext.getRelyingPartyId();
             requestContext.setInboundMessageIssuer(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
+            if (relyingPartyMetadata == null) {
+                throw new MetadataProviderException("Unable to locate metadata for relying party " + relyingPartyId);
+            }
             requestContext.setPeerEntityMetadata(relyingPartyMetadata);
             requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
             requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML11P_NS));
@@ -305,14 +310,19 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setRelyingPartyConfiguration(rpConfig);
             requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
+            // asserting party
             String assertingPartyId = rpConfig.getProviderId();
             requestContext.setLocalEntityId(assertingPartyId);
             EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
+            if (assertingPartyMetadata == null) {
+                throw new MetadataProviderException("Unable to locate metadata for asserting party " + assertingPartyId);
+            }
             requestContext.setLocalEntityMetadata(assertingPartyMetadata);
             requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
             requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
                     .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
 
+            // outbound message
             requestContext.setOutboundMessageTransport(out);
             requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
             ShibbolethSSOConfiguration profileConfig = (ShibbolethSSOConfiguration) rpConfig
@@ -327,7 +337,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
             return requestContext;
         } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for asserting or relying party");
+            log.error(e.getMessage());
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
             throw new ProfileException("Error locating party metadata");
         }
