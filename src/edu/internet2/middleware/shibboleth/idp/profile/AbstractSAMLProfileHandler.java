@@ -21,16 +21,16 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
 import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
-import org.opensaml.log.Level;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
@@ -46,10 +46,10 @@ public abstract class AbstractSAMLProfileHandler extends
         AbstractShibbolethProfileHandler<SAMLMDRelyingPartyConfigurationManager, Session> {
 
     /** SAML message audit log. */
-    private final Logger auditLog = Logger.getLogger(AuditLogEntry.AUDIT_LOGGER_NAME);
+    private final Logger auditLog = LoggerFactory.getLogger(AuditLogEntry.AUDIT_LOGGER_NAME);
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(AbstractSAMLProfileHandler.class);
+    private final Logger log = LoggerFactory.getLogger(AbstractSAMLProfileHandler.class);
 
     /** Generator of IDs which may be used for SAML assertions, requests, etc. */
     private IdentifierGenerator idGenerator;
@@ -224,23 +224,20 @@ public abstract class AbstractSAMLProfileHandler extends
         try {
             Endpoint peerEndpoint = requestContext.getPeerEntityEndpoint();
             if (peerEndpoint == null) {
-                log.error("No return endpoint available for relying party " + requestContext.getInboundMessageIssuer());
+                log.error("No return endpoint available for relying party {}", requestContext
+                                .getInboundMessageIssuer());
                 throw new ProfileException("No peer endpoint available to which to send SAML response");
             }
 
             SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
             if (encoder == null) {
-                log.error("No outbound message encoder configured for binding "
-                        + requestContext.getPeerEntityEndpoint().getBinding());
+                log.error("No outbound message encoder configured for binding {}", requestContext
+                        .getPeerEntityEndpoint().getBinding());
                 throw new ProfileException("No outbound message encoder configured for binding "
                         + requestContext.getPeerEntityEndpoint().getBinding());
             }
-
-            if (log.isDebugEnabled()) {
-                log.debug("Encoding response to SAML request " + requestContext.getInboundSAMLMessageId()
-                        + " from relying party " + requestContext.getInboundMessageIssuer() + " with outbound binding "
-                        + encoder.getBindingURI());
-            }
+            log.debug("Encoding response to SAML request {} from relying party {}", requestContext
+                    .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
 
             requestContext.setMessageEncoder(encoder);
             encoder.encode(requestContext);
@@ -269,6 +266,7 @@ public abstract class AbstractSAMLProfileHandler extends
         if (context.getReleasedAttributes() != null) {
             auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
         }
-        getAduitLog().log(Level.CRITICAL, auditLogEntry);
+
+        getAduitLog().info(auditLogEntry.toString());
     }
 }

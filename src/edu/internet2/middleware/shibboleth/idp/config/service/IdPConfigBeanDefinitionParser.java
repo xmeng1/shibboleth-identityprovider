@@ -49,14 +49,7 @@ public class IdPConfigBeanDefinitionParser extends AbstractSimpleBeanDefinitionP
     /** {@inheritDoc} */
     protected void doParse(Element config, ParserContext context, BeanDefinitionBuilder builder) {
         Map<QName, List<Element>> configChildren = XMLHelper.getChildElements(config);
-        List<Element> children;
-
-        children = configChildren.get(new QName(IdPServicesNamespaceHandler.NAMESPACE, "LoggingConfiguration"));
-        if (children != null && children.size() > 0) {
-            builder.addPropertyValue("loggingService", SpringConfigurationUtils.parseCustomElement(children.get(0), context));
-        }
-
-        children = configChildren.get(new QName(ServiceNamespaceHandler.NAMESPACE, "Service"));
+        List<Element> children = configChildren.get(new QName(ServiceNamespaceHandler.NAMESPACE, "Service"));
         builder.addConstructorArg(SpringConfigurationUtils.parseCustomElements(children, context));
     }
     

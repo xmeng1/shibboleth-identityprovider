@@ -29,10 +29,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
@@ -52,7 +53,7 @@ public class AuthenticationEngine extends HttpServlet {
     private static final long serialVersionUID = 8494202791991613148L;
 
     /** Class logger. */
-    private static final Logger LOG = Logger.getLogger(AuthenticationEngine.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthenticationEngine.class);
 
     /**
      * Gets the manager used to retrieve handlers for requests.
@@ -78,20 +79,13 @@ public class AuthenticationEngine extends HttpServlet {
      * 
      * @param httpRequest current http request
      * @param httpResponse current http response
-     * 
-     * @throws ServletException thrown if unable to return to authentication engine
      */
-    public static void returnToAuthenticationEngine(HttpServletRequest httpRequest, HttpServletResponse httpResponse)
-            throws ServletException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Returning control to authentication engine");
-        }
+    public static void returnToAuthenticationEngine(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        LOG.debug("Returning control to authentication engine");
         HttpSession httpSession = httpRequest.getSession();
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         if (loginContext == null) {
             LOG.error("User HttpSession did not contain a login context.  Unable to return to authentication engine");
-            throw new ServletException(
-                    "User HttpSession did not contain a login context.  Unable to return to authentication engine");
         }
         forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
     }
@@ -105,9 +99,7 @@ public class AuthenticationEngine extends HttpServlet {
      */
     public static void returnToProfileHandler(LoginContext loginContext, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Returning control to profile handler at: " + loginContext.getProfileHandlerURL());
-        }
+        LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
     }
 
@@ -125,9 +117,9 @@ public class AuthenticationEngine extends HttpServlet {
             dispatcher.forward(httpRequest, httpResponse);
             return;
         } catch (IOException e) {
-            LOG.fatal("Unable to return control back to authentication engine", e);
+            LOG.error("Unable to return control back to authentication engine", e);
         } catch (ServletException e) {
-            LOG.fatal("Unable to return control back to authentication engine", e);
+            LOG.error("Unable to return control back to authentication engine", e);
         }
     }
 
@@ -135,9 +127,7 @@ public class AuthenticationEngine extends HttpServlet {
     @SuppressWarnings("unchecked")
     protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Processing incoming request");
-        }
+        LOG.debug("Processing incoming request");
 
         if (httpResponse.isCommitted()) {
             LOG.error("HTTP Response already committed");
@@ -158,24 +148,20 @@ public class AuthenticationEngine extends HttpServlet {
                 AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(
                         loginContext, shibSession);
                 if (authenticationMethod != null) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("An active authentication method is applicable for relying party.  "
-                                + "Using authentication method " + authenticationMethod.getAuthenticationMethod()
-                                + " as authentication method to relying party without re-authenticating user.");
-                    }
+                    LOG
+                            .debug(
+                                    "An active authentication method is applicable for relying party.  "
+                                            + "Using authentication method {} as authentication method to relying party without re-authenticating user.",
+                                    authenticationMethod.getAuthenticationMethod());
                     authenticateUserWithActiveMethod(httpRequest, httpResponse, authenticationMethod);
                 }
             }
 
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("No active authentication method is applicable for relying party.  "
-                        + "Authenticating user with to be determined method.");
-            }
+            LOG.debug("No active authentication method is applicable for relying party.  "
+                    + "Authenticating user with to be determined method.");
             authenticateUserWithoutActiveMethod1(httpRequest, httpResponse);
         } else {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Request returned from authentication handler, completing authentication process.");
-            }
+            LOG.debug("Request returned from authentication handler, completing authentication process.");
             authenticateUserWithoutActiveMethod2(httpRequest, httpResponse);
         }
 
@@ -196,9 +182,7 @@ public class AuthenticationEngine extends HttpServlet {
         String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         Session shibSession = getSessionManager().getSession(shibSessionId);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Populating login context with existing session and authentication method information.");
-        }
+        LOG.debug("Populating login context with existing session and authentication method information.");
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         loginContext.setAuthenticationDuration(authenticationMethod.getAuthenticationDuration());
         loginContext.setAuthenticationInstant(authenticationMethod.getAuthenticationInstant());
@@ -224,10 +208,7 @@ public class AuthenticationEngine extends HttpServlet {
     protected void authenticateUserWithoutActiveMethod1(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         HttpSession httpSession = httpRequest.getSession();
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Selecting appropriate authentication method for request.");
-        }
+        LOG.debug("Selecting appropriate authentication method for request.");
         Pair<String, LoginHandler> handler = getProfileHandlerManager().getAuthenticationHandler(loginContext);
 
         if (handler == null) {
@@ -240,18 +221,14 @@ public class AuthenticationEngine extends HttpServlet {
             return;
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Authentication method " + handler.getFirst() + " will be used to authenticate user.");
-        }
+        LOG.debug("Authentication method {} will be used to authenticate user.", handler.getFirst());
         loginContext.setAuthenticationAttempted();
         loginContext.setAuthenticationDuration(handler.getSecond().getAuthenticationDuration());
         loginContext.setAuthenticationMethod(handler.getFirst());
         loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Transferring control to authentication handler of type: "
-                    + handler.getSecond().getClass().getName());
-        }
+        LOG.debug("Transferring control to authentication handler of type: {}", handler.getSecond().getClass()
+                .getName());
         handler.getSecond().login(httpRequest, httpResponse);
     }
 
@@ -284,9 +261,7 @@ public class AuthenticationEngine extends HttpServlet {
         Session shibSession = getSessionManager().getSession(shibSessionId);
 
         if (shibSession == null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Creating shibboleth session for principal " + principalName);
-            }
+            LOG.debug("Creating shibboleth session for principal {}", principalName);
 
             InetAddress addr;
             try {
@@ -300,10 +275,8 @@ public class AuthenticationEngine extends HttpServlet {
             httpSession.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession.getSessionID());
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Recording authentication and service information in Shibboleth session for principal: "
-                    + principalName);
-        }
+        LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
+                principalName);
         Subject subject = (Subject) httpRequest.getAttribute(LoginHandler.SUBJECT_KEY);
         AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(subject, loginContext
                 .getAuthenticationMethod(), new DateTime(), loginContext.getAuthenticationDuration());

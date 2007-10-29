@@ -21,8 +21,9 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
 import org.opensaml.util.URLBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Authentication Handler that redirects to servlet protected by a Web Single-Sign-On system.
@@ -30,7 +31,7 @@ import org.opensaml.util.URLBuilder;
 public class RemoteUserLoginHandler extends AbstractLoginHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(RemoteUserLoginHandler.class);
+    private final Logger log = LoggerFactory.getLogger(RemoteUserLoginHandler.class);
 
     /** The URL of the SSO-protected servlet. */
     private String servletURL;
@@ -71,10 +72,7 @@ public class RemoteUserLoginHandler extends AbstractLoginHandler {
             urlBuilder.setPort(httpRequest.getLocalPort());
             urlBuilder.setPath(pathBuilder.toString());
 
-            if (log.isDebugEnabled()) {
-                log.debug("Redirecting to " + urlBuilder.buildURL());
-            }
-
+            log.debug("Redirecting to {}", urlBuilder.buildURL());
             httpResponse.sendRedirect(urlBuilder.buildURL());
             return;
         } catch (IOException ex) {

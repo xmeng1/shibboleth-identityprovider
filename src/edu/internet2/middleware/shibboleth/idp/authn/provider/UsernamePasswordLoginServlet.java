@@ -18,8 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -33,10 +31,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
 import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.DatatypeHelper;
-import org.opensaml.xml.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
@@ -51,16 +49,13 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     private static final long serialVersionUID = -572799841125956990L;
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(RemoteUserAuthServlet.class);
+    private final Logger log = LoggerFactory.getLogger(RemoteUserAuthServlet.class);
 
     /** Name of JAAS configuration used to authenticate users. */
     private final String jaasConfigName = "ShibUserPassAuth";
 
     /** Login page name. */
     private final String loginPage = "login.jsp";
-    
-    /** Parameter name to indicate login failure. */
-    private final String failureParam = "loginFailed";
 
     /** HTTP request parameter containing the user name. */
     private final String usernameAttribute = "j_username";
@@ -75,21 +70,14 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
         String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
 
         if (username == null || password == null) {
-            redirectToLoginPage(request, response, null);
+            redirectToLoginPage(request, response);
             return;
         }
 
         if (authenticateUser(request)) {
-            try {
-                AuthenticationEngine.returnToAuthenticationEngine(request, response);
-            } catch (ServletException e) {
-                throw new ServletException("Unable to return to authentication engine.  "
-                        + "Authentication servlet should not be accessed directly.");
-            }
+            AuthenticationEngine.returnToAuthenticationEngine(request, response);
         } else {
-            List<Pair<String, String>> queryParams = new ArrayList<Pair<String, String>>();
-            queryParams.add(new Pair<String, String>(failureParam, "true"));
-            redirectToLoginPage(request, response, queryParams);
+            redirectToLoginPage(request, response);
             return;
         }
     }
@@ -99,10 +87,8 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      * 
      * @param request current request
      * @param response current response
-     * @param queryParams query parameters to pass to the login page
      */
-    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response,
-            List<Pair<String, String>> queryParams) {
+    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response) {
         try {
             StringBuilder pathBuilder = new StringBuilder();
             pathBuilder.append(request.getContextPath());
@@ -114,14 +100,8 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             urlBuilder.setHost(request.getLocalName());
             urlBuilder.setPort(request.getLocalPort());
             urlBuilder.setPath(pathBuilder.toString());
-            if (queryParams != null) {
-                urlBuilder.getQueryParams().addAll(queryParams);
-            }
-            
-            if (log.isDebugEnabled()) {
-                log.debug("Redirecting to login page " + urlBuilder.buildURL());
-            }
 
+            log.debug("Redirecting to login page {}", urlBuilder.buildURL());
             response.sendRedirect(urlBuilder.buildURL());
             return;
         } catch (IOException ex) {
@@ -149,7 +129,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
                     jaasConfigName, cbh);
 
             jaasLoginCtx.login();
-            log.debug("Successfully authenticated user " + username);
+            log.debug("Successfully authenticated user {}", username);
 
             Subject subject = jaasLoginCtx.getSubject();
             Principal principal = subject.getPrincipals().iterator().next();
@@ -158,15 +138,13 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             return true;
         } catch (LoginException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("User authentication failed", e);
-            }
+            log.debug("User authentication failed", e);
             return false;
         }
     }
 
     /**
-     * A callback handler that provides static name and password data to a JAAS login process.
+     * A callback handler that provides static name and password data to a JAAS loging process.
      * 
      * This handler only supports {@link NameCallback} and {@link PasswordCallback}.
      */

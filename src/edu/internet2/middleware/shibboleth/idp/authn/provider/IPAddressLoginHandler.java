@@ -16,7 +16,6 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
-import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -25,18 +24,15 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
-import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 
 /**
  * IP Address authentication handler.
@@ -50,7 +46,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 public class IPAddressLoginHandler extends AbstractLoginHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(IPAddressLoginHandler.class);
+    private final Logger log = LoggerFactory.getLogger(IPAddressLoginHandler.class);
 
     /** The URI of the AuthnContextDeclRef or the AuthnContextClass. */
     private String authnMethodURI = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol";
@@ -81,7 +77,8 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
 
         for (String addr : entries) {
             try {
-                ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressLoginHandler.IPEntry(addr));
+                ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressLoginHandler.IPEntry(
+                        addr));
             } catch (UnknownHostException ex) {
                 log.error("IPAddressHandler: Error parsing entry \"" + addr + "\". Ignoring.");
             }
@@ -125,12 +122,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
             handleDefaultAllow(httpRequest, httpResponse);
         }
 
-        try {
-            AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
-        } catch (ServletException e) {
-            // this shouldn't ever happen since the handler can only be accessed through the authentication engine
-            return;
-        }
+        AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }
 
     protected void handleDefaultDeny(HttpServletRequest request, HttpServletResponse response) {

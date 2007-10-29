@@ -16,9 +16,10 @@
 
 package edu.internet2.middleware.shibboleth.idp.config.profile;
 
-import org.apache.log4j.Logger;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
@@ -31,13 +32,11 @@ public abstract class AbstractSAMLProfileHandlerBeanDefinitionParser extends
         AbstractShibbolethProfileHandlerBeanDefinitionParser {
 
     /** Class loggger. */
-    private static Logger log = Logger.getLogger(AbstractSAMLProfileHandlerBeanDefinitionParser.class);
+    private static Logger log = LoggerFactory.getLogger(AbstractSAMLProfileHandlerBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
-        if (log.isInfoEnabled()) {
-            log.info("Parsing configuration for " + config.getLocalName() + " SAML profile handler.");
-        }
+        log.info("Parsing configuration for {} SAML profile handler.", config.getLocalName());
         super.doParse(config, builder);
 
         builder.addPropertyReference("idGenerator", config.getAttributeNS(null, "idGeneratorId"));

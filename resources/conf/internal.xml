@@ -5,9 +5,18 @@
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd">
 
+    <bean id="shibboleth.TaskTimer" class="java.util.Timer" destroy-method="cancel">
+        <constructor-arg value="true" type="boolean" />
+    </bean>
+    
+    <bean id="shibboleth.LogbackLogging" class="edu.internet2.middleware.shibboleth.common.log.LogbackLoggingService" depends-on="shibboleth.TaskTimer">
+    	<constructor-arg ref="shibboleth.TaskTimer" />
+    	<constructor-arg value="$IDP_HOME$/conf/logging.xml" />
+    	<constructor-arg value="600000" />
+    </bean>
+    
     <!-- Spring configuration file that boostraps OpenSAML -->
-    <bean id="shibboleth.OpensamlConfig" class="edu.internet2.middleware.shibboleth.common.config.OpensamlConfigBean"
-        lazy-init="false">
+    <bean id="shibboleth.OpensamlConfig" class="edu.internet2.middleware.shibboleth.common.config.OpensamlConfigBean" depends-on="shibboleth.LogbackLogging">
         <constructor-arg>
             <list>
                 <bean id="shibMetadataExtensions" class="org.opensaml.util.resource.ClasspathResource">
@@ -17,11 +26,11 @@
         </constructor-arg>
     </bean>
 
-    <bean id="shibboleth.IdGenerator" class="org.opensaml.common.impl.SecureRandomIdentifierGenerator">
+    <bean id="shibboleth.IdGenerator" class="org.opensaml.common.impl.SecureRandomIdentifierGenerator" depends-on="shibboleth.LogbackLogging">
         <constructor-arg value="SHA1PRNG" />
     </bean>
 
-    <bean id="shibboleth.VelocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean">
+    <bean id="shibboleth.VelocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean" depends-on="shibboleth.LogbackLogging">
         <property name="velocityProperties">
             <props>
                 <prop key="resource.loader">classpath, string</prop>
@@ -36,11 +45,12 @@
     </bean>
 
     <bean id="shibboleth.TemplateEngine"
-        class="edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.dataConnector.TemplateEngine">
+        class="edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.dataConnector.TemplateEngine"
+        depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.VelocityEngine" />
     </bean>
 
-    <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool">
+    <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool" depends-on="shibboleth.LogbackLogging">
         <property name="maxPoolSize" value="50" />
         <property name="createBuildersAtPoolLimit" value="true" />
         <property name="coalescing" value="true" />
@@ -49,30 +59,27 @@
         <property name="namespaceAware" value="true" />
     </bean>
 
-    <bean id="shibboleth.TaskTimer" class="java.util.Timer" destroy-method="cancel">
-        <constructor-arg value="true" type="boolean" />
-    </bean>
+    <bean id="shibboleth.StorageService" class="org.opensaml.util.storage.MapBasedStorageService" depends-on="shibboleth.LogbackLogging" />
 
-    <bean id="shibboleth.StorageService" class="org.opensaml.util.storage.MapBasedStorageService" />
-
-    <bean id="shibboleth.StorageServiceSweeper" class="org.opensaml.util.storage.ExpiringObjectStorageServiceSweeper">
+    <bean id="shibboleth.StorageServiceSweeper" class="org.opensaml.util.storage.ExpiringObjectStorageServiceSweeper" depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.TaskTimer" />
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg value="600000" type="long" />
     </bean>
 
     <bean id="shibboleth.SessionManager"
-        class="edu.internet2.middleware.shibboleth.idp.session.impl.SessionManagerImpl">
+          class="edu.internet2.middleware.shibboleth.idp.session.impl.SessionManagerImpl"
+          depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg value="1800000" type="long" />
     </bean>
 
-    <bean id="shibboleth.ArtifactMap" class="org.opensaml.common.binding.artifact.BasicSAMLArtifactMap">
+    <bean id="shibboleth.ArtifactMap" class="org.opensaml.common.binding.artifact.BasicSAMLArtifactMap" depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg type="long" value="300000" />
     </bean>
     
-    <bean id="shibboleth.ReplayCache" class="org.opensaml.util.storage.ReplayCache">
+    <bean id="shibboleth.ReplayCache" class="org.opensaml.util.storage.ReplayCache" depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg type="long" value="300000" />
     </bean>
@@ -204,19 +211,19 @@
     </util:map>
 
     <bean id="shibboleth.SAML1AttributeAuthority"
-        class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML1AttributeAuthority">
+        class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML1AttributeAuthority" depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.AttributeResolver" />
         <property name="filteringEngine" ref="shibboleth.AttributeFilterEngine" />
     </bean>
 
     <bean id="shibboleth.SAML2AttributeAuthority"
-        class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML2AttributeAuthority">
+        class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML2AttributeAuthority" depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.AttributeResolver" />
         <property name="filteringEngine" ref="shibboleth.AttributeFilterEngine" />
     </bean>
 
     <bean id="shibboleth.ServletAttributeExporter"
-        class="org.springframework.web.context.support.ServletContextAttributeExporter">
+        class="org.springframework.web.context.support.ServletContextAttributeExporter" depends-on="shibboleth.LogbackLogging">
         <property name="attributes">
             <map>
                 <entry>

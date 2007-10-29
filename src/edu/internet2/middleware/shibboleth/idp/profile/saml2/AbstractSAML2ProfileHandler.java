@@ -21,11 +21,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
-import org.opensaml.common.impl.SAMLObjectContentReference;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.AttributeStatement;
@@ -61,6 +59,8 @@ import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -79,7 +79,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     public static final SAMLVersion SAML_VERSION = SAMLVersion.VERSION_20;
 
     /** Class logger. */
-    private Logger log = Logger.getLogger(AbstractSAML2ProfileHandler.class);
+    private Logger log = LoggerFactory.getLogger(AbstractSAML2ProfileHandler.class);
 
     /** For building response. */
     private SAMLObjectBuilder<Response> responseBuilder;
@@ -325,11 +325,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
 
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("Resolving attributes for principal " + requestContext.getPrincipalName()
-                        + " of SAML request " + requestContext.getInboundSAMLMessageId() + " from relying party "
-                        + requestContext.getInboundMessageIssuer());
-            }
+            log.debug("Resolving attributes for principal {} of SAML request from relying party {}", requestContext
+                    .getPrincipalName(), requestContext.getInboundMessageIssuer());
             Map<String, BaseAttribute> principalAttributes = attributeAuthority.getAttributes(requestContext);
 
             requestContext.setAttributes(principalAttributes);
@@ -354,11 +351,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected AttributeStatement buildAttributeStatement(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Creating attribute statement in response to SAML request "
-                    + requestContext.getInboundSAMLMessageId() + " from relying party "
-                    + requestContext.getInboundMessageIssuer());
-        }
+        log.debug("Creating attribute statement in response to SAML request {} from relying party {}", requestContext
+                .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
+
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
         try {
@@ -396,12 +391,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                             + requestContext.getInboundMessageIssuer());
         }
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
-
-        if (log.isDebugEnabled()) {
-            log.debug("Resolving principal name for subject of SAML request "
-                    + requestContext.getInboundSAMLMessageId() + " from relying party "
-                    + requestContext.getInboundMessageIssuer());
-        }
+        log.debug("Resolving principal name for subject of SAML request {} from relying party {}", requestContext
+                .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
 
         try {
             String principal = attributeAuthority.getPrincipal(requestContext);
@@ -429,10 +420,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected void signAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion)
             throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Determining if SAML assertion to relying party " + requestContext.getInboundMessageIssuer()
-                    + " should be signed");
-        }
+        log.debug("Determining if SAML assertion to relying party {} should be signed", requestContext
+                .getInboundMessageIssuer());
 
         boolean signAssertion = false;
 
@@ -442,26 +431,21 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getPeerEntityRoleMetadata();
             if (ssoDescriptor.getWantAssertionsSigned() != null) {
                 signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
-                if (log.isDebugEnabled()) {
-                    log.debug("Entity metadata for relying party " + requestContext.getInboundMessageIssuer()
-                            + " indicates to sign assertions: " + signAssertion);
-                }
+                log.debug("Entity metadata for relying party {} indicates to sign assertions: {}", requestContext
+                        .getInboundMessageIssuer(), signAssertion);
             }
         } else if (profileConfig.getSignAssertions()) {
             signAssertion = true;
-            log.debug("IdP relying party configuration "
-                    + requestContext.getRelyingPartyConfiguration().getRelyingPartyId()
-                    + " indicates to sign assertions: " + signAssertion);
+            log.debug("IdP relying party configuration {} indicates to sign assertions: {}", requestContext
+                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
         }
 
         if (!signAssertion) {
             return;
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Determining signing credntial for assertion to relying party "
-                    + requestContext.getInboundMessageIssuer());
-        }
+        log.debug("Determining signing credntial for assertion to relying party {}", requestContext
+                .getInboundMessageIssuer());
         Credential signatureCredential = profileConfig.getSigningCredential();
         if (signatureCredential == null) {
             signatureCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
@@ -473,20 +457,18 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     + " or it's SAML2 attribute query profile configuration");
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Signing assertion to relying party " + requestContext.getInboundMessageIssuer());
-        }
+        log.debug("Signing assertion to relying party {}", requestContext.getInboundMessageIssuer());
         Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
-        
+
         signature.setSigningCredential(signatureCredential);
         try {
-            //TODO pull SecurityConfiguration from SAMLMessageContext?  needs to be added
-            //TODO how to pull what keyInfoGenName to use?
+            // TODO pull SecurityConfiguration from SAMLMessageContext? needs to be added
+            // TODO how to pull what keyInfoGenName to use?
             SecurityHelper.prepareSignatureParams(signature, signatureCredential, null, null);
         } catch (SecurityException e) {
             throw new ProfileException("Error preparing signature for signing", e);
         }
-        
+
         assertion.setSignature(signature);
 
         Signer.signObject(signature);
@@ -584,16 +566,12 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      *             name ID attribute or because there are no supported name formats
      */
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Building assertion NameID for principal/relying party:" + requestContext.getPrincipalName()
-                    + "/" + requestContext.getInboundMessageIssuer());
-        }
+        log.debug("Building assertion NameID for principal/relying party:{}/{}", requestContext.getPrincipalName(),
+                requestContext.getInboundMessageIssuer());
         Map<String, BaseAttribute> principalAttributes = requestContext.getPrincipalAttributes();
         List<String> supportedNameFormats = getNameFormats(requestContext);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Supported NameID formats: " + supportedNameFormats);
-        }
+        log.debug("Supported NameID formats: {}", supportedNameFormats);
 
         if (principalAttributes == null || supportedNameFormats == null) {
             log.error("No attributes for principal " + requestContext.getPrincipalName()
@@ -610,11 +588,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML2NameIDAttributeEncoder) {
                         nameIdEncoder = (SAML2NameIDAttributeEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("Using attribute " + attribute.getId() + " suppoting NameID format "
-                                        + nameIdEncoder.getNameFormat() + " to create the NameID for principal "
-                                        + requestContext.getPrincipalName());
-                            }
+                            log.debug("Using attribute {} suppoting NameID format {} to create the NameID for principal.{}",
+                                            attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }
                     }

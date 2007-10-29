@@ -21,14 +21,15 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
 import org.opensaml.util.URLBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Authenticate a username and password against a JAAS source.
  * 
- * This authenticaiton handler requires a JSP to collect a username and password from the user. It also requires
- * a JAAS configuration file to validate the username and password.
+ * This authenticaiton handler requires a JSP to collect a username and password from the user. It also requires a JAAS
+ * configuration file to validate the username and password.
  * 
  * If an Authentication Context Class or DeclRef URI is not specified, it will default to
  * "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport".
@@ -36,17 +37,17 @@ import org.opensaml.util.URLBuilder;
 public class UsernamePasswordLoginHandler extends AbstractLoginHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(UsernamePasswordLoginHandler.class);
+    private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginHandler.class);
 
     /** The URL of the servlet used to perform authentication. */
     private String authenticationServletURL;
 
-    /** 
+    /**
      * Constructor.
-     *
+     * 
      * @param servletURL URL to the authentication servlet
      */
-    public UsernamePasswordLoginHandler(String servletURL){
+    public UsernamePasswordLoginHandler(String servletURL) {
         super();
         setSupportsPassive(false);
         setSupportsForceAuthentication(true);
@@ -70,10 +71,7 @@ public class UsernamePasswordLoginHandler extends AbstractLoginHandler {
             urlBuilder.setPort(httpRequest.getLocalPort());
             urlBuilder.setPath(pathBuilder.toString());
 
-            if (log.isDebugEnabled()) {
-                log.debug("Redirecting to " + urlBuilder.buildURL());
-            }
-
+            log.debug("Redirecting to {}", urlBuilder.buildURL());
             httpResponse.sendRedirect(urlBuilder.buildURL());
             return;
         } catch (IOException ex) {

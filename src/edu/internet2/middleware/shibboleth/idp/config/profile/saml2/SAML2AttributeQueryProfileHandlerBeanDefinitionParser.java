@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.saml2;
 
 import javax.xml.namespace.QName;
 
-import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 

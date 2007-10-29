@@ -25,7 +25,6 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.log4j.Logger;
 import org.opensaml.Configuration;
 import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextComparisonTypeEnumeration;
@@ -37,6 +36,8 @@ import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.util.XMLHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
@@ -51,7 +52,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
     private static final long serialVersionUID = -2518779446947534977L;
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(Saml2LoginContext.class);
+    private final Logger log = LoggerFactory.getLogger(Saml2LoginContext.class);
     
     /** Relay state from authentication request. */
     private String relayState;

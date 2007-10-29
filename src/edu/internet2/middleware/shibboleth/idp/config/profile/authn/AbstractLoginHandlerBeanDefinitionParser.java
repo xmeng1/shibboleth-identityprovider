@@ -19,9 +19,10 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.w3c.dom.Element;
@@ -34,18 +35,14 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerName
 public abstract class AbstractLoginHandlerBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
     /** Class logger. */
-    private static Logger log = Logger.getLogger(AbstractLoginHandlerBeanDefinitionParser.class);
+    private static Logger log = LoggerFactory.getLogger(AbstractLoginHandlerBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
-        if (log.isInfoEnabled()) {
-            log.info("Parsing configuration for " + config.getLocalName() + " authentication handler.");
-        }
+        log.info("Parsing configuration for {} authentication handler.", config.getLocalName());
         
         int duration = Integer.parseInt(config.getAttributeNS(null, "authenticationDuration"));
-        if (log.isDebugEnabled()) {
-            log.debug("Authentication handler declared duration of " + duration + " minutes");
-        }
+        log.debug("Authentication handler declared duration of {} minutes", duration);
         builder.addPropertyValue("authenticationDuration", duration);
 
         String authnMethod;
@@ -54,9 +51,7 @@ public abstract class AbstractLoginHandlerBeanDefinitionParser extends AbstractS
                 ProfileHandlerNamespaceHandler.NAMESPACE, "AuthenticationMethod");
         for (Element authnMethodElem : authnMethodElems) {
             authnMethod = DatatypeHelper.safeTrimOrNullString(authnMethodElem.getTextContent());
-            if (log.isDebugEnabled()) {
-                log.debug("Authentication handler declared support for authentication method " + authnMethod);
-            }
+            log.debug("Authentication handler declared support for authentication method {}", authnMethod);
             authnMethods.add(authnMethod);
         }
         builder.addPropertyValue("authenticationMethods", authnMethods);

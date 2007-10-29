@@ -18,10 +18,11 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An endpoint selector that may optionally take a SP-provided assertion consumer service URL, validate it against
@@ -31,7 +32,7 @@ import org.opensaml.xml.util.DatatypeHelper;
 public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(ShibbolethSSOEndpointSelector.class);
+    private final Logger log = LoggerFactory.getLogger(ShibbolethSSOEndpointSelector.class);
 
     /** Assertion consumer service URL provided by SP. */
     private String spAssertionConsumerService;
@@ -70,31 +71,28 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
      */
     protected Endpoint selectEndpointByACS() {
         List<Endpoint> endpoints = getEntityRoleMetadata().getEndpoints();
-        if (log.isDebugEnabled()) {
-            log.debug("Relying party role contains " + endpoints.size() + " endpoints");
-            log.debug("Selecting endpoint from metadata corresponding to provided ACS URL: "
-                    + getSpAssertionConsumerService());
-        }
+        log.debug("Relying party role contains {} endpoints", endpoints.size());
+        log.debug("Selecting endpoint from metadata corresponding to provided ACS URL: {}",
+                getSpAssertionConsumerService());
+
         if (endpoints != null && endpoints.size() > 0) {
             for (Endpoint endpoint : endpoints) {
-                if(endpoint == null || !getSupportedIssuerBindings().contains(endpoint.getBinding())){
+                if (endpoint == null || !getSupportedIssuerBindings().contains(endpoint.getBinding())) {
                     continue;
                 }
-                
-                if(endpoint.getLocation().equalsIgnoreCase(spAssertionConsumerService)){
+
+                if (endpoint.getLocation().equalsIgnoreCase(spAssertionConsumerService)) {
                     return endpoint;
                 }
-                
-                if(!DatatypeHelper.isEmpty(endpoint.getResponseLocation()) && endpoint
-                                .getResponseLocation().equalsIgnoreCase(spAssertionConsumerService)){
+
+                if (!DatatypeHelper.isEmpty(endpoint.getResponseLocation())
+                        && endpoint.getResponseLocation().equalsIgnoreCase(spAssertionConsumerService)) {
                     return endpoint;
                 }
             }
         }
 
-        if(log.isDebugEnabled()){
-            log.debug("No endpoint meets selection criteria for SAML entity " + getEntityMetadata().getEntityID());
-        }
+        log.debug("No endpoint meets selection criteria for SAML entity {}", getEntityMetadata().getEntityID());
         return null;
     }
 }

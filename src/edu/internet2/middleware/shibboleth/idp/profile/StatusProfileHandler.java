@@ -19,9 +19,10 @@ package edu.internet2.middleware.shibboleth.idp.profile;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-import org.apache.log4j.Logger;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.OutTransport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractRequestURIMappedProfileHandler;
 
@@ -32,7 +33,7 @@ import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractReque
 public class StatusProfileHandler extends AbstractRequestURIMappedProfileHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(StatusProfileHandler.class);
+    private final Logger log = LoggerFactory.getLogger(StatusProfileHandler.class);
 
     /** {@inheritDoc} */
     public String getProfileId() {

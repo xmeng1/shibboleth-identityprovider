@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
@@ -39,7 +38,6 @@ import org.opensaml.saml1.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
-import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -47,6 +45,8 @@ import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
@@ -58,7 +58,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.Ar
 public class ArtifactResolution extends AbstractSAML1ProfileHandler {
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(ArtifactResolution.class);
+    private final Logger log = LoggerFactory.getLogger(ArtifactResolution.class);
 
     /** Builder of Response objects. */
     private SAMLObjectBuilder<Response> responseBuilder;
@@ -136,9 +136,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
      */
     protected ArtifactResolutionRequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Decoding incomming request");
-        }
+        log.debug("Decoding incomming request");
 
         MetadataProvider metadataProvider = getMetadataProvider();
 
@@ -156,9 +154,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
-            if (log.isDebugEnabled()) {
-                log.debug("Decoded request");
-            }
+            log.debug("Decoded request");
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding artifact resolve message", e);
@@ -179,19 +175,14 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
                 requestContext.setLocalEntityId(assertingPartyId);
-                EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
-                if (assertingPartyMetadata == null) {
-                    throw new MetadataProviderException("Unable to locate metadata for asserting party "
-                            + assertingPartyId);
-                }
-                requestContext.setLocalEntityMetadata(assertingPartyMetadata);
+                requestContext.setLocalEntityMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
                 requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
+                requestContext.setLocalEntityRoleMetadata(requestContext.getLocalEntityMetadata()
                         .getAttributeAuthorityDescriptor(SAMLConstants.SAML11P_NS));
 
                 ArtifactResolutionConfiguration profileConfig = (ArtifactResolutionConfiguration) rpConfig
                         .getProfileConfiguration(ArtifactResolutionConfiguration.PROFILE_ID);
-                if (profileConfig != null) {
+                if(profileConfig != null){
                     requestContext.setProfileConfiguration(profileConfig);
                     if (profileConfig.getSigningCredential() != null) {
                         requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
@@ -201,7 +192,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
                 }
 
             } catch (MetadataProviderException e) {
-                log.error(e.getMessage());
+                log.error("Unable to locate metadata for asserting or relying party");
                 requestContext
                         .setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
                 throw new ProfileException("Error locating party metadata");
@@ -268,7 +259,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             artifactMap.remove(assertionArtifact.getAssertionArtifact());
             assertions.add((Assertion) artifactEntry.getSamlMessage());
         }
-
+        
         requestContext.setReferencedAssertions(assertions);
     }
 

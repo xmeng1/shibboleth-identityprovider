@@ -23,7 +23,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
@@ -37,25 +38,15 @@ public class RemoteUserAuthServlet extends HttpServlet {
     private static final long serialVersionUID = 1745454095756633626L;
 
     /** Class logger. */
-    private final Logger log = Logger.getLogger(RemoteUserAuthServlet.class);
+    private final Logger log = LoggerFactory.getLogger(RemoteUserAuthServlet.class);
 
     /** {@inheritDoc} */
     protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
         String principalName = httpRequest.getRemoteUser();
 
-        if (log.isDebugEnabled()) {
-            log.debug("Remote user identified as " + principalName
-                            + " returning control back to authentication engine");
-        }
+        log.debug("Remote user identified as {} returning control back to authentication engine", principalName);
         httpRequest.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, httpRequest.getRemoteUser());
-
-        try {
-            AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
-        } catch (ServletException e) {
-            throw new ServletException("Unable to return to authentication engine.  "
-                    + "Authentication servlet should not be accessed directly.");
-        }
-
+        AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }
 }

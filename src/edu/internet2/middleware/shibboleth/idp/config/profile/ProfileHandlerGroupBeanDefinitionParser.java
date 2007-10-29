@@ -21,8 +21,9 @@ import java.util.Map;
 
 import javax.xml.namespace.QName;
 
-import org.apache.log4j.Logger;
 import org.opensaml.xml.util.XMLHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
@@ -40,7 +41,7 @@ public class ProfileHandlerGroupBeanDefinitionParser extends AbstractBeanDefinit
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandlerGroup");
     
     /** Class logger. */
-    private static Logger log = Logger.getLogger(ProfileHandlerGroupBeanDefinitionParser.class);
+    private static Logger log = LoggerFactory.getLogger(ProfileHandlerGroupBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
     protected AbstractBeanDefinition parseInternal(Element config, ParserContext context) {
@@ -50,21 +51,15 @@ public class ProfileHandlerGroupBeanDefinitionParser extends AbstractBeanDefinit
         List<Element> children;
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ErrorHandler"));
-        if(log.isDebugEnabled()){
-            log.debug(children.size() + " error handler definitions found");
-        }
+        log.debug("{} error handler definitions found", children.size());
         builder.addPropertyValue("errorHandler", SpringConfigurationUtils.parseCustomElement(children.get(0), context));
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandler"));
-        if(log.isDebugEnabled()){
-            log.debug(children.size() + " profile handler definitions found");
-        }
+        log.debug("{} profile handler definitions found", children.size());
         builder.addPropertyValue("profileHandlers", SpringConfigurationUtils.parseCustomElements(children, context));
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "LoginHandler"));
-        if(log.isDebugEnabled()){
-            log.debug(children.size() + " login handler definitions found");
-        }
+        log.debug("{} login handler definitions found", children.size());
         builder.addPropertyValue("loginHandlers", SpringConfigurationUtils.parseCustomElements(children,
                 context));
 

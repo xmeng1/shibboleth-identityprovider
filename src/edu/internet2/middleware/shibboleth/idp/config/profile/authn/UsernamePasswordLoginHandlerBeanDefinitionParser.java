@@ -18,9 +18,9 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
 import javax.xml.namespace.QName;
 
-import org.apache.log4j.Logger;
-import org.opensaml.log.Level;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
@@ -36,7 +36,7 @@ public class UsernamePasswordLoginHandlerBeanDefinitionParser extends
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "UsernamePassword");
     
     /** Class logger. */
-    private final Logger log = Logger.getLogger("UsernamePasswordAuthenticationHandlerBeanDefinitionParser");
+    private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginHandlerBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element element) {
@@ -51,7 +51,7 @@ public class UsernamePasswordLoginHandlerBeanDefinitionParser extends
                 "authenticationServletURL")));
 
         String jaasConfigurationURL = DatatypeHelper.safeTrim(config.getAttributeNS(null, "jaasConfigurationLocation"));
-        log.log(Level.CRITICAL, "Setting JAAS configuration file to: " + jaasConfigurationURL);
+        log.info("Setting JAAS configuration file to: {}", jaasConfigurationURL);
         System.setProperty("java.security.auth.login.config", jaasConfigurationURL);
     }
 }

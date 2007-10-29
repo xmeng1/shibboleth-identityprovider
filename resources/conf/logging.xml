@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <!-- 
+        Logging appenders define where and how logging messages are logged.
+     -->
+    <appender name="IDP_ACCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>$IDP_HOME$/logs/idp-access.log</File>
+        <ImmediateFlush>true</ImmediateFlush>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>idp-access-%d{yyyy-MM-dd}.log</FileNamePattern>
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%msg%n</Pattern>
+        </layout>
+    </appender>
+
+    <appender name="IDP_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>$IDP_HOME$/logs/idp-audit.log</File>
+        <ImmediateFlush>true</ImmediateFlush>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>idp-audit-%d{yyyy-MM-dd}.log</FileNamePattern>
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%msg%n</Pattern>
+        </layout>
+    </appender>
+
+    <appender name="IDP_PROCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>$IDP_HOME$/logs/idp.log</File>
+        <!-- Uncomment this if application is terminating in such as way that the last few log messages are not written to disk -->
+        <!--
+        <ImmediateFlush>true</ImmediateFlush>
+        -->
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>idp-%d{yyyy-MM-dd}.log</FileNamePattern>
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <!-- General logging pattern -->
+            <Pattern>%date{HH:mm:ss.SSS} %level [%logger] %msg%n%ex{full}%n</Pattern>
+            
+            <!-- Debug logging pattern -->
+            <!--
+            <Pattern>%date{HH:mm:ss.SSS} %level [%logger:%line] - %msg%n</Pattern>
+            -->
+        </layout>
+    </appender>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <ImmediateFlush>true</ImmediateFlush>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%date{HH:mm:ss.SSS} %level [%logger] %msg%n%ex{full}%n</Pattern>
+        </layout>
+    </appender>
+    
+    <!--
+        Loggers define inidicate which packages/categories are logged, at which level, and to which appender.
+        Levels: ALL, ERROR, WARN, INFO, DEBUG, OFF
+    -->
+
+    <!-- Logs IdP, but not OpenSAML, messages -->
+    <logger name="edu.internet2.shibboleth">
+        <level value="INFO" />
+        <appender-ref ref="IDP_PROCESS" />
+    </logger>
+
+    <!-- Logs OpenSAML, but not IdP, messages -->
+    <logger name="org.opensaml">
+        <level value="OFF" />
+        <appender-ref ref="IDP_PROCESS" />
+    </logger>
+    
+    
+    
+    
+
+    <!-- Do no edit the loggers below here. -->    
+    <logger name="Shibbolath-Access">
+        <level value="ALL" />
+        <appender-ref ref="IDP_ACCESS" />
+    </logger>
+    
+    <logger name="Shibbolath-Audit">
+        <level value="ALL" />
+        <appender-ref ref="IDP_AUDIT" />
+    </logger>
+
+    <root>
+        <level value="WARN" />
+        <appender-ref ref="IDP_PROCESS" />
+    </root>
+
+</configuration>

@@ -24,8 +24,8 @@ import edu.internet2.middleware.shibboleth.common.config.BaseService;
  * Collection of services loaded by the IdP.
  */
 public class IdPServicesBean {
-
-    /** Serivce components loaded into the IdP. */
+    
+    /** Service components loaded into the IdP. */
     private List<BaseService> services;
 
     /**

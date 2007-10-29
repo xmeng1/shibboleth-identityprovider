@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
@@ -30,7 +29,6 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
-import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -38,6 +36,8 @@ import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
@@ -47,8 +47,8 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.At
 public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** Class logger. */
-    private static Logger log = Logger.getLogger(AttributeQueryProfileHandler.class);
-
+    private static Logger log = LoggerFactory.getLogger(AttributeQueryProfileHandler.class);
+    
     /** Builder of assertion consumer service endpoints. */
     private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
@@ -79,7 +79,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                         "SAML 2 Attribute Query profile is not configured for relying party "
                                 + requestContext.getInboundMessageIssuer()));
                 throw new ProfileException("SAML 2 Attribute Query profile is not configured for relying party "
-                        + requestContext.getInboundMessageIssuer());
+                                + requestContext.getInboundMessageIssuer());
             }
 
             checkSamlVersion(requestContext);
@@ -119,19 +119,18 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected AttributeQueryContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        if (log.isDebugEnabled()) {
-            log.debug("Decoding incomming request");
-        }
+        log.debug("Decoding incomming request");
 
         MetadataProvider metadataProvider = getMetadataProvider();
 
         AttributeQueryContext requestContext = new AttributeQueryContext();
         requestContext.setMetadataProvider(metadataProvider);
-
+        
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
 
+        
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
@@ -139,9 +138,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
-            if (log.isDebugEnabled()) {
-                log.debug("Decoded request");
-            }
+            log.debug("Decoded request");
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding attribute query message", e);
@@ -156,11 +153,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             // Set as much information as can be retrieved from the decoded message
             try {
                 AttributeQuery query = requestContext.getInboundSAMLMessage();
-                if (query == null) {
-                    throw new ProfileException("No inbound SAML message found.");
-                }
                 requestContext.setSubjectNameIdentifier(query.getSubject().getNameID());
-
+                
                 String relyingPartyId = requestContext.getInboundMessageIssuer();
                 RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
                 requestContext.setRelyingPartyConfiguration(rpConfig);
@@ -168,19 +162,14 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
                 String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
                 requestContext.setLocalEntityId(assertingPartyId);
-                EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
-                if (assertingPartyMetadata == null) {
-                    throw new MetadataProviderException("Unable to locate metadata for asserting party "
-                            + assertingPartyId);
-                }
-                requestContext.setLocalEntityMetadata(assertingPartyMetadata);
+                requestContext.setLocalEntityMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
                 requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
+                requestContext.setLocalEntityRoleMetadata(requestContext.getLocalEntityMetadata()
                         .getAttributeAuthorityDescriptor(SAMLConstants.SAML20P_NS));
 
                 AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig
                         .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
-                if (profileConfig != null) {
+                if(profileConfig != null){
                     requestContext.setProfileConfiguration(profileConfig);
                     requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
                     if (profileConfig.getSigningCredential() != null) {
@@ -190,14 +179,14 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                     }
                 }
             } catch (MetadataProviderException e) {
-                log.error(e.getMessage());
+                log.error("Unable to locate metadata for asserting or relying party");
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
                         "Error locating party metadata"));
                 throw new ProfileException("Error locating party metadata");
             }
         }
     }
-
+    
     /**
      * Selects the appropriate endpoint for the relying party and stores it in the request context.
      * 
