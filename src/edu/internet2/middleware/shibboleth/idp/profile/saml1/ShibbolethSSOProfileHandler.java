@@ -43,11 +43,11 @@ import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
-import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
+import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,6 +179,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
         
+        requestContext.setCommunicationProfileId(ShibbolethSSOConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);        
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
@@ -193,9 +194,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         } catch (MessageDecodingException e) {
             log.error("Error decoding Shibboleth SSO request", e);
             throw new ProfileException("Error decoding Shibboleth SSO request", e);
-        } catch (SecurityPolicyException e) {
-            log.error("Shibboleth SSO request does not meet security policy requirements", e);
-            throw new ProfileException("Shibboleth SSO request does not meet security policy requirements", e);
+        } catch (SecurityException e) {
+            log.error("Shibboleth SSO request does not meet security requirements", e);
+            throw new ProfileException("Shibboleth SSO request does not meet security requirements", e);
         }
 
         ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();

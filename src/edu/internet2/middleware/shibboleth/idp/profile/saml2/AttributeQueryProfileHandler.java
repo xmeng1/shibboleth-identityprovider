@@ -33,9 +33,9 @@ import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
-import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,6 +126,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         AttributeQueryContext requestContext = new AttributeQueryContext();
         requestContext.setMetadataProvider(metadataProvider);
         
+        requestContext.setCommunicationProfileId(AttributeQueryConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
@@ -144,11 +145,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             log.error("Error decoding attribute query message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error decoding message"));
             throw new ProfileException("Error decoding attribute query message");
-        } catch (SecurityPolicyException e) {
-            log.error("Message did not meet security policy requirements", e);
+        } catch (SecurityException e) {
+            log.error("Message did not meet security requirements", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
-                    "Message did not meet security policy requirements"));
-            throw new ProfileException("Message did not meet security policy requirements", e);
+                    "Message did not meet security requirements"));
+            throw new ProfileException("Message did not meet security requirements", e);
         } finally {
             // Set as much information as can be retrieved from the decoded message
             try {

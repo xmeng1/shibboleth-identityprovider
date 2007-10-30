@@ -46,13 +46,13 @@ import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
-import org.opensaml.ws.security.SecurityPolicyException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +152,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(SSOConfiguration.PROFILE_ID);
             if (ssoConfig == null) {
-                log.error("SAML 2 SSO profile is not configured for relying party " + requestContext.getInboundMessageIssuer());
+                log.error("SAML 2 SSO profile is not configured for relying party "
+                        + requestContext.getInboundMessageIssuer());
                 throw new ProfileException("SAML 2 SSO profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
             }
@@ -249,11 +250,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         SSORequestContext requestContext = new SSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
-        
+
+        requestContext.setCommunicationProfileId(SSOConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-        
+
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
@@ -265,9 +267,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);
             throw new ProfileException("Error decoding authentication request message", e);
-        } catch (SecurityPolicyException e) {
-            log.error("Message did not meet security policy requirements", e);
-            throw new ProfileException("Message did not meet security policy requirements", e);
+        } catch (SecurityException e) {
+            log.error("Message did not meet security requirements", e);
+            throw new ProfileException("Message did not meet security requirements", e);
         }
     }
 
@@ -288,7 +290,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         try {
             requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
-            
+
             requestContext.setLoginContext(loginContext);
             requestContext.setPrincipalName(loginContext.getPrincipalName());
             requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
