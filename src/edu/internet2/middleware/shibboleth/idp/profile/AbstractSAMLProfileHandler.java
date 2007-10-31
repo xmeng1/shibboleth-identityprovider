@@ -27,6 +27,7 @@ import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
+import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartySecurityPolicyResolver;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
@@ -65,10 +67,36 @@ public abstract class AbstractSAMLProfileHandler extends
 
     /** SAML message bindings that may be used by outbound messages. */
     private List<String> supportedOutboundBindings;
+    
+    /** Resolver used to determine active security policy for an incoming request. */
+    private SecurityPolicyResolver securityPolicyResolver;
 
     /** Constructor. */
     protected AbstractSAMLProfileHandler() {
         super();
+    }
+    
+    
+    /**
+     * Gets the resolver used to determine active security policy for an incoming request.
+     * 
+     * @return resolver used to determine active security policy for an incoming request
+     */
+    public SecurityPolicyResolver getSecurityPolicyResolver() {
+        if(securityPolicyResolver == null){
+            setSecurityPolicyResolver(new RelyingPartySecurityPolicyResolver(getRelyingPartyConfigurationManager()));
+        }
+        
+        return securityPolicyResolver;
+    }
+    
+    /**
+     * Sets the resolver used to determine active security policy for an incoming request.
+     * 
+     * @param resolver resolver used to determine active security policy for an incoming request
+     */
+    public void setSecurityPolicyResolver(SecurityPolicyResolver resolver) {
+        securityPolicyResolver = resolver;
     }
 
     /**
