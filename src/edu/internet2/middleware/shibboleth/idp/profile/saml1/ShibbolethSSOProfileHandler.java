@@ -178,6 +178,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
+        requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
         
         requestContext.setCommunicationProfileId(ShibbolethSSOConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);

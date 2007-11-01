@@ -160,6 +160,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
         ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
         requestContext.setMetadataProvider(metadataProvider);
+        requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
         
         requestContext.setCommunicationProfileId(ArtifactResolutionConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);

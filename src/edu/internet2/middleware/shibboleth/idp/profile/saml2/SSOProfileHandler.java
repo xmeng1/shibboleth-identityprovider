@@ -250,6 +250,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         SSORequestContext requestContext = new SSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
+        requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
         requestContext.setCommunicationProfileId(SSOConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);

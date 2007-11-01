@@ -121,6 +121,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
         AttributeQueryContext requestContext = new AttributeQueryContext();
         requestContext.setMetadataProvider(metadataProvider);
+        requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
         requestContext.setCommunicationProfileId(AttributeQueryConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);
