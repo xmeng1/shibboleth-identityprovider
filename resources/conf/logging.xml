@@ -48,7 +48,7 @@
             
             <!-- Debug logging pattern -->
             <!--
-            <Pattern>%date{HH:mm:ss.SSS} %level [%logger:%line] - %msg%n</Pattern>
+            <Pattern>%date{HH:mm:ss.SSS} %level [%logger:%line] - %msg%n%ex{full}%n</Pattern>
             -->
         </layout>
     </appender>
