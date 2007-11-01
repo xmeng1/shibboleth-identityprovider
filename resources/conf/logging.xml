@@ -32,7 +32,7 @@
     </appender>
 
     <appender name="IDP_PROCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>$IDP_HOME$/logs/idp.log</File>
+        <File>$IDP_HOME$/logs/idp-process.log</File>
         <!-- Uncomment this if application is terminating in such as way that the last few log messages are not written to disk -->
         <!--
         <ImmediateFlush>true</ImmediateFlush>
