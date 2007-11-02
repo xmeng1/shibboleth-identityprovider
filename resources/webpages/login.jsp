@@ -1,7 +1,7 @@
 <html>
 
 	<body>
-	<img src="/images/logo.jpg" />
+	<img src="<%= request.getContextPath() %>/images/logo.jpg" />
 	<h2>Shibboleth Identity Provider Login</h2>
 	<table>
 		<tr>
