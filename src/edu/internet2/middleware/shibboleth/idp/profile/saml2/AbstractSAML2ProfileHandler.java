@@ -618,15 +618,35 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
-        List<String> assertingPartySupportedFormats = getEntitySupportedFormats(requestContext
-                .getLocalEntityRoleMetadata());
+        // Determine name formats supported by both SP and IdP
+        RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
+        if(relyingPartyRole != null){
+            List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
+            if(relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()){
+                nameFormats.addAll(relyingPartySupportedFormats);
+                
+                RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
+                if(assertingPartyRole != null){
+                    List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
+                    if(assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()){
+                        nameFormats.retainAll(assertingPartySupportedFormats);
+                    }
+                }
+            }                     
+        }
 
+        if (nameFormats.isEmpty()) {
+            nameFormats.add("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified");
+        }
+        
+        // If authn request and name ID policy format specified, make sure it's in the list of supported formats
         String nameFormat = null;
         if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
             AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
-            if (authnRequest.getNameIDPolicy() != null && !DatatypeHelper.isEmpty(nameFormat)) {
-                nameFormat = authnRequest.getNameIDPolicy().getFormat();
-                if (assertingPartySupportedFormats.contains(nameFormat)) {
+            if (authnRequest.getNameIDPolicy() != null) {
+                nameFormat = DatatypeHelper.safeTrimOrNullString(authnRequest.getNameIDPolicy().getFormat());
+                if(nameFormat != null && nameFormats.contains(nameFormat)){
+                    nameFormats.clear();
                     nameFormats.add(nameFormat);
                 } else {
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
@@ -635,18 +655,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                 }
             }
         }
-
-        if (nameFormats.isEmpty()) {
-            List<String> relyingPartySupportedFormats = getEntitySupportedFormats(requestContext
-                    .getPeerEntityRoleMetadata());
-
-            assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
-            nameFormats.addAll(assertingPartySupportedFormats);
-        }
-        if (nameFormats.isEmpty()) {
-            nameFormats.add("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified");
-        }
-
+        
         return nameFormats;
     }
 

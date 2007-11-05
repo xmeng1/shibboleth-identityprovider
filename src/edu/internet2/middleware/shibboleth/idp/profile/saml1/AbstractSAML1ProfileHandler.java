@@ -351,22 +351,28 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @return list of formats that may be used with the relying party
      * 
-     * @throws ProfileException thrown if there is a problem determing the NameIdentifier format to use
+     * @throws ProfileException thrown if there is a problem determining the NameIdentifier format to use
      */
     protected List<String> getNameFormats(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
-        RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
-        List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
-
-        if (nameFormats.isEmpty()) {
-            RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
+        RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
+        if(relyingPartyRole != null){
             List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
-
-            assertingPartySupportedFormats.retainAll(relyingPartySupportedFormats);
-            nameFormats.addAll(assertingPartySupportedFormats);
+            if(relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()){
+                nameFormats.addAll(relyingPartySupportedFormats);
+                
+                RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
+                if(assertingPartyRole != null){
+                    List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
+                    if(assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()){
+                        nameFormats.retainAll(assertingPartySupportedFormats);
+                    }
+                }
+            }                     
         }
+
         if (nameFormats.isEmpty()) {
             nameFormats.add("urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified");
         }
