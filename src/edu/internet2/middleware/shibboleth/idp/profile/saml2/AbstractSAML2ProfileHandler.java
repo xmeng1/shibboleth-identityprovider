@@ -588,7 +588,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML2NameIDAttributeEncoder) {
                         nameIdEncoder = (SAML2NameIDAttributeEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            log.debug("Using attribute {} suppoting NameID format {} to create the NameID for principal.{}",
+                            log
+                                    .debug(
+                                            "Using attribute {} suppoting NameID format {} to create the NameID for principal.{}",
                                             attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }
@@ -620,42 +622,45 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         // Determine name formats supported by both SP and IdP
         RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
-        if(relyingPartyRole != null){
+        if (relyingPartyRole != null) {
             List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
-            if(relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()){
+            if (relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()) {
                 nameFormats.addAll(relyingPartySupportedFormats);
-                
+
                 RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
-                if(assertingPartyRole != null){
+                if (assertingPartyRole != null) {
                     List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
-                    if(assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()){
+                    if (assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()) {
                         nameFormats.retainAll(assertingPartySupportedFormats);
                     }
                 }
-            }                     
+            }
         }
 
         if (nameFormats.isEmpty()) {
             nameFormats.add("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified");
         }
-        
+
         // If authn request and name ID policy format specified, make sure it's in the list of supported formats
         String nameFormat = null;
         if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
             AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
             if (authnRequest.getNameIDPolicy() != null) {
                 nameFormat = DatatypeHelper.safeTrimOrNullString(authnRequest.getNameIDPolicy().getFormat());
-                if(nameFormat != null && nameFormats.contains(nameFormat)){
-                    nameFormats.clear();
-                    nameFormats.add(nameFormat);
-                } else {
-                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
-                            StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + nameFormat));
-                    throw new ProfileException("NameID format required by relying party is not supported");
+                if (nameFormat != null) {
+                    if (nameFormats.contains(nameFormat)) {
+                        nameFormats.clear();
+                        nameFormats.add(nameFormat);
+                    } else {
+                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
+                                StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + nameFormat));
+                        throw new ProfileException("NameID format required by relying party is not supported");
+                    }
                 }
+
             }
         }
-        
+
         return nameFormats;
     }
 
