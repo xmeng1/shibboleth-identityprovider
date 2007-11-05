@@ -179,12 +179,12 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
-        
+
         requestContext.setCommunicationProfileId(ShibbolethSSOConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);
-        requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);        
+        requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-        
+
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
@@ -275,57 +275,79 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             HTTPInTransport in, HTTPOutTransport out) throws ProfileException {
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
 
+        requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
+
+        requestContext.setLoginContext(loginContext);
+        requestContext.setPrincipalName(loginContext.getPrincipalName());
+        requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
+        requestContext.setUserSession(getUserSession(in));
+        requestContext.setRelayState(loginContext.getSpTarget());
+
+        requestContext.setInboundMessageTransport(in);
+        requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
+
+        requestContext.setOutboundMessageTransport(out);
+        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+
+        MetadataProvider metadataProvider = getMetadataProvider();
+        requestContext.setMetadataProvider(metadataProvider);
+
+        String relyingPartyId = loginContext.getRelyingPartyId();
+        requestContext.setInboundMessageIssuer(relyingPartyId);
+
         try {
-            requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
-            
-            requestContext.setLoginContext(loginContext);
-            requestContext.setPrincipalName(loginContext.getPrincipalName());
-            requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
-            requestContext.setUserSession(getUserSession(in));
-            requestContext.setRelayState(loginContext.getSpTarget());
-
-            requestContext.setInboundMessageTransport(in);
-            requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
-
-            MetadataProvider metadataProvider = getMetadataProvider();
-            requestContext.setMetadataProvider(metadataProvider);
-
-            String relyingPartyId = loginContext.getRelyingPartyId();
-            requestContext.setInboundMessageIssuer(relyingPartyId);
             EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
-            requestContext.setPeerEntityMetadata(relyingPartyMetadata);
-            requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML11P_NS));
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-            requestContext.setRelyingPartyConfiguration(rpConfig);
-            requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
-
-            String assertingPartyId = rpConfig.getProviderId();
-            requestContext.setLocalEntityId(assertingPartyId);
-            EntityDescriptor assertingPartyMetadata = metadataProvider.getEntityDescriptor(assertingPartyId);
-            requestContext.setLocalEntityMetadata(assertingPartyMetadata);
-            requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
-            requestContext.setLocalEntityRoleMetadata(assertingPartyMetadata
-                    .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
-
-            requestContext.setOutboundMessageTransport(out);
-            requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
-            ShibbolethSSOConfiguration profileConfig = (ShibbolethSSOConfiguration) rpConfig
-                    .getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID);
-            requestContext.setProfileConfiguration(profileConfig);
-            requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-            if (profileConfig.getSigningCredential() != null) {
-                requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-            } else if (rpConfig.getDefaultSigningCredential() != null) {
-                requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+            if (relyingPartyMetadata != null) {
+                requestContext.setPeerEntityMetadata(relyingPartyMetadata);
+                requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
+                        .getSPSSODescriptor(SAMLConstants.SAML11P_NS));
             }
-
-            return requestContext;
         } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for asserting or relying party");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error locating party metadata"));
-            throw new ProfileException("Error locating party metadata");
+            log.error("Unable to locate metadata for relying party");
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Error locating relying party metadata"));
+            throw new ProfileException("Error locating relying party metadata");
         }
+
+        RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
+        if (rpConfig == null) {
+            log.error("Unable to retrieve relying party configuration data for entity with ID {}", relyingPartyId);
+            throw new ProfileException("Unable to retrieve relying party configuration data for entity with ID "
+                    + relyingPartyId);
+        }
+        requestContext.setRelyingPartyConfiguration(rpConfig);
+
+        ShibbolethSSOConfiguration profileConfig = (ShibbolethSSOConfiguration) rpConfig
+                .getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID);
+        requestContext.setProfileConfiguration(profileConfig);
+        requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
+        if (profileConfig.getSigningCredential() != null) {
+            requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+        } else if (rpConfig.getDefaultSigningCredential() != null) {
+            requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+        }
+
+        requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
+
+        String assertingPartyId = rpConfig.getProviderId();
+        requestContext.setLocalEntityId(assertingPartyId);
+        try {
+            EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
+            if (localEntityDescriptor != null) {
+                requestContext.setLocalEntityMetadata(localEntityDescriptor);
+                requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+                requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
+                        .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
+            }
+        } catch (MetadataProviderException e) {
+            log.error("Unable to locate metadata for asserting party");
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Error locating asserting party metadata"));
+            throw new ProfileException("Error locating asserting party metadata");
+        }
+
+        return requestContext;
     }
 
     /**

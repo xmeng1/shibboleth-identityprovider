@@ -29,6 +29,7 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -48,7 +49,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(AttributeQueryProfileHandler.class);
-    
+
     /** Builder of assertion consumer service endpoints. */
     private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
@@ -79,7 +80,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                         "SAML 2 Attribute Query profile is not configured for relying party "
                                 + requestContext.getInboundMessageIssuer()));
                 throw new ProfileException("SAML 2 Attribute Query profile is not configured for relying party "
-                                + requestContext.getInboundMessageIssuer());
+                        + requestContext.getInboundMessageIssuer());
             }
 
             checkSamlVersion(requestContext);
@@ -126,13 +127,12 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         AttributeQueryContext requestContext = new AttributeQueryContext();
         requestContext.setMetadataProvider(metadataProvider);
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
-        
+
         requestContext.setCommunicationProfileId(AttributeQueryConfiguration.PROFILE_ID);
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
 
-        
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
@@ -153,42 +153,51 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             throw new ProfileException("Message did not meet security requirements", e);
         } finally {
             // Set as much information as can be retrieved from the decoded message
+            AttributeQuery query = requestContext.getInboundSAMLMessage();
+            requestContext.setSubjectNameIdentifier(query.getSubject().getNameID());
+
+            String relyingPartyId = requestContext.getInboundMessageIssuer();
+            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
+            if (rpConfig == null) {
+                log.error("Unable to retrieve relying party configuration data for entity with ID {}", relyingPartyId);
+                throw new ProfileException("Unable to retrieve relying party configuration data for entity with ID "
+                        + relyingPartyId);
+            }
+            requestContext.setRelyingPartyConfiguration(rpConfig);
+
+            AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig
+                    .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
+            if (profileConfig != null) {
+                requestContext.setProfileConfiguration(profileConfig);
+                requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
+                if (profileConfig.getSigningCredential() != null) {
+                    requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
+                } else if (rpConfig.getDefaultSigningCredential() != null) {
+                    requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
+                }
+            }
+
+            requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
+
+            String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
+            requestContext.setLocalEntityId(assertingPartyId);
             try {
-                AttributeQuery query = requestContext.getInboundSAMLMessage();
-                requestContext.setSubjectNameIdentifier(query.getSubject().getNameID());
-                
-                String relyingPartyId = requestContext.getInboundMessageIssuer();
-                RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-                requestContext.setRelyingPartyConfiguration(rpConfig);
-                requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
-
-                String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
-                requestContext.setLocalEntityId(assertingPartyId);
-                requestContext.setLocalEntityMetadata(metadataProvider.getEntityDescriptor(assertingPartyId));
-                requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setLocalEntityRoleMetadata(requestContext.getLocalEntityMetadata()
-                        .getAttributeAuthorityDescriptor(SAMLConstants.SAML20P_NS));
-
-                AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig
-                        .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
-                if(profileConfig != null){
-                    requestContext.setProfileConfiguration(profileConfig);
-                    requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-                    if (profileConfig.getSigningCredential() != null) {
-                        requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-                    } else if (rpConfig.getDefaultSigningCredential() != null) {
-                        requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
-                    }
+                EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
+                if (localEntityDescriptor != null) {
+                    requestContext.setLocalEntityMetadata(localEntityDescriptor);
+                    requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
+                    requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
+                            .getAttributeAuthorityDescriptor(SAMLConstants.SAML20P_NS));
                 }
             } catch (MetadataProviderException e) {
-                log.error("Unable to locate metadata for asserting or relying party");
+                log.error("Unable to locate metadata for asserting party");
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                        "Error locating party metadata"));
-                throw new ProfileException("Error locating party metadata");
+                        "Error locating asserting party metadata"));
+                throw new ProfileException("Error locating asserting party metadata");
             }
         }
     }
-    
+
     /**
      * Selects the appropriate endpoint for the relying party and stores it in the request context.
      * 
