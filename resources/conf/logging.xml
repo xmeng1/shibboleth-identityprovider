@@ -68,13 +68,13 @@
     <!-- Logs IdP, but not OpenSAML, messages -->
     <logger name="edu.internet2.middleware.shibboleth">
         <level value="INFO" />
-        <appender-ref ref="IDP_PROCESS" />
+        <!-- Appender, IDP_PROCESS, is inherited from the root logger -->
     </logger>
 
     <!-- Logs OpenSAML, but not IdP, messages -->
     <logger name="org.opensaml">
         <level value="OFF" />
-        <appender-ref ref="IDP_PROCESS" />
+        <!-- Appender, IDP_PROCESS, is inherited from the root logger -->
     </logger>
     
     
