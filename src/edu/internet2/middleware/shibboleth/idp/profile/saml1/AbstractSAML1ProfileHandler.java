@@ -587,18 +587,19 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
         AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
+        if (profileConfig.getSignAssertions()) {
+            signAssertion = true;
+            log.debug("IdP relying party configuration {} indicates to sign assertions: {}", requestContext
+                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
+        }
 
-        if (relyingPartyRole instanceof SPSSODescriptor) {
+        if (!signAssertion && relyingPartyRole instanceof SPSSODescriptor) {
             SPSSODescriptor ssoDescriptor = (SPSSODescriptor) relyingPartyRole;
             if (ssoDescriptor.getWantAssertionsSigned() != null) {
                 signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
                 log.debug("Entity metadata for relying party {} indicates to sign assertions: {}", requestContext
                         .getInboundMessageIssuer(), signAssertion);
             }
-        } else if (profileConfig.getSignAssertions()) {
-            signAssertion = true;
-            log.debug("IdP relying party configuration {} indicates to sign assertions: {}", requestContext
-                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
         }
 
         if (!signAssertion) {

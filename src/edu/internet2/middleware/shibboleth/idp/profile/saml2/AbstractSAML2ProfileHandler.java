@@ -426,18 +426,19 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         boolean signAssertion = false;
 
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
+        if (profileConfig.getSignAssertions()) {
+            signAssertion = true;
+            log.debug("IdP relying party configuration {} indicates to sign assertions: {}", requestContext
+                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
+        }
 
-        if (requestContext.getPeerEntityRoleMetadata() instanceof SPSSODescriptor) {
+        if (!signAssertion && requestContext.getPeerEntityRoleMetadata() instanceof SPSSODescriptor) {
             SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getPeerEntityRoleMetadata();
             if (ssoDescriptor.getWantAssertionsSigned() != null) {
                 signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
                 log.debug("Entity metadata for relying party {} indicates to sign assertions: {}", requestContext
                         .getInboundMessageIssuer(), signAssertion);
             }
-        } else if (profileConfig.getSignAssertions()) {
-            signAssertion = true;
-            log.debug("IdP relying party configuration {} indicates to sign assertions: {}", requestContext
-                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
         }
 
         if (!signAssertion) {
