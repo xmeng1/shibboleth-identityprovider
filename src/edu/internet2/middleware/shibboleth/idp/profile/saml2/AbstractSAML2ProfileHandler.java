@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.joda.time.DateTime;
+import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.saml2.core.Assertion;
@@ -53,6 +54,8 @@ import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.xml.XMLObjectBuilder;
+import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
@@ -472,7 +475,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         assertion.setSignature(signature);
 
-        Signer.signObject(signature);
+        Marshaller assertionMarshaller = Configuration.getMarshallerFactory().getMarshaller(assertion);
+        try {
+            assertionMarshaller.marshall(assertion);
+            Signer.signObject(signature);
+        } catch (MarshallingException e) {
+            log.error("Unable to marshall assertion for signing", e);
+            throw new ProfileException("Unable to marshall assertion for signing", e);
+        }
     }
 
     /**

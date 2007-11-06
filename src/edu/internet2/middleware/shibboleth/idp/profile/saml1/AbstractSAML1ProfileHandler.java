@@ -24,6 +24,7 @@ import java.util.Map;
 import javax.xml.namespace.QName;
 
 import org.joda.time.DateTime;
+import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
@@ -52,6 +53,8 @@ import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.xml.XMLObjectBuilder;
+import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
@@ -324,7 +327,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML1NameIdentifierEncoder) {
                         nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            log.debug("Using attribute {} suppoting name format {} to create the NameIdentifier for principal",
+                            log
+                                    .debug(
+                                            "Using attribute {} suppoting name format {} to create the NameIdentifier for principal",
                                             attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }
@@ -358,19 +363,19 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         ArrayList<String> nameFormats = new ArrayList<String>();
 
         RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
-        if(relyingPartyRole != null){
+        if (relyingPartyRole != null) {
             List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
-            if(relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()){
+            if (relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()) {
                 nameFormats.addAll(relyingPartySupportedFormats);
-                
+
                 RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
-                if(assertingPartyRole != null){
+                if (assertingPartyRole != null) {
                     List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
-                    if(assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()){
+                    if (assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()) {
                         nameFormats.retainAll(assertingPartySupportedFormats);
                     }
                 }
-            }                     
+            }
         }
 
         if (nameFormats.isEmpty()) {
@@ -633,6 +638,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         assertion.setSignature(signature);
 
-        Signer.signObject(signature);
+        Marshaller assertionMarshaller = Configuration.getMarshallerFactory().getMarshaller(assertion);
+        try {
+            assertionMarshaller.marshall(assertion);
+            Signer.signObject(signature);
+        } catch (MarshallingException e) {
+            log.error("Unable to marshall assertion for signing", e);
+            throw new ProfileException("Unable to marshall assertion for signing", e);
+        }
     }
 }
