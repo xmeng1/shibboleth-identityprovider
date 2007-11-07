@@ -110,8 +110,8 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     }
 
     /**
-     * Authenticate a username and password against JAAS. If authentication succeeds the principal name and subject are
-     * placed into the request in their respective attributes.
+     * Authenticate a username and password against JAAS. If authentication succeeds the name of the first principal, or
+     * the username if that is empty, and the subject are placed into the request in their respective attributes.
      * 
      * @param request current authentication request
      * 
@@ -133,7 +133,12 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             Subject subject = jaasLoginCtx.getSubject();
             Principal principal = subject.getPrincipals().iterator().next();
-            request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
+            if (DatatypeHelper.isEmpty(principal.getName())) {
+                request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
+            } else {
+                request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
+            }
+
             request.setAttribute(LoginHandler.SUBJECT_KEY, jaasLoginCtx.getSubject());
 
             return true;
