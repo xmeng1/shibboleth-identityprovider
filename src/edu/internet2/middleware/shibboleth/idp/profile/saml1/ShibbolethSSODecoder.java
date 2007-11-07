@@ -88,7 +88,7 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
 
         String timeStr = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("time"));
         if (timeStr != null) {
-            long time = Long.parseLong(timeStr);
+            long time = Long.parseLong(timeStr) * 1000;
             requestContext.setInboundSAMLMessageIssueInstant(new DateTime(time, ISOChronology.getInstanceUTC()));
         }
         
