@@ -217,7 +217,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthnStatement(requestContext));
-            if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()
+                    && !requestContext.getPrincipalAttributes().isEmpty()) {
                 requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
                 statements.add(buildAttributeStatement(requestContext));
             }

@@ -243,7 +243,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthenticationStatement(requestContext));
-            if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()
+                    && !requestContext.getPrincipalAttributes().isEmpty()) {
                 requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
                 statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer"));
             }

@@ -186,7 +186,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         // create the assertion and add the attribute statement
         Assertion assertion = buildAssertion(requestContext, issueInstant);
-        if (statements != null) {
+        if (statements != null && !statements.isEmpty()) {
             assertion.getStatements().addAll(statements);
         }
 

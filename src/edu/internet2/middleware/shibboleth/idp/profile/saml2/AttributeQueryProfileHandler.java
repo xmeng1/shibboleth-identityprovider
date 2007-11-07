@@ -92,7 +92,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             // Lookup principal name and attributes, create attribute statement from information
             ArrayList<Statement> statements = new ArrayList<Statement>();
-            statements.add(buildAttributeStatement(requestContext));
+            if(!requestContext.getPrincipalAttributes().isEmpty()){
+                statements.add(buildAttributeStatement(requestContext));
+            }
 
             // create the SAML response
             samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches", statements);
