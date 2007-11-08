@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -132,14 +133,20 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             log.debug("Successfully authenticated user {}", username);
 
             Subject subject = jaasLoginCtx.getSubject();
-            Principal principal = subject.getPrincipals().iterator().next();
-            if (DatatypeHelper.isEmpty(principal.getName())) {
-                request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
-            } else {
-                request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
-            }
+            Set<Principal> principals = subject.getPrincipals();
 
-            request.setAttribute(LoginHandler.SUBJECT_KEY, jaasLoginCtx.getSubject());
+            if(principals.isEmpty()){
+                request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
+            }else{       
+                Principal principal = principals.iterator().next();
+                String principalName = DatatypeHelper.safeTrimOrNullString(principal.getName());
+                if(principalName == null){
+                    request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
+                }else{
+                    request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
+                }
+                request.setAttribute(LoginHandler.SUBJECT_KEY, jaasLoginCtx.getSubject());
+            }
 
             return true;
         } catch (LoginException e) {
