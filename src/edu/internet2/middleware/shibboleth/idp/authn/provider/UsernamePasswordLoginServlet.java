@@ -56,10 +56,16 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     private final Logger log = LoggerFactory.getLogger(RemoteUserAuthServlet.class);
 
     /** Name of JAAS configuration used to authenticate users. */
-    private final String jaasConfigName = "ShibUserPassAuth";
+    private String jaasConfigName = "ShibUserPassAuth";
+
+    /** init-param which can be passed to the servlet to override the default JAAS config. */
+    private final String jaasInitParam = "jaasConfigName";
 
     /** Login page name. */
-    private final String loginPage = "login.jsp";
+    private String loginPage = "login.jsp";
+    
+    /** init-param which can be passed to the servlet to override the default login page. */
+    private final String loginPageInitParam = "loginPage";
     
     /** Parameter name to indicate login failure. */
     private final String failureParam = "loginFailed";
@@ -70,6 +76,16 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     /** HTTP request parameter containing the user's password. */
     private final String passwordAttribute = "j_password";
 
+    /** {@inheritDoc} */
+    public void init() {
+        if (getInitParameter(jaasInitParam) != null) {
+            jaasConfigName = getInitParameter(jaasInitParam);        
+        }
+        if (getInitParameter(loginPageInitParam) != null) {
+            loginPage = getInitParameter(loginPageInitParam);        
+        }        
+    }
+    
     /** {@inheritDoc} */
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
             IOException {
