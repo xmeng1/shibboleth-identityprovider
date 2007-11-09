@@ -20,6 +20,9 @@
     <!-- Release the Principal as an attribute and encode it as the SAML 1 and 2 name IDs -->
     <resolver:AttributeDefinition id="principalName" xsi:type="PrincipalName" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
         <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                                   nameFormat="urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified" />
+                                   
+        <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
                                    nameFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
 
         <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
@@ -139,6 +142,10 @@
     <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
                                  id="saml1UnspecDirect"
                                  nameIDFormat="urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified" />
+                                 
+    <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
+                                 id="saml1UnspecDirect"
+                                 nameIDFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
                                  
     <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
                                  id="saml2UnspecDirect"
