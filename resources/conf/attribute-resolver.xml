@@ -144,7 +144,7 @@
                                  nameIDFormat="urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified" />
                                  
     <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
-                                 id="saml1UnspecDirect"
+                                 id="shibUnspecDirect"
                                  nameIDFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
                                  
     <resolver:PrincipalConnector xsi:type="Direct" xmlns="urn:mace:shibboleth:2.0:resolver:pc"
