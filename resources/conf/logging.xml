@@ -87,7 +87,7 @@
         <appender-ref ref="IDP_ACCESS" />
     </logger>
     
-    <logger name="Shibbolath-Audit">
+    <logger name="Shibboleth-Audit">
         <level value="ALL" />
         <appender-ref ref="IDP_AUDIT" />
     </logger>
