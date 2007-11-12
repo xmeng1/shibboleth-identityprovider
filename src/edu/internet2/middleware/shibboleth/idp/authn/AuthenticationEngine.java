@@ -148,11 +148,9 @@ public class AuthenticationEngine extends HttpServlet {
                 AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(
                         loginContext, shibSession);
                 if (authenticationMethod != null) {
-                    LOG
-                            .debug(
-                                    "An active authentication method is applicable for relying party.  "
-                                            + "Using authentication method {} as authentication method to relying party without re-authenticating user.",
-                                    authenticationMethod.getAuthenticationMethod());
+                    LOG.debug("An active authentication method is applicable for relying party.  Using authentication "
+                            + "method {} as authentication method to relying party without re-authenticating user.",
+                            authenticationMethod.getAuthenticationMethod());
                     authenticateUserWithActiveMethod(httpRequest, httpResponse, authenticationMethod);
                 }
             }

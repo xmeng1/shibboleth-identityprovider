@@ -108,9 +108,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
         HttpSession httpSession = httpRequest.getSession();
+        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
-        if (httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY) == null) {
+        if (loginContext == null) {
             log.debug("User session does not contain a login context, processing as first leg of request");
+            performAuthentication(inTransport, outTransport);
+        }else if (!loginContext.isPrincipalAuthenticated()){
+            log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
             log.debug("User session contains a login context, processing as second leg of request");
@@ -154,9 +158,11 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             dispatcher.forward(httpRequest, httpResponse);
             return;
         } catch (IOException ex) {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
         } catch (ServletException ex) {
+            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
         }
