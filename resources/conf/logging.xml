@@ -10,7 +10,7 @@
         <ImmediateFlush>true</ImmediateFlush>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>idp-access-%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>$IDP_HOME$/logs/idp-access-%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
 
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -23,7 +23,7 @@
         <ImmediateFlush>true</ImmediateFlush>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>idp-audit-%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>$IDP_HOME$/logs/idp-audit-%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
 
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -39,7 +39,7 @@
         -->
         
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>idp-%d{yyyy-MM-dd}.log</FileNamePattern>
+            <FileNamePattern>$IDP_HOME$/logs/idp-process-%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
 
         <layout class="ch.qos.logback.classic.PatternLayout">
