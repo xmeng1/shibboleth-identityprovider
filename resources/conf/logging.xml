@@ -82,7 +82,7 @@
     
 
     <!-- Do no edit the loggers below here. -->    
-    <logger name="Shibbolath-Access">
+    <logger name="Shibboleth-Access">
         <level value="ALL" />
         <appender-ref ref="IDP_ACCESS" />
     </logger>
