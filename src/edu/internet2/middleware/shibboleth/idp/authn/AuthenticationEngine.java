@@ -252,6 +252,7 @@ public class AuthenticationEngine extends HttpServlet {
             returnToProfileHandler(loginContext, httpRequest, httpResponse);
             return;
         }
+        loginContext.setPrincipalAuthenticated(true);
         loginContext.setPrincipalName(principalName);
         loginContext.setAuthenticationInstant(new DateTime());
 
