@@ -40,53 +40,50 @@
     <!-- ========================================== -->
     <!--      Metadata Configuration                -->
     <!-- ========================================== -->
-
-    <!-- MetadataProvider reading metadata from a URL. -->
-    <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
-    <!--
-    <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                      metadataURL="http://example.org/my/metadata/file.xml" backingFile="$IDP_HOME$/temp/metadata/somefile.xml" />
-    -->
-                  
-    <!-- MetadataProvider reading metadata from the filesystem -->
-    <!-- Fill in metadataFile attribute with deployment specific information -->
-    <!--
-    <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                      metadataFile="$IDP_HOME$/metadata/somefile.xml" />
-    -->
-    
-    <!-- MetadataProvider defining metadata inline -->
-    <!--
-    <MetadataProvider id="InlineMD" xsi:type="InlineMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-        <EntitiesDescriptor Name="urn:example.org:myFederation" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
-            <EntityDescriptor entityID="urn:example.org:myFederation:idp1">
-                <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-                    <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/myIdP" />
-                </IDPSSODescriptor>
-            </EntityDescriptor>
-            <EntityDescriptor entityID="urn:example.org:myFederation:sp1">
-                <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-                    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />
-                    <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0" />
-                </SPSSODescriptor>
-            </EntityDescriptor>
-        </EntitiesDescriptor>
-    </MetadataProvider>
-    -->
-    
     <!-- MetadataProvider the combining other MetadataProviders -->
-    <!--
-    <MetadataProvider id="ExampleMD" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-        <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider"
-                      metadataURL="http://example.org/my/metadata" backingFile="/path/to/temp/location" />
-        <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" metadataFile="/path/to/metadata/file.xml" />
+    <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
+        <!-- MetadataProvider reading metadata from a URL. -->
+        <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
+        <!--
+        <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
+                          metadataURL="http://example.org/my/metadata/file.xml" backingFile="$IDP_HOME$/temp/metadata/somefile.xml" />
+        -->
+
+        <!-- MetadataProvider reading metadata from the filesystem -->
+        <!-- Fill in metadataFile attribute with deployment specific information -->
+        <!--
+        <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
+                          metadataFile="$IDP_HOME$/metadata/somefile.xml" />
+        -->
+    
+        <!-- MetadataProvider defining metadata inline -->
+        <!--
+        <MetadataProvider id="InlineMD" xsi:type="InlineMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
+            <EntitiesDescriptor Name="urn:example.org:myFederation" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
+                <EntityDescriptor entityID="urn:example.org:myFederation:idp1">
+                    <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+                        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/myIdP" />
+                    </IDPSSODescriptor>
+                </EntityDescriptor>
+                <EntityDescriptor entityID="urn:example.org:myFederation:sp1">
+                    <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0" />
+                    </SPSSODescriptor>
+                </EntityDescriptor>
+            </EntitiesDescriptor>
+        </MetadataProvider>
+        -->
     </MetadataProvider>
-    -->
+
     
     <!-- ========================================== -->
     <!--     Security Configurations                -->
     <!-- ========================================== -->
-    <!-- Example Credential definition where credential material is inline. -->
+    <!-- 
+            Example Credential definition where credential material is inline.
+            Be sure to include the PEM headers as well.
+    -->
     <security:Credential id="ExampleOrgCred" xsi:type="security:X509Inline">
         <security:PrivateKey password="changeit">
 -----BEGIN RSA PRIVATE KEY-----
@@ -140,10 +137,18 @@ uLZYahMs/RHvtYH5guRBzCYL5w73H7nq0F2A0U/gRoEZZXzVjgehR8QEAxELy1eE
     </security:Credential>
     -->
     
+    <security:TrustEngine id="shibboleth.SignatureTrustEnginge" xsi:type="security:ExplicitKeySignature"
+                          metadataProviderRef="ShibbolethMetadata" />
+                          
+    <security:TrustEngine id="shibboleth.CredentialTrustEnginge" xsi:type="security:ExplicitX509Credential"
+                          metadataProviderRef="ShibbolethMetadata" />
+    
     <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
         <security:Rule xsi:type="samlsec:Replay"/>
         <security:Rule xsi:type="samlsec:IssueInstant"/>
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEnginge" />
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEnginge" />
     </security:SecurityPolicy>
     
 </RelyingPartyGroup>
