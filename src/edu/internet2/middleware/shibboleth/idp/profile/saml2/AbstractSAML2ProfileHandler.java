@@ -217,11 +217,29 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
-
-        samlResponse.getAssertions().add(assertion);
-
+        
         // sign the assertion if it should be signed
         signAssertion(requestContext, assertion);
+
+        if(requestContext.getProfileConfiguration().getEncryptAssertion()){
+            log.debug("Attempting to encrypt assertion to relying party {}", requestContext.getInboundMessageIssuer());
+            try {
+                Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
+                samlResponse.getEncryptedAssertions().add(encrypter.encrypt(assertion));
+            } catch (SecurityException e) {
+                log.error("Unable to construct encrypter", e);
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                        "Unable to encrypt assertion"));
+                throw new ProfileException("Unable to construct encrypter", e);
+            } catch (EncryptionException e) {
+                log.error("Unable to encrypt assertion", e);
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                        "Unable to encrypt assertion"));
+                throw new ProfileException("Unable to encrypt assertion", e);
+            }
+        }else{
+            samlResponse.getAssertions().add(assertion);
+        }
 
         Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
         samlResponse.setStatus(status);
