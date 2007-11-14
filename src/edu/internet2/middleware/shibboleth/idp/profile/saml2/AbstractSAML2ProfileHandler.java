@@ -25,6 +25,7 @@ import org.joda.time.DateTime;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
+import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.AttributeStatement;
@@ -44,6 +45,8 @@ import org.opensaml.saml2.core.StatusResponseType;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml2.core.SubjectConfirmationData;
+import org.opensaml.saml2.encryption.Encrypter;
+import org.opensaml.saml2.encryption.Encrypter.KeyPlacement;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.AuthnAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
@@ -52,13 +55,23 @@ import org.opensaml.saml2.metadata.PDPDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
+import org.opensaml.security.MetadataCredentialResolver;
+import org.opensaml.security.MetadataCriteria;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.xml.XMLObjectBuilder;
+import org.opensaml.xml.encryption.EncryptionException;
+import org.opensaml.xml.encryption.EncryptionParameters;
+import org.opensaml.xml.encryption.KeyEncryptionParameters;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.xml.security.CriteriaSet;
+import org.opensaml.xml.security.SecurityConfiguration;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
+import org.opensaml.xml.security.credential.UsageType;
+import org.opensaml.xml.security.criteria.EntityIDCriteria;
+import org.opensaml.xml.security.criteria.UsageCriteria;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.util.DatatypeHelper;
@@ -533,7 +546,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             DateTime issueInstant) throws ProfileException {
         NameID nameID = buildNameId(requestContext);
         requestContext.setSubjectNameIdentifier(nameID);
-        // TODO handle encryption
 
         SubjectConfirmationData confirmationData = subjectConfirmationDataBuilder.buildObject();
         HTTPInTransport inTransport = (HTTPInTransport) requestContext.getInboundMessageTransport();
@@ -556,8 +568,26 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         subjectConfirmation.setSubjectConfirmationData(confirmationData);
 
         Subject subject = subjectBuilder.buildObject();
-        subject.setNameID(nameID);
         subject.getSubjectConfirmations().add(subjectConfirmation);
+
+        if (requestContext.getProfileConfiguration().getEncryptNameID()) {
+            try {
+                Encrypter encrypter = getEncrypter(requestContext.getPeerEntityId());
+                subject.setEncryptedID(encrypter.encrypt(nameID));
+            } catch (SecurityException e) {
+                log.error("Unable to construct encrypter", e);
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                        "Unable to construct NameID"));
+                throw new ProfileException("Unable to construct encrypter", e);
+            } catch (EncryptionException e) {
+                log.error("Unable to encrypt NameID", e);
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                        "Unable to construct NameID"));
+                throw new ProfileException("Unable to encrypt NameID", e);
+            }
+        } else {
+            subject.setNameID(nameID);
+        }
 
         return subject;
     }
@@ -599,15 +629,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML2NameIDAttributeEncoder) {
                         nameIdEncoder = (SAML2NameIDAttributeEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            log
-                                    .debug(
-                                            "Using attribute {} suppoting NameID format {} to create the NameID for principal.{}",
-                                            attribute.getId(), nameIdEncoder.getNameFormat());
+                            log.debug("Using attribute {} suppoting NameID format {} to create the NameID.", attribute
+                                    .getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }
                     }
                 }
             }
+
             log.error("No principal attribute supported encoding into a supported name ID format.");
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));
             throw new ProfileException("No principal attribute supported encoding into a supported name ID format.");
@@ -720,5 +749,52 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         samlResponse.setStatus(requestContext.getFailureStatus());
 
         return samlResponse;
+    }
+
+    /**
+     * Gets an encrypter that may be used encrypt content to a given peer.
+     * 
+     * @param peerEntityId entity ID of the peer
+     * 
+     * @return encrypter that may be used encrypt content to a given peer
+     * 
+     * @throws SecurityException thrown if there is a problem constructing the encrypter. This normally occurs if the
+     *             key encryption credential for the peer can not be resolved or a required encryption algorithm is not
+     *             supported by the VM's JCE.
+     */
+    protected Encrypter getEncrypter(String peerEntityId) throws SecurityException {
+        SecurityConfiguration securityConfiguration = Configuration.getGlobalSecurityConfiguration();
+
+        EncryptionParameters dataEncParams = SecurityHelper
+                .buildDataEncryptionParams(null, securityConfiguration, null);
+
+        Credential keyEncryptionCredentials = getKeyEncryptionCredential(peerEntityId);
+        String wrappedJCAKeyAlgorithm = SecurityHelper.getKeyAlgorithmFromURI(dataEncParams.getAlgorithm());
+        KeyEncryptionParameters keyEncParams = SecurityHelper.buildKeyEncryptionParams(keyEncryptionCredentials,
+                wrappedJCAKeyAlgorithm, securityConfiguration, null, null);
+
+        Encrypter encrypter = new Encrypter(dataEncParams, keyEncParams);
+        encrypter.setKeyPlacement(KeyPlacement.INLINE);
+        return encrypter;
+    }
+
+    /**
+     * Gets the credential that can be used to encrypt encryption keys for a peer.
+     * 
+     * @param peerEntityId entity ID of the peer
+     * 
+     * @return credential that can be used to encrypt encryption keys for a peer
+     * 
+     * @throws SecurityException thrown if there is a problem resolving the credential from the peer's metadata
+     */
+    protected Credential getKeyEncryptionCredential(String peerEntityId) throws SecurityException {
+        MetadataCredentialResolver kekCredentialResolver = new MetadataCredentialResolver(getMetadataProvider());
+
+        CriteriaSet criteriaSet = new CriteriaSet();
+        criteriaSet.add(new EntityIDCriteria(peerEntityId));
+        criteriaSet.add(new MetadataCriteria(SPSSODescriptor.DEFAULT_ELEMENT_NAME, SAMLConstants.SAML20P_NS));
+        criteriaSet.add(new UsageCriteria(UsageType.ENCRYPTION));
+
+        return kekCredentialResolver.resolveSingle(criteriaSet);
     }
 }
