@@ -571,8 +571,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         subject.getSubjectConfirmations().add(subjectConfirmation);
 
         if (requestContext.getProfileConfiguration().getEncryptNameID()) {
+            log.debug("Attempting to encrypt NameID to relying party {}", requestContext.getInboundMessageIssuer());
             try {
-                Encrypter encrypter = getEncrypter(requestContext.getPeerEntityId());
+                Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
                 subject.setEncryptedID(encrypter.encrypt(nameID));
             } catch (SecurityException e) {
                 log.error("Unable to construct encrypter", e);
