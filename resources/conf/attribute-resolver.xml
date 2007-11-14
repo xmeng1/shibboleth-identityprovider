@@ -57,7 +57,7 @@
     
     <!--
     <resolver:AttributeDefinition id="affiliation" xsi:type="Simple"  xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-                                   sourceAttribute="eduPersonAffiliation">
+                                   sourceAttributeID="eduPersonAffiliation">
         <resolver:Dependency ref="staticAttributes" />
         <resolver:Dependency ref="myLDAP" />
         
