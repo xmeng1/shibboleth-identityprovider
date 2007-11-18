@@ -140,7 +140,7 @@ uLZYahMs/RHvtYH5guRBzCYL5w73H7nq0F2A0U/gRoEZZXzVjgehR8QEAxELy1eE
     <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:ExplicitKeySignature"
                           metadataProviderRef="ShibbolethMetadata" />
                           
-    <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:ExplicitX509Credential"
+    <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:ExplicitKey"
                           metadataProviderRef="ShibbolethMetadata" />
     
     <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
@@ -148,6 +148,7 @@ uLZYahMs/RHvtYH5guRBzCYL5w73H7nq0F2A0U/gRoEZZXzVjgehR8QEAxELy1eE
         <security:Rule xsi:type="samlsec:IssueInstant"/>
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
         <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
         <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
     </security:SecurityPolicy>
     
