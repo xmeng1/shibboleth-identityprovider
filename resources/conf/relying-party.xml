@@ -27,7 +27,8 @@
     <DefaultRelyingParty provider="http://example.org/IdP" />
     
     <RelyingParty id="urn:example.org"
-                  provider="http://idp.example.org">
+                  provider="http://idp.example.org"
+                  defaultSigningCredentialRef="ExampleOrgCred">
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" />
         <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile" />
@@ -80,62 +81,10 @@
     <!-- ========================================== -->
     <!--     Security Configurations                -->
     <!-- ========================================== -->
-    <!-- 
-            Example Credential definition where credential material is inline.
-            Be sure to include the PEM headers as well.
-    -->
-    <security:Credential id="ExampleOrgCred" xsi:type="security:X509Inline">
-        <security:PrivateKey password="changeit">
------BEGIN RSA PRIVATE KEY-----
-Proc-Type: 4,ENCRYPTED
-DEK-Info: DES-CBC,720B6CC5F7F6F342
-
-bOUiEz+T4aLlRJrumwiVgxczTXRWvFO2yCX74YQwN8aq2fPYLF86X08+6xP8RkNQ
-/BV3TBt0VUjli+/TJkNfKUhiVtr7ZWg5Y6oeI1yjV72DVdFsr4+Q+q7+54LOFRr/
-pxlDWKmkTEr+7yfqCUPjWcTyriS7fvEXLtevFi+sPejRkAoO8Wiys4hLxOCG69HG
-GtTL5j9YO3Z2UBXcN1yf0RPXDjd4Rd+46u621W+FKWkvyhPqkHnP0ZFdiAVePWwO
-K3bICDKJI7nQwxKkaMJOFyp5fuDCRmiroI6yghVH91jFgIp8XxGCx8OsnVbo0SkA
-k0zdlKAfhWg6lEyKmBGYD4A4J86BFPJ7olL7SuuroVWyRx79Fu8pjomvQr/zp2KG
-B8OOuBAYv7IVovQo5AzmWhkQhxHlvyfiXWjeghQeCSCDX938F78jfwqAXTxU2c3D
-kqUG8VQZiHXTlGCiXdLIcwT3JTNPvOBUA7UQMAEJMuc3aiCka7frSNcE8xPKUloe
-L9gZetFzPQJNVPNg4L8Giw0Hn0L5qoDeu6C/RG9sMNPlXp69LLTKAM0kNw5hRksJ
-smmbfJUyyhiwTbGkmyc2AyJCMGhzczvyxsKDMhhey2Px87Zm+SL2vBOdg1/X/lLm
-hlWLjqZQm3A22+mSn+sFpv74b/i1TDLD3VJ+/DK5KcGT+CdkMP7yWX+xzGOqonqS
-JRKBfbL9ucbyQROkhQByt6ERgB+IR+XwbM9VmkWSHhDh7fQJD29NjvPGYX4PwPp1
-OI2fqQKXBfIhB4J6eePgb2ZDanPdlYSOS2Ck6jvfm6eG7cGNghI+0Q==
------END RSA PRIVATE KEY-----
-        </security:PrivateKey>
-
-        <security:Certificate>
------BEGIN CERTIFICATE-----
-MIIDKzCCApSgAwIBAgIJANN2sHcfOFRbMA0GCSqGSIb3DQEBBQUAMG0xCzAJBgNV
-BAYTAlVTMR0wGwYDVQQIExREaXN0cmljdCBvZiBDb2x1bWJpYTETMBEGA1UEBxMK
-V2FzaGluZ3RvbjEQMA4GA1UEChMHRXhhbXBsZTEYMBYGA1UEAxMPaWRwLmV4YW1w
-bGUub3JnMB4XDTA3MDkwODE1MzEzNVoXDTA4MDkwNzE1MzEzNVowbTELMAkGA1UE
-BhMCVVMxHTAbBgNVBAgTFERpc3RyaWN0IG9mIENvbHVtYmlhMRMwEQYDVQQHEwpX
-YXNoaW5ndG9uMRAwDgYDVQQKEwdFeGFtcGxlMRgwFgYDVQQDEw9pZHAuZXhhbXBs
-ZS5vcmcwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBANGe69dmKja1MmlVrib0
-JQirUEj9EGTKy/qp4OQK93tGKmCoUmqG/RH/Cha0QzpRdgHEVpR6kqCuVU6JxfRV
-5pcQnjyvajrGu2mDRmIn54COZd0lRh1hiotG1QT2+cgh7grOfF5/hO3gxKELuEOY
-iTorXGSl2k8CCbaymADNUeiTAgMBAAGjgdIwgc8wHQYDVR0OBBYEFIrgEh6KyTds
-9xKsIVWr2r2H5eqpMIGfBgNVHSMEgZcwgZSAFIrgEh6KyTds9xKsIVWr2r2H5eqp
-oXGkbzBtMQswCQYDVQQGEwJVUzEdMBsGA1UECBMURGlzdHJpY3Qgb2YgQ29sdW1i
-aWExEzARBgNVBAcTCldhc2hpbmd0b24xEDAOBgNVBAoTB0V4YW1wbGUxGDAWBgNV
-BAMTD2lkcC5leGFtcGxlLm9yZ4IJANN2sHcfOFRbMAwGA1UdEwQFMAMBAf8wDQYJ
-KoZIhvcNAQEFBQADgYEAIiBVhDmDnhPdZ3IWTIVUFChunjA4B+OdR+d5kOPf7EE/
-uLZYahMs/RHvtYH5guRBzCYL5w73H7nq0F2A0U/gRoEZZXzVjgehR8QEAxELy1eE
-7J6sFFG/tae4stZOFd2cPoVf15MjV/HVPfFmFemRfhu6F5dPC1CMc6bbNSn989A=
------END CERTIFICATE-----
-        </security:Certificate>
-    </security:Credential>
-    
-    <!-- Example Credential definition where credential material is read from the filesystem -->
-    <!--
     <security:Credential id="ExampleOrgCred" xsi:type="security:X509Filesystem">
         <security:PrivateKey password="changeit">/path/to/private.key</security:PrivateKey>
         <security:Certificate>/path/to/entity.cert</security:Certificate>
     </security:Credential>
-    -->
     
     <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:ExplicitKeySignature"
                           metadataProviderRef="ShibbolethMetadata" />
