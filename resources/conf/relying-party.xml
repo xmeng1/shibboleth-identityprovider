@@ -149,6 +149,7 @@ uLZYahMs/RHvtYH5guRBzCYL5w73H7nq0F2A0U/gRoEZZXzVjgehR8QEAxELy1eE
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
         <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
         <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
         <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
     </security:SecurityPolicy>
     
