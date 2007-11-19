@@ -1,0 +1,43 @@
+Shibboleth 2.0 Beta 2 (19-Nov-2007)
+The following functionality is available in this release:
+* Authentication
+  - Remote User based authentication
+  - Username/Password based authentication using JAAS modules
+
+* Profiles
+  - Shibboleth SSO, SAML 1 Attribute Query, SAML 1 Artifact Resolution, SAML 2 SSO, 
+    SAML 2 Attribute Query and SAML 2 Artifact Resolution
+
+* Security
+   - Security policy code for:
+     * message issue instant checking
+     * message replay detection
+     * SAML protocol messages with digital signatures
+     * SSL/TLS client cert authentication
+     * SAML SimpleSign messages
+  - Digital signing of assertions
+  - Encrypted NameID and Assertions
+  - Reading of inline and filesystem-resident cryptographic credentials
+
+* Attributes
+  - Static, LDAP, and relational database data connectors
+  - Simple, principal name, authentication method, scoped, scriptlet, mapped, template, 
+    and transient ID attribute definitions
+  - Direct and transient principal connectors
+  - SAML 1 Attribute and NameIdentifier and SAML 2 Attribute and NameID attribute encoders
+  - Attribute filter policy functions of: AND, OR, NOT, ANY, Attribute requester, issuer, 
+    value, principal name, authentication method string and regular expression matching, 
+    sciptlet, number of values, and attribute request and issuer in SAML metadata group
+
+* Misc
+  - A new logging framework based on Logback (logback.org) with a new logging configuration 
+    file, $IDP_HOME/conf/logging.xml
+  - File, HTTP, file-backed HTTP, and chaining metadata providers
+
+The following functionality is not available in this release but is scheduled
+for the final release:
+- NameID Decryption
+- Attribute encryption and decryption
+- Persistent Identifiers
+- Data connector failover
+- IP based authentication (available but untested)
