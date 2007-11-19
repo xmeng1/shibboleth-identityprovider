@@ -87,6 +87,14 @@
     <util:map id="shibboleth.MessageDecoders">
         <entry>
             <key>
+                <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign</value>
+            </key>
+            <bean id="shibboleth.SAML2HttpPostSimpleSignDecoder" class="org.opensaml.saml2.binding.decoding.HTTPPostSimpleSignDecoder">
+                <constructor-arg ref="shibboleth.ParserPool" />
+            </bean>
+        </entry>
+        <entry>
+            <key>
                 <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST</value>
             </key>
             <bean id="shibboleth.SAML2HttpPostDecoder" class="org.opensaml.saml2.binding.decoding.HTTPPostDecoder">
@@ -150,6 +158,15 @@
     </util:map>
 
     <util:map id="shibboleth.MessageEncoders">
+        <entry>
+            <key>
+                <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign</value>
+            </key>
+            <bean id="shibboleth.SAML2HttpPostSimpleSignEncoder" class="org.opensaml.saml2.binding.encoding.HTTPPostSimpleSignEncoder">
+                <constructor-arg ref="shibboleth.VelocityEngine" />
+                <constructor-arg value="/templates/saml2-post-simplesign-binding.vm" />
+            </bean>
+        </entry>
         <entry>
             <key>
                 <value>urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST</value>
