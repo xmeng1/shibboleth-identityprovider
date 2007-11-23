@@ -28,6 +28,7 @@ import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.AuthnResponseEndpointSelector;
+import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
@@ -226,10 +227,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthnStatement(requestContext));
-            if (requestContext.getProfileConfiguration().includeAttributeStatement()
-                    && !requestContext.getPrincipalAttributes().isEmpty()) {
-                requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
-                statements.add(buildAttributeStatement(requestContext));
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()){
+                AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
+                if(attributeStatement != null){
+                    requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
+                    statements.add(attributeStatement);
+                }
             }
 
             samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:bearer", statements);

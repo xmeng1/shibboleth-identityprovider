@@ -23,6 +23,7 @@ import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.AttributeQuery;
+import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
@@ -92,8 +93,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             // Lookup principal name and attributes, create attribute statement from information
             ArrayList<Statement> statements = new ArrayList<Statement>();
-            if(!requestContext.getPrincipalAttributes().isEmpty()){
-                statements.add(buildAttributeStatement(requestContext));
+            AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
+            if (attributeStatement != null) {
+                statements.add(attributeStatement);
             }
 
             // create the SAML response

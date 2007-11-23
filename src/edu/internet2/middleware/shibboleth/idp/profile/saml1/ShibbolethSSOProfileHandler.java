@@ -28,6 +28,7 @@ import javax.servlet.http.HttpSession;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml1.core.AttributeStatement;
 import org.opensaml.saml1.core.AuthenticationStatement;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
@@ -113,8 +114,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         if (loginContext == null) {
             log.debug("User session does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
-        }else if (!loginContext.isPrincipalAuthenticated()){
-            log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
+        } else if (!loginContext.isPrincipalAuthenticated()) {
+            log
+                    .debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
             log.debug("User session contains a login context, processing as second leg of request");
@@ -249,10 +251,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthenticationStatement(requestContext));
-            if (requestContext.getProfileConfiguration().includeAttributeStatement()
-                    && !requestContext.getPrincipalAttributes().isEmpty()) {
-                requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
-                statements.add(buildAttributeStatement(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer"));
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
+                AttributeStatement attributeStatement = buildAttributeStatement(requestContext,
+                        "urn:oasis:names:tc:SAML:1.0:cm:bearer");
+                if (attributeStatement != null) {
+                    requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
+                    statements.add(attributeStatement);
+                }
             }
 
             samlResponse = buildResponse(requestContext, statements);

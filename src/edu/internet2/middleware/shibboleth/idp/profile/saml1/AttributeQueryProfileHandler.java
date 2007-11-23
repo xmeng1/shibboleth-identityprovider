@@ -23,6 +23,7 @@ import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AttributeQuery;
+import org.opensaml.saml1.core.AttributeStatement;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
@@ -88,9 +89,10 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 requestContext.setReleasedAttributes(requestContext.getPrincipalAttributes().keySet());
 
                 ArrayList<Statement> statements = new ArrayList<Statement>();
-                if (!requestContext.getPrincipalAttributes().isEmpty()) {
-                    statements.add(buildAttributeStatement(requestContext,
-                            "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches"));
+                AttributeStatement attributeStatement = buildAttributeStatement(requestContext,
+                        "urn:oasis:names:tc:SAML:1.0:cm:sender-vouches");
+                if (attributeStatement != null) {
+                    statements.add(attributeStatement);
                 }
 
                 samlResponse = buildResponse(requestContext, statements);
