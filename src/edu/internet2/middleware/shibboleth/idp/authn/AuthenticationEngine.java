@@ -152,6 +152,7 @@ public class AuthenticationEngine extends HttpServlet {
                             + "method {} as authentication method to relying party without re-authenticating user.",
                             authenticationMethod.getAuthenticationMethod());
                     authenticateUserWithActiveMethod(httpRequest, httpResponse, authenticationMethod);
+                    return;
                 }
             }
 
