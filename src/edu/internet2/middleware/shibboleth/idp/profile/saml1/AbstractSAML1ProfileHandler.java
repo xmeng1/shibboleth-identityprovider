@@ -308,17 +308,23 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         log.debug("Building assertion NameIdentifier to relying party {} for principal {}", requestContext
                 .getInboundMessageIssuer(), requestContext.getPrincipalName());
         Map<String, BaseAttribute> principalAttributes = requestContext.getPrincipalAttributes();
-        List<String> supportedNameFormats = getNameFormats(requestContext);
-
-        log.debug("Supported name formats: {}", supportedNameFormats);
-        if (principalAttributes == null || supportedNameFormats == null) {
-            log.error("No attributes for principal " + requestContext.getPrincipalName()
-                    + " support constructions of NameIdentifier");
+        if (principalAttributes == null || principalAttributes.isEmpty()) {
+            log.error("No attributes for principal {}, unable to construct of NameID", requestContext
+                    .getPrincipalName());
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
                     "Unable to construct NameIdentifier"));
             throw new ProfileException("No principal attributes support NameIdentifier construction");
         }
 
+        List<String> supportedNameFormats = getNameFormats(requestContext);
+        if (supportedNameFormats == null || supportedNameFormats.isEmpty()) {
+            log.error("No common NameID formats supported by SP {} and IdP", requestContext.getInboundMessageIssuer());
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
+                    "Unable to construct NameIdentifier"));
+            throw new ProfileException("No principal attributes support NameIdentifier construction");
+        }
+
+        log.debug("Supported name formats: {}", supportedNameFormats);
         try {
             SAML1NameIdentifierEncoder nameIdEncoder;
 
@@ -327,9 +333,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML1NameIdentifierEncoder) {
                         nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            log
-                                    .debug(
-                                            "Using attribute {} suppoting name format {} to create the NameIdentifier for principal",
+                            log.debug("Using attribute {} suppoting name format {} to create the NameIdentifier for principal",
                                             attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }

@@ -217,11 +217,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
-        
+
         // sign the assertion if it should be signed
         signAssertion(requestContext, assertion);
 
-        if(requestContext.getProfileConfiguration().getEncryptAssertion()){
+        if (requestContext.getProfileConfiguration().getEncryptAssertion()) {
             log.debug("Attempting to encrypt assertion to relying party {}", requestContext.getInboundMessageIssuer());
             try {
                 Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
@@ -237,7 +237,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                         "Unable to encrypt assertion"));
                 throw new ProfileException("Unable to encrypt assertion", e);
             }
-        }else{
+        } else {
             samlResponse.getAssertions().add(assertion);
         }
 
@@ -628,19 +628,25 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         log.debug("Building assertion NameID for principal/relying party:{}/{}", requestContext.getPrincipalName(),
                 requestContext.getInboundMessageIssuer());
+        
         Map<String, BaseAttribute> principalAttributes = requestContext.getPrincipalAttributes();
-        List<String> supportedNameFormats = getNameFormats(requestContext);
-
-        log.debug("Supported NameID formats: {}", supportedNameFormats);
-
-        if (principalAttributes == null || supportedNameFormats == null) {
-            log.error("No attributes for principal " + requestContext.getPrincipalName()
-                    + " support constructions of NameID");
+        if (principalAttributes == null || principalAttributes.isEmpty()) {
+            log.error("No attributes for principal {}, unable to construct of NameID", requestContext
+                    .getPrincipalName());
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
                     "Unable to construct NameID"));
             throw new ProfileException("No principal attributes support NameID construction");
         }
-
+        
+        List<String> supportedNameFormats = getNameFormats(requestContext);        
+        if (supportedNameFormats == null || supportedNameFormats.isEmpty()) {
+            log.error("No common NameID formats supported by SP {} and IdP", requestContext.getInboundMessageIssuer());
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
+                    "Unable to construct NameID"));
+            throw new ProfileException("No principal attributes support NameID construction");
+        }
+        
+        log.debug("Supported NameID formats: {}", supportedNameFormats);
         try {
             SAML2NameIDAttributeEncoder nameIdEncoder;
             for (BaseAttribute<?> attribute : principalAttributes.values()) {
