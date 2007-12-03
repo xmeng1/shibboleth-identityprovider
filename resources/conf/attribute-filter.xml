@@ -59,7 +59,7 @@
     <AttributeFilterPolicy>
         <PolicyRequirementRule xsi:type="basic:AttributeRequesterString" value="urn:example.org:sp:myPortal" />
 
-        <AttributeRule attribtueId="givenName">
+        <AttributeRule attributeId="givenName">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
     </AttributeFilterPolicy>
