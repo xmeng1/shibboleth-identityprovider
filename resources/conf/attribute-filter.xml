@@ -17,7 +17,7 @@
     <AttributeFilterPolicy id="releaseTransientIdToAnyone">
         <PolicyRequirementRule xsi:type="basic:ANY" />
 
-        <AttributeRule attributeId="transientId">
+        <AttributeRule attributeID="transientId">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
 
@@ -30,16 +30,16 @@
     -->
     <AttributeFilterPolicy>
         <PolicyRequirementRule xsi:type="basic:OR">
-            <basic:Rule xsi:type="AttributeRequesterInEntityGroup" groupId="urn:mace:incommon" />
-            <basic:Rule xsi:type="AttributeRequesterInEntityGroup" groupId="http://ukfederation.org.uk" />
-            <basic:Rule xsi:type="AttributeRequesterInEntityGroup" groupId="urn:mace:switch.ch:SWITCHaai" />
+            <basic:Rule xsi:type="AttributeRequesterInEntityGroup" groupID="urn:mace:incommon" />
+            <basic:Rule xsi:type="AttributeRequesterInEntityGroup" groupID="http://ukfederation.org.uk" />
+            <basic:Rule xsi:type="AttributeRequesterInEntityGroup" groupID="urn:mace:switch.ch:SWITCHaai" />
         </PolicyRequirementRule>
 
-        <AttributeRule attributeId="entitlement">
+        <AttributeRule attributeID="entitlement">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
 
-        <AttributeRule attributeId="affiliation">
+        <AttributeRule attributeID="affiliation">
             <PermitValueRule xsi:type="basic:OR">
                 <basic:Rule xsi:type="basic:AttributeValueString" value="faculty" />
                 <basic:Rule xsi:type="basic:AttributeValueString" value="student" />
@@ -59,7 +59,7 @@
     <AttributeFilterPolicy>
         <PolicyRequirementRule xsi:type="basic:AttributeRequesterString" value="urn:example.org:sp:myPortal" />
 
-        <AttributeRule attributeId="givenName">
+        <AttributeRule attributeID="givenName">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
     </AttributeFilterPolicy>
