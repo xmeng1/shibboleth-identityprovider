@@ -17,7 +17,7 @@
     <AttributeFilterPolicy id="releaseTransientIdToAnyone">
         <PolicyRequirementRule xsi:type="basic:ANY" />
 
-        <AttributeRule attributeID="transientId">
+        <AttributeRule attributeId="transientId">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
 
@@ -35,7 +35,7 @@
             <basic:Rule xsi:type="AttributeRequesterInEntityGroup" groupId="urn:mace:switch.ch:SWITCHaai" />
         </PolicyRequirementRule>
 
-        <AttributeRule attributeId="entitlment">
+        <AttributeRule attributeId="entitlement">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
 

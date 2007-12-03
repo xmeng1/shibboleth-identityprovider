@@ -495,7 +495,8 @@
     </resolver:DataConnector>
 
     <!-- Example Relational Database Connector -->
-    <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
+    <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
+        validationQuery="SELECT 1 FROM DUAL">
         <ApplicationManagedConnection jdbcDriver="oracle.jdbc.driver.OracleDriver"
             jdbcUrl="jdbc:oracle:thin:@db.example.org:1521:SomeDB" jdbcUserName="myid" jdbcPassword="mypassword" />
         <QueryTemplate>
