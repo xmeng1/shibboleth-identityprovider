@@ -7,33 +7,33 @@
     <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
 
     <ProfileHandler xsi:type="Status">
-        <RequestPath>/status</RequestPath>
+        <RequestPath>/Status</RequestPath>
     </ProfileHandler>
 
     <ProfileHandler xsi:type="ShibbolethSSO"
                     inboundBinding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:profiles:browser-post 
                                                 urn:oasis:names:tc:SAML:1.0:profiles:artifact-01">
-        <RequestPath>/shibboleth/SSO</RequestPath>
+        <RequestPath>/Shibboleth/SSO</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML1AttributeQuery" 
                     inboundBinding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding">
-        <RequestPath>/saml1/SOAP/AttributeQuery</RequestPath>
+        <RequestPath>/SAML1/SOAP/AttributeQuery</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML1ArtifactResolution" 
                     inboundBinding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding">
-        <RequestPath>/saml1/SOAP/ArtifactResolution</RequestPath>
+        <RequestPath>/SAML1/SOAP/ArtifactResolution</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML2SSO" 
                     inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST 
                                                 urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact">
-        <RequestPath>/saml2/POST/SSO</RequestPath>
+        <RequestPath>/SAML2/POST/SSO</RequestPath>
     </ProfileHandler>
 
     <ProfileHandler xsi:type="SAML2SSO" 
@@ -41,26 +41,26 @@
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign
                                                 urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST 
                                                 urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact">
-        <RequestPath>/saml2/POST-SimpleSign/SSO</RequestPath>
+        <RequestPath>/SAML2/POST-SimpleSign/SSO</RequestPath>
     </ProfileHandler>
 
     <ProfileHandler xsi:type="SAML2SSO" 
                     inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST 
                                                 urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact">
-        <RequestPath>/saml2/Redirect/SSO</RequestPath>
+        <RequestPath>/SAML2/Redirect/SSO</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML2AttributeQuery"
                     inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
-        <RequestPath>/saml2/SOAP/AttributeQuery</RequestPath>
+        <RequestPath>/SAML2/SOAP/AttributeQuery</RequestPath>
     </ProfileHandler>
     
     <ProfileHandler xsi:type="SAML2ArtifactResolution" 
                     inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
-        <RequestPath>/saml2/SOAP/ArtifactResolution</RequestPath>
+        <RequestPath>/SAML2/SOAP/ArtifactResolution</RequestPath>
     </ProfileHandler>
     
     <LoginHandler xsi:type="RemoteUser">
