@@ -436,25 +436,25 @@
             name="urn:oid:1.3.6.1.4.1.5923.1.1.1.8" friendlyName="eduPersonPrimaryOrgUnitDN" />
     </resolver:AttributeDefinition>
 
-    <resolver:AttributeDefinition id="principalName" xsi:type="Simple" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-        sourceAttributeID="eduPersonPrincipalName">
+    <resolver:AttributeDefinition id="principalName" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
+        scope="example.org" sourceAttributeID="eduPersonPrincipalName">
         <resolver:Dependency ref="myLDAP" />
 
-        <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:mace:dir:attribute-def:eduPersonPrincipalName" />
 
-        <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML2ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:1.3.6.1.4.1.5923.1.1.1.6" friendlyName="eduPersonPrincipalName" />
     </resolver:AttributeDefinition>
 
-    <resolver:AttributeDefinition id="scopedAffiliation" xsi:type="Simple" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-        sourceAttributeID="eduPersonScopedAffiliation">
+    <resolver:AttributeDefinition id="scopedAffiliation" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
+        scope="example.org" sourceAttributeID="eduPersonAffiliation">
         <resolver:Dependency ref="myLDAP" />
 
-        <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:mace:dir:attribute-def:eduPersonScopedAffiliation" />
 
-        <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML2ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:1.3.6.1.4.1.5923.1.1.1.9" friendlyName="eduPersonScopedAffiliation" />
     </resolver:AttributeDefinition>
 
