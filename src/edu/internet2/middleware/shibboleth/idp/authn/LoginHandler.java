@@ -36,6 +36,10 @@ import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInfor
  * the authentication process. This Subject is stored in the {@link AuthenticationMethodInformation}, created for this
  * authentication, in the user's session.
  * 
+ * The handler may designate the a URI representing the authentication method actually used, for example if a handler is
+ * capable of performing multiple types of authentication, by binding the URI, as a String, to a request attribute
+ * identified by {@link #AUTHENTICATION_METHOD_KEY}.
+ * 
  * The handler may also bind an error message, if an error occurred during authentication to the request attribute
  * identified by {@link LoginHandler#AUTHENTICATION_ERROR_KEY}.
  * 
@@ -54,6 +58,9 @@ public interface LoginHandler {
 
     /** Request attribute to which user's subject should be bound. */
     public static final String SUBJECT_KEY = "subject";
+
+    /** Request attribute to which an authentication method URI may be bound. */
+    public static final String AUTHENTICATION_METHOD_KEY = "authnMethod";
 
     /** Request attribute to which an error message may be bound. */
     public static final String AUTHENTICATION_ERROR_KEY = "authnError";

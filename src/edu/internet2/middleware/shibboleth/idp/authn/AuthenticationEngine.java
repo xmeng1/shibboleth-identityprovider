@@ -278,8 +278,13 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
                 principalName);
         Subject subject = (Subject) httpRequest.getAttribute(LoginHandler.SUBJECT_KEY);
-        AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(subject, loginContext
-                .getAuthenticationMethod(), new DateTime(), loginContext.getAuthenticationDuration());
+        String authnMethod = (String) httpRequest.getAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY);
+        if (DatatypeHelper.isEmpty(authnMethod)) {
+            authnMethod = loginContext.getAuthenticationMethod();
+        }
+
+        AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(subject, authnMethod,
+                new DateTime(), loginContext.getAuthenticationDuration());
 
         shibSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);
 
