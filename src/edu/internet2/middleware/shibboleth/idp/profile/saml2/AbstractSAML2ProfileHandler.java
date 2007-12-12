@@ -302,11 +302,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         Collection<String> audiences;
 
         // add audience restrictions
+        AudienceRestriction audienceRestriction = audienceRestrictionBuilder.buildObject();
+        //TODO we should only do this for certain outgoing bindings, not globally
+        Audience audience = audienceBuilder.buildObject();
+        audience.setAudienceURI(requestContext.getInboundMessageIssuer());
         audiences = profileConfig.getAssertionAudiences();
         if (audiences != null && audiences.size() > 0) {
-            AudienceRestriction audienceRestriction = audienceRestrictionBuilder.buildObject();
             for (String audienceUri : audiences) {
-                Audience audience = audienceBuilder.buildObject();
+                audience = audienceBuilder.buildObject();
                 audience.setAudienceURI(audienceUri);
                 audienceRestriction.getAudiences().add(audience);
             }
@@ -317,7 +320,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         audiences = profileConfig.getProxyAudiences();
         if (audiences != null && audiences.size() > 0) {
             ProxyRestriction proxyRestriction = proxyRestrictionBuilder.buildObject();
-            Audience audience;
             for (String audienceUri : audiences) {
                 audience = audienceBuilder.buildObject();
                 audience.setAudienceURI(audienceUri);
