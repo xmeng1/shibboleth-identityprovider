@@ -313,8 +313,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                 audience.setAudienceURI(audienceUri);
                 audienceRestriction.getAudiences().add(audience);
             }
-            conditions.getAudienceRestrictions().add(audienceRestriction);
         }
+        conditions.getAudienceRestrictions().add(audienceRestriction);
 
         // add proxy restrictions
         audiences = profileConfig.getProxyAudiences();
