@@ -181,7 +181,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             requestContext.setFailureStatus(buildStatus(StatusCode.VERSION_MISMATCH_URI,
                     StatusCode.REQUEST_VERSION_TOO_LOW_URI, null));
             throw new ProfileException("SAML request version too low");
-        } else if (version.getMajorVersion() > 2) {
+        } else if (version.getMajorVersion() > 2 || version.getMinorVersion() > 0) {
             requestContext.setFailureStatus(buildStatus(StatusCode.VERSION_MISMATCH_URI,
                     StatusCode.REQUEST_VERSION_TOO_HIGH_URI, null));
             throw new ProfileException("SAML request version too high");
