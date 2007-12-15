@@ -34,10 +34,12 @@ import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthnStatement;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.core.SubjectLocality;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
@@ -54,6 +56,7 @@ import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.security.SecurityException;
+import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,8 +132,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (loginContext == null) {
             log.debug("User session does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
-        }else if (!loginContext.isPrincipalAuthenticated()){
-            log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
+        } else if (!loginContext.isPrincipalAuthenticated()) {
+            log
+                    .debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
             log.debug("User session contains a login context, processing as second leg of request");
@@ -174,7 +178,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
                 loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
             }
-            
+
             httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
             RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
@@ -223,13 +227,26 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 throw new ProfileException("User failed authentication");
             }
 
+            if (requestContext.getSubjectNameIdentifier() != null) {
+                log.debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
+                resolvePrincipal(requestContext);
+                String requestedPrincipalName = requestContext.getPrincipalName();
+                if (!DatatypeHelper.safeEquals(loginContext.getPrincipalName(), requestedPrincipalName)) {
+                    log.error("Authentication request identified principal {} but authentication mechanism identified principal {}",
+                                    requestedPrincipalName, loginContext.getPrincipalName());
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
+                            null));
+                    throw new ProfileException("User failed authentication");
+                }
+            }
+
             resolveAttributes(requestContext);
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthnStatement(requestContext));
-            if (requestContext.getProfileConfiguration().includeAttributeStatement()){
+            if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
                 AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
-                if(attributeStatement != null){
+                if (attributeStatement != null) {
                     requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
                     statements.add(attributeStatement);
                 }
@@ -314,9 +331,15 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
         try {
-            requestContext.setInboundMessage(loginContext.getAuthenticationRequest());
+            AuthnRequest authnRequest = loginContext.getAuthenticationRequest();
+            requestContext.setInboundMessage(authnRequest);
             requestContext.setInboundSAMLMessage(loginContext.getAuthenticationRequest());
             requestContext.setInboundSAMLMessageId(loginContext.getAuthenticationRequest().getID());
+
+            Subject authnSubject = authnRequest.getSubject();
+            if (authnSubject != null) {
+                requestContext.setSubjectNameIdentifier(authnSubject.getNameID());
+            }
         } catch (UnmarshallingException e) {
             log.error("Unable to unmarshall authentication request context");
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
