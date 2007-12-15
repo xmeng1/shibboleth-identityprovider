@@ -158,8 +158,10 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             AttributeQuery query = requestContext.getInboundSAMLMessage();
-            requestContext.setSubjectNameIdentifier(query.getSubject().getNameID());
-
+            if(query != null){
+                requestContext.setSubjectNameIdentifier(query.getSubject().getNameID());
+            }
+            
             String relyingPartyId = requestContext.getInboundMessageIssuer();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             if (rpConfig == null) {

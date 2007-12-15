@@ -163,7 +163,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 throw new ProfileException("Unable to decode message.");
             }
             AttributeQuery query = request.getAttributeQuery();
-            requestContext.setSubjectNameIdentifier(query.getSubject().getNameIdentifier());
+            if(query != null){
+                requestContext.setSubjectNameIdentifier(query.getSubject().getNameIdentifier());
+            }
 
             String relyingPartyId = requestContext.getInboundMessageIssuer();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
