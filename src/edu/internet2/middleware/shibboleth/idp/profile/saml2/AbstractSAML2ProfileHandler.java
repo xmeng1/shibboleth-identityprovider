@@ -306,6 +306,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         //TODO we should only do this for certain outgoing bindings, not globally
         Audience audience = audienceBuilder.buildObject();
         audience.setAudienceURI(requestContext.getInboundMessageIssuer());
+        audienceRestriction.getAudiences().add(audience);
         audiences = profileConfig.getAssertionAudiences();
         if (audiences != null && audiences.size() > 0) {
             for (String audienceUri : audiences) {
