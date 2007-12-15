@@ -78,7 +78,7 @@
         <url-pattern>/Authn/UserPassword</url-pattern>
     </servlet-mapping>
 
-<!-- Uncommonent if to use container managed authentication -->
+<!-- Uncomment to use container managed authentication -->
 <!--
     <security-constraint>
         <display-name>Shibboleth IdP</display-name>
