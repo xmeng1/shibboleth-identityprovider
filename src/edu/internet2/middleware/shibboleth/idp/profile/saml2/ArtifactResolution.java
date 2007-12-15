@@ -155,8 +155,8 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
      */
     protected ArtifactResolutionRequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        log.debug("Decoding incomming request");
-
+        log.debug("Decoding message with decoder binding {}", getInboundBinding());
+        
         MetadataProvider metadataProvider = getMetadataProvider();
 
         ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();

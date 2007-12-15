@@ -182,6 +182,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      */
     protected ShibbolethSSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
+        log.debug("Decoding message with decoder binding {}", getInboundBinding());
+        
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();

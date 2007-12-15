@@ -132,8 +132,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             log.debug("User session does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else if (!loginContext.isPrincipalAuthenticated()) {
-            log
-                    .debug("User session contained a login context but user was not authenticated, processing as first leg of request");
+            log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
             log.debug("User session contains a login context, processing as second leg of request");
@@ -275,8 +274,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected SSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        log.debug("Decoding message with decoder binding {}", decodingBinding);
-
+        log.debug("Decoding message with decoder binding {}", getInboundBinding());
         SSORequestContext requestContext = new SSORequestContext();
         requestContext.setMetadataProvider(getMetadataProvider());
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());

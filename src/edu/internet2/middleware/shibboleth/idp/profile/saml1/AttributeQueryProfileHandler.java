@@ -120,7 +120,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
      */
     protected AttributeQueryContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        log.debug("Decoding incomming request");
+        log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
         MetadataProvider metadataProvider = getMetadataProvider();
 
