@@ -105,7 +105,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Processing incomming request");
+        log.debug("Processing incoming request");
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
         HttpSession httpSession = httpRequest.getSession();
@@ -115,8 +115,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.debug("User session does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else if (!loginContext.isPrincipalAuthenticated()) {
-            log
-                    .debug("User session contained a login context but user was not authenticated, processing as first leg of request");
+            log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
             log.debug("User session contains a login context, processing as second leg of request");
