@@ -270,7 +270,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @return request context with decoded information
      * 
-     * @throws ProfileException thrown if the incomming message failed decoding
+     * @throws ProfileException thrown if the incoming message failed decoding
      */
     protected SSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
@@ -291,6 +291,16 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
+            log.debug("Decoded request");
+            
+            if (!(requestContext.getInboundMessage() instanceof AuthnRequest)) {
+                log.error("Incomming message was not a AuthnRequest, it was a {}", requestContext.getInboundMessage()
+                        .getClass().getName());
+                requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, null,
+                        "Invalid SAML AuthnRequest message."));
+                throw new ProfileException("Invalid SAML AuthnRequest message.");
+            }
+            
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);

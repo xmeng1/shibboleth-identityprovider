@@ -144,6 +144,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request");
+            
+            if (!(requestContext.getInboundMessage() instanceof Request)) {
+                log.error("Incomming message was not a Request, it was a {}", requestContext.getInboundMessage()
+                        .getClass().getName());
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.REQUESTER, null, "Invalid SAML Request message."));
+                throw new ProfileException("Invalid SAML Request message.");
+            }
+            
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding attribute query message", e);
@@ -156,14 +165,13 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             throw new ProfileException("Message did not meet security policy requirements", e);
         } finally {
             // Set as much information as can be retrieved from the decoded message
-
             Request request = requestContext.getInboundSAMLMessage();
             if (request == null) {
                 log.error("Decoder did not contain an attribute query, an error occured decoding the message");
                 throw new ProfileException("Unable to decode message.");
             }
             AttributeQuery query = request.getAttributeQuery();
-            if(query != null){
+            if (query != null) {
                 requestContext.setSubjectNameIdentifier(query.getSubject().getNameIdentifier());
             }
 
