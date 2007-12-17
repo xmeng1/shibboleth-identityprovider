@@ -144,16 +144,14 @@ public class AuthenticationEngine extends HttpServlet {
             String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
             Session shibSession = getSessionManager().getSession(shibSessionId);
 
-            if (shibSession != null) {
-                AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(
-                        loginContext, shibSession);
-                if (authenticationMethod != null) {
-                    LOG.debug("An active authentication method is applicable for relying party.  Using authentication "
-                            + "method {} as authentication method to relying party without re-authenticating user.",
-                            authenticationMethod.getAuthenticationMethod());
-                    authenticateUserWithActiveMethod(httpRequest, httpResponse, authenticationMethod);
-                    return;
-                }
+            AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(loginContext,
+                    shibSession);
+            if (authenticationMethod != null) {
+                LOG.debug("An active authentication method is applicable for relying party.  Using authentication "
+                        + "method {} as authentication method to relying party without re-authenticating user.",
+                        authenticationMethod.getAuthenticationMethod());
+                authenticateUserWithActiveMethod(httpRequest, httpResponse, authenticationMethod);
+                return;
             }
 
             LOG.debug("No active authentication method is applicable for relying party.  "
@@ -309,30 +307,38 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected AuthenticationMethodInformation getUsableExistingAuthenticationMethod(LoginContext loginContext,
             Session shibSession) {
-        if (loginContext.getForceAuth() || shibSession == null) {
+
+        if (shibSession == null) {
+            return null;
+        }
+
+        if (loginContext.getForceAuth()) {
+            LOG.debug("Request for forced re-authentication, no existing authentication method considered usable");
             return null;
         }
 
         List<String> preferredAuthnMethods = loginContext.getRequestedAuthenticationMethods();
-
+        AuthenticationMethodInformation authnMethodInformation = null;
         if (preferredAuthnMethods == null || preferredAuthnMethods.size() == 0) {
-            for (AuthenticationMethodInformation authnMethod : shibSession.getAuthenticationMethods().values()) {
-                if (!authnMethod.isExpired()) {
-                    return authnMethod;
+            for (AuthenticationMethodInformation info : shibSession.getAuthenticationMethods().values()) {
+                if (!info.isExpired()) {
+                    authnMethodInformation = info;
+                    break;
                 }
             }
         } else {
             for (String preferredAuthnMethod : preferredAuthnMethods) {
                 if (shibSession.getAuthenticationMethods().containsKey(preferredAuthnMethod)) {
-                    AuthenticationMethodInformation authnMethodInfo = shibSession.getAuthenticationMethods().get(
+                    AuthenticationMethodInformation info = shibSession.getAuthenticationMethods().get(
                             preferredAuthnMethod);
-                    if (!authnMethodInfo.isExpired()) {
-                        return authnMethodInfo;
+                    if (!info.isExpired()) {
+                        authnMethodInformation = info;
+                        break;
                     }
                 }
             }
         }
 
-        return null;
+        return authnMethodInformation;
     }
 }
