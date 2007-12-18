@@ -28,6 +28,7 @@ import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
 import org.opensaml.saml1.core.StatusCode;
+import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
@@ -172,7 +173,14 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             }
             AttributeQuery query = request.getAttributeQuery();
             if (query != null) {
-                requestContext.setSubjectNameIdentifier(query.getSubject().getNameIdentifier());
+                Subject subject = query.getSubject();
+                if(subject == null){
+                    log.error("Attribute query did not contain a proper subject");
+                    requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER, null,
+                            "Attribute query did not contain a proper subject"));
+                    throw new ProfileException("Attribute query did not contain a proper subject");
+                }
+                requestContext.setSubjectNameIdentifier(subject.getNameIdentifier());
             }
 
             String relyingPartyId = requestContext.getInboundMessageIssuer();
