@@ -145,15 +145,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request");
-            
-            if (!(requestContext.getInboundMessage() instanceof AttributeQuery)) {
-                log.error("Incomming message was not a AttributeQuery, it was a {}", requestContext.getInboundMessage()
-                        .getClass().getName());
+
+            if (!(requestContext.getInboundSAMLMessage() instanceof AttributeQuery)) {
+                log.error("Incoming message was not a AttributeQuery, it was a {}", requestContext
+                        .getInboundSAMLMessage().getClass().getName());
                 requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, null,
                         "Invalid SAML AttributeQuery message."));
                 throw new ProfileException("Invalid SAML AttributeQuery message.");
             }
-            
+
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding attribute query message", e);
