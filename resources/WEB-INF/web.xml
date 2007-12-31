@@ -15,13 +15,16 @@
         <param-value>file://$IDP_HOME$/conf/internal.xml; file://$IDP_HOME$/conf/service.xml;</param-value>
     </context-param>
 
-    <!-- 
-        Spring 2.0 listener used to load up the configuration
-    -->
+    <!-- Spring 2.0 listener used to load up the configuration -->
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
+    <!-- Hook IdP sessions into HTTP servlet container sessions. -->
+    <listener>
+        <listener-class>edu.internet2.middleware.shibboleth.idp.session.ContainerSessionListener</listener-class>
+    </listener>
+    
     <!-- 
         Session time inactivity timeout, in minutes.
         
