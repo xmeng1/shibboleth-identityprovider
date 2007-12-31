@@ -24,13 +24,11 @@ import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 
 /**
  * A listener that listens for the destruction of {@link HttpSession}s. This allows the {@link SessionManager} to
- * appropriately destroy a shibboleth session whether the HTTP session is destroyed explicitly or through inactivity.
+ * appropriately destroy a Shibboleth session whether the HTTP session is destroyed explicitly or through inactivity.
  */
 public class ContainerSessionListener implements HttpSessionListener {
 
-    /**
-     * A no-op operation.
-     */
+    /** {@inheritDoc} */
     public void sessionCreated(HttpSessionEvent httpSessionEvent) {
         // we don't care about session creations
     }

@@ -1,5 +1,5 @@
 <project name="Shibboleth Identity Provider" basedir="." default="install">
-	
+
 	<!-- User based property file that overrides any property below -->
 	<property file="${user.name}-build.properties" />
 
@@ -40,12 +40,23 @@
 
 	<!-- Compile core (non-test) classes -->
 	<target name="compile-core" depends="build-init, clean-compile">
+		<mkdir dir="${core-prep-source.dir}" />
 		<mkdir dir="${core-classes.dir}" />
 
-		<javac srcdir="${core-src.dir}" destdir="${core-classes.dir}" includes="**/*.java" debug="on" source="1.5">
+		<copy todir="${core-prep-source.dir}" preservelastmodified="true">
+			<fileset dir="${core-src.dir}" />
+			<filterset begintoken="$" endtoken="$">
+				<filter token="IDP_HOME" value="${idp.home}" />
+				<filter token="IDP_VERSION" value="${version}" />
+			</filterset>
+		</copy>
+
+		<javac srcdir="${core-prep-source.dir}" destdir="${core-classes.dir}" includes="**/*.java" debug="on" source="1.5">
 			<classpath refid="build-path" />
 		</javac>
 
+		<delete dir="${core-prep-source.dir}" />
+		
 	</target>
 
 	<!-- Compile unit test classes -->
@@ -63,13 +74,7 @@
 		<mkdir dir="${test-results.dir}" />
 
 		<echo message="Excuting unit tests using endorsed directory ${java.endorsed.dirs}" />
-		<junit printsummary="off"
-		       fork="yes"
-		       forkmode="once"
-		       haltonerror="false"
-		       haltonfailure="false"
-		       dir="${basedir}"
-		       errorproperty="testFailed">
+		<junit printsummary="off" fork="yes" forkmode="once" haltonerror="false" haltonfailure="false" dir="${basedir}" errorproperty="testFailed">
 			<jvmarg value="-Djava.endorsed.dirs=${java.endorsed.dirs}" />
 			<classpath refid="test-path" />
 			<formatter type="xml" />
@@ -93,15 +98,7 @@
 	<!-- Javadoc core (non-test) classes -->
 	<target name="javadoc" description="Creates the JavaDoc documentatin for the project.">
 		<mkdir dir="${javadoc.dir}" />
-		<javadoc packagenames="org.opensaml.*"
-		         sourcepath="${core-src.dir}"
-		         destdir="${javadoc.dir}"
-		         author="false"
-		         version="true"
-		         windowtitle="${ant.project.name} ${version} Java API"
-		         doctitle="${ant.project.name} ${version} Java API"
-		         bottom="${copyright}"
-		         overview="${core-src.dir}/overview.html">
+		<javadoc packagenames="org.opensaml.*" sourcepath="${core-src.dir}" destdir="${javadoc.dir}" author="false" version="true" windowtitle="${ant.project.name} ${version} Java API" doctitle="${ant.project.name} ${version} Java API" bottom="${copyright}" overview="${core-src.dir}/overview.html">
 			<classpath refid="build-path" />
 		</javadoc>
 	</target>
@@ -168,7 +165,7 @@
 			<fileset file="${dist.dir}/${jar.name}" />
 			<fileset file="${build-lib.dir}/servlet-2.4.jar" />
 		</copy>
-		
+
 		<if>
 			<available file="${idp.home}/conf" />
 			<then>
