@@ -159,6 +159,7 @@
 		<mkdir dir="${idp.home}/bin" />
 		<mkdir dir="${idp.home}/war" />
 		<mkdir dir="${idp.home}/metadata" />
+        <mkdir dir="${idp.home}/credentials" />
 
 		<copy todir="${idp.home}/lib" preservelastmodified="true">
 			<fileset dir="${lib.dir}" />

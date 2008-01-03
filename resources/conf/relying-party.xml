@@ -54,7 +54,7 @@
         <!-- Fill in metadataFile attribute with deployment specific information -->
         <!--
         <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                          metadataFile="$IDP_HOME$/metadata/somefile.xml" />
+                          metadataFile="$IDP_HOME$/metadata/somefile.xml" maintainExpiredMetadata="true" />
         -->
     
         <!-- MetadataProvider defining metadata inline -->
@@ -82,8 +82,8 @@
     <!--     Security Configurations                -->
     <!-- ========================================== -->
     <security:Credential id="ExampleOrgCred" xsi:type="security:X509Filesystem">
-        <security:PrivateKey password="changeit">/path/to/private.key</security:PrivateKey>
-        <security:Certificate>/path/to/entity.cert</security:Certificate>
+        <security:PrivateKey password="changeit">$IDP_HOME$/credentials/example.org.key</security:PrivateKey>
+        <security:Certificate>$IDP_HOME$/credentials/example.org.cert</security:Certificate>
     </security:Credential>
     
     <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:ExplicitKeySignature"
