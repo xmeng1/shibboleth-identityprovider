@@ -11,6 +11,7 @@
                    xmlns:metadata="urn:mace:shibboleth:2.0:metadata"
                    xmlns:security="urn:mace:shibboleth:2.0:security"
                    xmlns:samlsec="urn:mace:shibboleth:2.0:security:saml"
+                   xmlns:samlmd="urn:oasis:names:tc:SAML:2.0:metadata"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd
                                        urn:mace:shibboleth:2.0:relying-party:saml classpath:/schema/shibboleth-2.0-relying-party-saml.xsd
@@ -43,6 +44,14 @@
     <!-- ========================================== -->
     <!-- MetadataProvider the combining other MetadataProviders -->
     <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
+            
+            <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
+                <MetadataFilter xsi:tpe="SignatureValidation" trustEngineRef="shibboleth.SignatureTrustEngine" />
+                <MetadataFilter xsi:type="EntityRoleWhiteList" xmlns="urn:mace:shibboleth:2.0:metadata">
+                    <RetainedRole>samlmd:SPSSODescriptor</RetainedRole>
+                </MetadataFilter>
+            </MetadataFilter>
+        
         <!-- MetadataProvider reading metadata from a URL. -->
         <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
         <!--
@@ -75,6 +84,7 @@
             </EntitiesDescriptor>
         </MetadataProvider>
         -->
+        
     </MetadataProvider>
 
     
@@ -95,11 +105,12 @@
     <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
         <security:Rule xsi:type="samlsec:Replay"/>
         <security:Rule xsi:type="samlsec:IssueInstant"/>
-        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
         <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
         <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
         <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
         <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+        <Security:Rule xsi:type="security:MandatoryMessageAuthentication" />
     </security:SecurityPolicy>
     
 </RelyingPartyGroup>

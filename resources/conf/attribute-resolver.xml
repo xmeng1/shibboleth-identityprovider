@@ -2,7 +2,7 @@
 
 <!-- 
     This file is an EXAMPLE configuration file.  Deployers should NOT attempt to use this 
-    without modifying it for their environment.  In paticular, deployers will need to edit 
+    without modifying it for their environment.  In particular, deployers will need to edit 
     data connector configurations.
     
     Not all attribute definitions, data connectors, or principal connectors are demonstrated.
@@ -498,7 +498,7 @@
     <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
         validationQuery="SELECT 1 FROM DUAL">
         <ApplicationManagedConnection jdbcDriver="oracle.jdbc.driver.OracleDriver"
-            jdbcUrl="jdbc:oracle:thin:@db.example.org:1521:SomeDB" jdbcUserName="myid" jdbcPassword="mypassword" />
+            jdbcURL="jdbc:oracle:thin:@db.example.org:1521:SomeDB" jdbcUserName="myid" jdbcPassword="mypassword" />
         <QueryTemplate>
             <![CDATA[
                 SELECT * FROM student WHERE gzbtpid = $requestContext.principalName
