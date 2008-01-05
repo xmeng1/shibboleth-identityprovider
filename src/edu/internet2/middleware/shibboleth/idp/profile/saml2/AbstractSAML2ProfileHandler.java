@@ -82,7 +82,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestExce
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
-import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML2NameIDAttributeEncoder;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML2NameIDEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
@@ -651,11 +651,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         
         log.debug("Supported NameID formats: {}", supportedNameFormats);
         try {
-            SAML2NameIDAttributeEncoder nameIdEncoder;
+            SAML2NameIDEncoder nameIdEncoder;
             for (BaseAttribute<?> attribute : principalAttributes.values()) {
                 for (AttributeEncoder encoder : attribute.getEncoders()) {
-                    if (encoder instanceof SAML2NameIDAttributeEncoder) {
-                        nameIdEncoder = (SAML2NameIDAttributeEncoder) encoder;
+                    if (encoder instanceof SAML2NameIDEncoder) {
+                        nameIdEncoder = (SAML2NameIDEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                             log.debug("Using attribute {} suppoting NameID format {} to create the NameID.", attribute
                                     .getId(), nameIdEncoder.getNameFormat());
