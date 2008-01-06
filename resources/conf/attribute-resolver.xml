@@ -20,7 +20,7 @@
                         urn:mace:shibboleth:2.0:resolver:ad classpath:/schema/shibboleth-2.0-attribute-resolver-ad.xsd
                         urn:mace:shibboleth:2.0:resolver:dc classpath:/schema/shibboleth-2.0-attribute-resolver-dc.xsd
                         urn:mace:shibboleth:2.0:attribute:encoder classpath:/schema/shibboleth-2.0-attribute-encoder.xsd
-                        urn:mace:shibboleth:2.0:security classpath:/schemashibboleth-2.0-security.xsd">
+                        urn:mace:shibboleth:2.0:security classpath:/schema/shibboleth-2.0-security.xsd">
 
     <!-- ========================================== -->
     <!--      Attribute Definitions                 -->
