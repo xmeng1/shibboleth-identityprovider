@@ -131,7 +131,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (loginContext == null) {
             log.debug("User session does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
-        } else if (!loginContext.isPrincipalAuthenticated()) {
+        } else if (!loginContext.isPrincipalAuthenticated() && !loginContext.getAuthenticationAttempted()) {
             log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {

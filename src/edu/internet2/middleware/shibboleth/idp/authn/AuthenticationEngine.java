@@ -210,7 +210,8 @@ public class AuthenticationEngine extends HttpServlet {
 
         if (handler == null) {
             loginContext.setPrincipalAuthenticated(false);
-            loginContext.setAuthenticationFailureMessage("No AuthenticationHandler satisfys the request from: "
+            loginContext.setAuthenticationAttempted();
+            loginContext.setAuthenticationFailureMessage("No AuthenticationHandler satisfies the request from: "
                     + loginContext.getRelyingPartyId());
             LOG.error("No AuthenticationHandler satisfies the request from relying party: "
                     + loginContext.getRelyingPartyId());
