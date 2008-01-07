@@ -73,17 +73,13 @@
                     <key>
                         <value>http://xml.org/sax/features/external-general-entities</value>
                     </key>
-                    <bean id="shibboleth.ExternalGeneralEntities" class="java.lang.Boolean">
-                        <constructor-arg value="true" />
-                    </bean>
+                    <util:constant static-field="java.lang.Boolean.FALSE"/>
                 </entry>
                 <entry>
                     <key>
                         <value>http://xml.org/sax/features/external-parameter-entities</value>
                     </key>
-                    <bean id="shibboleth.ExternalParameterEntities" class="java.lang.Boolean">
-                        <constructor-arg value="true" />
-                    </bean>
+                    <util:constant static-field="java.lang.Boolean.FALSE"/>
                 </entry>
             </map>
         </property>

@@ -496,8 +496,7 @@
     </resolver:DataConnector>
 
     <!-- Example Relational Database Connector -->
-    <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
-        validationQuery="SELECT 1 FROM DUAL">
+    <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
         <ApplicationManagedConnection jdbcDriver="oracle.jdbc.driver.OracleDriver"
             jdbcURL="jdbc:oracle:thin:@db.example.org:1521:SomeDB" jdbcUserName="myid" jdbcPassword="mypassword" />
         <QueryTemplate>
@@ -512,7 +511,7 @@
 
     <!-- Example LDAP Connector -->
     <resolver:DataConnector id="myLDAP" xsi:type="LDAPDirectory" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
-        ldapUrl="ldap://ldap.example.org" baseDN="ou=people,dc=example,dc=org" principal="uid=myservice,ou=system"
+        ldapURL="ldap://ldap.example.org" baseDN="ou=people,dc=example,dc=org" principal="uid=myservice,ou=system"
         principalCredential="myServicePassword">
         <FilterTemplate>
             <![CDATA[
