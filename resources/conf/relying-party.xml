@@ -46,7 +46,7 @@
     <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
             
             <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
-                <MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.SignatureTrustEngine" />
+                <!-- MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.SignatureTrustEngine" /-->
                 <MetadataFilter xsi:type="EntityRoleWhiteList" xmlns="urn:mace:shibboleth:2.0:metadata">
                     <RetainedRole>samlmd:SPSSODescriptor</RetainedRole>
                 </MetadataFilter>
