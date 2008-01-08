@@ -25,8 +25,20 @@
     <!-- ========================================== -->
     <AnonymousRelyingParty provider="http://example.org/IdP" />
     
-    <DefaultRelyingParty provider="http://example.org/IdP" />
+    <DefaultRelyingParty provider="http://example.org/IdP"
+                         defaultSigningCredentialRef="IdPCredential">
+        <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" />
+    </DefaultRelyingParty>
     
+    <!-- 
+        Example of relying party specific configuration
+     -->
+     <!--
     <RelyingParty id="urn:example.org"
                   provider="http://idp.example.org"
                   defaultSigningCredentialRef="ExampleOrgCred">
@@ -37,6 +49,7 @@
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" />
     </RelyingParty>
+     -->
     
     
     <!-- ========================================== -->
@@ -49,7 +62,7 @@
                 <!--
                     This filter should generally not be used as many XML documents contain small schema violations.  This 
                     violations often do not effect message processing.  This filter may be used when debugging a problem 
-                    with incomming metadata though.
+                    with incoming metadata though.
                 -->
                 <!-- MetadataFilter xsi:type="SchemaValidation" xmlns="urn:mace:shibboleth:2.0:metadata"-->
                 <!-- MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.SignatureTrustEngine" /-->
@@ -97,9 +110,9 @@
     <!-- ========================================== -->
     <!--     Security Configurations                -->
     <!-- ========================================== -->
-    <security:Credential id="ExampleOrgCred" xsi:type="security:X509Filesystem">
-        <security:PrivateKey password="changeit">$IDP_HOME$/credentials/example.org.key</security:PrivateKey>
-        <security:Certificate>$IDP_HOME$/credentials/example.org.cert</security:Certificate>
+    <security:Credential id="IdPCredential" xsi:type="security:X509Filesystem">
+        <security:PrivateKey password="changeit">$IDP_HOME$/credentials/idp.key</security:PrivateKey>
+        <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
     </security:Credential>
     
     <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:ExplicitKeySignature"
