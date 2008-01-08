@@ -538,8 +538,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                         .values());
             }
 
-            Subject statementSubject = buildSubject(requestContext, subjectConfMethod);
-            statment.setSubject(statementSubject);
+            if(statment != null){
+                Subject statementSubject = buildSubject(requestContext, subjectConfMethod);
+                statment.setSubject(statementSubject);
+            }
 
             return statment;
         } catch (AttributeRequestException e) {
