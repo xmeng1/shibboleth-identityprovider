@@ -186,6 +186,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
 
             String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
             requestContext.setLocalEntityId(assertingPartyId);
+            requestContext.setOutboundMessageIssuer(assertingPartyId);
             try {
                 EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
                 if (localEntityDescriptor != null) {
@@ -231,11 +232,11 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
     }
 
     /**
-     * Derferences the artifacts within the incomming request and stores them in the request context.
+     * Derferences the artifacts within the incoming request and stores them in the request context.
      * 
      * @param requestContext current request context
      * 
-     * @throws ProfileException thrown if the incomming request does not contain any {@link AssertionArtifact}s.
+     * @throws ProfileException thrown if the incoming request does not contain any {@link AssertionArtifact}s.
      */
     protected void derferenceArtifacts(ArtifactResolutionRequestContext requestContext) throws ProfileException {
         Request request = requestContext.getInboundSAMLMessage();
@@ -291,7 +292,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         return samlResponse;
     }
 
-    /** Represents the internal state of a SAML 1 Artiface resolver request while it's being processed by the IdP. */
+    /** Represents the internal state of a SAML 1 Artifact resolver request while it's being processed by the IdP. */
     public class ArtifactResolutionRequestContext extends
             BaseSAML1ProfileRequestContext<Request, Response, ArtifactResolutionConfiguration> implements
             SAML1ArtifactMessageContext<Request, Response, NameIdentifier> {

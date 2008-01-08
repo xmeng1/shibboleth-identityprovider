@@ -339,6 +339,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         String assertingPartyId = rpConfig.getProviderId();
         requestContext.setLocalEntityId(assertingPartyId);
+        requestContext.setOutboundMessageIssuer(assertingPartyId);
         try {
             EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
             if (localEntityDescriptor != null) {

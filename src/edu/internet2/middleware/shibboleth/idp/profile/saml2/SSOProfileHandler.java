@@ -402,7 +402,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         String assertingPartyId = rpConfig.getProviderId();
         requestContext.setLocalEntityId(assertingPartyId);
-
+        requestContext.setOutboundMessageIssuer(assertingPartyId);
         try {
             EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
             if (localEntityDescriptor != null) {

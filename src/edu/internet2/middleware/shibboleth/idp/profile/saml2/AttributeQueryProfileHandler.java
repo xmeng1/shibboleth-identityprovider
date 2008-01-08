@@ -199,6 +199,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
 
             String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
             requestContext.setLocalEntityId(assertingPartyId);
+            requestContext.setOutboundMessageIssuer(assertingPartyId);
             try {
                 EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
                 if (localEntityDescriptor != null) {
