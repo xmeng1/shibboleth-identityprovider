@@ -114,6 +114,10 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
 
     /** {@inheritDoc} */
     public boolean equals(Object obj) {
+        if(obj == this){
+            return true;
+        }
+        
         if (!(obj instanceof AuthenticationMethodInformation)) {
             return false;
         }

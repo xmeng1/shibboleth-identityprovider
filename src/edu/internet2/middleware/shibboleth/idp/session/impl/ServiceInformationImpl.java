@@ -70,6 +70,10 @@ public class ServiceInformationImpl implements ServiceInformation {
 
     /** {@inheritDoc} */
     public boolean equals(Object obj) {
+        if(obj == this){
+            return true;
+        }
+        
         if (!(obj instanceof ServiceInformation)) {
             return false;
         }
