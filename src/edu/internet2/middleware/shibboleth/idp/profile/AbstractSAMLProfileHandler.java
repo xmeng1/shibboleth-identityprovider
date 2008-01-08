@@ -39,9 +39,9 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartySecurityPolicyResolver;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.AbstractSAMLProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
-import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
@@ -269,7 +269,7 @@ public abstract class AbstractSAMLProfileHandler extends
                         + requestContext.getPeerEntityEndpoint().getBinding());
             }
 
-            AbstractSAML1ProfileConfiguration profileConfig = (AbstractSAML1ProfileConfiguration) requestContext
+            AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
                     .getProfileConfiguration();
             if (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
                     || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional && !encoder
