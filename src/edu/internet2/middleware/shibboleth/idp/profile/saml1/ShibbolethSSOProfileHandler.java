@@ -335,12 +335,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 .getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID);
         requestContext.setProfileConfiguration(profileConfig);
         requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-        if (profileConfig.getSigningCredential() != null) {
-            requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-        } else if (rpConfig.getDefaultSigningCredential() != null) {
-            requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
-        }
-
         requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
         String assertingPartyId = rpConfig.getProviderId();

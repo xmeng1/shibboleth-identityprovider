@@ -132,7 +132,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             log.debug("User session does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else if (!loginContext.isPrincipalAuthenticated() && !loginContext.getAuthenticationAttempted()) {
-            log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
+            log
+                    .debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
             log.debug("User session contains a login context, processing as second leg of request");
@@ -221,21 +222,24 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (loginContext.getPrincipalName() == null) {
                 log.error("User's login context did not contain a principal, user considered unauthenticiated.");
                 if (loginContext.getPassiveAuth()) {
-                    requestContext
-                        .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI, null));
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI,
+                            null));
                 } else {
-                    requestContext
-                        .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI, null));
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
+                            null));
                 }
                 throw new ProfileException("User failed authentication");
             }
 
             if (requestContext.getSubjectNameIdentifier() != null) {
-                log.debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
+                log
+                        .debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
                 resolvePrincipal(requestContext);
                 String requestedPrincipalName = requestContext.getPrincipalName();
                 if (!DatatypeHelper.safeEquals(loginContext.getPrincipalName(), requestedPrincipalName)) {
-                    log.error("Authentication request identified principal {} but authentication mechanism identified principal {}",
+                    log
+                            .error(
+                                    "Authentication request identified principal {} but authentication mechanism identified principal {}",
                                     requestedPrincipalName, loginContext.getPrincipalName());
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
                             null));
@@ -297,7 +301,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request");
-            
+
             if (!(requestContext.getInboundMessage() instanceof AuthnRequest)) {
                 log.error("Incomming message was not a AuthnRequest, it was a {}", requestContext.getInboundMessage()
                         .getClass().getName());
@@ -305,7 +309,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                         "Invalid SAML AuthnRequest message."));
                 throw new ProfileException("Invalid SAML AuthnRequest message.");
             }
-            
+
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);
@@ -394,11 +398,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
         requestContext.setProfileConfiguration(profileConfig);
         requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-        if (profileConfig.getSigningCredential() != null) {
-            requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-        } else if (rpConfig.getDefaultSigningCredential() != null) {
-            requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
-        }
         requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
         String assertingPartyId = rpConfig.getProviderId();

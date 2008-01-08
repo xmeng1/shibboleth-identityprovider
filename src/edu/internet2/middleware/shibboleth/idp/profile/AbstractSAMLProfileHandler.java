@@ -30,6 +30,7 @@ import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.xml.security.credential.Credential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,9 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartySecurityPolicyResolver;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
@@ -67,7 +70,7 @@ public abstract class AbstractSAMLProfileHandler extends
 
     /** SAML message bindings that may be used by outbound messages. */
     private List<String> supportedOutboundBindings;
-    
+
     /** Resolver used to determine active security policy for an incoming request. */
     private SecurityPolicyResolver securityPolicyResolver;
 
@@ -75,21 +78,20 @@ public abstract class AbstractSAMLProfileHandler extends
     protected AbstractSAMLProfileHandler() {
         super();
     }
-    
-    
+
     /**
      * Gets the resolver used to determine active security policy for an incoming request.
      * 
      * @return resolver used to determine active security policy for an incoming request
      */
     public SecurityPolicyResolver getSecurityPolicyResolver() {
-        if(securityPolicyResolver == null){
+        if (securityPolicyResolver == null) {
             setSecurityPolicyResolver(new RelyingPartySecurityPolicyResolver(getRelyingPartyConfigurationManager()));
         }
-        
+
         return securityPolicyResolver;
     }
-    
+
     /**
      * Sets the resolver used to determine active security policy for an incoming request.
      * 
@@ -250,9 +252,11 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     protected void encodeResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         try {
+
             Endpoint peerEndpoint = requestContext.getPeerEntityEndpoint();
             if (peerEndpoint == null) {
-                log.error("No return endpoint available for relying party {}", requestContext
+                log
+                        .error("No return endpoint available for relying party {}", requestContext
                                 .getInboundMessageIssuer());
                 throw new ProfileException("No peer endpoint available to which to send SAML response");
             }
@@ -264,6 +268,27 @@ public abstract class AbstractSAMLProfileHandler extends
                 throw new ProfileException("No outbound message encoder configured for binding "
                         + requestContext.getPeerEntityEndpoint().getBinding());
             }
+
+            AbstractSAML1ProfileConfiguration profileConfig = (AbstractSAML1ProfileConfiguration) requestContext
+                    .getProfileConfiguration();
+            if (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
+                    || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional && !encoder
+                            .providesMessageIntegrity(requestContext))) {
+                Credential signingCredential = null;
+                if (profileConfig.getSigningCredential() != null) {
+                    signingCredential = profileConfig.getSigningCredential();
+                } else if (requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential() != null) {
+                    signingCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
+                }
+
+                if (signingCredential == null) {
+                    throw new ProfileException(
+                            "Signing of responses is required but no signing credential is available");
+                }
+
+                requestContext.setOutboundSAMLMessageSigningCredential(signingCredential);
+            }
+
             log.debug("Encoding response to SAML request {} from relying party {}", requestContext
                     .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
 

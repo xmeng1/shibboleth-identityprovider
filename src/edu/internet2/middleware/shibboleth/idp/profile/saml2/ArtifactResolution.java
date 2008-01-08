@@ -156,7 +156,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
     protected ArtifactResolutionRequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
-        
+
         MetadataProvider metadataProvider = getMetadataProvider();
 
         ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
@@ -201,15 +201,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
             ArtifactResolutionConfiguration profileConfig = (ArtifactResolutionConfiguration) rpConfig
                     .getProfileConfiguration(ArtifactResolutionConfiguration.PROFILE_ID);
-            if (profileConfig != null) {
-                requestContext.setProfileConfiguration(profileConfig);
-                if (profileConfig.getSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(profileConfig.getSigningCredential());
-                } else if (rpConfig.getDefaultSigningCredential() != null) {
-                    requestContext.setOutboundSAMLMessageSigningCredential(rpConfig.getDefaultSigningCredential());
-                }
-            }
-
+            requestContext.setProfileConfiguration(profileConfig);
             requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
 
             String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();

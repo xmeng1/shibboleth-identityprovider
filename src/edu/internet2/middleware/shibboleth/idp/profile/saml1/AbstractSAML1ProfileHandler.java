@@ -28,6 +28,7 @@ import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
+import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.saml1.core.Assertion;
 import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.AttributeStatement;
@@ -52,6 +53,7 @@ import org.opensaml.saml2.metadata.PDPDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
+import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.xml.XMLObjectBuilder;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
@@ -70,6 +72,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEn
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML1NameIdentifierEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
 
@@ -333,7 +336,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML1NameIdentifierEncoder) {
                         nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            log.debug("Using attribute {} suppoting name format {} to create the NameIdentifier for principal",
+                            log
+                                    .debug(
+                                            "Using attribute {} suppoting name format {} to create the NameIdentifier for principal",
                                             attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }
@@ -538,7 +543,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                         .values());
             }
 
-            if(statment != null){
+            if (statment != null) {
                 Subject statementSubject = buildSubject(requestContext, subjectConfMethod);
                 statment.setSubject(statementSubject);
             }
@@ -597,11 +602,20 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         boolean signAssertion = false;
 
         RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
+        SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
         AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
-        if (profileConfig.getSignAssertions()) {
-            signAssertion = true;
-            log.debug("IdP relying party configuration {} indicates to sign assertions: {}", requestContext
-                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
+
+        try {
+            if (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.always
+                    || (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.conditional && !encoder
+                            .providesMessageIntegrity(requestContext))) {
+                signAssertion = true;
+                log.debug("IdP relying party configuration {} indicates to sign assertions: {}", requestContext
+                        .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
+            }
+        } catch (MessageEncodingException e) {
+            log.error("Unable to determine if outbound encoding {} can provide integrity", encoder.getBindingURI());
+            throw new ProfileException("Unable to determine if outbound message should be signed");
         }
 
         if (!signAssertion && relyingPartyRole instanceof SPSSODescriptor) {
