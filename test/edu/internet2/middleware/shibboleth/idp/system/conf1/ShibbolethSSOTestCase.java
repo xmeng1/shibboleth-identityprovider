@@ -48,7 +48,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
         HttpSession session = servletRequest.getSession();
@@ -84,7 +84,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
@@ -107,7 +107,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         try {
             handler.processRequest(profileRequest, profileResponse);
             fail("Request processing expected to due to lack of configured Shib SSO profile");

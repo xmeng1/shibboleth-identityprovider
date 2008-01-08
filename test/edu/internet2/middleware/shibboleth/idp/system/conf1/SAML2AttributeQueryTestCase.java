@@ -65,7 +65,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
@@ -92,7 +92,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
             
         String response = servletResponse.getContentAsString();

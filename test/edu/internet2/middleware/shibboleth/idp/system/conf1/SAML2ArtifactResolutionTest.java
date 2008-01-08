@@ -70,7 +70,7 @@ public class SAML2ArtifactResolutionTest extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
@@ -97,7 +97,7 @@ public class SAML2ArtifactResolutionTest extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
         String response = servletResponse.getContentAsString();
         assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Success"));

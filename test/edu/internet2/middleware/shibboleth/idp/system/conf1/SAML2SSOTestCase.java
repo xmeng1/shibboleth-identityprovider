@@ -56,7 +56,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
         HttpSession session = servletRequest.getSession();
@@ -90,7 +90,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
@@ -111,7 +111,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
-        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse);
+        HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         try {
             handler.processRequest(profileRequest, profileResponse);
             fail("Request processing expected to due to lack of configured SAML 2 SSO profile");
