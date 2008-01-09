@@ -79,7 +79,6 @@
     
     
     
-    
 
     <!-- Do no edit the loggers below here. -->    
     <logger name="Shibboleth-Access">
@@ -91,6 +90,14 @@
         <level value="ALL" />
         <appender-ref ref="IDP_AUDIT" />
     </logger>
+        
+    <logger name="org.springframework">
+        <level value="OFF" />
+    </logger>
+    
+    <logger name="org.apache.catalina">
+        <level value="OFF" />
+    </logger>    
 
     <root>
         <level value="WARN" />
