@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- 
-    This file is an EXAMPLE configuration file.  Deployers should NOT attempt to use this 
-    without modifying it for their environment.
+    This file is an EXAMPLE policy file.  While the policy presented in this 
+    example file is functional, it isn't very interesting.
     
     Deployers should refer to the Shibboleth 2 documentation for a complete list of components 
     and their options.
@@ -30,6 +30,7 @@
         Release eduPersonEntitlement and the permissible values of eduPersonAffiliation
         to any SP that is a member of InCommon, UK federation, or SWITCHaai
     -->
+    <!--
     <AttributeFilterPolicy>
         <PolicyRequirementRule xsi:type="basic:OR">
             <basic:Rule xsi:type="saml:AttributeRequesterInEntityGroup" groupID="urn:mace:incommon" />
@@ -54,10 +55,12 @@
         </AttributeRule>
 
     </AttributeFilterPolicy>
+    -->
 
     <!-- 
         Release the given name of the user to our portal service provider
     -->
+    <!--
     <AttributeFilterPolicy>
         <PolicyRequirementRule xsi:type="basic:AttributeRequesterString" value="urn:example.org:sp:myPortal" />
 
@@ -65,5 +68,6 @@
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
     </AttributeFilterPolicy>
+    -->
 
 </AttributeFilterPolicyGroup>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- 
-    This file is an EXAMPLE configuration file.  Deployers should NOT attempt to use this 
-    without modifying it for their environment.  In particular, deployers will need to edit 
-    data connector configurations.
+    This file is an EXAMPLE configuration file.  While the configuration presented in this 
+    example file is functional, it isn't very interesting.  However, there are lots of example
+    attributes, encoders, and a couple example data connectors.
     
     Not all attribute definitions, data connectors, or principal connectors are demonstrated.
     Deployers should refer to the Shibboleth 2 documentation for a complete list of components 
@@ -27,6 +27,7 @@
     <!-- ========================================== -->
 
     <!-- Schema: Core schema attributes-->
+    <!--
     <resolver:AttributeDefinition id="uid" xsi:type="Simple" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
         sourceAttributeID="uid">
         <resolver:Dependency ref="myLDAP" />
@@ -301,8 +302,10 @@
         <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:2.5.4.49" friendlyName="distinguishedName" />
     </resolver:AttributeDefinition>
+     -->
 
     <!-- Schema: inetOrgPerson attributes-->
+    <!--
     <resolver:AttributeDefinition id="departmentNumber" xsi:type="Simple" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
         sourceAttributeID="departmentNumber">
         <resolver:Dependency ref="myLDAP" />
@@ -357,8 +360,10 @@
         <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:2.16.840.1.113730.3.1.39" friendlyName="preferredLanguage" />
     </resolver:AttributeDefinition>
+    -->
 
-    <!-- Schema: eduPerson attributes-->
+    <!-- Schema: eduPerson attributes -->
+    <!--
     <resolver:AttributeDefinition id="affiliation" xsi:type="Simple" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
         sourceAttributeID="eduPersonAffiliation">
         <resolver:Dependency ref="staticAttributes" />
@@ -469,7 +474,7 @@
         <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" friendlyName="eduPersonTargetedID" />
     </resolver:AttributeDefinition>
-
+    -->
 
     <!-- Name Identifier related attributes -->
     <resolver:AttributeDefinition id="transientId" xsi:type="TransientId" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
@@ -485,6 +490,7 @@
     <!-- ========================================== -->
 
     <!-- Example Static Connector -->
+    <!--
     <resolver:DataConnector id="staticAttributes" xsi:type="Static" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
         <Attribute id="eduPersonAffiliation">
             <Value>member</Value>
@@ -494,8 +500,10 @@
             <Value>urn:mace:dir:entitlement:common-lib-terms</Value>
         </Attribute>
     </resolver:DataConnector>
+    -->
 
     <!-- Example Relational Database Connector -->
+    <!--
     <resolver:DataConnector id="mySIS" xsi:type="RelationalDatabase" xmlns="urn:mace:shibboleth:2.0:resolver:dc">
         <ApplicationManagedConnection jdbcDriver="oracle.jdbc.driver.OracleDriver"
             jdbcURL="jdbc:oracle:thin:@db.example.org:1521:SomeDB" jdbcUserName="myid" jdbcPassword="mypassword" />
@@ -508,8 +516,10 @@
         <Column columnName="gzbtpid" attributeID="uid" />
         <Column columnName="fqlft" attributeID="gpa" type="Float" />
     </resolver:DataConnector>
+     -->
 
     <!-- Example LDAP Connector -->
+    <!--
     <resolver:DataConnector id="myLDAP" xsi:type="LDAPDirectory" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
         ldapURL="ldap://ldap.example.org" baseDN="ou=people,dc=example,dc=org" principal="uid=myservice,ou=system"
         principalCredential="myServicePassword">
@@ -518,6 +528,7 @@
                 (uid=$requestContext.principalName)
             ]]>
         </FilterTemplate>
+     -->
 
     </resolver:DataConnector>
 
