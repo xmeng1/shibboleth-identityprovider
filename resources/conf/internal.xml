@@ -101,6 +101,7 @@
     </bean>
 
     <bean id="shibboleth.ArtifactMap" class="org.opensaml.common.binding.artifact.BasicSAMLArtifactMap" depends-on="shibboleth.LogbackLogging">
+        <constructor-arg ref="shibboleth.ParserPool" />
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg type="long" value="300000" />
     </bean>

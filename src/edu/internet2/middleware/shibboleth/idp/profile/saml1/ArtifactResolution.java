@@ -264,7 +264,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             assertions.add((Assertion) artifactEntry.getSamlMessage());
         }
 
-        requestContext.setReferencedAssertions(assertions);
+        requestContext.setDereferencedAssertions(assertions);
     }
 
     /**
@@ -282,8 +282,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
 
-        if (requestContext.getReferencedAssertions() != null) {
-            samlResponse.getAssertions().addAll(requestContext.getReferencedAssertions());
+        if (requestContext.getDereferencedAssertions() != null) {
+            samlResponse.getAssertions().addAll(requestContext.getDereferencedAssertions());
         }
 
         Status status = buildStatus(StatusCode.SUCCESS, null, null);
@@ -318,7 +318,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
          * 
          * @return SAML assertions referenced by the artifact(s)
          */
-        public Collection<Assertion> getReferencedAssertions() {
+        public Collection<Assertion> getDereferencedAssertions() {
             return referencedAssertions;
         }
 
@@ -327,7 +327,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
          * 
          * @param assertions SAML assertions referenced by the artifact(s)
          */
-        public void setReferencedAssertions(Collection<Assertion> assertions) {
+        public void setDereferencedAssertions(Collection<Assertion> assertions) {
             referencedAssertions = assertions;
         }
     }

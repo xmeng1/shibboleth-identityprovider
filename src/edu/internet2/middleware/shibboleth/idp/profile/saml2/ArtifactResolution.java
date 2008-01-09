@@ -125,9 +125,6 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
                         "Artifact requester mismatch."));
             }
-            artifactMap.remove(requestContext.getArtifact());
-            SAMLObject referencedMessage = artifactEntry.getSamlMessage();
-            requestContext.setReferencedMessage(referencedMessage);
 
             // create the SAML response
             samlResponse = buildArtifactResponse(requestContext);
@@ -315,20 +312,12 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             this.artifact = saml2Artifact;
         }
 
-        /**
-         * Gets the SAML message referenced by the artifact.
-         * 
-         * @return SAML message referenced by the artifact
-         */
+        /** {@inheritDoc} */
         public SAMLObject getReferencedMessage() {
             return referencedMessage;
         }
 
-        /**
-         * Sets the SAML message referenced by the artifact.
-         * 
-         * @param message SAML message referenced by the artifact
-         */
+        /** {@inheritDoc} */
         public void setReferencedMessage(SAMLObject message) {
             referencedMessage = message;
         }
