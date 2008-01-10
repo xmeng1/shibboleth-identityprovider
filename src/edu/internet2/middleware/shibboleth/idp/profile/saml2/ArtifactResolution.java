@@ -127,6 +127,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             }
 
             // create the SAML response
+            requestContext.setReferencedMessage(artifactEntry.getSamlMessage());
             samlResponse = buildArtifactResponse(requestContext);
         } catch (ProfileException e) {
             samlResponse = buildArtifactErrorResponse(requestContext);
