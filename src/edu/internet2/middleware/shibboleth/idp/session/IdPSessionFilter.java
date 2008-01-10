@@ -87,9 +87,11 @@ public class IdPSessionFilter implements Filter {
         log.debug("Attempting to retrieve IdP session cookie.");
         Cookie[] requestCookies = request.getCookies();
 
+        String thisDomain = "."+ request.getLocalName();
+        log.debug("THis domain is {}" + thisDomain);
         if (requestCookies != null) {
             for (Cookie requestCookie : requestCookies) {
-                if (DatatypeHelper.safeEquals(requestCookie.getDomain(), "."+ request.getLocalName())
+                if (DatatypeHelper.safeEquals(requestCookie.getDomain(), thisDomain)
                         && DatatypeHelper.safeEquals(requestCookie.getPath(), request.getContextPath())
                         && DatatypeHelper.safeEquals(requestCookie.getName(), AuthenticationEngine.IDP_SESSION_COOKIE_NAME)) {
                     log.debug("Found IdP session cookie.");
