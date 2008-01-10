@@ -53,16 +53,18 @@ public class IdPSessionFilter implements Filter {
             ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-
+        
+        Session idpSession = null;
         Cookie idpSessionCookie = getIdPSessionCookie(httpRequest);
         if (idpSessionCookie != null) {
-            Session idpSession = sessionManager.getSession(idpSessionCookie.getValue());
+             idpSession = sessionManager.getSession(idpSessionCookie.getValue());
             if (idpSession != null) {
                 idpSession.setLastActivityInstant(new DateTime());
                 httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, idpSession);
-                addIdPSessionCookieToResponse(httpRequest, httpResponse, idpSession);
             }
         }
+        
+        addIdPSessionCookieToResponse(httpRequest, httpResponse, idpSession);
 
         filterChain.doFilter(request, response);
     }
@@ -103,7 +105,7 @@ public class IdPSessionFilter implements Filter {
      * @param userSession user's currentSession
      */
     protected void addIdPSessionCookieToResponse(HttpServletRequest request, HttpServletResponse response,
-            Session userSession) {
+            Session userSession) {        
         Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
         sessionCookie.setDomain(request.getLocalName());
         sessionCookie.setPath(request.getContextPath());
