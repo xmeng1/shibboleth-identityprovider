@@ -107,14 +107,20 @@ public class IdPSessionFilter implements Filter {
      */
     protected void addIdPSessionCookieToResponse(HttpServletRequest request, HttpServletResponse response,
             Session userSession) {
-        Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
-        sessionCookie.setDomain(request.getLocalName());
-        sessionCookie.setPath(request.getContextPath());
-        sessionCookie.setSecure(false);
+        if (userSession == null) {
+            userSession = (Session) request.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        }
 
-        int maxAge = (int) (userSession.getInactivityTimeout() / 1000);
-        sessionCookie.setMaxAge(maxAge);
+        if (userSession != null) {
+            Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
+            sessionCookie.setDomain(request.getLocalName());
+            sessionCookie.setPath(request.getContextPath());
+            sessionCookie.setSecure(false);
 
-        response.addCookie(sessionCookie);
+            int maxAge = (int) (userSession.getInactivityTimeout() / 1000);
+            sessionCookie.setMaxAge(maxAge);
+
+            response.addCookie(sessionCookie);
+        }
     }
 }
