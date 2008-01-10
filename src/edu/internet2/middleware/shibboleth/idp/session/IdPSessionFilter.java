@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
+import org.opensaml.xml.util.DatatypeHelper;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 
@@ -53,17 +54,17 @@ public class IdPSessionFilter implements Filter {
             ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        
+
         Session idpSession = null;
         Cookie idpSessionCookie = getIdPSessionCookie(httpRequest);
         if (idpSessionCookie != null) {
-             idpSession = sessionManager.getSession(idpSessionCookie.getValue());
+            idpSession = sessionManager.getSession(idpSessionCookie.getValue());
             if (idpSession != null) {
                 idpSession.setLastActivityInstant(new DateTime());
                 httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, idpSession);
             }
         }
-        
+
         addIdPSessionCookieToResponse(httpRequest, httpResponse, idpSession);
 
         filterChain.doFilter(request, response);
@@ -86,9 +87,9 @@ public class IdPSessionFilter implements Filter {
 
         if (requestCookies != null) {
             for (Cookie requestCookie : requestCookies) {
-                if (requestCookie.getDomain().equals(request.getLocalName())
-                        && requestCookie.getPath().equals(request.getContextPath())
-                        && requestCookie.getName().equalsIgnoreCase(IDP_SESSION_COOKIE_NAME)) {
+                if (DatatypeHelper.safeEquals(requestCookie.getDomain(), request.getLocalName())
+                        && DatatypeHelper.safeEquals(requestCookie.getPath(), request.getContextPath())
+                        && DatatypeHelper.safeEquals(requestCookie.getName(), IDP_SESSION_COOKIE_NAME)) {
                     return requestCookie;
                 }
             }
@@ -105,7 +106,7 @@ public class IdPSessionFilter implements Filter {
      * @param userSession user's currentSession
      */
     protected void addIdPSessionCookieToResponse(HttpServletRequest request, HttpServletResponse response,
-            Session userSession) {        
+            Session userSession) {
         Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
         sessionCookie.setDomain(request.getLocalName());
         sessionCookie.setPath(request.getContextPath());
