@@ -63,6 +63,7 @@ public class IdPSessionFilter implements Filter {
         if (idpSessionCookie != null) {
             idpSession = sessionManager.getSession(idpSessionCookie.getValue());
             if (idpSession != null) {
+                log.trace("Updating IdP session activity time and adding session object to the request");
                 idpSession.setLastActivityInstant(new DateTime());
                 httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, idpSession);
             }
@@ -84,19 +85,19 @@ public class IdPSessionFilter implements Filter {
      * @return the user's current IdP session cookie, if they have a current session, otherwise null
      */
     protected Cookie getIdPSessionCookie(HttpServletRequest request) {
-        log.debug("Attempting to retrieve IdP session cookie.");
+        log.trace("Attempting to retrieve IdP session cookie.");
         Cookie[] requestCookies = request.getCookies();
 
         if (requestCookies != null) {
             for (Cookie requestCookie : requestCookies) {
                 if (DatatypeHelper.safeEquals(requestCookie.getName(), AuthenticationEngine.IDP_SESSION_COOKIE_NAME)) {
-                    log.debug("Found IdP session cookie.");
+                    log.trace("Found IdP session cookie.");
                     return requestCookie;
                 }
             }
         }
 
-        log.debug("No IdP session cookie sent by the client.");
+        log.trace("No IdP session cookie sent by the client.");
         return null;
     }
 }

@@ -298,6 +298,7 @@ public class AuthenticationEngine extends HttpServlet {
             Session shibSession) {
 
         if (shibSession == null) {
+            LOG.debug("No existing authentication methods due to the lack of existing IdP sessions");
             return null;
         }
 
