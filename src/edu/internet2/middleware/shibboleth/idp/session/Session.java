@@ -23,8 +23,8 @@ import java.util.Map;
  */
 public interface Session extends edu.internet2.middleware.shibboleth.common.session.Session {
 
-    /** Name of the HttpSession attribute a users Shibboleth session Id is bound to. */
-    public static final String HTTP_SESSION_BINDING_ATTRIBUTE = "ShibbolethSessionId";
+    /** Name of the HttpSession attribute to which a users IdP session is bound. */
+    public static final String HTTP_SESSION_BINDING_ATTRIBUTE = "ShibbolethIdPSession";
 
     /**
      * Gets the methods by which the user has authenticated to the IdP.

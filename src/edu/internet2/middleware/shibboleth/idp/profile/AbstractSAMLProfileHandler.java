@@ -177,25 +177,8 @@ public abstract class AbstractSAMLProfileHandler extends
      * @return user's session
      */
     protected Session getUserSession(InTransport inTransport) {
-        String sessionId = getUserSessionId(inTransport);
-        return getSessionManager().getSession(sessionId);
-    }
-
-    /**
-     * Gets the user's session ID from the current request.
-     * 
-     * @param inTransport current inbound transport
-     * 
-     * @return user's session ID
-     */
-    protected String getUserSessionId(InTransport inTransport) {
         HttpServletRequest rawRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-
-        if (rawRequest != null) {
-            return (String) rawRequest.getSession().getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-        }
-
-        return null;
+        return (Session) rawRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
     }
 
     /**

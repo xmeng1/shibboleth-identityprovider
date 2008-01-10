@@ -20,20 +20,16 @@
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
-    <!-- Hook IdP sessions into HTTP servlet container sessions. -->
-    <listener>
-        <listener-class>edu.internet2.middleware.shibboleth.idp.session.ContainerSessionListener</listener-class>
-    </listener>
+    <!--  Add IdP Session object to incoming profile requests -->
+    <filter>
+        <filter-name>IdPSessionFilter</filter-name>
+        <filter-class>edu.internet2.middleware.shibboleth.idp.session.IdPSessionFilter</filter-class>
+    </filter>
     
-    <!-- 
-        Session time inactivity timeout, in minutes.
-        
-        A timeout of 0 or less means the session never timesout.  Such a setting is strongly discouraged and will 
-        almost certainly lead to memory exhaustion under moderate to heavy loads or in servers with prolonged uptime.
-    -->
-    <session-config>
-        <session-timeout>30</session-timeout>
-    </session-config>
+    <filter-mapping>
+        <filter-name>IdSessionFilter</filter-name>
+        <url-pattern>/profile/*</url-pattern>
+    </filter-mapping>
 
     <!-- Profile Request Dispatcher -->
     <servlet>

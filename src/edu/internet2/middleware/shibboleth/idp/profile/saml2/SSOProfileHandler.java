@@ -66,6 +66,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SS
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** SAML 2.0 SSO request profile handler. */
 public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
@@ -437,8 +438,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         statement.setAuthnContext(authnContext);
         statement.setAuthnInstant(loginContext.getAuthenticationInstant());
 
-        // TODO
-        statement.setSessionIndex(null);
+        Session session = getUserSession(requestContext.getInboundMessageTransport());
+        if(session != null){
+            statement.setSessionIndex(session.getSessionID());
+        }
 
         if (loginContext.getAuthenticationDuration() > 0) {
             statement.setSessionNotOnOrAfter(loginContext.getAuthenticationInstant().plus(

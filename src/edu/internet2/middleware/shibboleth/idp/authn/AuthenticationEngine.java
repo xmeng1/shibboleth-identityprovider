@@ -17,8 +17,6 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.List;
 
 import javax.security.auth.Subject;
@@ -141,8 +139,7 @@ public class AuthenticationEngine extends HttpServlet {
         }
 
         if (!loginContext.getAuthenticationAttempted()) {
-            String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-            Session shibSession = getSessionManager().getSession(shibSessionId);
+            Session shibSession = (Session) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
 
             AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(loginContext,
                     shibSession);
@@ -176,8 +173,7 @@ public class AuthenticationEngine extends HttpServlet {
             AuthenticationMethodInformation authenticationMethod) {
         HttpSession httpSession = httpRequest.getSession();
 
-        String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-        Session shibSession = getSessionManager().getSession(shibSessionId);
+        Session shibSession = (Session) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
 
         LOG.debug("Populating login context with existing session and authentication method information.");
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
@@ -256,22 +252,12 @@ public class AuthenticationEngine extends HttpServlet {
         loginContext.setPrincipalName(principalName);
         loginContext.setAuthenticationInstant(new DateTime());
 
-        String shibSessionId = (String) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-        Session shibSession = getSessionManager().getSession(shibSessionId);
-
+        Session shibSession = (Session) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         if (shibSession == null) {
             LOG.debug("Creating shibboleth session for principal {}", principalName);
-
-            InetAddress addr;
-            try {
-                addr = InetAddress.getByName(httpRequest.getRemoteAddr());
-            } catch (UnknownHostException ex) {
-                addr = null;
-            }
-
-            shibSession = (Session) getSessionManager().createSession(addr, loginContext.getPrincipalName());
+            shibSession = (Session) getSessionManager().createSession(loginContext.getPrincipalName());
             loginContext.setSessionID(shibSession.getSessionID());
-            httpSession.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession.getSessionID());
+            httpSession.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession);
         }
 
         LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",

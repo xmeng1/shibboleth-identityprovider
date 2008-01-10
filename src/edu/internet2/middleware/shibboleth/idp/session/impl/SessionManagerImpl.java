@@ -16,11 +16,12 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
-import java.net.InetAddress;
+import java.security.SecureRandom;
 
 import org.joda.time.DateTime;
 import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
+import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -37,6 +38,12 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
     /** Spring context used to publish login and logout events. */
     private ApplicationContext appCtx;
+    
+    /** Number of random bits within a session ID. */
+    private final int sessionIDSize = 32;
+    
+    /** A {@link SecureRandom} PRNG to generate session IDs. */
+    private final SecureRandom prng = new SecureRandom();
 
     /** Backing service used to store sessions. */
     private StorageService<String, SessionManagerEntry> sessionStore;
@@ -83,8 +90,13 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     }
 
     /** {@inheritDoc} */
-    public Session createSession(InetAddress presenter, String principal) {
-        Session session = new SessionImpl(presenter, principal);
+    public Session createSession(String principal) {
+        // generate a random session ID
+        byte[] sid = new byte[sessionIDSize];
+        prng.nextBytes(sid);
+        String sessionID = Base64.encodeBytes(sid);
+        
+        Session session = new SessionImpl(sessionID, principal, sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
         sessionStore.put(partition, session.getSessionID(), sessionEntry);
         appCtx.publishEvent(new LoginEvent(session));

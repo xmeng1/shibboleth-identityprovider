@@ -16,7 +16,6 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
-import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ public class SessionImpl extends AbstractSession implements Session {
     /** Serial version UID. */
     private static final long serialVersionUID = 2927868242208211623L;
 
-    /** The list of methods used to authentictate the user. */
+    /** The list of methods used to authenticate the user. */
     private HashMap<String, AuthenticationMethodInformation> authnMethods;
 
     /** The list of services to which the user has logged in. */
@@ -42,11 +41,12 @@ public class SessionImpl extends AbstractSession implements Session {
     /**
      * Default constructor.
      * 
-     * @param presenter IP address of the presenter
+     * @param sessionId ID of the session
      * @param principal principal ID of the user
+     * @param timeout inactivity timeout for the session in milliseconds
      */
-    public SessionImpl(InetAddress presenter, String principal) {
-        super(presenter, principal);
+    public SessionImpl(String sessionId, String principal, long timeout) {
+        super(sessionId, principal, timeout);
 
         authnMethods = new HashMap<String, AuthenticationMethodInformation>();
         servicesInformation = new HashMap<String, ServiceInformation>();
