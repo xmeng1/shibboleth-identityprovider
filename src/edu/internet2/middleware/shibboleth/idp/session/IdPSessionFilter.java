@@ -30,6 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 
@@ -41,6 +43,9 @@ public class IdPSessionFilter implements Filter {
     /** Name of the IdP Cookie containing the IdP session ID. */
     public static final String IDP_SESSION_COOKIE_NAME = "_idp_session";
 
+    /** Class Logger. */
+    private final Logger log = LoggerFactory.getLogger(IdPSessionFilter.class);
+    
     /** IdP session manager. */
     private SessionManager<Session> sessionManager;
 
@@ -83,6 +88,7 @@ public class IdPSessionFilter implements Filter {
      * @return the user's current IdP session cookie, if they have a current session, otherwise null
      */
     protected Cookie getIdPSessionCookie(HttpServletRequest request) {
+        log.debug("Attempting to retrieve IdP session cookie.");
         Cookie[] requestCookies = request.getCookies();
 
         if (requestCookies != null) {
@@ -90,11 +96,13 @@ public class IdPSessionFilter implements Filter {
                 if (DatatypeHelper.safeEquals(requestCookie.getDomain(), request.getLocalName())
                         && DatatypeHelper.safeEquals(requestCookie.getPath(), request.getContextPath())
                         && DatatypeHelper.safeEquals(requestCookie.getName(), IDP_SESSION_COOKIE_NAME)) {
+                    log.debug("Found IdP session cookie.");
                     return requestCookie;
                 }
             }
         }
 
+        log.debug("No IdP session cookie sent by the client.");
         return null;
     }
 
@@ -107,10 +115,13 @@ public class IdPSessionFilter implements Filter {
      */
     protected void addIdPSessionCookieToResponse(HttpServletRequest request, HttpServletResponse response,
             Session userSession) {
+        log.debug("Adding session cookie to HTTP response.");
         Session currentSession = userSession;
         if (currentSession == null) {
+            log.debug("Retrieving IdP session from HTTP request");
             currentSession = (Session) request.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
             if (currentSession == null) {
+                log.debug("Retrieving IdP session from HTTP session");
                 currentSession = (Session) request.getSession().getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
             }
         }
@@ -125,6 +136,7 @@ public class IdPSessionFilter implements Filter {
             sessionCookie.setMaxAge(maxAge);
 
             response.addCookie(sessionCookie);
+            log.debug("Added IdP session cookie to HTTP response");
         }
     }
 }
