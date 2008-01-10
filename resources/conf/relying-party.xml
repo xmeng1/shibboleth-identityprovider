@@ -121,7 +121,66 @@
     <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:ExplicitKey"
                           metadataProviderRef="ShibbolethMetadata" />
     
-    <security:SecurityPolicy id="shibboleth.DefaultSecurityPolicy" xsi:type="security:SecurityPolicyType">
+    <security:SecurityPolicy id="shibboleth.ShibbolethSSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:IssueInstant" required="false"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML1AttributeQuerySecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+        <security:Rule xsi:type="security:MandatoryMessageAuthentication" />
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML1ArtifactResolutionSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+        <security:Rule xsi:type="security:MandatoryMessageAuthentication" />
+    </security:SecurityPolicy>
+
+    <security:SecurityPolicy id="shibboleth.SAML2SSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+
+    <security:SecurityPolicy id="shibboleth.SAML2AttributeQuerySecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+        <security:Rule xsi:type="security:MandatoryMessageAuthentication" />
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML2ArtifactResolutionSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine" />
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine" />
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+        <security:Rule xsi:type="security:MandatoryMessageAuthentication" />
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML2SLOSecurityPolicy" xsi:type="security:SecurityPolicyType">
         <security:Rule xsi:type="samlsec:Replay"/>
         <security:Rule xsi:type="samlsec:IssueInstant"/>
         <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine" />
