@@ -480,9 +480,15 @@
     <resolver:AttributeDefinition id="transientId" xsi:type="TransientId" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
         <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier"
             xmlns="urn:mace:shibboleth:2.0:attribute:encoder" nameFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
+            
+        <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier"
+            xmlns="urn:mace:shibboleth:2.0:attribute:encoder" nameFormat="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
 
         <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:transient" />
+            
+        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+            nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
     </resolver:AttributeDefinition>
 
     <!-- ========================================== -->
@@ -537,8 +543,14 @@
     <!-- ========================================== -->
     <resolver:PrincipalConnector xsi:type="Transient" xmlns="urn:mace:shibboleth:2.0:resolver:pc" id="shibTransient"
         nameIDFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
+        
+    <resolver:PrincipalConnector xsi:type="Transient" xmlns="urn:mace:shibboleth:2.0:resolver:pc" id="saml1Unspec"
+        nameIDFormat="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
 
     <resolver:PrincipalConnector xsi:type="Transient" xmlns="urn:mace:shibboleth:2.0:resolver:pc" id="saml2Transient"
         nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:transient" />
+        
+    <resolver:PrincipalConnector xsi:type="Transient" xmlns="urn:mace:shibboleth:2.0:resolver:pc" id="saml2Unspec"
+        nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 
 </AttributeResolver>
