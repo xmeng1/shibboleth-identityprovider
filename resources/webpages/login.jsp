@@ -8,7 +8,11 @@
 	<p>Authentication Failed</p>
 	<% } %>
 	
-	<form action="Authn/UserPassword" method="post">
+	<% if(request.getParameter("actionUrl") != null){ %>
+	    <form action="<%=request.getParameter("actionUrl)%>" method="post">
+	<% }else{ %>
+	    <form action="j_security_check" method="post">
+	<% } %>
 	<table>
 		<tr>
 			<td>Username:</td>

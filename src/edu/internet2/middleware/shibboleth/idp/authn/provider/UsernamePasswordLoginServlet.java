@@ -127,10 +127,13 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             urlBuilder.setHost(request.getLocalName());
             urlBuilder.setPort(request.getLocalPort());
             urlBuilder.setPath(pathBuilder.toString());
-            if (queryParams != null) {
-                urlBuilder.getQueryParams().addAll(queryParams);
+            
+            if (queryParams == null) {
+                queryParams = new ArrayList<Pair<String, String>>();
+                queryParams.add(new Pair<String, String>("actionUrl", request.getPathInfo()));
             }
-
+            urlBuilder.getQueryParams().addAll(queryParams);
+            
             log.debug("Redirecting to login page {}", urlBuilder.buildURL());
             response.sendRedirect(urlBuilder.buildURL());
             return;
