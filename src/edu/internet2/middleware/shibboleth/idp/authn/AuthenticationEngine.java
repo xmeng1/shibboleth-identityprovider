@@ -22,6 +22,7 @@ import java.util.List;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,6 +47,9 @@ import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationIm
  * Manager responsible for handling authentication requests.
  */
 public class AuthenticationEngine extends HttpServlet {
+
+    /** Name of the IdP Cookie containing the IdP session ID. */
+    public static final String IDP_SESSION_COOKIE_NAME = "_idp_session";
 
     /** Serial version UID. */
     private static final long serialVersionUID = 8494202791991613148L;
@@ -257,7 +261,7 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.debug("Creating shibboleth session for principal {}", principalName);
             shibSession = (Session) getSessionManager().createSession(loginContext.getPrincipalName());
             loginContext.setSessionID(shibSession.getSessionID());
-            httpRequest.getSession().setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession);
+            addSessionCookie(httpRequest, httpResponse, shibSession);
         }
 
         LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
@@ -325,5 +329,28 @@ public class AuthenticationEngine extends HttpServlet {
         }
 
         return authnMethodInformation;
+    }
+
+    /**
+     * Adds an IdP session cookie to the outbound response.
+     * 
+     * @param httpRequest current request
+     * @param httpResponse current response
+     * @param userSession user's session
+     */
+    protected void addSessionCookie(HttpServletRequest httpRequest, HttpServletResponse httpResponse,
+            Session userSession) {
+        httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, userSession);
+
+        LOG.debug("Adding IdP session cookie to HTTP response");
+        Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
+        sessionCookie.setDomain(httpRequest.getLocalName());
+        sessionCookie.setPath(httpRequest.getContextPath());
+        sessionCookie.setSecure(false);
+
+        int maxAge = (int) (userSession.getInactivityTimeout() / 1000);
+        sessionCookie.setMaxAge(maxAge);
+
+        httpResponse.addCookie(sessionCookie);
     }
 }

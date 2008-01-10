@@ -34,18 +34,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 
 /**
  * A filter that adds the current users {@link Session} the request, if the user has a session.
  */
 public class IdPSessionFilter implements Filter {
 
-    /** Name of the IdP Cookie containing the IdP session ID. */
-    public static final String IDP_SESSION_COOKIE_NAME = "_idp_session";
-
     /** Class Logger. */
     private final Logger log = LoggerFactory.getLogger(IdPSessionFilter.class);
-    
+
     /** IdP session manager. */
     private SessionManager<Session> sessionManager;
 
@@ -70,8 +68,6 @@ public class IdPSessionFilter implements Filter {
             }
         }
 
-        addIdPSessionCookieToResponse(httpRequest, httpResponse, idpSession);
-
         filterChain.doFilter(request, response);
     }
 
@@ -95,7 +91,7 @@ public class IdPSessionFilter implements Filter {
             for (Cookie requestCookie : requestCookies) {
                 if (DatatypeHelper.safeEquals(requestCookie.getDomain(), request.getLocalName())
                         && DatatypeHelper.safeEquals(requestCookie.getPath(), request.getContextPath())
-                        && DatatypeHelper.safeEquals(requestCookie.getName(), IDP_SESSION_COOKIE_NAME)) {
+                        && DatatypeHelper.safeEquals(requestCookie.getName(), AuthenticationEngine.IDP_SESSION_COOKIE_NAME)) {
                     log.debug("Found IdP session cookie.");
                     return requestCookie;
                 }
@@ -104,39 +100,5 @@ public class IdPSessionFilter implements Filter {
 
         log.debug("No IdP session cookie sent by the client.");
         return null;
-    }
-
-    /**
-     * Adds a cookie, containing the user's IdP session ID, to the response.
-     * 
-     * @param request current HTTP request
-     * @param response current HTTP response
-     * @param userSession user's currentSession
-     */
-    protected void addIdPSessionCookieToResponse(HttpServletRequest request, HttpServletResponse response,
-            Session userSession) {
-        log.debug("Adding session cookie to HTTP response.");
-        Session currentSession = userSession;
-        if (currentSession == null) {
-            log.debug("Retrieving IdP session from HTTP request");
-            currentSession = (Session) request.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-            if (currentSession == null) {
-                log.debug("Retrieving IdP session from HTTP session");
-                currentSession = (Session) request.getSession().getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-            }
-        }
-
-        if (currentSession != null) {
-            Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
-            sessionCookie.setDomain(request.getLocalName());
-            sessionCookie.setPath(request.getContextPath());
-            sessionCookie.setSecure(false);
-
-            int maxAge = (int) (userSession.getInactivityTimeout() / 1000);
-            sessionCookie.setMaxAge(maxAge);
-
-            response.addCookie(sessionCookie);
-            log.debug("Added IdP session cookie to HTTP response");
-        }
     }
 }
