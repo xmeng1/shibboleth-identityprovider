@@ -107,11 +107,15 @@ public class IdPSessionFilter implements Filter {
      */
     protected void addIdPSessionCookieToResponse(HttpServletRequest request, HttpServletResponse response,
             Session userSession) {
-        if (userSession == null) {
-            userSession = (Session) request.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        Session currentSession = userSession;
+        if (currentSession == null) {
+            currentSession = (Session) request.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+            if (currentSession == null) {
+                currentSession = (Session) request.getSession().getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+            }
         }
 
-        if (userSession != null) {
+        if (currentSession != null) {
             Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
             sessionCookie.setDomain(request.getLocalName());
             sessionCookie.setPath(request.getContextPath());

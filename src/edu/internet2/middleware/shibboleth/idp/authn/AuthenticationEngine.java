@@ -257,7 +257,7 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.debug("Creating shibboleth session for principal {}", principalName);
             shibSession = (Session) getSessionManager().createSession(loginContext.getPrincipalName());
             loginContext.setSessionID(shibSession.getSessionID());
-            httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession);
+            httpRequest.getSession().setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession);
         }
 
         LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
@@ -276,8 +276,6 @@ public class AuthenticationEngine extends HttpServlet {
         ServiceInformation serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(),
                 authnMethodInfo);
         shibSession.getServicesInformation().put(serviceInfo.getEntityID(), serviceInfo);
-
-        shibSession.setLastActivityInstant(new DateTime());
 
         returnToProfileHandler(loginContext, httpRequest, httpResponse);
     }
