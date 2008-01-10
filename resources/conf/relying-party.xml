@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
+    This file is an EXAMPLE configuration file.
+
     This file specifies relying party dependent configurations for the IdP, for example, whether SAML assertions to a 
     particular relying party should be signed.  It also includes metadata provider and credential definitions used 
     when answering requests to a relying party.
@@ -34,23 +36,7 @@
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
         <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" />
     </DefaultRelyingParty>
-    
-    <!-- 
-        Example of relying party specific configuration
-     -->
-     <!--
-    <RelyingParty id="urn:example.org"
-                  provider="http://idp.example.org"
-                  defaultSigningCredentialRef="ExampleOrgCred">
-        <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
-        <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" />
-        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile" />
-        <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" />
-        <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" />
-        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" />
-    </RelyingParty>
-     -->
-    
+        
     
     <!-- ========================================== -->
     <!--      Metadata Configuration                -->
@@ -59,23 +45,15 @@
     <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
             
             <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
-                <!--
-                    This filter should generally not be used as many XML documents contain small schema violations.  This 
-                    violations often do not effect message processing.  This filter may be used when debugging a problem 
-                    with incoming metadata though.
-                -->
-                <!-- MetadataFilter xsi:type="SchemaValidation" xmlns="urn:mace:shibboleth:2.0:metadata"-->
                 <!-- MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.SignatureTrustEngine" /-->
-                <MetadataFilter xsi:type="EntityRoleWhiteList" xmlns="urn:mace:shibboleth:2.0:metadata">
-                    <RetainedRole>samlmd:SPSSODescriptor</RetainedRole>
-                </MetadataFilter>
             </MetadataFilter>
         
         <!-- MetadataProvider reading metadata from a URL. -->
         <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
         <!--
         <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                          metadataURL="http://example.org/my/metadata/file.xml" backingFile="$IDP_HOME$/temp/metadata/somefile.xml" />
+                          metadataURL="http://example.org/my/metadata/file.xml" 
+                          backingFile="$IDP_HOME$/temp/metadata/somefile.xml" />
         -->
 
         <!-- MetadataProvider reading metadata from the filesystem -->
@@ -83,25 +61,6 @@
         <!--
         <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
                           metadataFile="$IDP_HOME$/metadata/somefile.xml" maintainExpiredMetadata="true" />
-        -->
-    
-        <!-- MetadataProvider defining metadata inline -->
-        <!--
-        <MetadataProvider id="InlineMD" xsi:type="InlineMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-            <EntitiesDescriptor Name="urn:example.org:myFederation" xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
-                <EntityDescriptor entityID="urn:example.org:myFederation:idp1">
-                    <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-                        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/myIdP" />
-                    </IDPSSODescriptor>
-                </EntityDescriptor>
-                <EntityDescriptor entityID="urn:example.org:myFederation:sp1">
-                    <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0" />
-                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0" />
-                    </SPSSODescriptor>
-                </EntityDescriptor>
-            </EntitiesDescriptor>
-        </MetadataProvider>
         -->
         
     </MetadataProvider>
@@ -115,6 +74,7 @@
         <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
     </security:Credential>
     
+    <!-- DO NOT EDIT BELOW THIS POINT  unless you know what you're doing -->
     <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:ExplicitKeySignature"
                           metadataProviderRef="ShibbolethMetadata" />
                           
