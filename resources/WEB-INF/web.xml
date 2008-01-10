@@ -8,7 +8,7 @@
 
     <!--
         Spring 2.0 application context files.  Files are loaded in the order they appear with subsequent files 
-        overwritting same named beans in previous files.
+        overwriting same named beans in previous files.
     -->
     <context-param>
         <param-name>contextConfigLocation</param-name>
@@ -27,16 +27,14 @@
     </filter>
     
     <filter-mapping>
-        <filter-name>IdSessionFilter</filter-name>
+        <filter-name>IdPSessionFilter</filter-name>
         <url-pattern>/profile/*</url-pattern>
     </filter-mapping>
 
     <!-- Profile Request Dispatcher -->
     <servlet>
         <servlet-name>ProfileRequestDispatcher</servlet-name>
-        <servlet-class>
-            edu.internet2.middleware.shibboleth.common.profile.ProfileRequestDispatcherServlet
-        </servlet-class>
+        <servlet-class>edu.internet2.middleware.shibboleth.common.profile.ProfileRequestDispatcherServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
