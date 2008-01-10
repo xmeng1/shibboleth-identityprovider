@@ -139,7 +139,7 @@ public class AuthenticationEngine extends HttpServlet {
         }
 
         if (!loginContext.getAuthenticationAttempted()) {
-            Session shibSession = (Session) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+            Session shibSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
 
             AuthenticationMethodInformation authenticationMethod = getUsableExistingAuthenticationMethod(loginContext,
                     shibSession);
@@ -173,7 +173,7 @@ public class AuthenticationEngine extends HttpServlet {
             AuthenticationMethodInformation authenticationMethod) {
         HttpSession httpSession = httpRequest.getSession();
 
-        Session shibSession = (Session) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        Session shibSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
 
         LOG.debug("Populating login context with existing session and authentication method information.");
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
@@ -252,12 +252,12 @@ public class AuthenticationEngine extends HttpServlet {
         loginContext.setPrincipalName(principalName);
         loginContext.setAuthenticationInstant(new DateTime());
 
-        Session shibSession = (Session) httpSession.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        Session shibSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         if (shibSession == null) {
             LOG.debug("Creating shibboleth session for principal {}", principalName);
             shibSession = (Session) getSessionManager().createSession(loginContext.getPrincipalName());
             loginContext.setSessionID(shibSession.getSessionID());
-            httpSession.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession);
+            httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, shibSession);
         }
 
         LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
