@@ -9,7 +9,7 @@
 	<% } %>
 	
 	<% if(request.getParameter("actionUrl") != null){ %>
-	    <form action="<%=request.getParameter("actionUrl)%>" method="post">
+	    <form action="<%=request.getParameter("actionUrl")%>" method="post">
 	<% }else{ %>
 	    <form action="j_security_check" method="post">
 	<% } %>
