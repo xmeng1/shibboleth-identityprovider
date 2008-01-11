@@ -379,6 +379,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
                 requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
                         .getSPSSODescriptor(SAMLConstants.SAML20P_NS));
+            }else{
+                log.error("Unable to locate metadata for relying party ({})", relyingPartyId);
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                        "Error locating relying party metadata"));
+                throw new ProfileException("Error locating relying party metadata");
             }
         } catch (MetadataProviderException e) {
             log.error("Unable to locate metadata for relying party");
