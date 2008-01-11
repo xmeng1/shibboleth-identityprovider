@@ -63,7 +63,9 @@
                     <key>
                         <value>http://apache.org/xml/properties/security-manager</value>
                     </key>
-                    <bean id="shibboleth.XercesSecurityManager" class="org.apache.xerces.util.SecurityManager" />
+                    <bean id="shibboleth.XercesSecurityManager" class="org.apache.xerces.util.SecurityManager">
+                        <property name="entityExpansionLimit" value="1000" />
+                    </bean>
                 </entry>
             </map>
         </property>
