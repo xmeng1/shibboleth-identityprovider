@@ -74,7 +74,14 @@
         <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
     </security:Credential>
     
-    <!-- DO NOT EDIT BELOW THIS POINT  unless you know what you're doing -->
+    <!-- DO NOT EDIT BELOW THIS POINT -->
+    <!-- 
+        The following trust engines and rules control every aspect of security related to incoming messages. 
+        Trust engines evaluate various tokens (like digital signatures) for trust worthiness while the 
+        security policies establish a set of checks that an incoming message must pass in order to be considered
+        secure.  Naturally some of these checks require the validation of the tokens evaluated by the trust 
+        engines and so you'll see some rules that reference the declared trust engines.
+    -->
     <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:ExplicitKeySignature"
                           metadataProviderRef="ShibbolethMetadata" />
                           
