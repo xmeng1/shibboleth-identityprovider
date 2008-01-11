@@ -73,15 +73,9 @@
             <map>
                 <entry>
                     <key>
-                        <value>http://xml.org/sax/features/external-general-entities</value>
+                        <value>http://apache.org/xml/features/disallow-doctype-decl</value>
                     </key>
-                    <util:constant static-field="java.lang.Boolean.FALSE"/>
-                </entry>
-                <entry>
-                    <key>
-                        <value>http://xml.org/sax/features/external-parameter-entities</value>
-                    </key>
-                    <util:constant static-field="java.lang.Boolean.FALSE"/>
+                    <util:constant static-field="java.lang.Boolean.TRUE"/>
                 </entry>
             </map>
         </property>
