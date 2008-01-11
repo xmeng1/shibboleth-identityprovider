@@ -51,7 +51,7 @@
     </bean>
 
     <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool" depends-on="shibboleth.LogbackLogging">
-        <property name="maxPoolSize" value="50" />
+        <property name="maxPoolSize" value="100" />
         <property name="createBuildersAtPoolLimit" value="true" />
         <property name="coalescing" value="true" />
         <property name="ignoreComments" value="true" />
@@ -63,9 +63,7 @@
                     <key>
                         <value>http://apache.org/xml/properties/security-manager</value>
                     </key>
-                    <bean id="shibboleth.XercesSecurityManager" class="org.apache.xerces.util.SecurityManager">
-                        <property name="entityExpansionLimit" value="1000" />
-                    </bean>
+                    <bean id="shibboleth.XercesSecurityManager" class="org.apache.xerces.util.SecurityManager" />
                 </entry>
             </map>
         </property>
