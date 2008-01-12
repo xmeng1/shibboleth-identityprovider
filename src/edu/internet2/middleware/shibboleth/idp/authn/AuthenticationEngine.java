@@ -324,8 +324,8 @@ public class AuthenticationEngine extends HttpServlet {
         loginContext.setAuthenticationDuration(logingHandler.getAuthenticationDuration());
         loginContext.setAuthenticationMethod(authnMethod);
         loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
-        logingHandler.login(httpRequest, httpResponse);
         httpRequest.getSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+        logingHandler.login(httpRequest, httpResponse);
     }
 
     /**
