@@ -54,8 +54,8 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     /** Map of request paths to profile handlers. */
     private Map<String, AbstractRequestURIMappedProfileHandler> profileHandlers;
 
-    /** Map of authentication methods to authentication handlers. */
-    private Map<String, LoginHandler> authenticationHandlers;
+    /** Map of authentication methods to login handlers. */
+    private Map<String, LoginHandler> loginHandlers;
 
     /**
      * Constructor. Configuration resources are not monitored for changes.
@@ -65,7 +65,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     public IdPProfileHandlerManager(List<Resource> configurations) {
         super(configurations);
         profileHandlers = new HashMap<String, AbstractRequestURIMappedProfileHandler>();
-        authenticationHandlers = new HashMap<String, LoginHandler>();
+        loginHandlers = new HashMap<String, LoginHandler>();
     }
 
     /**
@@ -79,7 +79,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     public IdPProfileHandlerManager(List<Resource> configurations, Timer timer, long pollingFrequency) {
         super(timer, configurations, pollingFrequency);
         profileHandlers = new HashMap<String, AbstractRequestURIMappedProfileHandler>();
-        authenticationHandlers = new HashMap<String, LoginHandler>();
+        loginHandlers = new HashMap<String, LoginHandler>();
     }
 
     /** {@inheritDoc} */
@@ -130,54 +130,12 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     }
 
     /**
-     * Gets the authentication handler appropriate for the given loging context. The mechanism used to determine the
-     * "appropriate" handler is implementation specific.
-     * 
-     * @param loginContext current login context
-     * 
-     * @return authentication method URI and handler appropriate for given login context
-     */
-    public Pair<String, LoginHandler> getAuthenticationHandler(LoginContext loginContext) {
-        log.debug("{}: Looking up authentication method for relying party {}", getId(), loginContext
-                .getRelyingPartyId());
-
-        List<String> requestedMethods = loginContext.getRequestedAuthenticationMethods();
-        if (requestedMethods != null) {
-            LoginHandler candidateHandler;
-            for (String requestedMethod : requestedMethods) {
-                log.debug(getId() + "{}: Checking for authentication handler for method {}", getId(), requestedMethod);
-                candidateHandler = authenticationHandlers.get(requestedMethod);
-                if (candidateHandler != null) {
-                    log.debug(getId()
-                            + "{}: Authentication handler for method {} found.  Checking if it meets othe criteria.",
-                            getId(), requestedMethod);
-
-                    if (loginContext.getPassiveAuth() && !candidateHandler.supportsPassive()) {
-                        log.debug("{}: Authentication handler for method {} does not meet required support for passive auth.  Skipping it",
-                                        getId(), requestedMethod);
-                        continue;
-                    }
-
-                    log.debug(getId() + "{}: Authentication handler for method {}  meets all requirements, using it.",
-                            getId(), requestedMethod);
-                    return new Pair<String, LoginHandler>(requestedMethod, candidateHandler);
-                }
-            }
-        } else {
-            log.error("{}: No requested authentication methods for relying party {}", getId(), loginContext
-                    .getRelyingPartyId());
-        }
-
-        return null;
-    }
-
-    /**
      * Gets the registered authentication handlers.
      * 
      * @return registered authentication handlers
      */
-    public Map<String, LoginHandler> getAuthenticationHandlers() {
-        return authenticationHandlers;
+    public Map<String, LoginHandler> getLoginHandlers() {
+        return loginHandlers;
     }
 
     /** {@inheritDoc} */
@@ -233,7 +191,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
         String[] authnBeanNames = newServiceContext.getBeanNamesForType(LoginHandler.class);
         log.debug("{}: Loading {} new authentication handlers.", getId(), authnBeanNames.length);
 
-        authenticationHandlers.clear();
+        loginHandlers.clear();
         LoginHandler authnHandler;
         for (String authnBeanName : authnBeanNames) {
             authnHandler = (LoginHandler) newServiceContext.getBean(authnBeanName);
@@ -241,7 +199,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
                     authnHandler.getSupportedAuthenticationMethods());
 
             for (String authnMethod : authnHandler.getSupportedAuthenticationMethods()) {
-                authenticationHandlers.put(authnMethod, authnHandler);
+                loginHandlers.put(authnMethod, authnHandler);
             }
         }
     }

@@ -83,8 +83,8 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         authnRequest = request;
         serialAuthnRequest = serializeRequest(request);
         
-        setForceAuth(authnRequest.isForceAuthn());
-        setPassiveAuth(authnRequest.isPassive());
+        setForceAuthRequired(authnRequest.isForceAuthn());
+        setPassiveAuthRequired(authnRequest.isPassive());
         getRequestedAuthenticationMethods().addAll(extractRequestedAuthenticationMethods());
     }
 

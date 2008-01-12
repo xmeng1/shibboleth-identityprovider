@@ -64,7 +64,9 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfigurat
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
+import edu.internet2.middleware.shibboleth.idp.authn.ForceAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
@@ -220,16 +222,17 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         Response samlResponse;
         try {
-            if (loginContext.getPrincipalName() == null) {
-                log.error("User's login context did not contain a principal, user considered unauthenticiated.");
-                if (loginContext.getPassiveAuth()) {
+            if (loginContext.getAuthenticationFailure() != null) {
+                log.error("User authentication failed with the following error: {}", loginContext
+                        .getAuthenticationFailure().toString());
+
+                if (loginContext.getAuthenticationFailure() instanceof PassiveAuthenticationException) {
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI,
                             null));
                 } else {
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
                             null));
                 }
-                throw new ProfileException("User failed authentication");
             }
 
             if (requestContext.getSubjectNameIdentifier() != null) {
@@ -379,7 +382,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
                 requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
                         .getSPSSODescriptor(SAMLConstants.SAML20P_NS));
-            }else{
+            } else {
                 log.error("Unable to locate metadata for relying party ({})", relyingPartyId);
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
                         "Error locating relying party metadata"));
@@ -444,7 +447,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         statement.setAuthnInstant(loginContext.getAuthenticationInstant());
 
         Session session = getUserSession(requestContext.getInboundMessageTransport());
-        if(session != null){
+        if (session != null) {
             statement.setSessionIndex(session.getSessionID());
         }
 

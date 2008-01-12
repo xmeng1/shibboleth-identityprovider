@@ -79,8 +79,8 @@ public class LoginContext implements Serializable {
     /** Did authentication succeed? */
     private boolean principalAuthenticated;
 
-    /** Optional failure message. */
-    private String authnFailureMessage;
+    /** Exception that occured during authentication. */
+    private AuthenticationException authnException;
 
     /** The instant of authentication. */
     private DateTime authnInstant;
@@ -137,7 +137,7 @@ public class LoginContext implements Serializable {
      * 
      * @return <code>true</code> if the authentication manager must re-authenticate the user.
      */
-    public boolean getForceAuth() {
+    public boolean isForceAuthRequired() {
         return forceAuth;
     }
 
@@ -146,7 +146,7 @@ public class LoginContext implements Serializable {
      * 
      * @return <code>true</code> if the authentication manager must not interact with the users UI.
      */
-    public boolean getPassiveAuth() {
+    public boolean isPassiveAuthRequired() {
         return passiveAuth;
     }
 
@@ -155,7 +155,7 @@ public class LoginContext implements Serializable {
      * 
      * @param force if the authentication manager must re-authenticate the user.
      */
-    public void setForceAuth(boolean force) {
+    public void setForceAuthRequired(boolean force) {
         forceAuth = force;
     }
 
@@ -164,7 +164,7 @@ public class LoginContext implements Serializable {
      * 
      * @param passive if the authentication manager must not interact with the users UI.
      */
-    public void setPassiveAuth(boolean passive) {
+    public void setPassiveAuthRequired(boolean passive) {
         passiveAuth = passive;
     }
 
@@ -210,21 +210,21 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Sets the optional authentication failure message.
+     * Sets the error that occurred during authentication.
      * 
-     * @param failureMessage A description of why authN failed.
+     * @param error error that occurred during authentication
      */
-    public void setAuthenticationFailureMessage(String failureMessage) {
-        authnFailureMessage = failureMessage;
+    public void setAuthenticationFailure(AuthenticationException error) {
+        authnException = error;
     }
 
     /**
-     * Returns the optional authentication failure message.
+     * Gets the error that occurred during authentication.
      * 
-     * @return The failure message, or <code>null</code> is none was set.
+     * @return error that occurred during authentication
      */
-    public String getAuthenticationFailureMessage() {
-        return authnFailureMessage;
+    public AuthenticationException getAuthenticationFailure() {
+        return authnException;
     }
 
     /**
