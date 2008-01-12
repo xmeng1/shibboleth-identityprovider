@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
@@ -64,7 +63,6 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfigurat
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
-import edu.internet2.middleware.shibboleth.idp.authn.ForceAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
@@ -206,11 +204,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        HttpSession httpSession = servletRequest.getSession();
 
-        Saml2LoginContext loginContext = (Saml2LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-
+        Saml2LoginContext loginContext = (Saml2LoginContext) servletRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         SSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
         checkSamlVersion(requestContext);

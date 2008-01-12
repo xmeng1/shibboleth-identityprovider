@@ -23,7 +23,6 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
@@ -114,7 +113,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.debug("User session does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else if (!loginContext.isPrincipalAuthenticated() && !loginContext.getAuthenticationAttempted()) {
-            log.debug("User session contained a login context but user was not authenticated, processing as first leg of request");
+            log
+                    .debug("User session contained a login context but user was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
             log.debug("User session contains a login context, processing as second leg of request");
@@ -178,7 +178,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected ShibbolethSSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
-        
+
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
@@ -229,11 +229,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        HttpSession httpSession = httpRequest.getSession(true);
-
-        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) httpSession
+        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) httpRequest
                 .getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
         ShibbolethSSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
@@ -244,7 +241,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                         .getAuthenticationFailure().toString());
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "User failed authentication"));
             }
-            
+
             resolveAttributes(requestContext);
 
             ArrayList<Statement> statements = new ArrayList<Statement>();
