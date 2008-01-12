@@ -219,6 +219,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
                             null));
                 }
+                throw new ProfileException("Authentication failure", loginContext.getAuthenticationFailure());
             }
 
             if (requestContext.getSubjectNameIdentifier() != null) {
