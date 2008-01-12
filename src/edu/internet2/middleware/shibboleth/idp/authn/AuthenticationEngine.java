@@ -178,15 +178,14 @@ public class AuthenticationEngine extends HttpServlet {
                 LOG.debug("Forced authentication is required, filtering possible login handlers accordingly");
                 filterByForceAuthentication(loginContext, activeAuthnMethods, possibleLoginHandlers);
             } else {
-                if (activeAuthnMethods != null) {
-                    LOG.debug("Forced authentication not required, using existing authentication method");
-                    for (AuthenticationMethodInformation activeAuthnMethod : activeAuthnMethods) {
-                        if (possibleLoginHandlers.containsKey(activeAuthnMethod.getAuthenticationMethod())) {
-                            completeAuthenticationWithActiveMethod(activeAuthnMethod, httpRequest, httpResponse);
-                            return;
-                        }
+                LOG.debug("Forced authentication not required, trying existing authentication methods");
+                for (AuthenticationMethodInformation activeAuthnMethod : activeAuthnMethods) {
+                    if (possibleLoginHandlers.containsKey(activeAuthnMethod.getAuthenticationMethod())) {
+                        completeAuthenticationWithActiveMethod(activeAuthnMethod, httpRequest, httpResponse);
+                        return;
                     }
                 }
+                LOG.debug("No existing authentication method meets service provides requirements");
             }
 
             if (loginContext.isPassiveAuthRequired()) {
@@ -249,7 +248,7 @@ public class AuthenticationEngine extends HttpServlet {
      * handlers that have been and support force re-authentication may be used. Filter out any of the other ones.
      * 
      * @param loginContext current login context
-     * @param activeAuthnMethods currently active authentication methods
+     * @param activeAuthnMethods currently active authentication methods, never null
      * @param loginHandlers login handlers to filter
      * 
      * @throws ForceAuthenticationException thrown if no handlers remain after filtering
@@ -259,14 +258,11 @@ public class AuthenticationEngine extends HttpServlet {
             throws ForceAuthenticationException {
 
         LoginHandler loginHandler;
-
-        if (activeAuthnMethods != null) {
-            for (AuthenticationMethodInformation activeAuthnMethod : activeAuthnMethods) {
-                loginHandler = loginHandlers.get(activeAuthnMethod.getAuthenticationMethod());
-                if (loginHandler != null && !loginHandler.supportsForceAuthentication()) {
-                    for (String handlerSupportedMethods : loginHandler.getSupportedAuthenticationMethods()) {
-                        loginHandlers.remove(handlerSupportedMethods);
-                    }
+        for (AuthenticationMethodInformation activeAuthnMethod : activeAuthnMethods) {
+            loginHandler = loginHandlers.get(activeAuthnMethod.getAuthenticationMethod());
+            if (loginHandler != null && !loginHandler.supportsForceAuthentication()) {
+                for (String handlerSupportedMethods : loginHandler.getSupportedAuthenticationMethods()) {
+                    loginHandlers.remove(handlerSupportedMethods);
                 }
             }
         }
