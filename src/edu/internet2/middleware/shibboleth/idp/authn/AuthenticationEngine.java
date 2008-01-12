@@ -106,6 +106,7 @@ public class AuthenticationEngine extends HttpServlet {
     public static void returnToProfileHandler(LoginContext loginContext, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
         LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
+        httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
     }
 
@@ -399,7 +400,6 @@ public class AuthenticationEngine extends HttpServlet {
 
         LOG.debug("User {} authentication with authentication method {}", loginContext.getPrincipalName(), loginContext
                 .getAuthenticationMethod());
-
         returnToProfileHandler(loginContext, httpRequest, httpResponse);
     }
 
