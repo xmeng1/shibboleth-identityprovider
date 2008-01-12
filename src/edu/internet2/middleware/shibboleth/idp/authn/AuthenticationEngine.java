@@ -17,6 +17,7 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -166,9 +167,12 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Beginning user authentication process");
         try {
             Map<String, LoginHandler> possibleLoginHandlers = determinePossibleLoginHandlers(loginContext);
+            ArrayList<AuthenticationMethodInformation> activeAuthnMethods = new ArrayList<AuthenticationMethodInformation>();
+
             Session userSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-            Collection<AuthenticationMethodInformation> activeAuthnMethods = userSession.getAuthenticationMethods()
-                    .values();
+            if (userSession != null) {
+                activeAuthnMethods.addAll(userSession.getAuthenticationMethods().values());
+            }
 
             if (loginContext.isForceAuthRequired()) {
                 LOG.debug("Forced authentication is required, filtering possible login handlers accordingly");
