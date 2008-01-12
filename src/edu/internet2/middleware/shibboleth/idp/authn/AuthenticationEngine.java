@@ -342,7 +342,6 @@ public class AuthenticationEngine extends HttpServlet {
             HttpServletResponse httpResponse) {
         Session shibSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
 
-        LOG.debug("Populating login context with existing session and authentication method information.");
         loginContext.setAuthenticationDuration(authenticationMethod.getAuthenticationDuration());
         loginContext.setAuthenticationInstant(authenticationMethod.getAuthenticationInstant());
         loginContext.setAuthenticationMethod(authenticationMethod.getAuthenticationMethod());
@@ -353,6 +352,8 @@ public class AuthenticationEngine extends HttpServlet {
                 authenticationMethod);
         shibSession.getServicesInformation().put(serviceInfo.getEntityID(), serviceInfo);
 
+        LOG.debug("Treating user {} as authenticated via existing method {}", loginContext.getPrincipalName(),
+                loginContext.getAuthenticationMethod());
         returnToProfileHandler(loginContext, httpRequest, httpResponse);
     }
 
