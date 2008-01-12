@@ -74,6 +74,16 @@
         <servlet-name>UsernamePasswordAuthHandler</servlet-name>
         <url-pattern>/Authn/UserPassword</url-pattern>
     </servlet-mapping>
+    
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/idp-error.jsp</location>
+    </error-page>
+    
+    <error-page>
+        <error-code>404</error-code>
+        <location>/idp-404.jsp</location>
+    </error-page>
 
 <!-- Uncomment to use container managed authentication -->
 <!--
@@ -109,7 +119,7 @@
         <realm-name>IdP Password Authentication</realm-name>
         <form-login-config>
             <form-login-page>/login.jsp</form-login-page>
-            <form-error-page>/error.jsp</form-error-page>
+            <form-error-page>/login-error.jsp</form-error-page>
         </form-login-config>
     </login-config>
 -->
