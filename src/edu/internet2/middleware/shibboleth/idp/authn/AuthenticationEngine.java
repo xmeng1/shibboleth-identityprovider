@@ -92,8 +92,10 @@ public class AuthenticationEngine extends HttpServlet {
         LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         if (loginContext == null) {
             LOG.error("User HttpSession did not contain a login context.  Unable to return to authentication engine");
+            forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
+        }else{
+            forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
         }
-        forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
     }
 
     /**
