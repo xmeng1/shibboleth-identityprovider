@@ -106,6 +106,7 @@ public class AuthenticationEngine extends HttpServlet {
     public static void returnToProfileHandler(LoginContext loginContext, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
         LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
+        httpRequest.getSession().removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
     }
@@ -146,9 +147,6 @@ public class AuthenticationEngine extends HttpServlet {
             // The authn engine attaches it to the session to allow the handlers to do any number of
             // request/response pairs without maintaining or losing the login context
             loginContext = (LoginContext) httpRequest.getSession().getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        } else {
-            // Clean out any old state that might be lying around
-            httpRequest.getSession().removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         }
 
         if (loginContext == null) {
@@ -396,10 +394,9 @@ public class AuthenticationEngine extends HttpServlet {
             loginContext.setAuthenticationMethod(actualAuthnMethod);
         }
 
-        updateUserSession(loginContext, httpRequest, httpResponse);
-
-        LOG.debug("User {} authentication with authentication method {}", loginContext.getPrincipalName(), loginContext
+        LOG.debug("User {} authenticated with method {}", loginContext.getPrincipalName(), loginContext
                 .getAuthenticationMethod());
+        updateUserSession(loginContext, httpRequest, httpResponse);
         returnToProfileHandler(loginContext, httpRequest, httpResponse);
     }
 

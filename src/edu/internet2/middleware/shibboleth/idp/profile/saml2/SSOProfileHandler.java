@@ -126,17 +126,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        
         LoginContext loginContext = (LoginContext) servletRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-
         if (loginContext == null) {
-            log.debug("User session does not contain a login context, processing as first leg of request");
-            performAuthentication(inTransport, outTransport);
-        } else if (!loginContext.isPrincipalAuthenticated() && !loginContext.getAuthenticationAttempted()) {
-            log
-                    .debug("User session contained a login context but user was not authenticated, processing as first leg of request");
+            log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else {
-            log.debug("User session contains a login context, processing as second leg of request");
+            log.debug("Incoming request contains a login context, processing as second leg of request");
             completeAuthenticationRequest(inTransport, outTransport);
         }
     }
