@@ -108,8 +108,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         log.debug("Processing incoming request");
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        HttpSession httpSession = httpRequest.getSession();
-        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        LoginContext loginContext = (LoginContext) httpRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
         if (loginContext == null) {
             log.debug("User session does not contain a login context, processing as first leg of request");
@@ -138,7 +137,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
-        HttpSession httpSession = httpRequest.getSession(true);
 
         ShibbolethSSORequestContext requestContext = decodeRequest(inTransport, outTransport);
         ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
@@ -152,18 +150,16 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         }
         loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
 
-        httpSession.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+        httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
 
         try {
             RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(httpRequest, httpResponse);
             return;
         } catch (IOException ex) {
-            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
         } catch (ServletException ex) {
-            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
         }

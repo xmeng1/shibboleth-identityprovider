@@ -128,8 +128,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        HttpSession httpSession = servletRequest.getSession(true);
-        LoginContext loginContext = (LoginContext) httpSession.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        LoginContext loginContext = (LoginContext) servletRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
 
         if (loginContext == null) {
             log.debug("User session does not contain a login context, processing as first leg of request");
@@ -157,7 +156,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     protected void performAuthentication(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        HttpSession httpSession = servletRequest.getSession();
 
         try {
             SSORequestContext requestContext = decodeRequest(inTransport, outTransport);
@@ -181,19 +179,16 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
             }
 
-            httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+            servletRequest.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
             RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
         } catch (MarshallingException e) {
-            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Unable to marshall authentication request context");
             throw new ProfileException("Unable to marshall authentication request context", e);
         } catch (IOException ex) {
-            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
         } catch (ServletException ex) {
-            httpSession.removeAttribute(LoginContext.LOGIN_CONTEXT_KEY);
             log.error("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
             throw new ProfileException("Error forwarding SAML 2 AuthnRequest to AuthenticationManager", ex);
         }
