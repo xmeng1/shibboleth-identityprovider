@@ -63,10 +63,10 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Login page name. */
     private String loginPage = "login.jsp";
-    
+
     /** init-param which can be passed to the servlet to override the default login page. */
     private final String loginPageInitParam = "loginPage";
-    
+
     /** Parameter name to indicate login failure. */
     private final String failureParam = "loginFailed";
 
@@ -79,13 +79,13 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     /** {@inheritDoc} */
     public void init() {
         if (getInitParameter(jaasInitParam) != null) {
-            jaasConfigName = getInitParameter(jaasInitParam);        
+            jaasConfigName = getInitParameter(jaasInitParam);
         }
         if (getInitParameter(loginPageInitParam) != null) {
-            loginPage = getInitParameter(loginPageInitParam);        
-        }        
+            loginPage = getInitParameter(loginPageInitParam);
+        }
     }
-    
+
     /** {@inheritDoc} */
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
             IOException {
@@ -127,13 +127,14 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             urlBuilder.setHost(request.getLocalName());
             urlBuilder.setPort(request.getLocalPort());
             urlBuilder.setPath(pathBuilder.toString());
-            
+
             if (queryParams == null) {
                 queryParams = new ArrayList<Pair<String, String>>();
-                queryParams.add(new Pair<String, String>("actionUrl", request.getPathInfo()));
+                queryParams.add(new Pair<String, String>("actionUrl", request.getContextPath()
+                        + request.getServletPath()));
             }
             urlBuilder.getQueryParams().addAll(queryParams);
-            
+
             log.debug("Redirecting to login page {}", urlBuilder.buildURL());
             response.sendRedirect(urlBuilder.buildURL());
             return;
@@ -167,14 +168,14 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             Subject subject = jaasLoginCtx.getSubject();
             Set<Principal> principals = subject.getPrincipals();
 
-            if(principals.isEmpty()){
+            if (principals.isEmpty()) {
                 request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
-            }else{       
+            } else {
                 Principal principal = principals.iterator().next();
                 String principalName = DatatypeHelper.safeTrimOrNullString(principal.getName());
-                if(principalName == null){
+                if (principalName == null) {
                     request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
-                }else{
+                } else {
                     request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
                 }
                 request.setAttribute(LoginHandler.SUBJECT_KEY, jaasLoginCtx.getSubject());
