@@ -82,10 +82,10 @@
         secure.  Naturally some of these checks require the validation of the tokens evaluated by the trust 
         engines and so you'll see some rules that reference the declared trust engines.
     -->
-    <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:ExplicitKeySignature"
+    <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:MetadataExplicitKeySignature"
                           metadataProviderRef="ShibbolethMetadata" />
                           
-    <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:ExplicitKey"
+    <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:MetadataExplicitKey"
                           metadataProviderRef="ShibbolethMetadata" />
     
     <security:SecurityPolicy id="shibboleth.ShibbolethSSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
