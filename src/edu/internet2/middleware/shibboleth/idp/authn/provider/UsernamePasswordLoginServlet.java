@@ -103,7 +103,6 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             List<Pair<String, String>> queryParams = new ArrayList<Pair<String, String>>();
             queryParams.add(new Pair<String, String>(failureParam, "true"));
             redirectToLoginPage(request, response, queryParams);
-            return;
         }
     }
 
@@ -130,9 +129,10 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             if (queryParams == null) {
                 queryParams = new ArrayList<Pair<String, String>>();
-                queryParams.add(new Pair<String, String>("actionUrl", request.getContextPath()
-                        + request.getServletPath()));
             }
+            
+            queryParams.add(new Pair<String, String>("actionUrl", request.getContextPath()
+                    + request.getServletPath()));
             urlBuilder.getQueryParams().addAll(queryParams);
 
             log.debug("Redirecting to login page {}", urlBuilder.buildURL());
