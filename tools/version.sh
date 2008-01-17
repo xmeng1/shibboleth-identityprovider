@@ -30,7 +30,8 @@ fi
 LOCALCLASSPATH=$JAVA_HOME/lib/tools.jar:$JAVA_HOME/lib/classes.zip
 
 # add in the dependency .jar files from the lib directory
-LIBS=$LOCATION/../lib/*.jar
+LIBDIR=$LOCATION/../lib
+LIBS=$LIBDIR/*.jar
 for i in $LIBS
 do
     # if the directory is empty, then it will return the input string
@@ -40,4 +41,4 @@ do
     fi
 done
 
-"$JAVACMD" '-classpath' "$LOCALCLASSPATH" 'edu.internet2.middleware.shibboleth.idp.Version'
+"$JAVACMD" '-classpath' "$LOCALCLASSPATH" '-Djava.endorsed.dirs='"$LIBDIR" 'edu.internet2.middleware.shibboleth.idp.Version'
