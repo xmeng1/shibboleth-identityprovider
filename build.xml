@@ -193,6 +193,7 @@
             
         <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
             
+        <echo message="Generating signing and encryption key and certificate. "/>
         <selfSignedCert hostname="${idp.hostname}"
                         privateKeyFile="${idp.home}/credentials/idp.key"
                         certificateFile="${idp.home}/credentials/idp.crt" />
