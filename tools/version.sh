@@ -41,4 +41,4 @@ do
     fi
 done
 
-"$JAVACMD" '-classpath' "$LOCALCLASSPATH" '-Djava.endorsed.dirs='"$LIBDIR" 'edu.internet2.middleware.shibboleth.idp.Version'
+"$JAVACMD" '-classpath' "$LOCALCLASSPATH" 'edu.internet2.middleware.shibboleth.idp.Version'
