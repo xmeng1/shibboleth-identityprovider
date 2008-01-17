@@ -25,9 +25,9 @@
     <!-- ========================================== -->
     <!--      Relying Party Configurations          -->
     <!-- ========================================== -->
-    <AnonymousRelyingParty provider="http://example.org/IdP" />
+    <AnonymousRelyingParty provider="$IDP_ENTITY_ID$" />
     
-    <DefaultRelyingParty provider="http://example.org/IdP"
+    <DefaultRelyingParty provider="$IDP_ENTITY_ID$"
                          defaultSigningCredentialRef="IdPCredential">
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" />
         <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" />
@@ -63,6 +63,9 @@
                           metadataFile="$IDP_HOME$/metadata/somefile.xml" maintainExpiredMetadata="true" />
         -->
         
+        <!--  IDP's Metadata -->
+        <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
+                          metadataFile="$IDP_HOME$/metadata/idp-metadata.xml" maintainExpiredMetadata="true" />
     </MetadataProvider>
 
     
