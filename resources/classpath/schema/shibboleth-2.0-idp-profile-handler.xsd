@@ -46,6 +46,23 @@
             <xsd:extension base="RequestURIMappedProfileHandlerType" />
         </xsd:complexContent>
     </xsd:complexType>
+    
+    <xsd:complexType name="SAMLMetadata">
+        <xsd:annotation>
+            <xsd:documentation>Basic handler that returns a general status of the IdP.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="RequestURIMappedProfileHandlerType">
+                <xsd:attribute name="metadataFile" type="xsd:string" use="required">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Location of the static IdP metadata file.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
 
     <xsd:complexType name="SAML2SSO">
         <xsd:annotation>
