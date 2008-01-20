@@ -195,8 +195,9 @@
                        defaultvalue="${idp.home}" />
                 <var name="idp.home" value="${idp.home.input}" />
 
-                <input message="What is the hostname of the Shibboleth Identity Provider server?"
-                       addproperty="idp.hostname.inout" />
+                <input message="What is the hostname of the Shibboleth Identity Provider server? [default: ${idp.hostname}]"
+                       addproperty="idp.hostname.inout"
+                    defaultvalue="${idp.hostname}"/>
                 <var name="idp.hostname" value="${idp.hostname.input}" />
 
                 <propertyfile file="build.properties">
