@@ -201,8 +201,8 @@
                 <var name="idp.hostname" value="${idp.hostname.input}" />
 
                 <propertyfile file="build.properties">
-                    <var name="idp.hostname" value="${idp.hostname}" />
-                    <entry key="idp.home" value="${idp.home}" />
+                    <var name="idp.hostname" value="${idp.hostname.input}" />
+                    <entry key="idp.home" value="${idp.home.input}" />
                 </propertyfile>
 
                 <var name="idp.entity.id" value="https://${idp.hostname}/shibboleth" />
