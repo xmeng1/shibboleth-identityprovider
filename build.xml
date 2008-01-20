@@ -173,13 +173,6 @@
     </target>
 
     <target name="install" depends="package" description="Installs the identity provider software.">
-        <input message="Where should the Shibboleth Identity Provider software be installed? [default: ${idp.home}]"
-               addproperty="idp.home.input"
-               defaultvalue="${idp.home}" />
-        <var name="idp.home" value="${idp.home.input}" />
-
-        <input message="What is the hostname of the Shibboleth Identity Provider server?" addproperty="idp.hostname" />
-
         <mkdir dir="${idp.home}" />
         <mkdir dir="${idp.home}/bin" />
         <mkdir dir="${idp.home}/conf" />
@@ -189,61 +182,75 @@
         <mkdir dir="${idp.home}/metadata" />
         <mkdir dir="${idp.home}/war" />
 
-        <var name="idp.entity.id" value="https://${idp.hostname}/shibboleth" />
-            
-        <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
-            
-        <echo message="Generating signing and encryption key and certificate. "/>
-        <selfSignedCert hostname="${idp.hostname}"
-                        privateKeyFile="${idp.home}/credentials/idp.key"
-                        certificateFile="${idp.home}/credentials/idp.crt" />
-        <stringFromFile input="${idp.home}/credentials/idp.crt" addProperty="idp.cert" />
 
-        <copy todir="${idp.home}/bin" preservelastmodified="true">
-            <fileset dir="${tools.dir}" />
-            <filterset begintoken="$" endtoken="$">
-                <filter token="IDP_HOME" value="${idp.home}" />
-                <filter token="IDP_VERSION" value="${version}" />
-            </filterset>
-        </copy>
-        <chmod file="${idp.home}/bin/*.sh" perm="+x" />
+        <input message="Is this a new installation? Answering yes will overwrite your current configuration. [yes|no]"
+               addproperty="new.install"
+               defaultvalue="no" />
 
         <if>
-            <available file="${idp.home}/conf" />
+            <equals arg1="${new.install}" arg2="yes" />
             <then>
-                <mkdir dir="${idp.home}/conf.bak" />
-                <copy todir="${idp.home}/conf.bak" preservelastmodified="true">
-                    <fileset dir="${idp.home}/conf" />
+                <input message="Where should the Shibboleth Identity Provider software be installed? [default: ${idp.home}]"
+                       addproperty="idp.home.input"
+                       defaultvalue="${idp.home}" />
+                <var name="idp.home" value="${idp.home.input}" />
+
+                <input message="What is the hostname of the Shibboleth Identity Provider server?"
+                       addproperty="idp.hostname" />
+
+                <input message="Would you like to be asked these questions again, in th future, or always install using the answers you just provided? [yes/no]"
+                       addproperty="silent.install" />
+
+                <var name="idp.entity.id" value="https://${idp.hostname}/shibboleth" />
+
+                <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
+
+                <echo message="Generating signing and encryption key and certificate. " />
+                <selfSignedCert hostname="${idp.hostname}"
+                                privateKeyFile="${idp.home}/credentials/idp.key"
+                                certificateFile="${idp.home}/credentials/idp.crt" />
+
+                <copy todir="${idp.home}/bin" preservelastmodified="true">
+                    <fileset dir="${tools.dir}" />
+                    <filterset begintoken="$" endtoken="$">
+                        <filter token="IDP_HOME" value="${idp.home}" />
+                        <filter token="IDP_VERSION" value="${version}" />
+                    </filterset>
+                </copy>
+                <chmod file="${idp.home}/bin/*.sh" perm="+x" />
+
+                <copy todir="${idp.home}/conf" preservelastmodified="true" overwrite="${idp.overwrite-config}">
+                    <fileset dir="${conf.dir}" />
+                    <filterset begintoken="$" endtoken="$">
+                        <filter token="IDP_HOME" value="${idp.home}" />
+                        <filter token="IDP_VERSION" value="${version}" />
+                        <filter token="IDP_ENTITY_ID" value="${idp.entity.id}" />
+                        <filter token="IDP_SCOPE" value="${idp.scope}" />
+                        <filter token="IDP_CERTIFICATE" value="${idp.cert}" />
+                        <filter token="IDP_HOSTNAME" value="${idp.hostname}" />
+                    </filterset>
+                </copy>
+
+                <stringFromFile input="${idp.home}/credentials/idp.crt" addProperty="idp.cert" />
+                <regexSplit input="${idp.cert}"
+                            regex="\A.*-----\s((?:.*\s)*).*-----\Z"
+                            addproperty="idp.metadata.cert" />
+                <copy todir="${idp.home}/metadata" preservelastmodified="true" overwrite="${idp.overwrite-config}">
+                    <fileset dir="${metadata.dir}" />
+                    <filterset begintoken="$" endtoken="$">
+                        <filter token="IDP_ENTITY_ID" value="${idp.entity.id}" />
+                        <filter token="IDP_SCOPE" value="${idp.scope}" />
+                        <filter token="IDP_CERTIFICATE" value="${idp.metadata.cert}" />
+                        <filter token="IDP_HOSTNAME" value="${idp.hostname}" />
+                    </filterset>
                 </copy>
             </then>
         </if>
-
-        <copy todir="${idp.home}/conf" preservelastmodified="true" overwrite="${idp.overwrite-config}">
-            <fileset dir="${conf.dir}" />
-            <filterset begintoken="$" endtoken="$">
-                <filter token="IDP_HOME" value="${idp.home}" />
-                <filter token="IDP_VERSION" value="${version}" />
-                <filter token="IDP_ENTITY_ID" value="${idp.entity.id}" />
-                <filter token="IDP_SCOPE" value="${idp.scope}" />
-                <filter token="IDP_CERTIFICATE" value="${idp.cert}" />
-                <filter token="IDP_HOSTNAME" value="${idp.hostname}" />
-            </filterset>
-        </copy>
 
         <copy todir="${idp.home}/lib" preservelastmodified="true">
             <fileset dir="${lib.dir}" />
             <fileset file="${dist.dir}/${jar.name}" />
             <fileset file="${build-lib.dir}/servlet-2.4.jar" />
-        </copy>
-
-        <copy todir="${idp.home}/metadata" preservelastmodified="true" overwrite="${idp.overwrite-config}">
-            <fileset dir="${metadata.dir}" />
-            <filterset begintoken="$" endtoken="$">
-                <filter token="IDP_ENTITY_ID" value="${idp.entity.id}" />
-                <filter token="IDP_SCOPE" value="${idp.scope}" />
-                <filter token="IDP_CERTIFICATE" value="${idp.cert}" />
-                <filter token="IDP_HOSTNAME" value="${idp.hostname}" />
-            </filterset>
         </copy>
 
         <copy todir="${webinf-temp.dir}">
@@ -259,8 +266,8 @@
             <zipfileset dir="${lib.dir}" prefix="WEB-INF/lib/" />
             <zipfileset file="${dist.dir}/${jar.name}" prefix="WEB-INF/lib/" />
         </jar>
-
     </target>
+
 
     <!-- **************************************************************** -->
     <!-- ***                                                          *** -->
