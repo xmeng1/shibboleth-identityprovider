@@ -201,7 +201,7 @@
                 <var name="idp.hostname" value="${idp.hostname.input}" />
 
                 <propertyfile file="build.properties">
-                    <var name="idp.hostname" value="${idp.hostname.input}" />
+                    <entry key="idp.hostname" value="${idp.hostname.input}" />
                     <entry key="idp.home" value="${idp.home.input}" />
                 </propertyfile>
 
