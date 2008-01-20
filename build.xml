@@ -196,7 +196,13 @@
                 <var name="idp.home" value="${idp.home.input}" />
 
                 <input message="What is the hostname of the Shibboleth Identity Provider server?"
-                       addproperty="idp.hostname" />
+                       addproperty="idp.hostname.inout" />
+                <var name="idp.hostname" value="${idp.hostname.input}" />
+
+                <propertyfile file="build.properties">
+                    <var name="idp.hostname" value="${idp.hostname}" />
+                    <entry key="idp.home" value="${idp.home}" />
+                </propertyfile>
 
                 <var name="idp.entity.id" value="https://${idp.hostname}/shibboleth" />
 
