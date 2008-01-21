@@ -45,7 +45,7 @@
     <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
             
             <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
-                <!-- MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.SignatureTrustEngine" /-->
+                <MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.MetadataTrustEngine" />
             </MetadataFilter>
         
         <!-- MetadataProvider reading metadata from a URL. -->
@@ -76,6 +76,19 @@
         <security:PrivateKey password="changeit">$IDP_HOME$/credentials/idp.key</security:PrivateKey>
         <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
     </security:Credential>
+    
+    <!-- Shibboleth metadata. -->
+    <security:TrustEngine id="shibboleth.MetadataTrustEngine" xsi:type="security:StaticExplicitKeySignature">
+        <security:Credential id="IdPMetadataCredentials" xsi:type="security:X509Filesystem">
+            <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
+        </security:Credential>
+        <!-- Add additional credentials for each federation signing key -->
+        <!--
+        <security:Credential id="IdPMetadataCredentials" xsi:type="security:X509Filesystem">
+            <security:Certificate>$IDP_HOME$/credentials/federation1.crt</security:Certificate>
+        </security:Credential>
+        -->
+    </security:TrustEngine>
     
     <!-- DO NOT EDIT BELOW THIS POINT -->
     <!-- 
