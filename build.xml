@@ -172,17 +172,7 @@
 
     </target>
 
-    <target name="install" depends="package" description="Installs the identity provider software.">
-        <mkdir dir="${idp.home}" />
-        <mkdir dir="${idp.home}/bin" />
-        <mkdir dir="${idp.home}/conf" />
-        <mkdir dir="${idp.home}/credentials" />
-        <mkdir dir="${idp.home}/lib" />
-        <mkdir dir="${idp.home}/logs" />
-        <mkdir dir="${idp.home}/metadata" />
-        <mkdir dir="${idp.home}/war" />
-
-
+    <target name="install" description="Installs the identity provider software.">
         <input message="Is this a new installation? Answering yes will overwrite your current configuration. [yes|no]"
                addproperty="new.install"
                defaultvalue="no" />
@@ -204,6 +194,15 @@
                     <entry key="idp.home" value="${idp.home.input}" />
                     <entry key="idp.hostname" value="${idp.hostname.input}" />
                 </propertyfile>
+
+                <mkdir dir="${idp.home}" />
+                <mkdir dir="${idp.home}/bin" />
+                <mkdir dir="${idp.home}/conf" />
+                <mkdir dir="${idp.home}/credentials" />
+                <mkdir dir="${idp.home}/lib" />
+                <mkdir dir="${idp.home}/logs" />
+                <mkdir dir="${idp.home}/metadata" />
+                <mkdir dir="${idp.home}/war" />
 
                 <var name="idp.entity.id" value="https://${idp.hostname}/shibboleth" />
 
