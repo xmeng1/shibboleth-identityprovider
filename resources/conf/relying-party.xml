@@ -77,7 +77,7 @@
         <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
     </security:Credential>
     
-    <!-- Shibboleth metadata. -->
+    <!-- Trust engine used to evaluate the signature on loaded metadata. -->
     <security:TrustEngine id="shibboleth.MetadataTrustEngine" xsi:type="security:StaticExplicitKeySignature">
         <security:Credential id="IdPMetadataCredentials" xsi:type="security:X509Filesystem">
             <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
