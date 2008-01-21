@@ -43,24 +43,24 @@
     <!-- ========================================== -->
     <!-- MetadataProvider the combining other MetadataProviders -->
     <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-            
-            <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
-                <MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.MetadataTrustEngine" />
-            </MetadataFilter>
         
         <!-- MetadataProvider reading metadata from a URL. -->
         <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
         <!--
         <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
                           metadataURL="http://example.org/my/metadata/file.xml" 
-                          backingFile="$IDP_HOME$/temp/metadata/somefile.xml" />
-        -->
+                          backingFile="$IDP_HOME$/temp/metadata/somefile.xml">
+            <MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.MetadataTrustEngine" />           
+        </MetadataProvider>
+        -->              
 
         <!-- MetadataProvider reading metadata from the filesystem -->
         <!-- Fill in metadataFile attribute with deployment specific information -->
         <!--
         <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                          metadataFile="$IDP_HOME$/metadata/somefile.xml" maintainExpiredMetadata="true" />
+                          metadataFile="$IDP_HOME$/metadata/somefile.xml" maintainExpiredMetadata="true">
+             <MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.MetadataTrustEngine" />
+        </MetadataProvider>
         -->
         
         <!--  IDP's Metadata -->
