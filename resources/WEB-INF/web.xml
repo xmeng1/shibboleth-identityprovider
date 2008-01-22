@@ -76,8 +76,8 @@
     </servlet-mapping>
     
     <error-page>
-        <exception-type>java.lang.Exception</exception-type>
-        <location>/idp-error.jsp</location>
+        <error-code>500</error-code>
+        <location>/idp-exception.jsp</location>
     </error-page>
     
     <error-page>
