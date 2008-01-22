@@ -534,9 +534,8 @@
                 (uid=$requestContext.principalName)
             ]]>
         </FilterTemplate>
-     -->
-
     </resolver:DataConnector>
+    -->
 
     <!-- ========================================== -->
     <!--      Principal Connectors                  -->
