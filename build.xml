@@ -190,7 +190,7 @@
                        defaultvalue="${idp.hostname}" />
                 <var name="idp.hostname" value="${idp.hostname.input}" />
 
-                <propertyfile file="build.properties">
+                <propertyfile file="install.properties">
                     <entry key="idp.home" value="${idp.home.input}" />
                     <entry key="idp.hostname" value="${idp.hostname.input}" />
                 </propertyfile>
