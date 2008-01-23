@@ -4,7 +4,7 @@
     
     <!--
         Loggers define indicate which packages/categories are logged, at which level, and to which appender.
-        Levels: ALL, ERROR, WARN, INFO, DEBUG, OFF
+        Levels: ALL, ERROR, WARN, INFO, DEBUG, TRACE, OFF
     -->
     <!-- Logs IdP, but not OpenSAML, messages -->
     <logger name="edu.internet2.middleware.shibboleth">
@@ -69,13 +69,6 @@
             <Pattern>%date{HH:mm:ss.SSS} %level [%logger:%line] - %msg%n%ex{full}%n</Pattern>
         </layout>
     </appender>
-
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <ImmediateFlush>true</ImmediateFlush>
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%date{HH:mm:ss.SSS} %level [%logger] %msg%n%ex{full}%n</Pattern>
-        </layout>
-    </appender>   
   
     <logger name="Shibboleth-Access">
         <level value="ALL" />
@@ -92,7 +85,7 @@
     </logger>
     
     <logger name="org.apache.catalina">
-        <level value="OFF" />
+        <level value="ERROR" />
     </logger>    
 
     <root>

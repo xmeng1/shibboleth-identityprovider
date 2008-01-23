@@ -204,7 +204,7 @@
                 <mkdir dir="${idp.home}/metadata" />
                 <mkdir dir="${idp.home}/war" />
 
-                <var name="idp.entity.id" value="https://${idp.hostname}/shibboleth" />
+                <var name="idp.entity.id" value="https://${idp.hostname}/idp/shibboleth" />
 
                 <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
 

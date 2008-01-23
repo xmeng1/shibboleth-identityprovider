@@ -49,10 +49,9 @@
         <!--
         <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
                           metadataURL="http://example.org/my/metadata/file.xml" 
-                          backingFile="$IDP_HOME$/temp/metadata/somefile.xml">
-            <MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.MetadataTrustEngine" />           
-        </MetadataProvider>
-        -->              
+                          backingFile="$IDP_HOME$/metadata/somefile.xml" />
+        -->
+        
 
         <!-- MetadataProvider reading metadata from the filesystem -->
         <!-- Fill in metadataFile attribute with deployment specific information -->
@@ -73,23 +72,19 @@
     <!--     Security Configurations                -->
     <!-- ========================================== -->
     <security:Credential id="IdPCredential" xsi:type="security:X509Filesystem">
-        <security:PrivateKey password="changeit">$IDP_HOME$/credentials/idp.key</security:PrivateKey>
+        <security:PrivateKey>$IDP_HOME$/credentials/idp.key</security:PrivateKey>
         <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
     </security:Credential>
     
     <!-- Trust engine used to evaluate the signature on loaded metadata. -->
+    <!--
     <security:TrustEngine id="shibboleth.MetadataTrustEngine" xsi:type="security:StaticExplicitKeySignature">
-        <security:Credential id="IdPMetadataCredentials" xsi:type="security:X509Filesystem">
-            <security:Certificate>$IDP_HOME$/credentials/idp.crt</security:Certificate>
-        </security:Credential>
-        <!-- Add additional credentials for each federation signing key -->
-        <!--
-        <security:Credential id="IdPMetadataCredentials" xsi:type="security:X509Filesystem">
+        <security:Credential id="MyFederation1Credentials" xsi:type="security:X509Filesystem">
             <security:Certificate>$IDP_HOME$/credentials/federation1.crt</security:Certificate>
         </security:Credential>
-        -->
     </security:TrustEngine>
-    
+     -->
+     
     <!-- DO NOT EDIT BELOW THIS POINT -->
     <!-- 
         The following trust engines and rules control every aspect of security related to incoming messages. 
