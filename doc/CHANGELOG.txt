@@ -1,3 +1,9 @@
+Shibboleth IdP 2.0 Release Candidate 1 (23-Jan-08)
+The following additional functionality is available in this release candidate:
+* Persistent, Computed, and Transient Identifiers
+* Data connector failover
+* Tons of bug fixes
+
 Shibboleth 2.0 Beta 2 (19-Nov-2007)
 The following functionality is available in this release:
 * Authentication
@@ -33,11 +39,3 @@ The following functionality is available in this release:
   - A new logging framework based on Logback (logback.org) with a new logging configuration 
     file, $IDP_HOME/conf/logging.xml
   - File, HTTP, file-backed HTTP, and chaining metadata providers
-
-The following functionality is not available in this release but is scheduled
-for the final release:
-- NameID Decryption
-- Attribute encryption and decryption
-- Persistent Identifiers
-- Data connector failover
-- IP based authentication (available but untested)
