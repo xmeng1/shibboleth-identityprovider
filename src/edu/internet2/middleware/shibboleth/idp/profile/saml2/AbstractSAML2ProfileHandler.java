@@ -736,7 +736,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         }
 
         if (nameFormats.isEmpty()) {
-            nameFormats.add("urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified");
+            nameFormats.add("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified");
         }
 
         // If authn request and name ID policy format specified, make sure it's in the list of supported formats

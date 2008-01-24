@@ -486,9 +486,6 @@
 
         <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:transient" />
-            
-        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
-            nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
     </resolver:AttributeDefinition>
 
     <!-- ========================================== -->
@@ -548,8 +545,5 @@
 
     <resolver:PrincipalConnector xsi:type="Transient" xmlns="urn:mace:shibboleth:2.0:resolver:pc" id="saml2Transient"
         nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:transient" />
-        
-    <resolver:PrincipalConnector xsi:type="Transient" xmlns="urn:mace:shibboleth:2.0:resolver:pc" id="saml2Unspec"
-        nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified" />
 
 </AttributeResolver>
