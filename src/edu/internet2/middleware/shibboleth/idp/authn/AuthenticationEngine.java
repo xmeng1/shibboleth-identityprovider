@@ -455,7 +455,7 @@ public class AuthenticationEngine extends HttpServlet {
         sessionCookie.setSecure(false);
 
         int maxAge = (int) (userSession.getInactivityTimeout() / 1000);
-        sessionCookie.setMaxAge(maxAge);
+        sessionCookie.setMaxAge(-1);
 
         httpResponse.addCookie(sessionCookie);
     }
