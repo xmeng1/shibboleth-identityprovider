@@ -77,12 +77,12 @@
     
     <error-page>
         <error-code>500</error-code>
-        <location>/idp-exception.jsp</location>
+        <location>/error.jsp</location>
     </error-page>
     
     <error-page>
         <error-code>404</error-code>
-        <location>/idp-404.jsp</location>
+        <location>/error.jsp</location>
     </error-page>
 
 <!-- Uncomment to use container managed authentication -->
