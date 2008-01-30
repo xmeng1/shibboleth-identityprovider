@@ -408,7 +408,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         HTTPInTransport inTransport = (HTTPInTransport) requestContext.getInboundMessageTransport();
         subjectLocality.setIPAddress(inTransport.getPeerAddress());
-        subjectLocality.setDNSAddress(inTransport.getPeerDomainName());
 
         return subjectLocality;
     }

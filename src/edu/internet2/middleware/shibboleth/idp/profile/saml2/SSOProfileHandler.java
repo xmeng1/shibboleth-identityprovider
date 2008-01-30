@@ -499,7 +499,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         HTTPInTransport transport = (HTTPInTransport) requestContext.getInboundMessageTransport();
         SubjectLocality subjectLocality = subjectLocalityBuilder.buildObject();
         subjectLocality.setAddress(transport.getPeerAddress());
-        subjectLocality.setDNSName(transport.getPeerDomainName());
 
         return subjectLocality;
     }
