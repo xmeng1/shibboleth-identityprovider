@@ -247,7 +247,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 AttributeStatement attributeStatement = buildAttributeStatement(requestContext,
                         "urn:oasis:names:tc:SAML:1.0:cm:bearer");
                 if (attributeStatement != null) {
-                    requestContext.setRequestedAttributes(requestContext.getPrincipalAttributes().keySet());
+                    requestContext.setRequestedAttributes(requestContext.getAttributes().keySet());
                     statements.add(attributeStatement);
                 }
             }

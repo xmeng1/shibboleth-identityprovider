@@ -87,7 +87,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             } else {
                 resolvePrincipal(requestContext);
                 resolveAttributes(requestContext);
-                requestContext.setReleasedAttributes(requestContext.getPrincipalAttributes().keySet());
+                requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
 
                 ArrayList<Statement> statements = new ArrayList<Statement>();
                 AttributeStatement attributeStatement = buildAttributeStatement(requestContext,

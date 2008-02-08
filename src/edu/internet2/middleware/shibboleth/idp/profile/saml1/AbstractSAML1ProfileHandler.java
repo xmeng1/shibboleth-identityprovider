@@ -310,7 +310,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             throws ProfileException {
         log.debug("Building assertion NameIdentifier to relying party {} for principal {}", requestContext
                 .getInboundMessageIssuer(), requestContext.getPrincipalName());
-        Map<String, BaseAttribute> principalAttributes = requestContext.getPrincipalAttributes();
+        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
         if (principalAttributes == null || principalAttributes.isEmpty()) {
             log.error("No attributes for principal {}, unable to construct of NameID", requestContext
                     .getPrincipalName());
@@ -537,10 +537,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             AttributeStatement statment;
             if (requestContext.getInboundSAMLMessage() instanceof AttributeQuery) {
                 statment = attributeAuthority.buildAttributeStatement((AttributeQuery) requestContext
-                        .getInboundSAMLMessage(), requestContext.getPrincipalAttributes().values());
+                        .getInboundSAMLMessage(), requestContext.getAttributes().values());
             } else {
-                statment = attributeAuthority.buildAttributeStatement(null, requestContext.getPrincipalAttributes()
-                        .values());
+                statment = attributeAuthority.buildAttributeStatement(null, requestContext.getAttributes().values());
             }
 
             if (statment != null) {
