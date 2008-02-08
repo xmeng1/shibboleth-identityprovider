@@ -57,6 +57,11 @@ public class SessionImpl extends AbstractSession implements Session {
         return authnMethods;
     }
 
+    /** {@inheritDoc} */
+    public Map<String, ServiceInformation> getServicesInformation() {
+        return servicesInformation;
+    }
+    
     /**
      * Gets the service information for the given entity ID.
      * 
@@ -66,10 +71,5 @@ public class SessionImpl extends AbstractSession implements Session {
      */
     public ServiceInformation getServiceInformation(String entityId) {
         return servicesInformation.get(entityId);
-    }
-
-    /** {@inheritDoc} */
-    public Map<String, ServiceInformation> getServicesInformation() {
-        return servicesInformation;
     }
 }

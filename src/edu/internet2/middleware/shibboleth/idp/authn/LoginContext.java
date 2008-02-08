@@ -40,9 +40,9 @@ import org.joda.time.DateTime;
  * 
  * The {@link AuthenticationEngine} or an {@link LoginHandler} should set the
  * {@link LoginContext#setAuthenticationAttempted()}, {@link LoginContext#setPrincipalAuthenticated(boolean)},
- * {@link LoginContext#setAuthnFailure(String)}, {@link LoginContext#{setAuthenticationDuration(long)}
- * {@link LoginContext#setAuthenticationInstant(DateTime)} appropriately.
- * 
+ * {@link LoginContext#setAuthenticationFailure(AuthenticationException)},
+ * {@link LoginContext#{setAuthenticationDuration(long)} {@link LoginContext#setAuthenticationInstant(DateTime)}
+ * appropriately.
  */
 public class LoginContext implements Serializable {
 
@@ -93,7 +93,7 @@ public class LoginContext implements Serializable {
 
     /** The session id. */
     private String sessionID;
-    
+
     /** List of request authentication methods. */
     private ArrayList<String> requestAuthenticationMethods;
 
