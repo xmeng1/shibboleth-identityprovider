@@ -41,7 +41,7 @@ import org.joda.time.DateTime;
  * The {@link AuthenticationEngine} or an {@link LoginHandler} should set the
  * {@link LoginContext#setAuthenticationAttempted()}, {@link LoginContext#setPrincipalAuthenticated(boolean)},
  * {@link LoginContext#setAuthenticationFailure(AuthenticationException)},
- * {@link LoginContext#{setAuthenticationDuration(long)} {@link LoginContext#setAuthenticationInstant(DateTime)}
+ * {@link LoginContext#setAuthenticationDuration(long)}, {@link LoginContext#setAuthenticationInstant(DateTime)}
  * appropriately.
  */
 public class LoginContext implements Serializable {
