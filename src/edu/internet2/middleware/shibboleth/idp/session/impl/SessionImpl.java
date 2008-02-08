@@ -57,7 +57,13 @@ public class SessionImpl extends AbstractSession implements Session {
         return authnMethods;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * Gets the service information for the given entity ID.
+     * 
+     * @param entityId entity ID to retrieve the service information for
+     * 
+     * @return the service information or null
+     */
     public ServiceInformation getServiceInformation(String entityId) {
         return servicesInformation.get(entityId);
     }

@@ -26,7 +26,7 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerName
 import edu.internet2.middleware.shibboleth.idp.profile.saml2.SSOProfileHandler;
 
 /**
- * Spring bean definition parser for {@link AuthenticationRequestBrowserPost} profile handlers.
+ * Spring bean definition parser for {@link SSOProfileHandler} profile handlers.
  */
 public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2ProfileHandlerBeanDefinitionParser {
 

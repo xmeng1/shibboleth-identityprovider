@@ -26,7 +26,7 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.AbstractSAML
 import edu.internet2.middleware.shibboleth.idp.profile.saml1.AttributeQueryProfileHandler;
 
 /**
- * Spring bean definition parser for {@link HTTPSOAPAttributeQuery} profile handlers.
+ * Spring bean definition parser for {@link AttributeQueryProfileHandler} profile handlers.
  */
 public class SAML1AttributeQueryProfileHandlerBeanDefinitionParser extends
         AbstractSAML2ProfileHandlerBeanDefinitionParser {

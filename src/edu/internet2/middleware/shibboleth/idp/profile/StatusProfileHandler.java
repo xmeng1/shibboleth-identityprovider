@@ -36,11 +36,6 @@ public class StatusProfileHandler extends AbstractRequestURIMappedProfileHandler
     private final Logger log = LoggerFactory.getLogger(StatusProfileHandler.class);
 
     /** {@inheritDoc} */
-    public String getProfileId() {
-        return "urn:mace:shibboleth:2.0:idp:profiles:status";
-    }
-
-    /** {@inheritDoc} */
     public void processRequest(InTransport in, OutTransport out) {
         try {
             OutputStreamWriter writer = new OutputStreamWriter(out.getOutgoingStream());

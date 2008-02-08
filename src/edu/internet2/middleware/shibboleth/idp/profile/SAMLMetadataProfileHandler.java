@@ -61,11 +61,6 @@ public class SAMLMetadataProfileHandler extends AbstractRequestURIMappedProfileH
     }
 
     /** {@inheritDoc} */
-    public String getProfileId() {
-        return "urn:mace:shibboleth:2.0:idp:profiles:saml2:metadata";
-    }
-
-    /** {@inheritDoc} */
     public void processRequest(InTransport in, OutTransport out) throws ProfileException {
         XMLObject metadata;
 

@@ -354,7 +354,7 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Gets the {@link Session} ID.
+     * Gets the {@link edu.internet2.middleware.shibboleth.idp.session.Session} ID.
      * 
      * @return the Session id
      */
@@ -363,7 +363,7 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Sets the {@link Session} ID.
+     * Sets the {@link edu.internet2.middleware.shibboleth.idp.session.Session} ID.
      * 
      * @param id the Session ID
      */
