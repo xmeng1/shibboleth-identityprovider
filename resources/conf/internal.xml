@@ -15,7 +15,7 @@
     	<constructor-arg value="600000" />
     </bean>
     
-    <!-- Spring configuration file that boostraps OpenSAML -->
+    <!-- Spring configuration file that bootstraps OpenSAML -->
     <bean id="shibboleth.OpensamlConfig" class="edu.internet2.middleware.shibboleth.common.config.OpensamlConfigBean" depends-on="shibboleth.LogbackLogging">
         <constructor-arg>
             <list>

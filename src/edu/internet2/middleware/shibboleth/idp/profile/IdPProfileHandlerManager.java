@@ -139,7 +139,7 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     }
 
     /** {@inheritDoc} */
-    protected void newContextCreated(ApplicationContext newServiceContext) {
+    protected void onNewContextCreated(ApplicationContext newServiceContext) {
         log.debug("{}: Loading new configuration into service", getId());
         Lock writeLock = getReadWriteLock().writeLock();
         writeLock.lock();
