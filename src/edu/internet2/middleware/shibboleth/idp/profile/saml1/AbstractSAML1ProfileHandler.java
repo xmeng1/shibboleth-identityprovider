@@ -388,7 +388,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         if (nameFormats.isEmpty()) {
-            nameFormats.add("urn:oasis:names:tc:SAML:1.0:nameid-format:unspecified");
+            nameFormats.add("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified");
         }
 
         return nameFormats;
