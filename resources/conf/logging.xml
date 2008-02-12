@@ -9,15 +9,12 @@
     <!-- Logs IdP, but not OpenSAML, messages -->
     <logger name="edu.internet2.middleware.shibboleth">
         <level value="INFO" />
-        <!-- Appender, IDP_PROCESS, is inherited from the root logger -->
     </logger>
 
     <!-- Logs OpenSAML, but not IdP, messages -->
     <logger name="org.opensaml">
         <level value="WARN" />
-        <!-- Appender, IDP_PROCESS, is inherited from the root logger -->
     </logger>
-    
 
     <!-- 
         Normally you should not edit below this point.  These default configurations are sufficient for 
@@ -66,7 +63,7 @@
 
         <layout class="ch.qos.logback.classic.PatternLayout">
             <!-- General logging pattern -->
-            <Pattern>%date{HH:mm:ss.SSS} %level [%logger:%line] - %msg%n%ex{full}%n</Pattern>
+            <Pattern>%date{HH:mm:ss.SSS} %level [%logger:%line] - %msg%n</Pattern>
         </layout>
     </appender>
   
@@ -89,7 +86,7 @@
     </logger>    
 
     <root>
-        <level value="WARN" />
+        <level value="ERROR" />
         <appender-ref ref="IDP_PROCESS" />
     </root>
 
