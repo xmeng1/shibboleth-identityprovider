@@ -22,6 +22,8 @@ import java.util.Map;
 import javax.xml.namespace.QName;
 
 import org.opensaml.xml.util.XMLHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractSimpleBeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
@@ -40,6 +42,9 @@ public class IdPConfigBeanDefinitionParser extends AbstractSimpleBeanDefinitionP
 
     /** Schema type. */
     public static final QName SCHEMA_TYPE = new QName(IdPServicesNamespaceHandler.NAMESPACE, "IdPConfigType");
+    
+    /** Class logger. */
+    private final Logger log = LoggerFactory.getLogger(IdPConfigBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
@@ -48,9 +53,11 @@ public class IdPConfigBeanDefinitionParser extends AbstractSimpleBeanDefinitionP
 
     /** {@inheritDoc} */
     protected void doParse(Element config, ParserContext context, BeanDefinitionBuilder builder) {
+        log.info("Beginning to load IdP configuration");
         Map<QName, List<Element>> configChildren = XMLHelper.getChildElements(config);
         List<Element> children = configChildren.get(new QName(ServiceNamespaceHandler.NAMESPACE, "Service"));
         builder.addConstructorArg(SpringConfigurationUtils.parseCustomElements(children, context));
+        log.info("Finished loading IdP configuration");
     }
     
     /** {@inheritDoc} */
