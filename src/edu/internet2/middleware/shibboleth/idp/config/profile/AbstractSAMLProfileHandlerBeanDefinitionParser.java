@@ -36,7 +36,7 @@ public abstract class AbstractSAMLProfileHandlerBeanDefinitionParser extends
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
-        log.info("Parsing configuration for {} SAML profile handler.", config.getLocalName());
+        log.info("Parsing configuration for {} SAML profile handler.", XMLHelper.getXSIType(config).getLocalPart());
         super.doParse(config, builder);
 
         builder.addPropertyReference("idGenerator", config.getAttributeNS(null, "idGeneratorId"));

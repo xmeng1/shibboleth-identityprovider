@@ -51,7 +51,7 @@ public class UsernamePasswordLoginHandlerBeanDefinitionParser extends
                 "authenticationServletURL")));
 
         String jaasConfigurationURL = DatatypeHelper.safeTrim(config.getAttributeNS(null, "jaasConfigurationLocation"));
-        log.info("Setting JAAS configuration file to: {}", jaasConfigurationURL);
+        log.debug("Setting JAAS configuration file to: {}", jaasConfigurationURL);
         System.setProperty("java.security.auth.login.config", jaasConfigurationURL);
     }
 }

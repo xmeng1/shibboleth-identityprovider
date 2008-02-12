@@ -39,7 +39,7 @@ public abstract class AbstractLoginHandlerBeanDefinitionParser extends AbstractS
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
-        log.info("Parsing configuration for {} authentication handler.", config.getLocalName());
+        log.debug("Parsing configuration for {} authentication handler.", XMLHelper.getXSIType(config).getLocalPart());
         
         int duration = Integer.parseInt(config.getAttributeNS(null, "authenticationDuration"));
         log.debug("Authentication handler declared duration of {} minutes", duration);
