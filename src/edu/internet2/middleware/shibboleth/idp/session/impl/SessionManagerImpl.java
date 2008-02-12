@@ -38,17 +38,17 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
     /** Spring context used to publish login and logout events. */
     private ApplicationContext appCtx;
-    
+
     /** Number of random bits within a session ID. */
     private final int sessionIDSize = 32;
-    
+
     /** A {@link SecureRandom} PRNG to generate session IDs. */
     private final SecureRandom prng = new SecureRandom();
 
     /** Backing service used to store sessions. */
     private StorageService<String, SessionManagerEntry> sessionStore;
 
-    /** Parition in which entries are stored. */
+    /** Partition in which entries are stored. */
     private String partition;
 
     /** Lifetime, in milliseconds, of session. */
@@ -95,10 +95,11 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         byte[] sid = new byte[sessionIDSize];
         prng.nextBytes(sid);
         String sessionID = Base64.encodeBytes(sid);
-        
+
         Session session = new SessionImpl(sessionID, principal, sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
-        sessionStore.put(partition, session.getSessionID(), sessionEntry);
+        sessionStore.put(partition, sessionID, sessionEntry);
+        sessionStore.put(partition, principal, sessionEntry);
         appCtx.publishEvent(new LoginEvent(session));
         return session;
     }
@@ -132,6 +133,13 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         } else {
             return sessionEntry.getSession();
         }
+    }
+    
+    /** {@inheritDoc} */
+    public Session getSessionByPrincipalName(String name) {
+        
+        //TODO
+        return null;
     }
 
     /**
