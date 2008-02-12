@@ -45,6 +45,8 @@ import org.slf4j.LoggerFactory;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
+import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** SAML 2.0 Attribute Query profile handler. */
 public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
@@ -81,26 +83,36 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
                         "SAML 2 Attribute Query profile is not configured for relying party "
                                 + requestContext.getInboundMessageIssuer()));
-                throw new ProfileException("SAML 2 Attribute Query profile is not configured for relying party "
-                        + requestContext.getInboundMessageIssuer());
+                samlResponse = buildErrorResponse(requestContext);
+            } else {
+                checkSamlVersion(requestContext);
+
+                // Resolve attribute query name id to principal name and place in context
+                resolvePrincipal(requestContext);
+
+                Session idpSession = getSessionManager().getSession(requestContext.getPrincipalName());
+                if (idpSession != null) {
+                    AuthenticationMethodInformation authnInfo = idpSession.getAuthenticationMethods().get(
+                            requestContext.getInboundMessageIssuer());
+                    if (authnInfo != null) {
+                        requestContext.setPrincipalAuthenticationMethod(authnInfo.getAuthenticationMethod());
+                    }
+                }
+
+                resolveAttributes(requestContext);
+                requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
+
+                // Lookup principal name and attributes, create attribute statement from information
+                ArrayList<Statement> statements = new ArrayList<Statement>();
+                AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
+                if (attributeStatement != null) {
+                    statements.add(attributeStatement);
+                }
+
+                // create the SAML response
+                samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches",
+                        statements);
             }
-
-            checkSamlVersion(requestContext);
-
-            // Resolve attribute query name id to principal name and place in context
-            resolvePrincipal(requestContext);
-            resolveAttributes(requestContext);
-            requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
-
-            // Lookup principal name and attributes, create attribute statement from information
-            ArrayList<Statement> statements = new ArrayList<Statement>();
-            AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
-            if (attributeStatement != null) {
-                statements.add(attributeStatement);
-            }
-
-            // create the SAML response
-            samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:sender-vouches", statements);
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
         }
@@ -170,7 +182,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             AttributeQuery query = requestContext.getInboundSAMLMessage();
             if (query != null) {
                 Subject subject = query.getSubject();
-                if(subject == null){
+                if (subject == null) {
                     log.error("Attribute query did not contain a proper subject");
                     requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, null,
                             "Attribute query did not contain a proper subject"));

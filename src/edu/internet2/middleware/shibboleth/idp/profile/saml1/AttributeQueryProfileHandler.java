@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AttributeQueryConfiguration;
+import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /**
  * SAML 1 Attribute Query profile handler.
@@ -86,6 +88,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 samlResponse = buildErrorResponse(requestContext);
             } else {
                 resolvePrincipal(requestContext);
+                
+                Session idpSession = getSessionManager().getSession(requestContext.getPrincipalName());
+                if(idpSession != null){
+                    AuthenticationMethodInformation authnInfo = idpSession.getAuthenticationMethods().get(requestContext.getInboundMessageIssuer());
+                    if(authnInfo != null){
+                        requestContext.setPrincipalAuthenticationMethod(authnInfo.getAuthenticationMethod());
+                    }
+                }
+                
                 resolveAttributes(requestContext);
                 requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
 
