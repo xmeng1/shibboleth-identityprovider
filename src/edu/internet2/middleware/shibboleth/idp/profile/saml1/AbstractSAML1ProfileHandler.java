@@ -61,6 +61,7 @@ import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
+import org.opensaml.xml.signature.SignatureException;
 import org.opensaml.xml.signature.Signer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -664,6 +665,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         } catch (MarshallingException e) {
             log.error("Unable to marshall assertion for signing", e);
             throw new ProfileException("Unable to marshall assertion for signing", e);
+        } catch (SignatureException e) {
+            log.error("Unable to sign assertion", e);
+            throw new ProfileException("Unable to sign assertion", e);
         }
     }
 }
