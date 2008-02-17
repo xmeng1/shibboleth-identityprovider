@@ -17,15 +17,12 @@
 package edu.internet2.middleware.shibboleth.idp.profile;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 import java.util.concurrent.locks.Lock;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
-import org.opensaml.util.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -55,27 +52,9 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     /** Map of authentication methods to login handlers. */
     private Map<String, LoginHandler> loginHandlers;
 
-    /**
-     * Constructor. Configuration resources are not monitored for changes.
-     * 
-     * @param configurations configuration resources for this service
-     */
-    public IdPProfileHandlerManager(List<Resource> configurations) {
-        super(configurations);
-        profileHandlers = new HashMap<String, AbstractRequestURIMappedProfileHandler>();
-        loginHandlers = new HashMap<String, LoginHandler>();
-    }
-
-    /**
-     * Constructor.
-     * 
-     * @param timer timer resource polling tasks are scheduled with
-     * @param configurations configuration resources for this service
-     * @param pollingFrequency the frequency, in milliseconds, to poll the policy resources for changes, must be greater
-     *            than zero
-     */
-    public IdPProfileHandlerManager(List<Resource> configurations, Timer timer, long pollingFrequency) {
-        super(timer, configurations, pollingFrequency);
+    /** Constructor. */
+    public IdPProfileHandlerManager() {
+        super();
         profileHandlers = new HashMap<String, AbstractRequestURIMappedProfileHandler>();
         loginHandlers = new HashMap<String, LoginHandler>();
     }
