@@ -74,7 +74,12 @@ public class IdPSessionFilter implements Filter {
 
     /** {@inheritDoc} */
     public void init(FilterConfig filterConfig) throws ServletException {
-        sessionManager = (SessionManager<Session>) filterConfig.getServletContext().getAttribute("sessionManager");
+        String sessionManagerId = filterConfig.getInitParameter("sessionManagedId");
+        if (DatatypeHelper.isEmpty(sessionManagerId)) {
+            sessionManagerId = "shibboleth.SessionManager";
+        }
+
+        sessionManager = (SessionManager<Session>) filterConfig.getServletContext().getAttribute(sessionManagerId);
     }
 
     /**

@@ -239,31 +239,13 @@
         </entry>
     </util:map>
 
-    <bean id="shibboleth.SAML1AttributeAuthority"
-        class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML1AttributeAuthority" depends-on="shibboleth.LogbackLogging">
-        <constructor-arg ref="shibboleth.AttributeResolver" />
-        <property name="filteringEngine" ref="shibboleth.AttributeFilterEngine" />
-    </bean>
-
-    <bean id="shibboleth.SAML2AttributeAuthority"
-        class="edu.internet2.middleware.shibboleth.common.attribute.provider.ShibbolethSAML2AttributeAuthority" depends-on="shibboleth.LogbackLogging">
-        <constructor-arg ref="shibboleth.AttributeResolver" />
-        <property name="filteringEngine" ref="shibboleth.AttributeFilterEngine" />
-    </bean>
-
     <bean id="shibboleth.ServletAttributeExporter"
         class="org.springframework.web.context.support.ServletContextAttributeExporter" depends-on="shibboleth.LogbackLogging">
         <property name="attributes">
             <map>
                 <entry>
                     <key>
-                        <value>handlerManager</value>
-                    </key>
-                    <ref bean="shibboleth.HandlerManager" />
-                </entry>
-                <entry>
-                    <key>
-                        <value>sessionManager</value>
+                        <value>shibboleth.SessionManager</value>
                     </key>
                     <ref bean="shibboleth.SessionManager" />
                 </entry>
