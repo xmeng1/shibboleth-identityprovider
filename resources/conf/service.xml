@@ -28,11 +28,15 @@
     
     <Service id="shibboleth.SAML1AttributeAuthority"
              xsi:type="attribute-authority:SAML1AttributeAuthority"
-             depends-on="shibboleth.AttributeResolver shibboleth.AttributeFilterEngine" />
+             depends-on="shibboleth.AttributeResolver shibboleth.AttributeFilterEngine"
+             resolver="shibboleth.AttributeResolver"
+             filter="shibboleth.AttributeFilterEngine" />
              
     <Service id="shibboleth.SAML2AttributeAuthority"
              xsi:type="attribute-authority:SAML2AttributeAuthority"
-             depends-on="shibboleth.AttributeResolver shibboleth.AttributeFilterEngine" />
+             depends-on="shibboleth.AttributeResolver shibboleth.AttributeFilterEngine"
+             resolver="shibboleth.AttributeResolver"
+             filter="shibboleth.AttributeFilterEngine" />
 
     <Service id="shibboleth.RelyingPartyConfigurationManager"
              xsi:type="relyingParty:SAMLMDRelyingPartyConfigurationManager"
