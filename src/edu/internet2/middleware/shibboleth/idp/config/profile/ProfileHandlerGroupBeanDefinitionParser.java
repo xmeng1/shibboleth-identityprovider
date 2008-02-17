@@ -24,9 +24,8 @@ import javax.xml.namespace.QName;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
@@ -35,39 +34,31 @@ import edu.internet2.middleware.shibboleth.common.config.SpringConfigurationUtil
 /**
  * Spring bean definition parser for profile handler root element.
  */
-public class ProfileHandlerGroupBeanDefinitionParser extends AbstractBeanDefinitionParser {
-    
+public class ProfileHandlerGroupBeanDefinitionParser implements BeanDefinitionParser {
+
     /** Schema type name. */
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandlerGroup");
-    
+
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(ProfileHandlerGroupBeanDefinitionParser.class);
 
     /** {@inheritDoc} */
-    protected AbstractBeanDefinition parseInternal(Element config, ParserContext context) {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(ProfileHandlerGroup.class);
-
+    public BeanDefinition parse(Element config, ParserContext context) {
         Map<QName, List<Element>> configChildren = XMLHelper.getChildElements(config);
         List<Element> children;
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ErrorHandler"));
         log.debug("{} error handler definitions found", children.size());
-        builder.addPropertyValue("errorHandler", SpringConfigurationUtils.parseCustomElement(children.get(0), context));
+        SpringConfigurationUtils.parseCustomElement(children.get(0), context);
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandler"));
         log.debug("{} profile handler definitions found", children.size());
-        builder.addPropertyValue("profileHandlers", SpringConfigurationUtils.parseCustomElements(children, context));
+        SpringConfigurationUtils.parseCustomElements(children, context);
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "LoginHandler"));
         log.debug("{} login handler definitions found", children.size());
-        builder.addPropertyValue("loginHandlers", SpringConfigurationUtils.parseCustomElements(children,
-                context));
+        SpringConfigurationUtils.parseCustomElements(children, context);
 
-        return builder.getBeanDefinition();
-    }
-
-    /** {@inheritDoc} */
-    protected boolean shouldGenerateId() {
-        return true;
+        return null;
     }
 }
