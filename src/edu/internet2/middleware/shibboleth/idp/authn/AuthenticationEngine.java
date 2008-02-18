@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -61,23 +62,27 @@ public class AuthenticationEngine extends HttpServlet {
     /** Class logger. */
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationEngine.class);
 
-    /**
-     * Gets the manager used to retrieve handlers for requests.
-     * 
-     * @return manager used to retrieve handlers for requests
-     */
-    public IdPProfileHandlerManager getProfileHandlerManager() {
-        return (IdPProfileHandlerManager) getServletContext().getAttribute("handlerManager");
-    }
+    /** Profile handler manager. */
+    private IdPProfileHandlerManager handlerManager;
 
-    /**
-     * Gets the session manager to be used.
-     * 
-     * @return session manager to be used
-     */
-    @SuppressWarnings("unchecked")
-    public SessionManager<Session> getSessionManager() {
-        return (SessionManager<Session>) getServletContext().getAttribute("sessionManager");
+    /** Session manager. */
+    private SessionManager<Session> sessionManager;
+
+    /** {@inheritDoc} */
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+
+        String handlerManagerId = config.getInitParameter("handlerManagerId");
+        if (DatatypeHelper.isEmpty(handlerManagerId)) {
+            handlerManagerId = "shibboleth.HandlerManager";
+        }
+
+        String sessionManagerId = config.getInitParameter("sessionManagedId");
+        if (DatatypeHelper.isEmpty(handlerManagerId)) {
+            sessionManagerId = "shibboleth.SessionManager";
+        }
+
+        sessionManager = (SessionManager<Session>) getServletContext().getAttribute(sessionManagerId);
     }
 
     /**
@@ -93,7 +98,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (loginContext == null) {
             LOG.error("User HttpSession did not contain a login context.  Unable to return to authentication engine");
             forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
-        }else{
+        } else {
             forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
         }
     }
@@ -228,7 +233,7 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected Map<String, LoginHandler> determinePossibleLoginHandlers(LoginContext loginContext)
             throws AuthenticationException {
-        Map<String, LoginHandler> supportedLoginHandlers = new HashMap<String, LoginHandler>(getProfileHandlerManager()
+        Map<String, LoginHandler> supportedLoginHandlers = new HashMap<String, LoginHandler>(handlerManager
                 .getLoginHandlers());
         LOG.trace("Supported login handlers: {}", supportedLoginHandlers);
         LOG.trace("Requested authentication methods: {}", loginContext.getRequestedAuthenticationMethods());
@@ -415,7 +420,7 @@ public class AuthenticationEngine extends HttpServlet {
         Session shibSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         if (shibSession == null) {
             LOG.debug("Creating shibboleth session for principal {}", loginContext.getPrincipalName());
-            shibSession = (Session) getSessionManager().createSession(loginContext.getPrincipalName());
+            shibSession = (Session) sessionManager.createSession(loginContext.getPrincipalName());
             loginContext.setSessionID(shibSession.getSessionID());
             addSessionCookie(httpRequest, httpResponse, shibSession);
         }
@@ -453,8 +458,6 @@ public class AuthenticationEngine extends HttpServlet {
         Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
         sessionCookie.setPath(httpRequest.getContextPath());
         sessionCookie.setSecure(false);
-
-        int maxAge = (int) (userSession.getInactivityTimeout() / 1000);
         sessionCookie.setMaxAge(-1);
 
         httpResponse.addCookie(sessionCookie);
