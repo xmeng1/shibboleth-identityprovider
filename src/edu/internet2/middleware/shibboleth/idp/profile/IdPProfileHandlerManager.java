@@ -119,11 +119,16 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     protected void onNewContextCreated(ApplicationContext newServiceContext) {
         log.debug("{}: Loading new configuration into service", getId());
         Lock writeLock = getReadWriteLock().writeLock();
-        writeLock.lock();
-        loadNewErrorHandler(newServiceContext);
-        loadNewProfileHandlers(newServiceContext);
-        loadNewAuthenticationHandlers(newServiceContext);
-        writeLock.unlock();
+        try {
+            writeLock.lock();
+            loadNewErrorHandler(newServiceContext);
+            loadNewProfileHandlers(newServiceContext);
+            loadNewAuthenticationHandlers(newServiceContext);
+        } catch (Exception e) {
+            log.error("Error loading information from new context", e);
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     /**
