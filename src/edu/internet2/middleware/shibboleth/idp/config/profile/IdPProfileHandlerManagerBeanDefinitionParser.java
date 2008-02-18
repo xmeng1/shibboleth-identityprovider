@@ -29,7 +29,8 @@ import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 public class IdPProfileHandlerManagerBeanDefinitionParser extends AbstractReloadableServiceBeanDefinitionParser {
 
     /** Schema type. */
-    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "IdPProfileHandlerManager");
+    public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE,
+            "IdPProfileHandlerManager");
 
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {

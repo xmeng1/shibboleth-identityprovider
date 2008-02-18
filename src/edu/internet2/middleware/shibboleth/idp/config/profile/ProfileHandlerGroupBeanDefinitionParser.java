@@ -31,9 +31,7 @@ import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.config.SpringConfigurationUtils;
 
-/**
- * Spring bean definition parser for profile handler root element.
- */
+/** Spring bean definition parser for profile handler root element. */
 public class ProfileHandlerGroupBeanDefinitionParser implements BeanDefinitionParser {
 
     /** Schema type name. */

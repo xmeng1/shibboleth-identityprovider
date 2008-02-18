@@ -46,7 +46,7 @@
 
     <Service id="shibboleth.HandlerManager"
              depends-on="shibboleth.RelyingPartyConfigurationManager"
-             xsi:type="relyingParty:SAMLMDRelyingPartyConfigurationManager">
+             xsi:type="profile:IdPProfileHandlerManager">
         <ConfigurationResource file="$IDP_HOME$/conf/handler.xml" xsi:type="resource:FilesystemResource" />
     </Service>
     
