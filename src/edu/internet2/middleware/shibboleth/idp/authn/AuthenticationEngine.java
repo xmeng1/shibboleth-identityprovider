@@ -79,8 +79,8 @@ public class AuthenticationEngine extends HttpServlet {
         handlerManager = (IdPProfileHandlerManager) getServletContext().getAttribute(handlerManagerId);
 
         String sessionManagerId = config.getInitParameter("sessionManagedId");
-        if (DatatypeHelper.isEmpty(handlerManagerId)) {
-            sessionManagerId = "sessionManager";
+        if (DatatypeHelper.isEmpty(sessionManagerId)) {
+            sessionManagerId = "shibboleth.SessionManager";
         }
 
         sessionManager = (SessionManager<Session>) getServletContext().getAttribute(sessionManagerId);
