@@ -245,7 +245,7 @@
             <map>
                 <entry>
                     <key>
-                        <value>shibboleth.SessionManager</value>
+                        <value>sessionManager</value>
                     </key>
                     <ref bean="shibboleth.SessionManager" />
                 </entry>

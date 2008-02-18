@@ -80,7 +80,7 @@ public class AuthenticationEngine extends HttpServlet {
 
         String sessionManagerId = config.getInitParameter("sessionManagedId");
         if (DatatypeHelper.isEmpty(handlerManagerId)) {
-            sessionManagerId = "shibboleth.SessionManager";
+            sessionManagerId = "sessionManager";
         }
 
         sessionManager = (SessionManager<Session>) getServletContext().getAttribute(sessionManagerId);
