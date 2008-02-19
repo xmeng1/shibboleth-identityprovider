@@ -217,6 +217,35 @@
             <xsd:extension base="ShibbolethProfileHandlerType" />
         </xsd:complexContent>
     </xsd:complexType>
+    
+    <xsd:complexType name="PreviousSession">
+        <xsd:complexContent>
+            <xsd:extension base="LoginHandlerType">
+                <xsd:attribute name="servletPath" type="xsd:string">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Optional servlet path to which the browser may be redirected.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="reportPreviousSessionAuthnMethod" type="xsd:boolean" default="false">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Whether this login handler should report its authentication method as PreviousSession 
+                            or the authentication method requested by the peer.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="supportsPassiveAuthentication" type="xsd:boolean" default="false">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Whether this login handler, when redirecting to a servlet, support passives authentication.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
 
     <xsd:complexType name="RemoteUser">
         <xsd:complexContent>

@@ -70,7 +70,7 @@ public abstract class AbstractLoginHandlerFactoryBean extends AbstractFactoryBea
     }
 
     /**
-     * Populates the authenication duration and methods of the handler.
+     * Populates the authentication duration and methods of the handler.
      * 
      * @param handler the authentication handler to populate
      */

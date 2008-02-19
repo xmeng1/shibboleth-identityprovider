@@ -73,5 +73,13 @@
                   jaasConfigurationLocation="file://$IDP_HOME$/conf/login.config">
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
     </LoginHandler>
+    
+    <!-- 
+        Removal of this login handler will disable SSO support, that is it will require the user to authenticate 
+        on every request.
+    -->
+    <LoginHandler xsi:type="PreviousSession">
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PreviousSession</AuthenticationMethod>
+    </LoginHandler>
 
 </ProfileHandlerGroup>

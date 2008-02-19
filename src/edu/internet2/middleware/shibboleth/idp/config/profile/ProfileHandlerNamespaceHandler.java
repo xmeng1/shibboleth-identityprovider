@@ -21,6 +21,7 @@ import javax.xml.namespace.QName;
 import edu.internet2.middleware.shibboleth.common.config.BaseSpringNamespaceHandler;
 import edu.internet2.middleware.shibboleth.common.config.profile.JSPErrorHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.common.config.profile.VelocityErrorHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.authn.PreviousSessionLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.RemoteUserLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.UsernamePasswordLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.SAML1ArtifactResolutionProfileHanderBeanDefinitionParser;
@@ -45,7 +46,7 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
 
         registerBeanDefinitionParser(ProfileHandlerGroupBeanDefinitionParser.SCHEMA_TYPE,
                 new ProfileHandlerGroupBeanDefinitionParser());
-        
+
         registerBeanDefinitionParser(StatusHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new StatusHandlerBeanDefinitionParser());
 
@@ -60,18 +61,21 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
 
         registerBeanDefinitionParser(SAML1AttributeQueryProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML1AttributeQueryProfileHandlerBeanDefinitionParser());
-        
+
         registerBeanDefinitionParser(SAML1ArtifactResolutionProfileHanderBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML1ArtifactResolutionProfileHanderBeanDefinitionParser());
 
         registerBeanDefinitionParser(SAML2SSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SSOProfileHandlerBeanDefinitionParser());
-        
+
         registerBeanDefinitionParser(SAML2AttributeQueryProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2AttributeQueryProfileHandlerBeanDefinitionParser());
-        
+
         registerBeanDefinitionParser(SAML2ArtifactResolutionProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2ArtifactResolutionProfileHandlerBeanDefinitionParser());
+
+        registerBeanDefinitionParser(PreviousSessionLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new PreviousSessionLoginHandlerBeanDefinitionParser());
 
         registerBeanDefinitionParser(RemoteUserLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new RemoteUserLoginHandlerBeanDefinitionParser());

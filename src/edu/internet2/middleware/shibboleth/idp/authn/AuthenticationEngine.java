@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
+import edu.internet2.middleware.shibboleth.idp.authn.provider.PreviousSessionLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
@@ -165,7 +165,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (!loginContext.getAuthenticationAttempted()) {
             startUserAuthentication(loginContext, httpRequest, httpResponse);
         } else {
-            completeAuthenticationWithoutActiveMethod(loginContext, httpRequest, httpResponse);
+            completeAuthentication(loginContext, httpRequest, httpResponse);
         }
     }
 
@@ -182,40 +182,28 @@ public class AuthenticationEngine extends HttpServlet {
             HttpServletResponse httpResponse) {
         LOG.debug("Beginning user authentication process");
         try {
+            Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
             Map<String, LoginHandler> possibleLoginHandlers = determinePossibleLoginHandlers(loginContext);
-            ArrayList<AuthenticationMethodInformation> activeAuthnMethods = new ArrayList<AuthenticationMethodInformation>();
 
-            Session userSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-            if (userSession != null) {
-                activeAuthnMethods.addAll(userSession.getAuthenticationMethods().values());
-            }
-
+            // Filter out possible candidate login handlers by forced and passive authentication requirements
             if (loginContext.isForceAuthRequired()) {
-                LOG.debug("Forced authentication is required, filtering possible login handlers accordingly");
-                filterByForceAuthentication(loginContext, activeAuthnMethods, possibleLoginHandlers);
-            } else {
-                LOG.debug("Forced authentication not required, trying existing authentication methods");
-                for (AuthenticationMethodInformation activeAuthnMethod : activeAuthnMethods) {
-                    if (possibleLoginHandlers.containsKey(activeAuthnMethod.getAuthenticationMethod())) {
-                        completeAuthenticationWithActiveMethod(loginContext, activeAuthnMethod, httpRequest,
-                                httpResponse);
-                        return;
-                    }
-                }
-                LOG.debug("No existing authentication method meets service provides requirements");
+                filterByForceAuthentication(idpSession, loginContext, possibleLoginHandlers);
             }
 
             if (loginContext.isPassiveAuthRequired()) {
-                LOG.debug("Passive authentication is required, filtering poassibl login handlers accordingly.");
                 filterByPassiveAuthentication(loginContext, possibleLoginHandlers);
             }
 
-            // Since we made it this far, just pick the first remaining login handler from the list
-            Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
-            LOG.debug("Authenticating user with login handler of type {}", chosenLoginHandler.getValue().getClass()
-                    .getName());
-            authenticateUser(chosenLoginHandler.getKey(), chosenLoginHandler.getValue(), loginContext, httpRequest,
-                    httpResponse);
+            // If the user already has a session and its usage is acceptable than use it
+            // otherwise just use the first candidate login handler
+            if (idpSession != null
+                    && possibleLoginHandlers.containsKey(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD)) {
+                authenticateUserWithPreviousSession(loginContext, possibleLoginHandlers, httpRequest, httpResponse);
+            } else {
+                Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
+                authenticateUser(chosenLoginHandler.getKey(), chosenLoginHandler.getValue(), loginContext, httpRequest,
+                        httpResponse);
+            }
         } catch (AuthenticationException e) {
             loginContext.setAuthenticationFailure(e);
             returnToProfileHandler(loginContext, httpRequest, httpResponse);
@@ -243,7 +231,8 @@ public class AuthenticationEngine extends HttpServlet {
         Entry<String, LoginHandler> supportedLoginHandler;
         while (supportedLoginHandlerItr.hasNext()) {
             supportedLoginHandler = supportedLoginHandlerItr.next();
-            if (!loginContext.getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
+            if (supportedLoginHandler.getKey().equals(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD)
+                    || !loginContext.getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
                 supportedLoginHandlerItr.remove();
                 continue;
             }
@@ -261,22 +250,27 @@ public class AuthenticationEngine extends HttpServlet {
     /**
      * Filters out any login handler based on the requirement for forced authentication.
      * 
-     * During forced authentication any handler that has not previously been used to authenticate the the user or any
+     * During forced authentication any handler that has not previously been used to authenticate the user or any
      * handlers that have been and support force re-authentication may be used. Filter out any of the other ones.
      * 
+     * @param idpSession user's current IdP session
      * @param loginContext current login context
-     * @param activeAuthnMethods currently active authentication methods, never null
      * @param loginHandlers login handlers to filter
      * 
      * @throws ForceAuthenticationException thrown if no handlers remain after filtering
      */
-    protected void filterByForceAuthentication(LoginContext loginContext,
-            Collection<AuthenticationMethodInformation> activeAuthnMethods, Map<String, LoginHandler> loginHandlers)
-            throws ForceAuthenticationException {
+    protected void filterByForceAuthentication(Session idpSession, LoginContext loginContext,
+            Map<String, LoginHandler> loginHandlers) throws ForceAuthenticationException {
+        LOG.debug("Forced authentication is required, filtering possible login handlers accordingly");
+
+        ArrayList<AuthenticationMethodInformation> activeMethods = new ArrayList<AuthenticationMethodInformation>();
+        if (idpSession != null) {
+            activeMethods.addAll(idpSession.getAuthenticationMethods().values());
+        }
 
         LoginHandler loginHandler;
-        for (AuthenticationMethodInformation activeAuthnMethod : activeAuthnMethods) {
-            loginHandler = loginHandlers.get(activeAuthnMethod.getAuthenticationMethod());
+        for (AuthenticationMethodInformation activeMethod : activeMethods) {
+            loginHandler = loginHandlers.get(activeMethod.getAuthenticationMethod());
             if (loginHandler != null && !loginHandler.supportsForceAuthentication()) {
                 for (String handlerSupportedMethods : loginHandler.getSupportedAuthenticationMethods()) {
                     loginHandlers.remove(handlerSupportedMethods);
@@ -301,6 +295,8 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected void filterByPassiveAuthentication(LoginContext loginContext, Map<String, LoginHandler> loginHandlers)
             throws PassiveAuthenticationException {
+        LOG.debug("Passive authentication is required, filtering poassible login handlers accordingly.");
+
         LoginHandler loginHandler;
         Iterator<Entry<String, LoginHandler>> authnMethodItr = loginHandlers.entrySet().iterator();
         while (authnMethodItr.hasNext()) {
@@ -317,56 +313,69 @@ public class AuthenticationEngine extends HttpServlet {
     }
 
     /**
-     * Authenticates the user with the given authentication method provided by the given login handler.
-     * 
-     * @param authnMethod the authentication method that will be used to authenticate the user
-     * @param logingHandler login handler that will authenticate user
-     * @param loginContext current login context
-     * @param httpRequest current HTTP request
-     * @param httpResponse current HTTP response
-     */
-    protected void authenticateUser(String authnMethod, LoginHandler logingHandler, LoginContext loginContext,
-            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-
-        loginContext.setAuthenticationAttempted();
-        loginContext.setAuthenticationDuration(logingHandler.getAuthenticationDuration());
-        loginContext.setAuthenticationMethod(authnMethod);
-        loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
-        httpRequest.getSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
-        logingHandler.login(httpRequest, httpResponse);
-    }
-
-    /**
      * Completes the authentication request using an existing, active, authentication method for the current user.
      * 
      * @param loginContext current login context
-     * @param authenticationMethod authentication method to use to complete the request
+     * @param possibleLoginHandlers login handlers that meet the peers authentication requirements
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
-    protected void completeAuthenticationWithActiveMethod(LoginContext loginContext,
-            AuthenticationMethodInformation authenticationMethod, HttpServletRequest httpRequest,
+    protected void authenticateUserWithPreviousSession(LoginContext loginContext,
+            Map<String, LoginHandler> possibleLoginHandlers, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        Session shibSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        LOG.debug("Authenticating user by way of existing session.");
 
-        loginContext.setAuthenticationDuration(authenticationMethod.getAuthenticationDuration());
-        loginContext.setAuthenticationInstant(authenticationMethod.getAuthenticationInstant());
-        loginContext.setAuthenticationMethod(authenticationMethod.getAuthenticationMethod());
-        loginContext.setPrincipalAuthenticated(true);
-        loginContext.setPrincipalName(shibSession.getPrincipalName());
+        Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        PreviousSessionLoginHandler loginHandler = (PreviousSessionLoginHandler) handlerManager.getLoginHandlers().get(
+                PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD);
 
-        ServiceInformation serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(),
-                authenticationMethod);
-        shibSession.getServicesInformation().put(serviceInfo.getEntityID(), serviceInfo);
+        AuthenticationMethodInformation authenticationMethod = null;
+        for (String possibleAuthnMethod : possibleLoginHandlers.keySet()) {
+            authenticationMethod = idpSession.getAuthenticationMethods().get(possibleAuthnMethod);
+            if (authenticationMethod != null) {
+                break;
+            }
+        }
 
-        LOG.debug("Treating user {} as authenticated via existing method {}", loginContext.getPrincipalName(),
-                loginContext.getAuthenticationMethod());
-        returnToProfileHandler(loginContext, httpRequest, httpResponse);
+        if (loginHandler.reportPreviousSessionAuthnMethod()) {
+            loginContext.setAuthenticationDuration(loginHandler.getAuthenticationDuration());
+            loginContext.setAuthenticationInstant(new DateTime());
+            loginContext.setAuthenticationMethod(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD);
+        } else {
+            loginContext.setAuthenticationDuration(authenticationMethod.getAuthenticationDuration());
+            loginContext.setAuthenticationInstant(authenticationMethod.getAuthenticationInstant());
+            loginContext.setAuthenticationMethod(authenticationMethod.getAuthenticationMethod());
+        }
+        loginContext.setPrincipalName(idpSession.getPrincipalName());
+
+        httpRequest.getSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+        loginHandler.login(httpRequest, httpResponse);
     }
 
     /**
-     * Completes the authentication process when and already active authentication mechanism wasn't used, that is, when
-     * the user was really authenticated.
+     * Authenticates the user with the given authentication method provided by the given login handler.
+     * 
+     * @param authnMethod the authentication method that will be used to authenticate the user
+     * @param loginHandler login handler that will authenticate user
+     * @param loginContext current login context
+     * @param httpRequest current HTTP request
+     * @param httpResponse current HTTP response
+     */
+    protected void authenticateUser(String authnMethod, LoginHandler loginHandler, LoginContext loginContext,
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        LOG.debug("Authenticating user with login handler of type {}", loginHandler.getClass().getName());
+
+        loginContext.setAuthenticationAttempted();
+        loginContext.setAuthenticationInstant(new DateTime());
+        loginContext.setAuthenticationDuration(loginHandler.getAuthenticationDuration());
+        loginContext.setAuthenticationMethod(authnMethod);
+        loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
+        httpRequest.getSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+        loginHandler.login(httpRequest, httpResponse);
+    }
+
+    /**
+     * Completes the authentication process.
      * 
      * The principal name set by the authentication handler is retrieved and pushed in to the login context, a
      * Shibboleth session is created if needed, information indicating that the user has logged into the service is
@@ -376,25 +385,28 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
-    protected void completeAuthenticationWithoutActiveMethod(LoginContext loginContext, HttpServletRequest httpRequest,
+    protected void completeAuthentication(LoginContext loginContext, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
 
-        String principalName = DatatypeHelper.safeTrimOrNullString((String) httpRequest
-                .getAttribute(LoginHandler.PRINCIPAL_NAME_KEY));
+        // We check if the principal name was already set in the login context
+        // if not attempt to pull it from where login handlers are supposed to provide it
+        String principalName = loginContext.getPrincipalName();
         if (principalName == null) {
-            loginContext.setPrincipalAuthenticated(false);
-            loginContext.setAuthenticationFailure(new AuthenticationException(
-                    "No principal name returned from authentication handler."));
-            LOG.error("No principal name returned from authentication method: "
-                    + loginContext.getAuthenticationMethod());
-            returnToProfileHandler(loginContext, httpRequest, httpResponse);
-            return;
+            DatatypeHelper.safeTrimOrNullString((String) httpRequest.getAttribute(LoginHandler.PRINCIPAL_NAME_KEY));
+            if (principalName != null) {
+                loginContext.setPrincipalName(principalName);
+            }else{
+                loginContext.setPrincipalAuthenticated(false);
+                loginContext.setAuthenticationFailure(new AuthenticationException(
+                        "No principal name returned from authentication handler."));
+                LOG.error("No principal name returned from authentication method: "
+                        + loginContext.getAuthenticationMethod());
+                returnToProfileHandler(loginContext, httpRequest, httpResponse);
+                return;
+            }
         }
-
         loginContext.setPrincipalAuthenticated(true);
-        loginContext.setPrincipalName(principalName);
-        loginContext.setAuthenticationInstant(new DateTime());
-
+        
         // We allow a login handler to override the authentication method in the event that it supports multiple methods
         String actualAuthnMethod = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY));
@@ -418,12 +430,12 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected void updateUserSession(LoginContext loginContext, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        Session shibSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-        if (shibSession == null) {
+        Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        if (idpSession == null) {
             LOG.debug("Creating shibboleth session for principal {}", loginContext.getPrincipalName());
-            shibSession = (Session) sessionManager.createSession(loginContext.getPrincipalName());
-            loginContext.setSessionID(shibSession.getSessionID());
-            addSessionCookie(httpRequest, httpResponse, shibSession);
+            idpSession = (Session) sessionManager.createSession(loginContext.getPrincipalName());
+            loginContext.setSessionID(idpSession.getSessionID());
+            addSessionCookie(httpRequest, httpResponse, idpSession);
         }
 
         LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
@@ -435,13 +447,13 @@ public class AuthenticationEngine extends HttpServlet {
         }
 
         AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(subject, authnMethod,
-                new DateTime(), loginContext.getAuthenticationDuration());
+                loginContext.getAuthenticationInstant(), loginContext.getAuthenticationDuration());
 
-        shibSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);
+        idpSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);
 
         ServiceInformation serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(),
                 authnMethodInfo);
-        shibSession.getServicesInformation().put(serviceInfo.getEntityID(), serviceInfo);
+        idpSession.getServicesInformation().put(serviceInfo.getEntityID(), serviceInfo);
     }
 
     /**
