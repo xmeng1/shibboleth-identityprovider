@@ -387,15 +387,17 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected void completeAuthentication(LoginContext loginContext, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
+        LOG.debug("Completing user authentication process");
 
         // We check if the principal name was already set in the login context
         // if not attempt to pull it from where login handlers are supposed to provide it
-        String principalName = loginContext.getPrincipalName();
+        String principalName = DatatypeHelper.safeTrimOrNullString(loginContext.getPrincipalName());
         if (principalName == null) {
-            DatatypeHelper.safeTrimOrNullString((String) httpRequest.getAttribute(LoginHandler.PRINCIPAL_NAME_KEY));
+            principalName = DatatypeHelper.safeTrimOrNullString((String) httpRequest
+                    .getAttribute(LoginHandler.PRINCIPAL_NAME_KEY));
             if (principalName != null) {
                 loginContext.setPrincipalName(principalName);
-            }else{
+            } else {
                 loginContext.setPrincipalAuthenticated(false);
                 loginContext.setAuthenticationFailure(new AuthenticationException(
                         "No principal name returned from authentication handler."));
@@ -406,7 +408,7 @@ public class AuthenticationEngine extends HttpServlet {
             }
         }
         loginContext.setPrincipalAuthenticated(true);
-        
+
         // We allow a login handler to override the authentication method in the event that it supports multiple methods
         String actualAuthnMethod = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY));
