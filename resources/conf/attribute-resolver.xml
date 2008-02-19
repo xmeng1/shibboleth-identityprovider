@@ -121,7 +121,7 @@
         <resolver:Dependency ref="myLDAP" />
 
         <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
-            name="urn:mace:dir:attribute-def:surname" />
+            name="urn:mace:dir:attribute-def:sn" />
 
         <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:2.5.4.4" friendlyName="surname" />
@@ -443,7 +443,7 @@
     </resolver:AttributeDefinition>
 
     <resolver:AttributeDefinition id="principalName" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-        scope="example.org" sourceAttributeID="eduPersonPrincipalName">
+        scope="example.org" sourceAttributeID="uid">
         <resolver:Dependency ref="myLDAP" />
 
         <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
