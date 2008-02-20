@@ -82,7 +82,7 @@
     
     <error-page>
         <error-code>404</error-code>
-        <location>/error.jsp</location>
+        <location>/error-404.jsp</location>
     </error-page>
 
 <!-- Uncomment to use container managed authentication -->
