@@ -32,6 +32,7 @@ import edu.internet2.middleware.shibboleth.common.profile.AbstractErrorHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractRequestURIMappedProfileHandler;
+import edu.internet2.middleware.shibboleth.common.service.ServiceException;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
 /**
@@ -116,18 +117,21 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
     }
 
     /** {@inheritDoc} */
-    protected void onNewContextCreated(ApplicationContext newServiceContext) {
+    protected void onNewContextCreated(ApplicationContext newServiceContext) throws ServiceException {
         log.debug("{}: Loading new configuration into service", getId());
-        Lock writeLock = getReadWriteLock().writeLock();
+        AbstractErrorHandler oldErrorHandler = errorHandler;
+        Map<String, AbstractRequestURIMappedProfileHandler> oldProfileHandlers = profileHandlers;
+        Map<String, LoginHandler> oldLoginHandlers = loginHandlers;
+
         try {
-            writeLock.lock();
             loadNewErrorHandler(newServiceContext);
             loadNewProfileHandlers(newServiceContext);
-            loadNewAuthenticationHandlers(newServiceContext);
+            loadNewLoginHandlers(newServiceContext);
         } catch (Exception e) {
-            log.error("Error loading information from new context", e);
-        } finally {
-            writeLock.unlock();
+            errorHandler = oldErrorHandler;
+            profileHandlers = oldProfileHandlers;
+            loginHandlers = oldLoginHandlers;
+            throw new ServiceException(getId() + " configuration is not valid, retaining old configuration", e);
         }
     }
 
@@ -153,15 +157,16 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
         String[] profileBeanNames = newServiceContext.getBeanNamesForType(AbstractRequestURIMappedProfileHandler.class);
         log.debug("{}: Loading {} new profile handlers.", getId(), profileBeanNames.length);
 
-        profileHandlers.clear();
+        Map<String, AbstractRequestURIMappedProfileHandler> newProfileHandlers = new HashMap<String, AbstractRequestURIMappedProfileHandler>();
         AbstractRequestURIMappedProfileHandler<?, ?> profileHandler;
         for (String profileBeanName : profileBeanNames) {
             profileHandler = (AbstractRequestURIMappedProfileHandler) newServiceContext.getBean(profileBeanName);
             for (String requestPath : profileHandler.getRequestPaths()) {
-                profileHandlers.put(requestPath, profileHandler);
+                newProfileHandlers.put(requestPath, profileHandler);
                 log.debug("{}: Loaded profile handler for handling requests to request path {}", getId(), requestPath);
             }
         }
+        profileHandlers = newProfileHandlers;
     }
 
     /**
@@ -169,11 +174,11 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
      * 
      * @param newServiceContext newly created application context
      */
-    protected void loadNewAuthenticationHandlers(ApplicationContext newServiceContext) {
+    protected void loadNewLoginHandlers(ApplicationContext newServiceContext) {
         String[] authnBeanNames = newServiceContext.getBeanNamesForType(LoginHandler.class);
         log.debug("{}: Loading {} new authentication handlers.", getId(), authnBeanNames.length);
 
-        loginHandlers.clear();
+        Map<String, LoginHandler> newLoginHandlers = new HashMap<String, LoginHandler>();
         LoginHandler authnHandler;
         for (String authnBeanName : authnBeanNames) {
             authnHandler = (LoginHandler) newServiceContext.getBean(authnBeanName);
@@ -181,8 +186,9 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
                     authnHandler.getSupportedAuthenticationMethods());
 
             for (String authnMethod : authnHandler.getSupportedAuthenticationMethods()) {
-                loginHandlers.put(authnMethod, authnHandler);
+                newLoginHandlers.put(authnMethod, authnHandler);
             }
         }
+        loginHandlers = newLoginHandlers;
     }
 }
