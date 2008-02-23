@@ -32,8 +32,7 @@
             <xsd:sequence>
                 <xsd:element name="ErrorHandler" type="ErrorHandlerType" />
                 <xsd:element name="ProfileHandler" type="RequestHandlerType" minOccurs="0" maxOccurs="unbounded" />
-                <xsd:element name="LoginHandler" type="LoginHandlerType" minOccurs="0"
-                    maxOccurs="unbounded" />
+                <xsd:element name="LoginHandler" type="LoginHandlerType" minOccurs="0" maxOccurs="unbounded" />
             </xsd:sequence>
         </xsd:complexType>
     </xsd:element>
@@ -46,7 +45,7 @@
             <xsd:extension base="RequestURIMappedProfileHandlerType" />
         </xsd:complexContent>
     </xsd:complexType>
-    
+
     <xsd:complexType name="SAMLMetadata">
         <xsd:annotation>
             <xsd:documentation>Basic handler that returns a general status of the IdP.</xsd:documentation>
@@ -55,9 +54,7 @@
             <xsd:extension base="RequestURIMappedProfileHandlerType">
                 <xsd:attribute name="metadataFile" type="xsd:string" use="required">
                     <xsd:annotation>
-                        <xsd:documentation>
-                            Location of the static IdP metadata file.
-                        </xsd:documentation>
+                        <xsd:documentation>Location of the static IdP metadata file.</xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
             </xsd:extension>
@@ -90,7 +87,7 @@
             <xsd:extension base="SAML2ProfileHandler" />
         </xsd:complexContent>
     </xsd:complexType>
-    
+
     <xsd:complexType name="SAML2ArtifactResolution">
         <xsd:annotation>
             <xsd:documentation>Configuration type for SAML 2 artifact resolution profile handlers.</xsd:documentation>
@@ -100,7 +97,8 @@
                 <xsd:attribute name="artifactMapRef" type="xsd:string" default="shibboleth.ArtifactMap">
                     <xsd:annotation>
                         <xsd:documentation>
-                            Reference to SAMLArtifactMap used by handler to resolve artifact strings into artifact objects.
+                            Reference to SAMLArtifactMap used by handler to resolve artifact strings into artifact
+                            objects.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
@@ -143,7 +141,7 @@
             <xsd:extension base="SAML1ProfileHandler" />
         </xsd:complexContent>
     </xsd:complexType>
-    
+
     <xsd:complexType name="SAML1ArtifactResolution">
         <xsd:annotation>
             <xsd:documentation>Configuration type for SAML 1 artifact resolution profile handlers.</xsd:documentation>
@@ -153,7 +151,8 @@
                 <xsd:attribute name="artifactMapRef" type="xsd:string" default="shibboleth.ArtifactMap">
                     <xsd:annotation>
                         <xsd:documentation>
-                            Reference to SAMLArtifactMap used by handler to resolve artifact strings into artifact objects.
+                            Reference to SAMLArtifactMap used by handler to resolve artifact strings into artifact
+                            objects.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
@@ -188,12 +187,10 @@
                 </xsd:attribute>
                 <xsd:attribute name="inboundBinding" type="xsd:anyURI" use="required">
                     <xsd:annotation>
-                        <xsd:documentation>
-                            The SAML message binding used by inbound messages.
-                        </xsd:documentation>
+                        <xsd:documentation>The SAML message binding used by inbound messages.</xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="outboundBindingEnumeration" >
+                <xsd:attribute name="outboundBindingEnumeration">
                     <xsd:annotation>
                         <xsd:documentation>
                             An ordered list of outbound bindings supported by this profile handler. The order provided
@@ -217,7 +214,7 @@
             <xsd:extension base="ShibbolethProfileHandlerType" />
         </xsd:complexContent>
     </xsd:complexType>
-    
+
     <xsd:complexType name="PreviousSession">
         <xsd:complexContent>
             <xsd:extension base="LoginHandlerType">
@@ -231,8 +228,8 @@
                 <xsd:attribute name="reportPreviousSessionAuthnMethod" type="xsd:boolean" default="false">
                     <xsd:annotation>
                         <xsd:documentation>
-                            Whether this login handler should report its authentication method as PreviousSession 
-                            or the authentication method requested by the peer.
+                            Whether this login handler should report its authentication method as PreviousSession or the
+                            authentication method requested by the peer.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
@@ -282,6 +279,39 @@
                             The servlet context path to the
                             edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordAuthenticationServlet
                             that will authenticate the user.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="IPAddress">
+        <xsd:complexContent>
+            <xsd:extension base="LoginHandlerType">
+                <xsd:sequence>
+                    <xsd:element name="IPEntry" type="xsd:string" maxOccurs="unbounded">
+                        <xsd:annotation>
+                            <xsd:documentation>
+                                An IP addresses in CIDR notation. For example, a single IP address of 192.168.1.1 would
+                                have the CIDR notation of 192.168.1.1/32. For the entire 192.168.0.0 class B network,
+                                the CIDR notation would be 192.168.0.0/16.
+                            </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+                <xsd:attribute name="username" type="xsd:string">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The username that will be presented to the IdP for all IP-address authenticated users.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="defaultDeny" type="xsd:boolean">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            If defaultDeny is true then only the IP addresses listed will be "authenticated." If
+                            defaultDeny is false, then all IP addresses except those listed will be authenticated.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
