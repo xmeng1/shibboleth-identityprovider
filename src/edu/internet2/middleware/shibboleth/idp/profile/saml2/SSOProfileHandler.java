@@ -115,7 +115,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
         subjectLocalityBuilder = (SAMLObjectBuilder<SubjectLocality>) getBuilderFactory().getBuilder(
                 SubjectLocality.DEFAULT_ELEMENT_NAME);
-        endpointBuilder = (SAMLObjectBuilder<Endpoint>) getBuilderFactory().getBuilder(Endpoint.DEFAULT_ELEMENT_NAME);
+        endpointBuilder = (SAMLObjectBuilder<Endpoint>) getBuilderFactory().getBuilder(
+                AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
 
     /** {@inheritDoc} */
@@ -301,7 +302,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                         "Invalid SAML AuthnRequest message."));
                 throw new ProfileException("Invalid SAML AuthnRequest message.");
             }
-            
+
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);

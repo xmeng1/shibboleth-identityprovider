@@ -98,7 +98,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         subjectLocalityBuilder = (SAMLObjectBuilder<SubjectLocality>) getBuilderFactory().getBuilder(
                 SubjectLocality.DEFAULT_ELEMENT_NAME);
 
-        endpointBuilder = (SAMLObjectBuilder<Endpoint>) getBuilderFactory().getBuilder(Endpoint.DEFAULT_ELEMENT_NAME);
+        endpointBuilder = (SAMLObjectBuilder<Endpoint>) getBuilderFactory().getBuilder(
+                AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
 
     /** {@inheritDoc} */
@@ -204,7 +205,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.error("Shibboleth SSO request does not meet security requirements", e);
             throw new ProfileException("Shibboleth SSO request does not meet security requirements", e);
         }
-        
+
         ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
         loginContext.setRelyingParty(requestContext.getInboundMessageIssuer());
         loginContext.setSpAssertionConsumerService(requestContext.getSpAssertionConsumerService());
