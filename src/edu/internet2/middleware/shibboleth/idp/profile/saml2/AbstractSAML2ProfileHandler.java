@@ -417,7 +417,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected void resolveAttributes(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
-
         try {
             log.debug("Resolving attributes for principal {} of SAML request from relying party {}", requestContext
                     .getPrincipalName(), requestContext.getInboundMessageIssuer());
