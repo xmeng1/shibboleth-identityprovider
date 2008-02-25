@@ -204,7 +204,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.error("Shibboleth SSO request does not meet security requirements", e);
             throw new ProfileException("Shibboleth SSO request does not meet security requirements", e);
         }
-        populateRequestContext(requestContext);
         
         ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
         loginContext.setRelyingParty(requestContext.getInboundMessageIssuer());

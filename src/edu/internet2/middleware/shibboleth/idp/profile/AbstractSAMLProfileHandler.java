@@ -239,6 +239,21 @@ public abstract class AbstractSAMLProfileHandler extends
     public void setSupportedOutboundBindings(List<String> bindings) {
         supportedOutboundBindings = bindings;
     }
+    
+    /** {@inheritDoc} */
+    public RelyingPartyConfiguration getRelyingPartyConfiguration(String relyingPartyId) {
+        try{
+        if(getMetadataProvider().getEntityDescriptor(relyingPartyId) == null){
+            log.warn("No metadata for relying party {}, treating party as anonymous", relyingPartyId);
+            return getRelyingPartyConfigurationManager().getAnonymousRelyingConfiguration();
+        }
+        }catch(MetadataProviderException e){
+            log.error("Unable to look up relying party metadata", e);
+            return null;
+        }
+        
+        return super.getRelyingPartyConfiguration(relyingPartyId);
+    }
 
     /**
      * Populates the request context with information.
@@ -280,20 +295,13 @@ public abstract class AbstractSAMLProfileHandler extends
         EntityDescriptor relyingPartyMetadata;
         try {
             relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
+            requestContext.setPeerEntityMetadata(relyingPartyMetadata);
         } catch (MetadataProviderException e) {
             log.error("Error looking up metadata for relying party " + relyingPartyId, e);
             throw new ProfileException("Error looking up metadata for relying party " + relyingPartyId);
         }
 
-        RelyingPartyConfiguration rpConfig = null;
-        if (relyingPartyMetadata != null) {
-            requestContext.setPeerEntityMetadata(relyingPartyMetadata);
-            rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-        } else {
-            log.warn("No metadata for relying party {}, treating party as anonymous", relyingPartyId);
-            rpConfig = getRelyingPartyConfigurationManager().getAnonymousRelyingConfiguration();
-        }
-
+        RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
         if (rpConfig == null) {
             log.error("Unable to retrieve relying party configuration data for entity with ID {}", relyingPartyId);
             throw new ProfileException("Unable to retrieve relying party configuration data for entity with ID "

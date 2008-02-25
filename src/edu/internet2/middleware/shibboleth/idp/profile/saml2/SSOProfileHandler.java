@@ -302,7 +302,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 throw new ProfileException("Invalid SAML AuthnRequest message.");
             }
             
-            populateRequestContext(requestContext);
             return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);
