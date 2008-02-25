@@ -239,19 +239,19 @@ public abstract class AbstractSAMLProfileHandler extends
     public void setSupportedOutboundBindings(List<String> bindings) {
         supportedOutboundBindings = bindings;
     }
-    
+
     /** {@inheritDoc} */
     public RelyingPartyConfiguration getRelyingPartyConfiguration(String relyingPartyId) {
-        try{
-        if(getMetadataProvider().getEntityDescriptor(relyingPartyId) == null){
-            log.warn("No metadata for relying party {}, treating party as anonymous", relyingPartyId);
-            return getRelyingPartyConfigurationManager().getAnonymousRelyingConfiguration();
-        }
-        }catch(MetadataProviderException e){
+        try {
+            if (getMetadataProvider().getEntityDescriptor(relyingPartyId) == null) {
+                log.warn("No metadata for relying party {}, treating party as anonymous", relyingPartyId);
+                return getRelyingPartyConfigurationManager().getAnonymousRelyingConfiguration();
+            }
+        } catch (MetadataProviderException e) {
             log.error("Unable to look up relying party metadata", e);
             return null;
         }
-        
+
         return super.getRelyingPartyConfiguration(relyingPartyId);
     }
 
@@ -384,7 +384,12 @@ public abstract class AbstractSAMLProfileHandler extends
             requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
         }
 
-        requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
+        Endpoint endpoint = selectEndpoint(requestContext);
+        if (endpoint == null) {
+            log.error("No return endpoint available for relying party {}", requestContext.getInboundMessageIssuer());
+            throw new ProfileException("No peer endpoint available to which to send SAML response");
+        }
+        requestContext.setPeerEntityEndpoint(endpoint);
     }
 
     /**
@@ -425,15 +430,6 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     protected void encodeResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         try {
-
-            Endpoint peerEndpoint = requestContext.getPeerEntityEndpoint();
-            if (peerEndpoint == null) {
-                log
-                        .error("No return endpoint available for relying party {}", requestContext
-                                .getInboundMessageIssuer());
-                throw new ProfileException("No peer endpoint available to which to send SAML response");
-            }
-
             SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
             if (encoder == null) {
                 log.error("No outbound message encoder configured for binding {}", requestContext
