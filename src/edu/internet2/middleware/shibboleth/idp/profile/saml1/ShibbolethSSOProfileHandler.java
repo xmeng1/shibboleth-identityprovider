@@ -292,6 +292,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setMetadataProvider(getMetadataProvider());
 
         String relyingPartyId = loginContext.getRelyingPartyId();
+        requestContext.setPeerEntityId(relyingPartyId);
         requestContext.setInboundMessageIssuer(relyingPartyId);
 
         populateRequestContext(requestContext);

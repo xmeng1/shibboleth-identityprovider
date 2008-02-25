@@ -336,6 +336,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         requestContext.setMetadataProvider(getMetadataProvider());
 
         String relyingPartyId = loginContext.getRelyingPartyId();
+        requestContext.setPeerEntityId(relyingPartyId);
         requestContext.setInboundMessageIssuer(relyingPartyId);
 
         populateSAMLMessageInformation(requestContext);
