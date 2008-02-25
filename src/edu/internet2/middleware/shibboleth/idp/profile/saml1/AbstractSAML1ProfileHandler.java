@@ -231,21 +231,19 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         DateTime issueInstant = new DateTime();
 
-        // create the assertion and add the attribute statement
-        Assertion assertion = buildAssertion(requestContext, issueInstant);
-        if (statements != null && !statements.isEmpty()) {
-            assertion.getStatements().addAll(statements);
-        }
-
         // create the SAML response and add the assertion
         Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
 
-        samlResponse.getAssertions().add(assertion);
-
-        // sign the assertion if it should be signed
-        signAssertion(requestContext, assertion);
+        // create the assertion and add the attribute statement
+        Assertion assertion = null;
+        if (statements != null && !statements.isEmpty()) {
+            assertion = buildAssertion(requestContext, issueInstant);
+            assertion.getStatements().addAll(statements);
+            samlResponse.getAssertions().add(assertion);
+            signAssertion(requestContext, assertion);
+        }        
 
         Status status = buildStatus(StatusCode.SUCCESS, null, null);
         samlResponse.setStatus(status);
