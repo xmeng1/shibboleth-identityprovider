@@ -358,7 +358,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         if (endpoint == null && loginContext.getSpAssertionConsumerService() != null) {
             endpoint = endpointBuilder.buildObject();
             endpoint.setLocation(loginContext.getSpAssertionConsumerService());
-            endpoint.setBinding(getInboundBinding());
+            endpoint.setBinding(getSupportedOutboundBindings().get(0));
             log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
                     new Object[] { requestContext.getPeerEntityId(), endpoint.getLocation(), endpoint.getBinding() });
         }

@@ -522,7 +522,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (authnRequest.getProtocolBinding() != null) {
                 endpoint.setBinding(authnRequest.getProtocolBinding());
             } else {
-                endpoint.setBinding(getInboundBinding());
+                endpoint.setBinding(getSupportedOutboundBindings().get(0));
             }
             endpoint.setBinding(getInboundBinding());
             log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
