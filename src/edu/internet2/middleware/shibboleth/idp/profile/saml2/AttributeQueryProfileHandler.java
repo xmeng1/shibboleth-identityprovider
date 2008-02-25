@@ -180,8 +180,6 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             populateRequestContext(requestContext);
-            populateSAMLMessageInformation(requestContext);
-            populateProfileInformation(requestContext);
         }
     }
 

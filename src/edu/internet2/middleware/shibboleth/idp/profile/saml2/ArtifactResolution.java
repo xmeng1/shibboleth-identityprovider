@@ -184,8 +184,6 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             throw new ProfileException("Message did not meet security requirements", e);
         } finally {
             populateRequestContext(requestContext);
-            populateSAMLMessageInformation(requestContext);
-            populateProfileInformation(requestContext);
         }
     }
 

@@ -169,7 +169,6 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         } finally {
             // Set as much information as can be retrieved from the decoded message
             populateRequestContext(requestContext);
-            populateProfileInformation(requestContext);
         }
     }
 
