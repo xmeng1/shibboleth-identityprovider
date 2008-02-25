@@ -72,6 +72,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     /** Builder of SubjectLocality objects. */
     private SAMLObjectBuilder<SubjectLocality> subjectLocalityBuilder;
 
+    /** Builder of Endpoint objects. */
+    private SAMLObjectBuilder<Endpoint> endpointBuilder;
+
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
@@ -94,6 +97,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         subjectLocalityBuilder = (SAMLObjectBuilder<SubjectLocality>) getBuilderFactory().getBuilder(
                 SubjectLocality.DEFAULT_ELEMENT_NAME);
+
+        endpointBuilder = (SAMLObjectBuilder<Endpoint>) getBuilderFactory().getBuilder(Endpoint.DEFAULT_ELEMENT_NAME);
     }
 
     /** {@inheritDoc} */
@@ -326,8 +331,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     }
 
     /** {@inheritDoc} */
-    protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext) 
-        throws ProfileException {
+    protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         // nothing to do here
     }
 
@@ -350,7 +354,16 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
         endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
 
-        return endpointSelector.selectEndpoint();
+        Endpoint endpoint = endpointSelector.selectEndpoint();
+        if (endpoint == null && loginContext.getSpAssertionConsumerService() != null) {
+            endpoint = endpointBuilder.buildObject();
+            endpoint.setLocation(loginContext.getSpAssertionConsumerService());
+            endpoint.setBinding(getInboundBinding());
+            log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
+                    new Object[] { requestContext.getPeerEntityId(), endpoint.getLocation(), endpoint.getBinding() });
+        }
+
+        return endpoint;
     }
 
     /**

@@ -88,6 +88,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** Builder of SubjectLocality objects. */
     private SAMLObjectBuilder<SubjectLocality> subjectLocalityBuilder;
 
+    /** Builder of Endpoint objects. */
+    private SAMLObjectBuilder<Endpoint> endpointBuilder;
+
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
@@ -112,6 +115,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 AuthnContextDeclRef.DEFAULT_ELEMENT_NAME);
         subjectLocalityBuilder = (SAMLObjectBuilder<SubjectLocality>) getBuilderFactory().getBuilder(
                 SubjectLocality.DEFAULT_ELEMENT_NAME);
+        endpointBuilder = (SAMLObjectBuilder<Endpoint>) getBuilderFactory().getBuilder(Endpoint.DEFAULT_ELEMENT_NAME);
     }
 
     /** {@inheritDoc} */
@@ -500,6 +504,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * @return Endpoint selected from the information provided in the request context
      */
     protected Endpoint selectEndpoint(BaseSAMLProfileRequestContext requestContext) {
+        AuthnRequest authnRequest = ((SSORequestContext) requestContext).getInboundSAMLMessage();
+
         AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
@@ -507,7 +513,22 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
         endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
         endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
-        return endpointSelector.selectEndpoint();
+
+        Endpoint endpoint = endpointSelector.selectEndpoint();
+        if (endpoint == null && authnRequest.getAssertionConsumerServiceURL() != null) {
+            endpoint = endpointBuilder.buildObject();
+            endpoint.setLocation(authnRequest.getAssertionConsumerServiceURL());
+            if (authnRequest.getProtocolBinding() != null) {
+                endpoint.setBinding(authnRequest.getProtocolBinding());
+            } else {
+                endpoint.setBinding(getInboundBinding());
+            }
+            endpoint.setBinding(getInboundBinding());
+            log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
+                    new Object[] { requestContext.getPeerEntityId(), endpoint.getLocation(), endpoint.getBinding() });
+        }
+
+        return endpoint;
     }
 
     /** Represents the internal state of a SAML 2.0 SSO Request while it's being processed by the IdP. */
