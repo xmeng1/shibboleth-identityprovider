@@ -35,7 +35,6 @@ import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -44,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
+import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AttributeQueryConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -70,7 +69,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** {@inheritDoc} */
     public String getProfileId() {
-        return "urn:mace:shibboleth:2.0:idp:profiles:saml1:query:attribute";
+        return AttributeQueryConfiguration.PROFILE_ID;
     }
 
     /** {@inheritDoc} */
@@ -88,15 +87,16 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 samlResponse = buildErrorResponse(requestContext);
             } else {
                 resolvePrincipal(requestContext);
-                
+
                 Session idpSession = getSessionManager().getSession(requestContext.getPrincipalName());
-                if(idpSession != null){
-                    AuthenticationMethodInformation authnInfo = idpSession.getAuthenticationMethods().get(requestContext.getInboundMessageIssuer());
-                    if(authnInfo != null){
+                if (idpSession != null) {
+                    AuthenticationMethodInformation authnInfo = idpSession.getAuthenticationMethods().get(
+                            requestContext.getInboundMessageIssuer());
+                    if (authnInfo != null) {
                         requestContext.setPrincipalAuthenticationMethod(authnInfo.getAuthenticationMethod());
                     }
                 }
-                
+
                 resolveAttributes(requestContext);
                 requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
 
@@ -134,15 +134,14 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
-        MetadataProvider metadataProvider = getMetadataProvider();
-
         AttributeQueryContext requestContext = new AttributeQueryContext();
-        requestContext.setMetadataProvider(metadataProvider);
-        requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
-        requestContext.setCommunicationProfileId(AttributeQueryConfiguration.PROFILE_ID);
+        MetadataProvider metadataProvider = getMetadataProvider();
+        requestContext.setMetadataProvider(metadataProvider);
+
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML11P_NS);
+        requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
 
         requestContext.setOutboundMessageTransport(outTransport);
@@ -177,57 +176,65 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
             throw new ProfileException("Message did not meet security policy requirements", e);
         } finally {
             // Set as much information as can be retrieved from the decoded message
-            Request request = requestContext.getInboundSAMLMessage();
-            if (request == null) {
-                log.error("Decoder did not contain an attribute query, an error occured decoding the message");
-                throw new ProfileException("Unable to decode message.");
-            }
-            AttributeQuery query = request.getAttributeQuery();
-            if (query != null) {
-                Subject subject = query.getSubject();
-                if(subject == null){
-                    log.error("Attribute query did not contain a proper subject");
-                    requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER, null,
-                            "Attribute query did not contain a proper subject"));
-                    throw new ProfileException("Attribute query did not contain a proper subject");
-                }
-                requestContext.setSubjectNameIdentifier(subject.getNameIdentifier());
-            }
+            populateRequestContext(requestContext);
+            populateSAMLMessageInformation(requestContext);
+            populateProfileInformation(requestContext);
+        }
+    }
 
-            String relyingPartyId = requestContext.getInboundMessageIssuer();
-            RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-            if (rpConfig == null) {
-                log.error("Unable to retrieve relying party configuration data for entity with ID {}", relyingPartyId);
-                throw new ProfileException("Unable to retrieve relying party configuration data for entity with ID "
-                        + relyingPartyId);
-            }
-            requestContext.setRelyingPartyConfiguration(rpConfig);
+    /** {@inheritDoc} */
+    protected void populateRelyingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        super.populateRelyingPartyInformation(requestContext);
 
-            AttributeQueryConfiguration profileConfig = (AttributeQueryConfiguration) rpConfig
-                    .getProfileConfiguration(AttributeQueryConfiguration.PROFILE_ID);
-            if (profileConfig != null) {
-                requestContext.setProfileConfiguration(profileConfig);
-                requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-            }
-            requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
+        EntityDescriptor relyingPartyMetadata = requestContext.getPeerEntityMetadata();
+        if (relyingPartyMetadata != null) {
+            requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML11P_NS));
+        }
+    }
 
-            String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
-            requestContext.setLocalEntityId(assertingPartyId);
-            requestContext.setOutboundMessageIssuer(assertingPartyId);
-            try {
-                EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
-                if (localEntityDescriptor != null) {
-                    requestContext.setLocalEntityMetadata(localEntityDescriptor);
-                    requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
-                    requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
-                            .getAttributeAuthorityDescriptor(SAMLConstants.SAML11P_NS));
-                }
-            } catch (MetadataProviderException e) {
-                log.error("Unable to locate metadata for asserting party");
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                        "Error locating asserting party metadata"));
-                throw new ProfileException("Error locating asserting party metadata");
+    /** {@inheritDoc} */
+    protected void populateAssertingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        super.populateAssertingPartyInformation(requestContext);
+
+        EntityDescriptor localEntityDescriptor = requestContext.getLocalEntityMetadata();
+        if (localEntityDescriptor != null) {
+            requestContext.setLocalEntityRole(AttributeAuthorityDescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
+                    .getAttributeAuthorityDescriptor(SAMLConstants.SAML11P_NS));
+        }
+    }
+
+    /**
+     * Populates the request context with information from the inbound SAML message.
+     * 
+     * This method requires the the following request context properties to be populated: inbound saml message
+     * 
+     * This methods populates the following request context properties: subject name identifier
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if the inbound SAML message or subject identifier is null
+     */
+    protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        Request request = (Request) requestContext.getInboundSAMLMessage();
+        if (request == null) {
+            log.error("Decoder did not contain an attribute query, an error occured decoding the message");
+            throw new ProfileException("Unable to decode message.");
+        }
+
+        AttributeQuery query = request.getAttributeQuery();
+        if (query != null) {
+            Subject subject = query.getSubject();
+            if (subject == null) {
+                log.error("Attribute query did not contain a proper subject");
+                ((AttributeQueryContext) requestContext).setFailureStatus(buildStatus(StatusCode.REQUESTER, null,
+                        "Attribute query did not contain a proper subject"));
+                throw new ProfileException("Attribute query did not contain a proper subject");
             }
+            requestContext.setSubjectNameIdentifier(subject.getNameIdentifier());
         }
     }
 
@@ -238,7 +245,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
      * 
      * @return Endpoint selected from the information provided in the request context
      */
-    protected Endpoint selectEndpoint(AttributeQueryContext requestContext) {
+    protected Endpoint selectEndpoint(BaseSAMLProfileRequestContext requestContext) {
         Endpoint endpoint;
 
         if (getInboundBinding().equals(SAMLConstants.SAML1_SOAP11_BINDING_URI)) {

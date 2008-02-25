@@ -21,12 +21,12 @@ if defined CLASSPATH (
   set LOCALCLASSPATH=%CLASSPATH%
 )
 
-REM add in the dependency .jar files 
 if not exist %IDP_HOME% (
   echo Error: IDP_HOME is not defined correctly.
   exit /b
 )
 
+REM add in the dependency .jar files 
 for %%i in ("%IDP_HOME%\lib\*.jar") do (
 	call "%IDP_HOME%\bin\cpappend.bat" %%i
 )

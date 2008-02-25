@@ -25,7 +25,9 @@ import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.InTransport;
@@ -38,6 +40,7 @@ import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartySecurityPolicyResolver;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.AbstractSAMLProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
@@ -182,6 +185,17 @@ public abstract class AbstractSAMLProfileHandler extends
     }
 
     /**
+     * Gets the user's session based on their principal name.
+     * 
+     * @param principalName user's principal name
+     * 
+     * @return the user's session
+     */
+    protected Session getUserSession(String principalName) {
+        return getSessionManager().getSession(principalName);
+    }
+
+    /**
      * Gets an ID generator which may be used for SAML assertions, requests, etc.
      * 
      * @param generator an ID generator which may be used for SAML assertions, requests, etc
@@ -225,6 +239,170 @@ public abstract class AbstractSAMLProfileHandler extends
     public void setSupportedOutboundBindings(List<String> bindings) {
         supportedOutboundBindings = bindings;
     }
+
+    /**
+     * Populates the request context with information.
+     * 
+     * This method requires the the following request context properties to be populated: inbound message transport,
+     * peer entity ID, metadata provider
+     * 
+     * This methods populates the following request context properties: user's session, user's principal name, service
+     * authentication method, peer entity metadata, relying party configuration, local entity ID, outbound message
+     * issuer, local entity metadata
+     * 
+     * @param requestContext current request context
+     * @throws ProfileException thrown if there is a problem looking up the relying party's metadata
+     */
+    protected void populateRequestContext(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        populateRelyingPartyInformation(requestContext);
+        populateAssertingPartyInformation(requestContext);
+        populateProfileInformation(requestContext);
+        populateSAMLMessageInformation(requestContext);
+        populateUserInformation(requestContext);
+    }
+
+    /**
+     * Populates the request context with information about the relying party.
+     * 
+     * This method requires the the following request context properties to be populated: peer entity ID
+     * 
+     * This methods populates the following request context properties: peer entity metadata, relying party
+     * configuration
+     * 
+     * @param requestContext current request context
+     * @throws ProfileException thrown if there is a problem looking up the relying party's metadata
+     */
+    protected void populateRelyingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        MetadataProvider metadataProvider = requestContext.getMetadataProvider();
+        String relyingPartyId = requestContext.getPeerEntityId();
+
+        EntityDescriptor relyingPartyMetadata;
+        try {
+            relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
+        } catch (MetadataProviderException e) {
+            log.error("Error looking up metadata for relying party " + relyingPartyId, e);
+            throw new ProfileException("Error looking up metadata for relying party " + relyingPartyId);
+        }
+        
+        RelyingPartyConfiguration rpConfig = null;
+        if (relyingPartyMetadata != null) {
+            requestContext.setPeerEntityMetadata(relyingPartyMetadata);
+            rpConfig = getRelyingPartyConfiguration(relyingPartyId);
+        } else {
+            log.warn("No metadata for relying party {}, treating party as anonymous", relyingPartyId);
+            rpConfig = getRelyingPartyConfigurationManager().getAnonymousRelyingConfiguration();
+        }
+
+        if (rpConfig == null) {
+            log.error("Unable to retrieve relying party configuration data for entity with ID {}", relyingPartyId);
+            throw new ProfileException("Unable to retrieve relying party configuration data for entity with ID "
+                    + relyingPartyId);
+        }
+        requestContext.setRelyingPartyConfiguration(rpConfig);
+    }
+
+    /**
+     * Populates the request context with information about the asserting party. Unless overridden,
+     * {@link #populateRequestContext(BaseSAMLProfileRequestContext)} has already invoked
+     * {@link #populateRelyingPartyInformation(BaseSAMLProfileRequestContext)} has already been invoked and the
+     * properties it provides are available in the request context.
+     * 
+     * This method requires the the following request context properties to be populated: metadata provider, relying
+     * party configuration
+     * 
+     * This methods populates the following request context properties: local entity ID, outbound message issuer, local
+     * entity metadata
+     * 
+     * @param requestContext current request context
+     * @throws ProfileException thrown if there is a problem looking up the asserting party's metadata
+     */
+    protected void populateAssertingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        String assertingPartyId = requestContext.getRelyingPartyConfiguration().getProviderId();
+        requestContext.setLocalEntityId(assertingPartyId);
+        requestContext.setOutboundMessageIssuer(assertingPartyId);
+
+        try {
+            EntityDescriptor localEntityDescriptor = requestContext.getMetadataProvider().getEntityDescriptor(
+                    assertingPartyId);
+            if (localEntityDescriptor != null) {
+                requestContext.setLocalEntityMetadata(localEntityDescriptor);
+            }
+        } catch (MetadataProviderException e) {
+            log.error("Error looking up metadata for asserting party " + assertingPartyId, e);
+            throw new ProfileException("Error looking up metadata for asserting party " + assertingPartyId);
+        }
+    }
+
+    /**
+     * Populates the request context with the information about the profile. Unless overridden,
+     * {@link #populateRequestContext(BaseSAMLProfileRequestContext)} has already invoked
+     * {@link #populateRelyingPartyInformation(BaseSAMLProfileRequestContext)},and
+     * {@link #populateAssertingPartyInformation(BaseSAMLProfileRequestContext)} have already been invoked and the
+     * properties they provide are available in the request context.
+     * 
+     * This method requires the the following request context properties to be populated: relying party configuration
+     * 
+     * This methods populates the following request context properties: communication profile ID, profile configuration,
+     * outbound message artifact type, peer entity endpoint
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there is a problem populating the profile information
+     */
+    protected void populateProfileInformation(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        requestContext.setCommunicationProfileId(getProfileId());
+        AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
+                .getRelyingPartyConfiguration().getProfileConfiguration(getProfileId());
+        requestContext.setProfileConfiguration(profileConfig);
+        requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
+        requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
+    }
+
+    /**
+     * Populates the request context with information from the inbound SAML message. Unless overridden,
+     * {@link #populateRequestContext(BaseSAMLProfileRequestContext)} has already invoked
+     * {@link #populateRelyingPartyInformation(BaseSAMLProfileRequestContext)},
+     * {@link #populateAssertingPartyInformation(BaseSAMLProfileRequestContext)}, and
+     * {@link #populateProfileInformation(BaseSAMLProfileRequestContext)} have already been invoked and the properties
+     * they provide are available in the request context.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there is a problem populating the request context with information
+     */
+    protected abstract void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException;
+
+    /**
+     * Populates the request context with the information about the user if they have an existing session. Unless
+     * overridden, {@link #populateRequestContext(BaseSAMLProfileRequestContext)} has already invoked
+     * {@link #populateRelyingPartyInformation(BaseSAMLProfileRequestContext)},
+     * {@link #populateAssertingPartyInformation(BaseSAMLProfileRequestContext)},
+     * {@link #populateProfileInformation(BaseSAMLProfileRequestContext)}, and
+     * {@link #populateSAMLMessageInformation(BaseSAMLProfileRequestContext)} have already been invoked and the
+     * properties they provide are available in the request context.
+     * 
+     * This method should populate: user's session, user's principal name, and service authentication method
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there is a problem populating the user's information
+     */
+    protected abstract void populateUserInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException;
+
+    /**
+     * Selects the appropriate endpoint for the relying party and stores it in the request context.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return Endpoint selected from the information provided in the request context
+     * 
+     * @throws ProfileException thrown if there is a problem selecting a response endpoint
+     */
+    protected abstract Endpoint selectEndpoint(BaseSAMLProfileRequestContext requestContext) throws ProfileException;
 
     /**
      * Encodes the request's SAML response and writes it to the servlet response.

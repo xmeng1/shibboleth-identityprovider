@@ -73,9 +73,11 @@ import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEn
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML1NameIdentifierEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** Common implementation details for profile handlers. */
 public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHandler {
@@ -147,6 +149,47 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         statusMessageBuilder = (SAMLObjectBuilder<StatusMessage>) getBuilderFactory().getBuilder(
                 StatusMessage.DEFAULT_ELEMENT_NAME);
         signatureBuilder = (XMLObjectBuilder<Signature>) getBuilderFactory().getBuilder(Signature.DEFAULT_ELEMENT_NAME);
+    }
+
+    /** {@inheritDoc} */
+    protected void populateRequestContext(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        BaseSAML1ProfileRequestContext saml1Request = (BaseSAML1ProfileRequestContext) requestContext;
+        try {
+            super.populateRequestContext(requestContext);
+        } catch (ProfileException e) {
+            if (saml1Request.getFailureStatus() == null) {
+                saml1Request.setFailureStatus(buildStatus(StatusCode.REQUESTER, null, e.getMessage()));
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Populates the request context with the information about the user.
+     * 
+     * This method requires the the following request context properties to be populated: inbound message transport,
+     * relying party ID
+     * 
+     * This methods populates the following request context properties: user's session, user's principal name, and
+     * service authentication method
+     * 
+     * @param requestContext current request context
+     */
+    protected void populateUserInformation(BaseSAMLProfileRequestContext requestContext) {
+        Session userSession = getUserSession(requestContext.getInboundMessageTransport());
+        if (userSession == null) {
+            NameIdentifier subject = (NameIdentifier) requestContext.getSubjectNameIdentifier();
+            if (subject != null && subject.getNameIdentifier() != null) {
+                userSession = getUserSession(subject.getNameIdentifier());
+            }
+        }
+
+        if (userSession != null) {
+            requestContext.setUserSession(userSession);
+            requestContext.setPrincipalName(userSession.getPrincipalName());
+            requestContext.setPrincipalAuthenticationMethod(userSession.getServicesInformation().get(
+                    requestContext.getPeerEntityId()).getAuthenticationMethod().getAuthenticationMethod());
+        }
     }
 
     /**

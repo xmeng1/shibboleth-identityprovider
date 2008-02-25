@@ -40,8 +40,6 @@ import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -54,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConstants;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
@@ -99,7 +98,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** {@inheritDoc} */
     public String getProfileId() {
-        return "urn:mace:shibboleth:2.0:idp:profiles:shibboleth:request:sso";
+        return ShibbolethSSOConfiguration.PROFILE_ID;
     }
 
     /** {@inheritDoc} */
@@ -282,9 +281,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
 
         requestContext.setLoginContext(loginContext);
-        requestContext.setPrincipalName(loginContext.getPrincipalName());
-        requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
-        requestContext.setUserSession(getUserSession(in));
         requestContext.setRelayState(loginContext.getSpTarget());
 
         requestContext.setInboundMessageTransport(in);
@@ -293,60 +289,45 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setOutboundMessageTransport(out);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
-        MetadataProvider metadataProvider = getMetadataProvider();
-        requestContext.setMetadataProvider(metadataProvider);
+        requestContext.setMetadataProvider(getMetadataProvider());
 
         String relyingPartyId = loginContext.getRelyingPartyId();
         requestContext.setInboundMessageIssuer(relyingPartyId);
 
-        try {
-            EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
-            if (relyingPartyMetadata != null) {
-                requestContext.setPeerEntityMetadata(relyingPartyMetadata);
-                requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
-                        .getSPSSODescriptor(SAMLConstants.SAML11P_NS));
-            }
-        } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for relying party");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                    "Error locating relying party metadata"));
-            throw new ProfileException("Error locating relying party metadata");
-        }
-
-        RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-        if (rpConfig == null) {
-            log.error("Unable to retrieve relying party configuration data for entity with ID {}", relyingPartyId);
-            throw new ProfileException("Unable to retrieve relying party configuration data for entity with ID "
-                    + relyingPartyId);
-        }
-        requestContext.setRelyingPartyConfiguration(rpConfig);
-
-        ShibbolethSSOConfiguration profileConfig = (ShibbolethSSOConfiguration) rpConfig
-                .getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID);
-        requestContext.setProfileConfiguration(profileConfig);
-        requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-        requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
-
-        String assertingPartyId = rpConfig.getProviderId();
-        requestContext.setLocalEntityId(assertingPartyId);
-        requestContext.setOutboundMessageIssuer(assertingPartyId);
-        try {
-            EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
-            if (localEntityDescriptor != null) {
-                requestContext.setLocalEntityMetadata(localEntityDescriptor);
-                requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
-                        .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
-            }
-        } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for asserting party");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                    "Error locating asserting party metadata"));
-            throw new ProfileException("Error locating asserting party metadata");
-        }
+        populateRequestContext(requestContext);
 
         return requestContext;
+    }
+
+    /** {@inheritDoc} */
+    protected void populateRelyingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        super.populateRelyingPartyInformation(requestContext);
+
+        EntityDescriptor relyingPartyMetadata = requestContext.getPeerEntityMetadata();
+        if (relyingPartyMetadata != null) {
+            requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML11P_NS));
+        }
+    }
+
+    /** {@inheritDoc} */
+    protected void populateAssertingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        super.populateAssertingPartyInformation(requestContext);
+
+        EntityDescriptor localEntityDescriptor = requestContext.getLocalEntityMetadata();
+        if (localEntityDescriptor != null) {
+            requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
+                    .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
+        }
+    }
+
+    /** {@inheritDoc} */
+    protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext) 
+        throws ProfileException {
+        // nothing to do here
     }
 
     /**
@@ -356,8 +337,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * 
      * @return Endpoint selected from the information provided in the request context
      */
-    protected Endpoint selectEndpoint(ShibbolethSSORequestContext requestContext) {
-        ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
+    protected Endpoint selectEndpoint(BaseSAMLProfileRequestContext requestContext) {
+        ShibbolethSSOLoginContext loginContext = ((ShibbolethSSORequestContext) requestContext).getLoginContext();
 
         ShibbolethSSOEndpointSelector endpointSelector = new ShibbolethSSOEndpointSelector();
         endpointSelector.setSpAssertionConsumerService(loginContext.getSpAssertionConsumerService());

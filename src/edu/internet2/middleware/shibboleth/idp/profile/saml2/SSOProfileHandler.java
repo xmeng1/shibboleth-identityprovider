@@ -44,8 +44,6 @@ import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -59,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
@@ -92,9 +91,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** URL of the authentication manager servlet. */
     private String authenticationManagerPath;
 
-    /** URI of request decoder. */
-    private String decodingBinding;
-
     /**
      * Constructor.
      * 
@@ -120,13 +116,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
     public String getProfileId() {
-        return "urn:mace:shibboleth:2.0:idp:profiles:saml2:request:sso";
+        return SSOConfiguration.PROFILE_ID;
     }
 
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        
+
         LoginContext loginContext = (LoginContext) servletRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
@@ -201,7 +197,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
-        Saml2LoginContext loginContext = (Saml2LoginContext) servletRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        Saml2LoginContext loginContext = (Saml2LoginContext) servletRequest
+                .getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
         SSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
         checkSamlVersion(requestContext);
@@ -329,15 +326,68 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
 
         requestContext.setLoginContext(loginContext);
-        requestContext.setPrincipalName(loginContext.getPrincipalName());
-        requestContext.setPrincipalAuthenticationMethod(loginContext.getAuthenticationMethod());
-        requestContext.setUserSession(getUserSession(in));
-        requestContext.setRelayState(loginContext.getRelayState());
 
         requestContext.setInboundMessageTransport(in);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
+        requestContext.setOutboundMessageTransport(out);
+        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+
+        requestContext.setMetadataProvider(getMetadataProvider());
+
+        String relyingPartyId = loginContext.getRelyingPartyId();
+        requestContext.setInboundMessageIssuer(relyingPartyId);
+
+        populateSAMLMessageInformation(requestContext);
+        populateRequestContext(requestContext);
+        populateProfileInformation(requestContext);
+
+        return requestContext;
+    }
+
+    /** {@inheritDoc} */
+    protected void populateRelyingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        super.populateRelyingPartyInformation(requestContext);
+
+        EntityDescriptor relyingPartyMetadata = requestContext.getPeerEntityMetadata();
+        if (relyingPartyMetadata != null) {
+            requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML20P_NS));
+        }
+    }
+
+    /** {@inheritDoc} */
+    protected void populateAssertingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        super.populateAssertingPartyInformation(requestContext);
+
+        EntityDescriptor localEntityDescriptor = requestContext.getLocalEntityMetadata();
+        if (localEntityDescriptor != null) {
+            requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
+                    .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
+        }
+    }
+
+    /**
+     * Populates the request context with information from the inbound SAML message.
+     * 
+     * This method requires the the following request context properties to be populated: login context
+     * 
+     * This methods populates the following request context properties: inbound saml message, relay state, inbound saml
+     * message ID, subject name identifier
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if the inbound SAML message or subject identifier is null
+     */
+    protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        SSORequestContext ssoRequestContext = (SSORequestContext) requestContext;
         try {
+            Saml2LoginContext loginContext = ssoRequestContext.getLoginContext();
+            requestContext.setRelayState(loginContext.getRelayState());
+
             AuthnRequest authnRequest = loginContext.getAuthenticationRequest();
             requestContext.setInboundMessage(authnRequest);
             requestContext.setInboundSAMLMessage(loginContext.getAuthenticationRequest());
@@ -349,72 +399,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             }
         } catch (UnmarshallingException e) {
             log.error("Unable to unmarshall authentication request context");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+            ssoRequestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
                     "Error recovering request state"));
             throw new ProfileException("Error recovering request state", e);
         }
-
-        requestContext.setOutboundMessageTransport(out);
-        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
-
-        MetadataProvider metadataProvider = getMetadataProvider();
-        requestContext.setMetadataProvider(metadataProvider);
-
-        String relyingPartyId = loginContext.getRelyingPartyId();
-        requestContext.setInboundMessageIssuer(relyingPartyId);
-        try {
-            EntityDescriptor relyingPartyMetadata = metadataProvider.getEntityDescriptor(relyingPartyId);
-            if (relyingPartyMetadata != null) {
-                requestContext.setPeerEntityMetadata(relyingPartyMetadata);
-                requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata
-                        .getSPSSODescriptor(SAMLConstants.SAML20P_NS));
-            } else {
-                log.error("Unable to locate metadata for relying party ({})", relyingPartyId);
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                        "Error locating relying party metadata"));
-                throw new ProfileException("Error locating relying party metadata");
-            }
-        } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for relying party");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                    "Error locating relying party metadata"));
-            throw new ProfileException("Error locating relying party metadata");
-        }
-
-        RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-        if (rpConfig == null) {
-            log.error("Unable to retrieve relying party configuration data for entity with ID {}", relyingPartyId);
-            throw new ProfileException("Unable to retrieve relying party configuration data for entity with ID "
-                    + relyingPartyId);
-        }
-        requestContext.setRelyingPartyConfiguration(rpConfig);
-
-        SSOConfiguration profileConfig = (SSOConfiguration) rpConfig
-                .getProfileConfiguration(SSOConfiguration.PROFILE_ID);
-        requestContext.setProfileConfiguration(profileConfig);
-        requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
-        requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
-
-        String assertingPartyId = rpConfig.getProviderId();
-        requestContext.setLocalEntityId(assertingPartyId);
-        requestContext.setOutboundMessageIssuer(assertingPartyId);
-        try {
-            EntityDescriptor localEntityDescriptor = metadataProvider.getEntityDescriptor(assertingPartyId);
-            if (localEntityDescriptor != null) {
-                requestContext.setLocalEntityMetadata(localEntityDescriptor);
-                requestContext.setLocalEntityRole(IDPSSODescriptor.DEFAULT_ELEMENT_NAME);
-                requestContext.setLocalEntityRoleMetadata(localEntityDescriptor
-                        .getIDPSSODescriptor(SAMLConstants.SAML20P_NS));
-            }
-        } catch (MetadataProviderException e) {
-            log.error("Unable to locate metadata for asserting party");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                    "Error locating asserting party metadata"));
-            throw new ProfileException("Error locating asserting party metadata");
-        }
-
-        return requestContext;
     }
 
     /**
@@ -510,7 +498,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @return Endpoint selected from the information provided in the request context
      */
-    protected Endpoint selectEndpoint(SSORequestContext requestContext) {
+    protected Endpoint selectEndpoint(BaseSAMLProfileRequestContext requestContext) {
         AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
         endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
         endpointSelector.setMetadataProvider(getMetadataProvider());
