@@ -256,8 +256,8 @@ public abstract class AbstractSAMLProfileHandler extends
     protected void populateRequestContext(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         populateRelyingPartyInformation(requestContext);
         populateAssertingPartyInformation(requestContext);
-        populateProfileInformation(requestContext);
         populateSAMLMessageInformation(requestContext);
+        populateProfileInformation(requestContext);
         populateUserInformation(requestContext);
     }
 
@@ -284,7 +284,7 @@ public abstract class AbstractSAMLProfileHandler extends
             log.error("Error looking up metadata for relying party " + relyingPartyId, e);
             throw new ProfileException("Error looking up metadata for relying party " + relyingPartyId);
         }
-        
+
         RelyingPartyConfiguration rpConfig = null;
         if (relyingPartyMetadata != null) {
             requestContext.setPeerEntityMetadata(relyingPartyMetadata);
@@ -336,10 +336,26 @@ public abstract class AbstractSAMLProfileHandler extends
     }
 
     /**
-     * Populates the request context with the information about the profile. Unless overridden,
+     * Populates the request context with information from the inbound SAML message. Unless overridden,
      * {@link #populateRequestContext(BaseSAMLProfileRequestContext)} has already invoked
      * {@link #populateRelyingPartyInformation(BaseSAMLProfileRequestContext)},and
      * {@link #populateAssertingPartyInformation(BaseSAMLProfileRequestContext)} have already been invoked and the
+     * properties they provide are available in the request context.
+     * 
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there is a problem populating the request context with information
+     */
+    protected abstract void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException;
+
+    /**
+     * Populates the request context with the information about the profile. Unless overridden,
+     * {@link #populateRequestContext(BaseSAMLProfileRequestContext)} has already invoked
+     * {@link #populateRelyingPartyInformation(BaseSAMLProfileRequestContext)},
+     * {@link #populateAssertingPartyInformation(BaseSAMLProfileRequestContext)}, and
+     * {@link #populateSAMLMessageInformation(BaseSAMLProfileRequestContext)} have already been invoked and the
      * properties they provide are available in the request context.
      * 
      * This method requires the the following request context properties to be populated: relying party configuration
@@ -355,25 +371,13 @@ public abstract class AbstractSAMLProfileHandler extends
         requestContext.setCommunicationProfileId(getProfileId());
         AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
                 .getRelyingPartyConfiguration().getProfileConfiguration(getProfileId());
-        requestContext.setProfileConfiguration(profileConfig);
-        requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
+        if (profileConfig != null) {
+            requestContext.setProfileConfiguration(profileConfig);
+            requestContext.setOutboundMessageArtifactType(profileConfig.getOutboundArtifactType());
+        }
+
         requestContext.setPeerEntityEndpoint(selectEndpoint(requestContext));
     }
-
-    /**
-     * Populates the request context with information from the inbound SAML message. Unless overridden,
-     * {@link #populateRequestContext(BaseSAMLProfileRequestContext)} has already invoked
-     * {@link #populateRelyingPartyInformation(BaseSAMLProfileRequestContext)},
-     * {@link #populateAssertingPartyInformation(BaseSAMLProfileRequestContext)}, and
-     * {@link #populateProfileInformation(BaseSAMLProfileRequestContext)} have already been invoked and the properties
-     * they provide are available in the request context.
-     * 
-     * @param requestContext current request context
-     * 
-     * @throws ProfileException thrown if there is a problem populating the request context with information
-     */
-    protected abstract void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext)
-            throws ProfileException;
 
     /**
      * Populates the request context with the information about the user if they have an existing session. Unless
