@@ -4,8 +4,14 @@
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                      xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:profile-handler classpath:/schema/shibboleth-2.0-idp-profile-handler.xsd">
 
+    <!-- Error Handler -->
     <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp" />
 
+    <!-- Profile Handlers -->
+    <!-- 
+        All profile handlers defined below are accessed via the Servlet path "/profile" so if your profile 
+        handler's request path is "/Status" then the full path is "<servletContextName>/profile/Status"
+     -->
     <ProfileHandler xsi:type="Status">
         <RequestPath>/Status</RequestPath>
     </ProfileHandler>
@@ -65,6 +71,7 @@
         <RequestPath>/SAML2/SOAP/ArtifactResolution</RequestPath>
     </ProfileHandler>
     
+    <!-- Login Handlers -->
     <LoginHandler xsi:type="RemoteUser">
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
     </LoginHandler>
