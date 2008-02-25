@@ -73,9 +73,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         Response samlResponse;
 
-        AttributeQueryContext requestContext = decodeRequest(inTransport, outTransport);
+        AttributeQueryContext requestContext = null;
 
         try {
+            requestContext = decodeRequest(inTransport, outTransport);
+            
             if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 2 Attribute Query profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());

@@ -74,10 +74,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
-        AttributeQueryContext requestContext = decodeRequest(inTransport, outTransport);
-
+        AttributeQueryContext requestContext = null;
         Response samlResponse;
         try {
+            requestContext = decodeRequest(inTransport, outTransport);
+            
             if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 1 Attribute Query profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
