@@ -57,6 +57,11 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
 
     /** {@inheritDoc} */
     public Endpoint selectEndpoint() {
+        if (getEntityRoleMetadata() == null) {
+            log.debug("Unable to select endpoint, no entity role metadata available.");
+            return null;
+        }
+
         if (spAssertionConsumerService != null) {
             return selectEndpointByACS();
         } else {
@@ -70,10 +75,11 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
      * @return endpoint corresponding to the SP-provdided ACS URL
      */
     protected Endpoint selectEndpointByACS() {
-        List<Endpoint> endpoints = getEntityRoleMetadata().getEndpoints();
-        log.debug("Relying party role contains {} endpoints", endpoints.size());
         log.debug("Selecting endpoint from metadata corresponding to provided ACS URL: {}",
                 getSpAssertionConsumerService());
+
+        List<Endpoint> endpoints = getEntityRoleMetadata().getEndpoints();
+        log.debug("Relying party role contains {} endpoints", endpoints.size());
 
         if (endpoints != null && endpoints.size() > 0) {
             for (Endpoint endpoint : endpoints) {
