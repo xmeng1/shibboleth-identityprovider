@@ -20,9 +20,6 @@ $IDP_CERTIFICATE$
             </ds:KeyInfo>
 
         </KeyDescriptor>
-
-        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
-        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
         
         <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
                                    Location="https://$IDP_HOSTNAME$:8443/idp/profile/SAML1/SOAP/ArtifactResolution" 
@@ -31,6 +28,9 @@ $IDP_CERTIFICATE$
         <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
                                    Location="https://$IDP_HOSTNAME$:8443/idp/profile/SAML2/SOAP/ArtifactResolution" 
                                    index="2"/>
+                                   
+        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
 
         <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" 
                              Location="https://$IDP_HOSTNAME$/idp/profile/Shibboleth/SSO" />
