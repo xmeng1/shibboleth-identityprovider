@@ -380,7 +380,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                             log
                                     .debug(
-                                            "Using attribute {} suppoting name format {} to create the NameIdentifier for principal",
+                                            "Using attribute {} supporting name format {} to create the NameIdentifier for principal",
                                             attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }

@@ -732,7 +732,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML2NameIDEncoder) {
                         nameIdEncoder = (SAML2NameIDEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            log.debug("Using attribute {} suppoting NameID format {} to create the NameID.", attribute
+                            log.debug("Using attribute {} supporting NameID format {} to create the NameID.", attribute
                                     .getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }
