@@ -136,6 +136,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
         AttributeQueryContext requestContext = new AttributeQueryContext();
+        requestContext.setCommunicationProfileId(getProfileId());
 
         MetadataProvider metadataProvider = getMetadataProvider();
         requestContext.setMetadataProvider(metadataProvider);

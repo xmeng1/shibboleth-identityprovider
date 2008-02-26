@@ -376,7 +376,6 @@ public abstract class AbstractSAMLProfileHandler extends
      * @throws ProfileException thrown if there is a problem populating the profile information
      */
     protected void populateProfileInformation(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
-        requestContext.setCommunicationProfileId(getProfileId());
         AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
                 .getRelyingPartyConfiguration().getProfileConfiguration(getProfileId());
         if (profileConfig != null) {

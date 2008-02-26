@@ -183,6 +183,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
+        requestContext.setCommunicationProfileId(getProfileId());
+        
         requestContext.setMetadataProvider(getMetadataProvider());
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
@@ -282,6 +284,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected ShibbolethSSORequestContext buildRequestContext(ShibbolethSSOLoginContext loginContext,
             HTTPInTransport in, HTTPOutTransport out) throws ProfileException {
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
+        requestContext.setCommunicationProfileId(getProfileId());
 
         requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
 

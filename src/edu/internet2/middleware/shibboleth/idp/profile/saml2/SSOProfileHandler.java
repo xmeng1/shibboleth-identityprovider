@@ -278,6 +278,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
         SSORequestContext requestContext = new SSORequestContext();
+        requestContext.setCommunicationProfileId(getProfileId());
+        
         requestContext.setMetadataProvider(getMetadataProvider());
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
@@ -327,6 +329,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     protected SSORequestContext buildRequestContext(Saml2LoginContext loginContext, HTTPInTransport in,
             HTTPOutTransport out) throws ProfileException {
         SSORequestContext requestContext = new SSORequestContext();
+        requestContext.setCommunicationProfileId(getProfileId());
 
         requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
 

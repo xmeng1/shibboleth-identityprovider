@@ -155,6 +155,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
         ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
+        requestContext.setCommunicationProfileId(getProfileId());
 
         MetadataProvider metadataProvider = getMetadataProvider();
         requestContext.setMetadataProvider(metadataProvider);
