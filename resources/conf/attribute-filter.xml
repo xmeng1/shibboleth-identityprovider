@@ -38,19 +38,16 @@
             <basic:Rule xsi:type="saml:AttributeRequesterInEntityGroup" groupID="urn:mace:switch.ch:SWITCHaai" />
         </PolicyRequirementRule>
 
-        <AttributeRule attributeID="entitlement">
-            <PermitValueRule xsi:type="basic:ANY" />
-        </AttributeRule>
-
         <AttributeRule attributeID="affiliation">
             <PermitValueRule xsi:type="basic:OR">
-                <basic:Rule xsi:type="basic:AttributeValueString" value="faculty" />
-                <basic:Rule xsi:type="basic:AttributeValueString" value="student" />
-                <basic:Rule xsi:type="basic:AttributeValueString" value="staff" />
-                <basic:Rule xsi:type="basic:AttributeValueString" value="alumn" />
-                <basic:Rule xsi:type="basic:AttributeValueString" value="member" />
-                <basic:Rule xsi:type="basic:AttributeValueString" value="affliate" />
-                <basic:Rule xsi:type="basic:AttributeValueString" value="employee" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="faculty" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="student" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="staff" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="alumni" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="member" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="affiliate" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="employee" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="library-walk-in" ignoreCase="true" />
             </PermitValueRule>
         </AttributeRule>
 
