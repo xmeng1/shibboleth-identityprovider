@@ -522,7 +522,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             } else {
                 endpoint.setBinding(getSupportedOutboundBindings().get(0));
             }
-            endpoint.setBinding(getInboundBinding());
             log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
                     new Object[] { requestContext.getPeerEntityId(), endpoint.getLocation(), endpoint.getBinding() });
         }
