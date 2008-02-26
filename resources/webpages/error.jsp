@@ -9,6 +9,10 @@
 	    An error occurred while processing your request.  Please contact your helpdesk or
 	    user ID office for assistance.
 	</p>
+	<p>
+	   Use of your browser's back button may cause specific errors that can be resolved by
+	   going back to your desired resource and trying to login again.
+	</p>
 	<% 
        Throwable error = (Throwable) request.getAttribute(AbstractErrorHandler.ERROR_KEY);
 	   if(error != null){
