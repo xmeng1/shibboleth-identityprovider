@@ -30,6 +30,7 @@ $IDP_CERTIFICATE$
                                    index="2"/>
                                    
         <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
 
         <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" 
@@ -70,6 +71,7 @@ $IDP_CERTIFICATE$
                           Location="https://$IDP_HOSTNAME$:8443/idp/profile/SAML2/SOAP/AttributeQuery" />
         
         <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>    
     </AttributeAuthorityDescriptor>
     
