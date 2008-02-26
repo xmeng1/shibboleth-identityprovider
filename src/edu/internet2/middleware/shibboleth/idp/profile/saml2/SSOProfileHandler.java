@@ -279,7 +279,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
         SSORequestContext requestContext = new SSORequestContext();
         requestContext.setCommunicationProfileId(getProfileId());
-        
+
         requestContext.setMetadataProvider(getMetadataProvider());
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
@@ -526,7 +526,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 endpoint.setBinding(getSupportedOutboundBindings().get(0));
             }
             log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
-                    new Object[] { requestContext.getPeerEntityId(), endpoint.getLocation(), endpoint.getBinding() });
+                    new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
+                            endpoint.getBinding(), });
         }
 
         return endpoint;

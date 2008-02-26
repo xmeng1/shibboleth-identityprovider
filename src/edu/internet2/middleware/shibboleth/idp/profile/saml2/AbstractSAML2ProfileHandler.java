@@ -211,7 +211,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             requestContext.setUserSession(userSession);
             requestContext.setPrincipalName(userSession.getPrincipalName());
             requestContext.setPrincipalAuthenticationMethod(userSession.getServicesInformation().get(
-                    requestContext.getPeerEntityId()).getAuthenticationMethod().getAuthenticationMethod());
+                    requestContext.getInboundMessageIssuer()).getAuthenticationMethod().getAuthenticationMethod());
         }
     }
 

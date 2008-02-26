@@ -184,7 +184,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
         requestContext.setCommunicationProfileId(getProfileId());
-        
+
         requestContext.setMetadataProvider(getMetadataProvider());
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
@@ -363,7 +363,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             endpoint.setLocation(loginContext.getSpAssertionConsumerService());
             endpoint.setBinding(getSupportedOutboundBindings().get(0));
             log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
-                    new Object[] { requestContext.getPeerEntityId(), endpoint.getLocation(), endpoint.getBinding() });
+                    new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
+                            endpoint.getBinding(), });
         }
 
         return endpoint;
