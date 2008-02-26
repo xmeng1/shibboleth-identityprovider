@@ -290,7 +290,7 @@ public abstract class AbstractSAMLProfileHandler extends
     protected void populateRelyingPartyInformation(BaseSAMLProfileRequestContext requestContext)
             throws ProfileException {
         MetadataProvider metadataProvider = requestContext.getMetadataProvider();
-        String relyingPartyId = requestContext.getPeerEntityId();
+        String relyingPartyId = requestContext.getInboundMessageIssuer();
 
         EntityDescriptor relyingPartyMetadata;
         try {
