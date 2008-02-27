@@ -236,8 +236,8 @@ public class AuthenticationEngine extends HttpServlet {
         Entry<String, LoginHandler> supportedLoginHandler;
         while (supportedLoginHandlerItr.hasNext()) {
             supportedLoginHandler = supportedLoginHandlerItr.next();
-            if (supportedLoginHandler.getKey().equals(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD)
-                    || !loginContext.getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
+            if (!(supportedLoginHandler.getKey().equals(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD))
+                    && !loginContext.getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
                 supportedLoginHandlerItr.remove();
                 continue;
             }
