@@ -198,9 +198,10 @@ public class AuthenticationEngine extends HttpServlet {
             if (loginContext.isPassiveAuthRequired()) {
                 filterByPassiveAuthentication(loginContext, possibleLoginHandlers);
             }
-
+            
             // If the user already has a session and its usage is acceptable than use it
             // otherwise just use the first candidate login handler
+            LOG.debug("Possible authentication handlers after filtering: {}", possibleLoginHandlers);
             if (idpSession != null
                     && possibleLoginHandlers.containsKey(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD)) {
                 authenticateUserWithPreviousSession(loginContext, possibleLoginHandlers, httpRequest, httpResponse);
