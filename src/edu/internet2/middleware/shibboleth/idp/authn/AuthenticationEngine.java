@@ -183,7 +183,12 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Beginning user authentication process");
         try {
             Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+            if(idpSession != null){
+                LOG.debug("Existing IdP session available for principal {}", idpSession.getPrincipalName());
+            }
+            
             Map<String, LoginHandler> possibleLoginHandlers = determinePossibleLoginHandlers(loginContext);
+            LOG.debug("Possible authentication handlers for this request: {}", possibleLoginHandlers);
 
             // Filter out possible candidate login handlers by forced and passive authentication requirements
             if (loginContext.isForceAuthRequired()) {
@@ -208,7 +213,6 @@ public class AuthenticationEngine extends HttpServlet {
             loginContext.setAuthenticationFailure(e);
             returnToProfileHandler(loginContext, httpRequest, httpResponse);
         }
-
     }
 
     /**
@@ -277,6 +281,9 @@ public class AuthenticationEngine extends HttpServlet {
                 }
             }
         }
+        
+        LOG.debug("Authentication handlers remaining after forced authentication requirement filtering: {}",
+                loginHandlers);
 
         if (loginHandlers.isEmpty()) {
             LOG.error("Force authentication required but no login handlers available to support it");
@@ -305,6 +312,9 @@ public class AuthenticationEngine extends HttpServlet {
                 authnMethodItr.remove();
             }
         }
+        
+        LOG.debug("Authentication handlers remaining after passive authentication requirement filtering: {}",
+                loginHandlers);
 
         if (loginHandlers.isEmpty()) {
             LOG.error("Passive authentication required but no login handlers available to support it");
