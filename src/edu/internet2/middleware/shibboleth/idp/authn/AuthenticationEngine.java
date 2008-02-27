@@ -359,6 +359,7 @@ public class AuthenticationEngine extends HttpServlet {
         }
         loginContext.setPrincipalName(idpSession.getPrincipalName());
 
+        loginContext.setAuthenticationAttempted();
         httpRequest.getSession().setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
         loginHandler.login(httpRequest, httpResponse);
     }
