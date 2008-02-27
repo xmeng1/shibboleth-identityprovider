@@ -94,6 +94,13 @@
         engines and so you'll see some rules that reference the declared trust engines.
     -->
     
+    <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:MetadataExplicitKeySignature"
+                              metadataProviderRef="ShibbolethMetadata" />
+                              
+    <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:MetadataExplicitKey"
+                              metadataProviderRef="ShibbolethMetadata" />
+                              
+<!--
     <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:Chaining">
         <security:TrustEngine id="shibboleth.SignatureMetadataExplicitKeyTrustEngine" xsi:type="security:MetadataExplicitKeySignature"
                               metadataProviderRef="ShibbolethMetadata" />                              
@@ -101,16 +108,14 @@
                               metadataProviderRef="ShibbolethMetadata" />
     </security:TrustEngine>
     
-    
     <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:Chaining">
         <security:TrustEngine id="shibboleth.CredentialMetadataExplictKeyTrustEngine" xsi:type="security:MetadataExplicitKey"
                               metadataProviderRef="ShibbolethMetadata" />
         <security:TrustEngine id="shibboleth.CredentialMetadataPKIXTrustEngine" xsi:type="security:MetadataPKIXX509Credential"
                               metadataProviderRef="ShibbolethMetadata" />
     </security:TrustEngine>
-                          
-    
-    
+-->                      
+     
     <security:SecurityPolicy id="shibboleth.ShibbolethSSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
         <security:Rule xsi:type="samlsec:IssueInstant" required="false"/>
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
