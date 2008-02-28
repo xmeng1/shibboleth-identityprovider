@@ -206,6 +206,7 @@ public class AuthenticationEngine extends HttpServlet {
                     && possibleLoginHandlers.containsKey(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD)) {
                 authenticateUserWithPreviousSession(loginContext, possibleLoginHandlers, httpRequest, httpResponse);
             } else {
+                possibleLoginHandlers.remove(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD);
                 Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
                 authenticateUser(chosenLoginHandler.getKey(), chosenLoginHandler.getValue(), loginContext, httpRequest,
                         httpResponse);
