@@ -123,8 +123,8 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             URLBuilder urlBuilder = new URLBuilder();
             urlBuilder.setScheme(request.getScheme());
-            urlBuilder.setHost(request.getLocalName());
-            urlBuilder.setPort(request.getLocalPort());
+            urlBuilder.setHost(request.getServerName());
+            urlBuilder.setPort(request.getServerPort());
             urlBuilder.setPath(pathBuilder.toString());
 
             if (queryParams == null) {

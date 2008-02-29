@@ -120,8 +120,8 @@ public class PreviousSessionLoginHandler extends AbstractLoginHandler {
 
                 URLBuilder urlBuilder = new URLBuilder();
                 urlBuilder.setScheme(httpRequest.getScheme());
-                urlBuilder.setHost(httpRequest.getLocalName());
-                urlBuilder.setPort(httpRequest.getLocalPort());
+                urlBuilder.setHost(httpRequest.getServerName());
+                urlBuilder.setPort(httpRequest.getServerPort());
                 urlBuilder.setPath(pathBuilder.toString());
 
                 log.debug("Redirecting to {}", urlBuilder.buildURL());
