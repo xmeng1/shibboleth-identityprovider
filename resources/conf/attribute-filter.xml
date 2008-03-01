@@ -38,7 +38,7 @@
             <basic:Rule xsi:type="saml:AttributeRequesterInEntityGroup" groupID="urn:mace:switch.ch:SWITCHaai" />
         </PolicyRequirementRule>
 
-        <AttributeRule attributeID="affiliation">
+        <AttributeRule attributeID="eduPersonAffiliation">
             <PermitValueRule xsi:type="basic:OR">
                 <basic:Rule xsi:type="basic:AttributeValueString" value="faculty" ignoreCase="true" />
                 <basic:Rule xsi:type="basic:AttributeValueString" value="student" ignoreCase="true" />
