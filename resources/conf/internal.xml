@@ -240,17 +240,14 @@
     </util:map>
 
     <bean id="shibboleth.ServletAttributeExporter"
-        class="org.springframework.web.context.support.ServletContextAttributeExporter" depends-on="shibboleth.LogbackLogging">
-        <property name="attributes">
-            <map>
-                <entry>
-                    <key>
-                        <value>shibboleth.SessionManager</value>
-                    </key>
-                    <ref bean="shibboleth.SessionManager" />
-                </entry>
-            </map>
-        </property>
+          class="edu.internet2.middleware.shibboleth.common.config.service.ServletContextAttributeExporter" 
+          depends-on="shibboleth.LogbackLogging"
+          init-method="initialize" >
+        <constructor-arg>
+           <list>
+               <value>shibboleth.SessionManager</value>
+           </list>
+        </constructor-arg>
     </bean>
 
 </beans>
