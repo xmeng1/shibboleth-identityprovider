@@ -1,3 +1,13 @@
+Shibboleth IdP 2.0 Release Candidate 3 (3-Mar-08)
+* RegexSplit and Prescoped attribute definitions
+* Exposure of attribute authorities as services
+* Exporting of all services into the ServletContext
+* Default configuration updates
+* Lots of bug fixes
+
+Shibboleth IdP 2.0 Release Candidate 2 (19-Feb-08)
+This release candidate was a bug fix release and did not include any new functionality
+
 Shibboleth IdP 2.0 Release Candidate 1 (23-Jan-08)
 The following additional functionality is available in this release candidate:
 * Persistent, Computed, and Transient Identifiers
