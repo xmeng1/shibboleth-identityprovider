@@ -632,31 +632,17 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected Subject buildSubject(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, String confirmationMethod,
             DateTime issueInstant) throws ProfileException {
+        Subject subject = subjectBuilder.buildObject();
+        subject.getSubjectConfirmations().add(
+                buildSubjectConfirmation(requestContext, confirmationMethod, issueInstant));
+
         NameID nameID = buildNameId(requestContext);
-        requestContext.setSubjectNameIdentifier(nameID);
-
-        SubjectConfirmationData confirmationData = subjectConfirmationDataBuilder.buildObject();
-        HTTPInTransport inTransport = (HTTPInTransport) requestContext.getInboundMessageTransport();
-        confirmationData.setAddress(inTransport.getPeerAddress());
-        confirmationData.setInResponseTo(requestContext.getInboundSAMLMessageId());
-        confirmationData.setNotOnOrAfter(issueInstant.plus(requestContext.getProfileConfiguration()
-                .getAssertionLifetime()));
-
-        Endpoint relyingPartyEndpoint = requestContext.getPeerEntityEndpoint();
-        if (relyingPartyEndpoint != null) {
-            if (relyingPartyEndpoint.getResponseLocation() != null) {
-                confirmationData.setRecipient(relyingPartyEndpoint.getResponseLocation());
-            } else {
-                confirmationData.setRecipient(relyingPartyEndpoint.getLocation());
-            }
+        if (nameID == null) {
+            return subject;
         }
 
-        SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
-        subjectConfirmation.setMethod(confirmationMethod);
-        subjectConfirmation.setSubjectConfirmationData(confirmationData);
+        requestContext.setSubjectNameIdentifier(nameID);
 
-        Subject subject = subjectBuilder.buildObject();
-        subject.getSubjectConfirmations().add(subjectConfirmation);
         SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
         try {
             if (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
@@ -690,6 +676,40 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
+     * Builds the SubjectConfirmation appropriate for this request.
+     * 
+     * @param requestContext current request context
+     * @param confirmationMethod confirmation method to use for the request
+     * @param issueInstant issue instant of the response
+     * 
+     * @return the constructed subject confirmation
+     */
+    protected SubjectConfirmation buildSubjectConfirmation(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext,
+            String confirmationMethod, DateTime issueInstant) {
+        SubjectConfirmationData confirmationData = subjectConfirmationDataBuilder.buildObject();
+        HTTPInTransport inTransport = (HTTPInTransport) requestContext.getInboundMessageTransport();
+        confirmationData.setAddress(inTransport.getPeerAddress());
+        confirmationData.setInResponseTo(requestContext.getInboundSAMLMessageId());
+        confirmationData.setNotOnOrAfter(issueInstant.plus(requestContext.getProfileConfiguration()
+                .getAssertionLifetime()));
+
+        Endpoint relyingPartyEndpoint = requestContext.getPeerEntityEndpoint();
+        if (relyingPartyEndpoint != null) {
+            if (relyingPartyEndpoint.getResponseLocation() != null) {
+                confirmationData.setRecipient(relyingPartyEndpoint.getResponseLocation());
+            } else {
+                confirmationData.setRecipient(relyingPartyEndpoint.getLocation());
+            }
+        }
+
+        SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
+        subjectConfirmation.setMethod(confirmationMethod);
+        subjectConfirmation.setSubjectConfirmationData(confirmationData);
+
+        return subjectConfirmation;
+    }
+
+    /**
      * Builds a NameID appropriate for this request. NameIDs are built by inspecting the SAML request and metadata,
      * picking a name format that was requested by the relying party or is mutually supported by both the relying party
      * and asserting party as described in their metadata entries. Once a set of supported name formats is determined
@@ -707,21 +727,18 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         log.debug("Building assertion NameID for principal/relying party:{}/{}", requestContext.getPrincipalName(),
                 requestContext.getInboundMessageIssuer());
 
-        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
-        if (principalAttributes == null || principalAttributes.isEmpty()) {
-            log.error("No attributes for principal {}, unable to construct of NameID", requestContext
-                    .getPrincipalName());
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
-                    "Unable to construct NameID"));
-            throw new ProfileException("No principal attributes support NameID construction");
-        }
-
         List<String> supportedNameFormats = getNameFormats(requestContext);
         if (supportedNameFormats == null || supportedNameFormats.isEmpty()) {
-            log.error("No common NameID formats supported by SP {} and IdP", requestContext.getInboundMessageIssuer());
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
-                    "Unable to construct NameID"));
-            throw new ProfileException("No principal attributes support NameID construction");
+            log.debug("No common NameID formats supported by SP {} and IdP, no name identifier will be created.",
+                    requestContext.getInboundMessageIssuer());
+            return null;
+        }
+
+        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
+        if (principalAttributes == null || principalAttributes.isEmpty()) {
+            log.debug("No attributes for principal {}, no name identifier will be created.", requestContext
+                    .getPrincipalName());
+            return null;
         }
 
         log.debug("Supported NameID formats: {}", supportedNameFormats);
@@ -740,9 +757,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                 }
             }
 
-            log.error("No principal attribute supported encoding into a supported name ID format.");
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));
-            throw new ProfileException("No principal attribute supported encoding into a supported name ID format.");
+            log.debug("No attributes for principal {} supports an encoding into a supported name ID format.",
+                    requestContext.getPrincipalName());
+            return null;
         } catch (AttributeEncodingException e) {
             log.error("Unable to encode NameID attribute", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));

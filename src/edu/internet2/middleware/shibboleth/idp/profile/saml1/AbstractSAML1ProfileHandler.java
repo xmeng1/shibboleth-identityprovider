@@ -243,7 +243,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             assertion.getStatements().addAll(statements);
             samlResponse.getAssertions().add(assertion);
             signAssertion(requestContext, assertion);
-        }        
+        }
 
         Status status = buildStatus(StatusCode.SUCCESS, null, null);
         samlResponse.setStatus(status);
@@ -318,8 +318,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      */
     protected Subject buildSubject(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext, String confirmationMethod)
             throws ProfileException {
-        NameIdentifier nameID = buildNameId(requestContext);
-        requestContext.setSubjectNameIdentifier(nameID);
 
         ConfirmationMethod method = confirmationMethodBuilder.buildObject();
         method.setConfirmationMethod(confirmationMethod);
@@ -327,10 +325,16 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
         subjectConfirmation.getConfirmationMethods().add(method);
 
-        Subject subject = subjectBuilder.buildObject();
-        subject.setNameIdentifier(nameID);
-        subject.setSubjectConfirmation(subjectConfirmation);
+        NameIdentifier nameID = buildNameId(requestContext);
 
+        Subject subject = subjectBuilder.buildObject();
+        subject.setSubjectConfirmation(subjectConfirmation);
+        
+        if(nameID != null){
+            subject.setNameIdentifier(nameID);
+            requestContext.setSubjectNameIdentifier(nameID);
+        }
+        
         return subject;
     }
 
@@ -352,21 +356,19 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             throws ProfileException {
         log.debug("Building assertion NameIdentifier to relying party {} for principal {}", requestContext
                 .getInboundMessageIssuer(), requestContext.getPrincipalName());
-        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
-        if (principalAttributes == null || principalAttributes.isEmpty()) {
-            log.error("No attributes for principal {}, unable to construct of NameID", requestContext
-                    .getPrincipalName());
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                    "Unable to construct NameIdentifier"));
-            throw new ProfileException("No principal attributes support NameIdentifier construction");
-        }
-
+        
         List<String> supportedNameFormats = getNameFormats(requestContext);
         if (supportedNameFormats == null || supportedNameFormats.isEmpty()) {
-            log.error("No common NameID formats supported by SP {} and IdP", requestContext.getInboundMessageIssuer());
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                    "Unable to construct NameIdentifier"));
-            throw new ProfileException("No principal attributes support NameIdentifier construction");
+            log.debug("No common NameID formats supported by SP {} and IdP, no name identifier will be created.",
+                    requestContext.getInboundMessageIssuer());
+            return null;
+        }
+        
+        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
+        if (principalAttributes == null || principalAttributes.isEmpty()) {
+            log.debug("No attributes for principal {}, no name identifier will be created.", requestContext
+                    .getPrincipalName());
+            return null;
         }
 
         log.debug("Supported name formats: {}", supportedNameFormats);
@@ -378,19 +380,17 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     if (encoder instanceof SAML1NameIdentifierEncoder) {
                         nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
                         if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            log
-                                    .debug(
-                                            "Using attribute {} supporting name format {} to create the NameIdentifier for principal",
-                                            attribute.getId(), nameIdEncoder.getNameFormat());
+                            log.debug("Using attribute {} supporting name format {} to create the NameIdentifier",
+                                    attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
                         }
                     }
                 }
             }
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
-                    "Unable to construct NameIdentifier"));
-            log.error("No principal attribute supports an encoding into a supported name ID format.");
-            throw new ProfileException("No principal attribute supports an encoding into a supported name ID format.");
+
+            log.debug("No attributes for principal {} supports an encoding into a supported name ID format.",
+                    requestContext.getPrincipalName());
+            return null;
         } catch (AttributeEncodingException e) {
             log.error("Unable to construct NameIdentifier", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
