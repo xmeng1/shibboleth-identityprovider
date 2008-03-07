@@ -180,6 +180,7 @@
                 <mkdir dir="${idp.home}/conf" />
                 <mkdir dir="${idp.home}/credentials" />
                 <mkdir dir="${idp.home}/lib" />
+                <mkdir dir="${idp.home}/lib/endorsed" />
                 <mkdir dir="${idp.home}/logs" />
                 <mkdir dir="${idp.home}/metadata" />
                 <mkdir dir="${idp.home}/war" />
@@ -237,6 +238,10 @@
             <fileset file="${dist.dir}/${jar.name}" />
             <fileset file="${build-lib.dir}/servlet-2.4.jar" />
         </copy>
+            
+        <copy todir="${idp.home}/lib/endorsed" preservelastmodified="true" failonerror="false">
+            <fileset dir="endorsed" />
+        </copy>
 
         <copy todir="${webinf-temp.dir}">
             <fileset dir="${webinf.dir}" />
@@ -253,7 +258,6 @@
             <zipfileset file="${dist.dir}/${jar.name}" prefix="WEB-INF/lib/" />
         </jar>
     </target>
-
 
     <!-- **************************************************************** -->
     <!-- ***                                                          *** -->

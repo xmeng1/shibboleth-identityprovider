@@ -41,4 +41,4 @@ do
     fi
 done
 
-"$JAVACMD" '-classpath' "$LOCALCLASSPATH" 'edu.internet2.middleware.shibboleth.common.attribute.AttributeAuthorityCLI' "$@"
+"$JAVACMD" '-classpath' "$LOCALCLASSPATH" '-Djava.endorsed.dirs='"$LIBDIR/endorsed" edu.internet2.middleware.shibboleth.common.attribute.AttributeAuthorityCLI' "$@"
