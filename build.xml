@@ -194,7 +194,8 @@
                                 privateKeyFile="${idp.home}/credentials/idp.key"
                                 certificateFile="${idp.home}/credentials/idp.crt"
                                 keystoreFile="${idp.home}/credentials/idp.jks"
-                                keystorePassword="${idp.keystore.pass}" />
+                                keystorePassword="${idp.keystore.pass}"
+                                uriSubjectAltName="${idp.entity.id}"/>
 
                 <copy todir="${idp.home}/bin" preservelastmodified="true">
                     <fileset dir="${tools.dir}" />
