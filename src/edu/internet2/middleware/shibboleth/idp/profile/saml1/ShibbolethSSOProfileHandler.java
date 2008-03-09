@@ -369,6 +369,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
             endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
             endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+            endpoint = endpointSelector.selectEndpoint();
         }
 
         return endpoint;

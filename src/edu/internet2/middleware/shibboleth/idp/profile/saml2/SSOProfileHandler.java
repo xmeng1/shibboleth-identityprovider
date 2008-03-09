@@ -532,6 +532,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
             endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
             endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
+            endpoint = endpointSelector.selectEndpoint();
         }
 
         return endpoint;
