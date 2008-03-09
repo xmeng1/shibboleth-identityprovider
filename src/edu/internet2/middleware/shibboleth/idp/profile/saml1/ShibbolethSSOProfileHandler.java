@@ -55,6 +55,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
@@ -348,23 +349,26 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected Endpoint selectEndpoint(BaseSAMLProfileRequestContext requestContext) {
         ShibbolethSSOLoginContext loginContext = ((ShibbolethSSORequestContext) requestContext).getLoginContext();
 
-        ShibbolethSSOEndpointSelector endpointSelector = new ShibbolethSSOEndpointSelector();
-        endpointSelector.setSpAssertionConsumerService(loginContext.getSpAssertionConsumerService());
-        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-        endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
-        endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
-        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
-        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
-
-        Endpoint endpoint = endpointSelector.selectEndpoint();
-        if (endpoint == null && loginContext.getSpAssertionConsumerService() != null) {
-            endpoint = endpointBuilder.buildObject();
-            endpoint.setLocation(loginContext.getSpAssertionConsumerService());
-            endpoint.setBinding(getSupportedOutboundBindings().get(0));
-            log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
-                    new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
-                            endpoint.getBinding(), });
+        Endpoint endpoint = null;
+        if (requestContext.getRelyingPartyConfiguration().getRelyingPartyId() == SAMLMDRelyingPartyConfigurationManager.ANONYMOUS_RP_NAME) {
+            if (loginContext.getSpAssertionConsumerService() != null) {
+                endpoint = endpointBuilder.buildObject();
+                endpoint.setLocation(loginContext.getSpAssertionConsumerService());
+                endpoint.setBinding(getSupportedOutboundBindings().get(0));
+                log.warn("Generating endpoint for anonymous relying party. ACS url {} and binding {}", new Object[] {
+                        requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
+            }else{
+               log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided."); 
+            }
+        } else {
+            ShibbolethSSOEndpointSelector endpointSelector = new ShibbolethSSOEndpointSelector();
+            endpointSelector.setSpAssertionConsumerService(loginContext.getSpAssertionConsumerService());
+            endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            endpointSelector.setMetadataProvider(getMetadataProvider());
+            endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+            endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
+            endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+            endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
         }
 
         return endpoint;

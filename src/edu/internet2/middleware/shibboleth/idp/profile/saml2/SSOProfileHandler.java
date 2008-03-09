@@ -60,6 +60,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
@@ -508,26 +509,29 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     protected Endpoint selectEndpoint(BaseSAMLProfileRequestContext requestContext) {
         AuthnRequest authnRequest = ((SSORequestContext) requestContext).getInboundSAMLMessage();
 
-        AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
-        endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
-        endpointSelector.setMetadataProvider(getMetadataProvider());
-        endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
-        endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
-        endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
-        endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
-
-        Endpoint endpoint = endpointSelector.selectEndpoint();
-        if (endpoint == null && authnRequest.getAssertionConsumerServiceURL() != null) {
-            endpoint = endpointBuilder.buildObject();
-            endpoint.setLocation(authnRequest.getAssertionConsumerServiceURL());
-            if (authnRequest.getProtocolBinding() != null) {
-                endpoint.setBinding(authnRequest.getProtocolBinding());
+        Endpoint endpoint = null;
+        if (requestContext.getRelyingPartyConfiguration().getRelyingPartyId() == SAMLMDRelyingPartyConfigurationManager.ANONYMOUS_RP_NAME) {
+            if (authnRequest.getAssertionConsumerServiceURL() != null) {
+                endpoint = endpointBuilder.buildObject();
+                endpoint.setLocation(authnRequest.getAssertionConsumerServiceURL());
+                if (authnRequest.getProtocolBinding() != null) {
+                    endpoint.setBinding(authnRequest.getProtocolBinding());
+                } else {
+                    endpoint.setBinding(getSupportedOutboundBindings().get(0));
+                }
+                log.warn("Generating endpoint for anonymous relying party. ACS url {} and binding {}", new Object[] {
+                        requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
             } else {
-                endpoint.setBinding(getSupportedOutboundBindings().get(0));
+                log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
             }
-            log.warn("No endpoint available for relying party {}. Generating endpoint with ACS url {} and binding {}",
-                    new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
-                            endpoint.getBinding(), });
+        } else {
+            AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
+            endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            endpointSelector.setMetadataProvider(getMetadataProvider());
+            endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
+            endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
+            endpointSelector.setSamlRequest(requestContext.getInboundSAMLMessage());
+            endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
         }
 
         return endpoint;
