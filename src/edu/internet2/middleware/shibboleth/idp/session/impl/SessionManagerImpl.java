@@ -18,10 +18,10 @@ package edu.internet2.middleware.shibboleth.idp.session.impl;
 
 import java.security.SecureRandom;
 
+import org.apache.commons.ssl.util.Hex;
 import org.joda.time.DateTime;
 import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
-import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -94,7 +94,7 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         // generate a random session ID
         byte[] sid = new byte[sessionIDSize];
         prng.nextBytes(sid);
-        String sessionID = Base64.encodeBytes(sid);
+        String sessionID = Hex.encode(sid);
 
         Session session = new SessionImpl(sessionID, principal, sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
@@ -134,11 +134,11 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
             return sessionEntry.getSession();
         }
     }
-    
+
     /** {@inheritDoc} */
     public Session getSessionByPrincipalName(String name) {
-        
-        //TODO
+
+        // TODO
         return null;
     }
 
