@@ -43,7 +43,7 @@
                 <basic:Rule xsi:type="basic:AttributeValueString" value="faculty" ignoreCase="true" />
                 <basic:Rule xsi:type="basic:AttributeValueString" value="student" ignoreCase="true" />
                 <basic:Rule xsi:type="basic:AttributeValueString" value="staff" ignoreCase="true" />
-                <basic:Rule xsi:type="basic:AttributeValueString" value="alumni" ignoreCase="true" />
+                <basic:Rule xsi:type="basic:AttributeValueString" value="alumn" ignoreCase="true" />
                 <basic:Rule xsi:type="basic:AttributeValueString" value="member" ignoreCase="true" />
                 <basic:Rule xsi:type="basic:AttributeValueString" value="affiliate" ignoreCase="true" />
                 <basic:Rule xsi:type="basic:AttributeValueString" value="employee" ignoreCase="true" />
