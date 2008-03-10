@@ -53,7 +53,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     private static final long serialVersionUID = -572799841125956990L;
 
     /** Class logger. */
-    private final Logger log = LoggerFactory.getLogger(RemoteUserAuthServlet.class);
+    private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginServlet.class);
 
     /** Name of JAAS configuration used to authenticate users. */
     private String jaasConfigName = "ShibUserPassAuth";
