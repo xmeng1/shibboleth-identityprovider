@@ -251,51 +251,47 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         DateTime issueInstant = new DateTime();
 
-        Subject subject = buildSubject(requestContext, subjectConfirmationMethod, issueInstant);
-
-        // create the assertion and add the attribute statement
-        Assertion assertion = buildAssertion(requestContext, issueInstant);
-        assertion.setSubject(subject);
-        if (statements != null && !statements.isEmpty()) {
-            assertion.getStatements().addAll(statements);
-        }
-
-        // create the SAML response and add the assertion
         Response samlResponse = responseBuilder.buildObject();
         samlResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, samlResponse);
 
-        // sign the assertion if it should be signed
-        signAssertion(requestContext, assertion);
+        Assertion assertion = null;
+        if (statements != null && !statements.isEmpty()) {
+            assertion = buildAssertion(requestContext, issueInstant);
+            assertion.getStatements().addAll(statements);
+            assertion.setSubject(buildSubject(requestContext, subjectConfirmationMethod, issueInstant));
+            
+            signAssertion(requestContext, assertion);
 
-        SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
-        try {
-            if (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.always
-                    || (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.conditional && !encoder
-                            .providesMessageConfidentiality(requestContext))) {
-                log.debug("Attempting to encrypt assertion to relying party {}", requestContext
-                        .getInboundMessageIssuer());
-                try {
-                    Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
-                    samlResponse.getEncryptedAssertions().add(encrypter.encrypt(assertion));
-                } catch (SecurityException e) {
-                    log.error("Unable to construct encrypter", e);
-                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                            "Unable to encrypt assertion"));
-                    throw new ProfileException("Unable to construct encrypter", e);
-                } catch (EncryptionException e) {
-                    log.error("Unable to encrypt assertion", e);
-                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                            "Unable to encrypt assertion"));
-                    throw new ProfileException("Unable to encrypt assertion", e);
+            SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
+            try {
+                if (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.always
+                        || (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.conditional && !encoder
+                                .providesMessageConfidentiality(requestContext))) {
+                    log.debug("Attempting to encrypt assertion to relying party {}", requestContext
+                            .getInboundMessageIssuer());
+                    try {
+                        Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
+                        samlResponse.getEncryptedAssertions().add(encrypter.encrypt(assertion));
+                    } catch (SecurityException e) {
+                        log.error("Unable to construct encrypter", e);
+                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                                "Unable to encrypt assertion"));
+                        throw new ProfileException("Unable to construct encrypter", e);
+                    } catch (EncryptionException e) {
+                        log.error("Unable to encrypt assertion", e);
+                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                                "Unable to encrypt assertion"));
+                        throw new ProfileException("Unable to encrypt assertion", e);
+                    }
+                } else {
+                    samlResponse.getAssertions().add(assertion);
                 }
-            } else {
-                samlResponse.getAssertions().add(assertion);
+            } catch (MessageEncodingException e) {
+                log.error("Unable to determine if outbound encoding {} can provide confidentiality", encoder
+                        .getBindingURI());
+                throw new ProfileException("Unable to determine if assertions should be encrypted");
             }
-        } catch (MessageEncodingException e) {
-            log.error("Unable to determine if outbound encoding {} can provide confidentiality", encoder
-                    .getBindingURI());
-            throw new ProfileException("Unable to determine if assertions should be encrypted");
         }
 
         Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
@@ -727,28 +723,55 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         log.debug("Building assertion NameID for principal/relying party:{}/{}", requestContext.getPrincipalName(),
                 requestContext.getInboundMessageIssuer());
 
+        // Check if AuthnRequest includes an explicit NameIDPolicy Format.
+        String requiredNameFormat = null;
+        if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
+            AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
+            if (authnRequest.getNameIDPolicy() != null) {
+                requiredNameFormat = DatatypeHelper.safeTrimOrNullString(authnRequest.getNameIDPolicy().getFormat());
+                // Check for unspec'd or encryption formats, which aren't relevant for this section of code.
+                if (requiredNameFormat != null
+                        && (requiredNameFormat.equals("urn:oasis:names:tc:SAML:2.0:nameid-format:encrypted") || requiredNameFormat
+                                .equals(NameID.UNSPECIFIED))) {
+                    requiredNameFormat = null;
+                }
+            }
+        }
+
+        // Get the SP's list, and filter it down by the AuthnRequest if need be.
         List<String> supportedNameFormats = getNameFormats(requestContext);
-        if (supportedNameFormats == null || supportedNameFormats.isEmpty()) {
-            log.debug("No common NameID formats supported by SP {} and IdP, no name identifier will be created.",
-                    requestContext.getInboundMessageIssuer());
-            return null;
+        if (requiredNameFormat != null) {
+            supportedNameFormats.clear();
+            supportedNameFormats.add(requiredNameFormat);
         }
 
         Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
         if (principalAttributes == null || principalAttributes.isEmpty()) {
+            if (requiredNameFormat != null) {
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
+                        StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + requiredNameFormat));
+                throw new ProfileException(
+                        "No attributes for principal, so NameID format required by relying party is not supported");
+            }
             log.debug("No attributes for principal {}, no name identifier will be created.", requestContext
                     .getPrincipalName());
             return null;
         }
 
-        log.debug("Supported NameID formats: {}", supportedNameFormats);
+        if (!supportedNameFormats.isEmpty()) {
+            log.debug("SP-supported name formats: {}", supportedNameFormats);
+        } else {
+            log.debug("SP indicated no preferred name formats.");
+        }
+
         try {
             SAML2NameIDEncoder nameIdEncoder;
             for (BaseAttribute<?> attribute : principalAttributes.values()) {
                 for (AttributeEncoder encoder : attribute.getEncoders()) {
                     if (encoder instanceof SAML2NameIDEncoder) {
                         nameIdEncoder = (SAML2NameIDEncoder) encoder;
-                        if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
+                        if (supportedNameFormats.isEmpty()
+                                || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                             log.debug("Using attribute {} supporting NameID format {} to create the NameID.", attribute
                                     .getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
@@ -757,7 +780,13 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                 }
             }
 
-            log.debug("No attributes for principal {} supports an encoding into a supported name ID format.",
+            if (requiredNameFormat != null) {
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
+                        StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + requiredNameFormat));
+                throw new ProfileException(
+                        "No attributes for principal support NameID format required by relying party");
+            }
+            log.debug("No attributes for principal {} support an encoding into a supported name ID format.",
                     requestContext.getPrincipalName());
             return null;
         } catch (AttributeEncodingException e) {
@@ -772,52 +801,20 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @param requestContext current request context
      * 
-     * @return list of nameID formats that may be used with the relying party
+     * @return list of formats that may be used with the relying party, or an empty list for no preference
      * 
-     * @throws ProfileException thrown if there is a problem determing the NameID format to use
+     * @throws ProfileException thrown if there is a problem determining the NameID format to use
      */
     protected List<String> getNameFormats(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
-        // Determine name formats supported by both SP and IdP
+        // Determine SP-supported formats.
         RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
         if (relyingPartyRole != null) {
             List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
             if (relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()) {
                 nameFormats.addAll(relyingPartySupportedFormats);
-
-                RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
-                if (assertingPartyRole != null) {
-                    List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
-                    if (assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()) {
-                        nameFormats.retainAll(assertingPartySupportedFormats);
-                    }
-                }
-            }
-        }
-
-        if (nameFormats.isEmpty()) {
-            nameFormats.add("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified");
-        }
-
-        // If authn request and name ID policy format specified, make sure it's in the list of supported formats
-        String nameFormat = null;
-        if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
-            AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
-            if (authnRequest.getNameIDPolicy() != null) {
-                nameFormat = DatatypeHelper.safeTrimOrNullString(authnRequest.getNameIDPolicy().getFormat());
-                if (nameFormat != null) {
-                    if (nameFormats.contains(nameFormat)) {
-                        nameFormats.clear();
-                        nameFormats.add(nameFormat);
-                    } else {
-                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
-                                StatusCode.INVALID_NAMEID_POLICY_URI, "Format not supported: " + nameFormat));
-                        throw new ProfileException("NameID format required by relying party is not supported");
-                    }
-                }
-
             }
         }
 

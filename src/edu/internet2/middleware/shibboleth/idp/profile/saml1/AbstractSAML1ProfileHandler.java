@@ -329,12 +329,12 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         Subject subject = subjectBuilder.buildObject();
         subject.setSubjectConfirmation(subjectConfirmation);
-        
-        if(nameID != null){
+
+        if (nameID != null) {
             subject.setNameIdentifier(nameID);
             requestContext.setSubjectNameIdentifier(nameID);
         }
-        
+
         return subject;
     }
 
@@ -356,14 +356,14 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             throws ProfileException {
         log.debug("Building assertion NameIdentifier to relying party {} for principal {}", requestContext
                 .getInboundMessageIssuer(), requestContext.getPrincipalName());
-        
+
         List<String> supportedNameFormats = getNameFormats(requestContext);
-        if (supportedNameFormats == null || supportedNameFormats.isEmpty()) {
-            log.debug("No common NameID formats supported by SP {} and IdP, no name identifier will be created.",
-                    requestContext.getInboundMessageIssuer());
-            return null;
+        if (!supportedNameFormats.isEmpty()) {
+            log.debug("SP-supported name formats: {}", supportedNameFormats);
+        } else {
+            log.debug("SP indicated no preferred name formats.");
         }
-        
+
         Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
         if (principalAttributes == null || principalAttributes.isEmpty()) {
             log.debug("No attributes for principal {}, no name identifier will be created.", requestContext
@@ -371,15 +371,14 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             return null;
         }
 
-        log.debug("Supported name formats: {}", supportedNameFormats);
+        SAML1NameIdentifierEncoder nameIdEncoder;
         try {
-            SAML1NameIdentifierEncoder nameIdEncoder;
-
             for (BaseAttribute<?> attribute : principalAttributes.values()) {
                 for (AttributeEncoder encoder : attribute.getEncoders()) {
                     if (encoder instanceof SAML1NameIdentifierEncoder) {
                         nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
-                        if (supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
+                        if (supportedNameFormats.isEmpty()
+                                || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                             log.debug("Using attribute {} supporting name format {} to create the NameIdentifier",
                                     attribute.getId(), nameIdEncoder.getNameFormat());
                             return nameIdEncoder.encode(attribute);
@@ -388,7 +387,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                 }
             }
 
-            log.debug("No attributes for principal {} supports an encoding into a supported name ID format.",
+            log.debug("No attributes for principal {} support an encoding into a supported name ID format.",
                     requestContext.getPrincipalName());
             return null;
         } catch (AttributeEncodingException e) {
@@ -397,7 +396,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     "Unable to construct NameIdentifier"));
             throw new ProfileException("Unable to encode NameIdentifier attribute", e);
         }
-
     }
 
     /**
@@ -405,7 +403,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @param requestContext current request context
      * 
-     * @return list of formats that may be used with the relying party
+     * @return list of formats that may be used with the relying party, or an empty list for no preference
      * 
      * @throws ProfileException thrown if there is a problem determining the NameIdentifier format to use
      */
@@ -418,19 +416,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
             if (relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()) {
                 nameFormats.addAll(relyingPartySupportedFormats);
-
-                RoleDescriptor assertingPartyRole = requestContext.getLocalEntityRoleMetadata();
-                if (assertingPartyRole != null) {
-                    List<String> assertingPartySupportedFormats = getEntitySupportedFormats(assertingPartyRole);
-                    if (assertingPartySupportedFormats != null && !assertingPartySupportedFormats.isEmpty()) {
-                        nameFormats.retainAll(assertingPartySupportedFormats);
-                    }
-                }
             }
-        }
-
-        if (nameFormats.isEmpty()) {
-            nameFormats.add("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified");
         }
 
         return nameFormats;
