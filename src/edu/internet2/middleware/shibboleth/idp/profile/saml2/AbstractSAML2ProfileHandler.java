@@ -260,7 +260,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             assertion = buildAssertion(requestContext, issueInstant);
             assertion.getStatements().addAll(statements);
             assertion.setSubject(buildSubject(requestContext, subjectConfirmationMethod, issueInstant));
-            
+
             signAssertion(requestContext, assertion);
 
             SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
@@ -639,9 +639,19 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         requestContext.setSubjectNameIdentifier(nameID);
 
+        boolean nameIdEncRequiredByAuthnRequest = false;
+        if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
+            AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
+            if (DatatypeHelper.safeEquals(DatatypeHelper.safeTrimOrNullString(authnRequest.getNameIDPolicy()
+                    .getFormat()), NameID.ENCRYPTED)) {
+                nameIdEncRequiredByAuthnRequest = true;
+            }
+        }
+
         SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
         try {
-            if (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
+            if (nameIdEncRequiredByAuthnRequest
+                    || requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
                     || (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.conditional && !encoder
                             .providesMessageConfidentiality(requestContext))) {
                 log.debug("Attempting to encrypt NameID to relying party {}", requestContext.getInboundMessageIssuer());
