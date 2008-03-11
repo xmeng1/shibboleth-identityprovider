@@ -408,6 +408,26 @@
         <resolver:AttributeEncoder xsi:type="SAML2ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:1.3.6.1.4.1.5923.1.1.1.9" friendlyName="eduPersonScopedAffiliation" />
     </resolver:AttributeDefinition>
+        
+    <resolver:AttributeDefinition id="eduPersonTargetedID.old" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
+        scope="iay.org.uk" sourceAttributeID="computedID">
+        <resolver:Dependency ref="computedID" />
+
+        <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+            name="urn:mace:dir:attribute-def:eduPersonTargetedID" />
+    </resolver:AttributeDefinition>
+
+    <resolver:AttributeDefinition id="eduPersonTargetedID" xsi:type="SAML2NameID" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
+        nameIdFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
+        sourceAttributeID="computedID">
+        <resolver:Dependency ref="computedID" />
+
+        <resolver:AttributeEncoder xsi:type="SAML1XMLObject" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" />
+    
+        <resolver:AttributeEncoder xsi:type="SAML2XMLObject" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+                name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" friendlyName="eduPersonTargetedID" />
+    </resolver:AttributeDefinition>
     -->
 
     <!-- Name Identifier related attributes -->
@@ -469,6 +489,17 @@
             ]]>
         </FilterTemplate>
     </resolver:DataConnector>
+    -->
+    
+    <!-- Computed targeted ID connector -->
+    <!--
+    <resolver:DataConnector xsi:type="ComputedId" xmlns="urn:mace:shibboleth:2.0:resolver:dc"
+                            id="computedID"
+                            generatedAttributeID="computedID"
+                            sourceAttributeID="uid"
+                            salt="your random string here">
+        <resolver:Dependency ref="myLDAP" />
+    </resolver:DataConnector> 
     -->
 
     <!-- ========================================== -->
