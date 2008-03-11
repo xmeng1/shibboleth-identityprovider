@@ -62,9 +62,6 @@
         </MetadataProvider>
         -->
         
-        <!--  IDP's Metadata -->
-        <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                          metadataFile="$IDP_HOME$/metadata/idp-metadata.xml" maintainExpiredMetadata="true" />
     </MetadataProvider>
 
     
