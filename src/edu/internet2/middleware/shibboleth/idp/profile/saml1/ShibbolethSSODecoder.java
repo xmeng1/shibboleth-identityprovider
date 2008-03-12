@@ -18,6 +18,8 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import org.joda.time.DateTime;
 import org.joda.time.chrono.ISOChronology;
+import org.opensaml.common.SAMLObject;
+import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.saml1.binding.decoding.BaseSAML1MessageDecoder;
 import org.opensaml.ws.message.MessageContext;
@@ -94,4 +96,17 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
         
         populateRelyingPartyMetadata(requestContext);
     }
+
+    /** {@inheritDoc} */
+    protected boolean isIntendedDestinationEndpointURIRequired(SAMLMessageContext samlMsgCtx) {
+        return false;
+    }
+
+    /** {@inheritDoc} */
+    protected String getIntendedDestinationEndpointURI(SAMLObject samlMessage) throws MessageDecodingException {
+        // Not relevant in this binding/profile, there is neither SAML message
+        // nor binding parameter with this information
+        return null;
+    }
+    
 }
