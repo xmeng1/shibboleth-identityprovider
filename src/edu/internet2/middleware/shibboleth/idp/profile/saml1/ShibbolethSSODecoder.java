@@ -103,7 +103,7 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
     }
 
     /** {@inheritDoc} */
-    protected String getIntendedDestinationEndpointURI(SAMLObject samlMessage) throws MessageDecodingException {
+    protected String getIntendedDestinationEndpointURI(SAMLMessageContext samlMsgCtx) throws MessageDecodingException {
         // Not relevant in this binding/profile, there is neither SAML message
         // nor binding parameter with this information
         return null;
