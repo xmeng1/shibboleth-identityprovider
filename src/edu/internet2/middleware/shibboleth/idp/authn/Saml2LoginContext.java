@@ -36,6 +36,7 @@ import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,7 +192,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         List<AuthnContextClassRef> authnClasses = authnContext.getAuthnContextClassRefs();
         if (authnClasses != null) {
             for (AuthnContextClassRef classRef : authnClasses) {
-                if (classRef != null) {
+                if (classRef != null && !DatatypeHelper.isEmpty(classRef.getAuthnContextClassRef())) {
                     requestedMethods.add(classRef.getAuthnContextClassRef());
                 }
             }
@@ -200,7 +201,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         List<AuthnContextDeclRef> authnDeclRefs = authnContext.getAuthnContextDeclRefs();
         if (authnDeclRefs != null) {
             for (AuthnContextDeclRef declRef : authnDeclRefs) {
-                if (declRef != null) {
+                if (declRef != null&& !DatatypeHelper.isEmpty(declRef.getAuthnContextDeclRef())) {
                     requestedMethods.add(declRef.getAuthnContextDeclRef());
                 }
             }
