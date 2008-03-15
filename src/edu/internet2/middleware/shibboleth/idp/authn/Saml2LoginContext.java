@@ -26,6 +26,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.opensaml.Configuration;
+import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
@@ -168,7 +169,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
     /**
      * Extracts the authentication methods requested within the request.
      * 
-     * @return requested authentication methods
+     * @return requested authentication methods, or an empty list if no preference
      */
     protected List<String> extractRequestedAuthenticationMethods(){
         ArrayList<String> requestedMethods = new ArrayList<String>();
@@ -188,8 +189,6 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
 
         // build a list of all requested authn classes and declrefs
         List<AuthnContextClassRef> authnClasses = authnContext.getAuthnContextClassRefs();
-        List<AuthnContextDeclRef> authnDeclRefs = authnContext.getAuthnContextDeclRefs();
-
         if (authnClasses != null) {
             for (AuthnContextClassRef classRef : authnClasses) {
                 if (classRef != null) {
@@ -198,12 +197,17 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
             }
         }
 
+        List<AuthnContextDeclRef> authnDeclRefs = authnContext.getAuthnContextDeclRefs();
         if (authnDeclRefs != null) {
             for (AuthnContextDeclRef declRef : authnDeclRefs) {
                 if (declRef != null) {
                     requestedMethods.add(declRef.getAuthnContextDeclRef());
                 }
             }
+        }
+        
+        if(requestedMethods.contains(AuthnContext.UNSPECIFIED_AUTHN_CTX)){
+            requestedMethods.clear();
         }
 
         return requestedMethods;

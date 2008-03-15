@@ -42,9 +42,6 @@ import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
  */
 public class PreviousSessionLoginHandler extends AbstractLoginHandler {
 
-    /** PreviousSession authentication method URI. */
-    public static final String PREVIOUS_SESSION_AUTHN_METHOD = "urn:oasis:names:tc:SAML:2.0:ac:classes:PreviousSession";
-
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(PreviousSessionLoginHandler.class);
 

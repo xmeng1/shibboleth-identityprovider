@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.joda.time.DateTime;
+import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,10 +184,10 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Beginning user authentication process");
         try {
             Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-            if(idpSession != null){
+            if (idpSession != null) {
                 LOG.debug("Existing IdP session available for principal {}", idpSession.getPrincipalName());
             }
-            
+
             Map<String, LoginHandler> possibleLoginHandlers = determinePossibleLoginHandlers(loginContext);
             LOG.debug("Possible authentication handlers for this request: {}", possibleLoginHandlers);
 
@@ -198,15 +199,14 @@ public class AuthenticationEngine extends HttpServlet {
             if (loginContext.isPassiveAuthRequired()) {
                 filterByPassiveAuthentication(loginContext, possibleLoginHandlers);
             }
-            
+
             // If the user already has a session and its usage is acceptable than use it
             // otherwise just use the first candidate login handler
             LOG.debug("Possible authentication handlers after filtering: {}", possibleLoginHandlers);
-            if (idpSession != null
-                    && possibleLoginHandlers.containsKey(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD)) {
+            if (idpSession != null && possibleLoginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX)) {
                 authenticateUserWithPreviousSession(loginContext, possibleLoginHandlers, httpRequest, httpResponse);
             } else {
-                possibleLoginHandlers.remove(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD);
+                possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
                 Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
                 authenticateUser(chosenLoginHandler.getKey(), chosenLoginHandler.getValue(), loginContext, httpRequest,
                         httpResponse);
@@ -233,13 +233,20 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.trace("Supported login handlers: {}", supportedLoginHandlers);
         LOG.trace("Requested authentication methods: {}", loginContext.getRequestedAuthenticationMethods());
 
+        // If no preferences Authn method preference is given, then we're free to use any
+        if (loginContext.getRequestedAuthenticationMethods().isEmpty()) {
+            LOG.trace("No preference given for authentication methods");
+            return supportedLoginHandlers;
+        }
+
+        // Otherwise we need to filter all the mechanism supported by the IdP so that only the request types are left
+        // Previous session handler is a special case, we always to keep that around if it's configured
         Iterator<Entry<String, LoginHandler>> supportedLoginHandlerItr = supportedLoginHandlers.entrySet().iterator();
         Entry<String, LoginHandler> supportedLoginHandler;
         while (supportedLoginHandlerItr.hasNext()) {
             supportedLoginHandler = supportedLoginHandlerItr.next();
-            if (!(supportedLoginHandler.getKey().equals(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD))
-                    && !loginContext.getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
-// treat no req method as any
+            if (!supportedLoginHandler.getKey().equals(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX) && !loginContext
+                    .getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
                 supportedLoginHandlerItr.remove();
                 continue;
             }
@@ -284,7 +291,7 @@ public class AuthenticationEngine extends HttpServlet {
                 }
             }
         }
-        
+
         LOG.debug("Authentication handlers remaining after forced authentication requirement filtering: {}",
                 loginHandlers);
 
@@ -315,7 +322,7 @@ public class AuthenticationEngine extends HttpServlet {
                 authnMethodItr.remove();
             }
         }
-        
+
         LOG.debug("Authentication handlers remaining after passive authentication requirement filtering: {}",
                 loginHandlers);
 
@@ -340,7 +347,7 @@ public class AuthenticationEngine extends HttpServlet {
 
         Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         PreviousSessionLoginHandler loginHandler = (PreviousSessionLoginHandler) handlerManager.getLoginHandlers().get(
-                PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD);
+                AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
 
         AuthenticationMethodInformation authenticationMethod = null;
         for (String possibleAuthnMethod : possibleLoginHandlers.keySet()) {
@@ -353,7 +360,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (loginHandler.reportPreviousSessionAuthnMethod()) {
             loginContext.setAuthenticationDuration(loginHandler.getAuthenticationDuration());
             loginContext.setAuthenticationInstant(new DateTime());
-            loginContext.setAuthenticationMethod(PreviousSessionLoginHandler.PREVIOUS_SESSION_AUTHN_METHOD);
+            loginContext.setAuthenticationMethod(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
         } else {
             loginContext.setAuthenticationDuration(authenticationMethod.getAuthenticationDuration());
             loginContext.setAuthenticationInstant(authenticationMethod.getAuthenticationInstant());
