@@ -171,7 +171,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                     requestContext.getInboundSAMLMessage());
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(servletRequest));
-            if (loginContext.getRequestedAuthenticationMethods().size() == 0) {
+            if (loginContext.getRequestedAuthenticationMethods().size() == 0
+                    && rpConfig.getDefaultAuthenticationMethod() != null) {
                 loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
             }
 
