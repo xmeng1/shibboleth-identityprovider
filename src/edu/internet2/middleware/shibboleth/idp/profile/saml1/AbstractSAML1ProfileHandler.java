@@ -71,6 +71,7 @@ import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AbstractSAML1ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.profile.AbstractSAMLProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** Common implementation details for profile handlers. */
@@ -181,8 +182,12 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         if (userSession != null) {
             requestContext.setUserSession(userSession);
             requestContext.setPrincipalName(userSession.getPrincipalName());
-            requestContext.setPrincipalAuthenticationMethod(userSession.getServicesInformation().get(
-                    requestContext.getInboundMessageIssuer()).getAuthenticationMethod().getAuthenticationMethod());
+            ServiceInformation serviceInfo = userSession.getServicesInformation().get(
+                    requestContext.getInboundMessageIssuer());
+            if (serviceInfo != null) {
+                requestContext.setPrincipalAuthenticationMethod(serviceInfo.getAuthenticationMethod()
+                        .getAuthenticationMethod());
+            }
         }
     }
 
