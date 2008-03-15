@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,8 +25,15 @@ import javax.servlet.http.HttpServletRequest;
 import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
+import org.opensaml.saml1.core.NameIdentifier;
+import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
+import org.opensaml.saml2.metadata.AuthnAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.NameIDFormat;
+import org.opensaml.saml2.metadata.PDPDescriptor;
+import org.opensaml.saml2.metadata.RoleDescriptor;
+import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
@@ -389,6 +397,64 @@ public abstract class AbstractSAMLProfileHandler extends
             throw new ProfileException("No peer endpoint available to which to send SAML response");
         }
         requestContext.setPeerEntityEndpoint(endpoint);
+    }
+
+    /**
+     * Gets the name identifier formats to use when creating identifiers for the relying party.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return list of formats that may be used with the relying party, or an empty list for no preference
+     * 
+     * @throws ProfileException thrown if there is a problem determining the name identifier format to use
+     */
+    protected List<String> getNameFormats(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        ArrayList<String> nameFormats = new ArrayList<String>();
+
+        RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
+        if (relyingPartyRole != null) {
+            List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
+            if (relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()) {
+                nameFormats.addAll(relyingPartySupportedFormats);
+            }
+        }
+
+        // If metadata contains the unspecified name format this means that any are supported
+        if (nameFormats.contains(NameIdentifier.UNSPECIFIED)) {
+            nameFormats.clear();
+        }
+
+        return nameFormats;
+    }
+
+    /**
+     * Gets the list of name identifier formats supported for a given role.
+     * 
+     * @param role the role to get the list of supported name identifier formats
+     * 
+     * @return list of supported name identifier formats
+     */
+    protected List<String> getEntitySupportedFormats(RoleDescriptor role) {
+        List<NameIDFormat> nameIDFormats = null;
+
+        if (role instanceof SSODescriptor) {
+            nameIDFormats = ((SSODescriptor) role).getNameIDFormats();
+        } else if (role instanceof AuthnAuthorityDescriptor) {
+            nameIDFormats = ((AuthnAuthorityDescriptor) role).getNameIDFormats();
+        } else if (role instanceof PDPDescriptor) {
+            nameIDFormats = ((PDPDescriptor) role).getNameIDFormats();
+        } else if (role instanceof AttributeAuthorityDescriptor) {
+            nameIDFormats = ((AttributeAuthorityDescriptor) role).getNameIDFormats();
+        }
+
+        ArrayList<String> supportedFormats = new ArrayList<String>();
+        if (nameIDFormats != null) {
+            for (NameIDFormat format : nameIDFormats) {
+                supportedFormats.add(format.getFormat());
+            }
+        }
+
+        return supportedFormats;
     }
 
     /**

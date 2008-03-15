@@ -807,61 +807,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     }
 
     /**
-     * Gets the NameID format to use when creating NameIDs for the relying party.
-     * 
-     * @param requestContext current request context
-     * 
-     * @return list of formats that may be used with the relying party, or an empty list for no preference
-     * 
-     * @throws ProfileException thrown if there is a problem determining the NameID format to use
-     */
-    protected List<String> getNameFormats(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
-            throws ProfileException {
-        ArrayList<String> nameFormats = new ArrayList<String>();
-
-        // Determine SP-supported formats.
-        RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
-        if (relyingPartyRole != null) {
-            List<String> relyingPartySupportedFormats = getEntitySupportedFormats(relyingPartyRole);
-            if (relyingPartySupportedFormats != null && !relyingPartySupportedFormats.isEmpty()) {
-                nameFormats.addAll(relyingPartySupportedFormats);
-            }
-        }
-
-        return nameFormats;
-    }
-
-    /**
-     * Gets the list of NameID formats supported for a given role.
-     * 
-     * @param role the role to get the list of supported NameID formats
-     * 
-     * @return list of supported NameID formats
-     */
-    protected List<String> getEntitySupportedFormats(RoleDescriptor role) {
-        List<NameIDFormat> nameIDFormats = null;
-
-        if (role instanceof SSODescriptor) {
-            nameIDFormats = ((SSODescriptor) role).getNameIDFormats();
-        } else if (role instanceof AuthnAuthorityDescriptor) {
-            nameIDFormats = ((AuthnAuthorityDescriptor) role).getNameIDFormats();
-        } else if (role instanceof PDPDescriptor) {
-            nameIDFormats = ((PDPDescriptor) role).getNameIDFormats();
-        } else if (role instanceof AttributeAuthorityDescriptor) {
-            nameIDFormats = ((AttributeAuthorityDescriptor) role).getNameIDFormats();
-        }
-
-        ArrayList<String> supportedFormats = new ArrayList<String>();
-        if (nameIDFormats != null) {
-            for (NameIDFormat format : nameIDFormats) {
-                supportedFormats.add(format.getFormat());
-            }
-        }
-
-        return supportedFormats;
-    }
-
-    /**
      * Constructs an SAML response message carrying a request error.
      * 
      * @param requestContext current request context
