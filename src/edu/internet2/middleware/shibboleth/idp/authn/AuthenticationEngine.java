@@ -357,7 +357,7 @@ public class AuthenticationEngine extends HttpServlet {
                 AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
 
         AuthenticationMethodInformation authenticationMethod = null;
-        for (String possibleAuthnMethod : possibleLoginHandlers.keySet()) {
+        for (String possibleAuthnMethod : idpSession.getAuthenticationMethods().keySet()) {
             authenticationMethod = idpSession.getAuthenticationMethods().get(possibleAuthnMethod);
             if (authenticationMethod != null) {
                 break;
