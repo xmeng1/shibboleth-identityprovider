@@ -76,10 +76,13 @@
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
     </LoginHandler>
     
+    <!--  Username/password login handler -->
+    <!-- 
     <LoginHandler xsi:type="UsernamePassword" 
                   jaasConfigurationLocation="file://$IDP_HOME$/conf/login.config">
         <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
     </LoginHandler>
+    -->
     
     <!-- 
         Removal of this login handler will disable SSO support, that is it will require the user to authenticate 

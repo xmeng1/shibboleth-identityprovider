@@ -37,23 +37,41 @@
         -->
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" 
                               includeAttributeStatement="false"
-                              assertionLifetime="300000" />
+                              assertionLifetime="300000"
+                              signResponses="conditional"
+                              signAssertions="never" />
                               
         <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile"
-                              assertionLifetime="300000" />
+                              assertionLifetime="300000"
+                              signResponses="conditional"
+                              signAssertions="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile"
+                              signResponses="conditional"
+                              signAssertions="never" />
         
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" 
                               includeAttributeStatement="true"
                               assertionLifetime="300000"
-                              assertionProxyCount="0" />
+                              assertionProxyCount="0" 
+                              signResponses="conditional"
+                              signAssertions="never" 
+                              encryptAssertions="conditional"
+                              encryptNameIds="conditional" />
         
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
                               assertionLifetime="300000"
-                              assertionProxyCount="0" />
+                              assertionProxyCount="0" 
+                              signResponses="conditional"
+                              signAssertions="never"
+                              encryptAssertions="conditional"
+                              encryptNameIds="conditional" />
         
-        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" />
+        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" 
+                              signResponses="conditional"
+                              signAssertions="never"
+                              encryptAssertions="conditional"
+                              encryptNameIds="conditional"/>
         
     </DefaultRelyingParty>
         
