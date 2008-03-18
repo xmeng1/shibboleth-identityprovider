@@ -197,7 +197,7 @@ public class AuthenticationEngine extends HttpServlet {
             }
 
             if (loginContext.isPassiveAuthRequired()) {
-                filterByPassiveAuthentication(loginContext, possibleLoginHandlers);
+                filterByPassiveAuthentication(idpSession, loginContext, possibleLoginHandlers);
             }
 
             // If the user already has a session and its usage is acceptable than use it
@@ -245,8 +245,8 @@ public class AuthenticationEngine extends HttpServlet {
         Entry<String, LoginHandler> supportedLoginHandler;
         while (supportedLoginHandlerItr.hasNext()) {
             supportedLoginHandler = supportedLoginHandlerItr.next();
-            if (!supportedLoginHandler.getKey().equals(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX) && !loginContext
-                    .getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
+            if (!supportedLoginHandler.getKey().equals(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX)
+                    && !loginContext.getRequestedAuthenticationMethods().contains(supportedLoginHandler.getKey())) {
                 supportedLoginHandlerItr.remove();
                 continue;
             }
@@ -295,7 +295,8 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Authentication handlers remaining after forced authentication requirement filtering: {}",
                 loginHandlers);
 
-        if (loginHandlers.isEmpty()) {
+        if (loginHandlers.isEmpty()
+                || (loginHandlers.size() == 1 && loginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX) && idpSession == null)) {
             LOG.error("Force authentication required but no login handlers available to support it");
             throw new ForceAuthenticationException();
         }
@@ -305,13 +306,14 @@ public class AuthenticationEngine extends HttpServlet {
      * Filters out any login handler that doesn't support passive authentication if the login context indicates passive
      * authentication is required.
      * 
+     * @param idpSession user's current IdP session
      * @param loginContext current login context
      * @param loginHandlers login handlers to filter
      * 
      * @throws PassiveAuthenticationException thrown if no handlers remain after filtering
      */
-    protected void filterByPassiveAuthentication(LoginContext loginContext, Map<String, LoginHandler> loginHandlers)
-            throws PassiveAuthenticationException {
+    protected void filterByPassiveAuthentication(Session idpSession, LoginContext loginContext,
+            Map<String, LoginHandler> loginHandlers) throws PassiveAuthenticationException {
         LOG.debug("Passive authentication is required, filtering poassible login handlers accordingly.");
 
         LoginHandler loginHandler;
@@ -326,7 +328,8 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Authentication handlers remaining after passive authentication requirement filtering: {}",
                 loginHandlers);
 
-        if (loginHandlers.isEmpty()) {
+        if (loginHandlers.isEmpty()
+                || (loginHandlers.size() == 1 && loginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX) && idpSession == null)) {
             LOG.error("Passive authentication required but no login handlers available to support it");
             throw new PassiveAuthenticationException();
         }
