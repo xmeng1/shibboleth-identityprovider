@@ -282,6 +282,8 @@ public class AuthenticationEngine extends HttpServlet {
             activeMethods.addAll(idpSession.getAuthenticationMethods().values());
         }
 
+        loginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
+
         LoginHandler loginHandler;
         for (AuthenticationMethodInformation activeMethod : activeMethods) {
             loginHandler = loginHandlers.get(activeMethod.getAuthenticationMethod());
@@ -295,8 +297,7 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Authentication handlers remaining after forced authentication requirement filtering: {}",
                 loginHandlers);
 
-        if (loginHandlers.isEmpty()
-                || (loginHandlers.size() == 1 && loginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX) && idpSession == null)) {
+        if (loginHandlers.isEmpty()) {
             LOG.error("Force authentication required but no login handlers available to support it");
             throw new ForceAuthenticationException();
         }
@@ -316,6 +317,10 @@ public class AuthenticationEngine extends HttpServlet {
             Map<String, LoginHandler> loginHandlers) throws PassiveAuthenticationException {
         LOG.debug("Passive authentication is required, filtering poassible login handlers accordingly.");
 
+        if (idpSession == null) {
+            loginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
+        }
+
         LoginHandler loginHandler;
         Iterator<Entry<String, LoginHandler>> authnMethodItr = loginHandlers.entrySet().iterator();
         while (authnMethodItr.hasNext()) {
@@ -328,8 +333,7 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Authentication handlers remaining after passive authentication requirement filtering: {}",
                 loginHandlers);
 
-        if (loginHandlers.isEmpty()
-                || (loginHandlers.size() == 1 && loginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX) && idpSession == null)) {
+        if (loginHandlers.isEmpty()) {
             LOG.error("Passive authentication required but no login handlers available to support it");
             throw new PassiveAuthenticationException();
         }
