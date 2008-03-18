@@ -41,6 +41,8 @@ public abstract class AbstractLoginHandler implements LoginHandler {
     /** Constructor. */
     protected AbstractLoginHandler(){
         supportedAuthenticationMethods = new ArrayList<String>();
+        supportsForceAuthentication = false;
+        supportsPassive = false;
     }
     
     /** {@inheritDoc} */
@@ -68,9 +70,9 @@ public abstract class AbstractLoginHandler implements LoginHandler {
     }
 
     /**
-     * Sets whether this handler supports foreced re-authentication.
+     * Sets whether this handler supports forced re-authentication.
      * 
-     * @param supported whether this handler supports foreced re-authentication
+     * @param supported whether this handler supports forced re-authentication
      */
     public void setSupportsForceAuthentication(boolean supported) {
         supportsForceAuthentication = supported;

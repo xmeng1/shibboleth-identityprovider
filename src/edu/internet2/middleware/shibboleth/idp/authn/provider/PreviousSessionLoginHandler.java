@@ -55,6 +55,7 @@ public class PreviousSessionLoginHandler extends AbstractLoginHandler {
     public PreviousSessionLoginHandler() {
         super();
         servletPath = null;
+        setSupportsForceAuthentication(false);
     }
 
     /**
