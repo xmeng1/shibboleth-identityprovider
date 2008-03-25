@@ -410,7 +410,7 @@
     </resolver:AttributeDefinition>
         
     <resolver:AttributeDefinition id="eduPersonTargetedID.old" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-        scope="iay.org.uk" sourceAttributeID="computedID">
+        scope="example.org" sourceAttributeID="computedID">
         <resolver:Dependency ref="computedID" />
 
         <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
