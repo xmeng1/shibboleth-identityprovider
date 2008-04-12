@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="test"/>
-	<classpathentry excluding="classpath/|conf/" including="META-INF/" kind="src" path="resources"/>
-	<classpathentry kind="src" path="resources/conf"/>
-	<classpathentry kind="src" path="resources/classpath"/>
+	<classpathentry kind="src" output="target/classes" path="src/main/java"/>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
+		<attributes>
+			<attribute name="maven.type" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry excluding="**" kind="src" output="src/main/resources" path="src/main/resources"/>
+	<classpathentry excluding="**" kind="src" output="src/test/resources" path="src/test/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="build-lib/servlet-2.4.jar"/>
-	<classpathentry kind="lib" path="build-lib/junit-3.8.1.jar"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/java-shib-common"/>
-	<classpathentry kind="lib" path="build-lib/spring-2.0.7-mock.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="con" path="org.maven.ide.eclipse.MAVEN2_CLASSPATH_CONTAINER"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>
