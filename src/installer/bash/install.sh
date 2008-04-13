@@ -35,7 +35,7 @@ if [ -n "$CLASSPATH" ] ; then
 fi
 
 # add in the dependency .jar files
-DIRLIBS=${ANT_HOME}/build-lib/*.jar
+DIRLIBS=${ANT_HOME}/src/installer/lib/*.jar
 for i in ${DIRLIBS}
 do
     # if the directory is empty, then it will return the input string
@@ -91,4 +91,4 @@ if $cygwin; then
   JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
   LOCALCLASSPATH=`cygpath --path --windows "$LOCALCLASSPATH"`
 fi
-$JAVACMD -classpath "$LOCALCLASSPATH" -Dant.home="${ANT_HOME}" $ANT_OPTS org.apache.tools.ant.Main -e "$@"
+$JAVACMD -classpath "$LOCALCLASSPATH" -Dant.home="${ANT_HOME}" $ANT_OPTS org.apache.tools.ant.Main -e -f src/installer/resources/build.xml "$@"

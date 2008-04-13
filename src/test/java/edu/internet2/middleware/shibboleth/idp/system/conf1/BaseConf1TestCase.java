@@ -3,12 +3,12 @@ package edu.internet2.middleware.shibboleth.idp.system.conf1;
 
 import org.springframework.context.ApplicationContext;
 
-import edu.internet2.middleware.shibboleth.idp.BaseIdPTestCase;
+import edu.internet2.middleware.shibboleth.idp.BaseTestCase;
 
 /**
  * Base unit test case for Spring configuration tests.
  */
-public class BaseConf1TestCase extends BaseIdPTestCase {
+public class BaseConf1TestCase extends BaseTestCase {
     
     /** Application context containing the loaded IdP configuration. */
     private ApplicationContext appCtx;

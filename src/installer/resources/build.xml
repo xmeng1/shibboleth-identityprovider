@@ -1,10 +1,10 @@
-<project name="Shibboleth Identity Provider" basedir="." default="install">
+<project name="Shibboleth Identity Provider" basedir="../../.." default="install">
 
-    <!-- User based property file that overrides any property below -->
-    <property file="${user.name}-build.properties" />
-
-    <!-- Project based property file -->
-    <property file="build.properties" />
+    <property name="installer.dir" value="${basedir}/src/installer" />
+    <property name="resources.dir" value="${installer.dir}/resources" />
+    <property name="tools.dir" value="${basedir}/src/tools" />
+    <property name="webapp.dir" value="${basedir}/src/main/webapp" />
+    <property name="war.name" value="idp" />
 
     <!-- Installation specific property file -->
     <property file="install.properties" />
@@ -15,158 +15,28 @@
     <!-- Load Internet2 ant extensions -->
     <taskdef resource="edu/internet2/middleware/ant/antlib.xml" />
 
-    <!-- Load Checkstyle tasks -->
-    <taskdef resource="checkstyletask.properties" />
-
-    <!-- Classpath for building core classes-->
-    <path id="build-path">
-        <fileset dir="${build-lib.dir}" includes="**/*.jar" />
-        <fileset dir="${lib.dir}" includes="**/*.jar" />
-    </path>
-
-    <!-- Classpath for testing classes-->
-    <path id="test-path">
-        <path refid="build-path" />
-        <pathelement location="${core-classes.dir}" />
-        <pathelement location="${core-src.dir}" />
-        <pathelement location="${test-classes.dir}" />
-        <pathelement location="${test-classes.dir}/data" />
-        <pathelement location="${test-classes.dir}/log4j.xml" />
-        <pathelement location="${test-src.dir}" />
-        <pathelement location="${classpathres.dir}" />
-    </path>
-
-    <!-- Prepare directory structure for build -->
-    <target name="build-init">
-        <mkdir dir="${build.dir}" />
-    </target>
-
-    <!-- Compile core (non-test) classes -->
-    <target name="compile-core" depends="build-init, clean-compile">
-        <mkdir dir="${core-prep-source.dir}" />
-        <mkdir dir="${core-classes.dir}" />
-
-        <copy todir="${core-prep-source.dir}" preservelastmodified="true">
-            <fileset dir="${core-src.dir}" />
-            <filterset begintoken="$" endtoken="$">
-                <filter token="IDP_HOME" value="${idp.home}" />
-                <filter token="IDP_VERSION" value="${version}" />
-            </filterset>
-        </copy>
-
-        <javac srcdir="${core-prep-source.dir}"
-               destdir="${core-classes.dir}"
-               includes="**/*.java"
-               debug="on"
-               source="1.5">
-            <classpath refid="build-path" />
-        </javac>
-
-        <delete dir="${core-prep-source.dir}" />
-
-    </target>
-
-    <!-- Compile unit test classes -->
-    <target name="compile-test" depends="compile-core">
-        <mkdir dir="${test-classes.dir}" />
-
-        <javac srcdir="${test-src.dir}" destdir="${test-classes.dir}" includes="**/*.java" debug="on" source="1.5">
-            <classpath refid="test-path" />
-        </javac>
-
-    </target>
-
-    <!-- Compile and run unit tests -->
-    <target name="test" depends="compile-core, compile-test" description="Runs the unit tests for the project.">
-        <mkdir dir="${test-results.dir}" />
-
-        <echo message="Excuting unit tests using endorsed directory ${java.endorsed.dirs}" />
-        <junit printsummary="off"
-               fork="yes"
-               forkmode="once"
-               haltonerror="false"
-               haltonfailure="false"
-               dir="${basedir}"
-               errorproperty="testFailed">
-            <jvmarg value="-Djava.endorsed.dirs=${java.endorsed.dirs}" />
-            <classpath refid="test-path" />
-            <formatter type="xml" />
-            <batchtest todir="${test-results.dir}">
-                <fileset dir="${test-classes.dir}">
-                    <include name="**/*Test.class" />
-                </fileset>
-            </batchtest>
-        </junit>
-        <junitreport todir="${test-results.dir}">
-            <fileset dir="${test-results.dir}">
-                <include name="TEST-*.xml" />
-            </fileset>
-            <report format="frames" todir="${test-report.dir}" />
-        </junitreport>
-
-        <echo message="Test report available at ${test-report.dir}/index.html" />
-        <fail if="testFailed" message="Test failure; see ${test-report.dir}/index.html for more information." />
-    </target>
-
-    <!-- Javadoc core (non-test) classes -->
-    <target name="javadoc" description="Creates the JavaDoc documentatin for the project.">
-        <mkdir dir="${javadoc.dir}" />
-        <javadoc packagenames="org.opensaml.*"
-                 sourcepath="${core-src.dir}"
-                 destdir="${javadoc.dir}"
-                 author="false"
-                 version="true"
-                 windowtitle="${ant.project.name} ${version} Java API"
-                 doctitle="${ant.project.name} ${version} Java API"
-                 bottom="${copyright}"
-                 overview="${core-src.dir}/overview.html">
-            <classpath refid="build-path" />
-        </javadoc>
-    </target>
-
-    <!-- Removes previously compiled files -->
-    <target name="clean-compile">
-        <delete dir="${build.dir}" />
-        <delete dir="${dist.dir}" />
-    </target>
-
-    <!-- Removes all build generated content -->
-    <target name="clean" depends="clean-compile" description="Removes any artifact produced by the build process.">
-        <delete dir="${javadoc.dir}" />
-        <delete dir="${reports.dir}" />
-        <delete dir="${dist.dir}" />
-    </target>
-
-    <!-- Create JAR file -->
-    <target name="package" depends="compile-core" description="Creates the project library jar file.">
-        <mkdir dir="${dist.dir}" />
-
-        <jar destfile="${dist.dir}/${jar.name}" whenempty="fail">
-            <fileset dir="${classpathres.dir}" />
-            <zipfileset dir="${metainf.dir}" prefix="META-INF/" />
-            <zipfileset dir="${core-classes.dir}" />
-        </jar>
-
-    </target>
-
     <target name="install" description="Installs the identity provider software.">
-        <input message="Is this a new installation? Answering yes will overwrite your current configuration. [yes|no]"
+        <input message="Is this a new installation? Answering yes will overwrite your current configuration."
                addproperty="new.install"
+               validargs="yes,no"
                defaultvalue="no" />
 
         <if>
             <equals arg1="${new.install}" arg2="yes" />
             <then>
-                <input message="Where should the Shibboleth Identity Provider software be installed? [default: ${idp.home}]"
+                <input message="Where should the Shibboleth Identity Provider software be installed?"
                        addproperty="idp.home.input"
                        defaultvalue="${idp.home}" />
                 <var name="idp.home" value="${idp.home.input}" />
 
-                <input message="What is the hostname of the Shibboleth Identity Provider server? [default: ${idp.hostname}]"
+                <pathToAbsolutePath path="${idp.home}" addproperty="idp.home.path" />
+                <pathToUrl path="${idp.home}" addproperty="idp.home.url" />
+
+                <input message="What is the hostname of the Shibboleth Identity Provider server?"
                        addproperty="idp.hostname.input"
                        defaultvalue="${idp.hostname}" />
                 <var name="idp.hostname" value="${idp.hostname.input}" />
-                
+
                 <input message="A keystore is about to be generated for you. Please enter a password that will be used to protect it."
                        addproperty="idp.keystore.pass" />
 
@@ -175,15 +45,15 @@
                     <entry key="idp.hostname" value="${idp.hostname.input}" />
                 </propertyfile>
 
-                <mkdir dir="${idp.home}" />
-                <mkdir dir="${idp.home}/bin" />
-                <mkdir dir="${idp.home}/conf" />
-                <mkdir dir="${idp.home}/credentials" />
-                <mkdir dir="${idp.home}/lib" />
-                <mkdir dir="${idp.home}/lib/endorsed" />
-                <mkdir dir="${idp.home}/logs" />
-                <mkdir dir="${idp.home}/metadata" />
-                <mkdir dir="${idp.home}/war" />
+                <mkdir dir="${idp.home.path}" />
+                <mkdir dir="${idp.home.path}/bin" />
+                <mkdir dir="${idp.home.path}/conf" />
+                <mkdir dir="${idp.home.path}/credentials" />
+                <mkdir dir="${idp.home.path}/lib" />
+                <mkdir dir="${idp.home.path}/lib/endorsed" />
+                <mkdir dir="${idp.home.path}/logs" />
+                <mkdir dir="${idp.home.path}/metadata" />
+                <mkdir dir="${idp.home.path}/war" />
 
                 <var name="idp.entity.id" value="https://${idp.hostname}/idp/shibboleth" />
 
@@ -191,25 +61,25 @@
 
                 <echo message="Generating signing and encryption key, certificate, and keystore. " />
                 <selfSignedCert hostname="${idp.hostname}"
-                                privateKeyFile="${idp.home}/credentials/idp.key"
-                                certificateFile="${idp.home}/credentials/idp.crt"
-                                keystoreFile="${idp.home}/credentials/idp.jks"
+                                privateKeyFile="${idp.home.path}/credentials/idp.key"
+                                certificateFile="${idp.home.path}/credentials/idp.crt"
+                                keystoreFile="${idp.home.path}/credentials/idp.jks"
                                 keystorePassword="${idp.keystore.pass}"
-                                uriSubjectAltNames="${idp.entity.id}"/>
+                                uriSubjectAltNames="${idp.entity.id}" />
 
-                <copy todir="${idp.home}/bin" preservelastmodified="true">
+                <copy todir="${idp.home.path}/bin" preservelastmodified="true">
                     <fileset dir="${tools.dir}" />
                     <filterset begintoken="$" endtoken="$">
-                        <filter token="IDP_HOME" value="${idp.home}" />
+                        <filter token="IDP_HOME" value="${idp.home.path}" />
                         <filter token="IDP_VERSION" value="${version}" />
                     </filterset>
                 </copy>
-                <chmod file="${idp.home}/bin/*.sh" perm="+x" />
+                <chmod file="${idp.home.path}/bin/*.sh" perm="+x" />
 
-                <copy todir="${idp.home}/conf" preservelastmodified="true" overwrite="true">
-                    <fileset dir="${conf.dir}" />
+                <copy todir="${idp.home.path}/conf" preservelastmodified="true" overwrite="true">
+                    <fileset dir="${resources.dir}/conf-tmpl" />
                     <filterset begintoken="$" endtoken="$">
-                        <filter token="IDP_HOME" value="${idp.home}" />
+                        <filter token="IDP_HOME" value="${idp.home.path}" />
                         <filter token="IDP_VERSION" value="${version}" />
                         <filter token="IDP_ENTITY_ID" value="${idp.entity.id}" />
                         <filter token="IDP_SCOPE" value="${idp.scope}" />
@@ -218,12 +88,12 @@
                     </filterset>
                 </copy>
 
-                <stringFromFile input="${idp.home}/credentials/idp.crt" addProperty="idp.cert" />
+                <stringFromFile input="${idp.home.path}/credentials/idp.crt" addProperty="idp.cert" />
                 <regexSplit input="${idp.cert}"
                             regex="\A.*-----\s((?:.*\s)*)-----END.*\Z"
                             addproperty="idp.metadata.cert" />
-                <copy todir="${idp.home}/metadata" preservelastmodified="true" overwrite="true">
-                    <fileset dir="${metadata.dir}" />
+                <copy todir="${idp.home.path}/metadata" preservelastmodified="true" overwrite="true">
+                    <fileset dir="${resources.dir}/metadata-tmpl" />
                     <filterset begintoken="$" endtoken="$">
                         <filter token="IDP_ENTITY_ID" value="${idp.entity.id}" />
                         <filter token="IDP_SCOPE" value="${idp.scope}" />
@@ -234,46 +104,35 @@
             </then>
         </if>
 
-        <copy todir="${idp.home}/lib" preservelastmodified="true">
+        <copy todir="${idp.home.path}/lib" preservelastmodified="true">
             <fileset dir="${lib.dir}" />
             <fileset file="${dist.dir}/${jar.name}" />
             <fileset file="${build-lib.dir}/servlet-2.4.jar" />
         </copy>
-            
-        <copy todir="${idp.home}/lib/endorsed" preservelastmodified="true" failonerror="false">
+
+        <copy todir="${idp.home.path}/lib/endorsed" preservelastmodified="true" failonerror="false">
             <fileset dir="endorsed" />
         </copy>
 
-        <copy todir="${webinf-temp.dir}">
-            <fileset dir="${webinf.dir}" />
+        <!-- create web.xml -->
+        <copy file="${webapp.dir}/WEB-INF/web.xml"
+              todir="${installer.dir}"
+              preservelastmodified="true"
+              overwrite="true">
             <filterset begintoken="$" endtoken="$">
-                <filter token="IDP_HOME" value="${idp.home}" />
-                <filter token="IDP_VERSION" value="${version}" />
+                <filter token="IDP_HOME" value="${idp.home.url}" />
             </filterset>
         </copy>
 
-        <jar destfile="${idp.home}/war/${war.name}" whenempty="fail">
-            <zipfileset dir="${webinf-temp.dir}" prefix="WEB-INF/" />
-            <zipfileset dir="${webpages.dir}" prefix="" />
-            <zipfileset dir="${lib.dir}" prefix="WEB-INF/lib/" />
-            <zipfileset file="${dist.dir}/${jar.name}" prefix="WEB-INF/lib/" />
-        </jar>
-    </target>
+        <!-- build the war file -->
+        <war warfile="${idp.home.path}/war/${war.name}.war" webxml="${installer.dir}/web.xml">
+            <lib dir="${basedir}/lib" />
+            <webinf dir="${webapp.dir}/WEB-INF" excludes="web.xml" />
+            <fileset dir="${webapp.dir}" excludes="WEB-INF/**" />
+        </war>
 
-    <!-- **************************************************************** -->
-    <!-- ***                                                          *** -->
-    <!-- ***                     Developer Tasks                      *** -->
-    <!-- ***                                                          *** -->
-    <!-- **************************************************************** -->
-
-    <!-- Checks code against style guidelines -->
-    <target name="checkstyle" description="Developer task: Produces coding standard compliance report.">
-        <mkdir dir="${reports.dir}" />
-
-        <checkstyle config="${basedir}/checkstyle.xml" failOnViolation="false" classpathref="build-path">
-            <fileset dir="src" includes="**/*.java" />
-            <formatter type="plain" toFile="${reports.dir}/checkstyle-report.txt" />
-        </checkstyle>
+        <!-- Remove generated web.xml -->
+        <delete file="${installer.dir}/web.xml" />
     </target>
 
 </project>

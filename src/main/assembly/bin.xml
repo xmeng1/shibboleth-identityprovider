@@ -14,6 +14,7 @@
                 <exclude>org.apache.xalan:*</exclude>
                 <exclude>org.apache.ant:*</exclude>
                 <exclude>ant-contrib:*</exclude>
+                <exclude>edu.internet2.middleware:ant-extensions:*</exclude>
             </excludes>
             <includes>
                 <include>*:jar:*</include>
@@ -24,6 +25,7 @@
             <includes>
                 <include>org.apache.ant:*</include>
                 <include>ant-contrib:*</include>
+                <include>edu.internet2.middleware:ant-extensions:*</include>
             </includes>
         </dependencySet>
         <dependencySet>
@@ -36,6 +38,14 @@
     </dependencySets>
     
     <fileSets>
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+    
         <!-- Copy up our installer srcipts into the root of the package -->
         <fileSet>
             <directory>src/installer/bash</directory>
@@ -62,15 +72,13 @@
             <outputDirectory>/src/main/webapp</outputDirectory>
         </fileSet>
         
-        <!-- Docs -->
+        <!-- Documentation -->
         <fileSet>
             <includes>
                 <include>RELEASE-NOTES*</include>
                 <include>LICENSE*</include>
             </includes>
         </fileSet>
-
-        <!-- Documentation -->
         <fileSet>
             <directory>doc/</directory>
             <outputDirectory>/doc</outputDirectory>

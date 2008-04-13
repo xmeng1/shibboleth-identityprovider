@@ -25,8 +25,8 @@ if defined CLASSPATH (
 )
 
 REM add in the dependency .jar files
-for %%i in (%ANT_HOME%\build-lib\*.jar) do (
-	call tools\cpappend.bat %%i
+for %%i in (%ANT_HOME%\src\installer\lib\*.jar) do (
+	call %ANT_HOME%\cpappend.bat %%i
 )
 
 if exist %JAVA_HOME%\lib\tools.jar (
@@ -37,4 +37,4 @@ if exist %JAVA_HOME%\lib\classes.zip (
     set LOCALCLASSPATH=%LOCALCLASSPATH%;%JAVA_HOME%\lib\classes.zip
 )
 
-%JAVACMD% -cp "%LOCALCLASSPATH%" -Dant.home="%ANT_HOME%" %ANT_OPTS% org.apache.tools.ant.Main -e %*
+%JAVACMD% -cp "%LOCALCLASSPATH%" -Dant.home="%ANT_HOME%" %ANT_OPTS% org.apache.tools.ant.Main -e -f src/installer/resources/build.xml %*
