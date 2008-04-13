@@ -7,7 +7,7 @@
     <property name="war.name" value="idp" />
 
     <!-- Installation specific property file -->
-    <property file="install.properties" />
+    <property file="${resources.dir}/install.properties" />
 
     <!-- Load ant-contrib tasks -->
     <taskdef resource="net/sf/antcontrib/antlib.xml" />
@@ -40,7 +40,7 @@
                 <input message="A keystore is about to be generated for you. Please enter a password that will be used to protect it."
                        addproperty="idp.keystore.pass" />
 
-                <propertyfile file="install.properties">
+                <propertyfile file="${resources.dir}/install.properties">
                     <entry key="idp.home" value="${idp.home.input}" />
                     <entry key="idp.hostname" value="${idp.hostname.input}" />
                 </propertyfile>
@@ -68,7 +68,8 @@
                                 uriSubjectAltNames="${idp.entity.id}" />
 
                 <copy todir="${idp.home.path}/bin" preservelastmodified="true">
-                    <fileset dir="${tools.dir}" />
+                    <fileset dir="${tools.dir}/bash" />
+                    <fileset dir="${tools.dir}/bat" />
                     <filterset begintoken="$" endtoken="$">
                         <filter token="IDP_HOME" value="${idp.home.path}" />
                         <filter token="IDP_VERSION" value="${version}" />
@@ -105,9 +106,7 @@
         </if>
 
         <copy todir="${idp.home.path}/lib" preservelastmodified="true">
-            <fileset dir="${lib.dir}" />
-            <fileset file="${dist.dir}/${jar.name}" />
-            <fileset file="${build-lib.dir}/servlet-2.4.jar" />
+            <fileset dir="${basedir}/lib" />
         </copy>
 
         <copy todir="${idp.home.path}/lib/endorsed" preservelastmodified="true" failonerror="false">
