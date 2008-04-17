@@ -249,7 +249,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
                 AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
                 if (attributeStatement != null) {
-                    requestContext.setRequestedAttributes(requestContext.getAttributes().keySet());
+                    requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
                     statements.add(attributeStatement);
                 }
             }
