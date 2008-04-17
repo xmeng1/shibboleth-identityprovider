@@ -30,7 +30,7 @@
     <DefaultRelyingParty provider="$IDP_ENTITY_ID$"
                          defaultSigningCredentialRef="IdPCredential">
         <!-- 
-            The attributes provided for each of these profile is set to its default value
+            Each attribute in these profiles configuration is set to its default value,
             that is, the values that would be in effect if those attributes were not present.
             We list them here so that people are aware of them (since they seem reluctant to 
             read the documentation).
