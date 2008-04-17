@@ -18,7 +18,6 @@ $IDP_CERTIFICATE$
                     </ds:X509Certificate>
                 </ds:X509Data>
             </ds:KeyInfo>
-
         </KeyDescriptor>
         
         <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
@@ -30,12 +29,10 @@ $IDP_CERTIFICATE$
                                    index="2"/>
                                    
         <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
-        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
 
         <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" 
                              Location="https://$IDP_HOSTNAME$/idp/profile/Shibboleth/SSO" />
-
         
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
                              Location="https://$IDP_HOSTNAME$/idp/profile/SAML2/POST/SSO" />
@@ -56,7 +53,6 @@ $IDP_CERTIFICATE$
         <KeyDescriptor>
             <ds:KeyInfo>
                 <ds:X509Data>
-
                     <ds:X509Certificate>
 $IDP_CERTIFICATE$
                     </ds:X509Certificate>
@@ -71,8 +67,8 @@ $IDP_CERTIFICATE$
                           Location="https://$IDP_HOSTNAME$:8443/idp/profile/SAML2/SOAP/AttributeQuery" />
         
         <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
-        <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</NameIDFormat>
-        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>    
+        <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
+        
     </AttributeAuthorityDescriptor>
     
 </EntityDescriptor>    
