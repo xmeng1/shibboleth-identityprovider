@@ -1,5 +1,5 @@
 /*
- * Copyright [2007] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2007 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
@@ -435,9 +437,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             statement.setSessionIndex(session.getSessionID());
         }
 
-        if (loginContext.getAuthenticationDuration() > 0) {
-            statement.setSessionNotOnOrAfter(loginContext.getAuthenticationInstant().plus(
-                    loginContext.getAuthenticationDuration()));
+        long maxSPSessionLifetime = requestContext.getProfileConfiguration().getMaximumSPSessionLifetime();
+        if (maxSPSessionLifetime > 0) {
+            DateTime lifetime = new DateTime(DateTimeZone.UTC).plus(maxSPSessionLifetime);
+            log.debug("Explicitly setting SP session expiration time to {}", lifetime.toString());
+            statement.setSessionNotOnOrAfter(lifetime);
         }
 
         statement.setSubjectLocality(buildSubjectLocality(requestContext));
