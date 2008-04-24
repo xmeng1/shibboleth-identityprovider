@@ -26,8 +26,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.MDC;
 import org.joda.time.DateTime;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
@@ -56,7 +56,6 @@ public class IdPSessionFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException,
             ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         Session idpSession = null;
         Cookie idpSessionCookie = getIdPSessionCookie(httpRequest);
@@ -65,6 +64,8 @@ public class IdPSessionFilter implements Filter {
             if (idpSession != null) {
                 log.trace("Updating IdP session activity time and adding session object to the request");
                 idpSession.setLastActivityInstant(new DateTime());
+                MDC.put("idpSessionId", idpSession.getSessionID());
+                MDC.put("principalName", idpSession.getPrincipalName());
                 httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, idpSession);
             }
         }

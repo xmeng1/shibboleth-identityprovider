@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.idp.session.impl;
 import java.security.SecureRandom;
 
 import org.apache.commons.ssl.util.Hex;
+import org.apache.log4j.MDC;
 import org.joda.time.DateTime;
 import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
@@ -96,6 +97,9 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         prng.nextBytes(sid);
         String sessionID = Hex.encode(sid);
 
+        MDC.put("idpSessionId", sessionID);
+        MDC.put("principalName", principal);
+        
         Session session = new SessionImpl(sessionID, principal, sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
