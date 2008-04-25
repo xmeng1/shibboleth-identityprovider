@@ -19,11 +19,11 @@ package edu.internet2.middleware.shibboleth.idp.session.impl;
 import java.security.SecureRandom;
 
 import org.apache.commons.ssl.util.Hex;
-import org.apache.log4j.MDC;
 import org.joda.time.DateTime;
 import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.slf4j.MDC;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
