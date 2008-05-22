@@ -36,6 +36,7 @@ import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.Conditions;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.NameIDPolicy;
 import org.opensaml.saml2.core.ProxyRestriction;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
@@ -647,8 +648,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         boolean nameIdEncRequiredByAuthnRequest = false;
         if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
             AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
-            if (DatatypeHelper.safeEquals(DatatypeHelper.safeTrimOrNullString(authnRequest.getNameIDPolicy()
-                    .getFormat()), NameID.ENCRYPTED)) {
+            NameIDPolicy policy = authnRequest.getNameIDPolicy();
+            if (policy != null && DatatypeHelper.safeEquals(policy.getFormat(), NameID.ENCRYPTED)) {
                 nameIdEncRequiredByAuthnRequest = true;
             }
         }
