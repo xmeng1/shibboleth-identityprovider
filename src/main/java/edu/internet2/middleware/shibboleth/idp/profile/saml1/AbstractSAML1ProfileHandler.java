@@ -424,10 +424,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             ResponseAbstractType response) {
         response.setID(getIdGenerator().generateIdentifier());
 
-        SAMLObject samlMessage = requestContext.getInboundSAMLMessage();
-        if (samlMessage != null && samlMessage instanceof RequestAbstractType) {
-            response.setInResponseTo(((RequestAbstractType) samlMessage).getID());
+        if(requestContext != null){
+            SAMLObject samlMessage = requestContext.getInboundSAMLMessage();
+            if (samlMessage != null && samlMessage instanceof RequestAbstractType) {
+                response.setInResponseTo(((RequestAbstractType) samlMessage).getID());
+            }
         }
+        
         response.setVersion(SAMLVersion.VERSION_11);
     }
 

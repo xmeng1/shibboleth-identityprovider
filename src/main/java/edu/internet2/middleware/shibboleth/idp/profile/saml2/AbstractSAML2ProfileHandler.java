@@ -402,9 +402,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected void populateStatusResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext,
             StatusResponseType response) {
         response.setID(getIdGenerator().generateIdentifier());
-        if (requestContext.getInboundSAMLMessage() != null) {
+        
+        if (requestContext != null && requestContext.getInboundSAMLMessage() != null) {
             response.setInResponseTo(requestContext.getInboundSAMLMessageId());
         }
+        
         response.setVersion(SAMLVersion.VERSION_20);
         response.setIssuer(buildEntityIssuer(requestContext));
     }
