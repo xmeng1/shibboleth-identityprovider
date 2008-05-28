@@ -19,6 +19,10 @@
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
+    
+    <listener>
+        <listener-class>edu.internet2.middleware.shibboleth.idp.session.ContainerSessionListener</listener-class>
+    </listener>
 
     <!--  Add IdP Session object to incoming profile requests -->
     <filter>
@@ -102,6 +106,10 @@
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
     </security-constraint>
+    
+    <security-role>
+      <role-name>user</role-name>
+    </security-role> 
 -->
 
 <!-- Uncomment if you want BASIC auth managed by the container -->
