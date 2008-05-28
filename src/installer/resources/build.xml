@@ -32,7 +32,7 @@
                 <pathToAbsolutePath path="${idp.home}" addproperty="idp.home.path" />
                 <pathToUrl path="${idp.home}" addproperty="idp.home.url" />
 
-                <input message="What is the hostname of the Shibboleth Identity Provider server?"
+                <input message="What is the fully qualified hostname of the Shibboleth Identity Provider server?"
                        addproperty="idp.hostname.input"
                        defaultvalue="${idp.hostname}" />
                 <var name="idp.hostname" value="${idp.hostname.input}" />
