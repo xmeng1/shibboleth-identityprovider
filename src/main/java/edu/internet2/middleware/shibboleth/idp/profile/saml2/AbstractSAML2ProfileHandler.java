@@ -669,12 +669,12 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                 } catch (SecurityException e) {
                     log.error("Unable to construct encrypter", e);
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                            "Unable to construct NameID"));
+                            "Unable to encrypt NameID"));
                     throw new ProfileException("Unable to construct encrypter", e);
                 } catch (EncryptionException e) {
                     log.error("Unable to encrypt NameID", e);
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                            "Unable to construct NameID"));
+                            "Unable to encrypt NameID"));
                     throw new ProfileException("Unable to encrypt NameID", e);
                 }
             } else {
