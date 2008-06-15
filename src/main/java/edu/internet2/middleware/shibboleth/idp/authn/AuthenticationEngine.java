@@ -499,7 +499,14 @@ public class AuthenticationEngine extends HttpServlet {
 
         LOG.debug("Adding IdP session cookie to HTTP response");
         Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, userSession.getSessionID());
-        sessionCookie.setPath(httpRequest.getContextPath());
+        
+        String contextPath = httpRequest.getContextPath();
+        if(DatatypeHelper.isEmpty(contextPath)){
+            sessionCookie.setPath("/");
+        }else{
+            sessionCookie.setPath(contextPath);
+        }
+        
         sessionCookie.setSecure(false);
         sessionCookie.setMaxAge(-1);
 
