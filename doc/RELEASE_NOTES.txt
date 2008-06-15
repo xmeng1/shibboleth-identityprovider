@@ -1,0 +1,14 @@
+Changes in Release 2.1.0
+=============================================
+[SIDP-164] - Option to make session cookie secure
+[SIDP-165] - Support for SessionNotOnOrAfter
+[SIDP-167] - Missing tags and incomplete login.jsp
+[SIDP-170] - Attribute Filter refresh won't work with "resource:FileBackedHttpResource"
+[SIDP-175] - Security role name missing in web.xml
+[SIDP-176] - useKeyTab should be set to true
+[SIDP-181] - Released Attributes not logged when using SAML2
+[SIDP-183] - make IdP session available to logging system
+[SIDP-185] - NullPointerException after AttributeQuery when Security Rule fails
+[SIDP-189] - NPE in AbstractSAML2ProfileHandler
+[SIDP-197] - Misleading error message for ValidationInfo element in relying-party.xml
+[SIDP-199] - loss of login context when deploying the IdP to tomcat's ROOT context
