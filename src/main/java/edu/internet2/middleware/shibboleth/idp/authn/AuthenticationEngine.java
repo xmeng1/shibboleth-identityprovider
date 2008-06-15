@@ -507,7 +507,7 @@ public class AuthenticationEngine extends HttpServlet {
             sessionCookie.setPath(contextPath);
         }
         
-        sessionCookie.setSecure(false);
+        sessionCookie.setSecure(httpRequest.isSecure());
         sessionCookie.setMaxAge(-1);
 
         httpResponse.addCookie(sessionCookie);
