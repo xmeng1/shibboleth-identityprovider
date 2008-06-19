@@ -289,12 +289,16 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         Collection<String> audiences;
 
-        // add audience restrictions
+        AudienceRestrictionCondition audienceRestriction = audienceRestrictionConditionBuilder.buildObject();
+        Audience audience = audienceBuilder.buildObject();
+        audience.setUri(requestContext.getInboundMessageIssuer());
+        audienceRestriction.getAudiences().add(audience);
+        
+        // add other audience restrictions
         audiences = profileConfig.getAssertionAudiences();
         if (audiences != null && audiences.size() > 0) {
-            AudienceRestrictionCondition audienceRestriction = audienceRestrictionConditionBuilder.buildObject();
             for (String audienceUri : audiences) {
-                Audience audience = audienceBuilder.buildObject();
+                audience = audienceBuilder.buildObject();
                 audience.setUri(audienceUri);
                 audienceRestriction.getAudiences().add(audience);
             }
