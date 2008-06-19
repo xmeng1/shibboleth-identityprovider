@@ -290,6 +290,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         Collection<String> audiences;
 
         AudienceRestrictionCondition audienceRestriction = audienceRestrictionConditionBuilder.buildObject();
+        conditions.getAudienceRestrictionConditions().add(audienceRestriction);
+        
         Audience audience = audienceBuilder.buildObject();
         audience.setUri(requestContext.getInboundMessageIssuer());
         audienceRestriction.getAudiences().add(audience);
@@ -302,7 +304,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                 audience.setUri(audienceUri);
                 audienceRestriction.getAudiences().add(audience);
             }
-            conditions.getAudienceRestrictionConditions().add(audienceRestriction);
         }
 
         return conditions;
