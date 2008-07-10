@@ -16,7 +16,6 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -49,14 +48,8 @@ import org.opensaml.saml2.core.SubjectConfirmation;
 import org.opensaml.saml2.core.SubjectConfirmationData;
 import org.opensaml.saml2.encryption.Encrypter;
 import org.opensaml.saml2.encryption.Encrypter.KeyPlacement;
-import org.opensaml.saml2.metadata.AttributeAuthorityDescriptor;
-import org.opensaml.saml2.metadata.AuthnAuthorityDescriptor;
 import org.opensaml.saml2.metadata.Endpoint;
-import org.opensaml.saml2.metadata.NameIDFormat;
-import org.opensaml.saml2.metadata.PDPDescriptor;
-import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.security.MetadataCredentialResolver;
 import org.opensaml.security.MetadataCriteria;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
@@ -88,6 +81,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEn
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML2NameIDEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
+import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
@@ -876,5 +870,86 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         criteriaSet.add(new UsageCriteria(UsageType.ENCRYPTION));
 
         return kekCredentialResolver.resolveSingle(criteriaSet);
+    }
+    
+
+    /**
+     * Writes an audit log entry indicating the successful response to the attribute request.
+     * 
+     * @param context current request context
+     */
+    protected void writeAuditLogEntry(BaseSAMLProfileRequestContext context) {
+        SAML2AuditLogEntry auditLogEntry = new SAML2AuditLogEntry();
+        auditLogEntry.setSAMLResponse((Response) context.getOutboundMessage());
+        auditLogEntry.setMessageProfile(getProfileId());
+        auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
+        auditLogEntry.setPrincipalName(context.getPrincipalName());
+        auditLogEntry.setAssertingPartyId(context.getLocalEntityId());
+        auditLogEntry.setRelyingPartyId(context.getInboundMessageIssuer());
+        auditLogEntry.setRequestBinding(context.getMessageDecoder().getBindingURI());
+        auditLogEntry.setRequestId(context.getInboundSAMLMessageId());
+        auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
+        auditLogEntry.setResponseId(context.getOutboundSAMLMessageId());
+        if (context.getReleasedAttributes() != null) {
+            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
+        }
+
+        getAduitLog().info(auditLogEntry.toString());
+    }
+    
+    /** SAML 1 specific audit log entry. */
+    protected class SAML2AuditLogEntry extends AuditLogEntry {
+
+        /** The response to the SAML request. */
+        private Response samlResponse;
+
+        /**
+         * Gets the response to the SAML request.
+         * 
+         * @return the response to the SAML request
+         */
+        public Response getSAMLResponse() {
+            return samlResponse;
+        }
+
+        /**
+         * Sets the response to the SAML request.
+         * 
+         * @param response the response to the SAML request
+         */
+        public void setSAMLResponse(Response response) {
+            samlResponse = response;
+        }
+
+        /** {@inheritDoc} */
+        public String toString() {
+            StringBuilder entryString = new StringBuilder(super.toString());
+            
+            NameID nameIdentifier = null;
+            StringBuilder assertionIds = new StringBuilder();
+            List<Assertion> assertions = samlResponse.getAssertions();
+            if(assertions != null && !assertions.isEmpty()){
+                for(Assertion assertion : assertions){
+                    assertionIds.append(assertion.getID());
+                    assertionIds.append(",");
+                    
+                    if(nameIdentifier == null){
+                        if(assertion.getSubject() != null){
+                            nameIdentifier = assertion.getSubject().getNameID();
+                        }
+                    }
+                }
+            }
+            
+            if(nameIdentifier != null){
+                entryString.append(nameIdentifier.getValue());
+            }
+            entryString.append("|");
+            
+            entryString.append(assertionIds.toString());
+            entryString.append("|");
+            
+            return entryString.toString();
+        }
     }
 }

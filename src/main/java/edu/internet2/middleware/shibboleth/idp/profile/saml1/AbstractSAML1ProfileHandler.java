@@ -45,6 +45,7 @@ import org.opensaml.saml1.core.StatusCode;
 import org.opensaml.saml1.core.StatusMessage;
 import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml1.core.SubjectConfirmation;
+import org.opensaml.saml1.core.SubjectStatement;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
@@ -66,6 +67,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEn
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML1NameIdentifierEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
+import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.CryptoOperationRequirementLevel;
@@ -291,11 +293,11 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         AudienceRestrictionCondition audienceRestriction = audienceRestrictionConditionBuilder.buildObject();
         conditions.getAudienceRestrictionConditions().add(audienceRestriction);
-        
+
         Audience audience = audienceBuilder.buildObject();
         audience.setUri(requestContext.getInboundMessageIssuer());
         audienceRestriction.getAudiences().add(audience);
-        
+
         // add other audience restrictions
         audiences = profileConfig.getAssertionAudiences();
         if (audiences != null && audiences.size() > 0) {
@@ -429,13 +431,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             ResponseAbstractType response) {
         response.setID(getIdGenerator().generateIdentifier());
 
-        if(requestContext != null){
+        if (requestContext != null) {
             SAMLObject samlMessage = requestContext.getInboundSAMLMessage();
             if (samlMessage != null && samlMessage instanceof RequestAbstractType) {
                 response.setInResponseTo(((RequestAbstractType) samlMessage).getID());
             }
         }
-        
+
         response.setVersion(SAMLVersion.VERSION_11);
     }
 
@@ -648,6 +650,93 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         } catch (SignatureException e) {
             log.error("Unable to sign assertion", e);
             throw new ProfileException("Unable to sign assertion", e);
+        }
+    }
+
+    /**
+     * Writes an audit log entry indicating the successful response to the attribute request.
+     * 
+     * @param context current request context
+     */
+    protected void writeAuditLogEntry(BaseSAMLProfileRequestContext context) {
+        SAML1AuditLogEntry auditLogEntry = new SAML1AuditLogEntry();
+        auditLogEntry.setSAMLResponse((Response) context.getOutboundMessage());
+        auditLogEntry.setMessageProfile(getProfileId());
+        auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
+        auditLogEntry.setPrincipalName(context.getPrincipalName());
+        auditLogEntry.setAssertingPartyId(context.getLocalEntityId());
+        auditLogEntry.setRelyingPartyId(context.getInboundMessageIssuer());
+        auditLogEntry.setRequestBinding(context.getMessageDecoder().getBindingURI());
+        auditLogEntry.setRequestId(context.getInboundSAMLMessageId());
+        auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
+        auditLogEntry.setResponseId(context.getOutboundSAMLMessageId());
+        if (context.getReleasedAttributes() != null) {
+            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
+        }
+
+        getAduitLog().info(auditLogEntry.toString());
+    }
+
+    /** SAML 1 specific audit log entry. */
+    protected class SAML1AuditLogEntry extends AuditLogEntry {
+
+        /** The response to the SAML 1 request. */
+        private Response samlResponse;
+
+        /**
+         * Gets the response to the SAML 1 request.
+         * 
+         * @return the response to the SAML 1 request
+         */
+        public Response getSAMLResponse() {
+            return samlResponse;
+        }
+
+        /**
+         * Sets the response to the SAML 1 request.
+         * 
+         * @param response the response to the SAML 1 request
+         */
+        public void setSAMLResponse(Response response) {
+            samlResponse = response;
+        }
+
+        /** {@inheritDoc} */
+        public String toString() {
+            StringBuilder entryString = new StringBuilder(super.toString());
+            
+            NameIdentifier nameIdentifier = null;
+            StringBuilder assertionIds = new StringBuilder();
+            List<Assertion> assertions = samlResponse.getAssertions();
+            if(assertions != null && !assertions.isEmpty()){
+                for(Assertion assertion : assertions){
+                    assertionIds.append(assertion.getID());
+                    assertionIds.append(",");
+                    
+                    if(nameIdentifier == null){
+                        List<Statement> statements = assertion.getStatements();
+                        if(statements != null && !statements.isEmpty()){
+                            for(Statement statement : statements){
+                                if(statement instanceof SubjectStatement){
+                                    if(((SubjectStatement)statement).getSubject() != null){
+                                        nameIdentifier = ((SubjectStatement)statement).getSubject().getNameIdentifier();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if(nameIdentifier != null){
+                entryString.append(nameIdentifier.getNameIdentifier());
+            }
+            entryString.append("|");
+            
+            entryString.append(assertionIds.toString());
+            entryString.append("|");
+            
+            return entryString.toString();
         }
     }
 }
