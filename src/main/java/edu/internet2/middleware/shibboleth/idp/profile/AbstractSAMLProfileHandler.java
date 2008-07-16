@@ -533,4 +533,27 @@ public abstract class AbstractSAMLProfileHandler extends
                     + requestContext.getInboundMessageIssuer(), e);
         }
     }
+    
+    /**
+     * Writes an audit log entry indicating the successful response to the attribute request.
+     * 
+     * @param context current request context
+     */
+    protected void writeAuditLogEntry(BaseSAMLProfileRequestContext context) {
+        AuditLogEntry auditLogEntry = new AuditLogEntry();
+        auditLogEntry.setMessageProfile(getProfileId());
+        auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
+        auditLogEntry.setPrincipalName(context.getPrincipalName());
+        auditLogEntry.setAssertingPartyId(context.getLocalEntityId());
+        auditLogEntry.setRelyingPartyId(context.getInboundMessageIssuer());
+        auditLogEntry.setRequestBinding(context.getMessageDecoder().getBindingURI());
+        auditLogEntry.setRequestId(context.getInboundSAMLMessageId());
+        auditLogEntry.setResponseBinding(context.getMessageEncoder().getBindingURI());
+        auditLogEntry.setResponseId(context.getOutboundSAMLMessageId());
+        if (context.getReleasedAttributes() != null) {
+            auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
+        }
+
+        getAduitLog().info(auditLogEntry.toString());
+    }
 }
