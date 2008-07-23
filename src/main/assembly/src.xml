@@ -26,6 +26,7 @@
                 <include>org.apache.ant:*</include>
                 <include>ant-contrib:*</include>
                 <include>edu.internet2.middleware:ant-extensions:*</include>
+                <include>org.bouncycastle:bcprov-jdk14:*</include>
             </includes>
         </dependencySet>
         <dependencySet>
