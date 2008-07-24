@@ -45,10 +45,18 @@ public class PreviousSessionLoginHandlerBeanDefinitionParser extends AbstractLog
         builder.addPropertyValue("servletPath", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
                 "servletPath")));
 
-        builder.addPropertyValue("supportsPassiveAuth", XMLHelper.getAttributeValueAsBoolean(config.getAttributeNodeNS(
-                null, "supportsPassiveAuthentication")));
+        if (config.hasAttributeNS(null, "supportsPassiveAuthentication")) {
+            builder.addPropertyValue("supportsPassiveAuth", XMLHelper.getAttributeValueAsBoolean(config
+                    .getAttributeNodeNS(null, "supportsPassiveAuthentication")));
+        } else {
+            builder.addPropertyValue("supportsPassiveAuth", false);
+        }
 
-        builder.addPropertyValue("reportPreviousSessionAuthnMethod", XMLHelper.getAttributeValueAsBoolean(config
-                .getAttributeNodeNS(null, "reportPreviousSessionAuthnMethod")));
+        if (config.hasAttributeNS(null, "reportPreviousSessionAuthnMethod")) {
+            builder.addPropertyValue("reportPreviousSessionAuthnMethod", XMLHelper.getAttributeValueAsBoolean(config
+                    .getAttributeNodeNS(null, "reportPreviousSessionAuthnMethod")));
+        } else {
+            builder.addPropertyValue("reportPreviousSessionAuthnMethod", false);
+        }
     }
 }

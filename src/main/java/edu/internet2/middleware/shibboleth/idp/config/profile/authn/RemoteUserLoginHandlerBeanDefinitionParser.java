@@ -27,9 +27,8 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerName
 /**
  * Spring bean definition parser for remote user authentication handlers.
  */
-public class RemoteUserLoginHandlerBeanDefinitionParser extends
-        AbstractLoginHandlerBeanDefinitionParser {
-    
+public class RemoteUserLoginHandlerBeanDefinitionParser extends AbstractLoginHandlerBeanDefinitionParser {
+
     /** Schema type. */
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "RemoteUser");
 
@@ -42,7 +41,11 @@ public class RemoteUserLoginHandlerBeanDefinitionParser extends
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addPropertyValue("protectedServletPath", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(
-                null, "protectedServletPath")));
+        if (config.hasAttributeNS(null, "protectedServletPath")) {
+            builder.addPropertyValue("protectedServletPath", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(
+                    null, "protectedServletPath")));
+        } else {
+            builder.addPropertyValue("protectedServletPath", "/Authn/RemoteUser");
+        }
     }
 }

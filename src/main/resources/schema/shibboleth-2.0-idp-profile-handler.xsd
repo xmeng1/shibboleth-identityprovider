@@ -67,7 +67,7 @@
         </xsd:annotation>
         <xsd:complexContent>
             <xsd:extension base="SAML2ProfileHandler">
-                <xsd:attribute name="authenticationManagerPath" type="xsd:string" default="/AuthnEngine">
+                <xsd:attribute name="authenticationManagerPath" type="xsd:string">
                     <xsd:annotation>
                         <xsd:documentation>
                             The context relative path to the authentication manager used by this profile handler. This
@@ -121,7 +121,7 @@
         </xsd:annotation>
         <xsd:complexContent>
             <xsd:extension base="SAML1ProfileHandler">
-                <xsd:attribute name="authenticationManagerPath" type="xsd:string" default="/AuthnEngine">
+                <xsd:attribute name="authenticationManagerPath" type="xsd:string">
                     <xsd:annotation>
                         <xsd:documentation>
                             The context relative path to the authentication manager used by this profile handler. This
@@ -225,7 +225,7 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="reportPreviousSessionAuthnMethod" type="xsd:boolean" default="false">
+                <xsd:attribute name="reportPreviousSessionAuthnMethod" type="xsd:boolean">
                     <xsd:annotation>
                         <xsd:documentation>
                             Whether this login handler should report its authentication method as PreviousSession or the
@@ -233,7 +233,7 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="supportsPassiveAuthentication" type="xsd:boolean" default="false">
+                <xsd:attribute name="supportsPassiveAuthentication" type="xsd:boolean">
                     <xsd:annotation>
                         <xsd:documentation>
                             Whether this login handler, when redirecting to a servlet, support passives authentication.
@@ -247,7 +247,7 @@
     <xsd:complexType name="RemoteUser">
         <xsd:complexContent>
             <xsd:extension base="LoginHandlerType">
-                <xsd:attribute name="protectedServletPath" type="xsd:string" default="/Authn/RemoteUser">
+                <xsd:attribute name="protectedServletPath" type="xsd:string">
                     <xsd:annotation>
                         <xsd:documentation>
                             The servlet context path to the
@@ -273,7 +273,7 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
-                <xsd:attribute name="authenticationServletURL" type="xsd:string" default="/Authn/UserPassword">
+                <xsd:attribute name="authenticationServletURL" type="xsd:string">
                     <xsd:annotation>
                         <xsd:documentation>
                             The servlet context path to the
@@ -333,7 +333,7 @@
                 </xsd:annotation>
             </xsd:element>
         </xsd:sequence>
-        <xsd:attribute name="authenticationDuration" type="xsd:positiveInteger" default="30">
+        <xsd:attribute name="authenticationDuration" type="xsd:positiveInteger">
             <xsd:annotation>
                 <xsd:documentation>
                     The length of time, in minutes, that an authentication performed by this handler should be

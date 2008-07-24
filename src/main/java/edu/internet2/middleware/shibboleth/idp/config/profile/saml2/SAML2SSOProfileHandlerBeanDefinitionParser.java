@@ -42,7 +42,11 @@ public class SAML2SSOProfileHandlerBeanDefinitionParser extends AbstractSAML2Pro
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addConstructorArg(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
-                "authenticationManagerPath")));
+        if (config.hasAttributeNS(null, "authenticationManagerPath")) {
+            builder.addConstructorArgValue(DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
+                    "authenticationManagerPath")));
+        } else {
+            builder.addConstructorArgValue("/AuthnEngine");
+        }
     }
 }

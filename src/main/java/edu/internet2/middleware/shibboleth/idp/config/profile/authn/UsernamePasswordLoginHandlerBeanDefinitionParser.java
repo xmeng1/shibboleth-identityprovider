@@ -29,12 +29,11 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerName
 /**
  * Spring bean definition parser for username/password authentication handlers.
  */
-public class UsernamePasswordLoginHandlerBeanDefinitionParser extends
-        AbstractLoginHandlerBeanDefinitionParser {
+public class UsernamePasswordLoginHandlerBeanDefinitionParser extends AbstractLoginHandlerBeanDefinitionParser {
 
     /** Schema type. */
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "UsernamePassword");
-    
+
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginHandlerBeanDefinitionParser.class);
 
@@ -47,8 +46,12 @@ public class UsernamePasswordLoginHandlerBeanDefinitionParser extends
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addPropertyValue("authenticationServletURL", DatatypeHelper.safeTrim(config.getAttributeNS(null,
-                "authenticationServletURL")));
+        if (config.hasAttributeNS(null, "authenticationServletURL")) {
+            builder.addPropertyValue("authenticationServletURL", DatatypeHelper.safeTrim(config.getAttributeNS(null,
+                    "authenticationServletURL")));
+        } else {
+            builder.addPropertyValue("authenticationServletURL", "/Authn/UserPassword");
+        }
 
         String jaasConfigurationURL = DatatypeHelper.safeTrim(config.getAttributeNS(null, "jaasConfigurationLocation"));
         log.debug("Setting JAAS configuration file to: {}", jaasConfigurationURL);
