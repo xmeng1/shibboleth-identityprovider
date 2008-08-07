@@ -16,6 +16,11 @@
         <level value="WARN" />
     </logger>
     
+    <!-- Logs LDAP related messages -->
+    <logger name="edu.vt.middleware.ldap">
+        <level value="WARN"/>
+    </logger>
+    
     <!-- Logs inbound and outbound protocols messages at DEBUG level -->
     <!--
     <logger name="PROTOCOL_MESSAGE">
