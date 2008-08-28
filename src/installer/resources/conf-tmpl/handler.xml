@@ -15,6 +15,10 @@
     <ProfileHandler xsi:type="Status">
         <RequestPath>/Status</RequestPath>
     </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAMLMetadata" metadataFile="$IDP_HOME$/metadata/idp-metadata.xml">
+        <RequestPath>/Metadata/SAML</RequestPath>
+    </ProfileHandler>    
 
     <ProfileHandler xsi:type="ShibbolethSSO"
                     inboundBinding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"

@@ -57,6 +57,11 @@
                         <xsd:documentation>Location of the static IdP metadata file.</xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
+                <xsd:attribute name="parserPoolRef" type="xsd:string" default="shibboleth.ParserPool">
+                    <xsd:annotation>
+                        <xsd:documentation>Reference to the parser pool used to parse the metadata.</xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>
@@ -221,7 +226,7 @@
                 <xsd:attribute name="servletPath" type="xsd:string">
                     <xsd:annotation>
                         <xsd:documentation>
-                            Optional servlet path to which the browser may be redirected.
+                            DEPRECATED. Optional servlet path to which the browser may be redirected.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
@@ -236,7 +241,7 @@
                 <xsd:attribute name="supportsPassiveAuthentication" type="xsd:boolean">
                     <xsd:annotation>
                         <xsd:documentation>
-                            Whether this login handler, when redirecting to a servlet, support passives authentication.
+                            DEPRECATED. Whether this login handler, when redirecting to a servlet, support passives authentication.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>

@@ -1,5 +1,5 @@
 /*
- * Copyright [2007] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2007 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import org.w3c.dom.Element;
 import edu.internet2.middleware.shibboleth.common.config.profile.AbstractRequestURIMappedProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.profile.SAMLMetadataProfileHandler;
 
-/**
- * Spring bean definition parser for {@link SAMLMetadataProfileHandler}s.
- */
+/** Spring bean definition parser for {@link SAMLMetadataProfileHandler}s. */
 public class SAMLMetadataHandlerBeanDefinitionParser extends AbstractRequestURIMappedProfileHandlerBeanDefinitionParser {
 
     /** Schema type. */
@@ -39,7 +37,10 @@ public class SAMLMetadataHandlerBeanDefinitionParser extends AbstractRequestURIM
 
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
-        builder.addConstructorArg(config.getAttributeNS(null, "metadataFile"));
+        super.doParse(config, builder);
+
+        builder.addConstructorArgValue(config.getAttributeNS(null, "metadataFile"));
+        builder.addConstructorArgReference(config.getAttributeNS(null, "parserPoolRef"));
     }
 
     /** {@inheritDoc} */

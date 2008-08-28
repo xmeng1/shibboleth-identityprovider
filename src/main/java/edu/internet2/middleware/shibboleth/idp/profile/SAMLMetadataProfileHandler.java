@@ -1,5 +1,5 @@
 /*
- * Copyright [2007] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2007 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
-import java.io.File;
 import java.io.OutputStreamWriter;
 
-import javax.servlet.http.HttpServletRequestWrapper;
-
 import org.opensaml.Configuration;
-import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.saml2.metadata.provider.ResourceBackedMetadataProvider;
+import org.opensaml.util.resource.FilesystemResource;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.OutTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.parse.ParserPool;
+import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +45,21 @@ public class SAMLMetadataProfileHandler extends AbstractRequestURIMappedProfileH
     private final Logger log = LoggerFactory.getLogger(SAMLMetadataProfileHandler.class);
 
     /** Metadata provider. */
-    private FilesystemMetadataProvider metadataProvider;
+    private ResourceBackedMetadataProvider metadataProvider;
 
     /**
      * Constructor.
      * 
      * @param metadataFile the IdPs metadata file
+     * @param pool pool of XML parsers used to parse the metadata
      */
-    public SAMLMetadataProfileHandler(String metadataFile) {
+    public SAMLMetadataProfileHandler(String metadataFile, ParserPool pool) {
         try {
-            metadataProvider = new FilesystemMetadataProvider(new File(metadataFile));
-        } catch (MetadataProviderException e) {
+            metadataProvider = new ResourceBackedMetadataProvider(new FilesystemResource(metadataFile));
+            metadataProvider.setParserPool(pool);
+            metadataProvider.setMaintainExpiredMetadata(true);
+            metadataProvider.initialize();
+        } catch (Exception e) {
             log.error("Unable to read metadata file " + metadataFile, e);
         }
     }
@@ -65,15 +69,18 @@ public class SAMLMetadataProfileHandler extends AbstractRequestURIMappedProfileH
         XMLObject metadata;
 
         try {
-            String requestedEntity = ((HttpServletRequestWrapper) in).getParameter("entity");
-            if (requestedEntity == null) {
+            String requestedEntity = DatatypeHelper.safeTrimOrNullString(((HttpServletRequestAdapter) in)
+                    .getParameterValue("entity"));
+            if (requestedEntity != null) {
                 metadata = metadataProvider.getEntityDescriptor(requestedEntity);
             } else {
                 metadata = metadataProvider.getMetadata();
             }
 
-            Marshaller marshaller = Configuration.getMarshallerFactory().getMarshaller(metadata);
-            XMLHelper.writeNode(marshaller.marshall(metadata), new OutputStreamWriter(out.getOutgoingStream()));
+            if (metadata != null) {
+                Marshaller marshaller = Configuration.getMarshallerFactory().getMarshaller(metadata);
+                XMLHelper.writeNode(marshaller.marshall(metadata), new OutputStreamWriter(out.getOutgoingStream()));
+            }
         } catch (Exception e) {
             log.error("Unable to retrieve and return metadata", e);
             throw new ProfileException(e);
