@@ -1,8 +1,5 @@
 Changes in Release 2.1.0
 =============================================
-NOTE, this release requires a small change to the service.xml file, if you are upgrading from 2.0.0.
-In the last service, shibboleth.ServiceServletContextAttributeExporter, you MUST add the service 
-'shibboleth.StorageService' to the whitespace delimited list of services already present.
 
 [SIDP-20] - Cannot deploy on Windows. Spring and DOS device names?
 [SIDP-164] - Option to make session cookie secure
@@ -25,3 +22,4 @@ In the last service, shibboleth.ServiceServletContextAttributeExporter, you MUST
 [SIDP-203] - Insufficient information logged to track down errant users
 [SIDP-209] - Enforce SAML 2 metadata SPSSODescriptor/@AuthnRequestsSigned
 [SIDP-214] - Installer needs to put (at least) bcprov onto the calsspath before it runs ant
+[SIDP-222] - Template engine used by LDAP and database connectors throw an NPE on startup
