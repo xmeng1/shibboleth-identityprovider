@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
+import java.security.Principal;
+
 import javax.security.auth.Subject;
 
 import org.joda.time.DateTime;
@@ -29,7 +31,10 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
 
     /** Subject created by this authentication mechanism. */
     private Subject authenticationSubject;
-    
+
+    /** Principal created by the authentication method. */
+    private Principal authenticationPrincipal;
+
     /** The authentication method (a URI). */
     private String authenticationMethod;
 
@@ -43,48 +48,37 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
     private DateTime expirationInstant;
 
     /**
-     * Default constructor.
+     * Default constructor.  This constructor does NOT add the given principal to the given subject.
      * 
-     * @param method The unique identifier for the authentication method.
-     * @param instant The time the user authenticated with this member.
-     * @param duration The duration of this authentication method.
+     * @param subject subject associated with the user's session
+     * @param principal principal created by the authentication method
+     * @param method The unique identifier for the authentication method
+     * @param instant The time the user authenticated with this member
+     * @param duration The duration of this authentication method
      */
-    public AuthenticationMethodInformationImpl(String method, DateTime instant, long duration) {
-
-        if (method == null || instant == null || duration < 0) {
-            throw new IllegalArgumentException("Authentication method, instant, and duration may not be null");
-        }
-
-        authenticationMethod = method;
-        authenticationInstant = instant;
-        authenticationDuration = duration;
-        expirationInstant = instant.plus(duration);
-    }
-    
-    /**
-     * Default constructor.
-     * 
-     * @param subject Subject created by the authentication method
-     * @param method The unique identifier for the authentication method.
-     * @param instant The time the user authenticated with this member.
-     * @param duration The duration of this authentication method.
-     */
-    public AuthenticationMethodInformationImpl(Subject subject, String method, DateTime instant, long duration) {
+    public AuthenticationMethodInformationImpl(Subject subject, Principal principal, String method, DateTime instant,
+            long duration) {
 
         if (method == null || instant == null || duration < 0) {
             throw new IllegalArgumentException("Authentication method, instant, and duration may not be null");
         }
 
         authenticationSubject = subject;
+        authenticationPrincipal = principal;
         authenticationMethod = method;
         authenticationInstant = instant;
         authenticationDuration = duration;
         expirationInstant = instant.plus(duration);
     }
-    
+
     /** {@inheritDoc} */
     public Subject getAuthenticationSubject() {
         return authenticationSubject;
+    }
+
+    /** {@inheritDoc} */
+    public Principal getAuthenticationPrincipal() {
+        return authenticationPrincipal;
     }
 
     /** {@inheritDoc} */
@@ -106,7 +100,7 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
     public boolean isExpired() {
         return expirationInstant.isBeforeNow();
     }
-    
+
     /** {@inheritDoc} */
     public int hashCode() {
         return authenticationMethod.hashCode();
@@ -114,10 +108,10 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
 
     /** {@inheritDoc} */
     public boolean equals(Object obj) {
-        if(obj == this){
+        if (obj == this) {
             return true;
         }
-        
+
         if (!(obj instanceof AuthenticationMethodInformation)) {
             return false;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import org.joda.time.DateTime;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 
-/**
- * Information about a service a user has logged in to.
- */
+/** Information about a service a user has logged in to. */
 public class ServiceInformationImpl implements ServiceInformation {
 
     /** Entity ID of the service. */
@@ -70,10 +68,10 @@ public class ServiceInformationImpl implements ServiceInformation {
 
     /** {@inheritDoc} */
     public boolean equals(Object obj) {
-        if(obj == this){
+        if (obj == this) {
             return true;
         }
-        
+
         if (!(obj instanceof ServiceInformation)) {
             return false;
         }

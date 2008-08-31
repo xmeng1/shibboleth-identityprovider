@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,24 +24,27 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.joda.time.DateTime;
 
+import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
+
 /**
  * Login context created by a profile handler and interpreted by the authentication package.
  * 
  * Two properties are tracked by default:
+ * <ul>
+ * <li><code>forceAuth</code> - Should user authentication be forced (default value: false).</li>
+ * <li><code>passiveAuth</code> - Should user authentication not control the UI (default value: false).</li>
+ * </ul>
  * 
- * <code>forceAuth</code> - Should user authentication be forced. <code>passiveAuth</code> - Should user
- * authentication not control the UI.
- * 
- * A Map&lt;String, Object&gt; is provided to store other properties. Alternatively, a profile handler may create a
- * subclass of LoginContext with extra fields.
+ * A {@link Map}&lt;String, Object&gt; is provided to store other properties. Alternatively, a profile handler may
+ * create a subclass of LoginContext with extra fields.
  * 
  * LoginContexts should be created by a profile handler when authentication is needed. Once control has returned to the
  * profile handler, it should remove the LoginContext from the HttpSession.
  * 
- * The {@link AuthenticationEngine} or an {@link LoginHandler} should set the
- * {@link LoginContext#setAuthenticationAttempted()}, {@link LoginContext#setPrincipalAuthenticated(boolean)},
+ * The {@link AuthenticationEngine} should set the {@link LoginContext#setAuthenticationAttempted()},
+ * {@link LoginContext#setPrincipalAuthenticated(boolean)},
  * {@link LoginContext#setAuthenticationFailure(AuthenticationException)},
- * {@link LoginContext#setAuthenticationDuration(long)}, {@link LoginContext#setAuthenticationInstant(DateTime)}
+ * 
  * appropriately.
  */
 public class LoginContext implements Serializable {
@@ -61,7 +64,7 @@ public class LoginContext implements Serializable {
     /** Must authentication not interact with the UI. */
     private boolean passiveAuth;
 
-    /** a catch-all map for other properties. */
+    /** A catch-all map for other properties. */
     private Map<String, Serializable> propsMap = new ConcurrentHashMap<String, Serializable>();
 
     /** The ProfileHandler URL. */
@@ -70,32 +73,26 @@ public class LoginContext implements Serializable {
     /** The authentication engine's URL. */
     private String authnEngineURL;
 
-    /** has authentication been attempted yet. */
+    /** Whether authentication been attempted yet. */
     private boolean authnAttempted;
 
-    /** The id of the authenticated user. */
-    private String principalName;
+    /** Attempted user authentication method. */
+    private String attemptedAuthnMethod;
 
     /** Did authentication succeed? */
     private boolean principalAuthenticated;
 
-    /** Exception that occured during authentication. */
+    /** Exception that occurred during authentication. */
     private AuthenticationException authnException;
-
-    /** The instant of authentication. */
-    private DateTime authnInstant;
-
-    /** The duration of authentication. */
-    private long authnDuration;
-
-    /** The method used to authenticate the user. */
-    private String authnMethod;
 
     /** The session id. */
     private String sessionID;
 
     /** List of request authentication methods. */
     private ArrayList<String> requestAuthenticationMethods;
+
+    /** Information about the authentication method. */
+    private AuthenticationMethodInformation authenticationMethodInformation;
 
     /** Creates a new instance of LoginContext. */
     public LoginContext() {
@@ -115,6 +112,108 @@ public class LoginContext implements Serializable {
     }
 
     /**
+     * Gets the authentication method that was used when attempting to authenticate the user. Note, this may be
+     * different than the authentication method reported within {@link #getAuthenticationMethodInformation()}.
+     * 
+     * @return authentication method that was used when attempting to authenticate the user
+     */
+    public String getAttemptedAuthnMethod() {
+        return attemptedAuthnMethod;
+    }
+
+    /**
+     * Returns if authentication has been attempted for this user.
+     * 
+     * @return if authentication has been attempted for this user
+     */
+    public boolean getAuthenticationAttempted() {
+        return authnAttempted;
+    }
+
+    /**
+     * Gets the duration of authentication.
+     * 
+     * @return The duration of authentication, or zero if none was set.
+     */
+    public long getAuthenticationDuration() {
+        return authenticationMethodInformation.getAuthenticationDuration();
+    }
+
+    /**
+     * Gets the authentication engine's URL.
+     * 
+     * @return the URL of the authentication engine
+     */
+    public String getAuthenticationEngineURL() {
+        return authnEngineURL;
+    }
+
+    /**
+     * Gets the error that occurred during authentication.
+     * 
+     * @return error that occurred during authentication
+     */
+    public AuthenticationException getAuthenticationFailure() {
+        return authnException;
+    }
+
+    /**
+     * Gets the authentication instant.
+     * 
+     * @return The instant of authentication, or <code>null</code> if none was set.
+     */
+    public DateTime getAuthenticationInstant() {
+        return authenticationMethodInformation.getAuthenticationInstant();
+    }
+
+    /**
+     * Gets the method used to authenticate the user.
+     * 
+     * @return The method used to authenticate the user.
+     */
+    public String getAuthenticationMethod() {
+        return authenticationMethodInformation.getAuthenticationMethod();
+    }
+
+    /**
+     * Gets information about the authentication event.
+     * 
+     * @return information about the authentication event.
+     */
+    public AuthenticationMethodInformation getAuthenticationMethodInformation() {
+        return authenticationMethodInformation;
+    }
+
+    /**
+     * Returns the ID of the authenticated user.
+     * 
+     * @return the ID of the user, or <code>null</code> if authentication failed.
+     */
+    public String getPrincipalName() {
+        return authenticationMethodInformation.getAuthenticationPrincipal().getName();
+    }
+
+    /**
+     * Gets the ProfileHandler URL.
+     * 
+     * @return the URL of the profile handler that is invoking the Authentication Manager.
+     */
+    public String getProfileHandlerURL() {
+        return profileHandlerURL;
+    }
+
+    /**
+     * Get an optional property object.
+     * 
+     * @param key The key in the properties Map.
+     * 
+     * @return The object, or <code>null</code> is no object exists for the key.
+     */
+    public Object getProperty(String key) {
+        return propsMap.get(key);
+    }
+
+    /**
      * Gets the entity ID of the relying party.
      * 
      * @return entity ID of the relying party
@@ -124,12 +223,22 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Gets the entity ID of the relying party.
+     * Return the acceptable authentication handler URIs, in preference order, for authenticating this user. If no
+     * authentication methods are preferred the resultant list will be empty.
      * 
-     * @param id entity ID of the relying party
+     * @return an list of authentication method identifiers
      */
-    public void setRelyingParty(String id) {
-        relyingPartyId = id;
+    public List<String> getRequestedAuthenticationMethods() {
+        return requestAuthenticationMethods;
+    }
+
+    /**
+     * Gets the {@link edu.internet2.middleware.shibboleth.idp.session.Session} ID.
+     * 
+     * @return the Session id
+     */
+    public String getSessionID() {
+        return sessionID;
     }
 
     /**
@@ -151,6 +260,90 @@ public class LoginContext implements Serializable {
     }
 
     /**
+     * Returns if authentication succeeded.
+     * 
+     * @return <code>true</code> is the user was successfully authenticated.
+     */
+    public boolean isPrincipalAuthenticated() {
+        return principalAuthenticated;
+    }
+
+    /**
+     * Sets the authentication method that was used when attempting to authenticate the user.
+     * 
+     * @param method authentication method that was used when attempting to authenticate the user
+     */
+    public void setAttemptedAuthnMethod(String method) {
+        attemptedAuthnMethod = method;
+    }
+
+    /**
+     * Set if authentication has been attempted.
+     * 
+     * This method should be called by an {@link LoginHandler} while processing a request.
+     */
+    public void setAuthenticationAttempted() {
+        authnAttempted = true;
+    }
+
+    /**
+     * Sets the duration of authentication.
+     * 
+     * @param duration The duration of authentication.
+     * 
+     * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
+     */
+    public void setAuthenticationDuration(long duration) {
+    }
+
+    /**
+     * Sets the authentication engine's URL.
+     * 
+     * @param url the URL of the authentication engine
+     */
+    public void setAuthenticationEngineURL(String url) {
+        authnEngineURL = url;
+    }
+
+    /**
+     * Sets the error that occurred during authentication.
+     * 
+     * @param error error that occurred during authentication
+     */
+    public void setAuthenticationFailure(AuthenticationException error) {
+        authnException = error;
+    }
+
+    /**
+     * Sets the authentication instant.
+     * 
+     * @param instant The instant of authentication.
+     * 
+     * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
+     */
+    public void setAuthenticationInstant(final DateTime instant) {
+    }
+
+    /**
+     * Sets the method used to authenticate the user.
+     * 
+     * @param method The method used to authenticate the user.
+     * 
+     * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
+     */
+    public void setAuthenticationMethod(String method) {
+    }
+
+    /**
+     * Sets the information about the authentication event.
+     * 
+     * @param info information about the authentication event
+     */
+    public void setAuthenticationMethodInformation(AuthenticationMethodInformation info) {
+        authenticationMethodInformation = info;
+    }
+
+    /**
      * Sets if authentication must be forced.
      * 
      * @param force if the authentication manager must re-authenticate the user.
@@ -169,14 +362,32 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Get an optional property object.
+     * Sets if authentication succeeded.
      * 
-     * @param key The key in the properties Map.
-     * 
-     * @return The object, or <code>null</code> is no object exists for the key.
+     * @param authnOK if authentication succeeded;
      */
-    public Object getProperty(String key) {
-        return propsMap.get(key);
+    public void setPrincipalAuthenticated(boolean authnOK) {
+        this.principalAuthenticated = authnOK;
+    }
+
+    /**
+     * Sets the ID of the authenticated user.
+     * 
+     * @param id The userid.
+     * 
+     * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
+     */
+    public void setPrincipalName(String id) {
+
+    }
+
+    /**
+     * Sets the ProfileHandler URL.
+     * 
+     * @param url The URL of the profile handler that invoked the AuthenticationManager/
+     */
+    public void setProfileHandlerURL(String url) {
+        profileHandlerURL = url;
     }
 
     /**
@@ -192,174 +403,12 @@ public class LoginContext implements Serializable {
     }
 
     /**
-     * Sets if authentication succeeded.
+     * Gets the entity ID of the relying party.
      * 
-     * @param authnOK if authentication succeeded;
+     * @param id entity ID of the relying party
      */
-    public void setPrincipalAuthenticated(boolean authnOK) {
-        this.principalAuthenticated = authnOK;
-    }
-
-    /**
-     * Returns if authentication succeeded.
-     * 
-     * @return <code>true</code> is the user was successfully authenticated.
-     */
-    public boolean isPrincipalAuthenticated() {
-        return principalAuthenticated;
-    }
-
-    /**
-     * Sets the error that occurred during authentication.
-     * 
-     * @param error error that occurred during authentication
-     */
-    public void setAuthenticationFailure(AuthenticationException error) {
-        authnException = error;
-    }
-
-    /**
-     * Gets the error that occurred during authentication.
-     * 
-     * @return error that occurred during authentication
-     */
-    public AuthenticationException getAuthenticationFailure() {
-        return authnException;
-    }
-
-    /**
-     * Set if authentication has been attempted.
-     * 
-     * This method should be called by an {@link LoginHandler} while processing a request.
-     */
-    public void setAuthenticationAttempted() {
-        authnAttempted = true;
-    }
-
-    /**
-     * Returns if authentication has been attempted for this user.
-     * 
-     * @return if authentication has been attempted for this user
-     */
-    public boolean getAuthenticationAttempted() {
-        return authnAttempted;
-    }
-
-    /**
-     * Sets the ID of the authenticated user.
-     * 
-     * @param id The userid.
-     */
-    public void setPrincipalName(String id) {
-        principalName = id;
-    }
-
-    /**
-     * Returns the ID of the authenticated user.
-     * 
-     * @return the ID of the user, or <code>null</code> if authentication failed.
-     */
-    public String getPrincipalName() {
-        return principalName;
-    }
-
-    /**
-     * Gets the ProfileHandler URL.
-     * 
-     * @return the URL of the profile handler that is invoking the Authentication Manager.
-     */
-    public String getProfileHandlerURL() {
-        return profileHandlerURL;
-    }
-
-    /**
-     * Sets the ProfileHandler URL.
-     * 
-     * @param url The URL of the profile handler that invoked the AuthenticationManager/
-     */
-    public void setProfileHandlerURL(String url) {
-        profileHandlerURL = url;
-    }
-
-    /**
-     * Gets the authentication engine's URL.
-     * 
-     * @return the URL of the authentication engine
-     */
-    public String getAuthenticationEngineURL() {
-        return authnEngineURL;
-    }
-
-    /**
-     * Sets the authentication engine's URL.
-     * 
-     * @param url the URL of the authentication engine
-     */
-    public void setAuthenticationEngineURL(String url) {
-        authnEngineURL = url;
-    }
-
-    /**
-     * Gets the authentication instant.
-     * 
-     * @return The instant of authentication, or <code>null</code> if none was set.
-     */
-    public DateTime getAuthenticationInstant() {
-        return authnInstant;
-    }
-
-    /**
-     * Sets the authentication instant.
-     * 
-     * @param instant The instant of authentication.
-     */
-    public void setAuthenticationInstant(final DateTime instant) {
-        authnInstant = instant;
-    }
-
-    /**
-     * Gets the duration of authentication.
-     * 
-     * @return The duration of authentication, or zero if none was set.
-     */
-    public long getAuthenticationDuration() {
-        return authnDuration;
-    }
-
-    /**
-     * Sets the duration of authentication.
-     * 
-     * @param duration The duration of authentication.
-     */
-    public void setAuthenticationDuration(long duration) {
-        authnDuration = duration;
-    }
-
-    /**
-     * Gets the method used to authenticate the user.
-     * 
-     * @return The method used to authenticate the user.
-     */
-    public String getAuthenticationMethod() {
-        return authnMethod;
-    }
-
-    /**
-     * Sets the method used to authenticate the user.
-     * 
-     * @param method The method used to authenticate the user.
-     */
-    public void setAuthenticationMethod(String method) {
-        authnMethod = method;
-    }
-
-    /**
-     * Gets the {@link edu.internet2.middleware.shibboleth.idp.session.Session} ID.
-     * 
-     * @return the Session id
-     */
-    public String getSessionID() {
-        return sessionID;
+    public void setRelyingParty(String id) {
+        relyingPartyId = id;
     }
 
     /**
@@ -369,15 +418,5 @@ public class LoginContext implements Serializable {
      */
     public void setSessionID(String id) {
         sessionID = id;
-    }
-
-    /**
-     * Return the acceptable authentication handler URIs, in preference order, for authenticating this user. If no
-     * authentication methods are preferred the resultant list will be empty.
-     * 
-     * @return an list of authentication method identifiers
-     */
-    public List<String> getRequestedAuthenticationMethods() {
-        return requestAuthenticationMethods;
     }
 }

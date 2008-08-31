@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,30 @@
 
 package edu.internet2.middleware.shibboleth.idp.session;
 
+import java.security.Principal;
+
 import javax.security.auth.Subject;
 
 import org.joda.time.DateTime;
 
-/**
- * Information about an authentication method employed by a user.
- */
+/** Information about an authentication method employed by a user. */
 public interface AuthenticationMethodInformation {
-    
+
     /**
      * Gets the Subject created by this authentication method.
      * 
      * @return subject created by this authentication method
+     * 
+     * @deprecated use {@link Session#getSubject()}
      */
     public Subject getAuthenticationSubject();
+
+    /**
+     * Gets the principal, for the {@link Subject} of the session, created by this authentication method.
+     * 
+     * @return principal created by this authentication method
+     */
+    public Principal getAuthenticationPrincipal();
 
     /**
      * Gets the unique identifier for the authentication method.

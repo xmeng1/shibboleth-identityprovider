@@ -57,6 +57,7 @@
     <Service id="shibboleth.ServiceServletContextAttributeExporter"
              depends-on="shibboleth.AttributeResolver shibboleth.AttributeFilterEngine
                          shibboleth.SAML1AttributeAuthority shibboleth.SAML2AttributeAuthority 
-                         shibboleth.RelyingPartyConfigurationManager shibboleth.HandlerManager"
+                         shibboleth.RelyingPartyConfigurationManager shibboleth.HandlerManager
+                         shibboleth.StorageService"
              xsi:type="ServletContextAttributeExporter" />
 </Services>

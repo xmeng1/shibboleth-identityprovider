@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@ import org.slf4j.LoggerFactory;
 /**
  * Authenticate a username and password against a JAAS source.
  * 
- * This authenticaiton handler requires a JSP to collect a username and password from the user. It also requires a JAAS
- * configuration file to validate the username and password.
- * 
- * If an Authentication Context Class or DeclRef URI is not specified, it will default to
- * "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport".
+ * This login handler creates a {@link javax.security.auth.Subject} and binds it to the request as described in the
+ * {@link edu.internet2.middleware.shibboleth.idp.authn.LoginHandler} documentation. If the JAAS module does not create
+ * a principal for the user a {@link edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal} is created, using the
+ * entered username. If the <code>storeCredentialsInSubject</code> init parameter of the authentication servlet is set
+ * to true a {@link UsernamePasswordCredential} is created, based on the entered username and password, and stored in
+ * the Subject's private credentials.
  */
 public class UsernamePasswordLoginHandler extends AbstractLoginHandler {
 

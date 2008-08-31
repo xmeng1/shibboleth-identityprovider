@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInfor
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
-/**
- * Session information for user logged into the IdP.
- */
+/** Session information for user logged into the IdP. */
 public class SessionImpl extends AbstractSession implements Session {
 
     /** Serial version UID. */
@@ -39,14 +37,13 @@ public class SessionImpl extends AbstractSession implements Session {
     private HashMap<String, ServiceInformation> servicesInformation;
 
     /**
-     * Default constructor.
+     * Constructor.
      * 
      * @param sessionId ID of the session
-     * @param principal principal ID of the user
      * @param timeout inactivity timeout for the session in milliseconds
      */
-    public SessionImpl(String sessionId, String principal, long timeout) {
-        super(sessionId, principal, timeout);
+    public SessionImpl(String sessionId, long timeout) {
+        super(sessionId, timeout);
 
         authnMethods = new HashMap<String, AuthenticationMethodInformation>();
         servicesInformation = new HashMap<String, ServiceInformation>();
@@ -61,7 +58,7 @@ public class SessionImpl extends AbstractSession implements Session {
     public Map<String, ServiceInformation> getServicesInformation() {
         return servicesInformation;
     }
-    
+
     /**
      * Gets the service information for the given entity ID.
      * 

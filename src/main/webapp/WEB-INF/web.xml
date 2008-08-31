@@ -19,10 +19,6 @@
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
-    
-    <listener>
-        <listener-class>edu.internet2.middleware.shibboleth.idp.session.ContainerSessionListener</listener-class>
-    </listener>
 
     <!--  Add IdP Session object to incoming profile requests -->
     <filter>

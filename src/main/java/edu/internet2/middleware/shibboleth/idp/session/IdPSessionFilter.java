@@ -65,7 +65,6 @@ public class IdPSessionFilter implements Filter {
                 log.trace("Updating IdP session activity time and adding session object to the request");
                 idpSession.setLastActivityInstant(new DateTime());
                 MDC.put("idpSessionId", idpSession.getSessionID());
-                MDC.put("principalName", idpSession.getPrincipalName());
                 httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, idpSession);
             }
         }

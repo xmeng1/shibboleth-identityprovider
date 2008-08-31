@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,42 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.util.List;
 
-import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
-
 /**
  * Authentication handlers authenticate a user in an implementation specific manner. Some examples of this might be by
- * collecting a user name and password and validating it against an LDAP directory or collecting and validating a client
- * certificate or one-time password.
+ * collecting a user name and password and validating it against an LDAP directory, validating a client certificate, or
+ * validating one-time password.
  * 
- * After the handler has authenticated the user it <strong>MUST</strong> bind the user's principal name to the
- * {@link HttpServletRequest} attribute identified by {@link LoginHandler#PRINCIPAL_NAME_KEY}.
+ * When a login handler is invoked the user's {@link edu.internet2.middleware.shibboleth.idp.session.Session} is bound
+ * to the {@link javax.servlet.http.HttpSession} under the attribute with the name
+ * {@link edu.internet2.middleware.shibboleth.idp.session.Session#HTTP_SESSION_BINDING_ATTRIBUTE}.
  * 
- * The handler may bind a {@link Subject} to the attribute identified by {@link #SUBJECT_KEY} if one was created during
- * the authentication process. This Subject is stored in the {@link AuthenticationMethodInformation}, created for this
- * authentication, in the user's session.
+ * After a successful authentication has been completed the handler <strong>MUST</strong> either:
+ * <ul>
+ * <li>Bind a {@link javax.security.auth.Subject} to the attribute identified by {@link #SUBJECT_KEY} if one was
+ * created during the authentication process. The principals, public, and private credentials from this subject will be
+ * merged with those in the {@link javax.security.auth.Subject} within the
+ * {@link edu.internet2.middleware.shibboleth.idp.session.Session}.</li>
+ * <li>Bind a {@link java.security.Principal} for the user to the request attribute identified by
+ * {@link #PRINCIPAL_KEY}. Such a {@link java.security.Principal} <strong>MUST</strong> implement
+ * {@link java.io.Serializable}. This principal will be added to the {@link javax.security.auth.Subject} within the
+ * {@link edu.internet2.middleware.shibboleth.idp.session.Session}.</li>
+ * <li>Bind a principal name string to the request attribute identified by {@link #PRINCIPAL_NAME_KEY}. In this case
+ * the {@link AuthenticationEngine} will create a {@link java.security.Principal} object of type
+ * {@link edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal} and add that to the
+ * {@link javax.security.auth.Subject} within the {@link edu.internet2.middleware.shibboleth.idp.session.Session}.</li>
+ * </ul>
  * 
- * The handler may designate the a URI representing the authentication method actually used, for example if a handler is
- * capable of performing multiple types of authentication, by binding the URI, as a String, to a request attribute
- * identified by {@link #AUTHENTICATION_METHOD_KEY}.
- * 
- * The handler may also bind an error message, if an error occurred during authentication to the request attribute
- * identified by {@link LoginHandler#AUTHENTICATION_ERROR_KEY}.
+ * The handler <strong>MAY</strong> also:
+ * <ul>
+ * <li>Bind a URI string, representing the authentication method actually used, to a request attribute identified by
+ * {@link #AUTHENTICATION_METHOD_KEY}. This may be used if a handler is capable of performing multiple types of
+ * authentication.</li>
+ * <li>bind an error message, if an error occurred during authentication to the request attribute identified by
+ * {@link LoginHandler#AUTHENTICATION_ERROR_KEY}.</li>
+ * </ul>
  * 
  * Finally, the handler must return control to the authentication engine by invoking
  * {@link AuthenticationEngine#returnToAuthenticationEngine(HttpServletRequest, HttpServletResponse)}. After which the
@@ -53,8 +65,11 @@ import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInfor
  */
 public interface LoginHandler {
 
+    /** Request attribute to which user's principal should be bound. */
+    public static final String PRINCIPAL_KEY = "principal";
+
     /** Request attribute to which user's principal name should be bound. */
-    public static final String PRINCIPAL_NAME_KEY = "principal";
+    public static final String PRINCIPAL_NAME_KEY = "principal_name";
 
     /** Request attribute to which user's subject should be bound. */
     public static final String SUBJECT_KEY = "subject";

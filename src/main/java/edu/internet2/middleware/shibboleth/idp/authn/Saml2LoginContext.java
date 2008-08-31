@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,8 @@ import org.xml.sax.InputSource;
 public class Saml2LoginContext extends LoginContext implements Serializable {
 
     /** Serial version UID. */
-    private static final long serialVersionUID = -2518779446947534977L;
+    private static final long serialVersionUID = -7117092606828289070L;
 
-    /** Class logger. */
-    private final Logger log = LoggerFactory.getLogger(Saml2LoginContext.class);
-    
     /** Relay state from authentication request. */
     private String relayState;
 
@@ -183,6 +180,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         // For the immediate future, we only support the "exact" comparator.
         AuthnContextComparisonTypeEnumeration comparator = authnContext.getComparison();
         if (comparator != null && comparator != AuthnContextComparisonTypeEnumeration.EXACT) {
+            Logger log = LoggerFactory.getLogger(Saml2LoginContext.class);
             log.error("Unsupported comparision operator ( " + comparator
                     + ") in RequestedAuthnContext. Only exact comparisions are supported.");
             return requestedMethods;

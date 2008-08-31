@@ -1,6 +1,10 @@
 Changes in Release 2.1.0
 =============================================
-[SIDP-20] - Cannot deploy on Windows. Sping and DOS device names?
+NOTE, this release requires a small change to the service.xml file, if you are upgrading from 2.0.0.
+In the last service, shibboleth.ServiceServletContextAttributeExporter, you MUST add the service 
+'shibboleth.StorageService' to the whitespace delimited list of services already present.
+
+[SIDP-20] - Cannot deploy on Windows. Spring and DOS device names?
 [SIDP-164] - Option to make session cookie secure
 [SIDP-165] - Support for SessionNotOnOrAfter
 [SIDP-167] - Missing tags and incomplete login.jsp
@@ -14,6 +18,7 @@ Changes in Release 2.1.0
 [SIDP-185] - NullPointerException after AttributeQuery when Security Rule fails
 [SIDP-189] - NPE in AbstractSAML2ProfileHandler
 [SIDP-194] - Installer can remember the wrong thing
+[SIDP-196] - IdP continues to use old principal name after forced reauthentication
 [SIDP-197] - Misleading error message for ValidationInfo element in relying-party.xml
 [SIDP-199] - loss of login context when deploying the IdP to tomcat's ROOT context
 [SIDP-201] - IdP sends SAML 1 authentication responses without audience conditions

@@ -80,7 +80,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
                 ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressLoginHandler.IPEntry(
                         addr));
             } catch (UnknownHostException ex) {
-                log.error("IPAddressHandler: Error parsing entry \"" + addr + "\". Ignoring.");
+                log.error("IPAddressHandler: Error parsing IP entry \"" + addr + "\". Ignoring.");
             }
         }
     }
@@ -130,6 +130,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
         boolean ipAllowed = searchIpList(request);
 
         if (ipAllowed) {
+            log.debug("Authenticated user by IP address");
             request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
         }
     }
@@ -139,6 +140,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
         boolean ipDenied = searchIpList(request);
 
         if (!ipDenied) {
+            log.debug("Authenticated user by IP address");
             request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
         }
     }
@@ -171,7 +173,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
             }
 
         } catch (UnknownHostException ex) {
-            log.error("IPAddressHandler: Error resolving hostname.", ex);
+            log.error("Error resolving hostname.", ex);
             return false;
         }
 
@@ -227,13 +229,13 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
 
             int cidrOffset = entry.indexOf("/");
             if (cidrOffset == -1) {
-                log.error("IPAddressHandler: invalid entry \"" + entry + "\" -- it lacks a netmask component.");
+                log.error("Invalid entry \"" + entry + "\" -- it lacks a netmask component.");
                 throw new UnknownHostException("entry lacks a netmask component.");
             }
 
             // ensure that only one "/" is present.
             if (entry.indexOf("/", cidrOffset + 1) != -1) {
-                log.error("IPAddressHandler: invalid entry \"" + entry + "\" -- too many \"/\" present.");
+                log.error("Invalid entry \"" + entry + "\" -- too many \"/\" present.");
                 throw new UnknownHostException("entry has too many netmask components.");
             }
 
@@ -248,9 +250,9 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
 
             // ensure that the netmask isn't too large
             if ((tempAddr instanceof Inet4Address) && (masklen > 32)) {
-                throw new UnknownHostException("IPAddressHandler: Netmask is too large for an IPv4 address: " + masklen);
+                throw new UnknownHostException("Netmask is too large for an IPv4 address: " + masklen);
             } else if ((tempAddr instanceof Inet6Address) && masklen > 128) {
-                throw new UnknownHostException("IPAddressHandler: Netmask is too large for an IPv6 address: " + masklen);
+                throw new UnknownHostException("Netmask is too large for an IPv6 address: " + masklen);
             }
 
             netmask = new BitSet(addrlen);

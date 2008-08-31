@@ -1,5 +1,5 @@
 /*
- * Copyright [2007] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2007 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.Vector;
 
 import org.apache.commons.ssl.util.Hex;
 import org.joda.time.DateTime;
@@ -32,9 +34,7 @@ import edu.internet2.middleware.shibboleth.common.session.LogoutEvent;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
-/**
- * Manager of IdP sessions.
- */
+/** Manager of IdP sessions. */
 public class SessionManagerImpl implements SessionManager<Session>, ApplicationContextAware {
 
     /** Spring context used to publish login and logout events. */
@@ -86,8 +86,20 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     }
 
     /** {@inheritDoc} */
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        appCtx = applicationContext;
+    public Session createSession() {
+        // generate a random session ID
+        byte[] sid = new byte[sessionIDSize];
+        prng.nextBytes(sid);
+        String sessionID = Hex.encode(sid);
+
+        Session session = new SessionImpl(sessionID, sessionLifetime);
+        SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
+        sessionStore.put(partition, sessionID, sessionEntry);
+
+        MDC.put("idpSessionId", sessionID);
+
+        appCtx.publishEvent(new LoginEvent(session));
+        return session;
     }
 
     /** {@inheritDoc} */
@@ -98,12 +110,10 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         String sessionID = Hex.encode(sid);
 
         MDC.put("idpSessionId", sessionID);
-        MDC.put("principalName", principal);
-        
-        Session session = new SessionImpl(sessionID, principal, sessionLifetime);
+
+        Session session = new SessionImpl(sessionID, sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
-        sessionStore.put(partition, principal, sessionEntry);
         appCtx.publishEvent(new LoginEvent(session));
         return session;
     }
@@ -140,10 +150,36 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     }
 
     /** {@inheritDoc} */
-    public Session getSessionByPrincipalName(String name) {
+    public boolean indexSession(Session session, String index) {
+        if (sessionStore.contains(partition, index)) {
+            return false;
+        }
 
-        // TODO
-        return null;
+        SessionManagerEntry sessionEntry = sessionStore.get(partition, session.getSessionID());
+        if (sessionEntry == null) {
+            return false;
+        }
+
+        if (sessionEntry.getSessionIndexes().contains(index)) {
+            return true;
+        }
+
+        sessionEntry.getSessionIndexes().add(index);
+        sessionStore.put(partition, index, sessionEntry);
+        return true;
+    }
+
+    /** {@inheritDoc} */
+    public void removeSessionIndex(String index) {
+        SessionManagerEntry sessionEntry = sessionStore.remove(partition, index);
+        if (sessionEntry != null) {
+            sessionEntry.getSessionIndexes().remove(index);
+        }
+    }
+
+    /** {@inheritDoc} */
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        appCtx = applicationContext;
     }
 
     /**
@@ -153,6 +189,9 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
         /** User's session. */
         private Session userSession;
+
+        /** Indexes for this session. */
+        private List<String> indexes;
 
         /** Manager that owns the session. */
         private SessionManager<Session> sessionManager;
@@ -171,6 +210,13 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
             sessionManager = manager;
             userSession = session;
             expirationTime = new DateTime().plus(lifetime);
+            indexes = new Vector<String>();
+            indexes.add(userSession.getSessionID());
+        }
+
+        /** {@inheritDoc} */
+        public DateTime getExpirationTime() {
+            return expirationTime;
         }
 
         /**
@@ -191,9 +237,13 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
             return userSession.getSessionID();
         }
 
-        /** {@inheritDoc} */
-        public DateTime getExpirationTime() {
-            return expirationTime;
+        /**
+         * Gets the list of indexes for this session.
+         * 
+         * @return list of indexes for this session
+         */
+        public List<String> getSessionIndexes() {
+            return indexes;
         }
 
         /** {@inheritDoc} */

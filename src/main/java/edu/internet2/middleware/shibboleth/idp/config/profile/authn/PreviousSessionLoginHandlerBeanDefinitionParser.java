@@ -18,8 +18,9 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
 import javax.xml.namespace.QName;
 
-import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
@@ -33,6 +34,9 @@ public class PreviousSessionLoginHandlerBeanDefinitionParser extends AbstractLog
     /** Schema type. */
     public static final QName SCHEMA_TYPE = new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "PreviousSession");
 
+    /** Class logger. */
+    private final Logger log = LoggerFactory.getLogger(PreviousSessionLoginHandlerBeanDefinitionParser.class);
+
     /** {@inheritDoc} */
     protected Class getBeanClass(Element arg0) {
         return PreviousSessionLoginHandlerFactoryBean.class;
@@ -42,14 +46,12 @@ public class PreviousSessionLoginHandlerBeanDefinitionParser extends AbstractLog
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
-        builder.addPropertyValue("servletPath", DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null,
-                "servletPath")));
-
+        if (config.hasAttributeNS(null, "servletPath")) {
+            log.warn("The 'servletPath' configuration option has been deprecated and is no longer supported.");
+        }
+        
         if (config.hasAttributeNS(null, "supportsPassiveAuthentication")) {
-            builder.addPropertyValue("supportsPassiveAuth", XMLHelper.getAttributeValueAsBoolean(config
-                    .getAttributeNodeNS(null, "supportsPassiveAuthentication")));
-        } else {
-            builder.addPropertyValue("supportsPassiveAuth", false);
+            log.warn("The 'supportsPassiveAuthentication' configuration option has been deprecated and is no longer supported.");
         }
 
         if (config.hasAttributeNS(null, "reportPreviousSessionAuthnMethod")) {

@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 [University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
+import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
 /**
@@ -54,6 +55,9 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginServlet.class);
+
+    /** Whether to store a user's credentials within the {@link Subject}. */
+    private boolean storeCredentialsInSubject;
 
     /** Name of JAAS configuration used to authenticate users. */
     private String jaasConfigName = "ShibUserPassAuth";
@@ -130,9 +134,8 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             if (queryParams == null) {
                 queryParams = new ArrayList<Pair<String, String>>();
             }
-            
-            queryParams.add(new Pair<String, String>("actionUrl", request.getContextPath()
-                    + request.getServletPath()));
+
+            queryParams.add(new Pair<String, String>("actionUrl", request.getContextPath() + request.getServletPath()));
             urlBuilder.getQueryParams().addAll(queryParams);
 
             log.debug("Redirecting to login page {}", urlBuilder.buildURL());
@@ -152,7 +155,6 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      * @return true of authentication succeeds, false if not
      */
     protected boolean authenticateUser(HttpServletRequest request) {
-
         try {
             String username = DatatypeHelper.safeTrimOrNullString(request.getParameter(usernameAttribute));
             String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
@@ -165,21 +167,22 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             jaasLoginCtx.login();
             log.debug("Successfully authenticated user {}", username);
 
-            Subject subject = jaasLoginCtx.getSubject();
-            Set<Principal> principals = subject.getPrincipals();
+            Subject loginSubject = jaasLoginCtx.getSubject();
 
+            Set<Principal> principals = loginSubject.getPrincipals();
             if (principals.isEmpty()) {
-                request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
-            } else {
-                Principal principal = principals.iterator().next();
-                String principalName = DatatypeHelper.safeTrimOrNullString(principal.getName());
-                if (principalName == null) {
-                    request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, username);
-                } else {
-                    request.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, principal.getName());
-                }
-                request.setAttribute(LoginHandler.SUBJECT_KEY, jaasLoginCtx.getSubject());
+                principals.add(new UsernamePrincipal(username));
             }
+
+            Set<Object> publicCredentials = loginSubject.getPublicCredentials();
+
+            Set<Object> privateCredentials = loginSubject.getPrivateCredentials();
+            if (storeCredentialsInSubject) {
+                privateCredentials.add(new UsernamePasswordCredential(username, password));
+            }
+
+            Subject userSubject = new Subject(false, principals, publicCredentials, privateCredentials);
+            request.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
 
             return true;
         } catch (LoginException e) {
