@@ -311,7 +311,6 @@
     <!--
     <resolver:AttributeDefinition id="eduPersonAffiliation" xsi:type="Simple" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
         sourceAttributeID="eduPersonAffiliation">
-        <resolver:Dependency ref="staticAttributes" />
         <resolver:Dependency ref="myLDAP" />
 
         <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
