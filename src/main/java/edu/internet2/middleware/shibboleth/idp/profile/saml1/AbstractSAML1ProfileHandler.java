@@ -660,7 +660,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      */
     protected void writeAuditLogEntry(BaseSAMLProfileRequestContext context) {
         SAML1AuditLogEntry auditLogEntry = new SAML1AuditLogEntry();
-        auditLogEntry.setSAMLResponse((Response) context.getOutboundMessage());
+        auditLogEntry.setSAMLResponse((Response) context.getOutboundSAMLMessage());
         auditLogEntry.setMessageProfile(getProfileId());
         auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
         auditLogEntry.setPrincipalName(context.getPrincipalName());
