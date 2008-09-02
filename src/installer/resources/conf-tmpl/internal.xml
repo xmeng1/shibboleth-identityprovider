@@ -79,7 +79,7 @@
         </property>
     </bean>
 
-    <bean id="shibboleth.StorageService" class="org.opensaml.util.storage.MapBasedStorageService" depends-on="shibboleth.LogbackLogging" />
+    <bean id="shibboleth.StorageService" class="edu.internet2.middleware.shibboleth.common.util.EventingMapBasedStorageService" depends-on="shibboleth.LogbackLogging" />
 
     <bean id="shibboleth.StorageServiceSweeper" class="org.opensaml.util.storage.ExpiringObjectStorageServiceSweeper" depends-on="shibboleth.LogbackLogging">
         <constructor-arg ref="shibboleth.TaskTimer" />

@@ -26,6 +26,11 @@ Upgrading
 from 2.0.0 to 2.1.0
 -------------------
 The following configuration changes must be made to upgrade from 2.0.0 to 2.1.0
+- in servie.xml replace 'org.opensaml.util.storage.MapBasedStorageService' with 
+  'edu.internet2.middleware.shibboleth.common.util.EventingMapBasedStorageService'
+  as the value for the class attribute of bean 'shibboleth.StorageService' (line 82 in the
+  default configuration file)
+  
 - in service.xml add the service 'shibboleth.StorageService' to the whitespace delimited 
   list of services already present in the service, shibboleth.ServiceServletContextAttributeExporter
   (service definition starts at line 57 in the default configuration file)

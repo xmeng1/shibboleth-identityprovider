@@ -25,17 +25,26 @@ import org.joda.time.DateTime;
 import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 
 import edu.internet2.middleware.shibboleth.common.session.LoginEvent;
 import edu.internet2.middleware.shibboleth.common.session.LogoutEvent;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
+import edu.internet2.middleware.shibboleth.common.util.EventingMapBasedStorageService.AddEntryEvent;
+import edu.internet2.middleware.shibboleth.common.util.EventingMapBasedStorageService.RemoveEntryEvent;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** Manager of IdP sessions. */
-public class SessionManagerImpl implements SessionManager<Session>, ApplicationContextAware {
+public class SessionManagerImpl implements SessionManager<Session>, ApplicationContextAware, ApplicationListener {
+
+    /** Class logger. */
+    private final Logger log = LoggerFactory.getLogger(SessionManagerImpl.class);
 
     /** Spring context used to publish login and logout events. */
     private ApplicationContext appCtx;
@@ -93,11 +102,11 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         String sessionID = Hex.encode(sid);
 
         Session session = new SessionImpl(sessionID, sessionLifetime);
-        SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
+        SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
 
         MDC.put("idpSessionId", sessionID);
-
+        log.trace("Created session {}", sessionID);
         appCtx.publishEvent(new LoginEvent(session));
         return session;
     }
@@ -112,9 +121,9 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         MDC.put("idpSessionId", sessionID);
 
         Session session = new SessionImpl(sessionID, sessionLifetime);
-        SessionManagerEntry sessionEntry = new SessionManagerEntry(this, session, sessionLifetime);
+        SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
-        appCtx.publishEvent(new LoginEvent(session));
+        log.trace("Created session {}", sessionID);
         return session;
     }
 
@@ -124,10 +133,7 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
             return;
         }
 
-        SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID);
-        if (sessionEntry != null) {
-            appCtx.publishEvent(new LogoutEvent(sessionEntry.getSession()));
-        }
+        sessionStore.remove(partition, sessionID);
     }
 
     /** {@inheritDoc} */
@@ -166,25 +172,51 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
         sessionEntry.getSessionIndexes().add(index);
         sessionStore.put(partition, index, sessionEntry);
+        log.trace("Added index {} to session {}", index, session.getSessionID());
         return true;
+    }
+
+    /** {@inheritDoc} */
+    public void onApplicationEvent(ApplicationEvent event) {
+        log.trace("Received event {}", event.getClass().getName());
+        if(event instanceof AddEntryEvent){
+            AddEntryEvent addEvent = (AddEntryEvent)event;
+            if(addEvent.getValue() instanceof SessionManagerEntry){
+                SessionManagerEntry sessionEntry = (SessionManagerEntry) addEvent.getValue();
+                appCtx.publishEvent(new LoginEvent(sessionEntry.getSession()));
+            }
+        }
+        
+        if (event instanceof RemoveEntryEvent) {
+            RemoveEntryEvent removeEvent = (RemoveEntryEvent) event;
+            if (removeEvent.getValue() instanceof SessionManagerEntry) {
+                SessionManagerEntry sessionEntry = (SessionManagerEntry) removeEvent.getValue();
+                log.trace("Destroyed session {} for principal {}", sessionEntry.getSessionId(), sessionEntry
+                        .getSession().getPrincipalName());
+                appCtx.publishEvent(new LogoutEvent(sessionEntry.getSession()));
+            }
+        }
     }
 
     /** {@inheritDoc} */
     public void removeSessionIndex(String index) {
         SessionManagerEntry sessionEntry = sessionStore.remove(partition, index);
         if (sessionEntry != null) {
+            log.trace("Removing index {} for session {}", index, sessionEntry.getSessionId());
             sessionEntry.getSessionIndexes().remove(index);
         }
     }
 
     /** {@inheritDoc} */
     public void setApplicationContext(ApplicationContext applicationContext) {
-        appCtx = applicationContext;
+        ApplicationContext rootContext = applicationContext;
+        while(rootContext.getParent() != null){
+            rootContext = rootContext.getParent();
+        }
+        appCtx = rootContext;
     }
 
-    /**
-     * Session store entry.
-     */
+    /** Session store entry. */
     public class SessionManagerEntry implements ExpiringObject {
 
         /** User's session. */
@@ -193,21 +225,16 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         /** Indexes for this session. */
         private List<String> indexes;
 
-        /** Manager that owns the session. */
-        private SessionManager<Session> sessionManager;
-
         /** Time this entry expires. */
         private DateTime expirationTime;
 
         /**
          * Constructor.
          * 
-         * @param manager manager that owns the session
          * @param session user session
          * @param lifetime lifetime of session
          */
-        public SessionManagerEntry(SessionManager<Session> manager, Session session, long lifetime) {
-            sessionManager = manager;
+        public SessionManagerEntry(Session session, long lifetime) {
             userSession = session;
             expirationTime = new DateTime().plus(lifetime);
             indexes = new Vector<String>();
@@ -253,7 +280,7 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
         /** {@inheritDoc} */
         public void onExpire() {
-            sessionManager.destroySession(userSession.getSessionID());
+
         }
     }
 }

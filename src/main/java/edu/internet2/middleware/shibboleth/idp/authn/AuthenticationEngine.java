@@ -71,6 +71,7 @@ public class AuthenticationEngine extends HttpServlet {
     public static final String LOGIN_CONTEXT_KEY_NAME = "_idp_authn_lc_key";
 
     /** Serial version UID. */
+    private static final long serialVersionUID = -8479060989001890156L;
 
     /** Class logger. */
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationEngine.class);
