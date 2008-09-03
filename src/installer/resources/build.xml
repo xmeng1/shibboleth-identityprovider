@@ -16,22 +16,31 @@
     <taskdef resource="edu/internet2/middleware/ant/antlib.xml" />
 
     <target name="install" description="Installs the identity provider software.">
-        <input message="Is this a new installation? Answering yes will overwrite your current configuration."
-               addproperty="new.install"
-               validargs="yes,no"
-               defaultvalue="no" />
+        
+        <input message="Where should the Shibboleth Identity Provider software be installed?"
+               addproperty="idp.home.input"
+               defaultvalue="${idp.home}" />
+        <var name="idp.home" value="${idp.home.input}" />
+
+        <pathToAbsolutePath path="${idp.home}" addproperty="idp.home.path" />
+        <pathToUrl path="${idp.home}" addproperty="idp.home.url" />
+        
+        <if>
+            <available file="${idp.home.path}" property="idp.home.exists"/>
+            <then>
+                <input message="The directory '${idp.home.path}' already exists.  Would you like to overwrite this Shibboleth configuration?"
+                       addproperty="install.config"
+                       validargs="yes,no"
+                       defaultvalue="no" />
+            </then>
+            <else>
+                <var name="install.config" value="yes"/>
+            </else>
+        </if>
 
         <if>
-            <equals arg1="${new.install}" arg2="yes" />
+            <equals arg1="${install.config}" arg2="yes" />
             <then>
-                <input message="Where should the Shibboleth Identity Provider software be installed?"
-                       addproperty="idp.home.input"
-                       defaultvalue="${idp.home}" />
-                <var name="idp.home" value="${idp.home.input}" />
-
-                <pathToAbsolutePath path="${idp.home}" addproperty="idp.home.path" />
-                <pathToUrl path="${idp.home}" addproperty="idp.home.url" />
-
                 <input message="What is the fully qualified hostname of the Shibboleth Identity Provider server?"
                        addproperty="idp.hostname.input"
                        defaultvalue="${idp.hostname}" />
@@ -67,7 +76,7 @@
                                 keystorePassword="${idp.keystore.pass}"
                                 uriSubjectAltNames="${idp.entity.id}" />
 
-                <copy todir="${idp.home.path}/bin" preservelastmodified="true">
+                <copy todir="${idp.home.path}/bin" preservelastmodified="true" overwrite="true">
                     <fileset dir="${tools.dir}/bash" />
                     <fileset dir="${tools.dir}/bat" />
                     <filterset begintoken="$" endtoken="$">
@@ -75,7 +84,6 @@
                         <filter token="IDP_VERSION" value="${version}" />
                     </filterset>
                 </copy>
-                <chmod file="${idp.home.path}/bin/*.sh" perm="+x" />
 
                 <copy todir="${idp.home.path}/conf" preservelastmodified="true" overwrite="true">
                     <fileset dir="${resources.dir}/conf-tmpl" />
@@ -103,13 +111,45 @@
                     </filterset>
                 </copy>
             </then>
-        </if>
+            <else>
+                <!-- 
+                    Even if we're not overwritting the config we should still add new files, for example, files added
+                    in a new release.
+                -->
+                <var name="idp.entity.id" value="https://${idp.hostname}/idp/shibboleth" />
+                <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
+                <stringFromFile input="${idp.home.path}/credentials/idp.crt" addProperty="idp.cert" />
+                    
+                <copy todir="${idp.home.path}/bin" preservelastmodified="true">
+                    <fileset dir="${tools.dir}/bash" />
+                    <fileset dir="${tools.dir}/bat" />
+                    <filterset begintoken="$" endtoken="$">
+                        <filter token="IDP_HOME" value="${idp.home.path}" />
+                        <filter token="IDP_VERSION" value="${version}" />
+                    </filterset>
+                </copy>
 
-        <copy todir="${idp.home.path}/lib" preservelastmodified="true">
+                <copy todir="${idp.home.path}/conf" preservelastmodified="true">
+                    <fileset dir="${resources.dir}/conf-tmpl" />
+                    <filterset begintoken="$" endtoken="$">
+                        <filter token="IDP_HOME" value="${idp.home.path}" />
+                        <filter token="IDP_VERSION" value="${version}" />
+                        <filter token="IDP_ENTITY_ID" value="${idp.entity.id}" />
+                        <filter token="IDP_SCOPE" value="${idp.scope}" />
+                        <filter token="IDP_CERTIFICATE" value="${idp.cert}" />
+                        <filter token="IDP_HOSTNAME" value="${idp.hostname}" />
+                    </filterset>
+                </copy>
+            </else>
+        </if>
+                            
+        <chmod file="${idp.home.path}/bin/*.sh" perm="+x" />
+
+        <copy todir="${idp.home.path}/lib" preservelastmodified="true" overwrite="true">
             <fileset dir="${basedir}/lib" />
         </copy>
 
-        <copy todir="${idp.home.path}/lib/endorsed" preservelastmodified="true" failonerror="false">
+        <copy todir="${idp.home.path}/lib/endorsed" preservelastmodified="true" failonerror="false" overwrite="true">
             <fileset dir="endorsed" />
         </copy>
 
