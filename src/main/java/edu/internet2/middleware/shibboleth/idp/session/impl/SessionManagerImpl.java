@@ -178,7 +178,6 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
     /** {@inheritDoc} */
     public void onApplicationEvent(ApplicationEvent event) {
-        log.trace("Received event {}", event.getClass().getName());
         if(event instanceof AddEntryEvent){
             AddEntryEvent addEvent = (AddEntryEvent)event;
             if(addEvent.getValue() instanceof SessionManagerEntry){
@@ -191,8 +190,6 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
             RemoveEntryEvent removeEvent = (RemoveEntryEvent) event;
             if (removeEvent.getValue() instanceof SessionManagerEntry) {
                 SessionManagerEntry sessionEntry = (SessionManagerEntry) removeEvent.getValue();
-                log.trace("Destroyed session {} for principal {}", sessionEntry.getSessionId(), sessionEntry
-                        .getSession().getPrincipalName());
                 appCtx.publishEvent(new LogoutEvent(sessionEntry.getSession()));
             }
         }
