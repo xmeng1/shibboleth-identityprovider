@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.terracotta.org/config http://www.terracotta.org/schema/terracotta-4.xsd">
+    
+    <!--
+        Terracotta configuration file for Shibboleth.
+    
+        Complete documentation on the contents of this file may be found here:
+        http://terracotta.org/web/display/docs/Configuration+Guide+and+Reference
+    -->
+    
+    <servers>
+        <!-- EXAMPLE SERVER CONFIGURATION -->
+        <!--
+        <server name="UNIQUE_ID" host="HOST">
+            <dso>
+                <persistence>
+                    <mode>permanent-store</mode>
+                </persistence>
+            </dso>
+            
+            <logs>$IDP_HOME$/cluster/server/logs</logs>
+            <data>$IDP_HOME$/cluster/server/data</data>
+            <statistics>$IDP_HOME$/cluster/server/stats</statistics>
+        </server>        
+        -->
+        <!-- START Terracotta server definitions -->
+
+
+        <!-- END Terracotta server definitions -->
+        
+        <ha>
+            <mode>networked-active-passive</mode>
+            <networked-active-passive>
+                <election-time></election-time>
+            </networked-active-passive>
+        </ha>
+    </servers>
+    
+    <system>
+        <configuration-model>production</configuration-model>
+    </system>
+    
+    <clients>
+        <logs>$IDP_HOME$/cluster/client/logs-%i</logs>
+        <statistics>$IDP_HOME$/cluster/client/stats-%i</statistics>
+    </clients>
+    
+    <application>
+        <dso>
+            <roots>
+                <root>
+                    <root-name>storageService</root-name>
+                    <field-name>edu.internet2.middleware.shibboleth.common.util.EventingMapBasedStorageService.store</field-name>
+                </root>
+            </roots>
+        </dso>
+    </application>
+    
+</tc:tc-config>
