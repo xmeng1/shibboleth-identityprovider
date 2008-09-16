@@ -1,5 +1,5 @@
 /*
- * Copyright [2007] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2008 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,16 @@
 
 package edu.internet2.middleware.shibboleth.idp;
 
-/**
- * Application that outputs the current IdP version.
- */
-public final class Version {
-
-    /** Current IdP version. */
-    public static final String VERSION = "$IDP_VERSION$";
-
-    /** Constructor. */
-    private Version() {
-
-    }
+/** Class for printing the version of this library. */
+public class Version {
 
     /**
-     * Application entry point.
+     * Main entry point to program.
      * 
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        System.out.println("Shibboleth Identity Provider Version: " + VERSION);
+        Package pkg = Version.class.getPackage();
+        System.out.println(pkg.getImplementationTitle() + " version " + pkg.getImplementationVersion());
     }
 }
