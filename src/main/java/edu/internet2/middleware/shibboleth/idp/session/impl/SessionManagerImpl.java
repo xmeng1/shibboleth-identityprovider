@@ -16,9 +16,12 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Vector;
+
+import javax.crypto.KeyGenerator;
 
 import org.apache.commons.ssl.util.Hex;
 import org.joda.time.DateTime;
@@ -49,6 +52,9 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     /** Spring context used to publish login and logout events. */
     private ApplicationContext appCtx;
 
+    /** Generator used to create secret keys associated with the session. */
+    private KeyGenerator secretKeyGen;
+
     /** Number of random bits within a session ID. */
     private final int sessionIDSize = 32;
 
@@ -74,6 +80,12 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         sessionStore = storageService;
         partition = "session";
         sessionLifetime = lifetime;
+
+        try {
+            secretKeyGen = KeyGenerator.getInstance("AES");
+        } catch (NoSuchAlgorithmException e) {
+            log.error("AES key generation is not supported", e);
+        }
     }
 
     /**
@@ -101,7 +113,7 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         prng.nextBytes(sid);
         String sessionID = Hex.encode(sid);
 
-        Session session = new SessionImpl(sessionID, sessionLifetime);
+        Session session = new SessionImpl(sessionID, secretKeyGen.generateKey(), sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
 
@@ -120,7 +132,7 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
         MDC.put("idpSessionId", sessionID);
 
-        Session session = new SessionImpl(sessionID, sessionLifetime);
+        Session session = new SessionImpl(sessionID, secretKeyGen.generateKey(), sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
         log.trace("Created session {}", sessionID);
@@ -178,14 +190,14 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
     /** {@inheritDoc} */
     public void onApplicationEvent(ApplicationEvent event) {
-        if(event instanceof AddEntryEvent){
-            AddEntryEvent addEvent = (AddEntryEvent)event;
-            if(addEvent.getValue() instanceof SessionManagerEntry){
+        if (event instanceof AddEntryEvent) {
+            AddEntryEvent addEvent = (AddEntryEvent) event;
+            if (addEvent.getValue() instanceof SessionManagerEntry) {
                 SessionManagerEntry sessionEntry = (SessionManagerEntry) addEvent.getValue();
                 appCtx.publishEvent(new LoginEvent(sessionEntry.getSession()));
             }
         }
-        
+
         if (event instanceof RemoveEntryEvent) {
             RemoveEntryEvent removeEvent = (RemoveEntryEvent) event;
             if (removeEvent.getValue() instanceof SessionManagerEntry) {
@@ -207,7 +219,7 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     /** {@inheritDoc} */
     public void setApplicationContext(ApplicationContext applicationContext) {
         ApplicationContext rootContext = applicationContext;
-        while(rootContext.getParent() != null){
+        while (rootContext.getParent() != null) {
             rootContext = rootContext.getParent();
         }
         appCtx = rootContext;

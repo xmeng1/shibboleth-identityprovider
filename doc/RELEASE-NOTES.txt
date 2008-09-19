@@ -25,4 +25,5 @@ Changes in Release 2.1.0
 [SIDP-214] - Installer needs to put (at least) bcprov onto the calsspath before it runs ant
 [SIDP-222] - Template engine used by LDAP and database connectors throw an NPE on startup
 [SIDP-224] - Add version information in library JAR manifest and provide command line tool to view it
+[SIDP-225] - Credential theft vulnerability in login.jsp
 [SIDP-226] - Cross site scripting vulnerability

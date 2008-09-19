@@ -18,6 +18,8 @@ package edu.internet2.middleware.shibboleth.idp.session;
 
 import java.util.Map;
 
+import javax.crypto.SecretKey;
+
 /**
  * Session information for user logged into the IdP.
  */
@@ -25,6 +27,13 @@ public interface Session extends edu.internet2.middleware.shibboleth.common.sess
 
     /** Name of the HTTP request attribute to which a users IdP session is bound. */
     public static final String HTTP_SESSION_BINDING_ATTRIBUTE = "ShibbolethIdPSession";
+    
+    /**
+     * A secret key associated with this session.
+     * 
+     * @return secret key associated with this session
+     */
+    public SecretKey getSessionSecretKey();
 
     /**
      * Gets the methods by which the user has authenticated to the IdP.

@@ -19,6 +19,8 @@ package edu.internet2.middleware.shibboleth.idp.session.impl;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.crypto.SecretKey;
+
 import edu.internet2.middleware.shibboleth.common.session.impl.AbstractSession;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
@@ -29,6 +31,9 @@ public class SessionImpl extends AbstractSession implements Session {
 
     /** Serial version UID. */
     private static final long serialVersionUID = 2927868242208211623L;
+    
+    /** Secret key associated with the session. */
+    private SecretKey sessionKey;
 
     /** The list of methods used to authenticate the user. */
     private HashMap<String, AuthenticationMethodInformation> authnMethods;
@@ -40,13 +45,21 @@ public class SessionImpl extends AbstractSession implements Session {
      * Constructor.
      * 
      * @param sessionId ID of the session
+     * @param key a secret key to associate with the session
      * @param timeout inactivity timeout for the session in milliseconds
      */
-    public SessionImpl(String sessionId, long timeout) {
+    public SessionImpl(String sessionId, SecretKey key, long timeout) {
         super(sessionId, timeout);
 
+        sessionKey = key;
+        
         authnMethods = new HashMap<String, AuthenticationMethodInformation>();
         servicesInformation = new HashMap<String, ServiceInformation>();
+    }
+    
+    /** {@inheritDoc} */
+    public SecretKey getSessionSecretKey() {
+        return sessionKey;
     }
 
     /** {@inheritDoc} */

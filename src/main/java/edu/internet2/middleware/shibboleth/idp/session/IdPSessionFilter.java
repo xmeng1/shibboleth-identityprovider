@@ -17,7 +17,10 @@
 package edu.internet2.middleware.shibboleth.idp.session;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -28,6 +31,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.joda.time.DateTime;
+import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +48,9 @@ public class IdPSessionFilter implements Filter {
     /** Class Logger. */
     private final Logger log = LoggerFactory.getLogger(IdPSessionFilter.class);
 
+    /** Whether the client must always come back from the same address. */
+    private boolean consistentAddress;
+
     /** IdP session manager. */
     private SessionManager<Session> sessionManager;
 
@@ -57,16 +64,13 @@ public class IdPSessionFilter implements Filter {
             ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
 
-        Session idpSession = null;
-        Cookie idpSessionCookie = getIdPSessionCookie(httpRequest);
-        if (idpSessionCookie != null) {
-            idpSession = sessionManager.getSession(idpSessionCookie.getValue());
-            if (idpSession != null) {
-                log.trace("Updating IdP session activity time and adding session object to the request");
-                idpSession.setLastActivityInstant(new DateTime());
-                MDC.put("idpSessionId", idpSession.getSessionID());
-                httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, idpSession);
-            }
+        Cookie sessionCookie = getIdPSessionCookie(httpRequest);
+        Session idpSession = validateCookie(sessionCookie, httpRequest);
+        if (idpSession != null) {
+            log.trace("Updating IdP session activity time and adding session object to the request");
+            idpSession.setLastActivityInstant(new DateTime());
+            MDC.put("idpSessionId", idpSession.getSessionID());
+            httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, idpSession);
         }
 
         filterChain.doFilter(request, response);
@@ -80,18 +84,25 @@ public class IdPSessionFilter implements Filter {
         }
 
         sessionManager = (SessionManager<Session>) filterConfig.getServletContext().getAttribute(sessionManagerId);
+
+        String consistentAddressParam = filterConfig.getInitParameter("ensureConsistentClientAddress");
+        if (DatatypeHelper.isEmpty(consistentAddressParam)) {
+            consistentAddress = true;
+        } else {
+            consistentAddress = Boolean.parseBoolean(consistentAddressParam);
+        }
     }
 
     /**
      * Gets the IdP session cookie from the current request, if the user currently has a session.
      * 
-     * @param request current HTTP request
+     * @param httpRequest current HTTP request
      * 
      * @return the user's current IdP session cookie, if they have a current session, otherwise null
      */
-    protected Cookie getIdPSessionCookie(HttpServletRequest request) {
+    protected Cookie getIdPSessionCookie(HttpServletRequest httpRequest) {
         log.trace("Attempting to retrieve IdP session cookie.");
-        Cookie[] requestCookies = request.getCookies();
+        Cookie[] requestCookies = httpRequest.getCookies();
 
         if (requestCookies != null) {
             for (Cookie requestCookie : requestCookies) {
@@ -102,7 +113,57 @@ public class IdPSessionFilter implements Filter {
             }
         }
 
-        log.trace("No IdP session cookie sent by the client.");
         return null;
+    }
+
+    /**
+     * Validates the given session cookie against the associated session.
+     * 
+     * @param sessionCookie the session cookie
+     * @param httpRequest the current HTTP request
+     * 
+     * @return the session against which the cookie was validated
+     */
+    protected Session validateCookie(Cookie sessionCookie, HttpServletRequest httpRequest) {
+        if (sessionCookie == null) {
+            return null;
+        }
+
+        // index 0: remote address
+        // index 1: session ID
+        // index 2: Base64(HMAC(index 0 + index 1))
+        String[] valueComponents = sessionCookie.getValue().split("\\|");
+
+        if (consistentAddress) {
+            if (!httpRequest.getRemoteAddr().equals(valueComponents[0])) {
+                log.error("Client sent a cookie from addres {} but the cookie was issued to address {}", httpRequest
+                        .getRemoteAddr(), valueComponents[0]);
+                return null;
+            }
+        }
+
+        Session userSession = sessionManager.getSession(valueComponents[1]);
+
+        if (userSession != null) {
+            SecretKey signingKey = userSession.getSessionSecretKey();
+            try {
+                Mac mac = Mac.getInstance("HmacSHA256");
+                mac.init(signingKey);
+                mac.update(valueComponents[0].getBytes());
+                mac.update(valueComponents[1].getBytes());
+                byte[] signature = mac.doFinal();
+
+                if (!DatatypeHelper.safeEquals(valueComponents[2], Base64.encodeBytes(signature))) {
+                    log.error("Session cookie signature did not match, the session cookie has been tampered with");
+                    return null;
+                }
+            } catch (GeneralSecurityException e) {
+                log.error("Unable to computer over session cookie material", e);
+            }
+        } else {
+            log.debug("No session associated with session ID {} - session must have timed out",
+                            valueComponents[1]);
+        }
+        return userSession;
     }
 }
