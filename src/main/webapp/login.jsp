@@ -8,12 +8,12 @@
 		<img src="<%= request.getContextPath() %>/images/logo.jpg" />
 		<h2>Shibboleth Identity Provider Login</h2>
 		
-		<% if ("true".equals(request.getParameter("loginFailed"))) { %>
-		<p>Authentication Failed</p>
+		<% if ("true".equals(request.getAttribute("loginFailed"))) { %>
+		<p><font color="red"Authentication Failed</font></p>
 		<% } %>
 		
-		<% if(request.getParameter("actionUrl") != null){ %>
-		    <form action="<%=request.getParameter("actionUrl")%>" method="post">
+		<% if(request.getAttribute("actionUrl") != null){ %>
+		    <form action="<%=request.getAttribute("actionUrl")%>" method="post">
 		<% }else{ %>
 		    <form action="j_security_check" method="post">
 		<% } %>

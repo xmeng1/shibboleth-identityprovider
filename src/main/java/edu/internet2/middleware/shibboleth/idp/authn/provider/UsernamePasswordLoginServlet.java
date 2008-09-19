@@ -29,23 +29,23 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.opensaml.util.URLBuilder;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 
 /**
- * This servlet should be protected by a filter which populates REMOTE_USER. The serlvet will then set the remote user
+ * This Servlet should be protected by a filter which populates REMOTE_USER. The Servlet will then set the remote user
  * field in a LoginContext.
  */
 public class UsernamePasswordLoginServlet extends HttpServlet {
@@ -81,12 +81,18 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     private final String passwordAttribute = "j_password";
 
     /** {@inheritDoc} */
-    public void init() {
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        
         if (getInitParameter(jaasInitParam) != null) {
             jaasConfigName = getInitParameter(jaasInitParam);
         }
+        
         if (getInitParameter(loginPageInitParam) != null) {
             loginPage = getInitParameter(loginPageInitParam);
+        }
+        if(!loginPage.startsWith("/")){
+            loginPage = "/" + loginPage;
         }
     }
 
@@ -119,30 +125,26 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      */
     protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response,
             List<Pair<String, String>> queryParams) {
-        try {
-            StringBuilder pathBuilder = new StringBuilder();
-            pathBuilder.append(request.getContextPath());
-            pathBuilder.append("/");
-            pathBuilder.append(loginPage);
+       
+        String requestContext = DatatypeHelper.safeTrimOrNullString(request.getContextPath());
+        if(request == null){
+            requestContext = "/";
+        }
+        request.setAttribute("actionUrl", requestContext + request.getServletPath());
 
-            URLBuilder urlBuilder = new URLBuilder();
-            urlBuilder.setScheme(request.getScheme());
-            urlBuilder.setHost(request.getServerName());
-            urlBuilder.setPort(request.getServerPort());
-            urlBuilder.setPath(pathBuilder.toString());
-
-            if (queryParams == null) {
-                queryParams = new ArrayList<Pair<String, String>>();
+        if(queryParams != null){
+            for(Pair<String, String> param : queryParams){
+                request.setAttribute(param.getFirst(), param.getSecond());
             }
-
-            queryParams.add(new Pair<String, String>("actionUrl", request.getContextPath() + request.getServletPath()));
-            urlBuilder.getQueryParams().addAll(queryParams);
-
-            log.debug("Redirecting to login page {}", urlBuilder.buildURL());
-            response.sendRedirect(urlBuilder.buildURL());
-            return;
+        }
+        
+        try {
+            request.getRequestDispatcher(loginPage).forward(request, response);
+            log.debug("Redirecting to login page {}", loginPage);
         } catch (IOException ex) {
             log.error("Unable to redirect to login page.", ex);
+        }catch (ServletException ex){
+            log.error("Unable to redirect to login page.", ex);            
         }
     }
 
