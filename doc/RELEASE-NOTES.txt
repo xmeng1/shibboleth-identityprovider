@@ -23,6 +23,7 @@ Changes in Release 2.1.0
 [SIDP-206] - SessionManagerEntry's back reference to the SessionManager object interferes with clustering
 [SIDP-209] - Enforce SAML 2 metadata SPSSODescriptor/@AuthnRequestsSigned
 [SIDP-214] - Installer needs to put (at least) bcprov onto the calsspath before it runs ant
+[SIDP-215] - SHIB-JCE.jar missing from 2.1.0 kit
 [SIDP-222] - Template engine used by LDAP and database connectors throw an NPE on startup
 [SIDP-224] - Add version information in library JAR manifest and provide command line tool to view it
 [SIDP-225] - Credential theft vulnerability in login.jsp

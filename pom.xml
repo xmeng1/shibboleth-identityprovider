@@ -109,6 +109,18 @@
             <version>13Apr2008</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>edu.internet2.middleware</groupId>
+            <artifactId>shibboleth-jce</artifactId>
+            <version>1.0.0</version>
+            <scope>runtime</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>catalina</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         
         <!-- Test dependencies -->
         <dependency>
