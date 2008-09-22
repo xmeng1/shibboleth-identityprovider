@@ -397,7 +397,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         statement.setSubjectLocality(buildSubjectLocality(requestContext));
 
-        Subject statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer");
+        Subject statementSubject;
+        Endpoint endpoint = selectEndpoint(requestContext);
+        if(endpoint.getBinding().equals(SAMLConstants.SAML1_ARTIFACT_BINDING_URI)){
+            statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:artifact");
+        }else{
+            statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer");
+        }
         statement.setSubject(statementSubject);
 
         return statement;
@@ -406,7 +412,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     /**
      * Constructs the subject locality for the authentication statement.
      * 
-     * @param requestContext curent request context
+     * @param requestContext current request context
      * 
      * @return subject locality for the authentication statement
      */
