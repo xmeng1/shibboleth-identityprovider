@@ -880,7 +880,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected void writeAuditLogEntry(BaseSAMLProfileRequestContext context) {
         SAML2AuditLogEntry auditLogEntry = new SAML2AuditLogEntry();
-        auditLogEntry.setSAMLResponse((Response) context.getOutboundSAMLMessage());
+        auditLogEntry.setSAMLResponse((StatusResponseType) context.getOutboundSAMLMessage());
         auditLogEntry.setMessageProfile(getProfileId());
         auditLogEntry.setPrincipalAuthenticationMethod(context.getPrincipalAuthenticationMethod());
         auditLogEntry.setPrincipalName(context.getPrincipalName());
@@ -901,14 +901,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected class SAML2AuditLogEntry extends AuditLogEntry {
 
         /** The response to the SAML request. */
-        private Response samlResponse;
+        private StatusResponseType samlResponse;
 
         /**
          * Gets the response to the SAML request.
          * 
          * @return the response to the SAML request
          */
-        public Response getSAMLResponse() {
+        public StatusResponseType getSAMLResponse() {
             return samlResponse;
         }
 
@@ -917,17 +917,19 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
          * 
          * @param response the response to the SAML request
          */
-        public void setSAMLResponse(Response response) {
+        public void setSAMLResponse(StatusResponseType response) {
             samlResponse = response;
         }
 
         /** {@inheritDoc} */
         public String toString() {
             StringBuilder entryString = new StringBuilder(super.toString());
-            
+
             NameID nameIdentifier = null;
             StringBuilder assertionIds = new StringBuilder();
-            List<Assertion> assertions = samlResponse.getAssertions();
+
+            if(samlResponse instanceof Response){
+            List<Assertion> assertions = ((Response)samlResponse).getAssertions();
             if(assertions != null && !assertions.isEmpty()){
                 for(Assertion assertion : assertions){
                     assertionIds.append(assertion.getID());
@@ -939,6 +941,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                         }
                     }
                 }
+            }
             }
             
             if(nameIdentifier != null){
