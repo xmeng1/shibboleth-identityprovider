@@ -29,3 +29,4 @@ Changes in Release 2.1.0
 [SIDP-225] - Credential theft vulnerability in login.jsp
 [SIDP-226] - Cross site scripting vulnerability
 [SIDP-227] - Default relying-party.xml has SAML2-specific security policy rules included in SAML 1 security policies
+[SIDP-228] - Improve error reporting in SAML 2 profile handlers when no encryption key is resolveable for the peer entity ID

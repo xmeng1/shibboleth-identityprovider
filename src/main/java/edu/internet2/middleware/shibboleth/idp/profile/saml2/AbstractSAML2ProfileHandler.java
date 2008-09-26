@@ -842,9 +842,13 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         EncryptionParameters dataEncParams = SecurityHelper
                 .buildDataEncryptionParams(null, securityConfiguration, null);
 
-        Credential keyEncryptionCredentials = getKeyEncryptionCredential(peerEntityId);
+        Credential keyEncryptionCredential = getKeyEncryptionCredential(peerEntityId);
+        if (keyEncryptionCredential == null) {
+            log.error("Could not resolve a key encryption credential for peer entity: {}", peerEntityId);
+            throw new SecurityException("Could not resolve key encryption credential");
+        }
         String wrappedJCAKeyAlgorithm = SecurityHelper.getKeyAlgorithmFromURI(dataEncParams.getAlgorithm());
-        KeyEncryptionParameters keyEncParams = SecurityHelper.buildKeyEncryptionParams(keyEncryptionCredentials,
+        KeyEncryptionParameters keyEncParams = SecurityHelper.buildKeyEncryptionParams(keyEncryptionCredential,
                 wrappedJCAKeyAlgorithm, securityConfiguration, null, null);
 
         Encrypter encrypter = new Encrypter(dataEncParams, keyEncParams);
