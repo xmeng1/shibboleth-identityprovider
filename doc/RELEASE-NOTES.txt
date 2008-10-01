@@ -22,6 +22,7 @@ Changes in Release 2.1.0
 [SIDP-203] - Insufficient information logged to track down errant users
 [SIDP-206] - SessionManagerEntry's back reference to the SessionManager object interferes with clustering
 [SIDP-209] - Enforce SAML 2 metadata SPSSODescriptor/@AuthnRequestsSigned
+[SIDP-212] - Wrong confirmation method used with SAML 1.x artifact profile
 [SIDP-214] - Installer needs to put (at least) bcprov onto the calsspath before it runs ant
 [SIDP-215] - SHIB-JCE.jar missing from 2.1.0 kit
 [SIDP-216] - Second of two signed sources of metadata fail after cache expiration
