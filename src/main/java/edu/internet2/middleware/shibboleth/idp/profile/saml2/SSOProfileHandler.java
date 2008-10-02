@@ -215,9 +215,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         Response samlResponse;
         try {
             if (loginContext.getAuthenticationFailure() != null) {
-                log.error("User authentication failed with the following error: {}", loginContext
-                        .getAuthenticationFailure().toString());
-
                 if (loginContext.getAuthenticationFailure() instanceof PassiveAuthenticationException) {
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI,
                             null));

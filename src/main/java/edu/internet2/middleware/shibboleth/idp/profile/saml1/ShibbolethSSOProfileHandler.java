@@ -243,8 +243,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         Response samlResponse;
         try {
             if (loginContext.getAuthenticationFailure() != null) {
-                log.error("User authentication failed with the following error: {}", loginContext
-                        .getAuthenticationFailure().toString());
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "User failed authentication"));
                 throw new ProfileException("Authentication failure", loginContext.getAuthenticationFailure());
             }

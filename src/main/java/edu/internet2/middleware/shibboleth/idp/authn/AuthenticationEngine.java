@@ -415,7 +415,7 @@ public class AuthenticationEngine extends HttpServlet {
                 loginHandlers);
 
         if (loginHandlers.isEmpty()) {
-            LOG.error("Force authentication required but no login handlers available to support it");
+            LOG.info("Force authentication requested but no login handlers available to support it");
             throw new ForceAuthenticationException();
         }
     }
