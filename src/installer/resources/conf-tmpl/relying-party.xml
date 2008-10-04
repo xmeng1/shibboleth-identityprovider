@@ -11,6 +11,7 @@
 <RelyingPartyGroup xmlns="urn:mace:shibboleth:2.0:relying-party"
                    xmlns:saml="urn:mace:shibboleth:2.0:relying-party:saml"
                    xmlns:metadata="urn:mace:shibboleth:2.0:metadata"
+                   xmlns:resource="urn:mace:shibboleth:2.0:resource"
                    xmlns:security="urn:mace:shibboleth:2.0:security"
                    xmlns:samlsec="urn:mace:shibboleth:2.0:security:saml"
                    xmlns:samlmd="urn:oasis:names:tc:SAML:2.0:metadata"
@@ -18,6 +19,7 @@
                    xsi:schemaLocation="urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd
                                        urn:mace:shibboleth:2.0:relying-party:saml classpath:/schema/shibboleth-2.0-relying-party-saml.xsd
                                        urn:mace:shibboleth:2.0:metadata classpath:/schema/shibboleth-2.0-metadata.xsd
+                                       urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd
                                        urn:mace:shibboleth:2.0:security classpath:/schema/shibboleth-2.0-security.xsd
                                        urn:mace:shibboleth:2.0:security:saml classpath:/schema/shibboleth-2.0-security-policy-saml.xsd
                                        urn:oasis:names:tc:SAML:2.0:metadata classpath:/schema/saml-schema-metadata-2.0.xsd">
@@ -81,24 +83,34 @@
     <!-- ========================================== -->
     <!-- MetadataProvider the combining other MetadataProviders -->
     <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
-        
-        <!-- MetadataProvider reading metadata from a URL. -->
-        <!-- Fill in metadataURL and backingFile attributes with deployment specific information -->
-        <!--
-        <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                          metadataURL="http://example.org/my/metadata/file.xml" 
-                          backingFile="$IDP_HOME$/metadata/somefile.xml" />
-        -->
-        
-
-        <!-- MetadataProvider reading metadata from the filesystem -->
-        <!-- Fill in metadataFile attribute with deployment specific information -->
-        <!--
-        <MetadataProvider id="FSMD" xsi:type="FilesystemMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata"
-                          metadataFile="$IDP_HOME$/metadata/somefile.xml" maintainExpiredMetadata="true">
-             <MetadataFilter xsi:type="SignatureValidation" trustEngineRef="shibboleth.MetadataTrustEngine" />
+    
+    	<!-- Load the IdP's own metadata.  This is necessary for artifact support. -->
+        <MetadataProvider id="IdPMD" xsi:type="ResourceBackedMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata" >
+            <MetadataResource xsi:type="resource:FilesystemResource" file="$IDP_HOME$/metadata/idp-metadata.xml" />
         </MetadataProvider>
-        -->
+        
+        <!-- Example metadata provider. -->
+        <!-- Reads metadata from a URL and store a backup copy on the file system.  Caches data for a max of 8 hours -->
+        <!-- Validates the signature of the metadata and filters out all by SP entities in order to save memory -->
+        <!-- ------------- -->
+        <!-- To use: fill in 'url' and 'file' properties on MetadataResource element -->
+        <!--
+        <MetadataProvider id="IdPMD" xsi:type="ResourceBackedMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata" 
+                          maxCacheDuration="28800">
+        	<MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
+				<MetadataFilter xsi:type="SignatureValidation" xmlns="urn:mace:shibboleth:2.0:metadata"
+                				trustEngineRef="shibboleth.MetadataTrustEngine"
+                				requireSignedMetadata="true" />
+	            <MetadataFilter xsi:type="EntityRoleWhiteList" xmlns="urn:mace:shibboleth:2.0:metadata">
+					<RetainedRole>samlmd:SPSSODescriptor</RetainedRole>
+				</MetadataFilter>
+			</MetadataFilter>
+			
+            <MetadataResource xsi:type="FileBackedHttpResource"
+                              url="http://example.org/my/metadata/file.xml"
+                              file="$IDP_HOME$/metadata/some-file.xml" />
+        </MetadataProvider>
+		-->
         
     </MetadataProvider>
 
