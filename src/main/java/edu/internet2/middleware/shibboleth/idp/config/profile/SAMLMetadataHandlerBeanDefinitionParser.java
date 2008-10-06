@@ -18,7 +18,9 @@ package edu.internet2.middleware.shibboleth.idp.config.profile;
 
 import javax.xml.namespace.QName;
 
+import org.opensaml.xml.util.DatatypeHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.config.profile.AbstractRequestURIMappedProfileHandlerBeanDefinitionParser;
@@ -36,11 +38,16 @@ public class SAMLMetadataHandlerBeanDefinitionParser extends AbstractRequestURIM
     }
 
     /** {@inheritDoc} */
-    protected void doParse(Element config, BeanDefinitionBuilder builder) {
+    protected void doParse(Element config, ParserContext parserContext, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
 
         builder.addConstructorArgValue(config.getAttributeNS(null, "metadataFile"));
-        builder.addConstructorArgReference(config.getAttributeNS(null, "parserPoolRef"));
+
+        String parserPoolRef = DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "parserPoolRef"));
+        if (parserPoolRef == null) {
+            parserPoolRef = "shibboleth.ParserPool";
+        }
+        builder.addConstructorArgReference(parserPoolRef);
     }
 
     /** {@inheritDoc} */

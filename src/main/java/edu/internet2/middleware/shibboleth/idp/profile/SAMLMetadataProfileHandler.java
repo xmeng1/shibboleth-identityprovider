@@ -16,11 +16,11 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile;
 
+import java.io.File;
 import java.io.OutputStreamWriter;
 
 import org.opensaml.Configuration;
-import org.opensaml.saml2.metadata.provider.ResourceBackedMetadataProvider;
-import org.opensaml.util.resource.FilesystemResource;
+import org.opensaml.saml2.metadata.provider.FilesystemMetadataProvider;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.OutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
@@ -45,7 +45,7 @@ public class SAMLMetadataProfileHandler extends AbstractRequestURIMappedProfileH
     private final Logger log = LoggerFactory.getLogger(SAMLMetadataProfileHandler.class);
 
     /** Metadata provider. */
-    private ResourceBackedMetadataProvider metadataProvider;
+    private FilesystemMetadataProvider metadataProvider;
 
     /**
      * Constructor.
@@ -55,7 +55,7 @@ public class SAMLMetadataProfileHandler extends AbstractRequestURIMappedProfileH
      */
     public SAMLMetadataProfileHandler(String metadataFile, ParserPool pool) {
         try {
-            metadataProvider = new ResourceBackedMetadataProvider(new FilesystemResource(metadataFile));
+            metadataProvider = new FilesystemMetadataProvider(new File(metadataFile));
             metadataProvider.setParserPool(pool);
             metadataProvider.setMaintainExpiredMetadata(true);
             metadataProvider.initialize();

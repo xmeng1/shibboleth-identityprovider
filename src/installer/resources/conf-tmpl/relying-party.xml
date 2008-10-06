@@ -90,27 +90,23 @@
         </MetadataProvider>
         
         <!-- Example metadata provider. -->
-        <!-- Reads metadata from a URL and store a backup copy on the file system.  Caches data for a max of 8 hours -->
+        <!-- Reads metadata from a URL and store a backup copy on the file system. -->
         <!-- Validates the signature of the metadata and filters out all by SP entities in order to save memory -->
-        <!-- ------------- -->
-        <!-- To use: fill in 'url' and 'file' properties on MetadataResource element -->
+        <!-- To use: fill in 'metadataURL' and 'backingFile' properties on MetadataResource element -->
         <!--
-        <MetadataProvider id="IdPMD" xsi:type="ResourceBackedMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata" 
-                          maxCacheDuration="28800">
-        	<MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
-				<MetadataFilter xsi:type="SignatureValidation" xmlns="urn:mace:shibboleth:2.0:metadata"
-                				trustEngineRef="shibboleth.MetadataTrustEngine"
-                				requireSignedMetadata="true" />
+        <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata" 
+                          metadataURL="http://example.org/metadata.xml"
+                          backingFile="/tmp/idp-metadata.xml">
+            <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
+                <MetadataFilter xsi:type="SignatureValidation" xmlns="urn:mace:shibboleth:2.0:metadata"
+                                trustEngineRef="shibboleth.MetadataTrustEngine"
+                                requireSignedMetadata="true" />
 	            <MetadataFilter xsi:type="EntityRoleWhiteList" xmlns="urn:mace:shibboleth:2.0:metadata">
-					<RetainedRole>samlmd:SPSSODescriptor</RetainedRole>
-				</MetadataFilter>
-			</MetadataFilter>
-			
-            <MetadataResource xsi:type="FileBackedHttpResource"
-                              url="http://example.org/my/metadata/file.xml"
-                              file="$IDP_HOME$/metadata/some-file.xml" />
+                    <RetainedRole>samlmd:SPSSODescriptor</RetainedRole>
+                </MetadataFilter>
+            </MetadataFilter>
         </MetadataProvider>
-		-->
+        -->
         
     </MetadataProvider>
 

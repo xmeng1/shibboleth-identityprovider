@@ -1,6 +1,5 @@
 Changes in Release 2.1.0
 =============================================
-
 [SIDP-20] - Cannot deploy on Windows. Spring and DOS device names?
 [SIDP-164] - Option to make session cookie secure
 [SIDP-165] - Support for SessionNotOnOrAfter
