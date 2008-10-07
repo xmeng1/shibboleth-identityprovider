@@ -96,7 +96,7 @@
         <!--
         <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata" 
                           metadataURL="http://example.org/metadata.xml"
-                          backingFile="/tmp/idp-metadata.xml">
+                          backingFile="$IDP_HOME$/metadata/some-metadata.xml">
             <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
                 <MetadataFilter xsi:type="SignatureValidation" xmlns="urn:mace:shibboleth:2.0:metadata"
                                 trustEngineRef="shibboleth.MetadataTrustEngine"

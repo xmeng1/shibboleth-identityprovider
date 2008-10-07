@@ -47,15 +47,15 @@ public class ProfileHandlerGroupBeanDefinitionParser implements BeanDefinitionPa
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ErrorHandler"));
         log.debug("{} error handler definitions found", children.size());
-        SpringConfigurationUtils.parseCustomElement(children.get(0), context);
+        SpringConfigurationUtils.parseInnerCustomElement(children.get(0), context);
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "ProfileHandler"));
         log.debug("{} profile handler definitions found", children.size());
-        SpringConfigurationUtils.parseCustomElements(children, context);
+        SpringConfigurationUtils.parseInnerCustomElements(children, context);
 
         children = configChildren.get(new QName(ProfileHandlerNamespaceHandler.NAMESPACE, "LoginHandler"));
         log.debug("{} login handler definitions found", children.size());
-        SpringConfigurationUtils.parseCustomElements(children, context);
+        SpringConfigurationUtils.parseInnerCustomElements(children, context);
 
         return null;
     }

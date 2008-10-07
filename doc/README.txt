@@ -18,18 +18,6 @@ http://shibboleth.internet2.edu/downloads
 Bug Tracker:
 https://bugs.internet2.edu/jira
 
-
-Known Issues
-====================
-There is an issue that is causing old metadata to be kept in memory (i.e. a memory leak).  This is being 
-looked in to, but while present, no site has yet reported this to be a cause of an error (i.e out of 
-memory exceptions).  Therefore, given the need to release a fix in order to address the security
-vulnerability found in 2.0.0 it was decided to make this release even with this known bug.  Sites can 
-mitigate this by using Entity Role White List metadata filter to ensure that at least the IdP isn't caching 
-information (IdP entity descriptors) that it doesn't need.  And, while less than optimal, this can be 
-addressed by periodic restarts of the IdP.
-
-
 Upgrading 
 ====================
 
