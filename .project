@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>java-idp</name>
+	<name>java-idp-r2</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -16,16 +16,17 @@
 			</arguments>
 		</buildCommand>
 		<buildCommand>
-			<name>org.maven.ide.eclipse.maven2Builder</name>
+			<name>org.devzuz.q.maven.jdt.core.mavenIncrementalBuilder</name>
 			<arguments>
 			</arguments>
 		</buildCommand>
 	</buildSpec>
 	<natures>
-		<nature>org.eclipse.jdt.core.javanature</nature>
-		<nature>org.maven.ide.eclipse.maven2Nature</nature>
+		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
 		<nature>org.eclipse.team.cvs.core.cvsnature</nature>
 		<nature>com.sysdeo.eclipse.tomcat.tomcatnature</nature>
-		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.maven.ide.eclipse.maven2Nature</nature>
+		<nature>org.devzuz.q.maven.jdt.core.mavenNature</nature>
 	</natures>
 </projectDescription>
