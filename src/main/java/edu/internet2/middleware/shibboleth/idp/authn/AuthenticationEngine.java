@@ -226,12 +226,12 @@ public class AuthenticationEngine extends HttpServlet {
             HttpServletResponse httpResponse) {
         LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
         httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
-        
+
         // Cleanup this cookie
         Cookie lcKeyCookie = new Cookie(LOGIN_CONTEXT_KEY_NAME, "");
         lcKeyCookie.setMaxAge(0);
         httpResponse.addCookie(lcKeyCookie);
-        
+
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
     }
 
@@ -713,23 +713,25 @@ public class AuthenticationEngine extends HttpServlet {
             Session userSession) {
         httpRequest.setAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE, userSession);
 
-        String remoteAddress = httpRequest.getRemoteAddr();
-        String sessionId = userSession.getSessionID();
-        
+        byte[] remoteAddress = httpRequest.getRemoteAddr().getBytes();
+        byte[] sessionId = userSession.getSessionID().getBytes();
+
         String signature = null;
         SecretKey signingKey = userSession.getSessionSecretKey();
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(signingKey);
-            mac.update(remoteAddress.getBytes());
-            mac.update(sessionId.getBytes());
+            mac.update(remoteAddress);
+            mac.update(sessionId);
             signature = Base64.encodeBytes(mac.doFinal());
         } catch (GeneralSecurityException e) {
             LOG.error("Unable to compute signature over session cookie material", e);
         }
 
         LOG.debug("Adding IdP session cookie to HTTP response");
-        Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, remoteAddress + "|" + sessionId + "|" + signature);
+        Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, Base64.encodeBytes(remoteAddress,
+                Base64.DONT_BREAK_LINES)
+                + "|" + Base64.encodeBytes(sessionId, Base64.DONT_BREAK_LINES) + "|" + signature);
 
         String contextPath = httpRequest.getContextPath();
         if (DatatypeHelper.isEmpty(contextPath)) {

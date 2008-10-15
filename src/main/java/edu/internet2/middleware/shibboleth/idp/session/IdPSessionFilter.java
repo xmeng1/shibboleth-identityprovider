@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.session;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
@@ -133,27 +134,32 @@ public class IdPSessionFilter implements Filter {
         // index 1: session ID
         // index 2: Base64(HMAC(index 0 + index 1))
         String[] valueComponents = sessionCookie.getValue().split("\\|");
+        byte[] remoteAddressBytes = Base64.decode(valueComponents[0]);
+        byte[] sessionIdBytes = Base64.decode(valueComponents[1]);
+        byte[] signatureBytes = Base64.decode(valueComponents[2]);
 
         if (consistentAddress) {
-            if (!httpRequest.getRemoteAddr().equals(valueComponents[0])) {
+            String remoteAddress = new String(remoteAddressBytes);
+            if (!httpRequest.getRemoteAddr().equals(remoteAddress)) {
                 log.error("Client sent a cookie from addres {} but the cookie was issued to address {}", httpRequest
-                        .getRemoteAddr(), valueComponents[0]);
+                        .getRemoteAddr(), remoteAddress);
                 return null;
             }
         }
 
-        Session userSession = sessionManager.getSession(valueComponents[1]);
+        String sessionId = new String(sessionIdBytes);
+        Session userSession = sessionManager.getSession(sessionId);
 
         if (userSession != null) {
             SecretKey signingKey = userSession.getSessionSecretKey();
             try {
                 Mac mac = Mac.getInstance("HmacSHA256");
                 mac.init(signingKey);
-                mac.update(valueComponents[0].getBytes());
-                mac.update(valueComponents[1].getBytes());
+                mac.update(remoteAddressBytes);
+                mac.update(sessionIdBytes);
                 byte[] signature = mac.doFinal();
 
-                if (!DatatypeHelper.safeEquals(valueComponents[2], Base64.encodeBytes(signature))) {
+                if (!Arrays.equals(signature, signatureBytes)) {
                     log.error("Session cookie signature did not match, the session cookie has been tampered with");
                     return null;
                 }
