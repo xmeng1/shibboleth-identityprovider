@@ -54,11 +54,22 @@ public abstract class AbstractLoginHandler implements LoginHandler {
     public long getAuthenticationDuration() {
         return authenticationDuration;
     }
+    
+    /**
+     * Sets the length of time, in milliseconds, after which a user should be re-authenticated.
+     * 
+     * @param duration length of time, in milliseconds, after which a user should be re-authenticated 
+     */
+    public void setAuthenticationDuration(long duration) {
+        authenticationDuration = duration;
+    }
 
     /**
      * Sets the length of time, in milliseconds, after which a user should be re-authenticated.
      * 
      * @param duration length of time, in milliseconds, after which a user should be re-authenticated
+     * 
+     * @deprecated use {@link #setAuthenticationDuration(long)}
      */
     public void setAuthenticationDurection(long duration) {
         authenticationDuration = duration;

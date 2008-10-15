@@ -33,4 +33,5 @@ Changes in Release 2.1.0
 [SIDP-228] - Improve error reporting in SAML 2 profile handlers when no encryption key is resolveable for the peer entity ID
 [SIDP-229] - IdP Metadata changes to KeyDescriptor not fully flushed from IdP cache
 [SIDP-230] - sanity check provided credentials
+[SIDP-233] - Typo on operation name - public void setAuthenticationDurection(long duration)
 [SIDP-237] - Re-run of install.sh does not create war again
