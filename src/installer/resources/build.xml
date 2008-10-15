@@ -16,6 +16,10 @@
     <taskdef resource="edu/internet2/middleware/ant/antlib.xml" />
 
     <target name="install" description="Installs the identity provider software.">
+    	
+    	<echo message="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" />
+    	<echo message="Be sure you have read the installation/upgrade instructions on the Shibboleth website before proceeding." />
+    	<echo message="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" />
         
         <input message="Where should the Shibboleth Identity Provider software be installed?"
                addproperty="idp.home.input"
@@ -120,7 +124,7 @@
                 <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
                 <stringFromFile input="${idp.home.path}/credentials/idp.crt" addProperty="idp.cert" />
                     
-                <copy todir="${idp.home.path}/bin" preservelastmodified="true">
+                <copy todir="${idp.home.path}/bin" preservelastmodified="true" overwrite="false">
                     <fileset dir="${tools.dir}/bash" />
                     <fileset dir="${tools.dir}/bat" />
                     <filterset begintoken="$" endtoken="$">
@@ -129,7 +133,7 @@
                     </filterset>
                 </copy>
 
-                <copy todir="${idp.home.path}/conf" preservelastmodified="true">
+                <copy todir="${idp.home.path}/conf" preservelastmodified="true" overwrite="false">
                     <fileset dir="${resources.dir}/conf-tmpl" />
                     <filterset begintoken="$" endtoken="$">
                         <filter token="IDP_HOME" value="${idp.home.path}" />
@@ -164,14 +168,17 @@
         </copy>
 
         <!-- build the war file -->
-        <war warfile="${idp.home.path}/war/${war.name}.war" webxml="${installer.dir}/web.xml">
+        <war warfile="${installer.dir}/${war.name}.war" webxml="${installer.dir}/web.xml">
             <lib dir="${basedir}/lib" />
             <webinf dir="${webapp.dir}/WEB-INF" excludes="web.xml" />
             <fileset dir="${webapp.dir}" excludes="WEB-INF/**" />
         </war>
+    	<copy file="${installer.dir}/${war.name}.war" todir="${idp.home.path}/war" preservelastmodified="true" overwrite="true" />
 
-        <!-- Remove generated web.xml -->
+        <!-- Remove generated files -->
         <delete file="${installer.dir}/web.xml" />
+    	<delete file="${installer.dir}/${war.name}.war" />
+    	
     </target>
 
 </project>
