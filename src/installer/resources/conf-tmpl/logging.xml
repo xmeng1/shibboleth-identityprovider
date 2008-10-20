@@ -4,7 +4,7 @@
     
     <!--
         Loggers define indicate which packages/categories are logged, at which level, and to which appender.
-        Levels: ALL, ERROR, WARN, INFO, DEBUG, TRACE, OFF
+        Levels: OFF, ERROR, WARN, INFO, DEBUG, TRACE, ALL
     -->
     <!-- Logs IdP, but not OpenSAML, messages -->
     <logger name="edu.internet2.middleware.shibboleth">
