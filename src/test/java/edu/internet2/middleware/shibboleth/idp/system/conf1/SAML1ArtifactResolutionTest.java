@@ -54,6 +54,7 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
         String soapMessage = buildRequestMessage(relyingPartyId, artifactEntry.getArtifact());
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml1/SOAP/ArtifactResolution");
         servletRequest.setContent(soapMessage.getBytes());
 
@@ -80,6 +81,7 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
         String soapMessage = buildRequestMessage(relyingPartyId, artifactEntry.getArtifact());
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml1/SOAP/ArtifactResolution");
         servletRequest.setContent(soapMessage.getBytes());
 

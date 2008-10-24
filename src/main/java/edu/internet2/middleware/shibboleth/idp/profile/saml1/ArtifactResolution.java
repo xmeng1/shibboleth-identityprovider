@@ -161,7 +161,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         } catch (MessageDecodingException e) {
             log.error("Error decoding artifact resolve message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error decoding message"));
-            throw new ProfileException("Error decoding artifact resolve message");
+            throw new ProfileException("Error decoding artifact resolve message",e);
         } catch (SecurityException e) {
             log.error("Message did not meet security requirements", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,

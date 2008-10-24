@@ -53,6 +53,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         String soapMessage = getSOAPMessage(query);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml2/SOAP/AttributeQuery");
         servletRequest.setContent(soapMessage.getBytes());
 
@@ -70,8 +71,8 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
 
         String response = servletResponse.getContentAsString();
         assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Success"));
-        assertTrue(response.contains("Name=\"principalName\""));
-        assertTrue(response.contains("testUser"));
+        assertTrue(response.contains(" Name=\"urn:oid:1.3.6.1.4.1.5923.1.1.1.7\""));
+        assertTrue(response.contains("urn:example.org:entitlement:entitlement1"));
     }
     
     /** Tests that the attribute query handler correctly fails out if the profile is not configured. */
@@ -80,6 +81,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
         String soapMessage = getSOAPMessage(query);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml2/SOAP/AttributeQuery");
         servletRequest.setContent(soapMessage.getBytes());
 
@@ -116,6 +118,7 @@ public class SAML2AttributeQueryTestCase extends BaseConf1TestCase {
                 .getBuilder(NameID.DEFAULT_ELEMENT_NAME);
         NameID nameId = nameIdBuilder.buildObject();
         nameId.setValue("testUser");
+        nameId.setFormat(NameID.UNSPECIFIED);
 
         SAMLObjectBuilder<Subject> subjectBuilder = (SAMLObjectBuilder<Subject>) builderFactory
                 .getBuilder(Subject.DEFAULT_ELEMENT_NAME);

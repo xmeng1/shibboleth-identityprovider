@@ -43,7 +43,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.w3c.dom.Element;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 
@@ -58,6 +57,7 @@ public class SAML2ArtifactResolutionTest extends BaseConf1TestCase {
         String soapMessage = buildRequestMessage(relyingPartyId, artifactEntry.getArtifact());
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml2/SOAP/ArtifactResolution");
         servletRequest.setContent(soapMessage.getBytes());
 
@@ -85,6 +85,7 @@ public class SAML2ArtifactResolutionTest extends BaseConf1TestCase {
         String soapMessage = buildRequestMessage(relyingPartyId, artifactEntry.getArtifact());
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml2/SOAP/ArtifactResolution");
         servletRequest.setContent(soapMessage.getBytes());
 

@@ -16,7 +16,9 @@
 
 package edu.internet2.middleware.shibboleth.idp.system.conf1;
 
-import javax.servlet.http.HttpSession;
+import java.security.Principal;
+
+import javax.security.auth.Subject;
 
 import org.joda.time.DateTime;
 import org.opensaml.ws.transport.http.HTTPInTransport;
@@ -30,6 +32,9 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
+import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
+import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 
 /**
  * Unit test for Shibboleth SSO requests.
@@ -51,8 +56,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
         HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
-        HttpSession session = servletRequest.getSession();
-        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) session
+        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) servletRequest
                 .getAttribute(ShibbolethSSOLoginContext.LOGIN_CONTEXT_KEY);
 
         assertNotNull(loginContext);
@@ -74,8 +78,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
         MockHttpServletRequest servletRequest = buildServletRequest();
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
-        HttpSession httpSession = servletRequest.getSession(true);
-        httpSession.setAttribute(ShibbolethSSOLoginContext.LOGIN_CONTEXT_KEY, buildLoginContext());
+        servletRequest.setAttribute(ShibbolethSSOLoginContext.LOGIN_CONTEXT_KEY, buildLoginContext());
 
         ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
                 "shibboleth.HandlerManager");
@@ -97,7 +100,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
     public void testAuthenticationWithoutConfiguredSSO() {
         MockHttpServletRequest servletRequest = buildServletRequest();
         servletRequest.setParameter("providerId", "urn:example.org:BogusSP");
-        
+
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
         ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
@@ -127,11 +130,17 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
     }
 
     protected ShibbolethSSOLoginContext buildLoginContext() {
+        Principal principal = new UsernamePrincipal("test");
+
+        Subject subject = new Subject();
+        subject.getPrincipals().add(principal);
+
+        AuthenticationMethodInformation authnInfo = new AuthenticationMethodInformationImpl(subject, principal,
+                "urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified", new DateTime(), 3600);
+
         ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
-        loginContext.setAuthenticationInstant(new DateTime());
-        loginContext.setAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified");
+        loginContext.setAuthenticationMethodInformation(authnInfo);
         loginContext.setPrincipalAuthenticated(true);
-        loginContext.setPrincipalName("testUser");
         loginContext.setRelyingParty("urn:example.org:sp1");
         loginContext.setSpAssertionConsumerService("https://example.org/mySP");
         loginContext.setSpTarget("https://example.org/mySP");

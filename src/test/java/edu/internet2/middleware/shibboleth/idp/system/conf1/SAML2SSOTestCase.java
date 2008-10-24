@@ -16,7 +16,9 @@
 
 package edu.internet2.middleware.shibboleth.idp.system.conf1;
 
-import javax.servlet.http.HttpSession;
+import java.security.Principal;
+
+import javax.security.auth.Subject;
 
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -38,6 +40,9 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
+import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
+import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 
 /**
  * 
@@ -47,6 +52,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
     /** Tests initial leg of the SSO request where request is decoded and sent to the authentication engine. */
     public void testFirstAuthenticationLeg() throws Exception {
         MockHttpServletRequest servletRequest = buildServletRequest("urn:example.org:sp1");
+        servletRequest.setMethod("POST");
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
         ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
@@ -59,8 +65,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
-        HttpSession session = servletRequest.getSession();
-        Saml2LoginContext loginContext = (Saml2LoginContext) session
+        Saml2LoginContext loginContext = (Saml2LoginContext) servletRequest
                 .getAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY);
 
         assertNotNull(loginContext);
@@ -70,7 +75,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         assertEquals("/AuthnEngine", loginContext.getAuthenticationEngineURL());
         assertEquals("/saml2/POST/SSO", loginContext.getProfileHandlerURL());
         assertEquals("urn:example.org:sp1", loginContext.getRelyingPartyId());
-        assertEquals(1, loginContext.getRequestedAuthenticationMethods().size());
+        assertEquals(0, loginContext.getRequestedAuthenticationMethods().size());
 
         assertEquals("/AuthnEngine", servletResponse.getForwardedUrl());
     }
@@ -80,8 +85,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         MockHttpServletRequest servletRequest = buildServletRequest("urn:example.org:sp1");
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
-        HttpSession httpSession = servletRequest.getSession(true);
-        httpSession.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, buildLoginContext("urn:example.org:sp1"));
+        servletRequest.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, buildLoginContext("urn:example.org:sp1"));
 
         ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
                 "shibboleth.HandlerManager");
@@ -132,12 +136,19 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
     }
 
     protected Saml2LoginContext buildLoginContext(String relyingPartyId) throws Exception{
+        Principal principal = new UsernamePrincipal("test");
+
+        Subject subject = new Subject();
+        subject.getPrincipals().add(principal);
+
+        AuthenticationMethodInformation authnInfo = new AuthenticationMethodInformationImpl(subject, principal,
+                "urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified", new DateTime(), 3600);
+        
         AuthnRequest request = buildAuthnRequest(relyingPartyId);
+        
         Saml2LoginContext loginContext = new Saml2LoginContext(relyingPartyId, null, request);
-        loginContext.setAuthenticationInstant(new DateTime());
-        loginContext.setAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified");
+        loginContext.setAuthenticationMethodInformation(authnInfo);
         loginContext.setPrincipalAuthenticated(true);
-        loginContext.setPrincipalName("testUser");
         loginContext.setRelyingParty(relyingPartyId);
 
         return loginContext;

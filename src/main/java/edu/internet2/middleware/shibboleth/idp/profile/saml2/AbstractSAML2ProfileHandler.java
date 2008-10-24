@@ -399,10 +399,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         
         if (requestContext != null && requestContext.getInboundSAMLMessage() != null) {
             response.setInResponseTo(requestContext.getInboundSAMLMessageId());
+            response.setIssuer(buildEntityIssuer(requestContext));
         }
         
         response.setVersion(SAMLVersion.VERSION_20);
-        response.setIssuer(buildEntityIssuer(requestContext));
     }
 
     /**

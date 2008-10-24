@@ -1,87 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<AttributeFilterPolicyGroup id="ShibbolethFilterPolicy" 
-                            xmlns="urn:mace:shibboleth:2.0:afp"
-                            xmlns:basic="urn:mace:shibboleth:2.0:afp:mf:basic"
+<AttributeFilterPolicyGroup id="ShibbolethFilterPolicy" xmlns="urn:mace:shibboleth:2.0:afp"
+                            xmlns:basic="urn:mace:shibboleth:2.0:afp:mf:basic" xmlns:saml="urn:mace:shibboleth:2.0:afp:mf:saml"
                             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                             xsi:schemaLocation="urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd
-                                                urn:mace:shibboleth:2.0:afp:mf:basic classpath:/schema/shibboleth-2.0-afp-mf-basic.xsd ">
+                                                urn:mace:shibboleth:2.0:afp:mf:basic classpath:/schema/shibboleth-2.0-afp-mf-basic.xsd
+                                                urn:mace:shibboleth:2.0:afp:mf:saml classpath:/schema/shibboleth-2.0-afp-mf-saml.xsd">
 
-    <!-- 
-        Release the principal, which is used as our SAML 1 & 2 name identifiers to anyone.
-    -->
-    <AttributeFilterPolicy id="releasePrincipalToAnyone">
+    <AttributeFilterPolicy id="releaseToAnyone">
         <PolicyRequirementRule xsi:type="basic:ANY" />
         
         <AttributeRule attributeID="principalName">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
         
-    </AttributeFilterPolicy>
-    
-
-    <!-- 
-          Releases to anyone:
-            * any value of uid
-            * only the member value of affiliation
-    -->
-    <!--
-    <AttributeFilterPolicy id="releaseToAnyone">
-        <PolicyRequirementRule xsi:type="basic:ANY" />
-        
-        <AttributeRule attributeID="uid">
-            <PermitValueRule xsi:type="basic:ANY" />
-        </AttributeRule>
-        
-        <AttributeRule attributeID="affiliation">
-            <PermitValueRule value="member"
-                             xsi:type="basic:AttributeValueString"/>
-        </AttributeRule>
-        
-    </AttributeFilterPolicy>
-    -->
-    
-    
-    <!-- 
-          Releases to only SP 1:
-            * any value of uid
-            * scoped primary affiliation if the scope is the IdP 1 and the value is staff, faculty, or student
-            * any value of affiliation
-            * any value of full name
-    -->
-    <!--
-    <AttributeFilterPolicy id="releaseToSP1">
-        <PolicyRequirementRule value="urn:example.org:myFederation:sp1" 
-                               xsi:type="basic:AttributeRequesterString" />
-        
-        <AttributeRule attributeID="uid">
-            <PermitValueRule xsi:type="basic:ANY" />
-        </AttributeRule>
-        
-        <AttributeRule attributeID="scopedPrimaryAffiliation">
-            <PermitValueRule xsi:type="basic:AND">
-                <basic:Rule value="urn:example.org:myFederation:idp1" 
-                            xsi:type="AttributeScopeString" />
-                <basic:Rule xsi:type="basic:OR">
-                    <basic:Rule value="staff"
-                                xsi:type="AttributeValueString" />
-                    <basic:Rule value="faculty"
-                                xsi:type="AttributeValueString" />
-                    <basic:Rule value="student"
-                                xsi:type="AttributeValueString" />
-                </basic:Rule>
-            </PermitValueRule>
-        </AttributeRule>
-        
-        <AttributeRule attributeID="affiliation">
-            <PermitValueRule xsi:type="basic:ANY" />
-        </AttributeRule>
-        
-        <AttributeRule attributeID="fullName">
+        <AttributeRule attributeID="eduPersonEntitlement">
             <PermitValueRule xsi:type="basic:ANY" />
         </AttributeRule>
         
     </AttributeFilterPolicy>
-    -->
     
 </AttributeFilterPolicyGroup>

@@ -52,6 +52,7 @@ public class SAML1AttributeQueryTestCase extends BaseConf1TestCase {
         String soapMessage = getSOAPMessage(query);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml1/SOAP/AttributeQuery");
         servletRequest.setContent(soapMessage.getBytes());
 
@@ -69,8 +70,8 @@ public class SAML1AttributeQueryTestCase extends BaseConf1TestCase {
 
         String response = servletResponse.getContentAsString();
         assertTrue(response.contains("samlp:Success"));
-        assertTrue(response.contains("AttributeName=\"principalName\""));
-        assertTrue(response.contains("testUser"));
+        assertTrue(response.contains("AttributeName=\"urn:mace:dir:attribute-def:eduPersonEntitlement\""));
+        assertTrue(response.contains("urn:example.org:entitlement:entitlement1"));
     }
     
     /** Tests that the attribute query handler correctly fails out if the profile is not configured. */
@@ -79,6 +80,7 @@ public class SAML1AttributeQueryTestCase extends BaseConf1TestCase {
         String soapMessage = getSOAPMessage(query);
 
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml1/SOAP/AttributeQuery");
         servletRequest.setContent(soapMessage.getBytes());
 
@@ -112,6 +114,7 @@ public class SAML1AttributeQueryTestCase extends BaseConf1TestCase {
                 .getBuilder(NameIdentifier.DEFAULT_ELEMENT_NAME);
         NameIdentifier nameId = nameIdBuilder.buildObject();
         nameId.setNameIdentifier("testUser");
+        nameId.setFormat(NameIdentifier.UNSPECIFIED);
 
         SAMLObjectBuilder<Subject> subjectBuilder = (SAMLObjectBuilder<Subject>) builderFactory
                 .getBuilder(Subject.DEFAULT_ELEMENT_NAME);

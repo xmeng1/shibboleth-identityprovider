@@ -170,7 +170,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         } catch (MessageDecodingException e) {
             log.error("Error decoding attribute query message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error decoding message"));
-            throw new ProfileException("Error decoding attribute query message");
+            throw new ProfileException("Error decoding attribute query message", e);
         } catch (SecurityException e) {
             log.error("Message did not meet security requirements", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,

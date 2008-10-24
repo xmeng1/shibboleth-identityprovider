@@ -505,22 +505,24 @@ public abstract class AbstractSAMLProfileHandler extends
 
             AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
                     .getProfileConfiguration();
-            if (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
-                    || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional && !encoder
-                            .providesMessageIntegrity(requestContext))) {
-                Credential signingCredential = null;
-                if (profileConfig.getSigningCredential() != null) {
-                    signingCredential = profileConfig.getSigningCredential();
-                } else if (requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential() != null) {
-                    signingCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
-                }
+            if (profileConfig != null) {
+                if (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
+                        || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional && !encoder
+                                .providesMessageIntegrity(requestContext))) {
+                    Credential signingCredential = null;
+                    if (profileConfig.getSigningCredential() != null) {
+                        signingCredential = profileConfig.getSigningCredential();
+                    } else if (requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential() != null) {
+                        signingCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
+                    }
 
-                if (signingCredential == null) {
-                    throw new ProfileException(
-                            "Signing of responses is required but no signing credential is available");
-                }
+                    if (signingCredential == null) {
+                        throw new ProfileException(
+                                "Signing of responses is required but no signing credential is available");
+                    }
 
-                requestContext.setOutboundSAMLMessageSigningCredential(signingCredential);
+                    requestContext.setOutboundSAMLMessageSigningCredential(signingCredential);
+                }
             }
 
             log.debug("Encoding response to SAML request {} from relying party {}", requestContext
@@ -533,7 +535,7 @@ public abstract class AbstractSAMLProfileHandler extends
                     + requestContext.getInboundMessageIssuer(), e);
         }
     }
-    
+
     /**
      * Writes an audit log entry indicating the successful response to the attribute request.
      * 
