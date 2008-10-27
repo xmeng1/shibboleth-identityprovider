@@ -108,6 +108,7 @@ public class PreviousSessionLoginHandler extends AbstractLoginHandler {
             log.error("No existing IdP session available.");
             httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY, "No existing IdP session available");
         }else{
+            log.error("Using existing IdP session for {}", idpSession.getPrincipalName());
             httpRequest.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, idpSession.getPrincipalName());
         }
 
