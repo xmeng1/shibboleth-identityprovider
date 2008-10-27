@@ -28,7 +28,7 @@
     
     <filter-mapping>
         <filter-name>IdPSessionFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>/profile/*</url-pattern>
     </filter-mapping>
 
     <!-- Profile Request Dispatcher -->
