@@ -157,9 +157,11 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      * @return true of authentication succeeds, false if not
      */
     protected boolean authenticateUser(HttpServletRequest request) {
+        String username = DatatypeHelper.safeTrimOrNullString(request.getParameter(usernameAttribute));
+        String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
+
         try {
-            String username = DatatypeHelper.safeTrimOrNullString(request.getParameter(usernameAttribute));
-            String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
+            log.debug("Attempting to authenticate user {}", username);
 
             SimpleCallbackHandler cbh = new SimpleCallbackHandler(username, password);
 
@@ -188,7 +190,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             return true;
         } catch (LoginException e) {
-            log.debug("User authentication failed", e);
+            log.debug("User authentication for {} failed", new Object[] {username}, e);
             return false;
         }
     }
