@@ -32,6 +32,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.joda.time.DateTime;
+import org.opensaml.ws.transport.http.HTTPTransportUtils;
 import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
@@ -133,7 +134,7 @@ public class IdPSessionFilter implements Filter {
         // index 0: remote address
         // index 1: session ID
         // index 2: Base64(HMAC(index 0 + index 1))
-        String[] valueComponents = sessionCookie.getValue().split("\\|");
+        String[] valueComponents = HTTPTransportUtils.urlDecode(sessionCookie.getValue()).split("\\|");
         byte[] remoteAddressBytes = Base64.decode(valueComponents[0]);
         byte[] sessionIdBytes = Base64.decode(valueComponents[1]);
         byte[] signatureBytes = Base64.decode(valueComponents[2]);

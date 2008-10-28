@@ -45,6 +45,7 @@ import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
+import org.opensaml.ws.transport.http.HTTPTransportUtils;
 import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
@@ -729,9 +730,11 @@ public class AuthenticationEngine extends HttpServlet {
         }
 
         LOG.debug("Adding IdP session cookie to HTTP response");
-        Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, Base64.encodeBytes(remoteAddress,
-                Base64.DONT_BREAK_LINES)
-                + "|" + Base64.encodeBytes(sessionId, Base64.DONT_BREAK_LINES) + "|" + signature);
+        StringBuilder cookieValue = new StringBuilder();
+        cookieValue.append(Base64.encodeBytes(remoteAddress, Base64.DONT_BREAK_LINES)).append("|");
+        cookieValue.append(Base64.encodeBytes(sessionId, Base64.DONT_BREAK_LINES)).append("|");
+        cookieValue.append(signature);
+        Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, HTTPTransportUtils.urlEncode(cookieValue.toString()));
 
         String contextPath = httpRequest.getContextPath();
         if (DatatypeHelper.isEmpty(contextPath)) {
