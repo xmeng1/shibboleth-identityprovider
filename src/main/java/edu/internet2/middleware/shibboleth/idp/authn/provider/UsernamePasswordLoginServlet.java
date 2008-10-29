@@ -28,7 +28,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.auth.login.LoginException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -189,7 +188,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             request.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
 
             return true;
-        } catch (LoginException e) {
+        } catch (Throwable e) {
             log.debug("User authentication for {} failed", new Object[] {username}, e);
             return false;
         }
