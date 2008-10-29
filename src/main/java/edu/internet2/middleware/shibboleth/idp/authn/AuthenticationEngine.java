@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -28,8 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
@@ -43,7 +42,6 @@ import org.joda.time.DateTime;
 import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml2.core.AuthnContext;
-import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.ws.transport.http.HTTPTransportUtils;
 import org.opensaml.xml.util.Base64;
@@ -547,6 +545,8 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected void validateSuccessfulAuthentication(LoginContext loginContext, HttpServletRequest httpRequest)
             throws AuthenticationException {
+        LOG.debug("Validating authentication was performed successfully");
+        
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
         if (errorMessage != null) {
@@ -636,8 +636,8 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected void updateUserSession(LoginContext loginContext, Subject authenticationSubject,
             String authenticationMethod, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-
         Principal authenticationPrincipal = authenticationSubject.getPrincipals().iterator().next();
+        LOG.debug("Updating session information for principal {}", authenticationPrincipal.getName());
 
         Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         if (idpSession == null) {
@@ -718,13 +718,12 @@ public class AuthenticationEngine extends HttpServlet {
         byte[] sessionId = userSession.getSessionID().getBytes();
 
         String signature = null;
-        SecretKey signingKey = userSession.getSessionSecretKey();
         try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(signingKey);
-            mac.update(remoteAddress);
-            mac.update(sessionId);
-            signature = Base64.encodeBytes(mac.doFinal());
+            MessageDigest digester = MessageDigest.getInstance("SHA");
+            digester.update(userSession.getSessionSecret());
+            digester.update(remoteAddress);
+            digester.update(sessionId);
+            signature = Base64.encodeBytes(digester.digest());
         } catch (GeneralSecurityException e) {
             LOG.error("Unable to compute signature over session cookie material", e);
         }
@@ -747,50 +746,5 @@ public class AuthenticationEngine extends HttpServlet {
         sessionCookie.setMaxAge(-1);
 
         httpResponse.addCookie(sessionCookie);
-    }
-
-    /** Storage service entry for login contexts. */
-    public class LoginContextEntry implements ExpiringObject {
-
-        /** Stored login context. */
-        private LoginContext loginCtx;
-
-        /** Time the entry expires. */
-        private DateTime expirationTime;
-
-        /**
-         * Constructor.
-         * 
-         * @param ctx context to store
-         * @param lifetime lifetime of the entry
-         */
-        public LoginContextEntry(LoginContext ctx, long lifetime) {
-            loginCtx = ctx;
-            expirationTime = new DateTime().plus(lifetime);
-        }
-
-        /**
-         * Gets the login context.
-         * 
-         * @return login context
-         */
-        public LoginContext getLoginContext() {
-            return loginCtx;
-        }
-
-        /** {@inheritDoc} */
-        public DateTime getExpirationTime() {
-            return expirationTime;
-        }
-
-        /** {@inheritDoc} */
-        public boolean isExpired() {
-            return expirationTime.isBeforeNow();
-        }
-
-        /** {@inheritDoc} */
-        public void onExpire() {
-
-        }
     }
 }

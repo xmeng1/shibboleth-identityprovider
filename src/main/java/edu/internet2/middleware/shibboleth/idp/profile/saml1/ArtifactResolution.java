@@ -24,7 +24,7 @@ import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.common.binding.artifact.SAMLArtifactMapEntry;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.binding.SAML1ArtifactMessageContext;

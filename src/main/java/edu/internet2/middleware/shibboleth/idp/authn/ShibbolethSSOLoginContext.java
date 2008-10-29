@@ -38,7 +38,7 @@ public class ShibbolethSSOLoginContext extends LoginContext {
      * 
      * @return service provider assertion consumer service URL
      */
-    public String getSpAssertionConsumerService() {
+    public synchronized String getSpAssertionConsumerService() {
         return spAssertionConsumerService;
     }
 
@@ -47,7 +47,7 @@ public class ShibbolethSSOLoginContext extends LoginContext {
      * 
      * @param url service provider assertion consumer service URL
      */
-    public void setSpAssertionConsumerService(String url) {
+    public synchronized void setSpAssertionConsumerService(String url) {
         spAssertionConsumerService = url;
     }
 
@@ -56,7 +56,7 @@ public class ShibbolethSSOLoginContext extends LoginContext {
      * 
      * @return service provider target URL
      */
-    public String getSpTarget() {
+    public synchronized String getSpTarget() {
         return spTarget;
     }
 
@@ -65,7 +65,7 @@ public class ShibbolethSSOLoginContext extends LoginContext {
      * 
      * @param url service provider target URL
      */
-    public void setSpTarget(String url) {
+    public synchronized void setSpTarget(String url) {
         spTarget = url;
     }
 }

@@ -18,10 +18,9 @@ package edu.internet2.middleware.shibboleth.idp.session;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.util.Arrays;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -152,15 +151,12 @@ public class IdPSessionFilter implements Filter {
         Session userSession = sessionManager.getSession(sessionId);
 
         if (userSession != null) {
-            SecretKey signingKey = userSession.getSessionSecretKey();
             try {
-                Mac mac = Mac.getInstance("HmacSHA256");
-                mac.init(signingKey);
-                mac.update(remoteAddressBytes);
-                mac.update(sessionIdBytes);
-                byte[] signature = mac.doFinal();
-
-                if (!Arrays.equals(signature, signatureBytes)) {
+                MessageDigest digester = MessageDigest.getInstance("SHA");
+                digester.update(userSession.getSessionSecret());
+                digester.update(remoteAddressBytes);
+                digester.update(sessionIdBytes);
+                if (!Arrays.equals(digester.digest(), signatureBytes)) {
                     log.error("Session cookie signature did not match, the session cookie has been tampered with");
                     return null;
                 }

@@ -16,6 +16,7 @@
 
 package edu.internet2.middleware.shibboleth.idp.session;
 
+import java.io.Serializable;
 import java.security.Principal;
 
 import javax.security.auth.Subject;
@@ -23,7 +24,7 @@ import javax.security.auth.Subject;
 import org.joda.time.DateTime;
 
 /** Information about an authentication method employed by a user. */
-public interface AuthenticationMethodInformation {
+public interface AuthenticationMethodInformation extends Serializable {
 
     /**
      * Gets the Subject created by this authentication method.

@@ -94,7 +94,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      * 
      * @throws UnmarshallingException thrown if the serialized form on the authentication request can be unmarshalled
      */
-    public AuthnRequest getAuthenticationRequest() throws UnmarshallingException {
+    public synchronized AuthnRequest getAuthenticationRequest() throws UnmarshallingException {
         if (authnRequest == null) {
             authnRequest = deserializeRequest(serialAuthnRequest);
         }
@@ -103,11 +103,11 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
     }
     
     /**
-     * Gets the relay state from the orginating authentication request.
+     * Gets the relay state from the originating authentication request.
      * 
-     * @return relay state from the orginating authentication request
+     * @return relay state from the originating authentication request
      */
-    public String getRelayState(){
+    public synchronized String getRelayState(){
         return relayState;
     }
 
@@ -116,7 +116,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      * 
      * @return requested authentication context information or null
      */
-    public RequestedAuthnContext getRequestedAuthenticationContext() {
+    public synchronized RequestedAuthnContext getRequestedAuthenticationContext() {
         try {
             AuthnRequest request = getAuthenticationRequest();
             return request.getRequestedAuthnContext();

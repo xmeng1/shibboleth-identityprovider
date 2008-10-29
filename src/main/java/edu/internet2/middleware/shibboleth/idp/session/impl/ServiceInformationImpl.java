@@ -17,18 +17,22 @@
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
 import org.joda.time.DateTime;
+import org.joda.time.chrono.ISOChronology;
 
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 
 /** Information about a service a user has logged in to. */
 public class ServiceInformationImpl implements ServiceInformation {
+    
+    /** Serial version UID. */
+    private static final long serialVersionUID = 1185342879825302743L;
 
     /** Entity ID of the service. */
     private String entityID;
 
     /** Instant the user was authenticated to the service. */
-    private DateTime authenticationInstant;
+    private long authenticationInstant;
 
     /** Authentication method used to authenticate the user to the service. */
     private AuthenticationMethodInformation methodInfo;
@@ -42,32 +46,32 @@ public class ServiceInformationImpl implements ServiceInformation {
      */
     public ServiceInformationImpl(String id, DateTime loginInstant, AuthenticationMethodInformation method) {
         entityID = id;
-        authenticationInstant = loginInstant;
+        authenticationInstant = loginInstant.toDateTime(ISOChronology.getInstanceUTC()).getMillis();
         methodInfo = method;
     }
 
     /** {@inheritDoc} */
-    public String getEntityID() {
+    public synchronized String getEntityID() {
         return entityID;
     }
 
     /** {@inheritDoc} */
-    public DateTime getLoginInstant() {
-        return authenticationInstant;
+    public synchronized DateTime getLoginInstant() {
+        return new DateTime(authenticationInstant, ISOChronology.getInstanceUTC());
     }
 
     /** {@inheritDoc} */
-    public AuthenticationMethodInformation getAuthenticationMethod() {
+    public synchronized AuthenticationMethodInformation getAuthenticationMethod() {
         return methodInfo;
     }
 
     /** {@inheritDoc} */
-    public int hashCode() {
+    public synchronized int hashCode() {
         return entityID.hashCode();
     }
 
     /** {@inheritDoc} */
-    public boolean equals(Object obj) {
+    public synchronized boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }

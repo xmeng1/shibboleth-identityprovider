@@ -43,9 +43,7 @@ import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInfor
  * 
  * The {@link AuthenticationEngine} should set the {@link LoginContext#setAuthenticationAttempted()},
  * {@link LoginContext#setPrincipalAuthenticated(boolean)},
- * {@link LoginContext#setAuthenticationFailure(AuthenticationException)},
- * 
- * appropriately.
+ * {@link LoginContext#setAuthenticationFailure(AuthenticationException)}, appropriately.
  */
 public class LoginContext implements Serializable {
 
@@ -117,7 +115,7 @@ public class LoginContext implements Serializable {
      * 
      * @return authentication method that was used when attempting to authenticate the user
      */
-    public String getAttemptedAuthnMethod() {
+    public synchronized String getAttemptedAuthnMethod() {
         return attemptedAuthnMethod;
     }
 
@@ -126,7 +124,7 @@ public class LoginContext implements Serializable {
      * 
      * @return if authentication has been attempted for this user
      */
-    public boolean getAuthenticationAttempted() {
+    public synchronized boolean getAuthenticationAttempted() {
         return authnAttempted;
     }
 
@@ -135,7 +133,7 @@ public class LoginContext implements Serializable {
      * 
      * @return The duration of authentication, or zero if none was set.
      */
-    public long getAuthenticationDuration() {
+    public synchronized long getAuthenticationDuration() {
         return authenticationMethodInformation.getAuthenticationDuration();
     }
 
@@ -144,7 +142,7 @@ public class LoginContext implements Serializable {
      * 
      * @return the URL of the authentication engine
      */
-    public String getAuthenticationEngineURL() {
+    public synchronized String getAuthenticationEngineURL() {
         return authnEngineURL;
     }
 
@@ -153,7 +151,7 @@ public class LoginContext implements Serializable {
      * 
      * @return error that occurred during authentication
      */
-    public AuthenticationException getAuthenticationFailure() {
+    public synchronized AuthenticationException getAuthenticationFailure() {
         return authnException;
     }
 
@@ -162,7 +160,7 @@ public class LoginContext implements Serializable {
      * 
      * @return The instant of authentication, or <code>null</code> if none was set.
      */
-    public DateTime getAuthenticationInstant() {
+    public synchronized DateTime getAuthenticationInstant() {
         return authenticationMethodInformation.getAuthenticationInstant();
     }
 
@@ -171,7 +169,7 @@ public class LoginContext implements Serializable {
      * 
      * @return The method used to authenticate the user.
      */
-    public String getAuthenticationMethod() {
+    public synchronized String getAuthenticationMethod() {
         return authenticationMethodInformation.getAuthenticationMethod();
     }
 
@@ -180,7 +178,7 @@ public class LoginContext implements Serializable {
      * 
      * @return information about the authentication event.
      */
-    public AuthenticationMethodInformation getAuthenticationMethodInformation() {
+    public synchronized AuthenticationMethodInformation getAuthenticationMethodInformation() {
         return authenticationMethodInformation;
     }
 
@@ -189,7 +187,7 @@ public class LoginContext implements Serializable {
      * 
      * @return the ID of the user, or <code>null</code> if authentication failed.
      */
-    public String getPrincipalName() {
+    public synchronized String getPrincipalName() {
         return authenticationMethodInformation.getAuthenticationPrincipal().getName();
     }
 
@@ -198,7 +196,7 @@ public class LoginContext implements Serializable {
      * 
      * @return the URL of the profile handler that is invoking the Authentication Manager.
      */
-    public String getProfileHandlerURL() {
+    public synchronized String getProfileHandlerURL() {
         return profileHandlerURL;
     }
 
@@ -209,7 +207,7 @@ public class LoginContext implements Serializable {
      * 
      * @return The object, or <code>null</code> is no object exists for the key.
      */
-    public Object getProperty(String key) {
+    public synchronized Object getProperty(String key) {
         return propsMap.get(key);
     }
 
@@ -218,7 +216,7 @@ public class LoginContext implements Serializable {
      * 
      * @return entity ID of the relying party
      */
-    public String getRelyingPartyId() {
+    public synchronized String getRelyingPartyId() {
         return relyingPartyId;
     }
 
@@ -228,7 +226,7 @@ public class LoginContext implements Serializable {
      * 
      * @return an list of authentication method identifiers
      */
-    public List<String> getRequestedAuthenticationMethods() {
+    public synchronized List<String> getRequestedAuthenticationMethods() {
         return requestAuthenticationMethods;
     }
 
@@ -237,7 +235,7 @@ public class LoginContext implements Serializable {
      * 
      * @return the Session id
      */
-    public String getSessionID() {
+    public synchronized String getSessionID() {
         return sessionID;
     }
 
@@ -246,7 +244,7 @@ public class LoginContext implements Serializable {
      * 
      * @return <code>true</code> if the authentication manager must re-authenticate the user.
      */
-    public boolean isForceAuthRequired() {
+    public synchronized boolean isForceAuthRequired() {
         return forceAuth;
     }
 
@@ -255,7 +253,7 @@ public class LoginContext implements Serializable {
      * 
      * @return <code>true</code> if the authentication manager must not interact with the users UI.
      */
-    public boolean isPassiveAuthRequired() {
+    public synchronized boolean isPassiveAuthRequired() {
         return passiveAuth;
     }
 
@@ -264,7 +262,7 @@ public class LoginContext implements Serializable {
      * 
      * @return <code>true</code> is the user was successfully authenticated.
      */
-    public boolean isPrincipalAuthenticated() {
+    public synchronized boolean isPrincipalAuthenticated() {
         return principalAuthenticated;
     }
 
@@ -273,7 +271,7 @@ public class LoginContext implements Serializable {
      * 
      * @param method authentication method that was used when attempting to authenticate the user
      */
-    public void setAttemptedAuthnMethod(String method) {
+    public synchronized void setAttemptedAuthnMethod(String method) {
         attemptedAuthnMethod = method;
     }
 
@@ -282,7 +280,7 @@ public class LoginContext implements Serializable {
      * 
      * This method should be called by an {@link LoginHandler} while processing a request.
      */
-    public void setAuthenticationAttempted() {
+    public synchronized void setAuthenticationAttempted() {
         authnAttempted = true;
     }
 
@@ -293,7 +291,7 @@ public class LoginContext implements Serializable {
      * 
      * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
      */
-    public void setAuthenticationDuration(long duration) {
+    public synchronized void setAuthenticationDuration(long duration) {
     }
 
     /**
@@ -301,7 +299,7 @@ public class LoginContext implements Serializable {
      * 
      * @param url the URL of the authentication engine
      */
-    public void setAuthenticationEngineURL(String url) {
+    public synchronized void setAuthenticationEngineURL(String url) {
         authnEngineURL = url;
     }
 
@@ -310,7 +308,7 @@ public class LoginContext implements Serializable {
      * 
      * @param error error that occurred during authentication
      */
-    public void setAuthenticationFailure(AuthenticationException error) {
+    public synchronized void setAuthenticationFailure(AuthenticationException error) {
         authnException = error;
     }
 
@@ -321,7 +319,7 @@ public class LoginContext implements Serializable {
      * 
      * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
      */
-    public void setAuthenticationInstant(final DateTime instant) {
+    public synchronized void setAuthenticationInstant(final DateTime instant) {
     }
 
     /**
@@ -331,7 +329,7 @@ public class LoginContext implements Serializable {
      * 
      * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
      */
-    public void setAuthenticationMethod(String method) {
+    public synchronized void setAuthenticationMethod(String method) {
     }
 
     /**
@@ -339,7 +337,7 @@ public class LoginContext implements Serializable {
      * 
      * @param info information about the authentication event
      */
-    public void setAuthenticationMethodInformation(AuthenticationMethodInformation info) {
+    public synchronized void setAuthenticationMethodInformation(AuthenticationMethodInformation info) {
         authenticationMethodInformation = info;
     }
 
@@ -348,7 +346,7 @@ public class LoginContext implements Serializable {
      * 
      * @param force if the authentication manager must re-authenticate the user.
      */
-    public void setForceAuthRequired(boolean force) {
+    public synchronized void setForceAuthRequired(boolean force) {
         forceAuth = force;
     }
 
@@ -357,7 +355,7 @@ public class LoginContext implements Serializable {
      * 
      * @param passive if the authentication manager must not interact with the users UI.
      */
-    public void setPassiveAuthRequired(boolean passive) {
+    public synchronized void setPassiveAuthRequired(boolean passive) {
         passiveAuth = passive;
     }
 
@@ -366,7 +364,7 @@ public class LoginContext implements Serializable {
      * 
      * @param authnOK if authentication succeeded;
      */
-    public void setPrincipalAuthenticated(boolean authnOK) {
+    public synchronized void setPrincipalAuthenticated(boolean authnOK) {
         this.principalAuthenticated = authnOK;
     }
 
@@ -377,7 +375,7 @@ public class LoginContext implements Serializable {
      * 
      * @deprecated this information is contained in the {@link AuthenticationMethodInformation}
      */
-    public void setPrincipalName(String id) {
+    public synchronized void setPrincipalName(String id) {
 
     }
 
@@ -386,7 +384,7 @@ public class LoginContext implements Serializable {
      * 
      * @param url The URL of the profile handler that invoked the AuthenticationManager/
      */
-    public void setProfileHandlerURL(String url) {
+    public synchronized void setProfileHandlerURL(String url) {
         profileHandlerURL = url;
     }
 
@@ -398,7 +396,7 @@ public class LoginContext implements Serializable {
      * @param key The key to set.
      * @param obj The object to associate with key.
      */
-    public void setProperty(String key, final Serializable obj) {
+    public synchronized void setProperty(String key, final Serializable obj) {
         propsMap.put(key, obj);
     }
 
@@ -407,7 +405,7 @@ public class LoginContext implements Serializable {
      * 
      * @param id entity ID of the relying party
      */
-    public void setRelyingParty(String id) {
+    public synchronized void setRelyingParty(String id) {
         relyingPartyId = id;
     }
 
@@ -416,7 +414,7 @@ public class LoginContext implements Serializable {
      * 
      * @param id the Session ID
      */
-    public void setSessionID(String id) {
+    public synchronized void setSessionID(String id) {
         sessionID = id;
     }
 }

@@ -21,13 +21,15 @@ import java.security.Principal;
 import javax.security.auth.Subject;
 
 import org.joda.time.DateTime;
+import org.joda.time.chrono.ISOChronology;
 
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 
-/**
- * Information about an authentication method employed by a user.
- */
+/** Information about an authentication method employed by a user. */
 public class AuthenticationMethodInformationImpl implements AuthenticationMethodInformation {
+
+    /** Serial version UID. */
+    private static final long serialVersionUID = -2108905664641155003L;
 
     /** Subject created by this authentication mechanism. */
     private Subject authenticationSubject;
@@ -39,13 +41,13 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
     private String authenticationMethod;
 
     /** The timestamp at which authentication occurred. */
-    private DateTime authenticationInstant;
+    private long authenticationInstant;
 
     /** The lifetime of the authentication method. */
     private long authenticationDuration;
 
     /** Time when this method expires. */
-    private DateTime expirationInstant;
+    private long expirationInstant;
 
     /**
      * Default constructor.  This constructor does NOT add the given principal to the given subject.
@@ -66,48 +68,48 @@ public class AuthenticationMethodInformationImpl implements AuthenticationMethod
         authenticationSubject = subject;
         authenticationPrincipal = principal;
         authenticationMethod = method;
-        authenticationInstant = instant;
+        authenticationInstant = instant.toDateTime(ISOChronology.getInstanceUTC()).getMillis();
         authenticationDuration = duration;
-        expirationInstant = instant.plus(duration);
+        expirationInstant = authenticationInstant + duration;
     }
 
     /** {@inheritDoc} */
-    public Subject getAuthenticationSubject() {
+    public synchronized Subject getAuthenticationSubject() {
         return authenticationSubject;
     }
 
     /** {@inheritDoc} */
-    public Principal getAuthenticationPrincipal() {
+    public synchronized Principal getAuthenticationPrincipal() {
         return authenticationPrincipal;
     }
 
     /** {@inheritDoc} */
-    public String getAuthenticationMethod() {
+    public synchronized String getAuthenticationMethod() {
         return authenticationMethod;
     }
 
     /** {@inheritDoc} */
-    public DateTime getAuthenticationInstant() {
-        return authenticationInstant;
+    public synchronized DateTime getAuthenticationInstant() {
+        return new DateTime(authenticationInstant, ISOChronology.getInstanceUTC());
     }
 
     /** {@inheritDoc} */
-    public long getAuthenticationDuration() {
+    public synchronized long getAuthenticationDuration() {
         return authenticationDuration;
     }
 
     /** {@inheritDoc} */
-    public boolean isExpired() {
-        return expirationInstant.isBeforeNow();
+    public synchronized boolean isExpired() {
+        return new DateTime(expirationInstant, ISOChronology.getInstanceUTC()).isBeforeNow();
     }
 
     /** {@inheritDoc} */
-    public int hashCode() {
+    public synchronized int hashCode() {
         return authenticationMethod.hashCode();
     }
 
     /** {@inheritDoc} */
-    public boolean equals(Object obj) {
+    public synchronized boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }

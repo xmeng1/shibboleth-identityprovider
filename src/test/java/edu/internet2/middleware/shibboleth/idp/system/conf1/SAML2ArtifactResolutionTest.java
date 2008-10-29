@@ -23,7 +23,7 @@ import java.security.SecureRandom;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.artifact.SAMLArtifactMap;
-import org.opensaml.common.binding.artifact.SAMLArtifactMap.SAMLArtifactMapEntry;
+import org.opensaml.common.binding.artifact.SAMLArtifactMapEntry;
 import org.opensaml.saml2.binding.artifact.SAML2ArtifactType0004;
 import org.opensaml.saml2.core.Artifact;
 import org.opensaml.saml2.core.ArtifactResolve;

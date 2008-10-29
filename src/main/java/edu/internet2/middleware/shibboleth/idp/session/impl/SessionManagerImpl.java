@@ -16,16 +16,9 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.List;
-import java.util.Vector;
-
-import javax.crypto.KeyGenerator;
 
 import org.apache.commons.ssl.util.Hex;
-import org.joda.time.DateTime;
-import org.opensaml.util.storage.ExpiringObject;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
@@ -52,9 +45,6 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     /** Spring context used to publish login and logout events. */
     private ApplicationContext appCtx;
 
-    /** Generator used to create secret keys associated with the session. */
-    private KeyGenerator secretKeyGen;
-
     /** Number of random bits within a session ID. */
     private final int sessionIDSize = 32;
 
@@ -80,12 +70,6 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         sessionStore = storageService;
         partition = "session";
         sessionLifetime = lifetime;
-
-        try {
-            secretKeyGen = KeyGenerator.getInstance("AES");
-        } catch (NoSuchAlgorithmException e) {
-            log.error("AES key generation is not supported", e);
-        }
     }
 
     /**
@@ -112,8 +96,11 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         byte[] sid = new byte[sessionIDSize];
         prng.nextBytes(sid);
         String sessionID = Hex.encode(sid);
+        
+        byte[] sessionSecret = new byte[16];
+        prng.nextBytes(sessionSecret);
 
-        Session session = new SessionImpl(sessionID, secretKeyGen.generateKey(), sessionLifetime);
+        Session session = new SessionImpl(sessionID, sessionSecret, sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
 
@@ -129,12 +116,15 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         byte[] sid = new byte[sessionIDSize];
         prng.nextBytes(sid);
         String sessionID = Hex.encode(sid);
+        
+        byte[] sessionSecret = new byte[16];
+        prng.nextBytes(sessionSecret);
 
-        MDC.put("idpSessionId", sessionID);
-
-        Session session = new SessionImpl(sessionID, secretKeyGen.generateKey(), sessionLifetime);
+        Session session = new SessionImpl(sessionID, sessionSecret, sessionLifetime);
         SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
+        
+        MDC.put("idpSessionId", sessionID);
         log.trace("Created session {}", sessionID);
         return session;
     }
@@ -223,73 +213,5 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
             rootContext = rootContext.getParent();
         }
         appCtx = rootContext;
-    }
-
-    /** Session store entry. */
-    public class SessionManagerEntry implements ExpiringObject {
-
-        /** User's session. */
-        private Session userSession;
-
-        /** Indexes for this session. */
-        private List<String> indexes;
-
-        /** Time this entry expires. */
-        private DateTime expirationTime;
-
-        /**
-         * Constructor.
-         * 
-         * @param session user session
-         * @param lifetime lifetime of session
-         */
-        public SessionManagerEntry(Session session, long lifetime) {
-            userSession = session;
-            expirationTime = new DateTime().plus(lifetime);
-            indexes = new Vector<String>();
-            indexes.add(userSession.getSessionID());
-        }
-
-        /** {@inheritDoc} */
-        public DateTime getExpirationTime() {
-            return expirationTime;
-        }
-
-        /**
-         * Gets the user session.
-         * 
-         * @return user session
-         */
-        public Session getSession() {
-            return userSession;
-        }
-
-        /**
-         * Gets the ID of the user session.
-         * 
-         * @return ID of the user session
-         */
-        public String getSessionId() {
-            return userSession.getSessionID();
-        }
-
-        /**
-         * Gets the list of indexes for this session.
-         * 
-         * @return list of indexes for this session
-         */
-        public List<String> getSessionIndexes() {
-            return indexes;
-        }
-
-        /** {@inheritDoc} */
-        public boolean isExpired() {
-            return expirationTime.isBeforeNow();
-        }
-
-        /** {@inheritDoc} */
-        public void onExpire() {
-
-        }
     }
 }

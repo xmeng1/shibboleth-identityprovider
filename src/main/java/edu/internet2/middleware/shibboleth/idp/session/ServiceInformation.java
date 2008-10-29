@@ -16,10 +16,12 @@
 
 package edu.internet2.middleware.shibboleth.idp.session;
 
+import java.io.Serializable;
+
 import org.joda.time.DateTime;
 
 /** Information about a service a user has logged in to. */
-public interface ServiceInformation {
+public interface ServiceInformation extends Serializable {
 
     /**
      * Gets the unique identifier for the service.
