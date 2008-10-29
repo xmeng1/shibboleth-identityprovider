@@ -21,7 +21,7 @@ if defined CLASSPATH (
   set LOCALCLASSPATH=%CLASSPATH%
 )
 
-if not exist %IDP_HOME% (
+if not exist "%IDP_HOME%" (
   echo Error: IDP_HOME is not defined correctly.
   exit /b
 )

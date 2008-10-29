@@ -26,7 +26,7 @@ if not defined IDP_HOME  (
   exit /b
 )
 
-if not exist %IDP_HOME% (
+if not exist "%IDP_HOME%" (
   echo Error: IDP_HOME is not defined correctly.
   exit /b
 )
