@@ -18,6 +18,7 @@ Changes in Release 2.1.0
 [SIDP-197] - Misleading error message for ValidationInfo element in relying-party.xml
 [SIDP-199] - loss of login context when deploying the IdP to tomcat's ROOT context
 [SIDP-201] - IdP sends SAML 1 authentication responses without audience conditions
+[SIDP-202] - Saml2LoginContext unable to deserialize serialized AuthnRequest
 [SIDP-203] - Insufficient information logged to track down errant users
 [SIDP-206] - SessionManagerEntry's back reference to the SessionManager object interferes with clustering
 [SIDP-209] - Enforce SAML 2 metadata SPSSODescriptor/@AuthnRequestsSigned

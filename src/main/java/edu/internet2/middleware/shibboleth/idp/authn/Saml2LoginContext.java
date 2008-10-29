@@ -17,13 +17,9 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.Serializable;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.opensaml.Configuration;
 import org.opensaml.saml2.core.AuthnContext;
@@ -34,14 +30,12 @@ import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
-import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 
 /**
  * A SAML 2.0 {@link LoginContext}.
@@ -58,9 +52,6 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
 
     /** Serialized authentication request. */
     private String serialAuthnRequest;
-
-    /** Unmarshalled authentication request. */
-    private transient AuthnRequest authnRequest;
 
     /**
      * Creates a new instance of Saml2LoginContext.
@@ -79,27 +70,22 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         }
         setRelyingParty(relyingParty);
         relayState = state;
-        authnRequest = request;
         serialAuthnRequest = serializeRequest(request);
         
-        setForceAuthRequired(authnRequest.isForceAuthn());
-        setPassiveAuthRequired(authnRequest.isPassive());
-        getRequestedAuthenticationMethods().addAll(extractRequestedAuthenticationMethods());
+        setForceAuthRequired(request.isForceAuthn());
+        setPassiveAuthRequired(request.isPassive());
+        getRequestedAuthenticationMethods().addAll(extractRequestedAuthenticationMethods(request));
     }
 
     /**
-     * Gets the authentication request that started the login process.
+     * Gets the serialized authentication request that started the login process.
      * 
      * @return authentication request that started the login process
      * 
      * @throws UnmarshallingException thrown if the serialized form on the authentication request can be unmarshalled
      */
-    public synchronized AuthnRequest getAuthenticationRequest() throws UnmarshallingException {
-        if (authnRequest == null) {
-            authnRequest = deserializeRequest(serialAuthnRequest);
-        }
-
-        return authnRequest;
+    public synchronized String getAuthenticationRequest() throws UnmarshallingException {
+        return serialAuthnRequest;
     }
     
     /**
@@ -109,20 +95,6 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      */
     public synchronized String getRelayState(){
         return relayState;
-    }
-
-    /**
-     * Gets the requested authentication context information from the authentication request.
-     * 
-     * @return requested authentication context information or null
-     */
-    public synchronized RequestedAuthnContext getRequestedAuthenticationContext() {
-        try {
-            AuthnRequest request = getAuthenticationRequest();
-            return request.getRequestedAuthnContext();
-        } catch (UnmarshallingException e) {
-            return null;
-        }
     }
 
     /**
@@ -142,37 +114,18 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         return writer.toString();
     }
 
-    /**
-     * Deserailizes an authentication request from a string.
-     * 
-     * @param request request to deserialize
-     * 
-     * @return the request XMLObject
-     * 
-     * @throws UnmarshallingException thrown if the request can no be deserialized and unmarshalled
-     */
-    protected AuthnRequest deserializeRequest(String request) throws UnmarshallingException {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        try {
-            DocumentBuilder docBuilder = builderFactory.newDocumentBuilder();
-            InputSource requestInput = new InputSource(new StringReader(request));
-            Element requestElem = docBuilder.parse(requestInput).getDocumentElement();
-            Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory().getUnmarshaller(requestElem);
-            return (AuthnRequest) unmarshaller.unmarshall(requestElem);
-        } catch (Exception e) {
-            throw new UnmarshallingException("Unable to read serialized authentication request");
-        }
-    }
     
     /**
      * Extracts the authentication methods requested within the request.
      * 
+     * @param request the authentication request
+     * 
      * @return requested authentication methods, or an empty list if no preference
      */
-    protected List<String> extractRequestedAuthenticationMethods(){
+    protected List<String> extractRequestedAuthenticationMethods(AuthnRequest request){
         ArrayList<String> requestedMethods = new ArrayList<String>();
 
-        RequestedAuthnContext authnContext = getRequestedAuthenticationContext();
+        RequestedAuthnContext authnContext = request.getRequestedAuthnContext();
         if (authnContext == null) {
             return requestedMethods;
         }

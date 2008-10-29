@@ -17,14 +17,18 @@
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
@@ -52,11 +56,14 @@ import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
@@ -396,10 +403,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             Saml2LoginContext loginContext = ssoRequestContext.getLoginContext();
             requestContext.setRelayState(loginContext.getRelayState());
 
-            AuthnRequest authnRequest = loginContext.getAuthenticationRequest();
+            AuthnRequest authnRequest = deserializeRequest(loginContext.getAuthenticationRequest());
             requestContext.setInboundMessage(authnRequest);
-            requestContext.setInboundSAMLMessage(loginContext.getAuthenticationRequest());
-            requestContext.setInboundSAMLMessageId(loginContext.getAuthenticationRequest().getID());
+            requestContext.setInboundSAMLMessage(authnRequest);
+            requestContext.setInboundSAMLMessageId(authnRequest.getID());
 
             Subject authnSubject = authnRequest.getSubject();
             if (authnSubject != null) {
@@ -538,6 +545,26 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         }
 
         return endpoint;
+    }
+    
+
+    /**
+     * Deserailizes an authentication request from a string.
+     * 
+     * @param request request to deserialize
+     * 
+     * @return the request XMLObject
+     * 
+     * @throws UnmarshallingException thrown if the request can no be deserialized and unmarshalled
+     */
+    protected AuthnRequest deserializeRequest(String request) throws UnmarshallingException {
+        try {
+            Element requestElem = getParserPool().parse(new StringReader(request)).getDocumentElement();
+            Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory().getUnmarshaller(requestElem);
+            return (AuthnRequest) unmarshaller.unmarshall(requestElem);
+        } catch (Exception e) {
+            throw new UnmarshallingException("Unable to read serialized authentication request");
+        }
     }
 
     /** Represents the internal state of a SAML 2.0 SSO Request while it's being processed by the IdP. */

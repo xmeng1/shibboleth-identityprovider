@@ -132,7 +132,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     /** For building audience restriction. */
     private SAMLObjectBuilder<AudienceRestriction> audienceRestrictionBuilder;
 
-    /** For building proxy retrictions. */
+    /** For building proxy restrictions. */
     private SAMLObjectBuilder<ProxyRestriction> proxyRestrictionBuilder;
 
     /** For building audience. */
