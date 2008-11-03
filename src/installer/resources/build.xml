@@ -169,7 +169,7 @@
 
         <!-- build the war file -->
         <war warfile="${installer.dir}/${war.name}.war" webxml="${installer.dir}/web.xml">
-            <lib dir="${basedir}/lib" />
+            <lib dir="${basedir}/lib" excludesfile="servlet-api*.jar"/>
             <webinf dir="${webapp.dir}/WEB-INF" excludes="web.xml" />
             <fileset dir="${webapp.dir}" excludes="WEB-INF/**" />
         </war>
