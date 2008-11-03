@@ -9,7 +9,7 @@
 		<h2>Shibboleth Identity Provider Login</h2>
 		
 		<% if ("true".equals(request.getAttribute("loginFailed"))) { %>
-		<p><font color="red"Authentication Failed</font></p>
+		<p><font color="red">Authentication Failed</font></p>
 		<% } %>
 		
 		<% if(request.getAttribute("actionUrl") != null){ %>
