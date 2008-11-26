@@ -89,9 +89,10 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         ArtifactResponse samlResponse;
 
-        ArtifactResolutionRequestContext requestContext = decodeRequest(inTransport, outTransport);
-
+        ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
         try {
+            decodeRequest(requestContext, inTransport, outTransport);
+            
             if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 2 Artifact Resolve profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
@@ -145,16 +146,14 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
      * 
      * @param inTransport inbound message transport
      * @param outTransport outbound message transport
-     * 
-     * @return the created request context
+     * @param requestContext request context to which decoded information should be added
      * 
      * @throws ProfileException throw if there is a problem decoding the request
      */
-    protected ArtifactResolutionRequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
-            throws ProfileException {
+    protected void decodeRequest(ArtifactResolutionRequestContext requestContext, HTTPInTransport inTransport,
+            HTTPOutTransport outTransport) throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
-        ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
         requestContext.setCommunicationProfileId(getProfileId());
 
         MetadataProvider metadataProvider = getMetadataProvider();
@@ -173,7 +172,6 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request");
-            return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding artifact resolve message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error decoding message"));
@@ -226,7 +224,9 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
      */
     protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         ArtifactResolve samlMessage = (ArtifactResolve) requestContext.getInboundSAMLMessage();
-        ((ArtifactResolutionRequestContext) requestContext).setArtifact(samlMessage.getArtifact().getArtifact());
+        if(samlMessage != null && samlMessage.getArtifact() != null){
+            ((ArtifactResolutionRequestContext) requestContext).setArtifact(samlMessage.getArtifact().getArtifact());
+        }
     }
 
     /**

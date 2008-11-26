@@ -93,7 +93,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         Response samlResponse;
 
-        ArtifactResolutionRequestContext requestContext = decodeRequest(inTransport, outTransport);
+        ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
+        decodeRequest(requestContext, inTransport, outTransport);
 
         try {
             if (requestContext.getProfileConfiguration() == null) {
@@ -129,16 +130,14 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
      * 
      * @param inTransport inbound message transport
      * @param outTransport outbound message transport
-     * 
-     * @return the created request context
+     * @param requestContext request context to which decoded information should be added
      * 
      * @throws ProfileException throw if there is a problem decoding the request
      */
-    protected ArtifactResolutionRequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
-            throws ProfileException {
+    protected void decodeRequest(ArtifactResolutionRequestContext requestContext, HTTPInTransport inTransport,
+            HTTPOutTransport outTransport) throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
-        ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
         requestContext.setCommunicationProfileId(getProfileId());
 
         MetadataProvider metadataProvider = getMetadataProvider();
@@ -157,11 +156,10 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request");
-            return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding artifact resolve message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error decoding message"));
-            throw new ProfileException("Error decoding artifact resolve message",e);
+            throw new ProfileException("Error decoding artifact resolve message", e);
         } catch (SecurityException e) {
             log.error("Message did not meet security requirements", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,

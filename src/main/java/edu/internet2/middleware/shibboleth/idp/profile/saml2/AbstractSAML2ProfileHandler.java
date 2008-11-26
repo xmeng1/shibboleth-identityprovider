@@ -396,12 +396,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
     protected void populateStatusResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext,
             StatusResponseType response) {
         response.setID(getIdGenerator().generateIdentifier());
-        
-        if (requestContext != null && requestContext.getInboundSAMLMessage() != null) {
-            response.setInResponseTo(requestContext.getInboundSAMLMessageId());
-            response.setIssuer(buildEntityIssuer(requestContext));
-        }
-        
+
+        response.setInResponseTo(requestContext.getInboundSAMLMessageId());
+        response.setIssuer(buildEntityIssuer(requestContext));
+
         response.setVersion(SAMLVersion.VERSION_20);
     }
 
@@ -875,7 +873,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         return kekCredentialResolver.resolveSingle(criteriaSet);
     }
-    
 
     /**
      * Writes an audit log entry indicating the successful response to the attribute request.
@@ -900,7 +897,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         getAduitLog().info(auditLogEntry.toString());
     }
-    
+
     /** SAML 1 specific audit log entry. */
     protected class SAML2AuditLogEntry extends AuditLogEntry {
 
@@ -932,30 +929,30 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             NameID nameIdentifier = null;
             StringBuilder assertionIds = new StringBuilder();
 
-            if(samlResponse instanceof Response){
-            List<Assertion> assertions = ((Response)samlResponse).getAssertions();
-            if(assertions != null && !assertions.isEmpty()){
-                for(Assertion assertion : assertions){
-                    assertionIds.append(assertion.getID());
-                    assertionIds.append(",");
-                    
-                    if(nameIdentifier == null){
-                        if(assertion.getSubject() != null){
-                            nameIdentifier = assertion.getSubject().getNameID();
+            if (samlResponse instanceof Response) {
+                List<Assertion> assertions = ((Response) samlResponse).getAssertions();
+                if (assertions != null && !assertions.isEmpty()) {
+                    for (Assertion assertion : assertions) {
+                        assertionIds.append(assertion.getID());
+                        assertionIds.append(",");
+
+                        if (nameIdentifier == null) {
+                            if (assertion.getSubject() != null) {
+                                nameIdentifier = assertion.getSubject().getNameID();
+                            }
                         }
                     }
                 }
             }
-            }
-            
-            if(nameIdentifier != null){
+
+            if (nameIdentifier != null) {
                 entryString.append(nameIdentifier.getValue());
             }
             entryString.append("|");
-            
+
             entryString.append(assertionIds.toString());
             entryString.append("|");
-            
+
             return entryString.toString();
         }
     }

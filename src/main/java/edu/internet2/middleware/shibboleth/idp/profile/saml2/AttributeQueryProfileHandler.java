@@ -73,11 +73,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         Response samlResponse;
 
-        AttributeQueryContext requestContext = null;
+        AttributeQueryContext requestContext = new AttributeQueryContext();
 
         try {
-            requestContext = decodeRequest(inTransport, outTransport);
-            
+            decodeRequest(requestContext, inTransport, outTransport);
+
             if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 2 Attribute Query profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
@@ -130,17 +130,15 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      * Decodes an incoming request and populates a created request context with the resultant information.
      * 
      * @param inTransport inbound message transport
-     * @param outTransport outbound message transport
-     * 
-     * @return the created request context
+     * @param outTransport outbound message transport *
+     * @param requestContext request context to which decoded information should be added
      * 
      * @throws ProfileException throw if there is a problem decoding the request
      */
-    protected AttributeQueryContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
-            throws ProfileException {
+    protected void decodeRequest(AttributeQueryContext requestContext, HTTPInTransport inTransport,
+            HTTPOutTransport outTransport) throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
-        AttributeQueryContext requestContext = new AttributeQueryContext();
         requestContext.setCommunicationProfileId(getProfileId());
 
         MetadataProvider metadataProvider = getMetadataProvider();
@@ -167,8 +165,6 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                         "Invalid SAML AttributeQuery message."));
                 throw new ProfileException("Invalid SAML AttributeQuery message.");
             }
-
-            return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding attribute query message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error decoding message"));

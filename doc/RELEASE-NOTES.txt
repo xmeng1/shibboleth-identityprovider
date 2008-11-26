@@ -3,6 +3,7 @@ Changes in Release 2.1.1
 [SIDP-248] - Signing code in profile handlers and encoders should not just check that a signing credential is supplied, but that a signing key is available in that credential.
 [SIDP-249] - PreviousSession INFO message printed as ERROR message
 [SIDP-250] - AuthenticationEngine::returnToAuthenticationEngine() static method called before servlet init() when clustered.
+[SIDP-251[ - NPE when SAML1 Attribute Query Handler hit with GET request
 [SIDP-252] - IdPSessionFilter throws ArrayIndexOutOfBoundsException on validation of unexpected cookie
 
 Changes in Release 2.1.0

@@ -139,8 +139,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
+        ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
 
-        ShibbolethSSORequestContext requestContext = decodeRequest(inTransport, outTransport);
+        decodeRequest(requestContext, inTransport, outTransport);
         ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
 
         RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(loginContext.getRelyingPartyId());
@@ -175,18 +176,16 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * 
      * @param inTransport inbound message transport
      * @param outTransport outbound message transport
-     * 
-     * @return the created request context
+     * @param requestContext the request context to which decoded information should be added
      * 
      * @throws ProfileException throw if there is a problem decoding the request
      */
-    protected ShibbolethSSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
-            throws ProfileException {
+    protected void decodeRequest(ShibbolethSSORequestContext requestContext, HTTPInTransport inTransport,
+            HTTPOutTransport outTransport) throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
-        ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
         requestContext.setCommunicationProfileId(getProfileId());
 
         requestContext.setMetadataProvider(getMetadataProvider());
@@ -219,8 +218,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         loginContext.setAuthenticationEngineURL(authenticationManagerPath);
         loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
         requestContext.setLoginContext(loginContext);
-
-        return requestContext;
     }
 
     /**
@@ -358,8 +355,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 endpoint.setBinding(getSupportedOutboundBindings().get(0));
                 log.warn("Generating endpoint for anonymous relying party. ACS url {} and binding {}", new Object[] {
                         requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
-            }else{
-               log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided."); 
+            } else {
+                log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
             }
         } else {
             ShibbolethSSOEndpointSelector endpointSelector = new ShibbolethSSOEndpointSelector();
@@ -397,9 +394,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
 
         Subject statementSubject;
         Endpoint endpoint = selectEndpoint(requestContext);
-        if(endpoint.getBinding().equals(SAMLConstants.SAML1_ARTIFACT_BINDING_URI)){
+        if (endpoint.getBinding().equals(SAMLConstants.SAML1_ARTIFACT_BINDING_URI)) {
             statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:artifact");
-        }else{
+        } else {
             statementSubject = buildSubject(requestContext, "urn:oasis:names:tc:SAML:1.0:cm:bearer");
         }
         statement.setSubject(statementSubject);

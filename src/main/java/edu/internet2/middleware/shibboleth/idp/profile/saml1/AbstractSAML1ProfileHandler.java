@@ -431,11 +431,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             ResponseAbstractType response) {
         response.setID(getIdGenerator().generateIdentifier());
 
-        if (requestContext != null) {
-            SAMLObject samlMessage = requestContext.getInboundSAMLMessage();
-            if (samlMessage != null && samlMessage instanceof RequestAbstractType) {
-                response.setInResponseTo(((RequestAbstractType) samlMessage).getID());
-            }
+        SAMLObject samlMessage = requestContext.getInboundSAMLMessage();
+        if (samlMessage != null && samlMessage instanceof RequestAbstractType) {
+            response.setInResponseTo(((RequestAbstractType) samlMessage).getID());
         }
 
         response.setVersion(SAMLVersion.VERSION_11);
@@ -704,22 +702,23 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         /** {@inheritDoc} */
         public String toString() {
             StringBuilder entryString = new StringBuilder(super.toString());
-            
+
             NameIdentifier nameIdentifier = null;
             StringBuilder assertionIds = new StringBuilder();
             List<Assertion> assertions = samlResponse.getAssertions();
-            if(assertions != null && !assertions.isEmpty()){
-                for(Assertion assertion : assertions){
+            if (assertions != null && !assertions.isEmpty()) {
+                for (Assertion assertion : assertions) {
                     assertionIds.append(assertion.getID());
                     assertionIds.append(",");
-                    
-                    if(nameIdentifier == null){
+
+                    if (nameIdentifier == null) {
                         List<Statement> statements = assertion.getStatements();
-                        if(statements != null && !statements.isEmpty()){
-                            for(Statement statement : statements){
-                                if(statement instanceof SubjectStatement){
-                                    if(((SubjectStatement)statement).getSubject() != null){
-                                        nameIdentifier = ((SubjectStatement)statement).getSubject().getNameIdentifier();
+                        if (statements != null && !statements.isEmpty()) {
+                            for (Statement statement : statements) {
+                                if (statement instanceof SubjectStatement) {
+                                    if (((SubjectStatement) statement).getSubject() != null) {
+                                        nameIdentifier = ((SubjectStatement) statement).getSubject()
+                                                .getNameIdentifier();
                                     }
                                 }
                             }
@@ -727,15 +726,15 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     }
                 }
             }
-            
-            if(nameIdentifier != null){
+
+            if (nameIdentifier != null) {
                 entryString.append(nameIdentifier.getNameIdentifier());
             }
             entryString.append("|");
-            
+
             entryString.append(assertionIds.toString());
             entryString.append("|");
-            
+
             return entryString.toString();
         }
     }

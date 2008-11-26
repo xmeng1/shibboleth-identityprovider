@@ -495,12 +495,22 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     protected void encodeResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         try {
-            SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
-            if (encoder == null) {
-                log.error("No outbound message encoder configured for binding {}", requestContext
-                        .getPeerEntityEndpoint().getBinding());
-                throw new ProfileException("No outbound message encoder configured for binding "
-                        + requestContext.getPeerEntityEndpoint().getBinding());
+            SAMLMessageEncoder encoder = null;
+
+            Endpoint endpoint = requestContext.getPeerEntityEndpoint();
+            if (endpoint == null) {
+                log.error("No peer endpoint available for peer. Unable to send response.");
+                throw new ProfileException("No peer endpoint available for peer. Unable to send response.");
+            }
+
+            if (endpoint != null) {
+                encoder = getMessageEncoders().get(endpoint.getBinding());
+                if (encoder == null) {
+                    log.error("No outbound message encoder configured for binding: {}", requestContext
+                            .getPeerEntityEndpoint().getBinding());
+                    throw new ProfileException("No outbound message encoder configured for binding: "
+                            + requestContext.getPeerEntityEndpoint().getBinding());
+                }
             }
 
             AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext

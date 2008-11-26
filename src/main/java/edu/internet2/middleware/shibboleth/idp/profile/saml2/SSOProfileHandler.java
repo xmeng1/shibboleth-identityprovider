@@ -75,6 +75,7 @@ import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSOProfileHandler.ShibbolethSSORequestContext;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** SAML 2.0 SSO request profile handler. */
@@ -161,9 +162,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     protected void performAuthentication(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        SSORequestContext requestContext = new SSORequestContext();
 
         try {
-            SSORequestContext requestContext = decodeRequest(inTransport, outTransport);
+            decodeRequest(requestContext, inTransport, outTransport);
 
             String relyingPartyId = requestContext.getInboundMessageIssuer();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
@@ -277,15 +279,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      * 
      * @param inTransport inbound transport
      * @param outTransport outbound transport
-     * 
-     * @return request context with decoded information
+     * @param requestContext request context to which decoded information should be added
      * 
      * @throws ProfileException thrown if the incoming message failed decoding
      */
-    protected SSORequestContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
-            throws ProfileException {
+    protected void decodeRequest(SSORequestContext requestContext, HTTPInTransport inTransport,
+            HTTPOutTransport outTransport) throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
-        SSORequestContext requestContext = new SSORequestContext();
+
         requestContext.setCommunicationProfileId(getProfileId());
 
         requestContext.setMetadataProvider(getMetadataProvider());
@@ -312,8 +313,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                         "Invalid SAML AuthnRequest message."));
                 throw new ProfileException("Invalid SAML AuthnRequest message.");
             }
-
-            return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding authentication request message", e);
             throw new ProfileException("Error decoding authentication request message", e);
@@ -546,7 +545,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         return endpoint;
     }
-    
 
     /**
      * Deserailizes an authentication request from a string.

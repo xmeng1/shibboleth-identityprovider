@@ -74,11 +74,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
-        AttributeQueryContext requestContext = null;
+        AttributeQueryContext requestContext = new AttributeQueryContext();
         Response samlResponse;
         try {
-            requestContext = decodeRequest(inTransport, outTransport);
-            
+            decodeRequest(requestContext, inTransport, outTransport);
+
             if (requestContext.getProfileConfiguration() == null) {
                 log.error("SAML 1 Attribute Query profile is not configured for relying party "
                         + requestContext.getInboundMessageIssuer());
@@ -126,16 +126,14 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
      * 
      * @param inTransport inbound message transport
      * @param outTransport outbound message transport
-     * 
-     * @return the created request context
+     * @param requestContext the request context to which decoded information should be added
      * 
      * @throws ProfileException throw if there is a problem decoding the request
      */
-    protected AttributeQueryContext decodeRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
-            throws ProfileException {
+    protected void decodeRequest(AttributeQueryContext requestContext, HTTPInTransport inTransport,
+            HTTPOutTransport outTransport) throws ProfileException {
         log.debug("Decoding message with decoder binding {}", getInboundBinding());
 
-        AttributeQueryContext requestContext = new AttributeQueryContext();
         requestContext.setCommunicationProfileId(getProfileId());
 
         MetadataProvider metadataProvider = getMetadataProvider();
@@ -165,8 +163,6 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                         "Invalid SAML Attribute Request message."));
                 throw new ProfileException("Invalid SAML Attribute Request message.");
             }
-
-            return requestContext;
         } catch (MessageDecodingException e) {
             log.error("Error decoding attribute query message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error decoding message"));
