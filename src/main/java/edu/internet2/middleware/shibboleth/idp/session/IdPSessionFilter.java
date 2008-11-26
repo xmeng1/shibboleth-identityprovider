@@ -66,7 +66,7 @@ public class IdPSessionFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
 
         Cookie sessionCookie = getIdPSessionCookie(httpRequest);
-        Session idpSession = validateCookie(sessionCookie, httpRequest);
+        Session idpSession = getUserSession(sessionCookie, httpRequest);
         if (idpSession != null) {
             log.trace("Updating IdP session activity time and adding session object to the request");
             idpSession.setLastActivityInstant(new DateTime());
@@ -118,55 +118,82 @@ public class IdPSessionFilter implements Filter {
     }
 
     /**
-     * Validates the given session cookie against the associated session.
+     * Gets the user session associated with a session cookie.
      * 
      * @param sessionCookie the session cookie
      * @param httpRequest the current HTTP request
      * 
-     * @return the session against which the cookie was validated
+     * @return the session associated with the cookie or null if there is no currently assoicated session
      */
-    protected Session validateCookie(Cookie sessionCookie, HttpServletRequest httpRequest) {
-        if (sessionCookie == null) {
+    protected Session getUserSession(Cookie sessionCookie, HttpServletRequest httpRequest) {
+        if (sessionCookie == null || DatatypeHelper.isEmpty(sessionCookie.getValue())) {
             return null;
         }
 
         // index 0: remote address
         // index 1: session ID
         // index 2: Base64(HMAC(index 0 + index 1))
-        String[] valueComponents = HTTPTransportUtils.urlDecode(sessionCookie.getValue()).split("\\|");
+        String cookieValue = HTTPTransportUtils.urlDecode(sessionCookie.getValue());
+        String[] valueComponents = cookieValue.split("\\|");
+        if (valueComponents.length != 3) {
+            log.warn("IdP session cookie has an improperly formated value: {}", cookieValue);
+            return null;
+        }
+
         byte[] remoteAddressBytes = Base64.decode(valueComponents[0]);
         byte[] sessionIdBytes = Base64.decode(valueComponents[1]);
         byte[] signatureBytes = Base64.decode(valueComponents[2]);
-
-        if (consistentAddress) {
-            String remoteAddress = new String(remoteAddressBytes);
-            if (!httpRequest.getRemoteAddr().equals(remoteAddress)) {
-                log.error("Client sent a cookie from addres {} but the cookie was issued to address {}", httpRequest
-                        .getRemoteAddr(), remoteAddress);
-                return null;
-            }
-        }
 
         String sessionId = new String(sessionIdBytes);
         Session userSession = sessionManager.getSession(sessionId);
 
         if (userSession != null) {
-            try {
-                MessageDigest digester = MessageDigest.getInstance("SHA");
-                digester.update(userSession.getSessionSecret());
-                digester.update(remoteAddressBytes);
-                digester.update(sessionIdBytes);
-                if (!Arrays.equals(digester.digest(), signatureBytes)) {
-                    log.error("Session cookie signature did not match, the session cookie has been tampered with");
-                    return null;
-                }
-            } catch (GeneralSecurityException e) {
-                log.error("Unable to computer over session cookie material", e);
+            if (isCookieValid(httpRequest, remoteAddressBytes, sessionIdBytes, signatureBytes, userSession
+                    .getSessionSecret())) {
+                return userSession;
             }
         } else {
-            log.debug("No session associated with session ID {} - session must have timed out",
-                            valueComponents[1]);
+            log.debug("No session associated with session ID {} - session must have timed out", valueComponents[1]);
         }
-        return userSession;
+        return null;
+    }
+
+    /**
+     * Validates the session cookie. This validates that the cookie came from the same IP address to which it was given,
+     * if consistent address checking is enabled, and that cookie data hasn't been changed.
+     * 
+     * @param httpRequest incoming HTTP request
+     * @param remoteAddressBytes remote address from the cookie value
+     * @param sessionIdBytes session ID from the cookie value
+     * @param signatureBytes signature from the cookie value
+     * @param sessionSecret secrete associated with the user's session
+     * 
+     * @return true if the information in the cookie is valid, false if not
+     */
+    protected boolean isCookieValid(HttpServletRequest httpRequest, byte[] remoteAddressBytes, byte[] sessionIdBytes,
+            byte[] signatureBytes, byte[] sessionSecret) {
+        if (consistentAddress) {
+            String remoteAddress = new String(remoteAddressBytes);
+            if (!httpRequest.getRemoteAddr().equals(remoteAddress)) {
+                log.error("Client sent a cookie from addres {} but the cookie was issued to address {}", httpRequest
+                        .getRemoteAddr(), remoteAddress);
+                return false;
+            }
+        }
+
+        try {
+            MessageDigest digester = MessageDigest.getInstance("SHA");
+            digester.update(sessionSecret);
+            digester.update(remoteAddressBytes);
+            digester.update(sessionIdBytes);
+            if (!Arrays.equals(digester.digest(), signatureBytes)) {
+                log.error("Session cookie has been tampered with, its signature no longer matches expected value");
+                return false;
+            }
+        } catch (GeneralSecurityException e) {
+            log.error("Unable to compute signature over session cookie material", e);
+        }
+
+        return true;
     }
 }

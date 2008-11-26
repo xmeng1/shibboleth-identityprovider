@@ -45,6 +45,9 @@
     <clients>
         <logs>$IDP_HOME$/cluster/client/logs-%i</logs>
         <statistics>$IDP_HOME$/cluster/client/stats-%i</statistics>
+        <modules>
+            <module name="tim-vector" version="2.4.0-SNAPSHOT" group-id="org.terracotta.modules"/>
+        </modules>
     </clients>
 
     <application>
@@ -67,6 +70,10 @@
                     <honor-transient>true</honor-transient>
                 </include>
                 <include>
+                    <class-expression>edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal</class-expression>
+                    <honor-transient>true</honor-transient>
+                </include> 
+                <include>
                     <class-expression>edu.vt.middleware.ldap.jaas.LdapCredential</class-expression>
                     <honor-transient>true</honor-transient>
                 </include>
@@ -79,7 +86,7 @@
                     <honor-transient>true</honor-transient>
                 </include>
                 <include>
-                    <class-expression>edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.attributeDefinition.IdEntry</class-expression>
+                    <class-expression>edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.attributeDefinition.TransientIdEntry</class-expression>
                     <honor-transient>true</honor-transient>
                 </include>
                 <include>
