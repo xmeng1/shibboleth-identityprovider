@@ -509,16 +509,19 @@ public abstract class AbstractSAMLProfileHandler extends
                 if (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
                         || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional && !encoder
                                 .providesMessageIntegrity(requestContext))) {
-                    Credential signingCredential = null;
-                    if (profileConfig.getSigningCredential() != null) {
-                        signingCredential = profileConfig.getSigningCredential();
-                    } else if (requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential() != null) {
+                    Credential signingCredential = profileConfig.getSigningCredential();
+                    if (signingCredential == null) {
                         signingCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
                     }
 
                     if (signingCredential == null) {
                         throw new ProfileException(
                                 "Signing of responses is required but no signing credential is available");
+                    }
+
+                    if (signingCredential.getPrivateKey() == null) {
+                        throw new ProfileException(
+                                "Signing of response is required but signing credential does not have a private key");
                     }
 
                     requestContext.setOutboundSAMLMessageSigningCredential(signingCredential);
