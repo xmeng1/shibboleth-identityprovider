@@ -1,5 +1,6 @@
 Changes in Release 2.1.1
 =============================================
+[SIDP-250] - AuthenticationEngine::returnToAuthenticationEngine() static method called before servlet init() when clustered.
 [SIDP-252] - IdPSessionFilter throws ArrayIndexOutOfBoundsException on validation of unexpected cookie
 
 Changes in Release 2.1.0
