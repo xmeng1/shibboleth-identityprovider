@@ -453,7 +453,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Creates an {@link AuthnContext} for a succesful authentication request.
+     * Creates an {@link AuthnContext} for a successful authentication request.
      * 
      * @param requestContext current request
      * 
@@ -483,7 +483,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                     }
                 }
             }
-        } else {
+        }
+        
+        if(authnContext.getAuthnContextClassRef() == null || authnContext.getAuthnContextDeclRef() == null){
             AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
             ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
             authnContext.setAuthnContextDeclRef(ref);
