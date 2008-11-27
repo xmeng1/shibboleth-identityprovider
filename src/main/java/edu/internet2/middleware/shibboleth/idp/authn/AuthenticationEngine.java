@@ -288,14 +288,14 @@ public class AuthenticationEngine extends HttpServlet {
      */
     protected void startUserAuthentication(LoginContext loginContext, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        LOG.debug("Beginning user authentication process");
+        LOG.debug("Beginning user authentication process.");
         try {
             Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
             if (idpSession != null) {
                 LOG.debug("Existing IdP session available for principal {}", idpSession.getPrincipalName());
             }
 
-            Map<String, LoginHandler> possibleLoginHandlers = determinePossibleLoginHandlers(loginContext);
+            Map<String, LoginHandler> possibleLoginHandlers = determinePossibleLoginHandlers(idpSession, loginContext);
             LOG.debug("Possible authentication handlers for this request: {}", possibleLoginHandlers);
 
             // Filter out possible candidate login handlers by forced and passive authentication requirements
@@ -337,22 +337,44 @@ public class AuthenticationEngine extends HttpServlet {
      * Determines which configured login handlers will support the requested authentication methods.
      * 
      * @param loginContext current login context
+     * @param idpSession current user's session, or null if they don't have one
      * 
      * @return login methods that may be used to authenticate the user
      * 
      * @throws AuthenticationException thrown if no login handler meets the given requirements
      */
-    protected Map<String, LoginHandler> determinePossibleLoginHandlers(LoginContext loginContext)
+    protected Map<String, LoginHandler> determinePossibleLoginHandlers(Session idpSession, LoginContext loginContext)
             throws AuthenticationException {
         Map<String, LoginHandler> supportedLoginHandlers = new HashMap<String, LoginHandler>(handlerManager
                 .getLoginHandlers());
-        LOG.trace("Supported login handlers: {}", supportedLoginHandlers);
-        LOG.trace("Requested authentication methods: {}", loginContext.getRequestedAuthenticationMethods());
+        LOG.debug("Filtering configured login handlers by requested athentication methods.");
+        LOG.debug("Configured LoginHandlers: {}", supportedLoginHandlers);
+        LOG.debug("Requested authentication methods: {}", loginContext.getRequestedAuthenticationMethods());
 
         // If no preferences Authn method preference is given, then we're free to use any
         if (loginContext.getRequestedAuthenticationMethods().isEmpty()) {
             LOG.trace("No preference given for authentication methods");
             return supportedLoginHandlers;
+        }
+
+        // If the previous session handler is configured, the user has an existing session, and the SP requested
+        // that a certain set of authentication methods be used then we need to check to see if the user has
+        // authenticated with one or more of those methods, if not we can't use the previous session handler
+        if (supportedLoginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX) && idpSession != null
+                && loginContext.getRequestedAuthenticationMethods() != null) {
+            boolean retainPreviousSession = false;
+
+            Map<String, AuthenticationMethodInformation> currentAuthnMethods = idpSession.getAuthenticationMethods();
+            for (String currentAuthnMethod : currentAuthnMethods.keySet()) {
+                if (loginContext.getRequestedAuthenticationMethods().contains(currentAuthnMethod)) {
+                    retainPreviousSession = true;
+                    break;
+                }
+            }
+
+            if (!retainPreviousSession) {
+                supportedLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
+            }
         }
 
         // Otherwise we need to filter all the mechanism supported by the IdP so that only the request types are left

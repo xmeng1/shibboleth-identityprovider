@@ -5,6 +5,7 @@ Changes in Release 2.1.1
 [SIDP-250] - AuthenticationEngine::returnToAuthenticationEngine() static method called before servlet init() when clustered.
 [SIDP-251[ - NPE when SAML1 Attribute Query Handler hit with GET request
 [SIDP-252] - IdPSessionFilter throws ArrayIndexOutOfBoundsException on validation of unexpected cookie
+[SIDP-257] - Prevous session is used if the user has an existing session but the SP requests an authentication method that is not currently active.
 
 Changes in Release 2.1.0
 =============================================
