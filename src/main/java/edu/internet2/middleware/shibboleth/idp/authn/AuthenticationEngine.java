@@ -525,7 +525,8 @@ public class AuthenticationEngine extends HttpServlet {
 
             loginContext.setPrincipalAuthenticated(true);
             updateUserSession(loginContext, subject, actualAuthnMethod, httpRequest, httpResponse);
-            LOG.debug("User {} authenticated with method {}", loginContext.getPrincipalName(), actualAuthnMethod);
+            LOG.debug("User {} authenticated with method {}", loginContext.getPrincipalName(), loginContext
+                    .getAuthenticationMethod());
         } catch (AuthenticationException e) {
             LOG.error("Authentication failed with the error:", e);
             loginContext.setPrincipalAuthenticated(false);
