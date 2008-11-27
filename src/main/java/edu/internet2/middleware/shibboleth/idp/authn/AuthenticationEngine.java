@@ -511,6 +511,9 @@ public class AuthenticationEngine extends HttpServlet {
                     .getAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY));
             if (actualAuthnMethod == null) {
                 actualAuthnMethod = loginContext.getAttemptedAuthnMethod();
+            } else {
+                LOG.debug("Authentication method overriden by LoginHandler.  It was {} and is now {}", loginContext
+                        .getAttemptedAuthnMethod(), actualAuthnMethod);
             }
 
             // Get the Subject from the request. If force authentication was required then make sure the
@@ -546,7 +549,7 @@ public class AuthenticationEngine extends HttpServlet {
     protected void validateSuccessfulAuthentication(LoginContext loginContext, HttpServletRequest httpRequest)
             throws AuthenticationException {
         LOG.debug("Validating authentication was performed successfully");
-        
+
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
         if (errorMessage != null) {
@@ -653,7 +656,7 @@ public class AuthenticationEngine extends HttpServlet {
 
         LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
                 authenticationPrincipal.getName());
-        LoginHandler loginHandler = handlerManager.getLoginHandlers().get(authenticationMethod);
+        LoginHandler loginHandler = handlerManager.getLoginHandlers().get(loginContext.getAttemptedAuthnMethod());
         AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(idpSession
                 .getSubject(), authenticationPrincipal, authenticationMethod, new DateTime(), loginHandler
                 .getAuthenticationDuration());
