@@ -574,16 +574,7 @@ public class AuthenticationEngine extends HttpServlet {
     protected void validateSuccessfulAuthentication(LoginContext loginContext, HttpServletRequest httpRequest,
             String authenticationMethod) throws AuthenticationException {
         LOG.debug("Validating authentication was performed successfully");
-
-        List<String> requestedAuthnMethods = loginContext.getRequestedAuthenticationMethods();
-        if (requestedAuthnMethods != null && !requestedAuthnMethods.isEmpty()) {
-            if (!requestedAuthnMethods.contains(authenticationMethod)) {
-                LOG.error("User was authenticated but the authentication method reported by the LoginHandler does not meet relying party requirements");
-                throw new AuthenticationException(
-                        "No authentication method, requested by the service provider, is supported");
-            }
-        }
-
+        
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
         if (errorMessage != null) {
