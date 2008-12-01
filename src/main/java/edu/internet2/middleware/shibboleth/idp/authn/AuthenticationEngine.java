@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -524,9 +525,6 @@ public class AuthenticationEngine extends HttpServlet {
         Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
 
         try {
-            // Check to make sure the login handler did the right thing
-            validateSuccessfulAuthentication(loginContext, httpRequest);
-
             // We allow a login handler to override the authentication method in the
             // event that it supports multiple methods
             String actualAuthnMethod = DatatypeHelper.safeTrimOrNullString((String) httpRequest
@@ -537,6 +535,9 @@ public class AuthenticationEngine extends HttpServlet {
                 LOG.debug("Authentication method overriden by LoginHandler.  It was {} and is now {}", loginContext
                         .getAttemptedAuthnMethod(), actualAuthnMethod);
             }
+
+            // Check to make sure the login handler did the right thing
+            validateSuccessfulAuthentication(loginContext, httpRequest, actualAuthnMethod);
 
             // Get the Subject from the request. If force authentication was required then make sure the
             // Subject identifies the same user that authenticated before
@@ -566,12 +567,22 @@ public class AuthenticationEngine extends HttpServlet {
      * 
      * @param loginContext current login context
      * @param httpRequest current HTTP request
+     * @param authenticationMethod the authentication method used to authenticate the user
      * 
      * @throws AuthenticationException thrown if the authentication was not successful
      */
-    protected void validateSuccessfulAuthentication(LoginContext loginContext, HttpServletRequest httpRequest)
-            throws AuthenticationException {
+    protected void validateSuccessfulAuthentication(LoginContext loginContext, HttpServletRequest httpRequest,
+            String authenticationMethod) throws AuthenticationException {
         LOG.debug("Validating authentication was performed successfully");
+
+        List<String> requestedAuthnMethods = loginContext.getRequestedAuthenticationMethods();
+        if (requestedAuthnMethods != null && !requestedAuthnMethods.isEmpty()) {
+            if (!requestedAuthnMethods.contains(authenticationMethod)) {
+                LOG.error("User was authenticated but the authentication method reported by the LoginHandler does not meet relying party requirements");
+                throw new AuthenticationException(
+                        "No authentication method, requested by the service provider, is supported");
+            }
+        }
 
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
