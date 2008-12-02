@@ -149,10 +149,12 @@
                             
         <chmod file="${idp.home.path}/bin/*.sh" perm="+x" />
 
+    	<delete>
+    	    <fileset dir="${idp.home.path}/lib" includes="**/*.jar" />
+        </delete>
         <copy todir="${idp.home.path}/lib" preservelastmodified="true" overwrite="true">
             <fileset dir="${basedir}/lib" />
         </copy>
-
         <copy todir="${idp.home.path}/lib/endorsed" preservelastmodified="true" failonerror="false" overwrite="true">
             <fileset dir="endorsed" />
         </copy>
