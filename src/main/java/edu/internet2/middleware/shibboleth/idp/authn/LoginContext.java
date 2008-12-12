@@ -17,12 +17,12 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.joda.time.DateTime;
+import org.opensaml.xml.util.LazyList;
 
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 
@@ -87,14 +87,14 @@ public class LoginContext implements Serializable {
     private String sessionID;
 
     /** List of request authentication methods. */
-    private ArrayList<String> requestAuthenticationMethods;
+    private List<String> requestAuthenticationMethods;
 
     /** Information about the authentication method. */
     private AuthenticationMethodInformation authenticationMethodInformation;
 
     /** Creates a new instance of LoginContext. */
     public LoginContext() {
-        requestAuthenticationMethods = new ArrayList<String>();
+        requestAuthenticationMethods = new LazyList<String>();
     }
 
     /**
@@ -106,7 +106,7 @@ public class LoginContext implements Serializable {
     public LoginContext(boolean force, boolean passive) {
         forceAuth = force;
         passiveAuth = passive;
-        requestAuthenticationMethods = new ArrayList<String>();
+        requestAuthenticationMethods = new LazyList<String>();
     }
 
     /**

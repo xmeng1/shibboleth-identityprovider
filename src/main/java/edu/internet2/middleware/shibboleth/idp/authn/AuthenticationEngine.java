@@ -716,15 +716,15 @@ public class AuthenticationEngine extends HttpServlet {
             return new Subject();
         }
 
-        Set<Principal> principals = new HashSet<Principal>();
+        Set<Principal> principals = new HashSet<Principal>(3);
         principals.addAll(subject1.getPrincipals());
         principals.addAll(subject2.getPrincipals());
 
-        Set<Object> publicCredentials = new HashSet<Object>();
+        Set<Object> publicCredentials = new HashSet<Object>(3);
         publicCredentials.addAll(subject1.getPublicCredentials());
         publicCredentials.addAll(subject2.getPublicCredentials());
 
-        Set<Object> privateCredentials = new HashSet<Object>();
+        Set<Object> privateCredentials = new HashSet<Object>(3);
         privateCredentials.addAll(subject1.getPrivateCredentials());
         privateCredentials.addAll(subject2.getPrivateCredentials());
 

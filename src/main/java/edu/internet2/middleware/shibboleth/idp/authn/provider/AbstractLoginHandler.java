@@ -16,8 +16,9 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import org.opensaml.xml.util.LazyList;
 
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
@@ -27,7 +28,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 public abstract class AbstractLoginHandler implements LoginHandler {
     
     /** Authentication methods this handler supports. */
-    private ArrayList<String> supportedAuthenticationMethods;
+    private List<String> supportedAuthenticationMethods;
 
     /** Length of time, in milliseconds, after which a user should be re-authenticated. */
     private long authenticationDuration;
@@ -40,7 +41,7 @@ public abstract class AbstractLoginHandler implements LoginHandler {
     
     /** Constructor. */
     protected AbstractLoginHandler(){
-        supportedAuthenticationMethods = new ArrayList<String>();
+        supportedAuthenticationMethods = new LazyList<String>();
         supportsForceAuthentication = false;
         supportsPassive = false;
     }

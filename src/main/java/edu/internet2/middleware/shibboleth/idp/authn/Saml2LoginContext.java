@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.Serializable;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.opensaml.Configuration;
@@ -32,6 +31,7 @@ import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.io.UnmarshallingException;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.opensaml.xml.util.LazyList;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +123,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      * @return requested authentication methods, or an empty list if no preference
      */
     protected List<String> extractRequestedAuthenticationMethods(AuthnRequest request){
-        ArrayList<String> requestedMethods = new ArrayList<String>();
+        LazyList<String> requestedMethods = new LazyList<String>();
 
         RequestedAuthnContext authnContext = request.getRequestedAuthnContext();
         if (authnContext == null) {
