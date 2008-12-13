@@ -63,7 +63,7 @@ public class LoginContext implements Serializable {
     private boolean passiveAuth;
 
     /** A catch-all map for other properties. */
-    private Map<String, Serializable> propsMap = new ConcurrentHashMap<String, Serializable>();
+    private Map<String, Serializable> propsMap = new ConcurrentHashMap<String, Serializable>(0);
 
     /** The ProfileHandler URL. */
     private String profileHandlerURL;

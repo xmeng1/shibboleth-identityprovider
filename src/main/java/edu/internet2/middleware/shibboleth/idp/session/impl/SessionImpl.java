@@ -50,8 +50,8 @@ public class SessionImpl extends AbstractSession implements Session {
         super(sessionId, timeout);
 
         sessionSecret = secret;
-        authnMethods = new ConcurrentHashMap<String, AuthenticationMethodInformation>();
-        servicesInformation = new ConcurrentHashMap<String, ServiceInformation>();
+        authnMethods = new ConcurrentHashMap<String, AuthenticationMethodInformation>(2);
+        servicesInformation = new ConcurrentHashMap<String, ServiceInformation>(2);
     }
 
     /** {@inheritDoc} */
