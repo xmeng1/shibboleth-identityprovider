@@ -9,8 +9,9 @@
 <body>
 	<img src="<%= request.getContextPath() %>/images/logo.jpg" />
 	<h3>ERROR</h3>
+	<% if (error != null){%>
 	Error Message: <%= error.getMessage() %>
-	
+	<% } %>
 </body>
 
 </html>
