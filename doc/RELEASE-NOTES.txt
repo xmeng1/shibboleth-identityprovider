@@ -2,6 +2,7 @@ Changes in Release 2.1.2
 =============================================
 * Significant memory optimizations
 [SIDP-260] - NPE in login-err.jsp
+[SIDP-268] - Expose Metadata on entityID URL
 
 
 Changes in Release 2.1.1

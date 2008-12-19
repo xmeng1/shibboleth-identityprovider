@@ -42,6 +42,17 @@
         <servlet-name>ProfileRequestDispatcher</servlet-name>
         <url-pattern>/profile/*</url-pattern>
     </servlet-mapping>
+    
+    <!-- Send request to the EntityID to the SAML metadata handler. -->
+    <servlet>
+        <servlet-name>shibboleth_jsp</servlet-name>
+        <jsp-file>/shibboleth.jsp</jsp-file>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>shibboleth_jsp</servlet-name>
+        <url-pattern>/shibboleth</url-pattern>
+    </servlet-mapping> 
 
     <!-- Authentication Engine Entry Point -->
     <servlet>
