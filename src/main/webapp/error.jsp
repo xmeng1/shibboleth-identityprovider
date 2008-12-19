@@ -10,6 +10,10 @@
 	    user ID office for assistance.
 	</p>
 	<p>
+	   This service requires cookies.  Please ensure that they are enabled and try your 
+	   going back to your desired resource and trying to login again.
+	</p>
+	<p>
 	   Use of your browser's back button may cause specific errors that can be resolved by
 	   going back to your desired resource and trying to login again.
 	</p>
