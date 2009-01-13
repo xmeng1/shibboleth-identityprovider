@@ -189,7 +189,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             return true;
         } catch (Throwable e) {
-            log.debug("User authentication for {} failed", new Object[] {username}, e);
+            log.debug("User authentication for " + username + " failed", e);
             return false;
         }
     }
