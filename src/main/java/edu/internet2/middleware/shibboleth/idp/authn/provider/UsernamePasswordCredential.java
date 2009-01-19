@@ -16,8 +16,13 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
+import java.io.Serializable;
+
 /** Represents a username and password entered used to authenticate a subject. */
-public class UsernamePasswordCredential {
+public class UsernamePasswordCredential implements Serializable{
+
+    /** Serial version UID. */
+    private static final long serialVersionUID = -5262041398037656037L;
 
     /** Username of a subject. */
     private String username;

@@ -16,13 +16,17 @@
 
 package edu.internet2.middleware.shibboleth.idp.authn;
 
+import java.io.Serializable;
 import java.security.Principal;
 
 import org.opensaml.xml.util.DatatypeHelper;
 
 /** A basic implementation of {@link Principal}. */
-public class UsernamePrincipal implements Principal {
+public class UsernamePrincipal implements Principal, Serializable {
 
+    /** Serial version UID. */
+    private static final long serialVersionUID = 8708917521896240626L;
+    
     /** Name of the principal. */
     private String name;
 
