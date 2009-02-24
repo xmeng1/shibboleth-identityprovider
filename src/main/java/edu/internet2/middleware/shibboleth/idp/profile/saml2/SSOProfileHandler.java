@@ -486,9 +486,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         }
         
         if(authnContext.getAuthnContextClassRef() == null || authnContext.getAuthnContextDeclRef() == null){
-            AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
-            ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
-            authnContext.setAuthnContextDeclRef(ref);
+            AuthnContextClassRef ref = authnContextClassRefBuilder.buildObject();
+            ref.setAuthnContextClassRef(loginContext.getAuthenticationMethod());
+            authnContext.setAuthnContextClassRef(ref);
         }
 
         return authnContext;
