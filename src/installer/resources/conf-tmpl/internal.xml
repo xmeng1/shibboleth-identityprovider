@@ -52,7 +52,6 @@
 
     <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool" depends-on="shibboleth.LogbackLogging">
         <property name="maxPoolSize" value="100" />
-        <property name="createBuildersAtPoolLimit" value="true" />
         <property name="coalescing" value="true" />
         <property name="ignoreComments" value="true" />
         <property name="ignoreElementContentWhitespace" value="true" />
