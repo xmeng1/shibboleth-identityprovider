@@ -46,4 +46,4 @@ if exist %JAVA_HOME%\lib\classes.zip (
 
 REM Go to it !
 
-%JAVACMD% -cp "%LOCALCLASSPATH%" -Djava.endorsed.dirs="%LIBDIR%/endorsed" edu.internet2.middleware.shibboleth.common.attribute.AttributeAuthorityCLI %*
+%JAVACMD% -cp "%LOCALCLASSPATH%" -Djava.endorsed.dirs="%~dp0/../lib/endorsed" edu.internet2.middleware.shibboleth.common.attribute.AttributeAuthorityCLI %*
