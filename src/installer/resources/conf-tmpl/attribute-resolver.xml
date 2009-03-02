@@ -463,7 +463,7 @@
             jdbcURL="jdbc:oracle:thin:@db.example.org:1521:SomeDB" jdbcUserName="myid" jdbcPassword="mypassword" />
         <QueryTemplate>
             <![CDATA[
-                SELECT * FROM student WHERE gzbtpid = $requestContext.principalName
+                SELECT * FROM student WHERE gzbtpid = '$requestContext.principalName'
             ]]>
         </QueryTemplate>
 

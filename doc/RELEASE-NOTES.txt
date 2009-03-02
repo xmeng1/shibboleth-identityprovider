@@ -1,6 +1,7 @@
 Changes in Release 2.1.3
 =============================================
 [SIDP-247] - Log Exception in UP LoginHandler Servlet
+[SIDP-276] - Example RDB Connector, quote principal
 [SIDP-280] - when an Idp has no outside (WAN) access Idp fails to collect or release attributes
 
 Changes in Release 2.1.2
