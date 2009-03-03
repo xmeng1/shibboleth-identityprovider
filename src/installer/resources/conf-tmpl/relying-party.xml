@@ -27,7 +27,8 @@
     <!-- ========================================== -->
     <!--      Relying Party Configurations          -->
     <!-- ========================================== -->
-    <AnonymousRelyingParty provider="$IDP_ENTITY_ID$" />
+    <AnonymousRelyingParty provider="$IDP_ENTITY_ID$"
+                           defaultSigningCredentialRef="IdPCredential" />
     
     <DefaultRelyingParty provider="$IDP_ENTITY_ID$"
                          defaultSigningCredentialRef="IdPCredential">
