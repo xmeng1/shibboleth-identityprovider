@@ -387,7 +387,7 @@
     </resolver:AttributeDefinition>
 
     <resolver:AttributeDefinition id="eduPersonPrincipalName" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-        scope="example.org" sourceAttributeID="uid">
+        scope="$IDP_SCOPE$" sourceAttributeID="uid">
         <resolver:Dependency ref="myLDAP" />
 
         <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
@@ -398,7 +398,7 @@
     </resolver:AttributeDefinition>
 
     <resolver:AttributeDefinition id="eduPersonScopedAffiliation" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-        scope="example.org" sourceAttributeID="eduPersonAffiliation">
+        scope="$IDP_SCOPE$" sourceAttributeID="eduPersonAffiliation">
         <resolver:Dependency ref="myLDAP" />
 
         <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
@@ -409,7 +409,7 @@
     </resolver:AttributeDefinition>
         
     <resolver:AttributeDefinition id="eduPersonTargetedID.old" xsi:type="Scoped" xmlns="urn:mace:shibboleth:2.0:resolver:ad"
-        scope="example.org" sourceAttributeID="computedID">
+        scope="$IDP_SCOPE$" sourceAttributeID="computedID">
         <resolver:Dependency ref="computedID" />
 
         <resolver:AttributeEncoder xsi:type="SAML1ScopedString" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"

@@ -5,6 +5,7 @@ Changes in Release 2.1.3
 [SIDP-276] - Example RDB Connector, quote principal
 [SIDP-277] - Incorrect null check for request context in UsernamePasswordServlet
 [SIDP-280] - when an Idp has no outside (WAN) access Idp fails to collect or release attributes
+[SIDP-285] - Use $IDP_SCOPE$ to populate IdP scope in conf-tmpl\attribute-resolver.xml
 
 Changes in Release 2.1.2
 =============================================
