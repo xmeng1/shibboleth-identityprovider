@@ -703,16 +703,16 @@ public class AuthenticationEngine extends HttpServlet {
      * @return subject containing the merged information
      */
     protected Subject mergeSubjects(Subject subject1, Subject subject2) {
+        if (subject1 == null && subject2 == null) {
+            return new Subject();
+        }
+        
         if (subject1 == null) {
             return subject2;
         }
 
         if (subject2 == null) {
             return subject1;
-        }
-
-        if (subject1 == null && subject2 == null) {
-            return new Subject();
         }
 
         Set<Principal> principals = new HashSet<Principal>(3);
