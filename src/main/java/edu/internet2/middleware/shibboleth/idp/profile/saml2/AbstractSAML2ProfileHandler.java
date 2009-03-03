@@ -784,7 +784,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                                 || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                             log.debug("Using attribute {} supporting NameID format {} to create the NameID.", attribute
                                     .getId(), nameIdEncoder.getNameFormat());
-                            return nameIdEncoder.encode(attribute);
+                            NameID nameIdentifier = nameIdEncoder.encode(attribute);
+                            requestContext.setSubjectNameIdentifier(nameIdentifier);
+                            return nameIdentifier;
                         }
                     }
                 }
@@ -903,6 +905,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         /** The response to the SAML request. */
         private StatusResponseType samlResponse;
+        
+        /** The unencrypted NameID for the SAML response. */
+        private NameID unencryptedNameId;
 
         /**
          * Gets the response to the SAML request.
@@ -921,12 +926,29 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         public void setSAMLResponse(StatusResponseType response) {
             samlResponse = response;
         }
+        
+        /**
+         * Gets the unencrypted NameID for the SAML response.
+         * 
+         * @return unencrypted NameID for the SAML response
+         */
+        public NameID getUnencryptedNameId() {
+            return unencryptedNameId;
+        }
+        
+        /**
+         * Sets the unencrypted NameID for the SAML response.
+         * 
+         * @param id unencrypted NameID for the SAML response
+         */
+        public void setUnencryptedNameId(NameID id) {
+            unencryptedNameId = id;
+        }
 
         /** {@inheritDoc} */
         public String toString() {
             StringBuilder entryString = new StringBuilder(super.toString());
 
-            NameID nameIdentifier = null;
             StringBuilder assertionIds = new StringBuilder();
 
             if (samlResponse instanceof Response) {
@@ -935,18 +957,12 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     for (Assertion assertion : assertions) {
                         assertionIds.append(assertion.getID());
                         assertionIds.append(",");
-
-                        if (nameIdentifier == null) {
-                            if (assertion.getSubject() != null) {
-                                nameIdentifier = assertion.getSubject().getNameID();
-                            }
-                        }
                     }
                 }
             }
 
-            if (nameIdentifier != null) {
-                entryString.append(nameIdentifier.getValue());
+            if (unencryptedNameId != null) {
+                entryString.append(unencryptedNameId.getValue());
             }
             entryString.append("|");
 
