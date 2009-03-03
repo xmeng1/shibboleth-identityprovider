@@ -126,7 +126,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             List<Pair<String, String>> queryParams) {
        
         String requestContext = DatatypeHelper.safeTrimOrNullString(request.getContextPath());
-        if(request == null){
+        if(requestContext == null){
             requestContext = "/";
         }
         request.setAttribute("actionUrl", requestContext + request.getServletPath());
