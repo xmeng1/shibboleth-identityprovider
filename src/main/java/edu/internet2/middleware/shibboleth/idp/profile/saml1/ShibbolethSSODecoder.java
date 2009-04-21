@@ -18,7 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml1;
 
 import org.joda.time.DateTime;
 import org.joda.time.chrono.ISOChronology;
-import org.opensaml.common.SAMLObject;
 import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.saml1.binding.decoding.BaseSAML1MessageDecoder;
@@ -41,7 +40,7 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
 
     /** Constructor. */
     public ShibbolethSSODecoder(){
-        super(null);
+        super();
     }
     
     /** {@inheritDoc} */
