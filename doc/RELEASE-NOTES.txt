@@ -8,6 +8,7 @@ Changes in Release 2.1.3
 [SIDP-280] - when an Idp has no outside (WAN) access Idp fails to collect or release attributes
 [SIDP-285] - Use $IDP_SCOPE$ to populate IdP scope in conf-tmpl\attribute-resolver.xml
 [SIDP-291] - Update libs for 2.1.3 release
+[SIDP-306] - Remove ClientCertAuth rule from SAML 2 SSO SecurityPolicy in relying-party.xml
 
 Changes in Release 2.1.2
 =============================================
