@@ -72,6 +72,9 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Parameter name to indicate login failure. */
     private final String failureParam = "loginFailed";
+    
+    /** Parameter name to indicate the login credentials should be stored in the Subject private credential set. */
+    private final String storeCredentials = "storeCredentialsInSubject";
 
     /** HTTP request parameter containing the user name. */
     private final String usernameAttribute = "j_username";
@@ -92,6 +95,10 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
         }
         if(!loginPage.startsWith("/")){
             loginPage = "/" + loginPage;
+        }
+        
+        if(getInitParameter(storeCredentials) != null){
+            storeCredentialsInSubject = Boolean.parseBoolean(getInitParameter(storeCredentials));
         }
     }
 
