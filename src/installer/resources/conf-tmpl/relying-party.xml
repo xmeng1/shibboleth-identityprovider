@@ -60,7 +60,7 @@
                               signResponses="conditional"
                               signAssertions="never" 
                               encryptAssertions="conditional"
-                              encryptNameIds="conditional" />
+                              encryptNameIds="never" />
         
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
                               assertionLifetime="300000"
@@ -68,13 +68,13 @@
                               signResponses="conditional"
                               signAssertions="never"
                               encryptAssertions="conditional"
-                              encryptNameIds="conditional" />
+                              encryptNameIds="never" />
         
         <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" 
                               signResponses="conditional"
                               signAssertions="never"
                               encryptAssertions="conditional"
-                              encryptNameIds="conditional"/>
+                              encryptNameIds="never"/>
         
     </DefaultRelyingParty>
         

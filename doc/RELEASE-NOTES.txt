@@ -9,6 +9,7 @@ Changes in Release 2.1.3
 [SIDP-285] - Use $IDP_SCOPE$ to populate IdP scope in conf-tmpl\attribute-resolver.xml
 [SIDP-291] - Update libs for 2.1.3 release
 [SIDP-306] - Remove ClientCertAuth rule from SAML 2 SSO SecurityPolicy in relying-party.xml
+[SIDP-310] - Change default relying-party.xml settings for SAML 2 profiles' encryptNameIds parameter from "conditional" to "never"
 
 Changes in Release 2.1.2
 =============================================
