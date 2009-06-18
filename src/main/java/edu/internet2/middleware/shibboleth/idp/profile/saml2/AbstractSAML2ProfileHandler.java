@@ -260,6 +260,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             assertion = buildAssertion(requestContext, issueInstant);
             assertion.getStatements().addAll(statements);
             assertion.setSubject(buildSubject(requestContext, subjectConfirmationMethod, issueInstant));
+            
+            postProcessAssertion(requestContext, assertion);
 
             signAssertion(requestContext, assertion);
 
@@ -296,8 +298,34 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
         samlResponse.setStatus(status);
+        
+        postProcessResponse(requestContext, samlResponse);
 
         return samlResponse;
+    }
+
+    /**
+     * Extension point for for subclasses to post-process the Response before it is signed and encoded.
+     * 
+     * @param requestContext the current request context
+     * @param samlResponse the SAML Response being built
+     * 
+     * @throws ProfileException if there was an error processing the response
+     */
+    protected void postProcessResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Response samlResponse) 
+            throws ProfileException {
+    }
+
+    /**
+     * Extension point for for subclasses to post-process the Assertion before it is signed and encrypted.
+     * 
+     * @param requestContext the current request context
+     * @param assertion the SAML Assertion being built
+     * 
+     * @throws ProfileException if there is an error processing the assertion
+     */
+    protected void postProcessAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion) 
+            throws ProfileException {
     }
 
     /**
