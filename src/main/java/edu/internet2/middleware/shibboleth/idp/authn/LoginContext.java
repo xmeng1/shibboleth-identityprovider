@@ -89,6 +89,9 @@ public class LoginContext implements Serializable {
     /** List of request authentication methods. */
     private List<String> requestAuthenticationMethods;
 
+    /** Default authentication method. */
+    private String defaultAuthenticationMethod;
+
     /** Information about the authentication method. */
     private AuthenticationMethodInformation authenticationMethodInformation;
 
@@ -231,6 +234,16 @@ public class LoginContext implements Serializable {
     }
 
     /**
+     * Return the default authentication method URI to use for authenticating
+     * the user. If no default authentication method is set, the result is null.
+     *
+     * @return default authentication method
+     */
+    public synchronized String getDefaultAuthenticationMethod() {
+        return defaultAuthenticationMethod;
+    }
+
+    /**
      * Gets the {@link edu.internet2.middleware.shibboleth.idp.session.Session} ID.
      * 
      * @return the Session id
@@ -357,6 +370,15 @@ public class LoginContext implements Serializable {
      */
     public synchronized void setPassiveAuthRequired(boolean passive) {
         passiveAuth = passive;
+    }
+
+    /**
+     * Sets the default authentication method to use.
+     *
+     * @param defaultAuthenticationMethod default authentication method to use.
+     */
+    public synchronized void setDefaultAuthenticationMethod(String defaultAuthenticationMethod) {
+        this.defaultAuthenticationMethod = defaultAuthenticationMethod;
     }
 
     /**
