@@ -316,6 +316,10 @@ public class AuthenticationEngine extends HttpServlet {
                 loginHandler = possibleLoginHandlers.get(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
             } else {
                 possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
+                if (possibleLoginHandlers.isEmpty()) {
+                    LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext.getRelyingPartyId());
+                    throw new AuthenticationException();
+                }
                 Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
                 loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
                 loginHandler = chosenLoginHandler.getValue();
