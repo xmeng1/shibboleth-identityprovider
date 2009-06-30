@@ -246,7 +246,15 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
             networkAddress = byteArrayToBitSet(tempAddr.getAddress());
 
             int masklen = Integer.parseInt(netmaskString);
-            int addrlen = networkAddress.length();
+
+            int addrlen;
+            if (tempAddr instanceof Inet4Address) {
+                addrlen = 32;
+            } else if (tempAddr instanceof Inet6Address) {
+                addrlen = 128;
+            }else{
+                throw new UnknownHostException("Unable to determine Inet protocol version");
+            }
 
             // ensure that the netmask isn't too large
             if ((tempAddr instanceof Inet4Address) && (masklen > 32)) {

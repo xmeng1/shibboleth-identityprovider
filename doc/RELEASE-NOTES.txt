@@ -2,6 +2,7 @@ Changes in Release 2.1.3
 =============================================
 [SIDP-247] - Log Exception in UP LoginHandler Servlet
 [SIDP-263] - Suggest adding defaultSigningCredentialRef to the AnonymousRelyingParty element in the default config
+[SIDP-261] - IPAddressLoginHandler addresses comparasion fails
 [SIDP-276] - Example RDB Connector, quote principal
 [SIDP-277] - Incorrect null check for request context in UsernamePasswordServlet
 [SIDP-279] - IdP should log NameID for auditing
