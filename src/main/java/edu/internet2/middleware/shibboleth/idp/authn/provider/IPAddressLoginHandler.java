@@ -80,7 +80,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
                 ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressLoginHandler.IPEntry(
                         addr));
             } catch (UnknownHostException ex) {
-                log.error("IPAddressHandler: Error parsing IP entry \"" + addr + "\". Ignoring.");
+                log.warn("IPAddressHandler: Error parsing IP entry \"" + addr + "\". Ignoring.");
             }
         }
     }
@@ -229,13 +229,13 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
 
             int cidrOffset = entry.indexOf("/");
             if (cidrOffset == -1) {
-                log.error("Invalid entry \"" + entry + "\" -- it lacks a netmask component.");
+                log.warn("Invalid entry \"" + entry + "\" -- it lacks a netmask component.");
                 throw new UnknownHostException("entry lacks a netmask component.");
             }
 
             // ensure that only one "/" is present.
             if (entry.indexOf("/", cidrOffset + 1) != -1) {
-                log.error("Invalid entry \"" + entry + "\" -- too many \"/\" present.");
+                log.warn("Invalid entry \"" + entry + "\" -- too many \"/\" present.");
                 throw new UnknownHostException("entry has too many netmask components.");
             }
 

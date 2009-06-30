@@ -16,6 +16,8 @@
 
 package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
+import java.text.MessageFormat;
+
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -92,38 +94,47 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         ArtifactResolutionRequestContext requestContext = new ArtifactResolutionRequestContext();
         try {
             decodeRequest(requestContext, inTransport, outTransport);
-            
+
             if (requestContext.getProfileConfiguration() == null) {
-                log.error("SAML 2 Artifact Resolve profile is not configured for relying party "
-                        + requestContext.getInboundMessageIssuer());
-                requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
-                        "SAML 2 Artifact Resolve profile is not configured for relying party "
-                                + requestContext.getInboundMessageIssuer()));
-                throw new ProfileException("SAML 2 Artifact Resolve profile is not configured for relying party "
-                        + requestContext.getInboundMessageIssuer());
+                String msg = MessageFormat.format(
+                        "SAML 2 Artifact Resolve profile is not configured for relying party '{}'", requestContext
+                                .getInboundMessageIssuer());
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI, msg));
+                log.warn(msg);
+                throw new ProfileException(msg);
             }
 
             checkSamlVersion(requestContext);
 
             SAMLArtifactMapEntry artifactEntry = artifactMap.get(requestContext.getArtifact());
             if (artifactEntry == null || artifactEntry.isExpired()) {
-                log.error("Unknown artifact.");
-                requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
-                        "Unknown artifact."));
+                String msg = MessageFormat.format("Unknown artifact '{}' from relying party '{}'", requestContext
+                        .getArtifact(), requestContext.getInboundMessageIssuer());
+                log.error(msg);
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI, msg));
             }
 
             if (!artifactEntry.getIssuerId().equals(requestContext.getLocalEntityId())) {
-                log.error("Artifact issuer mismatch.  Artifact issued by " + artifactEntry.getIssuerId()
-                        + " but IdP has entity ID of " + requestContext.getLocalEntityId());
-                requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
-                        "Artifact issuer mismatch."));
+                String msg = MessageFormat.format(
+                        "Artifact issuer mismatch.  Artifact issued by '{}' but IdP has entity ID of '{}'",
+                        artifactEntry.getIssuerId(), requestContext.getLocalEntityId());
+                log.warn(msg);
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI, msg));
+                return;
             }
 
             if (!artifactEntry.getRelyingPartyId().equals(requestContext.getInboundMessageIssuer())) {
-                log.error("Artifact requester mismatch.  Artifact was issued to " + artifactEntry.getRelyingPartyId()
-                        + " but was resolve request came from " + requestContext.getInboundMessageIssuer());
-                requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI,
-                        "Artifact requester mismatch."));
+                String msg = MessageFormat
+                        .format(
+                                "Artifact requester mismatch. Artifact was issued to '{}' but the resolve request came from '{}'",
+                                artifactEntry.getRelyingPartyId(), requestContext.getInboundMessageIssuer());
+                log.warn(msg);
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI, msg));
+                return;
             }
 
             // create the SAML response
@@ -152,7 +163,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
      */
     protected void decodeRequest(ArtifactResolutionRequestContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Decoding message with decoder binding {}", getInboundBinding());
+        log.debug("Decoding message with decoder binding '{}'", getInboundBinding());
 
         requestContext.setCommunicationProfileId(getProfileId());
 
@@ -171,16 +182,17 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
-            log.debug("Decoded request");
+            log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessageIssuer());
         } catch (MessageDecodingException e) {
-            log.error("Error decoding artifact resolve message", e);
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error decoding message"));
-            throw new ProfileException("Error decoding artifact resolve message");
+            String msg = "Error decoding artifact resolve message";
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, msg));
+            log.warn(msg, e);
+            throw new ProfileException(msg);
         } catch (SecurityException e) {
-            log.error("Message did not meet security requirements", e);
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
-                    "Message did not meet security requirements"));
-            throw new ProfileException("Message did not meet security requirements", e);
+            String msg = "Message did not meet security requirements";
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI, msg));
+            log.warn(msg, e);
+            throw new ProfileException(msg, e);
         } finally {
             populateRequestContext(requestContext);
         }
@@ -224,7 +236,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
      */
     protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         ArtifactResolve samlMessage = (ArtifactResolve) requestContext.getInboundSAMLMessage();
-        if(samlMessage != null && samlMessage.getArtifact() != null){
+        if (samlMessage != null && samlMessage.getArtifact() != null) {
             ((ArtifactResolutionRequestContext) requestContext).setArtifact(samlMessage.getArtifact().getArtifact());
         }
     }
@@ -299,7 +311,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
         return samlResponse;
     }
 
-    /** Represents the internal state of a SAML 2.0 Artiface resolver request while it's being processed by the IdP. */
+    /** Represents the internal state of a SAML 2.0 Artifact resolver request while it's being processed by the IdP. */
     public class ArtifactResolutionRequestContext extends
             BaseSAML2ProfileRequestContext<ArtifactResolve, ArtifactResponse, ArtifactResolutionConfiguration>
             implements SAML2ArtifactMessageContext<ArtifactResolve, ArtifactResponse, NameID> {

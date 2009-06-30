@@ -105,7 +105,7 @@ public class PreviousSessionLoginHandler extends AbstractLoginHandler {
         
         Session idpSession = (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         if(idpSession == null){
-            log.error("No existing IdP session available.");
+            log.warn("No existing IdP session available.");
             httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY, "No existing IdP session available");
         }else{
             log.debug("Using existing IdP session for {}", idpSession.getPrincipalName());

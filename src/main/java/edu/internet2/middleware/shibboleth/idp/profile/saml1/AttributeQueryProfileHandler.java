@@ -164,11 +164,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
                 throw new ProfileException("Invalid SAML Attribute Request message.");
             }
         } catch (MessageDecodingException e) {
-            log.error("Error decoding attribute query message", e);
+            log.warn("Error decoding attribute query message", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error decoding message"));
             throw new ProfileException("Error decoding attribute query message", e);
         } catch (SecurityException e) {
-            log.error("Message did not meet security requirements", e);
+            log.warn("Message did not meet security requirements", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
                     "Message did not meet security requirements"));
             throw new ProfileException("Message did not meet security policy requirements", e);

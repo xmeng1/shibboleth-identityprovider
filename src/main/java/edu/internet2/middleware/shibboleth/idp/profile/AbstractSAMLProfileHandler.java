@@ -499,7 +499,7 @@ public abstract class AbstractSAMLProfileHandler extends
 
             Endpoint endpoint = requestContext.getPeerEntityEndpoint();
             if (endpoint == null) {
-                log.error("No peer endpoint available for peer. Unable to send response.");
+                log.warn("No peer endpoint available for peer. Unable to send response.");
                 throw new ProfileException("No peer endpoint available for peer. Unable to send response.");
             }
 

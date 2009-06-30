@@ -207,7 +207,7 @@ public class AuthenticationEngine extends HttpServlet {
         LOG.debug("Returning control to authentication engine");
         LoginContext loginContext = retrieveLoginContext(httpRequest, false);
         if (loginContext == null) {
-            LOG.error("No login context available, unable to return to authentication engine");
+            LOG.warn("No login context available, unable to return to authentication engine");
             forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
         } else {
             forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
@@ -391,7 +391,7 @@ public class AuthenticationEngine extends HttpServlet {
         }
 
         if (supportedLoginHandlers.isEmpty()) {
-            LOG.error("No authentication method, requested by the service provider, is supported");
+            LOG.warn("No authentication method, requested by the service provider, is supported");
             throw new AuthenticationException(
                     "No authentication method, requested by the service provider, is supported");
         }
@@ -472,7 +472,7 @@ public class AuthenticationEngine extends HttpServlet {
                 loginHandlers);
 
         if (loginHandlers.isEmpty()) {
-            LOG.error("Passive authentication required but no login handlers available to support it");
+            LOG.warn("Passive authentication required but no login handlers available to support it");
             throw new PassiveAuthenticationException();
         }
     }

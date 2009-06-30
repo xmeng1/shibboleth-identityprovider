@@ -134,7 +134,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         AuthnContextComparisonTypeEnumeration comparator = authnContext.getComparison();
         if (comparator != null && comparator != AuthnContextComparisonTypeEnumeration.EXACT) {
             Logger log = LoggerFactory.getLogger(Saml2LoginContext.class);
-            log.error("Unsupported comparision operator ( " + comparator
+            log.warn("Unsupported comparision operator ( " + comparator
                     + ") in RequestedAuthnContext. Only exact comparisions are supported.");
             return requestedMethods;
         }
