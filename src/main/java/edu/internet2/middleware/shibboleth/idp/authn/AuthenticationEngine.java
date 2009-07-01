@@ -625,6 +625,11 @@ public class AuthenticationEngine extends HttpServlet {
                     .getAttemptedAuthnMethod(), errorMessage);
             throw new AuthenticationException(errorMessage);
         }
+        
+        AuthenticationException authnException = (AuthenticationException) httpRequest.getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY);
+        if(authnException != null){
+            throw authnException;
+        }
 
         Subject subject = (Subject) httpRequest.getAttribute(LoginHandler.SUBJECT_KEY);
         Principal principal = (Principal) httpRequest.getAttribute(LoginHandler.PRINCIPAL_KEY);
