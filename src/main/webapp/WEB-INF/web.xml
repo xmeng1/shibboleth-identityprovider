@@ -43,6 +43,17 @@
         <url-pattern>/profile/*</url-pattern>
     </servlet-mapping>
     
+    <servlet>
+        <servlet-name>Status</servlet-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.StatusServlet</servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>Status</servlet-name>
+        <url-pattern>/status</url-pattern>
+    </servlet-mapping>
+    
     <!-- Send request to the EntityID to the SAML metadata handler. -->
     <servlet>
         <servlet-name>shibboleth_jsp</servlet-name>
