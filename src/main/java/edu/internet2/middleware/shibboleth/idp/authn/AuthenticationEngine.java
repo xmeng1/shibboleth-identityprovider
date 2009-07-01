@@ -353,9 +353,16 @@ public class AuthenticationEngine extends HttpServlet {
                             .getRelyingPartyId());
                     throw new AuthenticationException();
                 }
-                Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
-                loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
-                loginHandler = chosenLoginHandler.getValue();
+
+                if (loginContext.getDefaultAuthenticationMethod() != null
+                        && possibleLoginHandlers.containsKey(loginContext.getDefaultAuthenticationMethod())) {
+                    loginHandler = possibleLoginHandlers.get(loginContext.getDefaultAuthenticationMethod());
+                    loginContext.setAttemptedAuthnMethod(loginContext.getDefaultAuthenticationMethod());
+                } else {
+                    Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
+                    loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
+                    loginHandler = chosenLoginHandler.getValue();
+                }
             }
 
             // Send the request to the login handler
