@@ -95,7 +95,7 @@ public class StatusServlet extends HttpServlet {
     protected void printOperatingEnvironmentInformation(PrintWriter out) {
         Runtime runtime = Runtime.getRuntime();
 
-        out.println("Operating Environment Information");
+        out.println("### Operating Environment Information");
         out.println("operating_system: " + System.getProperty("os.name"));
         out.println("operating_system_version: " + System.getProperty("os.version"));
         out.println("operating_system_architecture: " + System.getProperty("os.arch"));
@@ -115,7 +115,7 @@ public class StatusServlet extends HttpServlet {
     protected void printIdPInformation(PrintWriter out) {
         Package pkg = Version.class.getPackage();
 
-        out.println("Identity Provider Information");
+        out.println("### Identity Provider Information");
         out.println("idp_version: " + pkg.getImplementationVersion());
         out.println("idp_start_time: " + startTime.toString(dateFormat));
         try {
@@ -135,7 +135,7 @@ public class StatusServlet extends HttpServlet {
      * @param relyingPartyId entity ID of the relying party whose configuration should be printed
      */
     protected void printRelyingPartyConfigurationsInformation(PrintWriter out, String relyingPartyId) {
-        out.println("Relying Party Configurations");
+        out.println("### Relying Party Configurations");
 
         if (relyingPartyId == null) {
             for (RelyingPartyConfiguration config : rpConfigManager.getRelyingPartyConfigurations().values()) {
