@@ -27,7 +27,7 @@
 				<td><input name="j_password" type="password" tabindex="2" /></td>
 			</tr>
 			<tr>
-				<td rowspan="2"><input type="submit" value="Login" tabindex="3" /></td>
+				<td colspan="2"><input type="submit" value="Login" tabindex="3" /></td>
 			</tr>
 		</table>
 		</form>
