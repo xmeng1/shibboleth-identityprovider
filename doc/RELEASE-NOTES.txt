@@ -10,6 +10,7 @@ Changes in Release 2.1.3
 [SIDP-291] - Update libs for 2.1.3 release
 [SIDP-306] - Remove ClientCertAuth rule from SAML 2 SSO SecurityPolicy in relying-party.xml
 [SIDP-310] - Change default relying-party.xml settings for SAML 2 profiles' encryptNameIds parameter from "conditional" to "never"
+[SIDP-315] - Credential provided by UsernamePasswordLogin handler as attribute
 [SIDP-318] - IdP erroneously logs many normal events as errors
 [SIDP-322] - Exception thrown when SP requests a particular authentication method that is not configured
 

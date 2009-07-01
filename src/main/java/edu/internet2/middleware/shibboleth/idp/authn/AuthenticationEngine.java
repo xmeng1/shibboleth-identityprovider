@@ -61,6 +61,18 @@ import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationIm
 /** Manager responsible for handling authentication requests. */
 public class AuthenticationEngine extends HttpServlet {
 
+    /**
+     * Name of the Servlet config init parameter that indicates whether the public credentials of a {@link Subject} are
+     * retained after authentication.
+     */
+    public static final String RETAIN_PUBLIC_CREDENTIALS = "retainSubjectsPublicCredentials";
+
+    /**
+     * Name of the Servlet config init parameter that indicates whether the private credentials of a {@link Subject} are
+     * retained after authentication.
+     */
+    public static final String RETAIN_PRIVATE_CREDENTIALS = "retainSubjectsPrivateCredentials";
+
     /** Name of the Servlet config init parameter that holds the partition name for login contexts. */
     public static final String LOGIN_CONTEXT_PARTITION_NAME_INIT_PARAM_NAME = "loginContextPartitionName";
 
@@ -91,6 +103,12 @@ public class AuthenticationEngine extends HttpServlet {
     /** ID generator. */
     private static IdentifierGenerator idGen;
 
+    /** Whether the public credentials of a {@link Subject} are retained after authentication. */
+    private boolean retainSubjectsPublicCredentials;
+
+    /** Whether the private credentials of a {@link Subject} are retained after authentication. */
+    private boolean retainSubjectsPrivateCredentials;
+
     /** Profile handler manager. */
     private IdPProfileHandlerManager handlerManager;
 
@@ -100,6 +118,20 @@ public class AuthenticationEngine extends HttpServlet {
     /** {@inheritDoc} */
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+
+        String retain = DatatypeHelper.safeTrimOrNullString(config.getInitParameter(RETAIN_PRIVATE_CREDENTIALS));
+        if (retain != null) {
+            retainSubjectsPrivateCredentials = Boolean.parseBoolean(retain);
+        } else {
+            retainSubjectsPrivateCredentials = false;
+        }
+
+        retain = DatatypeHelper.safeTrimOrNullString(config.getInitParameter(RETAIN_PUBLIC_CREDENTIALS));
+        if (retain != null) {
+            retainSubjectsPublicCredentials = Boolean.parseBoolean(retain);
+        } else {
+            retainSubjectsPublicCredentials = false;
+        }
 
         String handlerManagerId = config.getInitParameter("handlerManagerId");
         if (DatatypeHelper.isEmpty(handlerManagerId)) {
@@ -317,7 +349,8 @@ public class AuthenticationEngine extends HttpServlet {
             } else {
                 possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
                 if (possibleLoginHandlers.isEmpty()) {
-                    LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext.getRelyingPartyId());
+                    LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext
+                            .getRelyingPartyId());
                     throw new AuthenticationException();
                 }
                 Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
@@ -577,7 +610,7 @@ public class AuthenticationEngine extends HttpServlet {
     protected void validateSuccessfulAuthentication(LoginContext loginContext, HttpServletRequest httpRequest,
             String authenticationMethod) throws AuthenticationException {
         LOG.debug("Validating authentication was performed successfully");
-        
+
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
         if (errorMessage != null) {
@@ -699,7 +732,11 @@ public class AuthenticationEngine extends HttpServlet {
     }
 
     /**
-     * Merges the principals and public and private credentials from two subjects into a new subject.
+     * Merges the two {@link Subject}s in to a new {@link Subject}. The new subjects contains all the {@link Principal}s
+     * from both subjects. If {@link #retainSubjectsPrivateCredentials} is true then the new subject will contain all
+     * the private credentials from both subjects, if not the new subject will not contain private credentials. If
+     * {@link #retainSubjectsPublicCredentials} is true then the new subject will contain all the public credentials
+     * from both subjects, if not the new subject will not contain public credentials.
      * 
      * @param subject1 first subject to merge, may be null
      * @param subject2 second subject to merge, may be null
@@ -710,7 +747,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (subject1 == null && subject2 == null) {
             return new Subject();
         }
-        
+
         if (subject1 == null) {
             return subject2;
         }
@@ -724,12 +761,18 @@ public class AuthenticationEngine extends HttpServlet {
         principals.addAll(subject2.getPrincipals());
 
         Set<Object> publicCredentials = new HashSet<Object>(3);
-        publicCredentials.addAll(subject1.getPublicCredentials());
-        publicCredentials.addAll(subject2.getPublicCredentials());
+        if (retainSubjectsPublicCredentials) {
+            LOG.debug("Merging in subjects public credentials");
+            publicCredentials.addAll(subject1.getPublicCredentials());
+            publicCredentials.addAll(subject2.getPublicCredentials());
+        }
 
         Set<Object> privateCredentials = new HashSet<Object>(3);
-        privateCredentials.addAll(subject1.getPrivateCredentials());
-        privateCredentials.addAll(subject2.getPrivateCredentials());
+        if (retainSubjectsPrivateCredentials) {
+            LOG.debug("Merging in subjects private credentials");
+            privateCredentials.addAll(subject1.getPrivateCredentials());
+            privateCredentials.addAll(subject2.getPrivateCredentials());
+        }
 
         return new Subject(false, principals, publicCredentials, privateCredentials);
     }

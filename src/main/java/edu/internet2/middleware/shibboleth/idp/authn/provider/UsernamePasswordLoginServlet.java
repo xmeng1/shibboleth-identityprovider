@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 [University Corporation for Advanced Internet Development, Inc.
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 
 /**
- * This Servlet should be protected by a filter which populates REMOTE_USER. The Servlet will then set the remote user
- * field in a LoginContext.
+ * This Servlet authenticates a user via JAAS. The user's credential is always added to the returned {@link Subject} as
+ * a {@link UsernamePasswordCredential} within the subject's private credentials.
  */
 public class UsernamePasswordLoginServlet extends HttpServlet {
 
@@ -54,9 +54,6 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginServlet.class);
-
-    /** Whether to store a user's credentials within the {@link Subject}. */
-    private boolean storeCredentialsInSubject;
 
     /** Name of JAAS configuration used to authenticate users. */
     private String jaasConfigName = "ShibUserPassAuth";
@@ -72,9 +69,6 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Parameter name to indicate login failure. */
     private final String failureParam = "loginFailed";
-    
-    /** Parameter name to indicate the login credentials should be stored in the Subject private credential set. */
-    private final String storeCredentials = "storeCredentialsInSubject";
 
     /** HTTP request parameter containing the user name. */
     private final String usernameAttribute = "j_username";
@@ -85,20 +79,16 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     /** {@inheritDoc} */
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        
+
         if (getInitParameter(jaasInitParam) != null) {
             jaasConfigName = getInitParameter(jaasInitParam);
         }
-        
+
         if (getInitParameter(loginPageInitParam) != null) {
             loginPage = getInitParameter(loginPageInitParam);
         }
-        if(!loginPage.startsWith("/")){
+        if (!loginPage.startsWith("/")) {
             loginPage = "/" + loginPage;
-        }
-        
-        if(getInitParameter(storeCredentials) != null){
-            storeCredentialsInSubject = Boolean.parseBoolean(getInitParameter(storeCredentials));
         }
     }
 
@@ -131,26 +121,26 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      */
     protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response,
             List<Pair<String, String>> queryParams) {
-       
+
         String requestContext = DatatypeHelper.safeTrimOrNullString(request.getContextPath());
-        if(requestContext == null){
+        if (requestContext == null) {
             requestContext = "/";
         }
         request.setAttribute("actionUrl", requestContext + request.getServletPath());
 
-        if(queryParams != null){
-            for(Pair<String, String> param : queryParams){
+        if (queryParams != null) {
+            for (Pair<String, String> param : queryParams) {
                 request.setAttribute(param.getFirst(), param.getSecond());
             }
         }
-        
+
         try {
             request.getRequestDispatcher(loginPage).forward(request, response);
             log.debug("Redirecting to login page {}", loginPage);
         } catch (IOException ex) {
             log.error("Unable to redirect to login page.", ex);
-        }catch (ServletException ex){
-            log.error("Unable to redirect to login page.", ex);            
+        } catch (ServletException ex) {
+            log.error("Unable to redirect to login page.", ex);
         }
     }
 
@@ -187,9 +177,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             Set<Object> publicCredentials = loginSubject.getPublicCredentials();
 
             Set<Object> privateCredentials = loginSubject.getPrivateCredentials();
-            if (storeCredentialsInSubject) {
-                privateCredentials.add(new UsernamePasswordCredential(username, password));
-            }
+            privateCredentials.add(new UsernamePasswordCredential(username, password));
 
             Subject userSubject = new Subject(false, principals, publicCredentials, privateCredentials);
             request.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);

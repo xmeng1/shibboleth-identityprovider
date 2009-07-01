@@ -41,35 +41,31 @@
     <servlet-mapping>
         <servlet-name>ProfileRequestDispatcher</servlet-name>
         <url-pattern>/profile/*</url-pattern>
-    </servlet-mapping>
-    
-    <servlet>
-        <servlet-name>Status</servlet-name>
-        <servlet-class>edu.internet2.middleware.shibboleth.idp.StatusServlet</servlet-class>
-        <load-on-startup>2</load-on-startup>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>Status</servlet-name>
-        <url-pattern>/status</url-pattern>
-    </servlet-mapping>
-    
-    <!-- Send request to the EntityID to the SAML metadata handler. -->
-    <servlet>
-        <servlet-name>shibboleth_jsp</servlet-name>
-        <jsp-file>/shibboleth.jsp</jsp-file>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>shibboleth_jsp</servlet-name>
-        <url-pattern>/shibboleth</url-pattern>
     </servlet-mapping> 
 
     <!-- Authentication Engine Entry Point -->
     <servlet>
         <servlet-name>AuthenticationEngine</servlet-name>
         <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine</servlet-class>
+        
+        <!-- Whether public credentials returned by a login handler are retained in the subject. -->
+        <!--
+        <init-param>
+            <param-name>retainSubjectsPublicCredentials</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        -->
+        
+        <!-- Whether private credentials returned by a login handler are retained in the subject. -->
+        <!--
+        <init-param>
+            <param-name>retainSubjectsPrivateCredentials</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        -->
+        
         <load-on-startup>2</load-on-startup>
+        
     </servlet>
 
     <servlet-mapping>
@@ -99,6 +95,30 @@
     <servlet-mapping>
         <servlet-name>UsernamePasswordAuthHandler</servlet-name>
         <url-pattern>/Authn/UserPassword</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Servlet for displaying IdP status. -->
+    <servlet>
+        <servlet-name>Status</servlet-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.StatusServlet</servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>Status</servlet-name>
+        <url-pattern>/status</url-pattern>
+    </servlet-mapping>
+    
+        
+    <!-- Send request to the EntityID to the SAML metadata handler. -->
+    <servlet>
+        <servlet-name>shibboleth_jsp</servlet-name>
+        <jsp-file>/shibboleth.jsp</jsp-file>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>shibboleth_jsp</servlet-name>
+        <url-pattern>/shibboleth</url-pattern>
     </servlet-mapping>
     
     <error-page>
