@@ -74,6 +74,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /** SAML 2.0 SSO request profile handler. */
 public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
@@ -99,13 +100,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** Builder of Endpoint objects. */
     private SAMLObjectBuilder<Endpoint> endpointBuilder;
 
-    /** URL of the authentication manager servlet. */
+    /** URL of the authentication manager Servlet. */
     private String authenticationManagerPath;
 
     /**
      * Constructor.
      * 
-     * @param authnManagerPath path to the authentication manager servlet
+     * @param authnManagerPath path to the authentication manager Servlet
      */
     @SuppressWarnings("unchecked")
     public SSOProfileHandler(String authnManagerPath) {
@@ -134,9 +135,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
-        HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
-        LoginContext loginContext = (LoginContext) servletRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(httpRequest);
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
@@ -180,7 +181,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(servletRequest));
             loginContext.setDefaultAuthenticationMethod(rpConfig.getDefaultAuthenticationMethod());
             
-            servletRequest.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+            HttpServletHelper.bindLoginContext(loginContext, servletRequest);
             RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
         } catch (MarshallingException e) {
@@ -206,10 +207,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-
-        Saml2LoginContext loginContext = (Saml2LoginContext) servletRequest
-                .getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        Saml2LoginContext loginContext = (Saml2LoginContext) HttpServletHelper.getLoginContext(httpRequest);
+        
         SSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
         checkSamlVersion(requestContext);

@@ -19,7 +19,6 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +31,7 @@ import java.util.Map.Entry;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -39,8 +39,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
-import org.opensaml.common.IdentifierGenerator;
-import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.ws.transport.http.HTTPTransportUtils;
@@ -57,6 +55,7 @@ import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationImpl;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /** Manager responsible for handling authentication requests. */
 public class AuthenticationEngine extends HttpServlet {
@@ -90,18 +89,12 @@ public class AuthenticationEngine extends HttpServlet {
 
     /** Class logger. */
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationEngine.class);
+    
+    //TODO remove once HttpServletHelper does redirects
+    private static ServletContext context;
 
     /** Storage service used to store {@link LoginContext}s while authentication is in progress. */
     private static StorageService<String, LoginContextEntry> storageService;
-
-    /** Name of the storage service partition used to store login contexts. */
-    private static String loginContextPartitionName;
-
-    /** Lifetime of stored login contexts. */
-    private static long loginContextEntryLifetime;
-
-    /** ID generator. */
-    private static IdentifierGenerator idGen;
 
     /** Whether the public credentials of a {@link Subject} are retained after authentication. */
     private boolean retainSubjectsPublicCredentials;
@@ -133,100 +126,11 @@ public class AuthenticationEngine extends HttpServlet {
             retainSubjectsPublicCredentials = false;
         }
 
-        String handlerManagerId = config.getInitParameter("handlerManagerId");
-        if (DatatypeHelper.isEmpty(handlerManagerId)) {
-            handlerManagerId = "shibboleth.HandlerManager";
-        }
-        handlerManager = (IdPProfileHandlerManager) getServletContext().getAttribute(handlerManagerId);
-
-        String sessionManagerId = config.getInitParameter("sessionManagedId");
-        if (DatatypeHelper.isEmpty(sessionManagerId)) {
-            sessionManagerId = "shibboleth.SessionManager";
-        }
-        sessionManager = (SessionManager<Session>) getServletContext().getAttribute(sessionManagerId);
-
-        String storageServiceId = config.getInitParameter("storageServiceId");
-        if (DatatypeHelper.isEmpty(storageServiceId)) {
-            storageServiceId = "shibboleth.StorageService";
-        }
-        storageService = (StorageService<String, LoginContextEntry>) getServletContext().getAttribute(storageServiceId);
-
-        String partitionName = DatatypeHelper.safeTrimOrNullString(config
-                .getInitParameter(LOGIN_CONTEXT_PARTITION_NAME_INIT_PARAM_NAME));
-        if (partitionName != null) {
-            loginContextPartitionName = partitionName;
-        } else {
-            loginContextPartitionName = "loginContexts";
-        }
-
-        String lifetime = DatatypeHelper.safeTrimOrNullString(config
-                .getInitParameter(LOGIN_CONTEXT_LIFETIME_INIT_PARAM_NAME));
-        if (lifetime != null) {
-            loginContextEntryLifetime = Long.parseLong(lifetime);
-        } else {
-            loginContextEntryLifetime = 1000 * 60 * 30;
-        }
-
-        try {
-            idGen = new SecureRandomIdentifierGenerator();
-        } catch (NoSuchAlgorithmException e) {
-            throw new ServletException("Error create random number generator", e);
-        }
-    }
-
-    /**
-     * Retrieves a login context.
-     * 
-     * @param httpRequest current HTTP request
-     * @param removeFromStorageService whether the login context should be removed from the storage service as it is
-     *            retrieved
-     * 
-     * @return the login context or null if one is not available (e.g. because it has expired)
-     */
-    protected static LoginContext retrieveLoginContext(HttpServletRequest httpRequest, boolean removeFromStorageService) {
-        // When the login context comes from the profile handlers its attached to the request
-        // Prior to the authentication engine handing control over to a login handler it stores
-        // the login context into the storage service so that the login handlers do not have to
-        // maintain a reference to the context and return it to the engine.
-        LoginContext loginContext = (LoginContext) httpRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        if (loginContext != null) {
-            LOG.trace("Login context retrieved from HTTP request attribute");
-            return loginContext;
-        }
-
-        String contextId = DatatypeHelper.safeTrimOrNullString((String) httpRequest
-                .getAttribute(LOGIN_CONTEXT_KEY_NAME));
-
-        if (contextId == null) {
-            Cookie[] requestCookies = httpRequest.getCookies();
-            if (requestCookies != null) {
-                for (Cookie requestCookie : requestCookies) {
-                    if (DatatypeHelper.safeEquals(requestCookie.getName(), LOGIN_CONTEXT_KEY_NAME)) {
-                        LOG.trace("Located cookie with login context key");
-                        contextId = requestCookie.getValue();
-                        break;
-                    }
-                }
-            }
-        }
-
-        LOG.trace("Using login context key {} to look up login context", contextId);
-        LoginContextEntry entry;
-        if (removeFromStorageService) {
-            entry = storageService.remove(loginContextPartitionName, contextId);
-        } else {
-            entry = storageService.get(loginContextPartitionName, contextId);
-        }
-        if (entry == null) {
-            LOG.trace("No entry for login context found in storage service.");
-            return null;
-        } else if (entry.isExpired()) {
-            LOG.trace("Login context entry found in storage service but it was expired.");
-            return null;
-        } else {
-            LOG.trace("Login context entry found in storage service.");
-            return entry.getLoginContext();
-        }
+        handlerManager = HttpServletHelper.getProfileHandlerManager(config.getServletContext());
+        sessionManager = HttpServletHelper.getSessionManager(config.getServletContext());
+        storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config.getServletContext());
+        
+        context = config.getServletContext();
     }
 
     /**
@@ -237,7 +141,7 @@ public class AuthenticationEngine extends HttpServlet {
      */
     public static void returnToAuthenticationEngine(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         LOG.debug("Returning control to authentication engine");
-        LoginContext loginContext = retrieveLoginContext(httpRequest, false);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, context, httpRequest);
         if (loginContext == null) {
             LOG.warn("No login context available, unable to return to authentication engine");
             forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
@@ -253,16 +157,17 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
-    public static void returnToProfileHandler(LoginContext loginContext, HttpServletRequest httpRequest,
+    public static void returnToProfileHandler(HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
+        LOG.debug("Returning control to login handler");
+        LoginContext loginContext = HttpServletHelper.unbindLoginContext(storageService, context, httpRequest, httpResponse);
+        if (loginContext == null) {
+            LOG.warn("No login context available, unable to return to profile handler");
+            forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
+        }
+        
+        HttpServletHelper.bindLoginContext(loginContext, httpRequest);
         LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
-        httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
-
-        // Cleanup this cookie
-        Cookie lcKeyCookie = new Cookie(LOGIN_CONTEXT_KEY_NAME, "");
-        lcKeyCookie.setMaxAge(0);
-        httpResponse.addCookie(lcKeyCookie);
-
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
     }
 
@@ -296,7 +201,7 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.error("HTTP Response already committed");
         }
 
-        LoginContext loginContext = retrieveLoginContext(httpRequest, true);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, getServletContext(), httpRequest);
         if (loginContext == null) {
             LOG.error("Incoming request does not have attached login context");
             throw new ServletException("Incoming request does not have attached login context");
@@ -365,15 +270,16 @@ public class AuthenticationEngine extends HttpServlet {
                 }
             }
 
-            // Send the request to the login handler
             LOG.debug("Authenticating user with login handler of type {}", loginHandler.getClass().getName());
             loginContext.setAuthenticationAttempted();
             loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
-            storeLoginContext(loginContext, httpRequest, httpResponse);
+            
+            // Send the request to the login handler
+            HttpServletHelper.bindLoginContext(loginContext, storageService, getServletContext(), httpRequest, httpResponse);
             loginHandler.login(httpRequest, httpResponse);
         } catch (AuthenticationException e) {
             loginContext.setAuthenticationFailure(e);
-            returnToProfileHandler(loginContext, httpRequest, httpResponse);
+            returnToProfileHandler(httpRequest, httpResponse);
         }
     }
 
@@ -522,35 +428,6 @@ public class AuthenticationEngine extends HttpServlet {
     }
 
     /**
-     * Stores the login context in the storage service. The key for the stored login context is then bound to an HTTP
-     * request attribute and set a cookie.
-     * 
-     * @param loginContext login context to store
-     * @param httpRequest current HTTP request
-     * @param httpResponse current HTTP response
-     */
-    protected void storeLoginContext(LoginContext loginContext, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
-        String contextId = idGen.generateIdentifier();
-
-        storageService.put(loginContextPartitionName, contextId, new LoginContextEntry(loginContext,
-                loginContextEntryLifetime));
-
-        httpRequest.setAttribute(LOGIN_CONTEXT_KEY_NAME, contextId);
-
-        Cookie cookie = new Cookie(LOGIN_CONTEXT_KEY_NAME, contextId);
-        String contextPath = httpRequest.getContextPath();
-        if (DatatypeHelper.isEmpty(contextPath)) {
-            cookie.setPath("/");
-        } else {
-            cookie.setPath(contextPath);
-        }
-        cookie.setSecure(httpRequest.isSecure());
-        cookie.setMaxAge(-1);
-        httpResponse.addCookie(cookie);
-    }
-
-    /**
      * Completes the authentication process.
      * 
      * The principal name set by the authentication handler is retrieved and pushed in to the login context, a
@@ -599,7 +476,7 @@ public class AuthenticationEngine extends HttpServlet {
             loginContext.setAuthenticationFailure(e);
         }
 
-        returnToProfileHandler(loginContext, httpRequest, httpResponse);
+        returnToProfileHandler(httpRequest, httpResponse);
     }
 
     /**

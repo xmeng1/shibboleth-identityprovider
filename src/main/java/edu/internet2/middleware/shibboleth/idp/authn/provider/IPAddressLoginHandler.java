@@ -48,9 +48,6 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(IPAddressLoginHandler.class);
 
-    /** The URI of the AuthnContextDeclRef or the AuthnContextClass. */
-    private String authnMethodURI = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol";
-
     /** The username to use for IP-address "authenticated" users. */
     private String username;
 

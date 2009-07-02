@@ -29,15 +29,20 @@ import org.joda.time.DateTime;
 import org.joda.time.chrono.ISOChronology;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.opensaml.xml.util.DatatypeHelper;
+import org.opensaml.xml.security.x509.X509Credential;
+import org.opensaml.xml.util.Base64;
 
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolver;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
-/** A servlet for displaying the status of the IdP. */
+/** A Servlet for displaying the status of the IdP. */
 public class StatusServlet extends HttpServlet {
+
+    /** Serial version UID. */
+    private static final long serialVersionUID = 7917509317276109266L;
 
     /** Formatter used when print date/times. */
     private DateTimeFormatter dateFormat;
@@ -56,24 +61,14 @@ public class StatusServlet extends HttpServlet {
         super.init(config);
 
         dateFormat = ISODateTimeFormat.dateTimeNoMillis();
-
         startTime = new DateTime(ISOChronology.getInstanceUTC());
-
-        String attributeResolverId = config.getInitParameter("attributeResolverId");
-        if (DatatypeHelper.isEmpty(attributeResolverId)) {
-            attributeResolverId = "shibboleth.AttributeResolver";
-        }
-        attributeResolver = (AttributeResolver<?>) getServletContext().getAttribute(attributeResolverId);
-
-        String rpConfigManagerId = config.getInitParameter("rpConfigManagerId");
-        if (DatatypeHelper.isEmpty(rpConfigManagerId)) {
-            rpConfigManagerId = "shibboleth.RelyingPartyConfigurationManager";
-        }
-        rpConfigManager = (RelyingPartyConfigurationManager) getServletContext().getAttribute(rpConfigManagerId);
+        attributeResolver = HttpServletHelper.getAttributeResolver(config.getServletContext());
+        rpConfigManager = HttpServletHelper.getRelyingPartyConfirmationManager(config.getServletContext());
     }
 
     /** {@inheritDoc} */
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("text/plain");
         PrintWriter output = resp.getWriter();
 
         printOperatingEnvironmentInformation(output);
@@ -160,13 +155,20 @@ public class StatusServlet extends HttpServlet {
     protected void printRelyingPartyConfigurationInformation(PrintWriter out, RelyingPartyConfiguration config) {
         out.println("relying_party_id: " + config.getRelyingPartyId());
         out.println("idp_entity_id: " + config.getProviderId());
-
+        
         if (config.getDefaultAuthenticationMethod() != null) {
             out.println("default_authentication_method: " + config.getDefaultAuthenticationMethod());
         } else {
             out.println("default_authentication_method: none");
         }
 
+        try{
+            X509Credential signingCredential = (X509Credential) config.getDefaultSigningCredential();
+            out.println("default_signing_tls_key: " + Base64.encodeBytes(signingCredential.getEntityCertificate().getEncoded(), Base64.DONT_BREAK_LINES));
+        }catch(Throwable t){
+            // swallow error
+        }
+        
         for (String profileId : config.getProfileConfigurations().keySet()) {
             out.println("configured_communication_profile: " + profileId);
         }

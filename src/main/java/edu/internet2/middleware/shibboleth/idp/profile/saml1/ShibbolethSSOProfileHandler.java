@@ -61,6 +61,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.Sh
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /** Shibboleth SSO request profile handler. */
 public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
@@ -114,7 +115,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         log.debug("Processing incoming request");
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        LoginContext loginContext = (LoginContext) httpRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(httpRequest);
 
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
@@ -149,19 +150,20 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         loginContext.setDefaultAuthenticationMethod(rpConfig.getDefaultAuthenticationMethod());
         ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID);
         if (ssoConfig == null) {
-            String msg = MessageFormatter.format("Shibboleth SSO profile is not configured for relying party '{}'", loginContext.getRelyingPartyId());
+            String msg = MessageFormatter.format("Shibboleth SSO profile is not configured for relying party '{}'",
+                    loginContext.getRelyingPartyId());
             log.warn(msg);
             throw new ProfileException(msg);
         }
 
-        httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+        HttpServletHelper.bindLoginContext(loginContext, httpRequest);
 
         try {
             RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(httpRequest, httpResponse);
             return;
         } catch (IOException e) {
-            String msg = "Error forwarding Shibboleth SSO request to AuthenticationManager"; 
+            String msg = "Error forwarding Shibboleth SSO request to AuthenticationManager";
             log.error(msg, e);
             throw new ProfileException(msg, e);
         } catch (ServletException e) {
@@ -203,9 +205,10 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setMessageDecoder(decoder);
         try {
             decoder.decode(requestContext);
-            log.debug("Decoded Shibboleth SSO request from relying party '{}'", requestContext.getInboundMessageIssuer());
+            log.debug("Decoded Shibboleth SSO request from relying party '{}'", requestContext
+                    .getInboundMessageIssuer());
         } catch (MessageDecodingException e) {
-            String msg = "Error decoding Shibboleth SSO request"; 
+            String msg = "Error decoding Shibboleth SSO request";
             log.warn(msg, e);
             throw new ProfileException(msg, e);
         } catch (SecurityException e) {
@@ -235,8 +238,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) httpRequest
-                .getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) HttpServletHelper.getLoginContext(httpRequest);
 
         ShibbolethSSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 

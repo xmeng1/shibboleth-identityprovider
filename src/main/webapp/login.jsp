@@ -1,3 +1,14 @@
+<%@ page import="edu.internet2.middleware.shibboleth.idp.authn.LoginContext" %>
+<%@ page import="edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper" %>
+<%@ page import="org.opensaml.saml2.metadata.*" %>
+
+<%
+   LoginContext loginContext = HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application),
+                                                                 application, request);
+   EntityDescriptor entityDescriptor = HttpServletHelper.getRelyingPartyMetadata(loginContext.getRelyingPartyId(),
+                                                   HttpServletHelper.getRelyingPartyConfirmationManager(application));  
+%>
+
 <html>
 
     <head>
@@ -6,7 +17,7 @@
 
 	<body>
 		<img src="<%= request.getContextPath() %>/images/logo.jpg" />
-		<h2>Shibboleth Identity Provider Login</h2>
+		<h2>Shibboleth Identity Provider Login to <%= entityDescriptor.getEntityID() %></h2>
 		
 		<% if ("true".equals(request.getAttribute("loginFailed"))) { %>
 		<p><font color="red">Authentication Failed</font></p>
