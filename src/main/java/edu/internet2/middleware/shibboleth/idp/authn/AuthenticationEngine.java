@@ -46,6 +46,7 @@ import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
@@ -89,8 +90,8 @@ public class AuthenticationEngine extends HttpServlet {
 
     /** Class logger. */
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationEngine.class);
-    
-    //TODO remove once HttpServletHelper does redirects
+
+    // TODO remove once HttpServletHelper does redirects
     private static ServletContext context;
 
     /** Storage service used to store {@link LoginContext}s while authentication is in progress. */
@@ -128,8 +129,9 @@ public class AuthenticationEngine extends HttpServlet {
 
         handlerManager = HttpServletHelper.getProfileHandlerManager(config.getServletContext());
         sessionManager = HttpServletHelper.getSessionManager(config.getServletContext());
-        storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config.getServletContext());
-        
+        storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config
+                .getServletContext());
+
         context = config.getServletContext();
     }
 
@@ -157,15 +159,15 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
-    public static void returnToProfileHandler(HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
+    public static void returnToProfileHandler(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         LOG.debug("Returning control to login handler");
-        LoginContext loginContext = HttpServletHelper.unbindLoginContext(storageService, context, httpRequest, httpResponse);
+        LoginContext loginContext = HttpServletHelper.unbindLoginContext(storageService, context, httpRequest,
+                httpResponse);
         if (loginContext == null) {
             LOG.warn("No login context available, unable to return to profile handler");
             forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
         }
-        
+
         HttpServletHelper.bindLoginContext(loginContext, httpRequest);
         LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
@@ -273,9 +275,10 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.debug("Authenticating user with login handler of type {}", loginHandler.getClass().getName());
             loginContext.setAuthenticationAttempted();
             loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
-            
+
             // Send the request to the login handler
-            HttpServletHelper.bindLoginContext(loginContext, storageService, getServletContext(), httpRequest, httpResponse);
+            HttpServletHelper.bindLoginContext(loginContext, storageService, getServletContext(), httpRequest,
+                    httpResponse);
             loginHandler.login(httpRequest, httpResponse);
         } catch (AuthenticationException e) {
             loginContext.setAuthenticationFailure(e);
@@ -449,11 +452,17 @@ public class AuthenticationEngine extends HttpServlet {
             // event that it supports multiple methods
             String actualAuthnMethod = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                     .getAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY));
-            if (actualAuthnMethod == null) {
-                actualAuthnMethod = loginContext.getAttemptedAuthnMethod();
+            if (actualAuthnMethod != null) {
+                if (!loginContext.getRequestedAuthenticationMethods().isEmpty()
+                        && !loginContext.getRequestedAuthenticationMethods().contains(actualAuthnMethod)) {
+                    String msg = MessageFormatter.format(
+                                    "Relying patry required an authentication method of '{}' but the login handler performed '{}'",
+                                    loginContext.getRequestedAuthenticationMethods(), actualAuthnMethod);
+                    LOG.error(msg);
+                    throw new AuthenticationException(msg);
+                }
             } else {
-                LOG.debug("Authentication method overriden by LoginHandler.  It was {} and is now {}", loginContext
-                        .getAttemptedAuthnMethod(), actualAuthnMethod);
+                actualAuthnMethod = loginContext.getAttemptedAuthnMethod();
             }
 
             // Check to make sure the login handler did the right thing
@@ -502,9 +511,10 @@ public class AuthenticationEngine extends HttpServlet {
                     .getAttemptedAuthnMethod(), errorMessage);
             throw new AuthenticationException(errorMessage);
         }
-        
-        AuthenticationException authnException = (AuthenticationException) httpRequest.getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY);
-        if(authnException != null){
+
+        AuthenticationException authnException = (AuthenticationException) httpRequest
+                .getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY);
+        if (authnException != null) {
             throw authnException;
         }
 

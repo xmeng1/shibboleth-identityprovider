@@ -2,6 +2,7 @@ Changes in Release 2.1.3
 =============================================
 [SIDP-244] - Error message on invalid ACS could be improved
 [SIDP-247] - Log Exception in UP LoginHandler Servlet
+[SIDP-258] - Authentication Engine does not check to ensure returned authenticaiton mechanism from Login Handler is acceptable to the SP
 [SIDP-263] - Suggest adding defaultSigningCredentialRef to the AnonymousRelyingParty element in the default config
 [SIDP-261] - IPAddressLoginHandler addresses comparison fails
 [SIDP-265] - Distinguish requested AuthMethod and default AuthMethod
