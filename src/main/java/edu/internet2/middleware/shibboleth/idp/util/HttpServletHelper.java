@@ -137,9 +137,8 @@ public class HttpServletHelper {
      * @param httpRequest the current HTTP request
      * @param httpResponse the current HTTP response
      */
-    public static void bindLoginContext(LoginContext loginContext,
-            StorageService storageService, ServletContext context,
-            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    public static void bindLoginContext(LoginContext loginContext, StorageService storageService,
+            ServletContext context, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         if (storageService == null) {
             throw new IllegalArgumentException("Storage service may not be null");
         }
@@ -278,8 +277,8 @@ public class HttpServletHelper {
      * 
      * @return the login context or null if none is available
      */
-    public static LoginContext getLoginContext(StorageService storageService,
-            ServletContext context, HttpServletRequest httpRequest) {
+    public static LoginContext getLoginContext(StorageService storageService, ServletContext context,
+            HttpServletRequest httpRequest) {
         if (storageService == null) {
             throw new IllegalArgumentException("Storage service may not be null");
         }
@@ -490,6 +489,18 @@ public class HttpServletHelper {
     }
 
     /**
+     * Gets the user session from the request. Retrieving the session in this manner does NOT update the last activity
+     * time of the session.
+     * 
+     * @param httpRequest current request
+     * 
+     * @return the users session, if one exists
+     */
+    public static Session getUserSession(HttpServletRequest httpRequest) {
+        return (Session) httpRequest.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+    }
+
+    /**
      * Unbinds a {@link LoginContext} from the current request. The unbinding results in the destruction of the
      * associated context key cookie and removes the context from the storage service.
      * 
@@ -500,8 +511,8 @@ public class HttpServletHelper {
      * 
      * @return the login context that was unbound or null if there was no bound context
      */
-    public static LoginContext unbindLoginContext(StorageService storageService,
-            ServletContext context, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    public static LoginContext unbindLoginContext(StorageService storageService, ServletContext context,
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         if (storageService == null || context == null || httpRequest == null || httpResponse == null) {
             return null;
         }
@@ -526,12 +537,4 @@ public class HttpServletHelper {
         }
         return null;
     }
-
-    // public static Session getUserSession(ServletContext context, HttpServletRequest request) {
-    //
-    // }
-    //
-    // public static Session getUserSession(ServletContext context, String sessionId) {
-    //
-    // }
 }

@@ -1,12 +1,16 @@
 <%@ page import="edu.internet2.middleware.shibboleth.idp.authn.LoginContext" %>
+<%@ page import="edu.internet2.middleware.shibboleth.idp.session.*" %>
 <%@ page import="edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper" %>
 <%@ page import="org.opensaml.saml2.metadata.*" %>
 
 <%
-   LoginContext loginContext = HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application),
-                                                                 application, request);
-   EntityDescriptor entityDescriptor = HttpServletHelper.getRelyingPartyMetadata(loginContext.getRelyingPartyId(),
-                                                   HttpServletHelper.getRelyingPartyConfirmationManager(application));  
+    LoginContext loginContext = HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application),
+                                                                  application, request);
+                                                                  
+    EntityDescriptor entityDescriptor = HttpServletHelper.getRelyingPartyMetadata(loginContext.getRelyingPartyId(),
+                                                   HttpServletHelper.getRelyingPartyConfirmationManager(application)); 
+                                                    
+    Session userSession = HttpServletHelper.getUserSession(request);
 %>
 
 <html>
@@ -17,7 +21,13 @@
 
 	<body>
 		<img src="<%= request.getContextPath() %>/images/logo.jpg" />
-		<h2>Shibboleth Identity Provider Login to <%= entityDescriptor.getEntityID() %></h2>
+		<h2>Shibboleth Identity Provider Login to Service Provider <%= entityDescriptor.getEntityID() %></h2>
+		<p>
+        Existing Session: <%= userSession != null %><br/>	
+		Requested Authentication Methods: <%= loginContext.getRequestedAuthenticationMethods() %><br/>
+		Attempting Authentication Method: <%= loginContext.getAttemptedAuthnMethod() %> <br/>
+		Is Forced Authentication: <%= loginContext.isForceAuthRequired() %><br/>
+		</p>
 		
 		<% if ("true".equals(request.getAttribute("loginFailed"))) { %>
 		<p><font color="red">Authentication Failed</font></p>

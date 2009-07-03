@@ -160,9 +160,8 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpResponse current HTTP response
      */
     public static void returnToProfileHandler(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-        LOG.debug("Returning control to login handler");
-        LoginContext loginContext = HttpServletHelper.unbindLoginContext(storageService, context, httpRequest,
-                httpResponse);
+        LOG.debug("Returning control to profile handler");
+        LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, context, httpRequest);
         if (loginContext == null) {
             LOG.warn("No login context available, unable to return to profile handler");
             forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
