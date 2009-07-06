@@ -299,9 +299,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             decoder.decode(requestContext);
             log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessageIssuer());
 
-            if (!(requestContext.getInboundMessage() instanceof AuthnRequest)) {
-                log.warn("Incomming message was not a AuthnRequest, it was a '{}'", requestContext.getInboundMessage()
-                        .getClass().getName());
+            if (!(requestContext.getInboundSAMLMessage() instanceof AuthnRequest)) {
+                log.warn("Incomming message was not a AuthnRequest, it was a '{}'",
+                        requestContext.getInboundSAMLMessage().getClass().getName());
                 requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, null,
                         "Invalid SAML AuthnRequest message."));
                 throw new ProfileException("Invalid SAML AuthnRequest message.");
