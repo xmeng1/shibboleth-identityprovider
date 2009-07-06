@@ -27,9 +27,13 @@
     
     <distributionManagement>
         <repository>
-            <id>ssh-repository</id>
-            <url>scpexe://www.internet2.edu/home/htdocs/shibboleth.internet2.edu/downloads/maven2</url>
+            <id>release-repo</id>
+            <url>${dist.release.url}</url>
         </repository>
+        <snapshotRepository>
+            <id>snapshot-repo</id>
+            <url>${dist.snapshot.url}</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <dependencies>
