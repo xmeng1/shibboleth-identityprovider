@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.opensaml.common.IdentifierGenerator;
+import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.saml1.core.NameIdentifier;
@@ -495,23 +496,7 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     protected void encodeResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
         try {
-            SAMLMessageEncoder encoder = null;
-
-            Endpoint endpoint = requestContext.getPeerEntityEndpoint();
-            if (endpoint == null) {
-                log.warn("No peer endpoint available for peer. Unable to send response.");
-                throw new ProfileException("No peer endpoint available for peer. Unable to send response.");
-            }
-
-            if (endpoint != null) {
-                encoder = getMessageEncoders().get(endpoint.getBinding());
-                if (encoder == null) {
-                    log.error("No outbound message encoder configured for binding: {}", requestContext
-                            .getPeerEntityEndpoint().getBinding());
-                    throw new ProfileException("No outbound message encoder configured for binding: "
-                            + requestContext.getPeerEntityEndpoint().getBinding());
-                }
-            }
+            SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
 
             AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
                     .getProfileConfiguration();
@@ -547,6 +532,46 @@ public abstract class AbstractSAMLProfileHandler extends
             throw new ProfileException("Unable to encode response to relying party: "
                     + requestContext.getInboundMessageIssuer(), e);
         }
+    }
+
+    /**
+     * Get the outbound message encoder to use.
+     * 
+     * <p>The default implementation uses the binding URI from the 
+     * {@link SAMLMessageContext#getPeerEntityEndpoint()} to lookup
+     * the encoder from the supported message encoders defined in {@link #getMessageEncoders()}.
+     * </p>
+     * 
+     * <p>
+     * Subclasses may override to implement a different mechanism to determine the 
+     * encoder to use, such as for example cases where an active intermediary actor
+     * sits between this provider and the peer entity endpoint (e.g. the SAML 2 ECP case).
+     * </p>
+     * 
+     * @param requestContext current request context
+     * @return the message encoder to use
+     * @throws ProfileException if the encoder to use can not be resolved based on the request context
+     */
+    protected SAMLMessageEncoder getOutboundMessageEncoder(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        SAMLMessageEncoder encoder = null;
+
+        Endpoint endpoint = requestContext.getPeerEntityEndpoint();
+        if (endpoint == null) {
+            log.warn("No peer endpoint available for peer. Unable to send response.");
+            throw new ProfileException("No peer endpoint available for peer. Unable to send response.");
+        }
+
+        if (endpoint != null) {
+            encoder = getMessageEncoders().get(endpoint.getBinding());
+            if (encoder == null) {
+                log.error("No outbound message encoder configured for binding: {}", requestContext
+                        .getPeerEntityEndpoint().getBinding());
+                throw new ProfileException("No outbound message encoder configured for binding: "
+                        + requestContext.getPeerEntityEndpoint().getBinding());
+            }
+        }
+        return encoder;
     }
 
     /**

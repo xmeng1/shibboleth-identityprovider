@@ -606,7 +606,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         boolean signAssertion = false;
 
         RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
-        SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
         AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
         try {

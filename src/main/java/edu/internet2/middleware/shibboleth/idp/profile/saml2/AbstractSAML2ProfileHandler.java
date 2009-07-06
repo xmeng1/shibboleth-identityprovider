@@ -266,7 +266,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
             signAssertion(requestContext, assertion);
 
-            SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
+            SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
             try {
                 if (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.always
                         || (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.conditional && !encoder
@@ -543,7 +543,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         boolean signAssertion = false;
 
-        SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
         try {
             if (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.always
@@ -684,7 +684,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             }
         }
 
-        SAMLMessageEncoder encoder = getMessageEncoders().get(requestContext.getPeerEntityEndpoint().getBinding());
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
         try {
             if (nameIdEncRequiredByAuthnRequest
                     || requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
