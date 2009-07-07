@@ -75,11 +75,11 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
      * @return endpoint corresponding to the SP-provdided ACS URL
      */
     protected Endpoint selectEndpointByACS() {
-        log.debug("Selecting endpoint from metadata corresponding to provided ACS URL: {}",
+        log.debug("Selecting endpoint from metadata corresponding to provided ACS URL: '{}'",
                 getSpAssertionConsumerService());
 
         List<Endpoint> endpoints = getEntityRoleMetadata().getEndpoints();
-        log.debug("Relying party role contains {} endpoints", endpoints.size());
+        log.debug("Relying party role contains '{}' endpoints", endpoints.size());
 
         if (endpoints != null && endpoints.size() > 0) {
             for (Endpoint endpoint : endpoints) {
@@ -98,7 +98,7 @@ public class ShibbolethSSOEndpointSelector extends BasicEndpointSelector {
             }
         }
 
-        log.debug("No endpoint meets selection criteria for SAML entity {}", getEntityMetadata().getEntityID());
+        log.debug("No endpoint meets selection criteria for SAML entity '{}'", getEntityMetadata().getEntityID());
         return null;
     }
 }

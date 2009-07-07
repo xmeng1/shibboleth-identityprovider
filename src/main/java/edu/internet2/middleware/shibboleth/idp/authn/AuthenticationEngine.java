@@ -19,7 +19,6 @@ package edu.internet2.middleware.shibboleth.idp.authn;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +31,7 @@ import java.util.Map.Entry;
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -39,8 +39,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
-import org.opensaml.common.IdentifierGenerator;
-import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.ws.transport.http.HTTPTransportUtils;
@@ -48,6 +46,7 @@ import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
@@ -57,9 +56,22 @@ import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
 import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationImpl;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /** Manager responsible for handling authentication requests. */
 public class AuthenticationEngine extends HttpServlet {
+
+    /**
+     * Name of the Servlet config init parameter that indicates whether the public credentials of a {@link Subject} are
+     * retained after authentication.
+     */
+    public static final String RETAIN_PUBLIC_CREDENTIALS = "retainSubjectsPublicCredentials";
+
+    /**
+     * Name of the Servlet config init parameter that indicates whether the private credentials of a {@link Subject} are
+     * retained after authentication.
+     */
+    public static final String RETAIN_PRIVATE_CREDENTIALS = "retainSubjectsPrivateCredentials";
 
     /** Name of the Servlet config init parameter that holds the partition name for login contexts. */
     public static final String LOGIN_CONTEXT_PARTITION_NAME_INIT_PARAM_NAME = "loginContextPartitionName";
@@ -79,17 +91,17 @@ public class AuthenticationEngine extends HttpServlet {
     /** Class logger. */
     private static final Logger LOG = LoggerFactory.getLogger(AuthenticationEngine.class);
 
+    // TODO remove once HttpServletHelper does redirects
+    private static ServletContext context;
+
     /** Storage service used to store {@link LoginContext}s while authentication is in progress. */
     private static StorageService<String, LoginContextEntry> storageService;
 
-    /** Name of the storage service partition used to store login contexts. */
-    private static String loginContextPartitionName;
+    /** Whether the public credentials of a {@link Subject} are retained after authentication. */
+    private boolean retainSubjectsPublicCredentials;
 
-    /** Lifetime of stored login contexts. */
-    private static long loginContextEntryLifetime;
-
-    /** ID generator. */
-    private static IdentifierGenerator idGen;
+    /** Whether the private credentials of a {@link Subject} are retained after authentication. */
+    private boolean retainSubjectsPrivateCredentials;
 
     /** Profile handler manager. */
     private IdPProfileHandlerManager handlerManager;
@@ -101,100 +113,26 @@ public class AuthenticationEngine extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
-        String handlerManagerId = config.getInitParameter("handlerManagerId");
-        if (DatatypeHelper.isEmpty(handlerManagerId)) {
-            handlerManagerId = "shibboleth.HandlerManager";
-        }
-        handlerManager = (IdPProfileHandlerManager) getServletContext().getAttribute(handlerManagerId);
-
-        String sessionManagerId = config.getInitParameter("sessionManagedId");
-        if (DatatypeHelper.isEmpty(sessionManagerId)) {
-            sessionManagerId = "shibboleth.SessionManager";
-        }
-        sessionManager = (SessionManager<Session>) getServletContext().getAttribute(sessionManagerId);
-
-        String storageServiceId = config.getInitParameter("storageServiceId");
-        if (DatatypeHelper.isEmpty(storageServiceId)) {
-            storageServiceId = "shibboleth.StorageService";
-        }
-        storageService = (StorageService<String, LoginContextEntry>) getServletContext().getAttribute(storageServiceId);
-
-        String partitionName = DatatypeHelper.safeTrimOrNullString(config
-                .getInitParameter(LOGIN_CONTEXT_PARTITION_NAME_INIT_PARAM_NAME));
-        if (partitionName != null) {
-            loginContextPartitionName = partitionName;
+        String retain = DatatypeHelper.safeTrimOrNullString(config.getInitParameter(RETAIN_PRIVATE_CREDENTIALS));
+        if (retain != null) {
+            retainSubjectsPrivateCredentials = Boolean.parseBoolean(retain);
         } else {
-            loginContextPartitionName = "loginContexts";
+            retainSubjectsPrivateCredentials = false;
         }
 
-        String lifetime = DatatypeHelper.safeTrimOrNullString(config
-                .getInitParameter(LOGIN_CONTEXT_LIFETIME_INIT_PARAM_NAME));
-        if (lifetime != null) {
-            loginContextEntryLifetime = Long.parseLong(lifetime);
+        retain = DatatypeHelper.safeTrimOrNullString(config.getInitParameter(RETAIN_PUBLIC_CREDENTIALS));
+        if (retain != null) {
+            retainSubjectsPublicCredentials = Boolean.parseBoolean(retain);
         } else {
-            loginContextEntryLifetime = 1000 * 60 * 30;
+            retainSubjectsPublicCredentials = false;
         }
 
-        try {
-            idGen = new SecureRandomIdentifierGenerator();
-        } catch (NoSuchAlgorithmException e) {
-            throw new ServletException("Error create random number generator", e);
-        }
-    }
+        handlerManager = HttpServletHelper.getProfileHandlerManager(config.getServletContext());
+        sessionManager = HttpServletHelper.getSessionManager(config.getServletContext());
+        storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config
+                .getServletContext());
 
-    /**
-     * Retrieves a login context.
-     * 
-     * @param httpRequest current HTTP request
-     * @param removeFromStorageService whether the login context should be removed from the storage service as it is
-     *            retrieved
-     * 
-     * @return the login context or null if one is not available (e.g. because it has expired)
-     */
-    protected static LoginContext retrieveLoginContext(HttpServletRequest httpRequest, boolean removeFromStorageService) {
-        // When the login context comes from the profile handlers its attached to the request
-        // Prior to the authentication engine handing control over to a login handler it stores
-        // the login context into the storage service so that the login handlers do not have to
-        // maintain a reference to the context and return it to the engine.
-        LoginContext loginContext = (LoginContext) httpRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
-        if (loginContext != null) {
-            LOG.trace("Login context retrieved from HTTP request attribute");
-            return loginContext;
-        }
-
-        String contextId = DatatypeHelper.safeTrimOrNullString((String) httpRequest
-                .getAttribute(LOGIN_CONTEXT_KEY_NAME));
-
-        if (contextId == null) {
-            Cookie[] requestCookies = httpRequest.getCookies();
-            if (requestCookies != null) {
-                for (Cookie requestCookie : requestCookies) {
-                    if (DatatypeHelper.safeEquals(requestCookie.getName(), LOGIN_CONTEXT_KEY_NAME)) {
-                        LOG.trace("Located cookie with login context key");
-                        contextId = requestCookie.getValue();
-                        break;
-                    }
-                }
-            }
-        }
-
-        LOG.trace("Using login context key {} to look up login context", contextId);
-        LoginContextEntry entry;
-        if (removeFromStorageService) {
-            entry = storageService.remove(loginContextPartitionName, contextId);
-        } else {
-            entry = storageService.get(loginContextPartitionName, contextId);
-        }
-        if (entry == null) {
-            LOG.trace("No entry for login context found in storage service.");
-            return null;
-        } else if (entry.isExpired()) {
-            LOG.trace("Login context entry found in storage service but it was expired.");
-            return null;
-        } else {
-            LOG.trace("Login context entry found in storage service.");
-            return entry.getLoginContext();
-        }
+        context = config.getServletContext();
     }
 
     /**
@@ -205,9 +143,9 @@ public class AuthenticationEngine extends HttpServlet {
      */
     public static void returnToAuthenticationEngine(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         LOG.debug("Returning control to authentication engine");
-        LoginContext loginContext = retrieveLoginContext(httpRequest, false);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, context, httpRequest);
         if (loginContext == null) {
-            LOG.error("No login context available, unable to return to authentication engine");
+            LOG.warn("No login context available, unable to return to authentication engine");
             forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
         } else {
             forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
@@ -221,16 +159,16 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
-    public static void returnToProfileHandler(LoginContext loginContext, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
+    public static void returnToProfileHandler(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        LOG.debug("Returning control to profile handler");
+        LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, context, httpRequest);
+        if (loginContext == null) {
+            LOG.warn("No login context available, unable to return to profile handler");
+            forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
+        }
+
+        HttpServletHelper.bindLoginContext(loginContext, httpRequest);
         LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
-        httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
-
-        // Cleanup this cookie
-        Cookie lcKeyCookie = new Cookie(LOGIN_CONTEXT_KEY_NAME, "");
-        lcKeyCookie.setMaxAge(0);
-        httpResponse.addCookie(lcKeyCookie);
-
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
     }
 
@@ -264,7 +202,7 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.error("HTTP Response already committed");
         }
 
-        LoginContext loginContext = retrieveLoginContext(httpRequest, true);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, getServletContext(), httpRequest);
         if (loginContext == null) {
             LOG.error("Incoming request does not have attached login context");
             throw new ServletException("Incoming request does not have attached login context");
@@ -316,20 +254,34 @@ public class AuthenticationEngine extends HttpServlet {
                 loginHandler = possibleLoginHandlers.get(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
             } else {
                 possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
-                Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
-                loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
-                loginHandler = chosenLoginHandler.getValue();
+                if (possibleLoginHandlers.isEmpty()) {
+                    LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext
+                            .getRelyingPartyId());
+                    throw new AuthenticationException();
+                }
+
+                if (loginContext.getDefaultAuthenticationMethod() != null
+                        && possibleLoginHandlers.containsKey(loginContext.getDefaultAuthenticationMethod())) {
+                    loginHandler = possibleLoginHandlers.get(loginContext.getDefaultAuthenticationMethod());
+                    loginContext.setAttemptedAuthnMethod(loginContext.getDefaultAuthenticationMethod());
+                } else {
+                    Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
+                    loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
+                    loginHandler = chosenLoginHandler.getValue();
+                }
             }
 
-            // Send the request to the login handler
             LOG.debug("Authenticating user with login handler of type {}", loginHandler.getClass().getName());
             loginContext.setAuthenticationAttempted();
             loginContext.setAuthenticationEngineURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
-            storeLoginContext(loginContext, httpRequest, httpResponse);
+
+            // Send the request to the login handler
+            HttpServletHelper.bindLoginContext(loginContext, storageService, getServletContext(), httpRequest,
+                    httpResponse);
             loginHandler.login(httpRequest, httpResponse);
         } catch (AuthenticationException e) {
             loginContext.setAuthenticationFailure(e);
-            returnToProfileHandler(loginContext, httpRequest, httpResponse);
+            returnToProfileHandler(httpRequest, httpResponse);
         }
     }
 
@@ -391,7 +343,7 @@ public class AuthenticationEngine extends HttpServlet {
         }
 
         if (supportedLoginHandlers.isEmpty()) {
-            LOG.error("No authentication method, requested by the service provider, is supported");
+            LOG.warn("No authentication method, requested by the service provider, is supported");
             throw new AuthenticationException(
                     "No authentication method, requested by the service provider, is supported");
         }
@@ -472,38 +424,9 @@ public class AuthenticationEngine extends HttpServlet {
                 loginHandlers);
 
         if (loginHandlers.isEmpty()) {
-            LOG.error("Passive authentication required but no login handlers available to support it");
+            LOG.warn("Passive authentication required but no login handlers available to support it");
             throw new PassiveAuthenticationException();
         }
-    }
-
-    /**
-     * Stores the login context in the storage service. The key for the stored login context is then bound to an HTTP
-     * request attribute and set a cookie.
-     * 
-     * @param loginContext login context to store
-     * @param httpRequest current HTTP request
-     * @param httpResponse current HTTP response
-     */
-    protected void storeLoginContext(LoginContext loginContext, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
-        String contextId = idGen.generateIdentifier();
-
-        storageService.put(loginContextPartitionName, contextId, new LoginContextEntry(loginContext,
-                loginContextEntryLifetime));
-
-        httpRequest.setAttribute(LOGIN_CONTEXT_KEY_NAME, contextId);
-
-        Cookie cookie = new Cookie(LOGIN_CONTEXT_KEY_NAME, contextId);
-        String contextPath = httpRequest.getContextPath();
-        if (DatatypeHelper.isEmpty(contextPath)) {
-            cookie.setPath("/");
-        } else {
-            cookie.setPath(contextPath);
-        }
-        cookie.setSecure(httpRequest.isSecure());
-        cookie.setMaxAge(-1);
-        httpResponse.addCookie(cookie);
     }
 
     /**
@@ -528,11 +451,17 @@ public class AuthenticationEngine extends HttpServlet {
             // event that it supports multiple methods
             String actualAuthnMethod = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                     .getAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY));
-            if (actualAuthnMethod == null) {
-                actualAuthnMethod = loginContext.getAttemptedAuthnMethod();
+            if (actualAuthnMethod != null) {
+                if (!loginContext.getRequestedAuthenticationMethods().isEmpty()
+                        && !loginContext.getRequestedAuthenticationMethods().contains(actualAuthnMethod)) {
+                    String msg = MessageFormatter.format(
+                                    "Relying patry required an authentication method of '{}' but the login handler performed '{}'",
+                                    loginContext.getRequestedAuthenticationMethods(), actualAuthnMethod);
+                    LOG.error(msg);
+                    throw new AuthenticationException(msg);
+                }
             } else {
-                LOG.debug("Authentication method overriden by LoginHandler.  It was {} and is now {}", loginContext
-                        .getAttemptedAuthnMethod(), actualAuthnMethod);
+                actualAuthnMethod = loginContext.getAttemptedAuthnMethod();
             }
 
             // Check to make sure the login handler did the right thing
@@ -555,7 +484,7 @@ public class AuthenticationEngine extends HttpServlet {
             loginContext.setAuthenticationFailure(e);
         }
 
-        returnToProfileHandler(loginContext, httpRequest, httpResponse);
+        returnToProfileHandler(httpRequest, httpResponse);
     }
 
     /**
@@ -573,13 +502,19 @@ public class AuthenticationEngine extends HttpServlet {
     protected void validateSuccessfulAuthentication(LoginContext loginContext, HttpServletRequest httpRequest,
             String authenticationMethod) throws AuthenticationException {
         LOG.debug("Validating authentication was performed successfully");
-        
+
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
         if (errorMessage != null) {
             LOG.error("Error returned from login handler for authentication method {}:\n{}", loginContext
                     .getAttemptedAuthnMethod(), errorMessage);
             throw new AuthenticationException(errorMessage);
+        }
+
+        AuthenticationException authnException = (AuthenticationException) httpRequest
+                .getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY);
+        if (authnException != null) {
+            throw authnException;
         }
 
         Subject subject = (Subject) httpRequest.getAttribute(LoginHandler.SUBJECT_KEY);
@@ -695,7 +630,11 @@ public class AuthenticationEngine extends HttpServlet {
     }
 
     /**
-     * Merges the principals and public and private credentials from two subjects into a new subject.
+     * Merges the two {@link Subject}s in to a new {@link Subject}. The new subjects contains all the {@link Principal}s
+     * from both subjects. If {@link #retainSubjectsPrivateCredentials} is true then the new subject will contain all
+     * the private credentials from both subjects, if not the new subject will not contain private credentials. If
+     * {@link #retainSubjectsPublicCredentials} is true then the new subject will contain all the public credentials
+     * from both subjects, if not the new subject will not contain public credentials.
      * 
      * @param subject1 first subject to merge, may be null
      * @param subject2 second subject to merge, may be null
@@ -706,7 +645,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (subject1 == null && subject2 == null) {
             return new Subject();
         }
-        
+
         if (subject1 == null) {
             return subject2;
         }
@@ -720,12 +659,18 @@ public class AuthenticationEngine extends HttpServlet {
         principals.addAll(subject2.getPrincipals());
 
         Set<Object> publicCredentials = new HashSet<Object>(3);
-        publicCredentials.addAll(subject1.getPublicCredentials());
-        publicCredentials.addAll(subject2.getPublicCredentials());
+        if (retainSubjectsPublicCredentials) {
+            LOG.debug("Merging in subjects public credentials");
+            publicCredentials.addAll(subject1.getPublicCredentials());
+            publicCredentials.addAll(subject2.getPublicCredentials());
+        }
 
         Set<Object> privateCredentials = new HashSet<Object>(3);
-        privateCredentials.addAll(subject1.getPrivateCredentials());
-        privateCredentials.addAll(subject2.getPrivateCredentials());
+        if (retainSubjectsPrivateCredentials) {
+            LOG.debug("Merging in subjects private credentials");
+            privateCredentials.addAll(subject1.getPrivateCredentials());
+            privateCredentials.addAll(subject2.getPrivateCredentials());
+        }
 
         return new Subject(false, principals, publicCredentials, privateCredentials);
     }

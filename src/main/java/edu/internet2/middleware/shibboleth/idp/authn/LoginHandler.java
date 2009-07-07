@@ -32,16 +32,16 @@ import javax.servlet.http.HttpServletResponse;
  * 
  * After a successful authentication has been completed the handler <strong>MUST</strong> either:
  * <ul>
- * <li>Bind a {@link javax.security.auth.Subject} to the attribute identified by {@link #SUBJECT_KEY} if one was
- * created during the authentication process. The principals, public, and private credentials from this subject will be
- * merged with those in the {@link javax.security.auth.Subject} within the
+ * <li>Bind a {@link javax.security.auth.Subject} to the attribute identified by {@link #SUBJECT_KEY} if one was created
+ * during the authentication process. The principals, public, and private credentials from this subject will be merged
+ * with those in the {@link javax.security.auth.Subject} within the
  * {@link edu.internet2.middleware.shibboleth.idp.session.Session}.</li>
- * <li>Bind a {@link java.security.Principal} for the user to the request attribute identified by
- * {@link #PRINCIPAL_KEY}. Such a {@link java.security.Principal} <strong>MUST</strong> implement
- * {@link java.io.Serializable}. This principal will be added to the {@link javax.security.auth.Subject} within the
+ * <li>Bind a {@link java.security.Principal} for the user to the request attribute identified by {@link #PRINCIPAL_KEY}
+ * . Such a {@link java.security.Principal} <strong>MUST</strong> implement {@link java.io.Serializable}. This principal
+ * will be added to the {@link javax.security.auth.Subject} within the
  * {@link edu.internet2.middleware.shibboleth.idp.session.Session}.</li>
- * <li>Bind a principal name string to the request attribute identified by {@link #PRINCIPAL_NAME_KEY}. In this case
- * the {@link AuthenticationEngine} will create a {@link java.security.Principal} object of type
+ * <li>Bind a principal name string to the request attribute identified by {@link #PRINCIPAL_NAME_KEY}. In this case the
+ * {@link AuthenticationEngine} will create a {@link java.security.Principal} object of type
  * {@link edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal} and add that to the
  * {@link javax.security.auth.Subject} within the {@link edu.internet2.middleware.shibboleth.idp.session.Session}.</li>
  * </ul>
@@ -51,8 +51,10 @@ import javax.servlet.http.HttpServletResponse;
  * <li>Bind a URI string, representing the authentication method actually used, to a request attribute identified by
  * {@link #AUTHENTICATION_METHOD_KEY}. This may be used if a handler is capable of performing multiple types of
  * authentication.</li>
- * <li>bind an error message, if an error occurred during authentication to the request attribute identified by
+ * <li>Bind an error message, if an error occurred during authentication to the request attribute identified by
  * {@link LoginHandler#AUTHENTICATION_ERROR_KEY}.</li>
+ * <li>Bind a {@link AuthenticationException}, if an exception occurred during authentication to the request attribute
+ * identified by {@link LoginHandler#AUTHENTICATION_EXCEPTION_KEY}.</li>
  * </ul>
  * 
  * Finally, the handler must return control to the authentication engine by invoking
@@ -79,6 +81,9 @@ public interface LoginHandler {
 
     /** Request attribute to which an error message may be bound. */
     public static final String AUTHENTICATION_ERROR_KEY = "authnError";
+
+    /** Request attribute to which an {@link AuthenticationException} may be bound. */
+    public static final String AUTHENTICATION_EXCEPTION_KEY = "authnException";
 
     /**
      * Gets the list of authentication methods this handler supports.

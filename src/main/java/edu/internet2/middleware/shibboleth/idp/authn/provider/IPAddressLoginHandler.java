@@ -48,9 +48,6 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(IPAddressLoginHandler.class);
 
-    /** The URI of the AuthnContextDeclRef or the AuthnContextClass. */
-    private String authnMethodURI = "urn:oasis:names:tc:SAML:2.0:ac:classes:InternetProtocol";
-
     /** The username to use for IP-address "authenticated" users. */
     private String username;
 
@@ -80,7 +77,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
                 ipList.add(new edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressLoginHandler.IPEntry(
                         addr));
             } catch (UnknownHostException ex) {
-                log.error("IPAddressHandler: Error parsing IP entry \"" + addr + "\". Ignoring.");
+                log.warn("IPAddressHandler: Error parsing IP entry \"" + addr + "\". Ignoring.");
             }
         }
     }
@@ -229,13 +226,13 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
 
             int cidrOffset = entry.indexOf("/");
             if (cidrOffset == -1) {
-                log.error("Invalid entry \"" + entry + "\" -- it lacks a netmask component.");
+                log.warn("Invalid entry \"" + entry + "\" -- it lacks a netmask component.");
                 throw new UnknownHostException("entry lacks a netmask component.");
             }
 
             // ensure that only one "/" is present.
             if (entry.indexOf("/", cidrOffset + 1) != -1) {
-                log.error("Invalid entry \"" + entry + "\" -- too many \"/\" present.");
+                log.warn("Invalid entry \"" + entry + "\" -- too many \"/\" present.");
                 throw new UnknownHostException("entry has too many netmask components.");
             }
 
@@ -246,7 +243,15 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
             networkAddress = byteArrayToBitSet(tempAddr.getAddress());
 
             int masklen = Integer.parseInt(netmaskString);
-            int addrlen = networkAddress.length();
+
+            int addrlen;
+            if (tempAddr instanceof Inet4Address) {
+                addrlen = 32;
+            } else if (tempAddr instanceof Inet6Address) {
+                addrlen = 128;
+            }else{
+                throw new UnknownHostException("Unable to determine Inet protocol version");
+            }
 
             // ensure that the netmask isn't too large
             if ((tempAddr instanceof Inet4Address) && (masklen > 32)) {

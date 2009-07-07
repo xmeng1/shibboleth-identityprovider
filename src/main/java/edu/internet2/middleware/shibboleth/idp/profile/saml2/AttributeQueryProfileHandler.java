@@ -1,5 +1,5 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
@@ -79,11 +80,12 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             decodeRequest(requestContext, inTransport, outTransport);
 
             if (requestContext.getProfileConfiguration() == null) {
-                log.error("SAML 2 Attribute Query profile is not configured for relying party "
-                        + requestContext.getInboundMessageIssuer());
+                String msg = MessageFormatter.format(
+                        "SAML 2 Attribute Query profile is not configured for relying party '{}'", requestContext
+                                .getInboundMessage());
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
-                        "SAML 2 Attribute Query profile is not configured for relying party "
-                                + requestContext.getInboundMessageIssuer()));
+                        msg));
+                log.warn(msg);
                 samlResponse = buildErrorResponse(requestContext);
             } else {
                 checkSamlVersion(requestContext);
@@ -137,7 +139,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void decodeRequest(AttributeQueryContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Decoding message with decoder binding {}", getInboundBinding());
+        log.debug("Decoding message with decoder binding '{}'", getInboundBinding());
 
         requestContext.setCommunicationProfileId(getProfileId());
 
@@ -156,24 +158,25 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
-            log.debug("Decoded request");
+            log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessage());
 
             if (!(requestContext.getInboundSAMLMessage() instanceof AttributeQuery)) {
-                log.error("Incoming message was not a AttributeQuery, it was a {}", requestContext
+                log.warn("Incoming message was not a AttributeQuery, it was a {}", requestContext
                         .getInboundSAMLMessage().getClass().getName());
                 requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, null,
                         "Invalid SAML AttributeQuery message."));
                 throw new ProfileException("Invalid SAML AttributeQuery message.");
             }
         } catch (MessageDecodingException e) {
-            log.error("Error decoding attribute query message", e);
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error decoding message"));
-            throw new ProfileException("Error decoding attribute query message");
+            String msg = "Error decoding attribute query message";
+            log.warn(msg, e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, msg));
+            throw new ProfileException(msg);
         } catch (SecurityException e) {
-            log.error("Message did not meet security requirements", e);
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
-                    "Message did not meet security requirements"));
-            throw new ProfileException("Message did not meet security requirements", e);
+            String msg = "Message did not meet security requirements";
+            log.warn(msg, e);
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI, msg));
+            throw new ProfileException(msg, e);
         } finally {
             // Set as much information as can be retrieved from the decoded message
             populateRequestContext(requestContext);
@@ -221,10 +224,11 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         if (query != null) {
             Subject subject = query.getSubject();
             if (subject == null) {
-                log.error("Attribute query did not contain a proper subject");
+                String msg = "Attribute query did not contain a proper subject";
+                log.warn(msg);
                 ((AttributeQueryContext) requestContext).setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, null,
-                        "Attribute query did not contain a proper subject"));
-                throw new ProfileException("Attribute query did not contain a proper subject");
+                        msg));
+                throw new ProfileException(msg);
             }
             requestContext.setSubjectNameIdentifier(subject.getNameID());
         }

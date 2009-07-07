@@ -51,13 +51,13 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
     /** {@inheritDoc} */
     protected void doDecode(MessageContext messageContext) throws MessageDecodingException {
         if (!(messageContext instanceof ShibbolethSSORequestContext)) {
-            log.error("Invalid message context type, this decoder only support ShibbolethSSORequestContext");
+            log.warn("Invalid message context type, this decoder only support ShibbolethSSORequestContext");
             throw new MessageDecodingException(
                     "Invalid message context type, this decoder only support ShibbolethSSORequestContext");
         }
 
         if (!(messageContext.getInboundMessageTransport() instanceof HTTPInTransport)) {
-            log.error("Invalid inbound message transport type, this decoder only support HTTPInTransport");
+            log.warn("Invalid inbound message transport type, this decoder only support HTTPInTransport");
             throw new MessageDecodingException(
                     "Invalid inbound message transport type, this decoder only support HTTPInTransport");
         }
@@ -67,7 +67,7 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
 
         String providerId = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("providerId"));
         if (providerId == null) {
-            log.error("No providerId parameter given in Shibboleth SSO authentication request.");
+            log.warn("No providerId parameter given in Shibboleth SSO authentication request.");
             throw new MessageDecodingException(
                     "No providerId parameter given in Shibboleth SSO authentication request.");
         }
@@ -75,14 +75,14 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
 
         String shire = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("shire"));
         if (shire == null) {
-            log.error("No shire parameter given in Shibboleth SSO authentication request.");
+            log.warn("No shire parameter given in Shibboleth SSO authentication request.");
             throw new MessageDecodingException("No shire parameter given in Shibboleth SSO authentication request.");
         }
         requestContext.setSpAssertionConsumerService(shire);
 
         String target = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("target"));
         if (target == null) {
-            log.error("No target parameter given in Shibboleth SSO authentication request.");
+            log.warn("No target parameter given in Shibboleth SSO authentication request.");
             throw new MessageDecodingException("No target parameter given in Shibboleth SSO authentication request.");
         }
         requestContext.setRelayState(target);

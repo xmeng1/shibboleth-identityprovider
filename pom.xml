@@ -27,9 +27,13 @@
     
     <distributionManagement>
         <repository>
-            <id>ssh-repository</id>
-            <url>scpexe://www.internet2.edu/home/htdocs/shibboleth.internet2.edu/downloads/maven2</url>
+            <id>release-repo</id>
+            <url>${dist.release.url}</url>
         </repository>
+        <snapshotRepository>
+            <id>snapshot-repo</id>
+            <url>${dist.snapshot.url}</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <dependencies>
@@ -111,14 +115,8 @@
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
             <artifactId>shibboleth-jce</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
             <scope>runtime</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>tomcat</groupId>
-                    <artifactId>catalina</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         
         <!-- Test dependencies -->

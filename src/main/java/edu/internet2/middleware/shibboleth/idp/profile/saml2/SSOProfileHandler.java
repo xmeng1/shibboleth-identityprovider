@@ -23,8 +23,6 @@ import java.util.ArrayList;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -62,8 +60,8 @@ import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
@@ -75,8 +73,8 @@ import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
-import edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSOProfileHandler.ShibbolethSSORequestContext;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /** SAML 2.0 SSO request profile handler. */
 public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
@@ -102,13 +100,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** Builder of Endpoint objects. */
     private SAMLObjectBuilder<Endpoint> endpointBuilder;
 
-    /** URL of the authentication manager servlet. */
+    /** URL of the authentication manager Servlet. */
     private String authenticationManagerPath;
 
     /**
      * Constructor.
      * 
-     * @param authnManagerPath path to the authentication manager servlet
+     * @param authnManagerPath path to the authentication manager Servlet
      */
     @SuppressWarnings("unchecked")
     public SSOProfileHandler(String authnManagerPath) {
@@ -137,9 +135,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
-        HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
-        LoginContext loginContext = (LoginContext) servletRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(httpRequest);
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
@@ -171,10 +169,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(SSOConfiguration.PROFILE_ID);
             if (ssoConfig == null) {
-                log.error("SAML 2 SSO profile is not configured for relying party "
-                        + requestContext.getInboundMessageIssuer());
-                throw new ProfileException("SAML 2 SSO profile is not configured for relying party "
-                        + requestContext.getInboundMessageIssuer());
+                String msg = MessageFormatter.format("SAML 2 SSO profile is not configured for relying party '{}'", requestContext.getInboundMessageIssuer());
+                log.warn(msg);
+                throw new ProfileException(msg);
             }
 
             log.debug("Creating login context and transferring control to authentication engine");
@@ -182,12 +179,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                     requestContext.getInboundSAMLMessage());
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(servletRequest));
-            if (loginContext.getRequestedAuthenticationMethods().size() == 0
-                    && rpConfig.getDefaultAuthenticationMethod() != null) {
-                loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
-            }
-
-            servletRequest.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+            loginContext.setDefaultAuthenticationMethod(rpConfig.getDefaultAuthenticationMethod());
+            
+            HttpServletHelper.bindLoginContext(loginContext, servletRequest);
             RequestDispatcher dispatcher = servletRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
         } catch (MarshallingException e) {
@@ -213,10 +207,9 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
-        HttpServletRequest servletRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-
-        Saml2LoginContext loginContext = (Saml2LoginContext) servletRequest
-                .getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        Saml2LoginContext loginContext = (Saml2LoginContext) HttpServletHelper.getLoginContext(httpRequest);
+        
         SSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
         checkSamlVersion(requestContext);
@@ -241,7 +234,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 String requestedPrincipalName = requestContext.getPrincipalName();
                 if (!DatatypeHelper.safeEquals(loginContext.getPrincipalName(), requestedPrincipalName)) {
                     log
-                            .error(
+                            .warn(
                                     "Authentication request identified principal {} but authentication mechanism identified principal {}",
                                     requestedPrincipalName, loginContext.getPrincipalName());
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
@@ -285,7 +278,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void decodeRequest(SSORequestContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Decoding message with decoder binding {}", getInboundBinding());
+        log.debug("Decoding message with decoder binding '{}'", getInboundBinding());
 
         requestContext.setCommunicationProfileId(getProfileId());
 
@@ -304,21 +297,23 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
-            log.debug("Decoded request");
+            log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessageIssuer());
 
-            if (!(requestContext.getInboundMessage() instanceof AuthnRequest)) {
-                log.error("Incomming message was not a AuthnRequest, it was a {}", requestContext.getInboundMessage()
-                        .getClass().getName());
+            if (!(requestContext.getInboundSAMLMessage() instanceof AuthnRequest)) {
+                log.warn("Incomming message was not a AuthnRequest, it was a '{}'",
+                        requestContext.getInboundSAMLMessage().getClass().getName());
                 requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, null,
                         "Invalid SAML AuthnRequest message."));
                 throw new ProfileException("Invalid SAML AuthnRequest message.");
             }
         } catch (MessageDecodingException e) {
-            log.error("Error decoding authentication request message", e);
-            throw new ProfileException("Error decoding authentication request message", e);
+            String msg = "Error decoding authentication request message"; 
+            log.warn(msg, e);
+            throw new ProfileException(msg, e);
         } catch (SecurityException e) {
-            log.error("Message did not meet security requirements", e);
-            throw new ProfileException("Message did not meet security requirements", e);
+            String msg = "Message did not meet security requirements"; 
+            log.warn(msg, e);
+            throw new ProfileException(msg, e);
         }
     }
 
@@ -443,7 +438,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         long maxSPSessionLifetime = requestContext.getProfileConfiguration().getMaximumSPSessionLifetime();
         if (maxSPSessionLifetime > 0) {
             DateTime lifetime = new DateTime(DateTimeZone.UTC).plus(maxSPSessionLifetime);
-            log.debug("Explicitly setting SP session expiration time to {}", lifetime.toString());
+            log.debug("Explicitly setting SP session expiration time to '{}'", lifetime.toString());
             statement.setSessionNotOnOrAfter(lifetime);
         }
 
@@ -529,7 +524,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 } else {
                     endpoint.setBinding(getSupportedOutboundBindings().get(0));
                 }
-                log.warn("Generating endpoint for anonymous relying party. ACS url {} and binding {}", new Object[] {
+                log.warn("Generating endpoint for anonymous relying party. ACS url '{}' and binding '{}'", new Object[] {
                         requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
             } else {
                 log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");

@@ -49,6 +49,7 @@ import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.ShibbolethConstants;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
@@ -60,6 +61,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.Sh
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /** Shibboleth SSO request profile handler. */
 public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
@@ -113,7 +115,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         log.debug("Processing incoming request");
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        LoginContext loginContext = (LoginContext) httpRequest.getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        LoginContext loginContext = HttpServletHelper.getLoginContext(httpRequest);
 
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
@@ -145,29 +147,29 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSOLoginContext loginContext = requestContext.getLoginContext();
 
         RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(loginContext.getRelyingPartyId());
+        loginContext.setDefaultAuthenticationMethod(rpConfig.getDefaultAuthenticationMethod());
         ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(ShibbolethSSOConfiguration.PROFILE_ID);
         if (ssoConfig == null) {
-            log.error("Shibboleth SSO profile is not configured for relying party " + loginContext.getRelyingPartyId());
-            throw new ProfileException("Shibboleth SSO profile is not configured for relying party "
-                    + loginContext.getRelyingPartyId());
-        }
-        if (loginContext.getRequestedAuthenticationMethods().size() == 0
-                && rpConfig.getDefaultAuthenticationMethod() != null) {
-            loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
+            String msg = MessageFormatter.format("Shibboleth SSO profile is not configured for relying party '{}'",
+                    loginContext.getRelyingPartyId());
+            log.warn(msg);
+            throw new ProfileException(msg);
         }
 
-        httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);
+        HttpServletHelper.bindLoginContext(loginContext, httpRequest);
 
         try {
             RequestDispatcher dispatcher = httpRequest.getRequestDispatcher(authenticationManagerPath);
             dispatcher.forward(httpRequest, httpResponse);
             return;
-        } catch (IOException ex) {
-            log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
-            throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
-        } catch (ServletException ex) {
-            log.error("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
-            throw new ProfileException("Error forwarding Shibboleth SSO request to AuthenticationManager", ex);
+        } catch (IOException e) {
+            String msg = "Error forwarding Shibboleth SSO request to AuthenticationManager";
+            log.error(msg, e);
+            throw new ProfileException(msg, e);
+        } catch (ServletException e) {
+            String msg = "Error forwarding Shibboleth SSO request to AuthenticationManager";
+            log.error(msg, e);
+            throw new ProfileException(msg, e);
         }
     }
 
@@ -203,12 +205,16 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setMessageDecoder(decoder);
         try {
             decoder.decode(requestContext);
+            log.debug("Decoded Shibboleth SSO request from relying party '{}'", requestContext
+                    .getInboundMessageIssuer());
         } catch (MessageDecodingException e) {
-            log.error("Error decoding Shibboleth SSO request", e);
-            throw new ProfileException("Error decoding Shibboleth SSO request", e);
+            String msg = "Error decoding Shibboleth SSO request";
+            log.warn(msg, e);
+            throw new ProfileException(msg, e);
         } catch (SecurityException e) {
-            log.error("Shibboleth SSO request does not meet security requirements", e);
-            throw new ProfileException("Shibboleth SSO request does not meet security requirements", e);
+            String msg = "Shibboleth SSO request does not meet security requirements";
+            log.warn(msg, e);
+            throw new ProfileException("msg", e);
         }
 
         ShibbolethSSOLoginContext loginContext = new ShibbolethSSOLoginContext();
@@ -232,8 +238,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
     protected void completeAuthenticationRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) httpRequest
-                .getAttribute(LoginContext.LOGIN_CONTEXT_KEY);
+        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) HttpServletHelper.getLoginContext(httpRequest);
 
         ShibbolethSSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 

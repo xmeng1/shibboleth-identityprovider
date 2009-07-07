@@ -37,6 +37,7 @@ public class StatusProfileHandler extends AbstractRequestURIMappedProfileHandler
 
     /** {@inheritDoc} */
     public void processRequest(InTransport in, OutTransport out) {
+        log.warn("This profile handler has been deprecated, use the Status servlet usually located at '/idp/status'");
         try {
             OutputStreamWriter writer = new OutputStreamWriter(out.getOutgoingStream());
             writer.write("ok");

@@ -1,3 +1,18 @@
+<%@ page import="edu.internet2.middleware.shibboleth.idp.authn.LoginContext" %>
+<%@ page import="edu.internet2.middleware.shibboleth.idp.session.*" %>
+<%@ page import="edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper" %>
+<%@ page import="org.opensaml.saml2.metadata.*" %>
+
+<%
+    LoginContext loginContext = HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application),
+                                                                  application, request);
+                                                                  
+    EntityDescriptor entityDescriptor = HttpServletHelper.getRelyingPartyMetadata(loginContext.getRelyingPartyId(),
+                                                   HttpServletHelper.getRelyingPartyConfirmationManager(application)); 
+                                                    
+    Session userSession = HttpServletHelper.getUserSession(request);
+%>
+
 <html>
 
     <head>
@@ -6,7 +21,13 @@
 
 	<body>
 		<img src="<%= request.getContextPath() %>/images/logo.jpg" />
-		<h2>Shibboleth Identity Provider Login</h2>
+		<h2>Shibboleth Identity Provider Login to Service Provider <%= entityDescriptor.getEntityID() %></h2>
+		<p>
+        Existing Session: <%= userSession != null %><br/>	
+		Requested Authentication Methods: <%= loginContext.getRequestedAuthenticationMethods() %><br/>
+		Attempting Authentication Method: <%= loginContext.getAttemptedAuthnMethod() %> <br/>
+		Is Forced Authentication: <%= loginContext.isForceAuthRequired() %><br/>
+		</p>
 		
 		<% if ("true".equals(request.getAttribute("loginFailed"))) { %>
 		<p><font color="red">Authentication Failed</font></p>
@@ -27,7 +48,7 @@
 				<td><input name="j_password" type="password" tabindex="2" /></td>
 			</tr>
 			<tr>
-				<td rowspan="2"><input type="submit" value="Login" tabindex="3" /></td>
+				<td colspan="2"><input type="submit" value="Login" tabindex="3" /></td>
 			</tr>
 		</table>
 		</form>

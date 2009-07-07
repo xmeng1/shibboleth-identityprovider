@@ -86,6 +86,9 @@ public class LoginContext implements Serializable {
     /** The session id. */
     private String sessionID;
 
+    /** Default authentication method to use if no other method is requested. */
+    private String defaultAuthenticationMethod;
+
     /** List of request authentication methods. */
     private List<String> requestAuthenticationMethods;
 
@@ -180,6 +183,15 @@ public class LoginContext implements Serializable {
      */
     public synchronized AuthenticationMethodInformation getAuthenticationMethodInformation() {
         return authenticationMethodInformation;
+    }
+
+    /**
+     * Gets the authentication method to use if none is requested.
+     * 
+     * @return authentication method to use if none is requested, may be null which indicates any method may be used
+     */
+    public synchronized String getDefaultAuthenticationMethod() {
+        return defaultAuthenticationMethod;
     }
 
     /**
@@ -339,6 +351,16 @@ public class LoginContext implements Serializable {
      */
     public synchronized void setAuthenticationMethodInformation(AuthenticationMethodInformation info) {
         authenticationMethodInformation = info;
+    }
+
+    /**
+     * Sets the authentication method to use if none is requested.
+     * 
+     * @param method authentication method to use if none is requested, may be null which indicates any method may be
+     *            used
+     */
+    public synchronized void setDefaultAuthenticationMethod(String method) {
+        defaultAuthenticationMethod = method;
     }
 
     /**
