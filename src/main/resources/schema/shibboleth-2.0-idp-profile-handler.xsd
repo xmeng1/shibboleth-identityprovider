@@ -84,6 +84,15 @@
         </xsd:complexContent>
     </xsd:complexType>
 
+    <xsd:complexType name="SAML2SLO">
+        <xsd:annotation>
+            <xsd:documentation>Configuration type for SAML 2 SLO profile handlers.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="SAML2ProfileHandler" />
+        </xsd:complexContent>
+    </xsd:complexType>
+
     <xsd:complexType name="SAML2AttributeQuery">
         <xsd:annotation>
             <xsd:documentation>Configuration type for SAML 2 Attribute Query profile handlers.</xsd:documentation>

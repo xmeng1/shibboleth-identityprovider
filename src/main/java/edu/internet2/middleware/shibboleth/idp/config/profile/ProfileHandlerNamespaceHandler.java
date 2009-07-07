@@ -30,6 +30,7 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.SAML1Attribu
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.ShibbolethSSOProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2ArtifactResolutionProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2AttributeQueryProfileHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2SLOProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2SSOProfileHandlerBeanDefinitionParser;
 
 /**
@@ -70,6 +71,9 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
                 new SAML1ArtifactResolutionProfileHanderBeanDefinitionParser());
 
         registerBeanDefinitionParser(SAML2SSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new SAML2SSOProfileHandlerBeanDefinitionParser());
+
+        registerBeanDefinitionParser(SAML2SLOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SSOProfileHandlerBeanDefinitionParser());
 
         registerBeanDefinitionParser(SAML2AttributeQueryProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
