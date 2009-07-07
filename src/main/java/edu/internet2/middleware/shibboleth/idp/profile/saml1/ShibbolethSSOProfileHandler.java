@@ -151,8 +151,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             throw new ProfileException("Shibboleth SSO profile is not configured for relying party "
                     + loginContext.getRelyingPartyId());
         }
-        if (rpConfig.getDefaultAuthenticationMethod() != null) {
-            loginContext.setDefaultAuthenticationMethod(rpConfig.getDefaultAuthenticationMethod());
+        if (loginContext.getRequestedAuthenticationMethods().size() == 0
+                && rpConfig.getDefaultAuthenticationMethod() != null) {
+            loginContext.getRequestedAuthenticationMethods().add(rpConfig.getDefaultAuthenticationMethod());
         }
 
         httpRequest.setAttribute(LoginContext.LOGIN_CONTEXT_KEY, loginContext);

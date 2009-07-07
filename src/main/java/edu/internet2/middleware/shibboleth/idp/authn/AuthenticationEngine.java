@@ -316,16 +316,9 @@ public class AuthenticationEngine extends HttpServlet {
                 loginHandler = possibleLoginHandlers.get(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
             } else {
                 possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
-                if (loginContext.getDefaultAuthenticationMethod() != null &&
-                        possibleLoginHandlers.containsKey(loginContext.getDefaultAuthenticationMethod())) {
-
-                    loginContext.setAttemptedAuthnMethod(loginContext.getDefaultAuthenticationMethod());
-                    loginHandler = possibleLoginHandlers.get(loginContext.getDefaultAuthenticationMethod());
-                } else {
-                     Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
-                     loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
-                     loginHandler = chosenLoginHandler.getValue();
-                }
+                Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
+                loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
+                loginHandler = chosenLoginHandler.getValue();
             }
 
             // Send the request to the login handler
