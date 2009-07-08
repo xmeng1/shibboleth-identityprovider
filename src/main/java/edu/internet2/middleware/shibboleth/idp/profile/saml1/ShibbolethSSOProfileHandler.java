@@ -184,7 +184,10 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      */
     protected void decodeRequest(ShibbolethSSORequestContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Decoding message with decoder binding {}", getInboundBinding());
+        if (log.isDebugEnabled()) {
+            log.debug("Decoding message with decoder binding {}",
+                    getInboundMessageDecoder(requestContext).getBindingURI());
+        }
 
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
 
@@ -201,7 +204,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setOutboundMessageTransport(outTransport);
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
-        SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
+        SAMLMessageDecoder decoder = getInboundMessageDecoder(requestContext);
         requestContext.setMessageDecoder(decoder);
         try {
             decoder.decode(requestContext);
@@ -290,7 +293,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         ShibbolethSSORequestContext requestContext = new ShibbolethSSORequestContext();
         requestContext.setCommunicationProfileId(getProfileId());
 
-        requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
+        requestContext.setMessageDecoder(getInboundMessageDecoder(requestContext));
 
         requestContext.setLoginContext(loginContext);
         requestContext.setRelayState(loginContext.getSpTarget());
