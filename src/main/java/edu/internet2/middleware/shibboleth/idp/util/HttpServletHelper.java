@@ -120,11 +120,11 @@ public class HttpServletHelper {
      * @param loginContext login context to be bound
      * @param request current HTTP request
      */
-    public static void bindLoginContext(LoginContext loginContext, HttpServletRequest request) {
-        if (request == null) {
+    public static void bindLoginContext(LoginContext loginContext, HttpServletRequest httpRequest) {
+        if (httpRequest == null) {
             throw new IllegalArgumentException("HTTP request may not be null");
         }
-        request.setAttribute(LOGIN_CTX_KEY_NAME, loginContext);
+        httpRequest.setAttribute(LOGIN_CTX_KEY_NAME, loginContext);
     }
 
     /**
@@ -148,6 +148,8 @@ public class HttpServletHelper {
         if (loginContext == null) {
             return;
         }
+        
+        bindLoginContext(loginContext, httpRequest);
 
         String parition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION);
         log.debug("LoginContext parition: {}", parition);
