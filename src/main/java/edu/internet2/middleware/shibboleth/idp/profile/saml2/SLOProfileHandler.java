@@ -19,23 +19,35 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
+import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
+import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
+import java.io.IOException;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import org.joda.time.DateTime;
+import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.LogoutResponse;
+import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.SingleLogoutService;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 /**
  *
@@ -44,19 +56,30 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
     private static final Logger log =
             LoggerFactory.getLogger(SLOProfileHandler.class);
+    private final SAMLObjectBuilder<SingleLogoutService> sloServiceBuilder;
+    private final SAMLObjectBuilder<Status> statusBuilder;
+    private final SAMLObjectBuilder<LogoutResponse> responseBuilder;
 
     public SLOProfileHandler() {
         super();
-        log.info("SLOProfileHandler Init");
+        sloServiceBuilder = (SAMLObjectBuilder<SingleLogoutService>) getBuilderFactory().getBuilder(
+                SingleLogoutService.DEFAULT_ELEMENT_NAME);
+        statusBuilder =
+                (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
+        responseBuilder =
+                (SAMLObjectBuilder<LogoutResponse>) getBuilderFactory().getBuilder(LogoutResponse.DEFAULT_ELEMENT_NAME);
     }
 
     @Override
     protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext)
             throws ProfileException {
+        
         LogoutRequest request =
                 (LogoutRequest) requestContext.getInboundSAMLMessage();
+        requestContext.setPeerEntityId(request.getIssuer().getValue());
+        requestContext.setInboundSAMLMessageId(request.getID());
         if (request != null) {
-            request.getSessionIndexes(); //TODO...
+            request.getSessionIndexes(); //TODO session indexes?
         }
     }
 
@@ -65,9 +88,9 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             throws ProfileException {
         Endpoint endpoint = null;
 
-        /* TODO
         if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
-            endpoint = acsEndpointBuilder.buildObject();
+
+            endpoint = sloServiceBuilder.buildObject();
             endpoint.setBinding(SAMLConstants.SAML2_SOAP11_BINDING_URI);
         } else {
             BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
@@ -79,7 +102,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             endpointSelector.getSupportedIssuerBindings().addAll(getSupportedOutboundBindings());
             endpoint = endpointSelector.selectEndpoint();
         }
-         */
 
         return endpoint;
     }
@@ -92,28 +114,78 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
 
-        LogoutResponse samlResponse = null;
+        HttpServletRequest servletRequest =
+                    ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.
+                getLoginContext(servletRequest);
 
-        LogoutRequestContext requestContext = new LogoutRequestContext();
+        //TODO RelayState is lost?!
+        //TODO unbind slo context
+        
+        if (sloContext == null) {
+            log.debug("Incoming request does not contain a single logout context, processing as first leg of request");
+            startLogout(inTransport, outTransport);
+        } else {
+            log.debug("Incoming request contains a single logout context, processing as second leg of request");
+            completeLogout(sloContext, inTransport, outTransport);
+        }
+    }
+
+    /**
+     * Start logout processing.
+     * 
+     * @param inTransport
+     * @param outTransport
+     * @throws ProfileException
+     */
+    protected void startLogout(HTTPInTransport inTransport, HTTPOutTransport outTransport)
+            throws
+            ProfileException {
 
         try {
+            HttpServletRequest servletRequest =
+                    ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+            LogoutRequestContext requestContext = new LogoutRequestContext();
             decodeRequest(requestContext, inTransport, outTransport);
-
-            if (requestContext.getProfileConfiguration() == null) {
-                String msg =
-                        MessageFormatter.format(
-                        "SAML 2 Single Logout profile is not configured for relying party '{}'",
-                        requestContext.getInboundMessage());
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
-                        StatusCode.REQUEST_DENIED_URI, msg));
-                log.warn(msg);
-            } else {
-                checkSamlVersion(requestContext);
-
+            checkSamlVersion(requestContext);
+            log.info("Processing logout request for principal '{}'.", requestContext.getPrincipalName());
+            Session idpSession =
+                    getSessionManager().getSession(requestContext.getPrincipalName());
+            if (idpSession == null) {
+                log.warn("Cannot find IdP Session for Principal '{}'", requestContext.getPrincipalName());
+                //TODO response
+                throw new ProfileException("Cannot find IdP Session for principal");
             }
-        } catch (ProfileException e) {
-            //samlResponse = buildErrorResponse(requestContext);
+
+            SingleLogoutContext sloContext =
+                    buildSingleLogoutContext(requestContext, idpSession);
+            SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, servletRequest);
+            
+            RequestDispatcher dispatcher =
+                    servletRequest.getRequestDispatcher("/SLOServlet"); //TODO!
+            dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
+        } catch (IOException ex) {
+            log.error("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
+            throw new ProfileException("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
+        } catch (ServletException ex) {
+            log.error("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
+            throw new ProfileException("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
         }
+    }
+
+    /**
+     * Complete logout processing.
+     * 
+     * @param inTransport
+     * @param outTransport
+     * @throws ProfileException
+     */
+    protected void completeLogout(SingleLogoutContext sloContext,
+            HTTPInTransport inTransport, HTTPOutTransport outTransport)
+            throws ProfileException {
+
+        LogoutRequestContext requestContext = buildRequestContext(sloContext, inTransport, outTransport);
+        LogoutResponse samlResponse = buildLogoutResponse(requestContext);
 
         requestContext.setOutboundSAMLMessage(samlResponse);
         requestContext.setOutboundSAMLMessageId(samlResponse.getID());
@@ -121,6 +193,65 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         encodeResponse(requestContext);
         writeAuditLogEntry(requestContext);
+    }
+
+    /**
+     * Builds new single log-out context for session store between logout events.
+     *
+     * @param requestContext
+     * @param idpSession
+     * @return
+     */
+    private SingleLogoutContext buildSingleLogoutContext(LogoutRequestContext requestContext, Session idpSession) {
+
+        return new SingleLogoutContext(requestContext.getPeerEntityId(),
+                requestContext.getInboundSAMLMessageId(), requestContext.getRelayState(),
+                idpSession);
+    }
+
+    /**
+     * Builds request context from information available after logout events.
+     *
+     * @param sloContext
+     * @return
+     */
+    protected LogoutRequestContext buildRequestContext(SingleLogoutContext sloContext,
+            HTTPInTransport in, HTTPOutTransport out) throws ProfileException {
+
+        LogoutRequestContext requestContext = new LogoutRequestContext();
+
+        requestContext.setCommunicationProfileId(getProfileId());
+        requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
+        requestContext.setInboundMessageTransport(in);
+        requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+        requestContext.setOutboundMessageTransport(out);
+        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+        requestContext.setMetadataProvider(getMetadataProvider());
+        requestContext.setInboundSAMLMessageId(sloContext.getRequestSAMLMessageID());
+        requestContext.setInboundMessageIssuer(sloContext.getRequesterEntityID());
+
+        return requestContext;
+    }
+
+    /**
+     * Builds Logout Response.
+     *
+     * @param requestContext
+     * @return
+     * @throws edu.internet2.middleware.shibboleth.common.profile.ProfileException
+     */
+    protected LogoutResponse buildLogoutResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
+            throws ProfileException {
+
+        DateTime issueInstant = new DateTime();
+
+        LogoutResponse logoutResponse = responseBuilder.buildObject();
+        logoutResponse.setIssueInstant(issueInstant);
+        populateStatusResponse(requestContext, logoutResponse);
+        Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
+        logoutResponse.setStatus(status);
+
+        return logoutResponse;
     }
 
     /**
@@ -163,6 +294,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                         "Invalid SAML LogoutRequest message."));
                 throw new ProfileException("Invalid SAML LogoutRequest message.");
             }
+
         } catch (MessageDecodingException e) {
             String msg = "Error decoding logout request message";
             log.warn(msg, e);
@@ -177,6 +309,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             // Set as much information as can be retrieved from the decoded message
             populateRequestContext(requestContext);
         }
+
+
     }
 
     protected class LogoutRequestContext
