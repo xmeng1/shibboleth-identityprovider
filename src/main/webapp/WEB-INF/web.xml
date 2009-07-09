@@ -41,7 +41,7 @@
     <servlet-mapping>
         <servlet-name>ProfileRequestDispatcher</servlet-name>
         <url-pattern>/profile/*</url-pattern>
-    </servlet-mapping> 
+    </servlet-mapping>
 
     <!-- Authentication Engine Entry Point -->
     <servlet>
@@ -72,6 +72,19 @@
         <servlet-name>AuthenticationEngine</servlet-name>
         <url-pattern>/AuthnEngine</url-pattern>
     </servlet-mapping>
+
+    <!-- SLO Servlet -->
+    <servlet>
+        <servlet-name>SLOServlet</servlet-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.slo.SLOServlet</servlet-class>
+        <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>SLOServlet</servlet-name>
+        <url-pattern>/SLOServlet</url-pattern>
+    </servlet-mapping>
+    <!-- END of SLO Servlet -->
 
     <!-- Servlet protected by container user for RemoteUser authentication -->
     <servlet>
