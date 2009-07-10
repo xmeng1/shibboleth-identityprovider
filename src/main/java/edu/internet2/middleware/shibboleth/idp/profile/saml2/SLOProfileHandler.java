@@ -22,7 +22,6 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.Lo
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
-import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutManager;
 import java.io.IOException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -37,7 +36,6 @@ import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
@@ -208,9 +206,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         SingleLogoutContext sloContext =
                 buildSingleLogoutContext(requestContext, idpSession);
-        SingleLogoutManager mgr =
-                new SingleLogoutManager(getBuilderFactory(),
-                getMetadataProvider(), requestContext, SingleLogoutManager.LogoutType.BACKCHANNEL_ONLY);
 
         log.debug("Issuing Backchannel logout requests");
         for (String spEntityID : sloContext.getServiceStatus().keySet()) {
