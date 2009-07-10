@@ -527,8 +527,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 } else {
                     endpoint.setBinding(getSupportedOutboundBindings().get(0));
                 }
-                log.warn("Generating endpoint for anonymous relying party. ACS url '{}' and binding '{}'", new Object[] {
-                        requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
+                log.warn("Generating endpoint for anonymous relying party self-identified as '{}', ACS url '{}' and binding '{}'",
+                        new Object[] {requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
             } else {
                 log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
             }
