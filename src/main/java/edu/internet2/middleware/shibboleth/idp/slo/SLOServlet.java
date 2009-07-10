@@ -17,6 +17,7 @@
 
 package edu.internet2.middleware.shibboleth.idp.slo;
 
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;

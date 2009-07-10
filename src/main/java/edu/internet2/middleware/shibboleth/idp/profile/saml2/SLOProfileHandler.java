@@ -26,8 +26,10 @@ import java.io.IOException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.httpclient.HttpClient;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.common.SAMLVersion;
 import org.opensaml.common.binding.BasicEndpointSelector;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
@@ -42,11 +44,22 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
+import org.opensaml.ws.soap.client.BasicSOAPMessageContext;
+import org.opensaml.ws.soap.client.SOAPMessageContext;
+import org.opensaml.ws.soap.client.http.HttpClientBuilder;
+import org.opensaml.ws.soap.client.http.HttpSOAPClient;
+import org.opensaml.ws.soap.common.SOAPException;
+import org.opensaml.ws.soap.soap11.Body;
+import org.opensaml.ws.soap.soap11.Envelope;
+import org.opensaml.ws.soap.soap11.impl.BodyBuilder;
+import org.opensaml.ws.soap.soap11.impl.EnvelopeBuilder;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
+import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -210,24 +223,89 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         log.debug("Issuing Backchannel logout requests");
         for (String spEntityID : sloContext.getServiceStatus().keySet()) {
             log.debug("Trying SP: {}", spEntityID);
-            /*SAMLObjectBuilder<LogoutRequest> requestBuilder =
-                    (SAMLObjectBuilder<LogoutRequest>) getBuilderFactory().
-                    getBuilder(LogoutRequest.DEFAULT_ELEMENT_NAME);
-            LogoutRequest request = requestBuilder.buildObject();
-            DateTime issueInstant = new DateTime();*/
 
+            //find SOAP endpoint for SingleLogoutService
+            BasicEndpointSelector es = new BasicEndpointSelector();
+            es.setEndpointType(SingleLogoutService.DEFAULT_ELEMENT_NAME);
+            es.setMetadataProvider(getMetadataProvider());
+            es.getSupportedIssuerBindings().add(SAMLConstants.SAML2_SOAP11_BINDING_URI);
+
+            try {
+                es.setEntityRoleMetadata(
+                        getMetadataProvider().getRole(spEntityID, SPSSODescriptor.DEFAULT_ELEMENT_NAME, SAMLConstants.SAML20P_NS));
+            } catch (MetadataProviderException ex) {
+                log.info("Cannot get SAML2 metadata for SP '{}'.", spEntityID);
+                continue;
+            }
+            Endpoint endpoint = es.selectEndpoint();
+            if (endpoint == null) {
+                log.info("Cannot get SAML2 SOAP SingleLogoutService endpoint for SP '{}'.", spEntityID);
+                continue;
+            }
 
             //Dirty hack to have access to the nameid, TODO: place nameid in serviceinformation?!
 
             requestContext.setInboundMessageIssuer(spEntityID);
             resolveAttributes(requestContext);
             NameID nameId = buildNameId(requestContext);
+
             log.debug("NameID for the principal: '{}'", nameId.getValue());
 
+
+            SAMLObjectBuilder<LogoutRequest> requestBuilder =
+                    (SAMLObjectBuilder<LogoutRequest>) getBuilderFactory().
+                    getBuilder(LogoutRequest.DEFAULT_ELEMENT_NAME);
+            SAMLObjectBuilder<LogoutResponse> responseBuilder =
+                    (SAMLObjectBuilder<LogoutResponse>) getBuilderFactory().
+                    getBuilder(LogoutResponse.DEFAULT_ELEMENT_NAME);
             
-            //Subject subject = buildSubject(requestContext, "", new DateTime());
-            /*request.setIssueInstant(issueInstant);
-            request.setID(getIdGenerator().generateIdentifier());*/
+            LogoutRequest request = requestBuilder.buildObject();
+            LogoutResponse response = responseBuilder.buildObject();
+            
+            DateTime issueInstant = new DateTime();
+            request.setIssueInstant(issueInstant);
+            request.setID(getIdGenerator().generateIdentifier());
+            request.setVersion(SAMLVersion.VERSION_20);
+
+            try {
+                /*SAMLMessageEncoder encoder = new HTTPSOAP11Encoder();
+                SAMLMessageDecoder decoder = new HTTPSOAP11Decoder(getParserPool());*/
+                
+                EnvelopeBuilder eb = new EnvelopeBuilder();
+                BodyBuilder bb = new BodyBuilder();
+                Envelope soapenv = eb.buildObject();
+                
+                Body soapbody = bb.buildObject();
+                soapenv.setBody(soapbody);
+                soapbody.getUnknownXMLObjects().add(request);
+
+                SOAPMessageContext ctx = new BasicSOAPMessageContext();
+                ctx.setCommunicationProfileId(getProfileId());
+                ctx.setOutboundMessage(soapenv);
+                ctx.setOutboundMessageIssuer(requestContext.getLocalEntityId());
+                //ctx.setInboundMessage();
+
+                //encoder.encode(ctx);
+
+                HttpClientBuilder httpClientBuilder = new HttpClientBuilder();
+                httpClientBuilder.setConnectionTimeout(1000);
+                httpClientBuilder.setContentCharSet("UTF-8");
+                HttpClient httpClient = new HttpClient();
+                
+                HttpSOAPClient soapClient = new HttpSOAPClient(httpClient, getParserPool());
+                soapClient.send(endpoint.getLocation(), ctx);
+
+                XMLObject inboundMessage = ctx.getInboundMessage();
+                
+            } catch (SOAPException ex) {
+                log.warn("Exception while encoding SAML Logout request", ex);
+                continue;
+            } catch (SecurityException ex) {
+                log.warn("Exception while encoding SAML Logout request", ex);
+                continue;
+            } catch (Throwable t) {
+                log.error("Exception while sending SAML Logout request", t);
+            }
         }
     }
 
