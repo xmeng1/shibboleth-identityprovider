@@ -37,6 +37,7 @@ import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
@@ -73,13 +74,33 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     @Override
     protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext)
             throws ProfileException {
-        
+
         LogoutRequest request =
                 (LogoutRequest) requestContext.getInboundSAMLMessage();
-        requestContext.setPeerEntityId(request.getIssuer().getValue());
-        requestContext.setInboundSAMLMessageId(request.getID());
+
         if (request != null) {
             request.getSessionIndexes(); //TODO session indexes?
+
+            requestContext.setPeerEntityId(request.getIssuer().getValue());
+            requestContext.setInboundSAMLMessageId(request.getID());
+            if (request.getNameID() != null) {
+                requestContext.setSubjectNameIdentifier(request.getNameID());
+            } else {
+                throw new ProfileException("Incoming Logout Request did not contain SAML2 NameID.");
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    protected void populateRelyingPartyInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        super.populateRelyingPartyInformation(requestContext);
+
+        EntityDescriptor relyingPartyMetadata =
+                requestContext.getPeerEntityMetadata();
+        if (relyingPartyMetadata != null) {
+            requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+            requestContext.setPeerEntityRoleMetadata(relyingPartyMetadata.getSPSSODescriptor(SAMLConstants.SAML20P_NS));
         }
     }
 
@@ -115,13 +136,14 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             throws ProfileException {
 
         HttpServletRequest servletRequest =
-                    ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-        SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.
-                getLoginContext(servletRequest);
+                ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+        SingleLogoutContext sloContext =
+                SingleLogoutContextStorageHelper.getLoginContext(servletRequest);
 
         //TODO RelayState is lost?!
         //TODO unbind slo context
-        
+        //TODO front/back channel separation
+
         if (sloContext == null) {
             log.debug("Incoming request does not contain a single logout context, processing as first leg of request");
             startLogout(inTransport, outTransport);
@@ -148,6 +170,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             LogoutRequestContext requestContext = new LogoutRequestContext();
             decodeRequest(requestContext, inTransport, outTransport);
             checkSamlVersion(requestContext);
+            resolvePrincipal(requestContext);
             log.info("Processing logout request for principal '{}'.", requestContext.getPrincipalName());
             Session idpSession =
                     getSessionManager().getSession(requestContext.getPrincipalName());
@@ -160,7 +183,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             SingleLogoutContext sloContext =
                     buildSingleLogoutContext(requestContext, idpSession);
             SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, servletRequest);
-            
+
             RequestDispatcher dispatcher =
                     servletRequest.getRequestDispatcher("/SLOServlet"); //TODO!
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
@@ -184,7 +207,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
 
-        LogoutRequestContext requestContext = buildRequestContext(sloContext, inTransport, outTransport);
+        LogoutRequestContext requestContext =
+                buildRequestContext(sloContext, inTransport, outTransport);
         LogoutResponse samlResponse = buildLogoutResponse(requestContext);
 
         requestContext.setOutboundSAMLMessage(samlResponse);
