@@ -53,7 +53,9 @@ public class SingleLogoutContext implements Serializable {
         Map<String, ServiceInformation> serviceInformationMap = idpSession.getServicesInformation();
         this.serviceStatus = new HashMap<String, LogoutStatus>(serviceInformationMap.size());
         for (ServiceInformation service : serviceInformationMap.values()) {
-            serviceStatus.put(service.getEntityID(), LogoutStatus.LOGGED_IN);
+            if (!service.getEntityID().equals(requesterEntityID)) {
+                serviceStatus.put(service.getEntityID(), LogoutStatus.LOGGED_IN);
+            }
         }
     }
 

@@ -22,6 +22,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.Lo
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
+import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutManager;
 import java.io.IOException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -33,8 +34,10 @@ import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.LogoutResponse;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
@@ -92,6 +95,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /** {@inheritDoc} */
+    @Override
     protected void populateRelyingPartyInformation(BaseSAMLProfileRequestContext requestContext)
             throws ProfileException {
         super.populateRelyingPartyInformation(requestContext);
@@ -149,7 +153,9 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             startLogout(inTransport, outTransport);
         } else {
             log.debug("Incoming request contains a single logout context, processing as second leg of request");
-            completeLogout(sloContext, inTransport, outTransport);
+            LogoutRequestContext requestContext =
+                    buildRequestContext(sloContext, inTransport, outTransport);
+            completeLogout(requestContext, inTransport, outTransport);
         }
     }
 
@@ -164,22 +170,89 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             throws
             ProfileException {
 
+        LogoutRequestContext requestContext = new LogoutRequestContext();
+        decodeRequest(requestContext, inTransport, outTransport);
+        checkSamlVersion(requestContext);
+        resolvePrincipal(requestContext);
+        log.info("Processing logout request for principal '{}'.", requestContext.getPrincipalName());
+        Session idpSession =
+                getSessionManager().getSession(requestContext.getPrincipalName());
+        if (idpSession == null) {
+            log.warn("Cannot find IdP Session for Principal '{}'", requestContext.getPrincipalName());
+            //TODO response
+            throw new ProfileException("Cannot find IdP Session for principal");
+        }
+
+        if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
+            initiateBackChannelLogout(inTransport, outTransport, requestContext, idpSession);
+        } else {
+            initiateFrontChannelLogout(inTransport, outTransport, requestContext, idpSession);
+        }
+
+
+    }
+
+    /**
+     * Issues back channel logout requests to session participants.
+     *
+     * @param inTransport
+     * @param outTransport
+     * @param requestContext
+     * @param idpSession
+     * @throws ProfileException
+     */
+    private void initiateBackChannelLogout(
+            HTTPInTransport inTransport, HTTPOutTransport outTransport,
+            LogoutRequestContext requestContext, Session idpSession)
+            throws ProfileException {
+
+        SingleLogoutContext sloContext =
+                buildSingleLogoutContext(requestContext, idpSession);
+        SingleLogoutManager mgr =
+                new SingleLogoutManager(getBuilderFactory(),
+                getMetadataProvider(), requestContext, SingleLogoutManager.LogoutType.BACKCHANNEL_ONLY);
+
+        log.debug("Issuing Backchannel logout requests");
+        for (String spEntityID : sloContext.getServiceStatus().keySet()) {
+            log.debug("Trying SP: {}", spEntityID);
+            /*SAMLObjectBuilder<LogoutRequest> requestBuilder =
+                    (SAMLObjectBuilder<LogoutRequest>) getBuilderFactory().
+                    getBuilder(LogoutRequest.DEFAULT_ELEMENT_NAME);
+            LogoutRequest request = requestBuilder.buildObject();
+            DateTime issueInstant = new DateTime();*/
+
+
+            //Dirty hack to have access to the nameid, TODO: place nameid in serviceinformation?!
+
+            requestContext.setInboundMessageIssuer(spEntityID);
+            resolveAttributes(requestContext);
+            NameID nameId = buildNameId(requestContext);
+            log.debug("NameID for the principal: '{}'", nameId.getValue());
+
+            
+            //Subject subject = buildSubject(requestContext, "", new DateTime());
+            /*request.setIssueInstant(issueInstant);
+            request.setID(getIdGenerator().generateIdentifier());*/
+        }
+    }
+
+    /**
+     * Issues front and back channel logout requests to session participants.
+     * 
+     * @param inTransport
+     * @param outTransport
+     * @param requestContext
+     * @param idpSession
+     * @throws ProfileException
+     */
+    private void initiateFrontChannelLogout(
+            HTTPInTransport inTransport, HTTPOutTransport outTransport,
+            LogoutRequestContext requestContext, Session idpSession)
+            throws ProfileException {
+
         try {
             HttpServletRequest servletRequest =
                     ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-            LogoutRequestContext requestContext = new LogoutRequestContext();
-            decodeRequest(requestContext, inTransport, outTransport);
-            checkSamlVersion(requestContext);
-            resolvePrincipal(requestContext);
-            log.info("Processing logout request for principal '{}'.", requestContext.getPrincipalName());
-            Session idpSession =
-                    getSessionManager().getSession(requestContext.getPrincipalName());
-            if (idpSession == null) {
-                log.warn("Cannot find IdP Session for Principal '{}'", requestContext.getPrincipalName());
-                //TODO response
-                throw new ProfileException("Cannot find IdP Session for principal");
-            }
-
             SingleLogoutContext sloContext =
                     buildSingleLogoutContext(requestContext, idpSession);
             SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, servletRequest);
@@ -187,6 +260,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             RequestDispatcher dispatcher =
                     servletRequest.getRequestDispatcher("/SLOServlet"); //TODO!
             dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
+
         } catch (IOException ex) {
             log.error("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
             throw new ProfileException("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
@@ -203,12 +277,10 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      * @param outTransport
      * @throws ProfileException
      */
-    protected void completeLogout(SingleLogoutContext sloContext,
+    protected void completeLogout(LogoutRequestContext requestContext,
             HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
 
-        LogoutRequestContext requestContext =
-                buildRequestContext(sloContext, inTransport, outTransport);
         LogoutResponse samlResponse = buildLogoutResponse(requestContext);
 
         requestContext.setOutboundSAMLMessage(samlResponse);
@@ -333,11 +405,9 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             // Set as much information as can be retrieved from the decoded message
             populateRequestContext(requestContext);
         }
-
-
     }
 
-    protected class LogoutRequestContext
+    public class LogoutRequestContext
             extends BaseSAML2ProfileRequestContext<LogoutRequest, LogoutResponse, LogoutRequestConfiguration> {
     }
 }
