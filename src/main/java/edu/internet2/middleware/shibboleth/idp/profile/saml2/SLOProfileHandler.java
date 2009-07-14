@@ -23,10 +23,8 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientOutTransportAdapter;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
@@ -72,7 +70,6 @@ import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.soap.client.http.HttpClientBuilder;
-import org.opensaml.ws.transport.OutTransport;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
@@ -304,26 +301,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 requestCtx.setOutboundMessageIssuer(requestContext.getOutboundMessageIssuer());
                 requestCtx.setInboundMessageIssuer(spEntityID);
                 requestCtx.setOutboundSAMLMessage(request);
-                //only a hack to have outtransport
-                requestCtx.setOutboundMessageTransport(requestContext.getOutboundMessageTransport());
-
-                //prepare soap envelope
-                /*
-                EnvelopeBuilder eb = new EnvelopeBuilder();
-                BodyBuilder bb = new BodyBuilder();
-                Envelope soapenv = eb.buildObject();
-                Body soapbody = bb.buildObject();
-                soapenv.setBody(soapbody);
-                //add saml request to soap body
-                soapbody.getUnknownXMLObjects().add(request);
-                 */
-
-                //prepare soap message
-                /*SOAPMessageContext ctx = new BasicSOAPMessageContext();
-                ctx.setCommunicationProfileId(getProfileId());
-                ctx.setOutboundMessage(soapenv);
-                ctx.setOutboundMessageIssuer(requestContext.getLocalEntityId());
-                 */
 
                 //prepare http message exchange for soap
                 HttpClientBuilder httpClientBuilder = new HttpClientBuilder();
@@ -361,29 +338,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 soapTransport.flush();
                 httpConn.flushRequestOutputStream();
 
-                /*
-                BufferedReader rr =
-                        new BufferedReader(new InputStreamReader(httpConn.getResponseInputStream()));
-                StringBuilder rb = new StringBuilder(1000);
-                String response;
-                while ((response = rr.readLine()) != null) {
-                    rb.append(response);
-                }
-                log.debug("Response from server:" + rb.toString());
-                */
-                /*ParserPool pp = new StaticBasicParserPool();
-                HttpSOAPClient soapClient =
-                new HttpSOAPClient(httpClient, pp);
-                //send soap request
-                soapClient.send(endpoint.getLocation(), ctx);*/
-
-                //XMLObject inboundMessage = ctx.getInboundMessage();
-            /*} catch (SOAPException ex) {
-                log.warn("Exception while encoding SAML Logout request", ex);
-                continue;
-            } catch (SecurityException ex) {
-                log.warn("Exception while encoding SAML Logout request", ex);
-                continue;*/
+                //TODO response unmarshalling
             } catch (Throwable t) {
                 log.error("Exception while sending SAML Logout request", t);
             }
@@ -580,9 +535,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
             super();
 
-            RSAPrivateCrtKey privateKey =
-                    (RSAPrivateCrtKey) myCredential.getPrivateKey();
-            RSAPublicKey publicKey = (RSAPublicKey) myCredential.getPublicKey();
             List<X509Certificate> certificates =
                     new ArrayList<X509Certificate>();
 
@@ -598,9 +550,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                     }
                 }
             }
-            //setKeyMaterial(new KeyMaterial(publicKey.getEncoded(), privateKey.getEncoded(), null));
+            //TODO client authentication
             addTrustMaterial(new TrustMaterial(certificates));
-            setNeedClientAuth(true);
             setUseClientMode(true);
         }
     }
