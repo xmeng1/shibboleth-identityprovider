@@ -132,7 +132,10 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
      */
     protected void decodeRequest(AttributeQueryContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Decoding message with decoder binding {}", getInboundBinding());
+        if (log.isDebugEnabled()) {
+            log.debug("Decoding message with decoder binding {}",
+                    getInboundMessageDecoder(requestContext).getBindingURI());
+        }
 
         requestContext.setCommunicationProfileId(getProfileId());
 
@@ -148,10 +151,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
         try {
-            SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
-            if (decoder == null) {
-                throw new ProfileException("No message decoder configured for inbound binding " + getInboundBinding());
-            }
+            SAMLMessageDecoder decoder = getInboundMessageDecoder(requestContext);
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request");
