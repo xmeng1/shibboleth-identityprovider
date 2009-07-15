@@ -573,6 +573,35 @@ public abstract class AbstractSAMLProfileHandler extends
         }
         return encoder;
     }
+    
+    /**
+     * Get the inbound message decoder to use.
+     * 
+     * <p>The default implementation uses the binding URI from
+     * {@link #getInboundBinding()} to lookup the decoder from the supported message decoders
+     * defined in {@link #getMessageDecoders()}.
+     * </p>
+     * 
+     * <p>
+     * Subclasses may override to implement a different mechanism to determine the 
+     * decoder to use.
+     * </p>
+     * 
+     * @param requestContext current request context
+     * @return the message decoder to use
+     * @throws ProfileException if the decoder to use can not be resolved based on the request context
+     */
+    protected SAMLMessageDecoder getInboundMessageDecoder(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        SAMLMessageDecoder decoder = null;
+
+        decoder = getMessageDecoders().get(getInboundBinding());
+        if (decoder == null) {
+            log.error("No inbound message decoder configured for binding: {}", getInboundBinding());
+            throw new ProfileException("No inbound message decoder configured for binding: " + getInboundBinding());
+        }
+        return decoder;
+    }
 
     /**
      * Writes an audit log entry indicating the successful response to the attribute request.

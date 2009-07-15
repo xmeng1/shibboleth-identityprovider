@@ -134,7 +134,10 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
      */
     protected void decodeRequest(ArtifactResolutionRequestContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Decoding message with decoder binding '{}'", getInboundBinding());
+        if (log.isDebugEnabled()) {
+            log.debug("Decoding message with decoder binding '{}'",
+                    getInboundMessageDecoder(requestContext).getBindingURI());
+        }
 
         requestContext.setCommunicationProfileId(getProfileId());
 
@@ -150,7 +153,7 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
         try {
-            SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
+            SAMLMessageDecoder decoder = getInboundMessageDecoder(requestContext);
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded artifact resolution request from relying party '{}'", requestContext

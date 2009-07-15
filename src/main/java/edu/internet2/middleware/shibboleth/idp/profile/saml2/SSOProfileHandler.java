@@ -278,7 +278,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void decodeRequest(SSORequestContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
-        log.debug("Decoding message with decoder binding '{}'", getInboundBinding());
+        if (log.isDebugEnabled()) {
+            log.debug("Decoding message with decoder binding '{}'",
+                    getInboundMessageDecoder(requestContext).getBindingURI());
+        }
 
         requestContext.setCommunicationProfileId(getProfileId());
 
@@ -294,7 +297,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
 
         try {
-            SAMLMessageDecoder decoder = getMessageDecoders().get(getInboundBinding());
+            SAMLMessageDecoder decoder = getInboundMessageDecoder(requestContext);
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessageIssuer());
@@ -333,7 +336,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         SSORequestContext requestContext = new SSORequestContext();
         requestContext.setCommunicationProfileId(getProfileId());
 
-        requestContext.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
+        requestContext.setMessageDecoder(getInboundMessageDecoder(requestContext));
 
         requestContext.setLoginContext(loginContext);
 
@@ -524,8 +527,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 } else {
                     endpoint.setBinding(getSupportedOutboundBindings().get(0));
                 }
-                log.warn("Generating endpoint for anonymous relying party. ACS url '{}' and binding '{}'", new Object[] {
-                        requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
+                log.warn("Generating endpoint for anonymous relying party self-identified as '{}', ACS url '{}' and binding '{}'",
+                        new Object[] {requestContext.getInboundMessageIssuer(), endpoint.getLocation(), endpoint.getBinding(), });
             } else {
                 log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
             }
