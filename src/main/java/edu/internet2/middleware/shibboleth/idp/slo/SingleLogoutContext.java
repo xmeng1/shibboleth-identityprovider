@@ -14,7 +14,6 @@
  *  limitations under the License.
  *  under the License.
  */
-
 package edu.internet2.middleware.shibboleth.idp.slo;
 
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
@@ -28,33 +27,33 @@ import java.util.Map;
  * @author Adam Lantos  NIIF / HUNGARNET
  */
 public class SingleLogoutContext implements Serializable {
-    
-    private static final long serialVersionUID = -4067880011119487071L;
 
+    private static final long serialVersionUID = -4067880011119487071L;
     /** EntityID of the entity which requested the logout. */
     private final String requesterEntityID;
-
     /** SAML ID of the LogoutRequest. */
     private final String requestSAMLMessageID;
-
     /** RelayState of the LogoutRequest. */
     private final String relayState;
-
-    private final Map<String, LogoutStatus> serviceStatus;
+    private final Map<String, LogoutInformation> serviceInformation;
 
     public SingleLogoutContext(
             String requesterEntityID, String requestSAMLMessageID,
             String relayState, Session idpSession) {
-        
+
         this.requesterEntityID = requesterEntityID;
         this.requestSAMLMessageID = requestSAMLMessageID;
         this.relayState = relayState;
 
-        Map<String, ServiceInformation> serviceInformationMap = idpSession.getServicesInformation();
-        this.serviceStatus = new HashMap<String, LogoutStatus>(serviceInformationMap.size());
+        Map<String, ServiceInformation> serviceInformationMap =
+                idpSession.getServicesInformation();
+        this.serviceInformation =
+                new HashMap<String, LogoutInformation>(serviceInformationMap.size());
         for (ServiceInformation service : serviceInformationMap.values()) {
             if (!service.getEntityID().equals(requesterEntityID)) {
-                serviceStatus.put(service.getEntityID(), LogoutStatus.LOGGED_IN);
+                LogoutInformation logoutInfo =
+                        new LogoutInformation(service, LogoutStatus.LOGGED_IN);
+                serviceInformation.put(service.getEntityID(), logoutInfo);
             }
         }
     }
@@ -71,11 +70,67 @@ public class SingleLogoutContext implements Serializable {
         return requesterEntityID;
     }
 
-    public Map<String, LogoutStatus> getServiceStatus() {
-        return serviceStatus;
+    public Map<String, LogoutInformation> getServiceInformation() {
+        return serviceInformation;
     }
-    
+
     public enum LogoutStatus implements Serializable {
+
         LOGGED_IN, LOGOUT_ATTEMPTED, LOGOUT_SUCCEEDED, LOGOUT_FAILED
+    }
+
+    public class LogoutInformation implements Serializable {
+
+        private static final long serialVersionUID = -411782660988990728L;
+        private String entityID;
+        private String nameIdentifier;
+        private String nameIdentifierFormat;
+        private LogoutStatus logoutStatus;
+
+        public LogoutInformation(String entityID, String nameIdentifier,
+                String nameIdentifierFormat, LogoutStatus logoutStatus) {
+
+            this.entityID = entityID;
+            this.nameIdentifier = nameIdentifier;
+            this.nameIdentifierFormat = nameIdentifierFormat;
+            this.logoutStatus = logoutStatus;
+        }
+
+        public LogoutInformation(ServiceInformation service, LogoutStatus status) {
+            this(service.getEntityID(), service.getNameIdentifier(),
+                    service.getNameIdentifierFormat(), status);
+        }
+
+        public String getEntityID() {
+            return entityID;
+        }
+
+        public void setEntityID(String entityID) {
+            this.entityID = entityID;
+        }
+
+        public LogoutStatus getLogoutStatus() {
+            return logoutStatus;
+        }
+
+        public void setLogoutStatus(LogoutStatus logoutStatus) {
+            this.logoutStatus = logoutStatus;
+        }
+
+        public String getNameIdentifier() {
+            return nameIdentifier;
+        }
+
+        public void setNameIdentifier(String nameIdentifier) {
+            this.nameIdentifier = nameIdentifier;
+        }
+
+        public String getNameIdentifierFormat() {
+            return nameIdentifierFormat;
+        }
+
+        public void setNameIdentifierFormat(String nameIdentifierFormat) {
+            this.nameIdentifierFormat = nameIdentifierFormat;
+        }
     }
 }

@@ -29,8 +29,6 @@ import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPublicKey;
-import java.security.interfaces.RSAPrivateCrtKey;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.RequestDispatcher;
@@ -239,7 +237,12 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 buildSingleLogoutContext(requestContext, idpSession);
 
         log.debug("Issuing Backchannel logout requests");
-        for (String spEntityID : sloContext.getServiceStatus().keySet()) {
+        for (String spEntityID : sloContext.getServiceInformation().keySet()) {
+            SingleLogoutContext.LogoutInformation serviceLogoutInfo =
+                    sloContext.getServiceInformation().get(spEntityID);
+            if (! serviceLogoutInfo.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+                continue;
+            }
             log.debug("Trying SP: {}", spEntityID);
 
             RoleDescriptor spMetadata = null;
@@ -268,11 +271,13 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 continue;
             }
 
-            //Dirty hack to have access to the nameid, TODO: place nameid in serviceinformation?!
-            //resolve nameid for principal and sp
-            requestContext.setInboundMessageIssuer(spEntityID);
-            resolveAttributes(requestContext);
-            NameID nameId = buildNameId(requestContext);
+            //retrieve nameid value from session and build nameid object
+            SAMLObjectBuilder<NameID> nameIDBuilder =
+                    (SAMLObjectBuilder<NameID>) getBuilderFactory().
+                    getBuilder(NameID.DEFAULT_ELEMENT_NAME);
+            NameID nameId = nameIDBuilder.buildObject();
+            nameId.setFormat(serviceLogoutInfo.getNameIdentifierFormat());
+            nameId.setValue(serviceLogoutInfo.getNameIdentifier());
             log.debug("NameID for the principal: '{}'", nameId.getValue());
 
             SAMLObjectBuilder<LogoutRequest> requestBuilder =
