@@ -146,7 +146,7 @@ public class AuthenticationEngine extends HttpServlet {
         LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, context, httpRequest);
         if (loginContext == null) {
             LOG.warn("No login context available, unable to return to authentication engine");
-            forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
+            forwardRequest("/error.jsp", httpRequest, httpResponse);
         } else {
             forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
         }
@@ -164,7 +164,7 @@ public class AuthenticationEngine extends HttpServlet {
         LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, context, httpRequest);
         if (loginContext == null) {
             LOG.warn("No login context available, unable to return to profile handler");
-            forwardRequest("/idp-error.jsp", httpRequest, httpResponse);
+            forwardRequest("/error.jsp", httpRequest, httpResponse);
         }
 
         HttpServletHelper.bindLoginContext(loginContext, httpRequest);
