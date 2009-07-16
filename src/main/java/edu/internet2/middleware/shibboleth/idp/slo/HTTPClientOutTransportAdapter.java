@@ -19,31 +19,33 @@ package edu.internet2.middleware.shibboleth.idp.slo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.apache.commons.httpclient.HttpConnection;
-import org.apache.commons.httpclient.URI;
+import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.RequestEntity;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HTTPTransport.HTTP_VERSION;
 import org.opensaml.xml.security.credential.Credential;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Adam Lantos  NIIF / HUNGARNET
  */
 public class HTTPClientOutTransportAdapter implements HTTPOutTransport {
-
-    private String encoding;
+    private static final Logger log = LoggerFactory.getLogger(HTTPClientOutTransportAdapter.class);
+    
     private HttpConnection connection;
-    private Map<String, String> headers;
-    private URI uri;
-    private ByteArrayOutputStream contentStream;
+    private EntityEnclosingMethod method;
+    SOAPRequestEntity requestEntity;
 
-    public HTTPClientOutTransportAdapter(HttpConnection connection, URI uri) {
+    public HTTPClientOutTransportAdapter(HttpConnection connection, EntityEnclosingMethod method) {
         this.connection = connection;
-        this.uri = uri;
-        this.headers = new HashMap<String, String>();
+        this.method = method;
+        requestEntity = new SOAPRequestEntity();
+        method.setRequestEntity(requestEntity);
     }
 
     public void setVersion(HTTP_VERSION version) {
@@ -51,7 +53,7 @@ public class HTTPClientOutTransportAdapter implements HTTPOutTransport {
     }
 
     public void setHeader(String name, String value) {
-        headers.put(name, value);
+        method.addRequestHeader(name, value);
     }
 
     public void addParameter(String name, String value) {
@@ -71,33 +73,11 @@ public class HTTPClientOutTransportAdapter implements HTTPOutTransport {
     }
 
     public void setCharacterEncoding(String encoding) {
-        this.encoding = encoding;
-        headers.put("Content-type", "application/soap+xml; charset=" + encoding);
+        requestEntity.setEncoding(encoding);
     }
 
     public OutputStream getOutgoingStream() {
-        contentStream = new ByteArrayOutputStream();
-        return contentStream;
-    }
-
-    public void flush() throws IOException {
-        StringBuilder builder = new StringBuilder(500);
-        builder.append("POST ");
-        builder.append(uri.getEscapedPath());
-        builder.append(" HTTP/1.1\r\nHost: ");
-        builder.append(uri.getHost());
-        builder.append("\r\n");
-        for (Map.Entry<String, String> header : headers.entrySet()) {
-            builder.append(header.getKey());
-            builder.append(": ");
-            builder.append(header.getValue());
-            builder.append("\r\n");
-        }
-        builder.append("Content-Length: ");
-        builder.append(contentStream.size());
-        builder.append("\r\n\r\n");
-        connection.write(builder.toString().getBytes(encoding));
-        connection.write(contentStream.toByteArray());
+        return requestEntity.getContentStream();
     }
 
     public Object getAttribute(String name) {
@@ -105,7 +85,7 @@ public class HTTPClientOutTransportAdapter implements HTTPOutTransport {
     }
 
     public String getCharacterEncoding() {
-        return encoding;
+        return requestEntity.getEncoding();
     }
 
     public Credential getLocalCredential() {
@@ -162,5 +142,39 @@ public class HTTPClientOutTransportAdapter implements HTTPOutTransport {
 
     public HTTP_VERSION getVersion() {
         return HTTP_VERSION.HTTP1_1;
+    }
+
+
+    class SOAPRequestEntity implements RequestEntity {
+        private ByteArrayOutputStream contentStream = new ByteArrayOutputStream();
+        private String encoding = "utf-8";
+
+        public boolean isRepeatable() {
+            return false;
+        }
+
+        public void writeRequest(OutputStream out) throws IOException {
+            out.write(contentStream.toByteArray());
+        }
+
+        public long getContentLength() {
+            return contentStream.size();
+        }
+
+        public String getContentType() {
+            return "text/xml; encoding=" + encoding;
+        }
+
+        void setEncoding(String encoding) {
+            this.encoding = encoding;
+        }
+
+        String getEncoding() {
+            return encoding;
+        }
+
+        OutputStream getContentStream() {
+            return contentStream;
+        }
     }
 }

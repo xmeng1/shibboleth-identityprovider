@@ -20,6 +20,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
+import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientInTransportAdapter;
 import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientOutTransportAdapter;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
@@ -37,8 +38,11 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnection;
+import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
+import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
 import org.apache.commons.ssl.TrustMaterial;
 import org.joda.time.DateTime;
@@ -49,6 +53,7 @@ import org.opensaml.common.binding.BasicSAMLMessageContext;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
 import org.opensaml.saml2.binding.encoding.HTTPSOAP11Encoder;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.LogoutRequest;
@@ -236,14 +241,15 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         SingleLogoutContext sloContext =
                 buildSingleLogoutContext(requestContext, idpSession);
 
-        log.debug("Issuing Backchannel logout requests");
-        for (String spEntityID : sloContext.getServiceInformation().keySet()) {
-            SingleLogoutContext.LogoutInformation serviceLogoutInfo =
-                    sloContext.getServiceInformation().get(spEntityID);
-            if (! serviceLogoutInfo.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+        log.info("Issuing Backchannel logout requests");
+        for (SingleLogoutContext.LogoutInformation serviceLogoutInfo :
+                sloContext.getServiceInformation().values()) {
+            if (!serviceLogoutInfo.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
                 continue;
             }
+            String spEntityID = serviceLogoutInfo.getEntityID();
             log.debug("Trying SP: {}", spEntityID);
+            serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_ATTEMPTED);
 
             RoleDescriptor spMetadata = null;
             try {
@@ -303,6 +309,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             try {
                 //prepare saml request for signing
                 LogoutResponseContext requestCtx = new LogoutResponseContext();
+                requestCtx.setCommunicationProfileId(getProfileId());
+                requestCtx.setSecurityPolicyResolver(getSecurityPolicyResolver());
                 requestCtx.setOutboundMessageIssuer(requestContext.getOutboundMessageIssuer());
                 requestCtx.setInboundMessageIssuer(spEntityID);
                 requestCtx.setOutboundSAMLMessage(request);
@@ -332,22 +340,77 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 HttpConnection httpConn =
                         httpClient.getHttpConnectionManager().getConnectionWithTimeout(hostConfig, 1000);
                 httpConn.open();
-                HTTPClientOutTransportAdapter soapTransport =
-                        new HTTPClientOutTransportAdapter(httpConn, location);
-                requestCtx.setOutboundMessageTransport(soapTransport);
+                EntityEnclosingMethod method =
+                        new PostMethod(endpoint.getLocation());
+                HTTPOutTransport soapOutTransport =
+                        new HTTPClientOutTransportAdapter(httpConn, method);
+                HTTPInTransport soapInTransport =
+                        new HTTPClientInTransportAdapter(httpConn, method);
+                requestCtx.setOutboundMessageTransport(soapOutTransport);
                 SAMLMessageEncoder encoder = new HTTPSOAP11Encoder();
+                requestCtx.setInboundMessageTransport(soapInTransport);
+                SAMLMessageDecoder decoder =
+                        new HTTPSOAP11Decoder(getParserPool());
 
                 //encode and sign saml request
                 encoder.encode(requestCtx);
-                //need to call flush because of the content caching
-                soapTransport.flush();
-                httpConn.flushRequestOutputStream();
 
-                //TODO response unmarshalling
+                log.info("Issuing back-channel logout request for principal '{}' to SP '{}'",
+                        nameId.getValue(), spEntityID);
+                //execute SOAP/HTTP call
+                HttpState state = new HttpState();
+                method.execute(state, httpConn);
+
+                //decode saml response
+                decoder.decode(requestCtx);
+
+                httpConn.close();
+
+                LogoutResponse spResponse = requestCtx.getInboundSAMLMessage();
+                StatusCode statusCode = spResponse.getStatus().getStatusCode();
+                if (statusCode.getValue().equals(StatusCode.SUCCESS_URI)) {
+                    log.info("Logout was successful on SP '{}'.", spEntityID);
+                    serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED);
+                } else {
+                    log.warn("Logout failed on SP '{}', logout status code is '{}'.", spEntityID, statusCode.getValue());
+                    StatusCode secondaryCode = statusCode.getStatusCode();
+                    if (secondaryCode != null) {
+                        log.warn("Additional status code: '{}'", secondaryCode.getValue());
+                    }
+                    serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_FAILED);
+                }
             } catch (Throwable t) {
                 log.error("Exception while sending SAML Logout request", t);
             }
         }
+
+        boolean success = true;
+        for (SingleLogoutContext.LogoutInformation info : sloContext.getServiceInformation().values()) {
+            if (!info.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED)) {
+                success = false;
+            }
+        }
+        log.info("Invalidating session '{}'.", idpSession.getSessionID());
+        //TODO is this enough?
+        getSessionManager().destroySession(idpSession.getSessionID());
+        Status status;
+        if (success) {
+            log.info("Status of Single Log-out: success");
+            status = buildStatus(StatusCode.SUCCESS_URI, null, null);
+        } else {
+            log.info("Status of Single Log-out: partial");
+            status =
+                    buildStatus(StatusCode.RESPONDER_URI, StatusCode.PARTIAL_LOGOUT_URI, null);
+        }
+
+        LogoutResponse samlResponse =
+                buildLogoutResponse(requestContext, status);
+        requestContext.setOutboundSAMLMessage(samlResponse);
+        requestContext.setOutboundSAMLMessageId(samlResponse.getID());
+        requestContext.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
+        log.debug("Sending response to the original LogoutRequest");
+        encodeResponse(requestContext);
+        writeAuditLogEntry(requestContext);
     }
 
     /**
@@ -395,14 +458,14 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
 
-        LogoutResponse samlResponse = buildLogoutResponse(requestContext);
+        /*LogoutResponse samlResponse = buildLogoutResponse(requestContext);
 
         requestContext.setOutboundSAMLMessage(samlResponse);
         requestContext.setOutboundSAMLMessageId(samlResponse.getID());
         requestContext.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
 
         encodeResponse(requestContext);
-        writeAuditLogEntry(requestContext);
+        writeAuditLogEntry(requestContext);*/
     }
 
     /**
@@ -450,7 +513,9 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      * @return
      * @throws edu.internet2.middleware.shibboleth.common.profile.ProfileException
      */
-    protected LogoutResponse buildLogoutResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
+    protected LogoutResponse buildLogoutResponse(
+            BaseSAML2ProfileRequestContext<?, ?, ?> requestContext,
+            Status status)
             throws ProfileException {
 
         DateTime issueInstant = new DateTime();
@@ -458,7 +523,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         LogoutResponse logoutResponse = responseBuilder.buildObject();
         logoutResponse.setIssueInstant(issueInstant);
         populateStatusResponse(requestContext, logoutResponse);
-        Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
         logoutResponse.setStatus(status);
 
         return logoutResponse;
@@ -493,7 +557,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         try {
             SAMLMessageDecoder decoder =
-                    getMessageDecoders().get(getInboundBinding());
+                    getInboundMessageDecoder(requestContext);
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
             log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessage());
