@@ -43,10 +43,10 @@ public class SLOServlet extends HttpServlet {
         writer.print("SLO Request ID: ");
         writer.println(sloContext.getRequestSAMLMessageID());
         writer.println("Services");
-        for (String entityID : sloContext.getServiceStatus().keySet()) {
+        for (String entityID : sloContext.getServiceInformation().keySet()) {
             writer.print(entityID);
             writer.print(" logout status is: ");
-            writer.println(sloContext.getServiceStatus().get(entityID).toString());
+            writer.println(sloContext.getServiceInformation().get(entityID).getLogoutStatus().toString());
         }
     }
 
