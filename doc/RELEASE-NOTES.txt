@@ -6,6 +6,7 @@ Changes in Release 2.1.3
 [SIDP-263] - Suggest adding defaultSigningCredentialRef to the AnonymousRelyingParty element in the default config
 [SIDP-261] - IPAddressLoginHandler addresses comparison fails
 [SIDP-265] - Distinguish requested AuthMethod and default AuthMethod
+[SIDP-266] - General errors triggers error-404.jsp instead of error.jsp
 [SIDP-271] - AuthenticationEngine doesn't correctly handle passive return from login servlet
 [SIDP-276] - Example RDB Connector, quote principal
 [SIDP-277] - Incorrect null check for request context in UsernamePasswordServlet
@@ -14,6 +15,7 @@ Changes in Release 2.1.3
 [SIDP-285] - Use $IDP_SCOPE$ to populate IdP scope in conf-tmpl\attribute-resolver.xml
 [SIDP-291] - Update libs for 2.1.3 release
 [SIDP-292] - login.jsp: wrong using of the attribute rowspan within the tag <td>
+[SIDP-295] - If no cookies are supported/enabled in user agent (browser), display better error message
 [SIDP-296] - Make LoginContext / IdP Session availabe through the public API
 [SIDP-306] - Remove ClientCertAuth rule from SAML 2 SSO SecurityPolicy in relying-party.xml
 [SIDP-310] - Change default relying-party.xml settings for SAML 2 profiles' encryptNameIds parameter from "conditional" to "never"

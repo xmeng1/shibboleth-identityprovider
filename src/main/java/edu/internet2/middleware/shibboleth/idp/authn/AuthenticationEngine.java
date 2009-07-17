@@ -155,7 +155,6 @@ public class AuthenticationEngine extends HttpServlet {
     /**
      * Returns control back to the profile handler that invoked the authentication engine.
      * 
-     * @param loginContext current login context
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */

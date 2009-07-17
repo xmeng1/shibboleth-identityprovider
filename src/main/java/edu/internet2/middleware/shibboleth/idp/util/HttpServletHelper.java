@@ -118,7 +118,7 @@ public class HttpServletHelper {
      * Binds a {@link LoginContext} to the current request.
      * 
      * @param loginContext login context to be bound
-     * @param request current HTTP request
+     * @param httpRequest current HTTP request
      */
     public static void bindLoginContext(LoginContext loginContext, HttpServletRequest httpRequest) {
         if (httpRequest == null) {
