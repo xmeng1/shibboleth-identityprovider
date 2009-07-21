@@ -85,7 +85,7 @@ public class SingleLogoutContextStorageHelper {
      * @param httpRequest the current HTTP request
      * @param httpResponse the current HTTP response
      */
-    public static void bindLoginContext(SingleLogoutContext sloContext, StorageService storageService,
+    public static void bindSingleLogoutContext(SingleLogoutContext sloContext, StorageService storageService,
             ServletContext context, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         if (storageService == null) {
             throw new IllegalArgumentException("Storage service may not be null");
@@ -99,24 +99,23 @@ public class SingleLogoutContextStorageHelper {
 
         bindSingleLogoutContext(sloContext, httpRequest);
 
-        String parition = HttpServletHelper.getContextParam(
+        String partition = HttpServletHelper.getContextParam(
                 context, SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION);
-        log.debug("LoginContext parition: {}", parition);
+        log.debug("SingleLogoutContext parition: {}", partition);
 
         String contextKey = UUID.randomUUID().toString();
-        while (storageService.contains(parition, contextKey)) {
+        while (storageService.contains(partition, contextKey)) {
             contextKey = UUID.randomUUID().toString();
         }
-        log.debug("LoginContext key: {}", contextKey);
+        log.debug("SingleLogoutContext key: {}", contextKey);
 
         SingleLogoutContextEntry entry =
                 new SingleLogoutContextEntry(sloContext, 1800000);
-        storageService.put(parition, contextKey, entry);
+        storageService.put(partition, contextKey, entry);
 
         Cookie contextKeyCookie = new Cookie(SLO_CTX_KEY_NAME, contextKey);
         contextKeyCookie.setPath("/");
         contextKeyCookie.setSecure(httpRequest.isSecure());
-        contextKeyCookie.setMaxAge(31556926);
         httpResponse.addCookie(contextKeyCookie);
     }
 
@@ -132,7 +131,7 @@ public class SingleLogoutContextStorageHelper {
      *
      * @return the login context that was unbound or null if there was no bound context
      */
-    public static SingleLogoutContext unbindLoginContext(StorageService storageService, ServletContext context,
+    public static SingleLogoutContext unbindSingleLogoutContext(StorageService storageService, ServletContext context,
             HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         if (storageService == null || context == null || httpRequest == null ||
                 httpResponse == null) {
@@ -148,7 +147,7 @@ public class SingleLogoutContextStorageHelper {
         String loginContextKey =
                 DatatypeHelper.safeTrimOrNullString(loginContextKeyCookie.getValue());
         if (loginContextKey == null) {
-            log.warn("Corrupted LoginContext Key cookie, it did not contain a value");
+            log.warn("Corrupted SingleLogoutContext Key cookie, it did not contain a value");
         }
 
         loginContextKeyCookie.setMaxAge(0);
