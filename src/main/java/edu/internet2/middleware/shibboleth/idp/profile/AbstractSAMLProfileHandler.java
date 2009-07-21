@@ -501,9 +501,7 @@ public abstract class AbstractSAMLProfileHandler extends
             AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
                     .getProfileConfiguration();
             if (profileConfig != null) {
-                if (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
-                        || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional && !encoder
-                                .providesMessageIntegrity(requestContext))) {
+                if (isSignResponse(requestContext)) {
                     Credential signingCredential = profileConfig.getSigningCredential();
                     if (signingCredential == null) {
                         signingCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
@@ -532,6 +530,36 @@ public abstract class AbstractSAMLProfileHandler extends
             throw new ProfileException("Unable to encode response to relying party: "
                     + requestContext.getInboundMessageIssuer(), e);
         }
+    }
+
+    /**
+     * Determine whether responses should be signed.
+     * 
+     * @param requestContext the current request context
+     * @return true if responses should be signed, false otherwise
+     * @throws ProfileException if there is a problem determining whether responses should be signed
+     */
+    protected boolean isSignResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
+        
+        AbstractSAMLProfileConfiguration profileConfig = 
+            (AbstractSAMLProfileConfiguration) requestContext.getProfileConfiguration();
+        
+        if (profileConfig != null) {
+            try {
+                return profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
+                    || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional 
+                        && !encoder.providesMessageIntegrity(requestContext));
+            } catch (MessageEncodingException e) {
+                log.error("Unable to determine if outbound encoding '{}' provides message integrity protection",
+                        encoder.getBindingURI());
+                throw new ProfileException("Unable to determine if outbound response should be signed");
+            }
+        } else {
+            return false;
+        }
+        
     }
 
     /**
