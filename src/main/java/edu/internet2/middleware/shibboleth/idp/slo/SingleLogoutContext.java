@@ -31,6 +31,8 @@ public class SingleLogoutContext implements Serializable {
     private static final long serialVersionUID = -4067880011119487071L;
     /** EntityID of the entity which requested the logout. */
     private final String requesterEntityID;
+    /** EntityID of the IdP which will respond. */
+    private final String responderEntityID;
     /** SAML ID of the LogoutRequest. */
     private final String requestSAMLMessageID;
     /** RelayState of the LogoutRequest. */
@@ -38,10 +40,14 @@ public class SingleLogoutContext implements Serializable {
     private final Map<String, LogoutInformation> serviceInformation;
 
     public SingleLogoutContext(
-            String requesterEntityID, String requestSAMLMessageID,
-            String relayState, Session idpSession) {
+            String requesterEntityID, 
+            String responderEntityID,
+            String requestSAMLMessageID,
+            String relayState,
+            Session idpSession) {
 
         this.requesterEntityID = requesterEntityID;
+        this.responderEntityID = responderEntityID;
         this.requestSAMLMessageID = requestSAMLMessageID;
         this.relayState = relayState;
 
@@ -68,6 +74,10 @@ public class SingleLogoutContext implements Serializable {
 
     public String getRequesterEntityID() {
         return requesterEntityID;
+    }
+
+    public String getResponderEntityID() {
+        return responderEntityID;
     }
 
     public Map<String, LogoutInformation> getServiceInformation() {

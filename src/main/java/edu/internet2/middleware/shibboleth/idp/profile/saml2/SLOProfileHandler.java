@@ -25,14 +25,17 @@ import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientOutTransportAdapter
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnection;
+import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpState;
 import org.apache.commons.httpclient.URI;
+import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -81,17 +84,23 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     private static final Logger log =
             LoggerFactory.getLogger(SLOProfileHandler.class);
     private final SAMLObjectBuilder<SingleLogoutService> sloServiceBuilder;
-    private final SAMLObjectBuilder<Status> statusBuilder;
     private final SAMLObjectBuilder<LogoutResponse> responseBuilder;
+    private final SAMLObjectBuilder<NameID> nameIDBuilder;
+    private final SAMLObjectBuilder<LogoutRequest> requestBuilder;
+    private final SAMLObjectBuilder<Issuer> issuerBuilder;
 
     public SLOProfileHandler() {
         super();
         sloServiceBuilder = (SAMLObjectBuilder<SingleLogoutService>) getBuilderFactory().getBuilder(
                 SingleLogoutService.DEFAULT_ELEMENT_NAME);
-        statusBuilder =
-                (SAMLObjectBuilder<Status>) getBuilderFactory().getBuilder(Status.DEFAULT_ELEMENT_NAME);
         responseBuilder =
                 (SAMLObjectBuilder<LogoutResponse>) getBuilderFactory().getBuilder(LogoutResponse.DEFAULT_ELEMENT_NAME);
+        nameIDBuilder =
+                (SAMLObjectBuilder<NameID>) getBuilderFactory().getBuilder(NameID.DEFAULT_ELEMENT_NAME);
+        requestBuilder =
+                (SAMLObjectBuilder<LogoutRequest>) getBuilderFactory().getBuilder(LogoutRequest.DEFAULT_ELEMENT_NAME);
+        issuerBuilder =
+                (SAMLObjectBuilder<Issuer>) getBuilderFactory().getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
     }
 
     @Override
@@ -172,10 +181,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             log.debug("Incoming request does not contain a single logout context, processing as first leg of request");
             startLogout(inTransport, outTransport);
         } else {
-            log.debug("Incoming request contains a single logout context, processing as second leg of request");
-            LogoutRequestContext requestContext =
-                    buildRequestContext(sloContext, inTransport, outTransport);
-            completeLogout(requestContext, inTransport, outTransport);
+            //TODO only front-channel bindings need this path
         }
     }
 
@@ -203,31 +209,28 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             throw new ProfileException("Cannot find IdP Session for principal");
         }
 
+        SingleLogoutContext sloContext =
+                buildSingleLogoutContext(requestContext, idpSession);
+
         if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
-            initiateBackChannelLogout(inTransport, outTransport, requestContext, idpSession);
+            initiateBackChannelLogout(sloContext);
+            log.info("Invalidating session '{}'.", idpSession.getSessionID());
+            getSessionManager().destroySession(idpSession.getSessionID());
+            respondToInitialRequest(sloContext, requestContext);
         } else {
-            initiateFrontChannelLogout(inTransport, outTransport, requestContext, idpSession);
+            //TODO front-channel binding
         }
-
-
     }
 
     /**
      * Issues back channel logout requests to session participants.
      *
-     * @param inTransport
-     * @param outTransport
-     * @param requestContext
+     * @param sloContext
      * @param idpSession
      * @throws ProfileException
      */
-    private void initiateBackChannelLogout(
-            HTTPInTransport inTransport, HTTPOutTransport outTransport,
-            LogoutRequestContext requestContext, Session idpSession)
+    private void initiateBackChannelLogout(SingleLogoutContext sloContext)
             throws ProfileException {
-
-        SingleLogoutContext sloContext =
-                buildSingleLogoutContext(requestContext, idpSession);
 
         log.info("Issuing Backchannel logout requests");
         for (SingleLogoutContext.LogoutInformation serviceLogoutInfo :
@@ -239,103 +242,41 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             log.debug("Trying SP: {}", spEntityID);
             serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_ATTEMPTED);
 
-            RoleDescriptor spMetadata = null;
-            try {
-                //retrieve metadata
-                spMetadata =
-                        getMetadataProvider().getRole(spEntityID, SPSSODescriptor.DEFAULT_ELEMENT_NAME, SAMLConstants.SAML20P_NS);
-                if (spMetadata == null) {
-                    log.warn("SP Metadata is null");
-                    continue;
-                }
-            } catch (MetadataProviderException ex) {
-                log.info("Cannot get SAML2 metadata for SP '{}'.", spEntityID);
+            Endpoint endpoint = getSOAPBindingLocation(spEntityID);
+            if (endpoint == null) {
+                log.info("No SAML2 LogoutRequest SOAP endpoint found for entity '{}'", spEntityID);
                 continue;
             }
 
-            //find SOAP endpoint for SingleLogoutService
-            BasicEndpointSelector es = new BasicEndpointSelector();
-            es.setEndpointType(SingleLogoutService.DEFAULT_ELEMENT_NAME);
-            es.setMetadataProvider(getMetadataProvider());
-            es.getSupportedIssuerBindings().add(SAMLConstants.SAML2_SOAP11_BINDING_URI);
-            es.setEntityRoleMetadata(spMetadata);
-            Endpoint endpoint = es.selectEndpoint();
-            if (endpoint == null) {
-                log.info("Cannot get SAML2 SOAP SingleLogoutService endpoint for SP '{}'.", spEntityID);
-                continue;
-            }
+            log.debug("Building LogoutRequest");
+            LogoutRequest request = buildLogoutRequest(sloContext);
 
             //retrieve nameid value from session and build nameid object
-            SAMLObjectBuilder<NameID> nameIDBuilder =
-                    (SAMLObjectBuilder<NameID>) getBuilderFactory().
-                    getBuilder(NameID.DEFAULT_ELEMENT_NAME);
             NameID nameId = nameIDBuilder.buildObject();
             nameId.setFormat(serviceLogoutInfo.getNameIdentifierFormat());
             nameId.setValue(serviceLogoutInfo.getNameIdentifier());
             log.debug("NameID for the principal: '{}'", nameId.getValue());
-
-            SAMLObjectBuilder<LogoutRequest> requestBuilder =
-                    (SAMLObjectBuilder<LogoutRequest>) getBuilderFactory().
-                    getBuilder(LogoutRequest.DEFAULT_ELEMENT_NAME);
-            SAMLObjectBuilder<Issuer> issuerBuilder =
-                    (SAMLObjectBuilder<Issuer>) getBuilderFactory().
-                    getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
-
-            LogoutRequest request = requestBuilder.buildObject();
-
-            //build saml request
-            DateTime issueInstant = new DateTime();
-            request.setIssueInstant(issueInstant);
-            request.setID(getIdGenerator().generateIdentifier());
-            request.setVersion(SAMLVersion.VERSION_20);
             request.setNameID(nameId);
-            Issuer issuer = issuerBuilder.buildObject();
-            issuer.setValue(requestContext.getOutboundMessageIssuer());
-            request.setIssuer(issuer);
 
+            LogoutResponseContext requestCtx =
+                    buildLogoutRequestContext(sloContext, spEntityID);
+            requestCtx.setOutboundSAMLMessage(request);
 
             try {
-                //prepare saml request for signing
-                LogoutResponseContext requestCtx = new LogoutResponseContext();
-                requestCtx.setCommunicationProfileId(getProfileId());
-                requestCtx.setSecurityPolicyResolver(getSecurityPolicyResolver());
-                requestCtx.setOutboundMessageIssuer(requestContext.getOutboundMessageIssuer());
-                requestCtx.setInboundMessageIssuer(spEntityID);
-                requestCtx.setOutboundSAMLMessage(request);
-
                 //prepare http message exchange for soap
-                HttpClientBuilder httpClientBuilder = new HttpClientBuilder();
-                httpClientBuilder.setConnectionTimeout(1000);
-                httpClientBuilder.setContentCharSet("UTF-8");
-
-                Credential signingCredential =
-                        getRelyingPartyConfigurationManager().
-                        getDefaultRelyingPartyConfiguration().getDefaultSigningCredential();
-                requestCtx.setOutboundSAMLMessageSigningCredential(signingCredential);
-
-                SecureProtocolSocketFactory sf =
-                        new EasySSLProtocolSocketFactory();
-                httpClientBuilder.setHttpsProtocolSocketFactory(sf);
-
-                //build http connection
-                HttpClient httpClient = httpClientBuilder.buildClient();
-                HostConfiguration hostConfig = new HostConfiguration();
-                URI location = new URI(endpoint.getLocation());
-                hostConfig.setHost(location);
-                HttpConnection httpConn =
-                        httpClient.getHttpConnectionManager().getConnectionWithTimeout(hostConfig, 1000);
+                log.debug("Preparing HTTP transport for SOAP request");
+                HttpConnection httpConn = createHttpConnection(endpoint);
+                log.debug("Opening HTTP connection to '{}'", endpoint.getLocation());
                 httpConn.open();
-                EntityEnclosingMethod method =
-                        new PostMethod(endpoint.getLocation());
-                HTTPOutTransport soapOutTransport =
-                        new HTTPClientOutTransportAdapter(httpConn, method);
-                HTTPInTransport soapInTransport =
-                        new HTTPClientInTransportAdapter(httpConn, method);
-                requestCtx.setOutboundMessageTransport(soapOutTransport);
+                if (!httpConn.isOpen()) {
+                    log.warn("HTTP connection could not be opened");
+                    continue;
+                }
+
+                log.debug("Preparing transports and encoders/decoders");
+                prepareSOAPTransport(requestCtx, httpConn, endpoint);
                 SAMLMessageEncoder encoder = new HTTPSOAP11Encoder();
-                requestCtx.setInboundMessageTransport(soapInTransport);
-                SAMLMessageDecoder decoder =
-                        new HTTPSOAP11Decoder(getParserPool());
+                SAMLMessageDecoder decoder = new HTTPSOAP11Decoder(getParserPool());
 
                 //encode and sign saml request
                 encoder.encode(requestCtx);
@@ -343,12 +284,12 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 log.info("Issuing back-channel logout request for principal '{}' to SP '{}'",
                         nameId.getValue(), spEntityID);
                 //execute SOAP/HTTP call
-                HttpState state = new HttpState();
-                method.execute(state, httpConn);
+                log.debug("Executing HTTP POST");
+                requestCtx.execute(httpConn);
 
                 //decode saml response
                 decoder.decode(requestCtx);
-
+                log.debug("Closing HTTP connection");
                 httpConn.close();
 
                 LogoutResponse spResponse = requestCtx.getInboundSAMLMessage();
@@ -368,34 +309,137 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 log.error("Exception while sending SAML Logout request", t);
             }
         }
+    }
 
-        boolean success = true;
-        for (SingleLogoutContext.LogoutInformation info : sloContext.getServiceInformation().values()) {
-            if (!info.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED)) {
-                success = false;
+    /**
+     * Reads SAML2 SingleLogoutService SOAP Binding endpoint of the entity or
+     * null if no metadata or endpoint found.
+     *
+     * @param spEntityID
+     * @return
+     */
+    private Endpoint getSOAPBindingLocation(String spEntityID) {
+        RoleDescriptor spMetadata = null;
+        try {
+            //retrieve metadata
+            spMetadata =
+                    getMetadataProvider().getRole(spEntityID, SPSSODescriptor.DEFAULT_ELEMENT_NAME, SAMLConstants.SAML20P_NS);
+            if (spMetadata == null) {
+                log.warn("SP Metadata is null");
+                return null;
             }
-        }
-        log.info("Invalidating session '{}'.", idpSession.getSessionID());
-        //TODO is this enough?
-        getSessionManager().destroySession(idpSession.getSessionID());
-        Status status;
-        if (success) {
-            log.info("Status of Single Log-out: success");
-            status = buildStatus(StatusCode.SUCCESS_URI, null, null);
-        } else {
-            log.info("Status of Single Log-out: partial");
-            status =
-                    buildStatus(StatusCode.RESPONDER_URI, StatusCode.PARTIAL_LOGOUT_URI, null);
+        } catch (MetadataProviderException ex) {
+            log.info("Cannot get SAML2 metadata for SP '{}'.", spEntityID);
+            return null;
         }
 
-        LogoutResponse samlResponse =
-                buildLogoutResponse(requestContext, status);
-        requestContext.setOutboundSAMLMessage(samlResponse);
-        requestContext.setOutboundSAMLMessageId(samlResponse.getID());
-        requestContext.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
-        log.debug("Sending response to the original LogoutRequest");
-        encodeResponse(requestContext);
-        writeAuditLogEntry(requestContext);
+        //find SOAP endpoint for SingleLogoutService
+        BasicEndpointSelector es = new BasicEndpointSelector();
+        es.setEndpointType(SingleLogoutService.DEFAULT_ELEMENT_NAME);
+        es.setMetadataProvider(getMetadataProvider());
+        es.getSupportedIssuerBindings().add(SAMLConstants.SAML2_SOAP11_BINDING_URI);
+        es.setEntityRoleMetadata(spMetadata);
+        Endpoint endpoint = es.selectEndpoint();
+        if (endpoint == null) {
+            log.info("Cannot get SAML2 SOAP SingleLogoutService endpoint for SP '{}'.", spEntityID);
+            return null;
+        }
+
+        return endpoint;
+    }
+
+    /**
+     * TODO confusing name!
+     * 
+     * @param sloContext
+     * @param spEntityID
+     * @return
+     */
+    private LogoutResponseContext buildLogoutRequestContext(SingleLogoutContext sloContext, String spEntityID) {
+        LogoutResponseContext requestCtx = new LogoutResponseContext();
+        requestCtx.setCommunicationProfileId(getProfileId());
+        requestCtx.setSecurityPolicyResolver(getSecurityPolicyResolver());
+        requestCtx.setOutboundMessageIssuer(sloContext.getResponderEntityID());
+        requestCtx.setInboundMessageIssuer(spEntityID);
+        Credential signingCredential =
+                getRelyingPartyConfigurationManager().
+                getDefaultRelyingPartyConfiguration().getDefaultSigningCredential();
+        requestCtx.setOutboundSAMLMessageSigningCredential(signingCredential);
+
+        return requestCtx;
+    }
+
+    /**
+     * Build SAML request for issuing LogoutRequest.
+     * 
+     * @param sloContext
+     * @param spEntityID
+     * @return
+     */
+    private LogoutRequest buildLogoutRequest(SingleLogoutContext sloContext) {
+        LogoutRequest request = requestBuilder.buildObject();
+        //build saml request
+        DateTime issueInstant = new DateTime();
+        request.setIssueInstant(issueInstant);
+        request.setID(getIdGenerator().generateIdentifier());
+        request.setVersion(SAMLVersion.VERSION_20);
+        Issuer issuer = issuerBuilder.buildObject();
+        issuer.setValue(sloContext.getResponderEntityID());
+        request.setIssuer(issuer);
+
+        return request;
+    }
+
+    /**
+     * Creates Http connection.
+     * 
+     * @param endpoint
+     * @return
+     * @throws URIException
+     * @throws GeneralSecurityException
+     * @throws IOException
+     */
+    private HttpConnection createHttpConnection(Endpoint endpoint)
+            throws URIException, GeneralSecurityException, IOException {
+
+        HttpClientBuilder httpClientBuilder =
+                new HttpClientBuilder();
+        httpClientBuilder.setConnectionTimeout(1000);
+        httpClientBuilder.setContentCharSet("UTF-8");
+        SecureProtocolSocketFactory sf =
+                new EasySSLProtocolSocketFactory();
+        httpClientBuilder.setHttpsProtocolSocketFactory(sf);
+        //build http connection
+        HttpClient httpClient = httpClientBuilder.buildClient();
+        HostConfiguration hostConfig =
+                new HostConfiguration();
+        URI location =
+                new URI(endpoint.getLocation());
+        hostConfig.setHost(location);
+        HttpConnection httpConn =
+                httpClient.getHttpConnectionManager().getConnectionWithTimeout(hostConfig, 1000);
+
+        return httpConn;
+    }
+
+    /**
+     * Adapts SOAP/HTTP client transport to SAML transports.
+     * @param requestCtx
+     * @param httpConn
+     * @param endpoint
+     */
+    private void prepareSOAPTransport(LogoutResponseContext requestCtx,
+            HttpConnection httpConn, Endpoint endpoint) {
+
+        EntityEnclosingMethod method =
+                new PostMethod(endpoint.getLocation());
+        requestCtx.setPostMethod(method);
+        HTTPOutTransport soapOutTransport =
+                new HTTPClientOutTransportAdapter(httpConn, method);
+        HTTPInTransport soapInTransport =
+                new HTTPClientInTransportAdapter(httpConn, method);
+        requestCtx.setOutboundMessageTransport(soapOutTransport);
+        requestCtx.setInboundMessageTransport(soapInTransport);
     }
 
     /**
@@ -433,24 +477,39 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Complete logout processing.
+     * Respond to LogoutRequest.
      * 
-     * @param inTransport
-     * @param outTransport
+     * @param sloContext
+     * @param requestContext
      * @throws ProfileException
      */
-    protected void completeLogout(LogoutRequestContext requestContext,
-            HTTPInTransport inTransport, HTTPOutTransport outTransport)
+    protected void respondToInitialRequest(SingleLogoutContext sloContext, LogoutRequestContext requestContext)
             throws ProfileException {
 
-        /*LogoutResponse samlResponse = buildLogoutResponse(requestContext);
+        boolean success = true;
+        for (SingleLogoutContext.LogoutInformation info : sloContext.getServiceInformation().values()) {
+            if (!info.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED)) {
+                success = false;
+            }
+        }
+        Status status;
+        if (success) {
+            log.info("Status of Single Log-out: success");
+            status = buildStatus(StatusCode.SUCCESS_URI, null, null);
+        } else {
+            log.info("Status of Single Log-out: partial");
+            status =
+                    buildStatus(StatusCode.RESPONDER_URI, StatusCode.PARTIAL_LOGOUT_URI, null);
+        }
 
+        LogoutResponse samlResponse =
+                buildLogoutResponse(requestContext, status);
         requestContext.setOutboundSAMLMessage(samlResponse);
         requestContext.setOutboundSAMLMessageId(samlResponse.getID());
         requestContext.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
-
+        log.debug("Sending response to the original LogoutRequest");
         encodeResponse(requestContext);
-        writeAuditLogEntry(requestContext);*/
+        writeAuditLogEntry(requestContext);
     }
 
     /**
@@ -462,8 +521,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     private SingleLogoutContext buildSingleLogoutContext(LogoutRequestContext requestContext, Session idpSession) {
 
-        return new SingleLogoutContext(requestContext.getPeerEntityId(),
-                requestContext.getInboundSAMLMessageId(), requestContext.getRelayState(),
+        return new SingleLogoutContext(
+                requestContext.getPeerEntityId(),
+                requestContext.getLocalEntityId(),
+                requestContext.getInboundSAMLMessageId(),
+                requestContext.getRelayState(),
                 idpSession);
     }
 
@@ -576,5 +638,20 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
     public class LogoutResponseContext
             extends BasicSAMLMessageContext<LogoutResponse, LogoutRequest, NameIDImpl> {
+
+        EntityEnclosingMethod postMethod;
+
+        public EntityEnclosingMethod getPostMethod() {
+            return postMethod;
+        }
+
+        public void setPostMethod(EntityEnclosingMethod postMethod) {
+            this.postMethod = postMethod;
+        }
+
+        public int execute(HttpConnection conn) throws HttpException,
+                IOException {
+            return postMethod.execute(new HttpState(), conn);
+        }
     }
 }
