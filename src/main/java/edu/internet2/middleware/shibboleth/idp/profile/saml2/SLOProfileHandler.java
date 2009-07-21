@@ -24,14 +24,7 @@ import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientInTransportAdapter;
 import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientOutTransportAdapter;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +37,6 @@ import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
-import org.apache.commons.ssl.TrustMaterial;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.SAMLVersion;
@@ -65,7 +57,6 @@ import org.opensaml.saml2.core.impl.NameIDImpl;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml2.metadata.KeyDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
@@ -79,9 +70,6 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.credential.Credential;
-import org.opensaml.xml.security.credential.UsageType;
-import org.opensaml.xml.signature.X509Data;
-import org.opensaml.xml.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -320,16 +308,13 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 httpClientBuilder.setConnectionTimeout(1000);
                 httpClientBuilder.setContentCharSet("UTF-8");
 
-                //prepare http server certificate check
                 Credential signingCredential =
                         getRelyingPartyConfigurationManager().
                         getDefaultRelyingPartyConfiguration().getDefaultSigningCredential();
                 requestCtx.setOutboundSAMLMessageSigningCredential(signingCredential);
-                List<KeyDescriptor> keyDescriptors =
-                        spMetadata.getKeyDescriptors();
 
                 SecureProtocolSocketFactory sf =
-                        new ClientCertificateSSLSocketFactory(signingCredential, keyDescriptors);
+                        new EasySSLProtocolSocketFactory();
                 httpClientBuilder.setHttpsProtocolSocketFactory(sf);
 
                 //build http connection
@@ -591,37 +576,5 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
     public class LogoutResponseContext
             extends BasicSAMLMessageContext<LogoutResponse, LogoutRequest, NameIDImpl> {
-    }
-
-    class ClientCertificateSSLSocketFactory extends EasySSLProtocolSocketFactory {
-
-        private CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-        public ClientCertificateSSLSocketFactory(Credential myCredential,
-                List<KeyDescriptor> rpCertificates)
-                throws
-                GeneralSecurityException, IOException {
-
-            super();
-
-            List<X509Certificate> certificates =
-                    new ArrayList<X509Certificate>();
-
-            for (KeyDescriptor d : rpCertificates) {
-                if (d.getUse().equals(UsageType.ENCRYPTION)) {
-                    continue;
-                }
-                for (X509Data x509 : d.getKeyInfo().getX509Datas()) {
-                    for (org.opensaml.xml.signature.X509Certificate cert : x509.getX509Certificates()) {
-                        Certificate clientCert =
-                                cf.generateCertificate(new ByteArrayInputStream(Base64.decode(cert.getValue())));
-                        certificates.add((X509Certificate) clientCert);
-                    }
-                }
-            }
-            //TODO client authentication
-            addTrustMaterial(new TrustMaterial(certificates));
-            setUseClientMode(true);
-        }
     }
 }
