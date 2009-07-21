@@ -134,8 +134,14 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         if (sessionID == null) {
             return;
         }
-
-        sessionStore.remove(partition, sessionID);
+        // remove indexed entries
+        SessionManagerEntry sessionEntry = sessionStore.remove(partition, sessionID);
+        if (sessionEntry == null) {
+            return;
+        }
+        for (String sessionIndex : sessionEntry.getSessionIndexes()) {
+            sessionStore.remove(partition, sessionIndex);
+        }
     }
 
     /** {@inheritDoc} */
