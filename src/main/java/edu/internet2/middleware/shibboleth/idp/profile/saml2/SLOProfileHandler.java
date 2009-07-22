@@ -23,11 +23,10 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientInTransportAdapter;
 import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientOutTransportAdapter;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
+import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext.LogoutInformation;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
@@ -70,7 +69,6 @@ import org.opensaml.ws.soap.client.http.HttpClientBuilder;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
-import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.credential.Credential;
 import org.slf4j.Logger;
@@ -220,7 +218,10 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 buildSingleLogoutContext(initialRequest, idpSession);
 
         if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
-            initiateBackChannelLogout(sloContext);
+            log.info("Issuing Backchannel logout requests");
+            for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
+                initiateBackChannelLogout(sloContext, serviceLogoutInfo);
+            }
             log.info("Invalidating session '{}'.", idpSession.getSessionID());
             getSessionManager().destroySession(idpSession.getSessionID());
             respondToInitialRequest(sloContext, initialRequest);
@@ -230,91 +231,114 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Issues back channel logout requests to session participants.
+     * Creates SAML2 LogoutRequest and corresponding context.
+     * 
+     * @param sloContext
+     * @param serviceLogoutInfo
+     * @return
+     */
+    private LogoutRequestContext createLogoutRequestContext(
+            SingleLogoutContext sloContext,
+            LogoutInformation serviceLogoutInfo) {
+
+        String spEntityID = serviceLogoutInfo.getEntityID();
+        log.debug("Trying SP: {}", spEntityID);
+        serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_ATTEMPTED);
+
+        log.debug("Building LogoutRequest");
+        LogoutRequest request = buildLogoutRequest(sloContext);
+        NameID nameId = buildNameID(serviceLogoutInfo);
+        request.setNameID(nameId);
+
+        LogoutRequestContext requestCtx = new LogoutRequestContext();
+        requestCtx.setCommunicationProfileId(getProfileId());
+        requestCtx.setSecurityPolicyResolver(getSecurityPolicyResolver());
+        requestCtx.setOutboundMessageIssuer(sloContext.getResponderEntityID());
+        requestCtx.setInboundMessageIssuer(spEntityID);
+        //TODO get credential configured for relying party
+        Credential signingCredential =
+                getRelyingPartyConfigurationManager().
+                getDefaultRelyingPartyConfiguration().getDefaultSigningCredential();
+        requestCtx.setOutboundSAMLMessageSigningCredential(signingCredential);
+        requestCtx.setOutboundSAMLMessage(request);
+
+        return requestCtx;
+    }
+
+    /**
+     * Issues back channel logout request to session participant.
      *
      * @param sloContext
+     * @param serviceLogoutInfo
      * @param idpSession
      * @throws ProfileException
      */
-    private void initiateBackChannelLogout(SingleLogoutContext sloContext)
+    private void initiateBackChannelLogout(SingleLogoutContext sloContext, LogoutInformation serviceLogoutInfo)
             throws ProfileException {
 
-        log.info("Issuing Backchannel logout requests");
-        for (SingleLogoutContext.LogoutInformation serviceLogoutInfo :
-                sloContext.getServiceInformation().values()) {
-            if (!serviceLogoutInfo.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
-                continue;
+        if (!serviceLogoutInfo.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+            log.info("Logout status for entity is '{}', not attempting logout", serviceLogoutInfo.getLogoutStatus().toString());
+            return;
+        }
+
+        String spEntityID = serviceLogoutInfo.getEntityID();
+        Endpoint endpoint = getSOAPBindingLocation(spEntityID);
+        if (endpoint == null) {
+            log.info("No SAML2 LogoutRequest SOAP endpoint found for entity '{}'", spEntityID);
+            return;
+        }
+
+        LogoutRequestContext requestCtx =
+                createLogoutRequestContext(sloContext, serviceLogoutInfo);
+        if (requestCtx == null) {
+            log.info("Cannot create LogoutRequest Context for entity '{}'", spEntityID);
+            return;
+        }
+        try {
+            //prepare http message exchange for soap
+            log.debug("Preparing HTTP transport for SOAP request");
+            HttpConnection httpConn = createHttpConnection(endpoint);
+            log.debug("Opening HTTP connection to '{}'", endpoint.getLocation());
+            httpConn.open();
+            if (!httpConn.isOpen()) {
+                log.warn("HTTP connection could not be opened");
+                return;
             }
-            String spEntityID = serviceLogoutInfo.getEntityID();
-            log.debug("Trying SP: {}", spEntityID);
-            serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_ATTEMPTED);
 
-            Endpoint endpoint = getSOAPBindingLocation(spEntityID);
-            if (endpoint == null) {
-                log.info("No SAML2 LogoutRequest SOAP endpoint found for entity '{}'", spEntityID);
-                continue;
-            }
+            log.debug("Preparing transports and encoders/decoders");
+            prepareSOAPTransport(requestCtx, httpConn, endpoint);
+            SAMLMessageEncoder encoder = new HTTPSOAP11Encoder();
+            SAMLMessageDecoder decoder =
+                    new HTTPSOAP11Decoder(getParserPool());
 
-            log.debug("Building LogoutRequest");
-            LogoutRequest request = buildLogoutRequest(sloContext);
+            //encode and sign saml request
+            encoder.encode(requestCtx);
 
-            //retrieve nameid value from session and build nameid object
-            NameID nameId = nameIDBuilder.buildObject();
-            nameId.setFormat(serviceLogoutInfo.getNameIdentifierFormat());
-            nameId.setValue(serviceLogoutInfo.getNameIdentifier());
-            log.debug("NameID for the principal: '{}'", nameId.getValue());
-            request.setNameID(nameId);
+            log.info("Issuing back-channel logout request to SP '{}'", spEntityID);
+            //execute SOAP/HTTP call
+            log.debug("Executing HTTP POST");
+            requestCtx.execute(httpConn);
 
-            LogoutRequestContext requestCtx =
-                    buildLogoutRequestContext(sloContext, spEntityID);
-            requestCtx.setOutboundSAMLMessage(request);
+            //decode saml response
+            decoder.decode(requestCtx);
+            log.debug("Closing HTTP connection");
+            httpConn.close();
 
-            try {
-                //prepare http message exchange for soap
-                log.debug("Preparing HTTP transport for SOAP request");
-                HttpConnection httpConn = createHttpConnection(endpoint);
-                log.debug("Opening HTTP connection to '{}'", endpoint.getLocation());
-                httpConn.open();
-                if (!httpConn.isOpen()) {
-                    log.warn("HTTP connection could not be opened");
-                    continue;
+            LogoutResponse spResponse = requestCtx.getInboundSAMLMessage();
+            StatusCode statusCode = spResponse.getStatus().getStatusCode();
+            if (statusCode.getValue().equals(StatusCode.SUCCESS_URI)) {
+                log.info("Logout was successful on SP '{}'.", spEntityID);
+                serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED);
+            } else {
+                log.warn("Logout failed on SP '{}', logout status code is '{}'.", spEntityID, statusCode.getValue());
+                StatusCode secondaryCode = statusCode.getStatusCode();
+                if (secondaryCode != null) {
+                    log.warn("Additional status code: '{}'", secondaryCode.getValue());
                 }
-
-                log.debug("Preparing transports and encoders/decoders");
-                prepareSOAPTransport(requestCtx, httpConn, endpoint);
-                SAMLMessageEncoder encoder = new HTTPSOAP11Encoder();
-                SAMLMessageDecoder decoder = new HTTPSOAP11Decoder(getParserPool());
-
-                //encode and sign saml request
-                encoder.encode(requestCtx);
-
-                log.info("Issuing back-channel logout request for principal '{}' to SP '{}'",
-                        nameId.getValue(), spEntityID);
-                //execute SOAP/HTTP call
-                log.debug("Executing HTTP POST");
-                requestCtx.execute(httpConn);
-
-                //decode saml response
-                decoder.decode(requestCtx);
-                log.debug("Closing HTTP connection");
-                httpConn.close();
-
-                LogoutResponse spResponse = requestCtx.getInboundSAMLMessage();
-                StatusCode statusCode = spResponse.getStatus().getStatusCode();
-                if (statusCode.getValue().equals(StatusCode.SUCCESS_URI)) {
-                    log.info("Logout was successful on SP '{}'.", spEntityID);
-                    serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED);
-                } else {
-                    log.warn("Logout failed on SP '{}', logout status code is '{}'.", spEntityID, statusCode.getValue());
-                    StatusCode secondaryCode = statusCode.getStatusCode();
-                    if (secondaryCode != null) {
-                        log.warn("Additional status code: '{}'", secondaryCode.getValue());
-                    }
-                    serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_FAILED);
-                }
-            } catch (Throwable t) {
-                log.error("Exception while sending SAML Logout request", t);
+                serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_FAILED);
             }
+        } catch (Throwable t) {
+            log.error("Exception while sending SAML Logout request", t);
         }
     }
 
@@ -356,24 +380,20 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Builds Logout request context.
-     * 
-     * @param sloContext
-     * @param spEntityID
+     * Builds NameID for the principal and the SP.
+     *
+     * TODO support encrypted nameid?
+     *
+     * @param serviceLogoutInfo
      * @return
      */
-    private LogoutRequestContext buildLogoutRequestContext(SingleLogoutContext sloContext, String spEntityID) {
-        LogoutRequestContext requestCtx = new LogoutRequestContext();
-        requestCtx.setCommunicationProfileId(getProfileId());
-        requestCtx.setSecurityPolicyResolver(getSecurityPolicyResolver());
-        requestCtx.setOutboundMessageIssuer(sloContext.getResponderEntityID());
-        requestCtx.setInboundMessageIssuer(spEntityID);
-        Credential signingCredential =
-                getRelyingPartyConfigurationManager().
-                getDefaultRelyingPartyConfiguration().getDefaultSigningCredential();
-        requestCtx.setOutboundSAMLMessageSigningCredential(signingCredential);
+    private NameID buildNameID(LogoutInformation serviceLogoutInfo) {
+        NameID nameId = nameIDBuilder.buildObject();
+        nameId.setFormat(serviceLogoutInfo.getNameIdentifierFormat());
+        nameId.setValue(serviceLogoutInfo.getNameIdentifier());
+        log.debug("NameID for the principal: '{}'", nameId.getValue());
 
-        return requestCtx;
+        return nameId;
     }
 
     /**
@@ -459,28 +479,10 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      * @throws ProfileException
      */
     private void initiateFrontChannelLogout(
-            HTTPInTransport inTransport, HTTPOutTransport outTransport,
-            InitialRequestContext initialRequest, Session idpSession)
+            HTTPOutTransport outTransport,
+            InitialRequestContext initialRequest,
+            Session idpSession)
             throws ProfileException {
-
-        try {
-            HttpServletRequest servletRequest =
-                    ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
-            SingleLogoutContext sloContext =
-                    buildSingleLogoutContext(initialRequest, idpSession);
-            SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, servletRequest);
-
-            RequestDispatcher dispatcher =
-                    servletRequest.getRequestDispatcher("/SLOServlet"); //TODO!
-            dispatcher.forward(servletRequest, ((HttpServletResponseAdapter) outTransport).getWrappedResponse());
-
-        } catch (IOException ex) {
-            log.error("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
-            throw new ProfileException("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
-        } catch (ServletException ex) {
-            log.error("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
-            throw new ProfileException("Error forwarding SAML 2 Single Logout Request to the Logout Servlet", ex);
-        }
     }
 
     /**
