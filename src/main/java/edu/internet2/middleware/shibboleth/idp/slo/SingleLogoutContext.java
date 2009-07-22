@@ -119,12 +119,14 @@ public class SingleLogoutContext implements Serializable {
     }
 
     public class LogoutInformation implements Serializable {
-
-        private static final long serialVersionUID = -411782660988990728L;
+        
+        private static final long serialVersionUID = -9214161647487117263L;
+        
         private final String entityID;
         private final String nameIdentifier;
         private final String nameIdentifierFormat;
         private LogoutStatus logoutStatus;
+        private String logoutRequestId;
 
         public LogoutInformation(String entityID, String nameIdentifier,
                 String nameIdentifierFormat, LogoutStatus logoutStatus) {
@@ -162,6 +164,22 @@ public class SingleLogoutContext implements Serializable {
 
         public String getNameIdentifierFormat() {
             return nameIdentifierFormat;
+        }
+
+        public String getLogoutRequestId() {
+            synchronized (this) {
+                return logoutRequestId;
+            }
+        }
+
+        public void setLogoutRequestId(String logoutRequestId) {
+            synchronized (this) {
+                if (this.logoutRequestId == null) {
+                    this.logoutRequestId = logoutRequestId;
+                } else {
+                    throw new IllegalStateException("Request ID is previously set");
+                }
+            }
         }
     }
 }
