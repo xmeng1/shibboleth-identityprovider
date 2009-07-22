@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.idp.slo;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,15 +58,16 @@ public class SingleLogoutContext implements Serializable {
 
         Map<String, ServiceInformation> serviceInformationMap =
                 idpSession.getServicesInformation();
-        this.serviceInformation =
+        Map<String, LogoutInformation> serviceInfo =
                 new HashMap<String, LogoutInformation>(serviceInformationMap.size());
         for (ServiceInformation service : serviceInformationMap.values()) {
             if (!service.getEntityID().equals(requesterEntityID)) {
                 LogoutInformation logoutInfo =
                         new LogoutInformation(service, LogoutStatus.LOGGED_IN);
-                serviceInformation.put(service.getEntityID(), logoutInfo);
+                serviceInfo.put(service.getEntityID(), logoutInfo);
             }
         }
+        this.serviceInformation = Collections.unmodifiableMap(serviceInfo);
     }
 
     public String getRelayState() {
@@ -106,7 +108,7 @@ public class SingleLogoutContext implements Serializable {
                     return serviceLogoutInfo;
                 }
             }
-            
+
             return null;
         }
     }
