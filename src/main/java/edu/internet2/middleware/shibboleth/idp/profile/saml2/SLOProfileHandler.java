@@ -205,8 +205,15 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 getSessionManager().getSession(requestContext.getPrincipalName());
         if (idpSession == null) {
             log.warn("Cannot find IdP Session for Principal '{}'", requestContext.getPrincipalName());
-            //TODO response
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI, null));
             throw new ProfileException("Cannot find IdP Session for principal");
+        }
+        if (!idpSession.getServicesInformation().keySet().
+                contains(requestContext.getInboundMessageIssuer())) {
+            String msg = "Requesting entity is not session participant";
+            log.warn(msg);
+            requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, StatusCode.REQUEST_DENIED_URI, msg));
+            throw new ProfileException(msg);
         }
 
         SingleLogoutContext sloContext =
