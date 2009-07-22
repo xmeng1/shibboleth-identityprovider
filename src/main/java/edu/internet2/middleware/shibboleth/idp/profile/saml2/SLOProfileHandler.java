@@ -257,11 +257,13 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      *
      * @param sloContext
      * @param serviceLogoutInfo
+     * @param endpoint
      * @return
      */
     private LogoutRequestContext createLogoutRequestContext(
             SingleLogoutContext sloContext,
-            LogoutInformation serviceLogoutInfo) {
+            LogoutInformation serviceLogoutInfo,
+            Endpoint endpoint) {
 
         String spEntityID = serviceLogoutInfo.getEntityID();
         log.debug("Trying SP: {}", spEntityID);
@@ -271,12 +273,14 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         LogoutRequest request = buildLogoutRequest(sloContext);
         NameID nameId = buildNameID(serviceLogoutInfo);
         request.setNameID(nameId);
+        request.setDestination(endpoint.getLocation());
 
         LogoutRequestContext requestCtx = new LogoutRequestContext();
         requestCtx.setCommunicationProfileId(getProfileId());
         requestCtx.setSecurityPolicyResolver(getSecurityPolicyResolver());
         requestCtx.setOutboundMessageIssuer(sloContext.getResponderEntityID());
         requestCtx.setInboundMessageIssuer(spEntityID);
+        requestCtx.setPeerEntityEndpoint(endpoint);
         //TODO get credential configured for relying party
         Credential signingCredential =
                 getRelyingPartyConfigurationManager().
@@ -311,7 +315,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         }
 
         LogoutRequestContext requestCtx =
-                createLogoutRequestContext(sloContext, serviceLogoutInfo);
+                createLogoutRequestContext(sloContext, serviceLogoutInfo, endpoint);
         if (requestCtx == null) {
             log.info("Cannot create LogoutRequest Context for entity '{}'", spEntityID);
             return;
