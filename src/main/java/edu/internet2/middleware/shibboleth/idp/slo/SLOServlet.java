@@ -14,16 +14,23 @@
  *  limitations under the License.
  *  under the License.
  */
-
 package edu.internet2.middleware.shibboleth.idp.slo;
 
+import edu.internet2.middleware.shibboleth.common.session.SessionManager;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
+import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import java.io.IOException;
 import java.io.PrintWriter;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.opensaml.util.storage.StorageService;
 
 /**
  *
@@ -31,12 +38,44 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class SLOServlet extends HttpServlet {
 
+    private static final long serialVersionUID = -6038945519457268089L;
+    // TODO remove once HttpServletHelper does redirects
+    private static ServletContext context;
+    /** Storage service used to store {@link LoginContext}s while authentication is in progress. */
+    private static StorageService<String, LoginContextEntry> storageService;
+    /** Profile handler manager. */
+    private IdPProfileHandlerManager handlerManager;
+    /** Session manager. */
+    private SessionManager<Session> sessionManager;
+
+    /** {@inheritDoc} */
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+
+        handlerManager =
+                HttpServletHelper.getProfileHandlerManager(config.getServletContext());
+        sessionManager =
+                HttpServletHelper.getSessionManager(config.getServletContext());
+        storageService =
+                (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config.getServletContext());
+        context = config.getServletContext();
+    }
+
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.getLoginContext(req);
-        
+        SingleLogoutContext sloContext =
+                SingleLogoutContextStorageHelper.getSingleLogoutContext(req);
+        if (sloContext != null) {
+            //TODO when to bind permanently
+            SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext,
+                    storageService, context, req, resp);
+        } else {
+            sloContext =
+                    SingleLogoutContextStorageHelper.getSingleLogoutContext(storageService, context, req);
+        }
+
         PrintWriter writer = resp.getWriter();
         writer.print("SLO Request from: ");
         writer.println(sloContext.getRequesterEntityID());
@@ -49,5 +88,4 @@ public class SLOServlet extends HttpServlet {
             writer.println(sloContext.getServiceInformation().get(entityID).getLogoutStatus().toString());
         }
     }
-
 }

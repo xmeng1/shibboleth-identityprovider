@@ -27,7 +27,10 @@ import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext.LogoutInf
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.logging.Level;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnection;
@@ -69,6 +72,7 @@ import org.opensaml.ws.soap.client.http.HttpClientBuilder;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
+import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.credential.Credential;
 import org.slf4j.Logger;
@@ -169,7 +173,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         HttpServletRequest servletRequest =
                 ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
         SingleLogoutContext sloContext =
-                SingleLogoutContextStorageHelper.getLoginContext(servletRequest);
+                SingleLogoutContextStorageHelper.getSingleLogoutContext(servletRequest);
 
         //TODO RelayState is lost?!
         //TODO unbind slo context
@@ -226,13 +230,31 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             getSessionManager().destroySession(idpSession.getSessionID());
             respondToInitialRequest(sloContext, initialRequest);
         } else {
-            //TODO front-channel binding
+            log.info("Issuing Frontchannel logout requests");
+            HttpServletRequest servletRequest =
+                    ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+            HttpServletResponse servletResponse =
+                    ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
+            SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, servletRequest);
+            try {
+                servletRequest.getRequestDispatcher("/SLOServlet").forward(servletRequest, servletResponse);
+            } catch (ServletException ex) {
+                String msg = "Cannot forward request to SLO Servlet";
+                log.error(msg, ex);
+                initialRequest.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, msg));
+                throw new ProfileException(ex);
+            } catch (IOException ex) {
+                String msg = "Cannot forward request to SLO Servlet";
+                log.error(msg, ex);
+                initialRequest.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, msg));
+                throw new ProfileException(ex);
+            }
         }
     }
 
     /**
      * Creates SAML2 LogoutRequest and corresponding context.
-     * 
+     *
      * @param sloContext
      * @param serviceLogoutInfo
      * @return
