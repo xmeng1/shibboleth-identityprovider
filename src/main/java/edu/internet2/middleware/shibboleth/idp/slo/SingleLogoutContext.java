@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class SingleLogoutContext implements Serializable {
 
-    private static final long serialVersionUID = -4067880011119487071L;
+    private static final long serialVersionUID = -6824272239830757989L;
     /** EntityID of the entity which requested the logout. */
     private final String requesterEntityID;
     /** EntityID of the IdP which will respond. */
@@ -37,15 +37,19 @@ public class SingleLogoutContext implements Serializable {
     private final String requestSAMLMessageID;
     /** RelayState of the LogoutRequest. */
     private final String relayState;
+    /** URL of the current profile handler. */
+    private final String profileHandlerURL;
     private final Map<String, LogoutInformation> serviceInformation;
 
     public SingleLogoutContext(
-            String requesterEntityID, 
+            String profileHandlerURL,
+            String requesterEntityID,
             String responderEntityID,
             String requestSAMLMessageID,
             String relayState,
             Session idpSession) {
 
+        this.profileHandlerURL = profileHandlerURL;
         this.requesterEntityID = requesterEntityID;
         this.responderEntityID = responderEntityID;
         this.requestSAMLMessageID = requestSAMLMessageID;
@@ -80,8 +84,31 @@ public class SingleLogoutContext implements Serializable {
         return responderEntityID;
     }
 
+    public String getProfileHandlerURL() {
+        return profileHandlerURL;
+    }
+
     public Map<String, LogoutInformation> getServiceInformation() {
-        return serviceInformation;
+        synchronized (this) {
+            return serviceInformation;
+        }
+    }
+
+    /**
+     * Returns the next service which is in LOGGED_IN state or null.
+     * 
+     * @return
+     */
+    public LogoutInformation getNextActiveService() {
+        synchronized (this) {
+            for (LogoutInformation serviceLogoutInfo : serviceInformation.values()) {
+                if (serviceLogoutInfo.getLogoutStatus().equals(LogoutStatus.LOGGED_IN)) {
+                    return serviceLogoutInfo;
+                }
+            }
+            
+            return null;
+        }
     }
 
     public enum LogoutStatus implements Serializable {
@@ -92,9 +119,9 @@ public class SingleLogoutContext implements Serializable {
     public class LogoutInformation implements Serializable {
 
         private static final long serialVersionUID = -411782660988990728L;
-        private String entityID;
-        private String nameIdentifier;
-        private String nameIdentifierFormat;
+        private final String entityID;
+        private final String nameIdentifier;
+        private final String nameIdentifierFormat;
         private LogoutStatus logoutStatus;
 
         public LogoutInformation(String entityID, String nameIdentifier,
@@ -115,32 +142,24 @@ public class SingleLogoutContext implements Serializable {
             return entityID;
         }
 
-        public void setEntityID(String entityID) {
-            this.entityID = entityID;
-        }
-
         public LogoutStatus getLogoutStatus() {
-            return logoutStatus;
+            synchronized (this) {
+                return logoutStatus;
+            }
         }
 
         public void setLogoutStatus(LogoutStatus logoutStatus) {
-            this.logoutStatus = logoutStatus;
+            synchronized (this) {
+                this.logoutStatus = logoutStatus;
+            }
         }
 
         public String getNameIdentifier() {
             return nameIdentifier;
         }
 
-        public void setNameIdentifier(String nameIdentifier) {
-            this.nameIdentifier = nameIdentifier;
-        }
-
         public String getNameIdentifierFormat() {
             return nameIdentifierFormat;
-        }
-
-        public void setNameIdentifierFormat(String nameIdentifierFormat) {
-            this.nameIdentifierFormat = nameIdentifierFormat;
         }
     }
 }
