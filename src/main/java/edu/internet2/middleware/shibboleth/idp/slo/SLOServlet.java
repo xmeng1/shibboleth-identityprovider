@@ -83,10 +83,8 @@ public class SLOServlet extends HttpServlet {
             writer.print("]");
         } else if (req.getParameter("action") != null) { //forward to handler
             req.getRequestDispatcher(sloContext.getProfileHandlerURL()).forward(req, resp);
-        } else if (req.getParameter("statusFrame") != null) { //forward to status check frame
-            req.getRequestDispatcher("/sloStatusFrame.jsp").forward(req, resp);
-        } else { //respond with SLO Frameset
-            req.getRequestDispatcher("/sloFrame.jsp").forward(req, resp);
+        } else { //respond with SLO Controller
+            req.getRequestDispatcher("/sloController.jsp").forward(req, resp);
         }
     }
 }

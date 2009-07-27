@@ -55,6 +55,7 @@ SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.getSingleLogou
             <tr>
                 <td><%= service.getEntityID() %></td>
                 <td id="<%= service.getEntityID() %>"><%= service.getLogoutStatus().toString()%></td>
+                <td style="width: 0px; height: 0px;"><iframe src="/idp/SLOServlet?action" width="0" height="0" /></td>
             </tr>
             <%
             }
