@@ -68,12 +68,8 @@ public class SLOServlet extends HttpServlet {
         SingleLogoutContext sloContext =
                 SingleLogoutContextStorageHelper.getSingleLogoutContext(req);
         if (sloContext != null) {
-            //TODO when to bind permanently
             SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext,
                     storageService, context, req, resp);
-        } else {
-            sloContext =
-                    SingleLogoutContextStorageHelper.getSingleLogoutContext(storageService, context, req);
         }
 
         PrintWriter writer = resp.getWriter();

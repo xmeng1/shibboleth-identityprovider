@@ -31,6 +31,26 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <!--  Add IdP SLO Context object to incoming profile requests -->
+    <filter>
+        <filter-name>SLOContextFilter</filter-name>
+        <filter-class>edu.internet2.middleware.shibboleth.idp.slo.SLOContextFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>SLOContextFilter</filter-name>
+        <url-pattern>/profile/SAML2/SOAP/SLO</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>SLOContextFilter</filter-name>
+        <url-pattern>/profile/SAML2/Redirect/SLO</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>SLOContextFilter</filter-name>
+        <url-pattern>/SLOServlet</url-pattern>
+    </filter-mapping>
+    <!-- END of SLO Context Filter -->
+
     <!-- Profile Request Dispatcher -->
     <servlet>
         <servlet-name>ProfileRequestDispatcher</servlet-name>
