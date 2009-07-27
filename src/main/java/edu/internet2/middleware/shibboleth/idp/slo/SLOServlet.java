@@ -16,14 +16,13 @@
  */
 package edu.internet2.middleware.shibboleth.idp.slo;
 
-import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
-import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
+import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext.LogoutInformation;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Iterator;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -38,24 +37,17 @@ import org.opensaml.util.storage.StorageService;
  */
 public class SLOServlet extends HttpServlet {
 
-    private static final long serialVersionUID = -6038945519457268089L;
+    private static final long serialVersionUID = -3562061733288921508L;
     // TODO remove once HttpServletHelper does redirects
     private static ServletContext context;
     /** Storage service used to store {@link LoginContext}s while authentication is in progress. */
     private static StorageService<String, LoginContextEntry> storageService;
-    /** Profile handler manager. */
-    private IdPProfileHandlerManager handlerManager;
-    /** Session manager. */
-    private SessionManager<Session> sessionManager;
 
     /** {@inheritDoc} */
+    @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-
-        handlerManager =
-                HttpServletHelper.getProfileHandlerManager(config.getServletContext());
-        sessionManager =
-                HttpServletHelper.getSessionManager(config.getServletContext());
+        
         storageService =
                 (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config.getServletContext());
         context = config.getServletContext();
@@ -72,16 +64,29 @@ public class SLOServlet extends HttpServlet {
                     storageService, context, req, resp);
         }
 
-        PrintWriter writer = resp.getWriter();
-        writer.print("SLO Request from: ");
-        writer.println(sloContext.getRequesterEntityID());
-        writer.print("SLO Request ID: ");
-        writer.println(sloContext.getRequestSAMLMessageID());
-        writer.println("Services");
-        for (String entityID : sloContext.getServiceInformation().keySet()) {
-            writer.print(entityID);
-            writer.print(" logout status is: ");
-            writer.println(sloContext.getServiceInformation().get(entityID).getLogoutStatus().toString());
+        if (req.getParameter("status") != null) { //status query, response is JSON
+            PrintWriter writer = resp.getWriter();
+            writer.print("[");
+            Iterator<SingleLogoutContext.LogoutInformation> it =
+                    sloContext.getServiceInformation().values().iterator();
+            while (it.hasNext()) {
+                LogoutInformation service = it.next();
+                writer.print("{\"entityID\":\"");
+                writer.print(service.getEntityID());
+                writer.print("\",\"logoutStatus\":\"");
+                writer.print(service.getLogoutStatus().toString());
+                writer.print("\"}");
+                if (it.hasNext()) {
+                    writer.print(",");
+                }
+            }
+            writer.print("]");
+        } else if (req.getParameter("action") != null) { //forward to handler
+            req.getRequestDispatcher(sloContext.getProfileHandlerURL()).forward(req, resp);
+        } else if (req.getParameter("statusFrame") != null) { //forward to status check frame
+            req.getRequestDispatcher("/sloStatusFrame.jsp").forward(req, resp);
+        } else { //respond with SLO Frameset
+            req.getRequestDispatcher("/sloFrame.jsp").forward(req, resp);
         }
     }
 }
