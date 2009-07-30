@@ -69,10 +69,12 @@ String contextPath = request.getContextPath();
         <div class="content">
             <h1>Logging out</h1>
             <%
+            int i = 0;
             for (SingleLogoutContext.LogoutInformation service : sloContext.getServiceInformation().values()) {
+                i++;
             %>
             <div class="row"><%= service.getEntityID() %><img id="<%= service.getEntityID() %>" src="<%= contextPath %>/images/indicator.gif"></div>
-            <iframe src="<%= contextPath %>/SLOServlet?action" width="0" height="0" style="position:absolute;top:-1000px;"></iframe>
+            <iframe src="<%= contextPath %>/SLOServlet?action&<%= i %>" width="0" height="0" style="position:absolute;top:-1000px;"></iframe>
             <%
             }
             %>
