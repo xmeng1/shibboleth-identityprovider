@@ -323,9 +323,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         LogoutInformation nextActive = sloContext.getNextActiveService();
         if (nextActive == null) {
+            log.info("Invalidating session '{}'.", sloContext.getIdpSessionID());
+            getSessionManager().destroySession(sloContext.getIdpSessionID());
+
             //logoutrequest was sent to every session participant
             //reconstruct initial request context
-
             InitialRequestContext initialRequest =
                     buildRequestContext(sloContext, inTransport, outTransport);
             respondToInitialRequest(sloContext, initialRequest);
