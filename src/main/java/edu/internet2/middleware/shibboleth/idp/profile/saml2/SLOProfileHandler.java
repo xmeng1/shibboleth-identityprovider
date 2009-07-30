@@ -189,7 +189,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         } else { //Front-channel case only, called by SLOServlet?action
             LogoutInformation nextActive = sloContext.getNextActiveService();
             if (nextActive == null) {
-                destroySession(sloContext);
                 //logoutrequest was sent to every session participant
                 //reconstruct initial request context
                 InitialRequestContext initialRequest =
@@ -291,17 +290,17 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         SingleLogoutContext sloContext =
                 buildSingleLogoutContext(initialRequest, idpSession);
+        destroySession(sloContext);
 
         if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
             log.info("Issuing Backchannel logout requests");
             for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
                 initiateBackChannelLogout(sloContext, serviceLogoutInfo);
             }
-            destroySession(sloContext);
+            
             respondToInitialRequest(sloContext, initialRequest);
         } else {
             if (sloContext.getServiceInformation().isEmpty()) {
-                destroySession(sloContext);
                 respondToInitialRequest(sloContext, initialRequest);
 
                 return;
