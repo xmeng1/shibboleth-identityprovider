@@ -60,7 +60,6 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.impl.NameIDImpl;
-import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
@@ -154,7 +153,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             endpoint.setBinding(SAMLConstants.SAML2_SOAP11_BINDING_URI);
         } else {
             BasicEndpointSelector endpointSelector = new BasicEndpointSelector();
-            endpointSelector.setEndpointType(AssertionConsumerService.DEFAULT_ELEMENT_NAME);
+            endpointSelector.setEndpointType(SingleLogoutService.DEFAULT_ELEMENT_NAME);
             endpointSelector.setMetadataProvider(getMetadataProvider());
             endpointSelector.setEntityMetadata(requestContext.getPeerEntityMetadata());
             endpointSelector.setEntityRoleMetadata(requestContext.getPeerEntityRoleMetadata());
@@ -326,6 +325,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         if (nextActive == null) {
             //logoutrequest was sent to every session participant
             //reconstruct initial request context
+
             InitialRequestContext initialRequest =
                     buildRequestContext(sloContext, inTransport, outTransport);
             respondToInitialRequest(sloContext, initialRequest);
@@ -657,9 +657,13 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         LogoutResponse samlResponse =
                 buildLogoutResponse(initialRequest, status);
+        populateRelyingPartyInformation(initialRequest);
+        Endpoint endpoint = selectEndpoint(initialRequest);
+        initialRequest.setPeerEntityEndpoint(endpoint);
         initialRequest.setOutboundSAMLMessage(samlResponse);
         initialRequest.setOutboundSAMLMessageId(samlResponse.getID());
         initialRequest.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
+        initialRequest.setPeerEntityId(sloContext.getRequesterEntityID());
         log.debug("Sending response to the original LogoutRequest");
         encodeResponse(initialRequest);
         writeAuditLogEntry(initialRequest);
