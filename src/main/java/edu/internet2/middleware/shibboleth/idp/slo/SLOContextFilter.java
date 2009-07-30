@@ -53,10 +53,18 @@ public class SLOContextFilter implements Filter {
             throws IOException, ServletException {
 
         HttpServletRequest req = (HttpServletRequest) request;
-
+        HttpServletResponse resp = (HttpServletResponse) response;
+        
         SingleLogoutContext sloContext =
-                SingleLogoutContextStorageHelper.getSingleLogoutContext(storageService, context, req);
-        SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, req);
+                SingleLogoutContextStorageHelper.getSingleLogoutContext(req);
+        if (sloContext != null) {
+            //context found in the request, this must be a forward
+            SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, storageService, context, req, resp);
+        } else {
+            sloContext =
+                    SingleLogoutContextStorageHelper.getSingleLogoutContext(storageService, context, req);
+            SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, req);
+        }
 
         chain.doFilter(request, response);
     }
