@@ -234,14 +234,14 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             throw new ProfileException("LogoutResponse issuer is unknown");
         }
         if (!serviceLogoutInfo.getLogoutRequestId().equals(inResponseTo)) {
-            serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_FAILED);
+            serviceLogoutInfo.setLogoutFailed();
             throw new ProfileException("LogoutResponse InResponseTo does not match the LogoutRequest ID");
         }
         log.info("Logout status is '{}'", logoutResponse.getStatus().toString());
         if (logoutResponse.getStatus().getStatusCode().getValue().equals(StatusCode.SUCCESS_URI)) {
-            serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED);
+            serviceLogoutInfo.setLogoutSucceeded();
         } else {
-            serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_FAILED);
+            serviceLogoutInfo.setLogoutFailed();
         }
 
         return true;
@@ -355,7 +355,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         log.debug("Trying SP: {}", spEntityID);
         LogoutRequest request = buildLogoutRequest(sloContext);
 
-        serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_ATTEMPTED);
+        serviceLogoutInfo.setLogoutAttempted();
         serviceLogoutInfo.setLogoutRequestId(request.getID());
 
         NameID nameId = buildNameID(serviceLogoutInfo);
@@ -442,14 +442,14 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             StatusCode statusCode = spResponse.getStatus().getStatusCode();
             if (statusCode.getValue().equals(StatusCode.SUCCESS_URI)) {
                 log.info("Logout was successful on SP '{}'.", spEntityID);
-                serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_SUCCEEDED);
+                serviceLogoutInfo.setLogoutSucceeded();
             } else {
                 log.warn("Logout failed on SP '{}', logout status code is '{}'.", spEntityID, statusCode.getValue());
                 StatusCode secondaryCode = statusCode.getStatusCode();
                 if (secondaryCode != null) {
                     log.warn("Additional status code: '{}'", secondaryCode.getValue());
                 }
-                serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_FAILED);
+                serviceLogoutInfo.setLogoutFailed();
             }
         } catch (Throwable t) {
             log.error("Exception while sending SAML Logout request", t);
@@ -624,7 +624,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             encoder.encode(requestCtx);
         } catch (MessageEncodingException ex) {
             log.warn("Cannot encode LogoutRequest", ex);
-            serviceLogoutInfo.setLogoutStatus(SingleLogoutContext.LogoutStatus.LOGOUT_FAILED);
+            serviceLogoutInfo.setLogoutFailed();
             return;
         }
     }

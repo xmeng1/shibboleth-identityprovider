@@ -119,9 +119,8 @@ public class SingleLogoutContext implements Serializable {
     }
 
     public class LogoutInformation implements Serializable {
-        
+
         private static final long serialVersionUID = -9214161647487117263L;
-        
         private final String entityID;
         private final String nameIdentifier;
         private final String nameIdentifierFormat;
@@ -152,9 +151,39 @@ public class SingleLogoutContext implements Serializable {
             }
         }
 
-        public void setLogoutStatus(LogoutStatus logoutStatus) {
+        private void setLogoutStatus(LogoutStatus logoutStatus) {
             synchronized (this) {
                 this.logoutStatus = logoutStatus;
+            }
+        }
+
+        public void setLogoutAttempted() {
+            synchronized (this) {
+                if (getLogoutStatus().equals(LogoutStatus.LOGGED_IN)) {
+                    this.setLogoutStatus(LogoutStatus.LOGOUT_ATTEMPTED);
+                } else {
+                    throw new IllegalStateException("Logout already attempted");
+                }
+            }
+        }
+
+        public void setLogoutFailed() {
+            synchronized (this) {
+                if (getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED)) {
+                    this.setLogoutStatus(LogoutStatus.LOGOUT_FAILED);
+                } else {
+                    throw new IllegalStateException("LogoutStatus is not LOGOUT_ATTEMPTED");
+                }
+            }
+        }
+
+        public void setLogoutSucceeded() {
+            synchronized (this) {
+                if (getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED)) {
+                    this.setLogoutStatus(LogoutStatus.LOGOUT_SUCCEEDED);
+                } else {
+                    throw new IllegalStateException("LogoutStatus is not LOGOUT_ATTEMPTED");
+                }
             }
         }
 
