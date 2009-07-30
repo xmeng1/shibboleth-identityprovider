@@ -120,7 +120,7 @@ public class SingleLogoutContext implements Serializable {
 
     public enum LogoutStatus implements Serializable {
 
-        LOGGED_IN, LOGOUT_ATTEMPTED, LOGOUT_SUCCEEDED, LOGOUT_FAILED
+        LOGGED_IN, LOGOUT_ATTEMPTED, LOGOUT_SUCCEEDED, LOGOUT_FAILED, LOGOUT_UNSUPPORTED
     }
 
     public class LogoutInformation implements Serializable {
@@ -158,6 +158,16 @@ public class SingleLogoutContext implements Serializable {
 
         private void setLogoutStatus(LogoutStatus logoutStatus) {
             this.logoutStatus = logoutStatus;
+        }
+        
+        public void setLogoutUnsupported() {
+            synchronized (this) {
+                if (getLogoutStatus().equals(LogoutStatus.LOGGED_IN)) {
+                    this.setLogoutStatus(LogoutStatus.LOGOUT_UNSUPPORTED);
+                } else {
+                    throw new IllegalStateException("LogoutStatus is not LOGGED_IN");
+                }
+            }
         }
 
         public void setLogoutAttempted() {

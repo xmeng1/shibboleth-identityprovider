@@ -594,6 +594,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 getBindingLocation(spEntityID, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
         if (endpoint == null) {
             log.info("No SAML2 LogoutRequest Redirect endpoint found for entity '{}'", spEntityID);
+            serviceLogoutInfo.setLogoutUnsupported();
             return;
         }
 
