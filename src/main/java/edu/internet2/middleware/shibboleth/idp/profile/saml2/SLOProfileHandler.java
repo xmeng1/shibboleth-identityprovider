@@ -300,6 +300,12 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             destroySession(sloContext);
             respondToInitialRequest(sloContext, initialRequest);
         } else {
+            if (sloContext.getServiceInformation().isEmpty()) {
+                destroySession(sloContext);
+                respondToInitialRequest(sloContext, initialRequest);
+
+                return;
+            }
             HttpServletRequest servletRequest =
                     ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
             HttpServletResponse servletResponse =
