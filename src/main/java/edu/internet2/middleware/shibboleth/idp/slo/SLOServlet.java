@@ -65,6 +65,8 @@ public class SLOServlet extends HttpServlet {
         }
 
         if (req.getParameter("status") != null) { //status query, response is JSON
+            resp.setHeader("Cache-Control", "no-cache, must-revalidate");
+            resp.setHeader("Pragma", "no-cache");
             PrintWriter writer = resp.getWriter();
             writer.print("[");
             Iterator<SingleLogoutContext.LogoutInformation> it =
@@ -84,6 +86,8 @@ public class SLOServlet extends HttpServlet {
         } else if (req.getParameter("action") != null) { //forward to handler
             req.getRequestDispatcher(sloContext.getProfileHandlerURL()).forward(req, resp);
         } else { //respond with SLO Controller
+            resp.setHeader("Cache-Control", "no-cache, must-revalidate");
+            resp.setHeader("Pragma", "no-cache");
             req.getRequestDispatcher("/sloController.jsp").forward(req, resp);
         }
     }
