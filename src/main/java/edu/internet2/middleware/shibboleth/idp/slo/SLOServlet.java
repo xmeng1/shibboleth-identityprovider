@@ -47,7 +47,7 @@ public class SLOServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        
+
         storageService =
                 (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config.getServletContext());
         context = config.getServletContext();
@@ -86,6 +86,9 @@ public class SLOServlet extends HttpServlet {
             }
             writer.print("]");
         } else if (req.getParameter("action") != null) { //forward to handler
+            req.getRequestDispatcher(sloContext.getProfileHandlerURL()).forward(req, resp);
+        } else if (req.getParameter("finish") != null) { //forward to handler
+            SingleLogoutContextStorageHelper.unbindSingleLogoutContext(storageService, context, req, resp);
             req.getRequestDispatcher(sloContext.getProfileHandlerURL()).forward(req, resp);
         } else { //respond with SLO Controller
             resp.setHeader("Cache-Control", "no-cache, must-revalidate");

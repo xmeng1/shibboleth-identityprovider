@@ -61,7 +61,7 @@ public class SingleLogoutContextStorageHelper {
         return (SingleLogoutContext) httpRequest.getAttribute(SLO_CTX_KEY_NAME);
     }
 
-        /**
+    /**
      * Gets the {@link SingleLogoutContext} for the user issuing the HTTP request.
      *
      * @param context the Servlet context
@@ -85,21 +85,25 @@ public class SingleLogoutContextStorageHelper {
         SingleLogoutContext sloContext = getSingleLogoutContext(httpRequest);
         if (sloContext == null) {
             log.debug("LoginContext not bound to HTTP request, retrieving it from storage service");
-            Cookie sloContextKeyCookie = HttpServletHelper.getCookie(httpRequest, SLO_CTX_KEY_NAME);
+            Cookie sloContextKeyCookie =
+                    HttpServletHelper.getCookie(httpRequest, SLO_CTX_KEY_NAME);
             if (sloContextKeyCookie == null) {
                 log.debug("SingleLogoutContext key cookie was not present in request");
                 return null;
             }
 
-            String sloContextKey = DatatypeHelper.safeTrimOrNullString(sloContextKeyCookie.getValue());
+            String sloContextKey =
+                    DatatypeHelper.safeTrimOrNullString(sloContextKeyCookie.getValue());
             if (sloContextKey == null) {
                 log.warn("Corrupted SingleLogoutContext Key cookie, it did not contain a value");
             }
             log.debug("SingleLogoutContext key is '{}'", sloContextKey);
 
-            String partition = HttpServletHelper.getContextParam(context, SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION);
+            String partition =
+                    HttpServletHelper.getContextParam(context, SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION);
             log.debug("parition: {}", partition);
-            SingleLogoutContextEntry entry = (SingleLogoutContextEntry) storageService.get(partition, sloContextKey);
+            SingleLogoutContextEntry entry =
+                    (SingleLogoutContextEntry) storageService.get(partition, sloContextKey);
             if (entry != null) {
                 if (entry.isExpired()) {
                     log.debug("SingleLogoutContext found but it was expired");
@@ -113,7 +117,6 @@ public class SingleLogoutContextStorageHelper {
 
         return sloContext;
     }
-
 
     /**
      * Binds a {@link SingleLogoutContext} to the current request.
@@ -192,27 +195,44 @@ public class SingleLogoutContextStorageHelper {
             return null;
         }
 
-        Cookie loginContextKeyCookie =
-                HttpServletHelper.getCookie(httpRequest, SLO_CTX_KEY_NAME);
-        if (loginContextKeyCookie == null) {
+        String sloContextKey = removeSingleLogoutContextCookie(httpRequest, httpResponse);
+        if (sloContextKey == null) {
             return null;
         }
 
-        String loginContextKey =
-                DatatypeHelper.safeTrimOrNullString(loginContextKeyCookie.getValue());
-        if (loginContextKey == null) {
-            log.warn("Corrupted SingleLogoutContext Key cookie, it did not contain a value");
-        }
-
-        loginContextKeyCookie.setMaxAge(0);
-        httpResponse.addCookie(loginContextKeyCookie);
-
         SingleLogoutContextEntry entry =
                 (SingleLogoutContextEntry) storageService.remove(HttpServletHelper.getContextParam(context,
-                SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION), loginContextKey);
+                SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION), sloContextKey);
         if (entry != null && !entry.isExpired()) {
             return entry.getSingleLogoutContext();
         }
         return null;
+    }
+
+    /**
+     * Removes cookie for SingleLogoutContext and returns the logout context key.
+     * 
+     * @param httpRequest
+     * @param httpResponse
+     */
+    protected static String removeSingleLogoutContextCookie(HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        Cookie sloContextKeyCookie =
+                HttpServletHelper.getCookie(httpRequest, SLO_CTX_KEY_NAME);
+        if (sloContextKeyCookie == null) {
+            return null;
+        }
+        String sloContextKey =
+                DatatypeHelper.safeTrimOrNullString(sloContextKeyCookie.getValue());
+        if (sloContextKey == null) {
+            log.warn("Corrupted SingleLogoutContext Key cookie, it did not contain a value");
+        }
+
+        if (sloContextKeyCookie == null) {
+            return null;
+        }
+        sloContextKeyCookie.setMaxAge(0);
+        httpResponse.addCookie(sloContextKeyCookie);
+
+        return sloContextKey;
     }
 }
