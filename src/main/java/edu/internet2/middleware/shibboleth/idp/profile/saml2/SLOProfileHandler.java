@@ -186,9 +186,23 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         } else if (servletRequest.getParameter("SAMLRequest") != null) {
             log.debug("Processing incoming SAML LogoutRequest");
             processLogoutRequest(inTransport, outTransport);
-        } else {
-            log.debug("Issuing frong-channel LogoutRequest");
-            tryFrontChannelLogout(sloContext, inTransport, outTransport);
+        } else { //Front-channel case only, called by SLOServlet?action
+            LogoutInformation nextActive = sloContext.getNextActiveService();
+            if (nextActive == null) {
+                log.info("Invalidating session '{}'.", sloContext.getIdpSessionID());
+                getSessionManager().destroySession(sloContext.getIdpSessionID());
+
+                //logoutrequest was sent to every session participant
+                //reconstruct initial request context
+                InitialRequestContext initialRequest =
+                        buildRequestContext(sloContext, inTransport, outTransport);
+                respondToInitialRequest(sloContext, initialRequest);
+
+                return;
+            }
+
+            //issue logoutrequest to the next active session participant
+            initiateFrontChannelLogout(sloContext, nextActive, outTransport);
         }
     }
 
@@ -308,36 +322,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 throw new ProfileException(ex);
             }
         }
-    }
-
-    /**
-     * Continues logout process.
-     *
-     * @param sloContext
-     * @param inTransport
-     * @param outTransport
-     */
-    private void tryFrontChannelLogout(SingleLogoutContext sloContext,
-            HTTPInTransport inTransport, HTTPOutTransport outTransport)
-            throws ProfileException {
-
-        LogoutInformation nextActive = sloContext.getNextActiveService();
-        if (nextActive == null) {
-            log.info("Invalidating session '{}'.", sloContext.getIdpSessionID());
-            getSessionManager().destroySession(sloContext.getIdpSessionID());
-
-            //logoutrequest was sent to every session participant
-            //reconstruct initial request context
-            InitialRequestContext initialRequest =
-                    buildRequestContext(sloContext, inTransport, outTransport);
-            respondToInitialRequest(sloContext, initialRequest);
-
-            return;
-        }
-
-        //issue logoutrequest to the next active session participant
-        initiateFrontChannelLogout(sloContext, nextActive, outTransport);
-
     }
 
     /**
