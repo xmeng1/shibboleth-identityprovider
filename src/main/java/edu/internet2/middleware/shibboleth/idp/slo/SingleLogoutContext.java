@@ -98,9 +98,7 @@ public class SingleLogoutContext implements Serializable {
     }
 
     public Map<String, LogoutInformation> getServiceInformation() {
-        synchronized (this) {
-            return serviceInformation;
-        }
+        return serviceInformation;
     }
 
     /**
@@ -159,9 +157,7 @@ public class SingleLogoutContext implements Serializable {
         }
 
         private void setLogoutStatus(LogoutStatus logoutStatus) {
-            synchronized (this) {
-                this.logoutStatus = logoutStatus;
-            }
+            this.logoutStatus = logoutStatus;
         }
 
         public void setLogoutAttempted() {
