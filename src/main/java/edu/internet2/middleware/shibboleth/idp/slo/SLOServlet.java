@@ -62,6 +62,9 @@ public class SLOServlet extends HttpServlet {
         if (sloContext != null) {
             SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext,
                     storageService, context, req, resp);
+        } else {
+            resp.sendError(404, "Single Logout servlet can not be called directly");
+            return;
         }
 
         if (req.getParameter("status") != null) { //status query, response is JSON
