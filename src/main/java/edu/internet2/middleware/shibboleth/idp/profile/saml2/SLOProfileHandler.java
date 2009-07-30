@@ -189,9 +189,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         } else { //Front-channel case only, called by SLOServlet?action
             LogoutInformation nextActive = sloContext.getNextActiveService();
             if (nextActive == null) {
-                log.info("Invalidating session '{}'.", sloContext.getIdpSessionID());
-                getSessionManager().destroySession(sloContext.getIdpSessionID());
-
+                destroySession(sloContext);
                 //logoutrequest was sent to every session participant
                 //reconstruct initial request context
                 InitialRequestContext initialRequest =
@@ -299,8 +297,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
                 initiateBackChannelLogout(sloContext, serviceLogoutInfo);
             }
-            log.info("Invalidating session '{}'.", idpSession.getSessionID());
-            getSessionManager().destroySession(idpSession.getSessionID());
+            destroySession(sloContext);
             respondToInitialRequest(sloContext, initialRequest);
         } else {
             HttpServletRequest servletRequest =
@@ -362,6 +359,16 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         requestCtx.setOutboundSAMLMessage(request);
 
         return requestCtx;
+    }
+
+    /**
+     * Destroy idp session.
+     *
+     * @param sloContext
+     */
+    private void destroySession(SingleLogoutContext sloContext) {
+        log.info("Invalidating session '{}'.", sloContext.getIdpSessionID());
+        getSessionManager().destroySession(sloContext.getIdpSessionID());
     }
 
     /**
