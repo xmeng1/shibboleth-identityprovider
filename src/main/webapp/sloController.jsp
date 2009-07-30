@@ -30,7 +30,7 @@ String contextPath = request.getContextPath();
                         var src = "indicator.gif";
 
                         switch(status) {
-                            case "LOGOUT_SUCCEEDED" : src="success.gif";
+                            case "LOGOUT_SUCCEEDED" : src="success.png";
                                 break;
                             case "LOGOUT_FAILED" : src="failed.png";
                                 break;
