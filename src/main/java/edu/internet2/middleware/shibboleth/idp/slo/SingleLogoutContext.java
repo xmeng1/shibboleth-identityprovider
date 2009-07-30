@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class SingleLogoutContext implements Serializable {
 
-    private static final long serialVersionUID = -6824272239830757989L;
+    private static final long serialVersionUID = -2503893952974231362L;
     /** EntityID of the entity which requested the logout. */
     private final String requesterEntityID;
     /** EntityID of the IdP which will respond. */
@@ -40,6 +40,8 @@ public class SingleLogoutContext implements Serializable {
     private final String relayState;
     /** URL of the current profile handler. */
     private final String profileHandlerURL;
+    /** Internal IdP Session ID. */
+    private final String idpSessionID;
     private final Map<String, LogoutInformation> serviceInformation;
 
     public SingleLogoutContext(
@@ -55,6 +57,7 @@ public class SingleLogoutContext implements Serializable {
         this.responderEntityID = responderEntityID;
         this.requestSAMLMessageID = requestSAMLMessageID;
         this.relayState = relayState;
+        this.idpSessionID = idpSession.getSessionID();
 
         Map<String, ServiceInformation> serviceInformationMap =
                 idpSession.getServicesInformation();
@@ -88,6 +91,10 @@ public class SingleLogoutContext implements Serializable {
 
     public String getProfileHandlerURL() {
         return profileHandlerURL;
+    }
+
+    public String getIdpSessionID() {
+        return idpSessionID;
     }
 
     public Map<String, LogoutInformation> getServiceInformation() {
