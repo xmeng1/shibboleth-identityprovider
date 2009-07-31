@@ -51,7 +51,6 @@ import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.decoding.HTTPSOAP11Decoder;
-import org.opensaml.saml2.binding.encoding.HTTPRedirectDeflateEncoder;
 import org.opensaml.saml2.binding.encoding.HTTPSOAP11Encoder;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.LogoutRequest;
@@ -179,7 +178,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 SingleLogoutContextStorageHelper.getSingleLogoutContext(servletRequest);
 
         //TODO RelayState is lost?!
-        //TODO unbind slo context
+        //TODO front channel slo - try back channel
         if (servletRequest.getParameter("SAMLResponse") != null) {
             log.debug("Processing incoming SAML LogoutResponse");
             processLogoutResponse(sloContext, inTransport, outTransport);
@@ -297,7 +296,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
                 initiateBackChannelLogout(sloContext, serviceLogoutInfo);
             }
-            
+
             respondToInitialRequest(sloContext, initialRequest);
         } else {
             if (sloContext.getServiceInformation().isEmpty()) {
@@ -394,7 +393,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         String spEntityID = serviceLogoutInfo.getEntityID();
         Endpoint endpoint =
-                getBindingLocation(spEntityID, SAMLConstants.SAML2_SOAP11_BINDING_URI);
+                getEndpointForBinding(spEntityID, SAMLConstants.SAML2_SOAP11_BINDING_URI);
         if (endpoint == null) {
             log.info("No SAML2 LogoutRequest SOAP endpoint found for entity '{}'", spEntityID);
             return;
@@ -455,13 +454,14 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Reads SAML2 SingleLogoutService SOAP Binding endpoint of the entity or
+     * Reads SAML2 SingleLogoutService endpoint of the entity or
      * null if no metadata or endpoint found.
      *
      * @param spEntityID
+     * @param bindingURI which binding to use
      * @return
      */
-    private Endpoint getBindingLocation(String spEntityID, String bindingURI) {
+    private Endpoint getEndpointForBinding(String spEntityID, String bindingURI) {
         RoleDescriptor spMetadata = null;
         try {
             //retrieve metadata
@@ -476,7 +476,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             return null;
         }
 
-        //find SOAP endpoint for SingleLogoutService
+        //find endpoint for SingleLogoutService
         BasicEndpointSelector es = new BasicEndpointSelector();
         es.setEndpointType(SingleLogoutService.DEFAULT_ELEMENT_NAME);
         es.setMetadataProvider(getMetadataProvider());
@@ -603,23 +603,34 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         String spEntityID = serviceLogoutInfo.getEntityID();
         Endpoint endpoint =
-                getBindingLocation(spEntityID, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+                getEndpointForBinding(spEntityID, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
         if (endpoint == null) {
-            log.info("No SAML2 LogoutRequest Redirect endpoint found for entity '{}'", spEntityID);
+            endpoint =
+                    getEndpointForBinding(spEntityID, SAMLConstants.SAML2_POST_BINDING_URI);
+        }
+        if (endpoint == null) {
+            log.info("No SAML2 LogoutRequest front-channel endpoint found for entity '{}'", spEntityID);
             serviceLogoutInfo.setLogoutUnsupported();
+            return;
+        }
+        SAMLMessageEncoder encoder =
+                getMessageEncoders().get(endpoint.getBinding());
+        if (encoder == null) {
+            log.warn("No message encoder found for binding '{}'", endpoint.getBinding());
+            serviceLogoutInfo.setLogoutFailed();
             return;
         }
 
         LogoutRequestContext requestCtx =
                 createLogoutRequestContext(sloContext, serviceLogoutInfo, endpoint);
         if (requestCtx == null) {
-            log.info("Cannot create LogoutRequest Context for entity '{}'", spEntityID);
+            log.warn("Cannot create LogoutRequest Context for entity '{}'", spEntityID);
+            serviceLogoutInfo.setLogoutFailed();
             return;
         }
         requestCtx.setOutboundMessageTransport(outTransport);
-        SAMLMessageEncoder encoder = new HTTPRedirectDeflateEncoder();
+
         try {
-            //TODO store saml message id
             encoder.encode(requestCtx);
         } catch (MessageEncodingException ex) {
             log.warn("Cannot encode LogoutRequest", ex);
