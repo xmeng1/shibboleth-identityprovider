@@ -10,6 +10,8 @@ String contextPath = request.getContextPath();
         <title>Shibboleth IdP Frontchannel Single Log-out Controller</title>
         <script language="javascript" type="text/javascript">
             var timer = 1;
+			var timeout;
+			var wasFailed = false;
             var checkInterval = 5;
             
             var xhr = new XMLHttpRequest();
@@ -28,7 +30,7 @@ String contextPath = request.getContextPath();
                         var entity = resp[service].entityID;
                         var status = resp[service].logoutStatus;
                         var src = "indicator.gif";
-
+						
                         switch(status) {
                             case "LOGOUT_SUCCEEDED" : src="success.png";
                                 break;
@@ -37,35 +39,43 @@ String contextPath = request.getContextPath();
                             case "LOGOUT_ATTEMPTED" : src="indicator.gif";
                                 break;
                         }
-
+						
                         if (status != 'LOGOUT_SUCCEEDED') {
                             succ = false;
                         }
+
+						if ((status=="LOGOUT_ATTEMPTED" || status=="LOGOUT_UNSUPPORTED") && timer > 15){
+							src = "failed.png";
+							succ = true;
+							wasfail = true;
+						}
+
                         document.getElementById(entity).src = "<%= contextPath %>/images/" + src;
+
                     }
                     if (succ == true) {
-                        alert('Logout successful');
-                        finish();
+                        clearTimeout(timeout);
+                        if (!wasfail) finish();
                     }
                 }
             }
 
             function finish() {
-                window.parent.location = "<%= contextPath %>/SLOServlet?finish";
+				document.getElementById("result").style.display = "block";
+                //window.parent.location = "<%= contextPath %>/SLOServlet?finish";
             }
 
             function tick() {
-                //document.getElementById("timer").innerHTML = timer;
                 timer += 1;
                 if (timer % checkInterval == 0) {
                     checkStatus();
                 }
-                setTimeout(tick, 1000);
+
+                timeout = setTimeout(tick, 1000);
             }
         </script>
     </head>
     <body onload="javascript: tick();">
-        <!--<span id="timer">0</span> <a href="#" onclick="javascript:checkStatus();">checkStatus</a><br/>-->
         <div class="content">
             <h1>Logging out</h1>
             <%
@@ -74,10 +84,11 @@ String contextPath = request.getContextPath();
                 i++;
             %>
             <div class="row"><%= service.getEntityID() %><img id="<%= service.getEntityID() %>" src="<%= contextPath %>/images/indicator.gif"></div>
-            <iframe src="<%= contextPath %>/SLOServlet?action&<%= i %>" width="0" height="0" style="position:absolute;top:-1000px;"></iframe>
+            <iframe src="<%= contextPath %>/SLOServlet?action&<%= i %>" width="0" height="0"></iframe>
             <%
             }
             %>
+			<div class="result" id="result" style="display:none">You have successfully logged out</div>
         </div>
     </body>
 </html>
