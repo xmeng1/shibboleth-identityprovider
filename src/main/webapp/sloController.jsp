@@ -1,8 +1,14 @@
 <%@page import="edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext" %>
 <%@page import="edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper" %>
+<%@page import="java.util.Locale" %>
 <%
 SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.getSingleLogoutContext(request);
 String contextPath = request.getContextPath();
+Locale defaultLocale = Locale.ENGLISH;
+Locale locale = request.getLocale();
+if (locale == null) {
+    locale = defaultLocale;
+}
 %>
 <html>
     <head>
@@ -83,7 +89,7 @@ String contextPath = request.getContextPath();
             for (SingleLogoutContext.LogoutInformation service : sloContext.getServiceInformation().values()) {
                 i++;
             %>
-            <div class="row"><%= service.getEntityID() %><img id="<%= service.getEntityID() %>" src="<%= contextPath %>/images/indicator.gif"></div>
+            <div class="row"><%= service.getDisplayName(locale, defaultLocale) %><img id="<%= service.getEntityID() %>" src="<%= contextPath %>/images/indicator.gif"></div>
             <iframe src="<%= contextPath %>/SLOServlet?action&<%= i %>" width="0" height="0"></iframe>
             <%
             }
