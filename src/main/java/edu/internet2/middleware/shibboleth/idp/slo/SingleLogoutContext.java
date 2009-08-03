@@ -21,6 +21,7 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -125,12 +126,13 @@ public class SingleLogoutContext implements Serializable {
 
     public class LogoutInformation implements Serializable {
 
-        private static final long serialVersionUID = -9214161647487117263L;
+        private static final long serialVersionUID = -4706249072687825726L;
         private final String entityID;
         private final String nameIdentifier;
         private final String nameIdentifierFormat;
         private LogoutStatus logoutStatus;
         private String logoutRequestId;
+        private Map<String, String> displayName;
 
         public LogoutInformation(String entityID, String nameIdentifier,
                 String nameIdentifierFormat, LogoutStatus logoutStatus) {
@@ -222,6 +224,33 @@ public class SingleLogoutContext implements Serializable {
                     throw new IllegalStateException("Request ID is previously set");
                 }
             }
+        }
+
+        public void setDisplayName(Map<String, String> displayName) {
+            synchronized (this) {
+                if (this.displayName == null) {
+                    this.displayName = Collections.unmodifiableMap(displayName);
+                } else {
+                    throw new IllegalStateException("Display Name is previously set");
+                }
+            }
+        }
+
+        public String getDisplayName(Locale locale, Locale defaultLocale) {
+            String dName = null;
+            if (displayName != null) {
+                if (locale != null) {
+                    dName = displayName.get(locale.getLanguage());
+                }
+                if (dName == null && defaultLocale != null) {
+                    dName = displayName.get(defaultLocale.getLanguage());
+                }
+            }
+            if (dName == null) {
+                dName = entityID;
+            }
+
+            return dName;
         }
     }
 }

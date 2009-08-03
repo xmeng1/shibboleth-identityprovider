@@ -28,6 +28,9 @@ import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext.LogoutInf
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,6 +64,8 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.impl.NameIDImpl;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml2.metadata.Organization;
+import org.opensaml.saml2.metadata.OrganizationDisplayName;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
@@ -309,6 +314,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             HttpServletResponse servletResponse =
                     ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
             SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, servletRequest);
+            populateServiceDisplayNames(sloContext);
             try {
                 servletRequest.getRequestDispatcher("/SLOServlet").forward(servletRequest, servletResponse);
             } catch (ServletException ex) {
@@ -527,6 +533,42 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         request.setIssuer(issuer);
 
         return request;
+    }
+
+    /**
+     * Populate service display names from metadata.
+     * This method must be called once.
+     *
+     * @param sloContext
+     */
+    private void populateServiceDisplayNames(SingleLogoutContext sloContext) {
+        MetadataProvider mdProvider = getMetadataProvider();
+        for (LogoutInformation serviceInfo : sloContext.getServiceInformation().values()) {
+            EntityDescriptor spMetadata;
+            String spEntityID = serviceInfo.getEntityID();
+            Map<String, String> serviceDisplayNames = new HashMap<String, String>();
+            try {
+                spMetadata = mdProvider.getEntityDescriptor(spEntityID);
+            } catch (MetadataProviderException ex) {
+                log.warn("Can not get metadata for relying party '{}'", spEntityID);
+                continue;
+            }
+            Organization spOrg = spMetadata.getOrganization();
+            if (spOrg == null) {
+                log.debug("Organization is not set for relying party '{}'", spEntityID);
+                continue;
+            }
+            List<OrganizationDisplayName> dNameList =
+                    spOrg.getDisplayNames();
+            if (dNameList == null) {
+                log.debug("DisplayName is unset for relying party '{}'", spEntityID);
+                continue;
+            }
+            for (OrganizationDisplayName dName : dNameList) {
+                serviceDisplayNames.put(dName.getName().getLanguage(), dName.getName().getLocalString());
+            }
+            serviceInfo.setDisplayName(serviceDisplayNames);
+        }
     }
 
     /**
