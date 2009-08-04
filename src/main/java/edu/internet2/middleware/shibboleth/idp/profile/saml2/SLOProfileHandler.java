@@ -190,6 +190,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         } else if (servletRequest.getParameter("SAMLRequest") != null) {
             log.debug("Processing incoming SAML LogoutRequest");
             processLogoutRequest(inTransport, outTransport);
+        } else if (servletRequest.getParameter("finish") != null) { //Front-channel case only
+            //TODO this is just a hack
+            InitialRequestContext initialRequest =
+                    buildRequestContext(sloContext, inTransport, outTransport);
+            respondToInitialRequest(sloContext, initialRequest);
         } else { //Front-channel case only, called by SLOServlet?action
             LogoutInformation nextActive = sloContext.getNextActiveService();
             if (nextActive == null) {
