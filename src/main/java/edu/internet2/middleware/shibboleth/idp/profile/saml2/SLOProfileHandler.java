@@ -304,7 +304,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
             log.info("Issuing Backchannel logout requests");
             for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
-                serviceLogoutInfo.setLogoutAttempted();
                 initiateBackChannelLogout(sloContext, serviceLogoutInfo);
             }
 
@@ -407,13 +406,16 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 getEndpointForBinding(spEntityID, SAMLConstants.SAML2_SOAP11_BINDING_URI);
         if (endpoint == null) {
             log.info("No SAML2 LogoutRequest SOAP endpoint found for entity '{}'", spEntityID);
+            serviceLogoutInfo.setLogoutUnsupported();
             return;
         }
 
+        serviceLogoutInfo.setLogoutAttempted();
         LogoutRequestContext requestCtx =
                 createLogoutRequestContext(sloContext, serviceLogoutInfo, endpoint);
         if (requestCtx == null) {
             log.info("Cannot create LogoutRequest Context for entity '{}'", spEntityID);
+            serviceLogoutInfo.setLogoutFailed();
             return;
         }
         try {
@@ -424,6 +426,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             httpConn.open();
             if (!httpConn.isOpen()) {
                 log.warn("HTTP connection could not be opened");
+                serviceLogoutInfo.setLogoutFailed();
                 return;
             }
 
@@ -461,6 +464,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             }
         } catch (Throwable t) {
             log.error("Exception while sending SAML Logout request", t);
+            serviceLogoutInfo.setLogoutFailed();
         }
     }
 
@@ -663,7 +667,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                     getEndpointForBinding(spEntityID, SAMLConstants.SAML2_SOAP11_BINDING_URI);
             if (endpoint != null) {
                 //fallback to SOAP1.1 when no HTTP-POST is set
-                serviceLogoutInfo.setLogoutAttempted();
                 initiateBackChannelLogout(sloContext, serviceLogoutInfo);
             } else {
                 //no supported endpoints found
