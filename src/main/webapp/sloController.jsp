@@ -6,9 +6,6 @@ SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.getSingleLogou
 String contextPath = request.getContextPath();
 Locale defaultLocale = Locale.ENGLISH;
 Locale locale = request.getLocale();
-if (locale == null) {
-    locale = defaultLocale;
-}
 %>
 <html>
     <head>
