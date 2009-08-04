@@ -353,7 +353,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         log.debug("Trying SP: {}", spEntityID);
         LogoutRequest request = buildLogoutRequest(sloContext);
 
-        serviceLogoutInfo.setLogoutAttempted();
         serviceLogoutInfo.setLogoutRequestId(request.getID());
 
         NameID nameId = buildNameID(serviceLogoutInfo);
@@ -668,6 +667,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             return;
         }
 
+        serviceLogoutInfo.setLogoutAttempted();
         LogoutRequestContext requestCtx =
                 createLogoutRequestContext(sloContext, serviceLogoutInfo, endpoint);
         if (requestCtx == null) {
