@@ -649,15 +649,26 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         }
 
         String spEntityID = serviceLogoutInfo.getEntityID();
+        //prefer HTTP-Redirect binding
         Endpoint endpoint =
                 getEndpointForBinding(spEntityID, SAMLConstants.SAML2_REDIRECT_BINDING_URI);
         if (endpoint == null) {
+            //fallback to HTTP-POST when no HTTP-Redirect is set
             endpoint =
                     getEndpointForBinding(spEntityID, SAMLConstants.SAML2_POST_BINDING_URI);
         }
         if (endpoint == null) {
             log.info("No SAML2 LogoutRequest front-channel endpoint found for entity '{}'", spEntityID);
-            serviceLogoutInfo.setLogoutUnsupported();
+            endpoint =
+                    getEndpointForBinding(spEntityID, SAMLConstants.SAML2_SOAP11_BINDING_URI);
+            if (endpoint != null) {
+                //fallback to SOAP1.1 when no HTTP-POST is set
+                serviceLogoutInfo.setLogoutAttempted();
+                initiateBackChannelLogout(sloContext, serviceLogoutInfo);
+            } else {
+                //no supported endpoints found
+                serviceLogoutInfo.setLogoutUnsupported();
+            }
             return;
         }
         SAMLMessageEncoder encoder =
