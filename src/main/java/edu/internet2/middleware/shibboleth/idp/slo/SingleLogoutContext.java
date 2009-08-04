@@ -65,11 +65,15 @@ public class SingleLogoutContext implements Serializable {
         Map<String, LogoutInformation> serviceInfo =
                 new HashMap<String, LogoutInformation>(serviceInformationMap.size());
         for (ServiceInformation service : serviceInformationMap.values()) {
+            LogoutInformation logoutInfo;
             if (!service.getEntityID().equals(requesterEntityID)) {
-                LogoutInformation logoutInfo =
+                logoutInfo =
                         new LogoutInformation(service, LogoutStatus.LOGGED_IN);
-                serviceInfo.put(service.getEntityID(), logoutInfo);
+            } else {
+                logoutInfo =
+                        new LogoutInformation(service, LogoutStatus.LOGOUT_SUCCEEDED);
             }
+            serviceInfo.put(service.getEntityID(), logoutInfo);
         }
         this.serviceInformation = Collections.unmodifiableMap(serviceInfo);
     }
@@ -161,7 +165,7 @@ public class SingleLogoutContext implements Serializable {
         private void setLogoutStatus(LogoutStatus logoutStatus) {
             this.logoutStatus = logoutStatus;
         }
-        
+
         public void setLogoutUnsupported() {
             synchronized (this) {
                 if (getLogoutStatus().equals(LogoutStatus.LOGGED_IN)) {
