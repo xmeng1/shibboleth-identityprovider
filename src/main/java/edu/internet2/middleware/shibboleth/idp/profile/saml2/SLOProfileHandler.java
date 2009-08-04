@@ -663,7 +663,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 getMessageEncoders().get(endpoint.getBinding());
         if (encoder == null) {
             log.warn("No message encoder found for binding '{}'", endpoint.getBinding());
-            serviceLogoutInfo.setLogoutFailed();
+            serviceLogoutInfo.setLogoutUnsupported();
             return;
         }
 
