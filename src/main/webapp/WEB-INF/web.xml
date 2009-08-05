@@ -101,6 +101,13 @@
     <servlet>
         <servlet-name>Status</servlet-name>
         <servlet-class>edu.internet2.middleware.shibboleth.idp.StatusServlet</servlet-class>
+        
+        <!-- Space separated list of CIDR blocks allowed to access the status page -->
+        <init-param>
+            <param-name>AllowedIPs</param-name>
+            <param-value>127.0.0.1/32 ::1/128</param-value>
+        </init-param>
+        
         <load-on-startup>2</load-on-startup>
     </servlet>
 
