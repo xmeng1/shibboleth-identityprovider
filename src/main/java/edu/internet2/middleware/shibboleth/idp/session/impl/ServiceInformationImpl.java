@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
 import org.joda.time.DateTime;
@@ -21,26 +20,27 @@ import org.joda.time.chrono.ISOChronology;
 
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
+import org.opensaml.saml2.core.NameID;
 
 /** Information about a service a user has logged in to. */
 public class ServiceInformationImpl implements ServiceInformation {
-    
-    /** Serial version UID. */
-    private static final long serialVersionUID = 1185342879825302743L;
 
+    /** Serial version UID. */
+    private static final long serialVersionUID = -4284509878936885637L;
     /** Entity ID of the service. */
     private String entityID;
-
     /** Instant the user was authenticated to the service. */
     private long authenticationInstant;
-
     /** Authentication method used to authenticate the user to the service. */
     private AuthenticationMethodInformation methodInfo;
-
     /** Name identifier used to identify the user at the service. */
     private String nameIdentifier;
-    
+    /** Name identifier format. */
     private String nameIdentifierFormat;
+    /** SP Name qualifier for the name identifier. */
+    private String SPNameQualifier;
+    /** Name qualifier for the name identifier. */
+    private String nameQualifier;
 
     /**
      * Default constructor.
@@ -51,7 +51,8 @@ public class ServiceInformationImpl implements ServiceInformation {
      */
     public ServiceInformationImpl(String id, DateTime loginInstant, AuthenticationMethodInformation method) {
         entityID = id;
-        authenticationInstant = loginInstant.toDateTime(ISOChronology.getInstanceUTC()).getMillis();
+        authenticationInstant =
+                loginInstant.toDateTime(ISOChronology.getInstanceUTC()).getMillis();
         methodInfo = method;
     }
 
@@ -89,18 +90,23 @@ public class ServiceInformationImpl implements ServiceInformation {
         return entityID.equals(si.getEntityID());
     }
 
-    /** {@inheritDoc} */
-    public String getNameIdentifier() {
-        return nameIdentifier;
-    }
-
     /**
      * Sets the name identifier for the principal known by the service.
      * 
      * @param nameIdentifier
      */
-    public void setNameIdentifier(String nameIdentifier) {
-        this.nameIdentifier = nameIdentifier;
+    public void setSAML2NameIdentifier(NameID nameIdentifier) {
+        synchronized (this) {
+            this.nameIdentifier = nameIdentifier.getValue();
+            this.nameIdentifierFormat = nameIdentifier.getFormat();
+            this.nameQualifier = nameIdentifier.getNameQualifier();
+            this.SPNameQualifier = nameIdentifier.getSPNameQualifier();
+        }
+    }
+
+    /** {@inheritDoc} */
+    public String getNameIdentifier() {
+        return nameIdentifier;
     }
 
     /** {@inheritDoc} */
@@ -108,12 +114,13 @@ public class ServiceInformationImpl implements ServiceInformation {
         return nameIdentifierFormat;
     }
 
-    /**
-     * Sets the name identifier format.
-     * 
-     * @param nameIdentifierFormat
-     */
-    public void setNameIdentifierFormat(String nameIdentifierFormat) {
-        this.nameIdentifierFormat = nameIdentifierFormat;
+    /** {@inheritDoc} */
+    public String getNameQualifier() {
+        return nameQualifier;
+    }
+
+    /** {@inheritDoc} */
+    public String getSPNameQualifier() {
+        return SPNameQualifier;
     }
 }

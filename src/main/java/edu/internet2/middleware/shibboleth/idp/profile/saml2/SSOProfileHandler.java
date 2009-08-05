@@ -268,9 +268,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 getUserSession(requestContext.getInboundMessageTransport());
         ServiceInformationImpl serviceInfo =
                 (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
-        serviceInfo.setNameIdentifier(nameID.getValue());
-        serviceInfo.setNameIdentifierFormat(nameID.getFormat());
-        
+        serviceInfo.setSAML2NameIdentifier(nameID);
 
         requestContext.setOutboundSAMLMessage(samlResponse);
         requestContext.setOutboundSAMLMessageId(samlResponse.getID());

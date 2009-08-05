@@ -57,4 +57,18 @@ public interface ServiceInformation extends Serializable {
      * @return name identifier format
      */
     public String getNameIdentifierFormat();
+
+    /**
+     * Gets the name qualifier for the name identifier.
+     *
+     * @return name qualifier
+     */
+    public String getNameQualifier();
+
+    /**
+     * Gets the SP name qualifier for the name identifier.
+     *
+     * @return SP name qualifier
+     */
+    public String getSPNameQualifier();
 }
