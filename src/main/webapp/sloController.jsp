@@ -124,7 +124,7 @@ Locale locale = request.getLocale();
                 <img alt="<%= service.getLogoutStatus().toString() %>" id="<%= service.getEntityID() %>" src="<%= src.toString() %>">
             </div>
             <%
-            if (service.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+            if (service.isLoggedIn()) {
                 //if-logged-in
             %>
             <iframe src="<%= contextPath %>/SLOServlet?action&entityID=<%= entityID %>" width="0" height="0"></iframe>

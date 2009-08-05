@@ -206,6 +206,10 @@ public class SingleLogoutContext implements Serializable {
             }
         }
 
+        public boolean isLoggedIn() {
+            return getLogoutStatus().equals(LogoutStatus.LOGGED_IN);
+        }
+
         public String getNameIdentifier() {
             return nameIdentifier;
         }

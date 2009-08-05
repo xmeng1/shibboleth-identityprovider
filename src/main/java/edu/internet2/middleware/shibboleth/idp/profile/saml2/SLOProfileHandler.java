@@ -206,7 +206,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             if (nextActive == null) {
                 throw new ProfileException("Requested SP could not be found");
             }
-            if (!nextActive.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+            if (!nextActive.isLoggedIn()) {
                 throw new ProfileException("Already attempted to log out this service");
             }
 
@@ -400,7 +400,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     private void initiateBackChannelLogout(SingleLogoutContext sloContext, LogoutInformation serviceLogoutInfo)
             throws ProfileException {
 
-        if (!serviceLogoutInfo.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+        if (!serviceLogoutInfo.isLoggedIn()) {
             log.info("Logout status for entity is '{}', not attempting logout", serviceLogoutInfo.getLogoutStatus().toString());
             return;
         }
@@ -651,7 +651,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             HTTPOutTransport outTransport)
             throws ProfileException {
 
-        if (!serviceLogoutInfo.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+        if (!serviceLogoutInfo.isLoggedIn()) {
             log.info("Logout status for entity is '{}', not attempting logout", serviceLogoutInfo.getLogoutStatus().toString());
             return;
         }
