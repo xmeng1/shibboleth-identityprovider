@@ -50,22 +50,32 @@ Locale locale = request.getLocale();
                         if ((status=="LOGOUT_ATTEMPTED" || status=="LOGOUT_UNSUPPORTED") && timer > 15){
                             src = "failed.png";
                             succ = true;
-                            wasfail = true;
+                            wasFailed = true;
                         }
 
                         document.getElementById(entity).src = "<%= contextPath %>/images/" + src;
 
                     }
-                    if (succ == true) {
-                        clearTimeout(timeout);
-                        if (!wasfail) finish();
-                    }
+
+                        
+                        finish(wasFailed);
+
                 }
             }
 
-            function finish() {
-                document.getElementById("result").style.display = "block";
-                //window.parent.location = "<%= contextPath %>/SLOServlet?finish";
+            function finish(wasfail) {
+                
+                var str = "You have successfully logged out";
+                var className = "success";
+                if (!wasfail){
+                    str = "Problem. We ask you to close your browser to log out" ;
+                    className = "fail";
+                }
+                document.getElementById("result").className = className;
+                document.getElementById("result").innerHTML = str;
+
+                clearTimeout(timeout);
+
             }
 
             function tick() {
@@ -109,7 +119,7 @@ Locale locale = request.getLocale();
             <%
             }
             %>
-            <div class="result" id="result" style="display:none">You have successfully logged out</div>
+            <div id="result"></div>
         </div>
     </body>
 </html>

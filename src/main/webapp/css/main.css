@@ -11,6 +11,8 @@ form {float:left;padding:5px 10px 5px 30px;margin:0;}
 .row {clear:both;padding:6px 10px;font-size:14px; background-image: url('../images/list_image.png');background-repeat: no-repeat;background-position: 2px 12px;	 list-style-type: none; margin-left:8px;}
 .row img {padding-left:10px;border:0;width:14px;height:14px;}
 
-.result {display:none;clear:both;padding:6px 8px;font-size:14px;color:#159015;}
 .controller {clear:both;padding:5px 8px; font-size:20px; font-weight:bold;background-color:#d2d2d2;margin:10px 0 4px 0;}
 
+#result {clear:both;padding:6px 8px;font-size:14px;}
+.success {color:#159015;}
+.fail {color:red;}
