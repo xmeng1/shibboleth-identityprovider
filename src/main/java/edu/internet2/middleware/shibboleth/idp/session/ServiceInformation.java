@@ -43,18 +43,4 @@ public interface ServiceInformation extends Serializable {
      * @return authentication method used to log into the service
      */
     public AuthenticationMethodInformation getAuthenticationMethod();
-
-    /**
-     * Gets the principal name identifier for the service.
-     *
-     * @return name identifier
-     */
-    public String getNameIdentifier();
-
-    /**
-     * Gets the principal name identifier format.
-     * 
-     * @return name identifier format
-     */
-    public String getNameIdentifierFormat();
 }

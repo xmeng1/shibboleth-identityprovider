@@ -37,7 +37,6 @@ import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthnStatement;
-import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
@@ -74,7 +73,6 @@ import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
-import edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationImpl;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
@@ -261,16 +259,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
         }
-
-        //bind nameID to session.servicesInformation
-        NameID nameID = buildNameId(requestContext);
-        Session session =
-                getUserSession(requestContext.getInboundMessageTransport());
-        ServiceInformationImpl serviceInfo =
-                (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
-        serviceInfo.setNameIdentifier(nameID.getValue());
-        serviceInfo.setNameIdentifierFormat(nameID.getFormat());
-        
 
         requestContext.setOutboundSAMLMessage(samlResponse);
         requestContext.setOutboundSAMLMessageId(samlResponse.getID());

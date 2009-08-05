@@ -37,11 +37,6 @@ public class ServiceInformationImpl implements ServiceInformation {
     /** Authentication method used to authenticate the user to the service. */
     private AuthenticationMethodInformation methodInfo;
 
-    /** Name identifier used to identify the user at the service. */
-    private String nameIdentifier;
-    
-    private String nameIdentifierFormat;
-
     /**
      * Default constructor.
      * 
@@ -87,33 +82,5 @@ public class ServiceInformationImpl implements ServiceInformation {
 
         ServiceInformation si = (ServiceInformation) obj;
         return entityID.equals(si.getEntityID());
-    }
-
-    /** {@inheritDoc} */
-    public String getNameIdentifier() {
-        return nameIdentifier;
-    }
-
-    /**
-     * Sets the name identifier for the principal known by the service.
-     * 
-     * @param nameIdentifier
-     */
-    public void setNameIdentifier(String nameIdentifier) {
-        this.nameIdentifier = nameIdentifier;
-    }
-
-    /** {@inheritDoc} */
-    public String getNameIdentifierFormat() {
-        return nameIdentifierFormat;
-    }
-
-    /**
-     * Sets the name identifier format.
-     * 
-     * @param nameIdentifierFormat
-     */
-    public void setNameIdentifierFormat(String nameIdentifierFormat) {
-        this.nameIdentifierFormat = nameIdentifierFormat;
     }
 }
