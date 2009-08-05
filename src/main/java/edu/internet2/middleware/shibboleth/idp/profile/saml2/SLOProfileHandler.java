@@ -195,20 +195,24 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             InitialRequestContext initialRequest =
                     buildRequestContext(sloContext, inTransport, outTransport);
             respondToInitialRequest(sloContext, initialRequest);
-        } else { //Front-channel case only, called by SLOServlet?action
-            LogoutInformation nextActive = sloContext.getNextActiveService();
+        } else if (servletRequest.getParameter("action") != null) { //Front-channel case only, called by SLOServlet?action
+            LogoutInformation nextActive = null;
+            //try to retrieve the sp from request parameter
+            String spEntityID = servletRequest.getParameter("entityID");
+            if (spEntityID != null) {
+                spEntityID = spEntityID.trim();
+                nextActive = sloContext.getServiceInformation().get(spEntityID);
+            }
             if (nextActive == null) {
-                //logoutrequest was sent to every session participant
-                //reconstruct initial request context
-                InitialRequestContext initialRequest =
-                        buildRequestContext(sloContext, inTransport, outTransport);
-                respondToInitialRequest(sloContext, initialRequest);
-
-                return;
+                throw new ProfileException("Requested SP could not be found");
+            }
+            if (!nextActive.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+                throw new ProfileException("Already attempted to log out this service");
             }
 
-            //issue logoutrequest to the next active session participant
             initiateFrontChannelLogout(sloContext, nextActive, outTransport);
+        } else {
+            throw new ProfileException("Unknown command");
         }
     }
 
