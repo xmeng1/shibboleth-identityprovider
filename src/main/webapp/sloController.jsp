@@ -13,8 +13,8 @@ Locale locale = request.getLocale();
         <title>Shibboleth IdP Frontchannel Single Log-out Controller</title>
         <script language="javascript" type="text/javascript">
             var timer = 1;
-			var timeout;
-			var wasFailed = false;
+            var timeout;
+            var wasFailed = false;
             var checkInterval = 5;
             
             var xhr = new XMLHttpRequest();
@@ -47,11 +47,11 @@ Locale locale = request.getLocale();
                             succ = false;
                         }
 
-						if ((status=="LOGOUT_ATTEMPTED" || status=="LOGOUT_UNSUPPORTED") && timer > 15){
-							src = "failed.png";
-							succ = true;
-							wasfail = true;
-						}
+                        if ((status=="LOGOUT_ATTEMPTED" || status=="LOGOUT_UNSUPPORTED") && timer > 15){
+                            src = "failed.png";
+                            succ = true;
+                            wasfail = true;
+                        }
 
                         document.getElementById(entity).src = "<%= contextPath %>/images/" + src;
 
@@ -64,7 +64,7 @@ Locale locale = request.getLocale();
             }
 
             function finish() {
-				document.getElementById("result").style.display = "block";
+                document.getElementById("result").style.display = "block";
                 //window.parent.location = "<%= contextPath %>/SLOServlet?finish";
             }
 
@@ -85,13 +85,31 @@ Locale locale = request.getLocale();
             int i = 0;
             for (SingleLogoutContext.LogoutInformation service : sloContext.getServiceInformation().values()) {
                 i++;
+                StringBuilder src = new StringBuilder(contextPath);
+                src.append("/images/");
+                switch (service.getLogoutStatus()) {
+                    case LOGGED_IN:
+                    case LOGOUT_ATTEMPTED:
+                        src.append("indicator.gif");
+                        break;
+                    case LOGOUT_UNSUPPORTED:
+                    case LOGOUT_FAILED:
+                        src.append("failed.png");
+                        break;
+                    case LOGOUT_SUCCEEDED:
+                        src.append("success.png");
+                        break;
+                }
             %>
-            <div class="row"><%= service.getDisplayName(locale, defaultLocale) %><img id="<%= service.getEntityID() %>" src="<%= contextPath %>/images/indicator.gif"></div>
+            <div class="row">
+                <%= service.getDisplayName(locale, defaultLocale) %>
+                <img id="<%= service.getEntityID() %>" src="<%= src.toString() %>">
+            </div>
             <iframe src="<%= contextPath %>/SLOServlet?action&<%= i %>" width="0" height="0"></iframe>
             <%
             }
             %>
-			<div class="result" id="result" style="display:none">You have successfully logged out</div>
+            <div class="result" id="result" style="display:none">You have successfully logged out</div>
         </div>
     </body>
 </html>
