@@ -19,87 +19,52 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 import java.util.List;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.IPAddressLoginHandler;
+import edu.internet2.middleware.shibboleth.idp.util.IPRange;
 
 /**
  * Spring factory for {@link IPAddressLoginHandler}.
  */
 public class IPAddressLoginHandlerFactoryBean extends AbstractLoginHandlerFactoryBean {
 
-    /** The list of denied or permitted IPs. */
-    private List<String> addresses;
-
     /** The username to use for IP-address "authenticated" users. */
-    private String username;
+    private String authenticatedUser;
 
-    /** Are the IPs in ipList a permitted list or a deny list. */
-    private boolean defaultDeny;
+    /** List of configured IP ranged. */
+    private List<IPRange> ipRanges;
 
-    /** {@inheritDoc} */
-    protected Object createInstance() throws Exception {
-        IPAddressLoginHandler handler = new IPAddressLoginHandler();
-        handler.setUsername(getUsername());
-        handler.setEntries(getAddresses(), isDefaultDeny());
-        populateHandler(handler);
-        return handler;
-    }
+    /** Whether a user is "authenticated" if their IP address is within a configured IP range. */
+    private boolean ipInRangeIsAuthenticated;
 
     /** {@inheritDoc} */
     public Class getObjectType() {
         return IPAddressLoginHandler.class;
     }
-
+    
     /**
-     * Get the list of denied or permitted IPs.
-     * 
-     * @return list of denied or permitted IPs
+     * @param user The authenticatedUser to set.
      */
-    public List<String> getAddresses() {
-        return addresses;
+    public void setAuthenticatedUser(String user) {
+        authenticatedUser = user;
     }
 
     /**
-     * Set the list of denied or permitted IPs.
-     * 
-     * @param newAddresses list of denied or permitted IPs
+     * @param ranges The ipRanges to set.
      */
-    public void setAddresses(List<String> newAddresses) {
-        addresses = newAddresses;
+    public void setIpRanges(List<IPRange> ranges) {
+        ipRanges = ranges;
     }
 
     /**
-     * Get the username to use for IP-address "authenticated" users.
-     * 
-     * @return username to use for IP-address "authenticated" users
+     * @param authenticated The ipInRangeIsAuthenticated to set.
      */
-    public String getUsername() {
-        return username;
+    public void setIpInRangeIsAuthenticated(boolean authenticated) {
+        ipInRangeIsAuthenticated = authenticated;
     }
 
-    /**
-     * Set the username to use for IP-address "authenticated" users.
-     * 
-     * @param newUsername username to use for IP-address "authenticated" users
-     */
-    public void setUsername(String newUsername) {
-        username = newUsername;
+    /** {@inheritDoc} */
+    protected Object createInstance() throws Exception {
+        IPAddressLoginHandler handler = new IPAddressLoginHandler(authenticatedUser, ipRanges, ipInRangeIsAuthenticated);
+        populateHandler(handler);
+        return handler;
     }
-
-    /**
-     * Get whether the IPs in ipList a permitted list or a deny list.
-     * 
-     * @return whether the IPs in ipList a permitted list or a deny list
-     */
-    public boolean isDefaultDeny() {
-        return defaultDeny;
-    }
-
-    /**
-     * Set whether the IPs in ipList a permitted list or a deny list.
-     * 
-     * @param newDefaultDeny whether the IPs in ipList a permitted list or a deny list.
-     */
-    public void setDefaultDeny(boolean newDefaultDeny) {
-        defaultDeny = newDefaultDeny;
-    }
-
 }

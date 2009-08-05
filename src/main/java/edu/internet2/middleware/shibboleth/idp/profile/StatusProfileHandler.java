@@ -29,6 +29,8 @@ import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractReque
 /**
  * A simple profile handler that returns the string "ok" if the IdP is able to answer the request. This may be used for
  * very basic monitoring of the IdP.
+ * 
+ * @deprecated
  */
 public class StatusProfileHandler extends AbstractRequestURIMappedProfileHandler {
 
