@@ -1,6 +1,8 @@
 <%@page import="edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext" %>
 <%@page import="edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper" %>
 <%@page import="java.util.Locale" %>
+<%@page import="java.net.URLEncoder" %>
+<%@page import="java.io.UnsupportedEncodingException" %>
 <%
 SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.getSingleLogoutContext(request);
 String contextPath = request.getContextPath();
@@ -95,6 +97,12 @@ Locale locale = request.getLocale();
             int i = 0;
             for (SingleLogoutContext.LogoutInformation service : sloContext.getServiceInformation().values()) {
                 i++;
+                String entityID = null;
+                try {
+                    entityID = URLEncoder.encode(service.getEntityID(), "UTF-8");
+                } catch (UnsupportedEncodingException ex) {
+                    throw new RuntimeException(ex);
+                }
                 StringBuilder src = new StringBuilder(contextPath);
                 src.append("/images/");
                 switch (service.getLogoutStatus()) {
@@ -113,11 +121,16 @@ Locale locale = request.getLocale();
             %>
             <div class="row">
                 <%= service.getDisplayName(locale, defaultLocale) %>
-                <img id="<%= service.getEntityID() %>" src="<%= src.toString() %>">
+                <img alt="<%= service.getLogoutStatus().toString() %>" id="<%= service.getEntityID() %>" src="<%= src.toString() %>">
             </div>
-            <iframe src="<%= contextPath %>/SLOServlet?action&<%= i %>" width="0" height="0"></iframe>
             <%
-            }
+            if (service.getLogoutStatus().equals(SingleLogoutContext.LogoutStatus.LOGGED_IN)) {
+                //if-logged-in
+            %>
+            <iframe src="<%= contextPath %>/SLOServlet?action&entityID=<%= entityID %>" width="0" height="0"></iframe>
+            <%
+            } //end of if-logged-in
+            } //end of for-each-service
             %>
             <div id="result"></div>
         </div>
