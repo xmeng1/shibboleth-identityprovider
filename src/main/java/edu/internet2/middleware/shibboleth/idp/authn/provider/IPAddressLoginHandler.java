@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.util.IPRange;
 
@@ -88,14 +87,14 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
                 httpRequest.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, authenticatedUser);
             } else {
                 log.debug("Client IP address {} failed authentication.", httpRequest.getRemoteAddr());
-                httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY, new AuthenticationException(
-                        "Client failed IP address authentication"));
+                httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY,
+                        "Client failed IP address authentication");
             }
         } catch (UnknownHostException e) {
             String msg = MessageFormatter.format("Unable to resolve {} in to an IP address", httpRequest
                     .getRemoteAddr());
             log.warn(msg);
-            httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY, new AuthenticationException(msg));
+            httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY, msg);
         }
 
         AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
