@@ -704,18 +704,11 @@ public class AuthenticationEngine extends HttpServlet {
         cookieValue.append(Base64.encodeBytes(remoteAddress, Base64.DONT_BREAK_LINES)).append("|");
         cookieValue.append(Base64.encodeBytes(sessionId, Base64.DONT_BREAK_LINES)).append("|");
         cookieValue.append(signature);
+        
         Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, HTTPTransportUtils.urlEncode(cookieValue.toString()));
-
-        String contextPath = httpRequest.getContextPath();
-        if (DatatypeHelper.isEmpty(contextPath)) {
-            sessionCookie.setPath("/");
-        } else {
-            sessionCookie.setPath(contextPath);
-        }
-
+        sessionCookie.setVersion(1);
+        sessionCookie.setPath(httpRequest.getContextPath() == "" ? "/" : httpRequest.getContextPath());
         sessionCookie.setSecure(httpRequest.isSecure());
-        sessionCookie.setMaxAge(-1);
-
         httpResponse.addCookie(sessionCookie);
     }
 }
