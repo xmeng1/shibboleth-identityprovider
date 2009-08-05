@@ -49,40 +49,38 @@ Locale locale = request.getLocale();
                             succ = false;
                         }
 
-                        if ((status=="LOGOUT_ATTEMPTED" || status=="LOGOUT_UNSUPPORTED") && timer > 15){
+                        if ((status=="LOGOUT_ATTEMPTED" || status=="LOGOUT_UNSUPPORTED") && timer >= 8){
                             src = "failed.png";
-                            succ = true;
                             wasFailed = true;
+                            succ=true;
                         }
 
                         document.getElementById(entity).src = "<%= contextPath %>/images/" + src;
 
                     }
-
-                        
-                        finish(wasFailed);
+                    if (succ==true || timer >= 8) finish(wasFailed);
 
                 }
             }
 
-            function finish(wasfail) {
+            function finish(wasFailed) {
                 
                 var str = "You have successfully logged out";
                 var className = "success";
-                if (!wasfail){
+                if (wasFailed){
                     str = "Problem. We ask you to close your browser to log out" ;
                     className = "fail";
                 }
                 document.getElementById("result").className = className;
                 document.getElementById("result").innerHTML = str;
-
+                document.getElementById("result").innerHTML += '<form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="finish" /><input type="submit" value="Back to the application" /></form><div class="clear"></div>';
                 clearTimeout(timeout);
 
             }
 
             function tick() {
                 timer += 1;
-                if (timer % checkInterval == 0) {
+                if (timer  == 1 || timer  == 2 || timer  == 4 || timer  == 8) {
                     checkStatus();
                 }
 

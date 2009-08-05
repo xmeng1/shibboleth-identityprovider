@@ -42,7 +42,7 @@ String requesterSP = sloContext.getServiceInformation().
                     <input type="hidden" name="finish"/>
                     <input type="submit" value="No, only from <%= requesterSP %>" />
                 </form>
-                <div style="clear:both;"></div>
+                <div class="clear"></div>
             </div>
         </div>
     </body>
