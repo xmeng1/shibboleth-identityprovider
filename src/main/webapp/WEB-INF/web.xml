@@ -47,6 +47,10 @@
     </filter-mapping>
     <filter-mapping>
         <filter-name>SLOContextFilter</filter-name>
+        <url-pattern>/profile/SAML2/POST/SLO</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>SLOContextFilter</filter-name>
         <url-pattern>/SLOServlet</url-pattern>
         <dispatcher>REQUEST</dispatcher>
         <dispatcher>FORWARD</dispatcher>
