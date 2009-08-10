@@ -315,7 +315,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
             respondToInitialRequest(sloContext, initialRequest);
         } else {
-            if (sloContext.getServiceInformation().isEmpty()) {
+            if (sloContext.getServiceInformation().size() == 1) {
                 respondToInitialRequest(sloContext, initialRequest);
 
                 return;
