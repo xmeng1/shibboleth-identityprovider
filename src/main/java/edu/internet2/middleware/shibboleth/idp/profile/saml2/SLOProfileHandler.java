@@ -308,7 +308,9 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
             log.info("Issuing Backchannel logout requests");
             for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
-                initiateBackChannelLogout(sloContext, serviceLogoutInfo);
+                if (serviceLogoutInfo.isLoggedIn()) {
+                    initiateBackChannelLogout(sloContext, serviceLogoutInfo);
+                }
             }
 
             respondToInitialRequest(sloContext, initialRequest);
