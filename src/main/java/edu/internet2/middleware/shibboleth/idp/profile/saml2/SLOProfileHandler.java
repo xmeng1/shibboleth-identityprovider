@@ -787,6 +787,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         initialRequest.setMetadataProvider(getMetadataProvider());
         initialRequest.setInboundSAMLMessageId(sloContext.getRequestSAMLMessageID());
         initialRequest.setInboundMessageIssuer(sloContext.getRequesterEntityID());
+        initialRequest.setLocalEntityId(sloContext.getResponderEntityID());
 
         return initialRequest;
     }
