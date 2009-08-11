@@ -65,7 +65,7 @@ public class HTTPClientInTransportAdapter implements HTTPInTransport {
     }
 
     public Credential getLocalCredential() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return null;
     }
 
     public Credential getPeerCredential() {
@@ -73,7 +73,8 @@ public class HTTPClientInTransportAdapter implements HTTPInTransport {
     }
 
     public boolean isAuthenticated() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        //TODO support transport authentication?
+        return false;
     }
 
     public void setAuthenticated(boolean isAuthenticated) {
