@@ -371,6 +371,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         requestCtx.setOutboundMessageIssuer(sloContext.getResponderEntityID());
         requestCtx.setInboundMessageIssuer(spEntityID);
         requestCtx.setPeerEntityEndpoint(endpoint);
+        requestCtx.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
         //TODO get credential configured for relying party
         Credential signingCredential =
                 getRelyingPartyConfigurationManager().
@@ -741,7 +742,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         initialRequest.setOutboundSAMLMessage(samlResponse);
         initialRequest.setOutboundSAMLMessageId(samlResponse.getID());
         initialRequest.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
-        initialRequest.setPeerEntityId(sloContext.getRequesterEntityID());
+        Credential signingCredential =
+                getRelyingPartyConfigurationManager().
+                getDefaultRelyingPartyConfiguration().getDefaultSigningCredential();
+        initialRequest.setOutboundSAMLMessageSigningCredential(signingCredential);
+
         log.debug("Sending response to the original LogoutRequest");
         encodeResponse(initialRequest);
         writeAuditLogEntry(initialRequest);
@@ -788,6 +793,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         initialRequest.setInboundSAMLMessageId(sloContext.getRequestSAMLMessageID());
         initialRequest.setInboundMessageIssuer(sloContext.getRequesterEntityID());
         initialRequest.setLocalEntityId(sloContext.getResponderEntityID());
+        initialRequest.setPeerEntityId(sloContext.getRequesterEntityID());
+        initialRequest.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
         return initialRequest;
     }
