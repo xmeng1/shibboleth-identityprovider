@@ -20,6 +20,7 @@ import org.joda.time.chrono.ISOChronology;
 
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
+import org.opensaml.saml1.core.NameIdentifier;
 import org.opensaml.saml2.core.NameID;
 
 /** Information about a service a user has logged in to. */
@@ -104,23 +105,44 @@ public class ServiceInformationImpl implements ServiceInformation {
         }
     }
 
+    /**
+     * Sets the name identifier for the principal known by the service.
+     * 
+     * @param nameIdentifier
+     */
+    public void setShibbolethNameIdentifier(NameIdentifier nameIdentifier) {
+        synchronized (this) {
+            this.nameIdentifier = nameIdentifier.getNameIdentifier();
+            this.nameIdentifierFormat = nameIdentifier.getFormat();
+            this.nameQualifier = nameIdentifier.getNameQualifier();
+        }
+    }
+
     /** {@inheritDoc} */
     public String getNameIdentifier() {
-        return nameIdentifier;
+        synchronized (this) {
+            return nameIdentifier;
+        }
     }
 
     /** {@inheritDoc} */
     public String getNameIdentifierFormat() {
-        return nameIdentifierFormat;
+        synchronized (this) {
+            return nameIdentifierFormat;
+        }
     }
 
     /** {@inheritDoc} */
     public String getNameQualifier() {
-        return nameQualifier;
+        synchronized (this) {
+            return nameQualifier;
+        }
     }
 
     /** {@inheritDoc} */
     public String getSPNameQualifier() {
-        return SPNameQualifier;
+        synchronized (this) {
+            return SPNameQualifier;
+        }
     }
 }
