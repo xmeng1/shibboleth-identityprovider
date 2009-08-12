@@ -39,6 +39,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnection;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpState;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.URI;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
@@ -431,10 +432,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             serviceLogoutInfo.setLogoutFailed();
             return;
         }
+        HttpConnection httpConn = null;
         try {
             //prepare http message exchange for soap
             log.debug("Preparing HTTP transport for SOAP request");
-            HttpConnection httpConn = createHttpConnection(endpoint);
+            httpConn = createHttpConnection(endpoint);
             log.debug("Opening HTTP connection to '{}'", endpoint.getLocation());
             httpConn.open();
             if (!httpConn.isOpen()) {
@@ -455,12 +457,16 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             log.info("Issuing back-channel logout request to SP '{}'", spEntityID);
             //execute SOAP/HTTP call
             log.debug("Executing HTTP POST");
-            requestCtx.execute(httpConn);
+            if (!requestCtx.execute(httpConn)) {
+                log.warn("Logout execution failed on SP '{}', HTTP status is '{}'",
+                        spEntityID, requestCtx.getHttpStatus());
+                serviceLogoutInfo.setLogoutFailed();
+                
+                return;
+            }
 
             //decode saml response
             decoder.decode(requestCtx);
-            log.debug("Closing HTTP connection");
-            httpConn.close();
 
             LogoutResponse spResponse = requestCtx.getInboundSAMLMessage();
             StatusCode statusCode = spResponse.getStatus().getStatusCode();
@@ -478,6 +484,15 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         } catch (Throwable t) {
             log.error("Exception while sending SAML Logout request", t);
             serviceLogoutInfo.setLogoutFailed();
+        } finally {
+            if (httpConn != null && httpConn.isOpen()) {
+                log.debug("Closing HTTP connection");
+                try {
+                    httpConn.close();
+                } catch (Throwable t) {
+                    log.warn("Caught exception while closing HTTP Connection", t);
+                }
+            }
         }
     }
 
@@ -898,17 +913,21 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         EntityEnclosingMethod postMethod;
 
-        public EntityEnclosingMethod getPostMethod() {
+        EntityEnclosingMethod getPostMethod() {
             return postMethod;
         }
 
-        public void setPostMethod(EntityEnclosingMethod postMethod) {
+        void setPostMethod(EntityEnclosingMethod postMethod) {
             this.postMethod = postMethod;
         }
 
-        public int execute(HttpConnection conn) throws HttpException,
+        boolean execute(HttpConnection conn) throws HttpException,
                 IOException {
-            return postMethod.execute(new HttpState(), conn);
+            return postMethod.execute(new HttpState(), conn) == HttpStatus.SC_OK;
+        }
+
+        String getHttpStatus() {
+            return postMethod.getStatusCode() + " " + postMethod.getStatusText();
         }
     }
 }
