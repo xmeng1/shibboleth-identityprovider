@@ -284,12 +284,15 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         decodeRequest(initialRequest, inTransport, outTransport);
 
         checkSamlVersion(initialRequest);
-        resolvePrincipal(initialRequest);
-        log.info("Processing logout request for principal '{}'.", initialRequest.getPrincipalName());
-        Session idpSession =
-                getSessionManager().getSession(initialRequest.getPrincipalName());
+        Session idpSession = getUserSession(inTransport);
         if (idpSession == null) {
-            log.warn("Cannot find IdP Session for Principal '{}'", initialRequest.getPrincipalName());
+            String nameIDValue =
+                    initialRequest.getInboundSAMLMessage().getNameID().getValue();
+            log.info("Session not found in request, trying to resolve session from NameID {}", nameIDValue);
+            idpSession = getSessionManager().getSession(nameIDValue);
+        }
+        if (idpSession == null) {
+            log.warn("Cannot find IdP Session");
             initialRequest.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI, null));
             throw new ProfileException("Cannot find IdP Session for principal");
         }
