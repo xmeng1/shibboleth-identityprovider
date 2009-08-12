@@ -259,7 +259,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             serviceLogoutInfo.setLogoutFailed();
             throw new ProfileException("LogoutResponse InResponseTo does not match the LogoutRequest ID");
         }
-        log.info("Logout status is '{}'", logoutResponse.getStatus().toString());
+        log.info("Logout status is '{}'", logoutResponse.getStatus().getStatusCode().getValue().toString());
         if (logoutResponse.getStatus().getStatusCode().getValue().equals(StatusCode.SUCCESS_URI)) {
             serviceLogoutInfo.setLogoutSucceeded();
         } else {
@@ -587,7 +587,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         for (LogoutInformation serviceInfo : sloContext.getServiceInformation().values()) {
             EntityDescriptor spMetadata;
             String spEntityID = serviceInfo.getEntityID();
-            Map<String, String> serviceDisplayNames = new HashMap<String, String>();
+            Map<String, String> serviceDisplayNames =
+                    new HashMap<String, String>();
             try {
                 spMetadata = mdProvider.getEntityDescriptor(spEntityID);
             } catch (MetadataProviderException ex) {
