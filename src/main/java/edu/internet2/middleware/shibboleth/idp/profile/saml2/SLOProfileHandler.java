@@ -183,13 +183,10 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 SingleLogoutContextStorageHelper.getSingleLogoutContext(servletRequest);
 
         //TODO RelayState is lost?!
-        //TODO front channel slo - try back channel
+        //TODO catch profileexception and respond with saml error.
         if (servletRequest.getParameter("SAMLResponse") != null) {
             log.debug("Processing incoming SAML LogoutResponse");
             processLogoutResponse(sloContext, inTransport, outTransport);
-        } else if (servletRequest.getParameter("SAMLRequest") != null) {
-            log.debug("Processing incoming SAML LogoutRequest");
-            processLogoutRequest(inTransport, outTransport);
         } else if (servletRequest.getParameter("finish") != null) { //Front-channel case only
             //TODO this is just a hack
             InitialRequestContext initialRequest =
@@ -212,7 +209,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
             initiateFrontChannelLogout(sloContext, nextActive, outTransport);
         } else {
-            throw new ProfileException("Unknown command");
+            log.debug("Processing incoming SAML LogoutRequest");
+            processLogoutRequest(inTransport, outTransport);
         }
     }
 
