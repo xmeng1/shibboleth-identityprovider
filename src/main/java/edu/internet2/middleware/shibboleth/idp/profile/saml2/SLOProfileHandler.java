@@ -534,7 +534,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         NameID nameId = nameIDBuilder.buildObject();
         nameId.setFormat(serviceLogoutInfo.getNameIdentifierFormat());
         nameId.setValue(serviceLogoutInfo.getNameIdentifier());
-        log.debug("NameID for the principal: '{}'", nameId.getValue());
+        nameId.setNameQualifier(serviceLogoutInfo.getNameQualifier());
+        nameId.setSPNameQualifier(serviceLogoutInfo.getSPNameQualifier());
 
         return nameId;
     }

@@ -130,26 +130,32 @@ public class SingleLogoutContext implements Serializable {
 
     public class LogoutInformation implements Serializable {
 
-        private static final long serialVersionUID = -4706249072687825726L;
+        private static final long serialVersionUID = 426061541760803398L;
         private final String entityID;
         private final String nameIdentifier;
         private final String nameIdentifierFormat;
+        private final String nameQualifier;
+        private final String SPNameQualifier;
         private LogoutStatus logoutStatus;
         private String logoutRequestId;
         private Map<String, String> displayName;
 
         public LogoutInformation(String entityID, String nameIdentifier,
-                String nameIdentifierFormat, LogoutStatus logoutStatus) {
+                String nameIdentifierFormat, String nameQualifier,
+                String SPNameQualifier, LogoutStatus logoutStatus) {
 
             this.entityID = entityID;
             this.nameIdentifier = nameIdentifier;
             this.nameIdentifierFormat = nameIdentifierFormat;
+            this.nameQualifier = nameQualifier;
+            this.SPNameQualifier = SPNameQualifier;
             this.logoutStatus = logoutStatus;
         }
 
         public LogoutInformation(ServiceInformation service, LogoutStatus status) {
             this(service.getEntityID(), service.getNameIdentifier(),
-                    service.getNameIdentifierFormat(), status);
+                    service.getNameIdentifierFormat(), service.getNameQualifier(),
+                    service.getSPNameQualifier(), status);
         }
 
         public String getEntityID() {
@@ -216,6 +222,14 @@ public class SingleLogoutContext implements Serializable {
 
         public String getNameIdentifierFormat() {
             return nameIdentifierFormat;
+        }
+
+        public String getNameQualifier() {
+            return nameQualifier;
+        }
+
+        public String getSPNameQualifier() {
+            return SPNameQualifier;
         }
 
         public String getLogoutRequestId() {
