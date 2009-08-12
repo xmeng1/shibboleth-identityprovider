@@ -27,6 +27,7 @@ import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext.LogoutInformation;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextStorageHelper;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,8 @@ import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.params.HttpConnectionParams;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -88,7 +91,11 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
+    //TODO this needs to be placed in the config
 
+    private static final int HTTPCLIENT_POOL_TIMEOUT = 1000;
+    private static final int HTTPCLIENT_CONNECT_TIMEOUT = 5000;
+    private static final int HTTPCLIENT_SO_TIMEOUT = 5000;
     private static final Logger log =
             LoggerFactory.getLogger(SLOProfileHandler.class);
     private final SAMLObjectBuilder<SingleLogoutService> sloServiceBuilder;
@@ -481,10 +488,18 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 }
                 serviceLogoutInfo.setLogoutFailed();
             }
-        } catch (Throwable t) {
-            log.error("Exception while sending SAML Logout request", t);
+        } catch (SocketTimeoutException e) { //socket connect or read timeout
+            log.info("Socket timeout while sending SOAP request to SP '{}'",
+                    serviceLogoutInfo.getEntityID());
             serviceLogoutInfo.setLogoutFailed();
-        } finally {
+        } catch (IOException e) { //other networking error
+            log.info("IOException caught while sending SOAP request", e);
+            serviceLogoutInfo.setLogoutFailed();
+        } catch (Throwable t) { //unexpected
+            log.error("Unexpected exception caught while sending SAML Logout request", t);
+            serviceLogoutInfo.setLogoutFailed();
+        } finally { //
+            requestCtx.releaseConnection();
             if (httpConn != null && httpConn.isOpen()) {
                 log.debug("Closing HTTP connection");
                 try {
@@ -627,20 +642,24 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         HttpClientBuilder httpClientBuilder =
                 new HttpClientBuilder();
-        httpClientBuilder.setConnectionTimeout(1000);
         httpClientBuilder.setContentCharSet("UTF-8");
-        SecureProtocolSocketFactory sf =
-                new EasySSLProtocolSocketFactory();
+        SecureProtocolSocketFactory sf = new EasySSLProtocolSocketFactory();
         httpClientBuilder.setHttpsProtocolSocketFactory(sf);
+
         //build http connection
         HttpClient httpClient = httpClientBuilder.buildClient();
-        HostConfiguration hostConfig =
-                new HostConfiguration();
-        URI location =
-                new URI(endpoint.getLocation());
+
+        HostConfiguration hostConfig = new HostConfiguration();
+        URI location = new URI(endpoint.getLocation());
         hostConfig.setHost(location);
-        HttpConnection httpConn =
-                httpClient.getHttpConnectionManager().getConnectionWithTimeout(hostConfig, 1000);
+
+        HttpConnection httpConn = httpClient.getHttpConnectionManager().
+                getConnectionWithTimeout(hostConfig, HTTPCLIENT_POOL_TIMEOUT);
+
+        HttpConnectionParams params = new HttpConnectionParams();
+        params.setConnectionTimeout(HTTPCLIENT_CONNECT_TIMEOUT);
+        params.setSoTimeout(HTTPCLIENT_SO_TIMEOUT);
+        httpConn.setParams(params);
 
         return httpConn;
     }
@@ -929,6 +948,12 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         String getHttpStatus() {
             return postMethod.getStatusCode() + " " + postMethod.getStatusText();
+        }
+
+        void releaseConnection() {
+            if (postMethod != null) {
+                postMethod.releaseConnection();
+            }
         }
     }
 }
