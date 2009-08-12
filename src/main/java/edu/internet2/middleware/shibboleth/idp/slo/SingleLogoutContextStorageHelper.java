@@ -43,7 +43,7 @@ public class SingleLogoutContextStorageHelper {
             "sloContextPartitionName";
     /** Default name for the {@link StorageService} partition which holds
      * {@link SingleLogoutContext}s: {@value} . */
-    public static final String DEFAULT_SLO_CTX_PARITION = "sloContexts";
+    public static final String DEFAULT_SLO_CTX_PARTITION = "sloContexts";
     /** Class logger. */
     private static final Logger log =
             LoggerFactory.getLogger(SingleLogoutContextStorageHelper.class);
@@ -100,8 +100,8 @@ public class SingleLogoutContextStorageHelper {
             log.debug("SingleLogoutContext key is '{}'", sloContextKey);
 
             String partition =
-                    HttpServletHelper.getContextParam(context, SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION);
-            log.debug("parition: {}", partition);
+                    HttpServletHelper.getContextParam(context, SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARTITION);
+            log.debug("partition: {}", partition);
             SingleLogoutContextEntry entry =
                     (SingleLogoutContextEntry) storageService.get(partition, sloContextKey);
             if (entry != null) {
@@ -157,8 +157,8 @@ public class SingleLogoutContextStorageHelper {
         bindSingleLogoutContext(sloContext, httpRequest);
 
         String partition = HttpServletHelper.getContextParam(
-                context, SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION);
-        log.debug("SingleLogoutContext parition: {}", partition);
+                context, SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARTITION);
+        log.debug("SingleLogoutContext partition: {}", partition);
 
         String contextKey = UUID.randomUUID().toString();
         while (storageService.contains(partition, contextKey)) {
@@ -202,7 +202,7 @@ public class SingleLogoutContextStorageHelper {
 
         SingleLogoutContextEntry entry =
                 (SingleLogoutContextEntry) storageService.remove(HttpServletHelper.getContextParam(context,
-                SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARITION), sloContextKey);
+                SLO_CTX_PARTITION_CTX_PARAM, DEFAULT_SLO_CTX_PARTITION), sloContextKey);
         if (entry != null && !entry.isExpired()) {
             return entry.getSingleLogoutContext();
         }
