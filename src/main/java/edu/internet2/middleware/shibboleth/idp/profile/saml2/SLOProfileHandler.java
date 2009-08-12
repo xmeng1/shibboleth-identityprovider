@@ -363,6 +363,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         serviceLogoutInfo.setLogoutRequestId(request.getID());
 
         NameID nameId = buildNameID(serviceLogoutInfo);
+        if (nameId == null) {
+            log.info("NameID is null, cannot crete logout request context");
+            return null;
+        }
+
         request.setNameID(nameId);
         request.setDestination(endpoint.getLocation());
 
@@ -523,6 +528,9 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      * @return
      */
     private NameID buildNameID(LogoutInformation serviceLogoutInfo) {
+        if (serviceLogoutInfo.getNameIdentifier() == null) {
+            return null;
+        }
         NameID nameId = nameIDBuilder.buildObject();
         nameId.setFormat(serviceLogoutInfo.getNameIdentifierFormat());
         nameId.setValue(serviceLogoutInfo.getNameIdentifier());
@@ -694,7 +702,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         LogoutRequestContext requestCtx =
                 createLogoutRequestContext(sloContext, serviceLogoutInfo, endpoint);
         if (requestCtx == null) {
-            log.warn("Cannot create LogoutRequest Context for entity '{}'", spEntityID);
+            log.info("Cannot create LogoutRequest Context for entity '{}'", spEntityID);
             serviceLogoutInfo.setLogoutFailed();
             return;
         }
