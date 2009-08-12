@@ -68,7 +68,7 @@ Locale locale = request.getLocale();
                 var str = "You have successfully logged out";
                 var className = "success";
                 if (wasFailed){
-                    str = "Problem. We ask you to close your browser to log out" ;
+                    str = "Logout failed. Please exit from your browser to complete the logout process." ;
                     className = "fail";
                 }
                 document.getElementById("result").className = className;
