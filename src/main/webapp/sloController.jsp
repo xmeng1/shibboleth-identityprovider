@@ -91,8 +91,11 @@ Boolean sloAttempted = false;
                 if (timer  == 1 || timer  == 2 || timer  == 4 || timer  == 8) {
                     checkStatus();
                 }
-
-                timeout = setTimeout("tick()", 1000);
+                if (timer > 8) {
+                    finish(true);
+                } else {
+                    timeout = setTimeout("tick()", 1000);
+                }
             }
 
             timeout = setTimeout("tick()", 1000);
