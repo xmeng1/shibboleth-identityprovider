@@ -9,8 +9,8 @@ String contextPath = request.getContextPath();
 Locale defaultLocale = Locale.ENGLISH;
 Locale locale = request.getLocale();
 Boolean logoutString = false;
-Boolean wasFailed = false;
-Boolean wasAttempted = false;
+Boolean sloFailed = false;
+Boolean sloAttempted = false;
 %>
 <html>
     <head>
@@ -18,60 +18,65 @@ Boolean wasAttempted = false;
         <title>Shibboleth IdP Frontchannel Single Log-out Controller</title>
         <script language="javascript" type="text/javascript">
             <!--
-            var timer = 1;
+            var timer = 0;
             var timeout;
-            var wasFailed = false;
-            var checkInterval = 5;
             
             var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = updateStatus;
 
             function checkStatus() {
+                xhr.onreadystatechange = updateStatus;
                 xhr.open("GET", "<%= contextPath %>/SLOServlet?status", true);
                 xhr.send(null);
             }
 
             function updateStatus() {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var resp = eval("(" + xhr.responseText + ")");
-                    succ = true;
-                    for (var service in resp) {
-                        var entity = resp[service].entityID;
-                        var status = resp[service].logoutStatus;
-                        var src = "indicator.gif";
-						
-                        switch(status) {
-                            case "LOGOUT_SUCCEEDED" : src="success.png";
-                                break;
-                            case "LOGOUT_FAILED" : src="failed.png";
-                                break;
-                            case "LOGOUT_ATTEMPTED" : src="indicator.gif";
-                                break;
-                        }
-						
-                        if (status != 'LOGOUT_SUCCEEDED') {
-                            succ = false;
-                        }
+                if (xhr.readyState != 4 || xhr.status != 200) {
+                    return;
+                }
 
-                        if ((status=="LOGOUT_ATTEMPTED" || status=="LOGOUT_UNSUPPORTED") && timer >= 8){
+                var sloFailed = false;
+                var resp = eval("(" + xhr.responseText + ")");
+                var ready = true;
+
+                for (var service in resp) {
+                    var entity = resp[service].entityID;
+                    var status = resp[service].logoutStatus;
+                    var src = "indicator.gif";
+                    
+                    switch(status) {
+                        case "LOGOUT_SUCCEEDED" : 
+                            src = "success.png";
+                            break;
+                        case "LOGOUT_FAILED" : 
+                        case "LOGOUT_UNSUPPORTED" :
                             src = "failed.png";
-                            wasFailed = true;
-                            succ=true;
-                        }
-
-                        document.getElementById(entity).src = "<%= contextPath %>/images/" + src;
-
+                            sloFailed = true;
+                            break;
+                        case "LOGOUT_ATTEMPTED" : 
+                        case "LOGGED_IN" :
+                            if (timer >= 8) {
+                                src = "failed.png";
+                                sloFailed = true;
+                                ready = true;
+                            } else {
+                                src = "indicator.gif";
+                                ready = false;
+                            }
+                            break;
                     }
-                    if (succ==true || timer >= 8) finish(wasFailed);
+                    
+                    document.getElementById(entity).src = "<%= contextPath %>/images/" + src;
+                }
 
+                if (ready) {
+                    finish(sloFailed);
                 }
             }
 
-            function finish(wasFailed) {
-                
+            function finish(sloFailed) {
                 var str = "You have successfully logged out";
                 var className = "success";
-                if (wasFailed){
+                if (sloFailed){
                     str = "Logout failed. Please exit from your browser to complete the logout process." ;
                     className = "fail";
                 }
@@ -79,7 +84,6 @@ Boolean wasAttempted = false;
                 document.getElementById("result").innerHTML = str;
                 document.getElementById("result").innerHTML += '<form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="finish" /><input type="submit" value="Back to the application" /></form><div class="clear"></div>';
                 clearTimeout(timeout);
-
             }
 
             function tick() {
@@ -88,12 +92,14 @@ Boolean wasAttempted = false;
                     checkStatus();
                 }
 
-                timeout = setTimeout(tick, 1000);
+                timeout = setTimeout("tick()", 1000);
             }
+
+            timeout = setTimeout("tick()", 1000);
             //-->
         </script>
     </head>
-    <body onload="javascript: tick();">
+    <body>
         <div class="content">
             <h1>Logging out</h1>
             <%
@@ -113,12 +119,12 @@ Boolean wasAttempted = false;
                     case LOGGED_IN:
                         logoutString = true;
                     case LOGOUT_ATTEMPTED:
-                        wasAttempted = true;
+                        sloAttempted = true;
                         src.append("indicator.gif");
                         break;
                     case LOGOUT_UNSUPPORTED:
                     case LOGOUT_FAILED:
-                        wasFailed = true;
+                        sloFailed = true;
                         src.append("failed.png");
                         break;
                     case LOGOUT_SUCCEEDED:
@@ -151,10 +157,10 @@ Boolean wasAttempted = false;
             <div id="result"></div>
             <noscript>
                 <p align="center">
-                    <% if (logoutString || wasAttempted) { %>
+                    <% if (logoutString || sloAttempted) { %>
                         <form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="logout" /><input type="submit" value="Refresh" /></form><div class="clear"></div>
                     <% } else { %>
-                        <% if (wasFailed) { %>
+                        <% if (sloFailed) { %>
                             <div id="result" class="fail">Logout failed. Please exit from your browser to complete the logout process.</div>
                         <% } else { %>
                             <div id="result" class="success">You have successfully logged out<form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="finish" /><input type="submit" value="Back to the application" /></form><div class="clear"></div></div>
