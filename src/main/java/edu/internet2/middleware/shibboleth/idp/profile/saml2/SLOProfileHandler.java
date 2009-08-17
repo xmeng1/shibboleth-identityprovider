@@ -776,7 +776,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         } else {
             log.info("Status of Single Log-out: partial");
             status =
-                    buildStatus(StatusCode.RESPONDER_URI, StatusCode.PARTIAL_LOGOUT_URI, null);
+                    buildStatus(StatusCode.SUCCESS_URI, StatusCode.PARTIAL_LOGOUT_URI, null);
         }
 
         LogoutResponse samlResponse =
