@@ -266,34 +266,25 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
             signAssertion(requestContext, assertion);
 
-            SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
-            try {
-                if (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.always
-                        || (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.conditional && !encoder
-                                .providesMessageConfidentiality(requestContext))) {
-                    log.debug("Attempting to encrypt assertion to relying party '{}'", requestContext
-                            .getInboundMessageIssuer());
-                    try {
-                        Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
-                        samlResponse.getEncryptedAssertions().add(encrypter.encrypt(assertion));
-                    } catch (SecurityException e) {
-                        log.error("Unable to construct encrypter", e);
-                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                                "Unable to encrypt assertion"));
-                        throw new ProfileException("Unable to construct encrypter", e);
-                    } catch (EncryptionException e) {
-                        log.error("Unable to encrypt assertion", e);
-                        requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                                "Unable to encrypt assertion"));
-                        throw new ProfileException("Unable to encrypt assertion", e);
-                    }
-                } else {
-                    samlResponse.getAssertions().add(assertion);
+            if (isEncryptAssertion(requestContext)) {
+                log.debug("Attempting to encrypt assertion to relying party '{}'", requestContext
+                        .getInboundMessageIssuer());
+                try {
+                    Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
+                    samlResponse.getEncryptedAssertions().add(encrypter.encrypt(assertion));
+                } catch (SecurityException e) {
+                    log.error("Unable to construct encrypter", e);
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                    "Unable to encrypt assertion"));
+                    throw new ProfileException("Unable to construct encrypter", e);
+                } catch (EncryptionException e) {
+                    log.error("Unable to encrypt assertion", e);
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                    "Unable to encrypt assertion"));
+                    throw new ProfileException("Unable to encrypt assertion", e);
                 }
-            } catch (MessageEncodingException e) {
-                log.error("Unable to determine if outbound encoding '{}' can provide confidentiality", encoder
-                        .getBindingURI());
-                throw new ProfileException("Unable to determine if assertions should be encrypted");
+            } else {
+                samlResponse.getAssertions().add(assertion);
             }
         }
 
@@ -303,6 +294,28 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         postProcessResponse(requestContext, samlResponse);
 
         return samlResponse;
+    }
+
+    /**
+     * Determine whether issued assertions should be encrypted.
+     * 
+     * @param requestContext the current request context
+     * @return true if assertions should be encrypted, false otherwise
+     * @throws ProfileException if there is a problem determining whether assertions should be encrypted
+     */
+    protected boolean isEncryptAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) 
+            throws ProfileException {
+        
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
+        try {
+            return requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.always
+                || (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.conditional
+                    && !encoder.providesMessageConfidentiality(requestContext));
+        } catch (MessageEncodingException e) {
+            log.error("Unable to determine if outbound encoding '{}' can provide confidentiality", encoder
+                    .getBindingURI());
+            throw new ProfileException("Unable to determine if assertions should be encrypted"); 
+        }
     }
 
     /**
@@ -541,36 +554,13 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         log.debug("Determining if SAML assertion to relying party '{}' should be signed", requestContext
                 .getInboundMessageIssuer());
 
-        boolean signAssertion = false;
-
-        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
-        AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
-        try {
-            if (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.always
-                    || (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.conditional && !encoder
-                            .providesMessageIntegrity(requestContext))) {
-                signAssertion = true;
-                log.debug("IdP relying party configuration '{}' indicates to sign assertions: {}", requestContext
-                        .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
-            }
-        } catch (MessageEncodingException e) {
-            log.error("Unable to determine if outbound encoding '{}' provides message integrity protection", encoder
-                    .getBindingURI());
-            throw new ProfileException("Unable to determine if outbound message should be signed");
-        }
-
-        if (!signAssertion && requestContext.getPeerEntityRoleMetadata() instanceof SPSSODescriptor) {
-            SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getPeerEntityRoleMetadata();
-            if (ssoDescriptor.getWantAssertionsSigned() != null) {
-                signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
-                log.debug("Entity metadata for relying party '{} 'indicates to sign assertions: {}", requestContext
-                        .getInboundMessageIssuer(), signAssertion);
-            }
-        }
+        boolean signAssertion = isSignAssertion(requestContext);
 
         if (!signAssertion) {
             return;
         }
+        
+        AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
         log.debug("Determining signing credntial for assertion to relying party '{}'", requestContext
                 .getInboundMessageIssuer());
@@ -615,6 +605,43 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             String msg = "Unable to sign assertion";
             log.error(msg, e);
             throw new ProfileException(msg, e);
+        }
+    }
+
+    /**
+     * Determine whether issued assertions should be signed.
+     * 
+     * @param requestContext the current request context
+     * @return true if assertions should be signed, false otherwise
+     * @throws ProfileException if there is a problem determining whether assertions should be signed
+     */
+    protected boolean isSignAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
+        
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
+        AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
+        
+        try {
+            boolean signAssertion = profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.always
+                || (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.conditional 
+                    && !encoder.providesMessageIntegrity(requestContext));
+            
+            log.debug("IdP relying party configuration '{}' indicates to sign assertions: {}", requestContext
+                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
+            
+            if (!signAssertion && requestContext.getPeerEntityRoleMetadata() instanceof SPSSODescriptor) {
+                SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getPeerEntityRoleMetadata();
+                if (ssoDescriptor.getWantAssertionsSigned() != null) {
+                    signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
+                    log.debug("Entity metadata for relying party '{} 'indicates to sign assertions: {}", requestContext
+                            .getInboundMessageIssuer(), signAssertion);
+                }
+            }
+            
+            return signAssertion;
+        } catch (MessageEncodingException e) {
+            log.error("Unable to determine if outbound encoding '{}' provides message integrity protection", encoder
+                    .getBindingURI());
+            throw new ProfileException("Unable to determine if outbound assertion should be signed");
         }
     }
 
@@ -674,7 +701,71 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         }
 
         requestContext.setSubjectNameIdentifier(nameID);
+        
+        if (isEncryptNameID(requestContext)) {
+            log.debug("Attempting to encrypt NameID to relying party '{}'", requestContext
+                    .getInboundMessageIssuer());
+            try {
+                Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
+                subject.setEncryptedID(encrypter.encrypt(nameID));
+            } catch (SecurityException e) {
+                log.error("Unable to construct encrypter", e);
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                "Unable to encrypt NameID"));
+                throw new ProfileException("Unable to construct encrypter", e);
+            } catch (EncryptionException e) {
+                log.error("Unable to encrypt NameID", e);
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
+                "Unable to encrypt NameID"));
+                throw new ProfileException("Unable to encrypt NameID", e);
+            }
+        } else {
+            subject.setNameID(nameID);
+        }
 
+
+        return subject;
+    }
+    
+
+    /**
+     * Determine whether NameID's should be encrypted.
+     * 
+     * @param requestContext the current request context
+     * @return true if NameID's should be encrypted, false otherwise
+     * @throws ProfileException if there is a problem determining whether NameID's should be encrypted
+     */
+    protected boolean isEncryptNameID(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) 
+            throws ProfileException {
+        
+        boolean nameIdEncRequiredByAuthnRequest = isRequestRequiresEncryptNameID(requestContext);
+        
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
+        boolean nameIdEncRequiredByConfig = false;
+        try {
+            nameIdEncRequiredByConfig = 
+                requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
+                    || (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.conditional
+                            && !encoder.providesMessageConfidentiality(requestContext));
+        } catch (MessageEncodingException e) {
+            String msg = MessageFormatter.format(
+                    "Unable to determine if outbound encoding '{}' provides message confidentiality protection",
+                    encoder.getBindingURI());
+            log.error(msg);
+            throw new ProfileException(msg);
+        }
+        
+        return nameIdEncRequiredByAuthnRequest || nameIdEncRequiredByConfig;
+    }
+
+    /**
+     * Determine whether information in the SAML request requires the issued NameID to 
+     * be encrypted.
+     * 
+     * @param requestContext the current request context
+     * @return true if the request indicates NameID encryption is required, false otherwise
+     */
+    protected boolean isRequestRequiresEncryptNameID(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) {
         boolean nameIdEncRequiredByAuthnRequest = false;
         if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
             AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
@@ -683,41 +774,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                 nameIdEncRequiredByAuthnRequest = true;
             }
         }
-
-        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
-        try {
-            if (nameIdEncRequiredByAuthnRequest
-                    || requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
-                    || (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.conditional && !encoder
-                            .providesMessageConfidentiality(requestContext))) {
-                log.debug("Attempting to encrypt NameID to relying party '{}'", requestContext
-                        .getInboundMessageIssuer());
-                try {
-                    Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
-                    subject.setEncryptedID(encrypter.encrypt(nameID));
-                } catch (SecurityException e) {
-                    log.error("Unable to construct encrypter", e);
-                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                            "Unable to encrypt NameID"));
-                    throw new ProfileException("Unable to construct encrypter", e);
-                } catch (EncryptionException e) {
-                    log.error("Unable to encrypt NameID", e);
-                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                            "Unable to encrypt NameID"));
-                    throw new ProfileException("Unable to encrypt NameID", e);
-                }
-            } else {
-                subject.setNameID(nameID);
-            }
-        } catch (MessageEncodingException e) {
-            String msg = MessageFormatter.format(
-                    "Unable to determine if outbound encoding '{}' provides message confidentiality protection",
-                    encoder.getBindingURI());
-            log.error(msg);
-            throw new ProfileException(msg);
-        }
-
-        return subject;
+        return nameIdEncRequiredByAuthnRequest;
     }
 
     /**

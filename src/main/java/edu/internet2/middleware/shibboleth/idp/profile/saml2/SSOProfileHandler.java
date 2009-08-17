@@ -167,7 +167,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             String relyingPartyId = requestContext.getInboundMessageIssuer();
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
-            ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(SSOConfiguration.PROFILE_ID);
+            ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(getProfileId());
             if (ssoConfig == null) {
                 String msg = MessageFormatter.format("SAML 2 SSO profile is not configured for relying party '{}'", requestContext.getInboundMessageIssuer());
                 log.warn(msg);
@@ -288,7 +288,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         requestContext.setMetadataProvider(getMetadataProvider());
         requestContext.setSecurityPolicyResolver(getSecurityPolicyResolver());
 
-        requestContext.setCommunicationProfileId(SSOConfiguration.PROFILE_ID);
+        requestContext.setCommunicationProfileId(getProfileId());
         requestContext.setInboundMessageTransport(inTransport);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
         requestContext.setPeerEntityRole(SPSSODescriptor.DEFAULT_ELEMENT_NAME);

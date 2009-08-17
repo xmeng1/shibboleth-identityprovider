@@ -118,7 +118,7 @@ public class HttpServletHelper {
      * Binds a {@link LoginContext} to the current request.
      * 
      * @param loginContext login context to be bound
-     * @param request current HTTP request
+     * @param httpRequest current HTTP request
      */
     public static void bindLoginContext(LoginContext loginContext, HttpServletRequest httpRequest) {
         if (httpRequest == null) {
@@ -148,7 +148,7 @@ public class HttpServletHelper {
         if (loginContext == null) {
             return;
         }
-        
+
         bindLoginContext(loginContext, httpRequest);
 
         String parition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION);
@@ -164,9 +164,9 @@ public class HttpServletHelper {
         storageService.put(parition, contextKey, entry);
 
         Cookie contextKeyCookie = new Cookie(LOGIN_CTX_KEY_NAME, contextKey);
-        contextKeyCookie.setPath("/");
+        contextKeyCookie.setVersion(1);
+        contextKeyCookie.setPath(httpRequest.getContextPath() == "" ? "/" : httpRequest.getContextPath());
         contextKeyCookie.setSecure(httpRequest.isSecure());
-        contextKeyCookie.setMaxAge(31556926);
         httpResponse.addCookie(contextKeyCookie);
     }
 
@@ -529,6 +529,7 @@ public class HttpServletHelper {
             log.warn("Corrupted LoginContext Key cookie, it did not contain a value");
         }
 
+        httpRequest.setAttribute(LOGIN_CTX_KEY_NAME, null);
         loginContextKeyCookie.setMaxAge(0);
         httpResponse.addCookie(loginContextKeyCookie);
 
