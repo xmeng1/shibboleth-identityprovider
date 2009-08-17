@@ -8,12 +8,16 @@ SingleLogoutContext sloContext = SingleLogoutContextStorageHelper.getSingleLogou
 String contextPath = request.getContextPath();
 Locale defaultLocale = Locale.ENGLISH;
 Locale locale = request.getLocale();
+Boolean logoutString = false;
+Boolean wasFailed = false;
+Boolean wasAttempted = false;
 %>
 <html>
     <head>
         <link title="style" href="<%= contextPath %>/css/main.css" type="text/css" rel="stylesheet" />
         <title>Shibboleth IdP Frontchannel Single Log-out Controller</title>
         <script language="javascript" type="text/javascript">
+            <!--
             var timer = 1;
             var timeout;
             var wasFailed = false;
@@ -86,6 +90,7 @@ Locale locale = request.getLocale();
 
                 timeout = setTimeout(tick, 1000);
             }
+            //-->
         </script>
     </head>
     <body onload="javascript: tick();">
@@ -101,36 +106,62 @@ Locale locale = request.getLocale();
                 } catch (UnsupportedEncodingException ex) {
                     throw new RuntimeException(ex);
                 }
+				
                 StringBuilder src = new StringBuilder(contextPath);
                 src.append("/images/");
                 switch (service.getLogoutStatus()) {
                     case LOGGED_IN:
+                        logoutString = true;
                     case LOGOUT_ATTEMPTED:
+                        wasAttempted = true;
                         src.append("indicator.gif");
                         break;
                     case LOGOUT_UNSUPPORTED:
                     case LOGOUT_FAILED:
+                        wasFailed = true;
                         src.append("failed.png");
                         break;
                     case LOGOUT_SUCCEEDED:
+                        logoutString = false;
                         src.append("success.png");
                         break;
                 }
             %>
             <div class="row">
-                <%= service.getDisplayName(locale, defaultLocale) %>
-                <img alt="<%= service.getLogoutStatus().toString() %>" id="<%= service.getEntityID() %>" src="<%= src.toString() %>">
+                <script type="text/javascript">
+                    <!--
+                    document.write('<%= service.getDisplayName(locale, defaultLocale) %><img alt="<%= service.getLogoutStatus().toString() %>" id="<%= service.getEntityID() %>" src="<%= src.toString() %>">');
+                    //-->
+                </script>
+                <noscript><%= service.getDisplayName(locale, defaultLocale) %> <% if (logoutString) { %><a href="<%= contextPath %>/SLOServlet?action&entityID=<%= entityID %>" target="_blank">Logout from this SP</a> <% }  else { %><img alt="<%= service.getLogoutStatus().toString() %>" id="<%= service.getEntityID() %>" src="<%= src.toString() %>"><% } %></noscript>
             </div>
             <%
             if (service.isLoggedIn()) {
                 //if-logged-in
             %>
-            <iframe src="<%= contextPath %>/SLOServlet?action&entityID=<%= entityID %>" width="0" height="0"></iframe>
+            <script type="text/javascript">
+                <!--
+                document.write('<iframe src="<%= contextPath %>/SLOServlet?action&entityID=<%= entityID %>" width="0" height="0"></iframe>');
+                //-->
+            </script>
             <%
             } //end of if-logged-in
             } //end of for-each-service
             %>
             <div id="result"></div>
+            <noscript>
+                <p align="center">
+                    <% if (logoutString || wasAttempted) { %>
+                        <form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="logout" /><input type="submit" value="Refresh" /></form><div class="clear"></div>
+                    <% } else { %>
+                        <% if (wasFailed) { %>
+                            <div id="result" class="fail">Logout failed. Please exit from your browser to complete the logout process.</div>
+                        <% } else { %>
+                            <div id="result" class="success">You have successfully logged out<form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="finish" /><input type="submit" value="Back to the application" /></form><div class="clear"></div></div>
+                        <% }
+                       } %>
+                </p>
+            </noscript>
         </div>
     </body>
 </html>
