@@ -49,6 +49,7 @@ Boolean sloAttempted = false;
                             break;
                         case "LOGOUT_FAILED" : 
                         case "LOGOUT_UNSUPPORTED" :
+                        case "LOGOUT_TIMED_OUT" :
                             src = "failed.png";
                             sloFailed = true;
                             break;
@@ -127,6 +128,7 @@ Boolean sloAttempted = false;
                         break;
                     case LOGOUT_UNSUPPORTED:
                     case LOGOUT_FAILED:
+                    case LOGOUT_TIMED_OUT:
                         sloFailed = true;
                         src.append("failed.png");
                         break;

@@ -96,6 +96,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     private static final int HTTPCLIENT_POOL_TIMEOUT = 1000;
     private static final int HTTPCLIENT_CONNECT_TIMEOUT = 5000;
     private static final int HTTPCLIENT_SO_TIMEOUT = 5000;
+    /**
+     * Timeout for front-channel logout requests.
+     */
+    private static final int FRONTCHANNEL_TIMEOUT = 5000;
+
     private static final Logger log =
             LoggerFactory.getLogger(SLOProfileHandler.class);
     private final SAMLObjectBuilder<SingleLogoutService> sloServiceBuilder;
@@ -814,6 +819,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 initialRequest.getLocalEntityId(),
                 initialRequest.getInboundSAMLMessageId(),
                 initialRequest.getRelayState(),
+                FRONTCHANNEL_TIMEOUT,
                 idpSession);
     }
 

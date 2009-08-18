@@ -69,6 +69,7 @@ public class SLOServlet extends HttpServlet {
         resp.setHeader("Pragma", "no-cache");
 
         if (req.getParameter("status") != null) { //status query, response is JSON
+            sloContext.checkTimeout();
             PrintWriter writer = resp.getWriter();
             writer.print("[");
             Iterator<SingleLogoutContext.LogoutInformation> it =

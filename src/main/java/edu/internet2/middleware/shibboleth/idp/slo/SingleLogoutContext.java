@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class SingleLogoutContext implements Serializable {
 
-    private static final long serialVersionUID = -2503893952974231362L;
+    private static final long serialVersionUID = -2386684678331311278L;
     /** EntityID of the entity which requested the logout. */
     private final String requesterEntityID;
     /** EntityID of the IdP which will respond. */
@@ -43,6 +43,8 @@ public class SingleLogoutContext implements Serializable {
     private final String profileHandlerURL;
     /** Internal IdP Session ID. */
     private final String idpSessionID;
+    /** Timeout value for frontchannel requests (in milliseconds). */
+    private final long logoutTimeout;
     private final Map<String, LogoutInformation> serviceInformation;
 
     public SingleLogoutContext(
@@ -51,6 +53,7 @@ public class SingleLogoutContext implements Serializable {
             String responderEntityID,
             String requestSAMLMessageID,
             String relayState,
+            long logoutTimeout,
             Session idpSession) {
 
         this.profileHandlerURL = profileHandlerURL;
@@ -58,6 +61,7 @@ public class SingleLogoutContext implements Serializable {
         this.responderEntityID = responderEntityID;
         this.requestSAMLMessageID = requestSAMLMessageID;
         this.relayState = relayState;
+        this.logoutTimeout = logoutTimeout;
         this.idpSessionID = idpSession.getSessionID();
 
         Map<String, ServiceInformation> serviceInformationMap =
@@ -123,14 +127,29 @@ public class SingleLogoutContext implements Serializable {
         }
     }
 
+    /**
+     * Checks all services for logout timeout.
+     */
+    public void checkTimeout() {
+        synchronized (this) {
+            for (LogoutInformation serviceLogoutInfo : serviceInformation.values()) {
+                if (serviceLogoutInfo.getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED) &&
+                        serviceLogoutInfo.getElapsedMillis() > logoutTimeout) {
+                    serviceLogoutInfo.setLogoutTimedOut();
+                }
+            }
+        }
+    }
+
     public enum LogoutStatus implements Serializable {
 
-        LOGGED_IN, LOGOUT_ATTEMPTED, LOGOUT_SUCCEEDED, LOGOUT_FAILED, LOGOUT_UNSUPPORTED
+        LOGGED_IN, LOGOUT_ATTEMPTED, LOGOUT_SUCCEEDED, LOGOUT_FAILED,
+        LOGOUT_UNSUPPORTED, LOGOUT_TIMED_OUT
     }
 
     public class LogoutInformation implements Serializable {
 
-        private static final long serialVersionUID = 426061541760803398L;
+        private static final long serialVersionUID = -1371240803047042613L;
         private final String entityID;
         private final String nameIdentifier;
         private final String nameIdentifierFormat;
@@ -139,6 +158,7 @@ public class SingleLogoutContext implements Serializable {
         private LogoutStatus logoutStatus;
         private String logoutRequestId;
         private Map<String, String> displayName;
+        private long logoutTimestamp;
 
         public LogoutInformation(String entityID, String nameIdentifier,
                 String nameIdentifierFormat, String nameQualifier,
@@ -186,6 +206,7 @@ public class SingleLogoutContext implements Serializable {
             synchronized (this) {
                 if (getLogoutStatus().equals(LogoutStatus.LOGGED_IN)) {
                     this.setLogoutStatus(LogoutStatus.LOGOUT_ATTEMPTED);
+                    this.logoutTimestamp = System.currentTimeMillis();
                 } else {
                     throw new IllegalStateException("Logout already attempted");
                 }
@@ -206,6 +227,16 @@ public class SingleLogoutContext implements Serializable {
             synchronized (this) {
                 if (getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED)) {
                     this.setLogoutStatus(LogoutStatus.LOGOUT_SUCCEEDED);
+                } else {
+                    throw new IllegalStateException("LogoutStatus is not LOGOUT_ATTEMPTED");
+                }
+            }
+        }
+
+        public void setLogoutTimedOut() {
+            synchronized (this) {
+                if (getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED)) {
+                    this.setLogoutStatus(LogoutStatus.LOGOUT_TIMED_OUT);
                 } else {
                     throw new IllegalStateException("LogoutStatus is not LOGOUT_ATTEMPTED");
                 }
@@ -273,6 +304,14 @@ public class SingleLogoutContext implements Serializable {
             }
 
             return dName;
+        }
+
+        long getElapsedMillis() {
+            if (this.logoutTimestamp == 0) {
+                throw new IllegalStateException("Logout timestamp is not initialized");
+            }
+
+            return System.currentTimeMillis() - logoutTimestamp;
         }
     }
 }
