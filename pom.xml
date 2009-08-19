@@ -107,6 +107,12 @@
             <artifactId>ant-extensions</artifactId>
             <version>13Apr2008</version>
             <scope>runtime</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk14</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
