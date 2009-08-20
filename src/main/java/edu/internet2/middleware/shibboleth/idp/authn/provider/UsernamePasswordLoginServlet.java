@@ -95,8 +95,8 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
     /** {@inheritDoc} */
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
             IOException {
-        String username = DatatypeHelper.safeTrimOrNullString(request.getParameter(usernameAttribute));
-        String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
+        String username = request.getParameter(usernameAttribute);
+        String password = request.getParameter(passwordAttribute);
 
         if (username == null || password == null) {
             redirectToLoginPage(request, response, null);
