@@ -208,7 +208,7 @@
                                 <manifestEntries>
                                     <Implementation-Title>${pom.artifactId}</Implementation-Title>
                                     <Implementation-Version>${pom.version}</Implementation-Version>
-                                    <Implementation-Vendor>www.opensaml.org</Implementation-Vendor>
+                                    <Implementation-Vendor>shibboleth.internet2.edu</Implementation-Vendor>
                                 </manifestEntries>
                             </manifestSection>
                         </manifestSections>
