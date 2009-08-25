@@ -16,6 +16,7 @@
  */
 package edu.internet2.middleware.shibboleth.idp.slo;
 
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import java.io.Serializable;
@@ -44,7 +45,7 @@ public class SingleLogoutContext implements Serializable {
     /** Internal IdP Session ID. */
     private final String idpSessionID;
     /** Timeout value for frontchannel requests (in milliseconds). */
-    private final long logoutTimeout;
+    private final int frontChannelResponseTimeout;
     private final Map<String, LogoutInformation> serviceInformation;
 
     public SingleLogoutContext(
@@ -53,7 +54,7 @@ public class SingleLogoutContext implements Serializable {
             String responderEntityID,
             String requestSAMLMessageID,
             String relayState,
-            long logoutTimeout,
+            LogoutRequestConfiguration profileConfiguration,
             Session idpSession) {
 
         this.profileHandlerURL = profileHandlerURL;
@@ -61,7 +62,7 @@ public class SingleLogoutContext implements Serializable {
         this.responderEntityID = responderEntityID;
         this.requestSAMLMessageID = requestSAMLMessageID;
         this.relayState = relayState;
-        this.logoutTimeout = logoutTimeout;
+        this.frontChannelResponseTimeout = profileConfiguration.getFrontChannelResponseTimeout();
         this.idpSessionID = idpSession.getSessionID();
 
         Map<String, ServiceInformation> serviceInformationMap =
@@ -110,6 +111,10 @@ public class SingleLogoutContext implements Serializable {
         return serviceInformation;
     }
 
+    public int getFrontChannelResponseTimeout() {
+        return frontChannelResponseTimeout;
+    }
+
     /**
      * Returns the next service which is in LOGGED_IN state or null.
      * 
@@ -134,7 +139,7 @@ public class SingleLogoutContext implements Serializable {
         synchronized (this) {
             for (LogoutInformation serviceLogoutInfo : serviceInformation.values()) {
                 if (serviceLogoutInfo.getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED) &&
-                        serviceLogoutInfo.getElapsedMillis() > logoutTimeout) {
+                        serviceLogoutInfo.getElapsedMillis() > frontChannelResponseTimeout) {
                     serviceLogoutInfo.setLogoutTimedOut();
                 }
             }

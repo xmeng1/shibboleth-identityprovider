@@ -35,6 +35,7 @@ import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.httpclient.ConnectionPoolTimeoutException;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnection;
@@ -47,7 +48,6 @@ import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
-import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -91,15 +91,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
-    //TODO this needs to be placed in the config
-
-    private static final int HTTPCLIENT_POOL_TIMEOUT = 1000;
-    private static final int HTTPCLIENT_CONNECT_TIMEOUT = 5000;
-    private static final int HTTPCLIENT_SO_TIMEOUT = 5000;
-    /**
-     * Timeout for front-channel logout requests.
-     */
-    private static final int FRONTCHANNEL_TIMEOUT = 5000;
 
     private static final Logger log =
             LoggerFactory.getLogger(SLOProfileHandler.class);
@@ -448,7 +439,12 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         try {
             //prepare http message exchange for soap
             log.debug("Preparing HTTP transport for SOAP request");
-            httpConn = createHttpConnection(endpoint);
+            httpConn = createHttpConnection(serviceLogoutInfo, endpoint);
+            if (httpConn == null) {
+                log.warn("Unable to acquire usable http connection from the pool");
+                serviceLogoutInfo.setLogoutFailed();
+                return;
+            }
             log.debug("Opening HTTP connection to '{}'", endpoint.getLocation());
             httpConn.open();
             if (!httpConn.isOpen()) {
@@ -473,7 +469,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 log.warn("Logout execution failed on SP '{}', HTTP status is '{}'",
                         spEntityID, requestCtx.getHttpStatus());
                 serviceLogoutInfo.setLogoutFailed();
-                
+
                 return;
             }
 
@@ -635,14 +631,16 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
     /**
      * Creates Http connection.
-     * 
+     *
+     * @param serviceLogoutInfo
      * @param endpoint
      * @return
      * @throws URIException
      * @throws GeneralSecurityException
      * @throws IOException
      */
-    private HttpConnection createHttpConnection(Endpoint endpoint)
+    private HttpConnection createHttpConnection(
+            LogoutInformation serviceLogoutInfo, Endpoint endpoint)
             throws URIException, GeneralSecurityException, IOException {
 
         HttpClientBuilder httpClientBuilder =
@@ -658,12 +656,28 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         URI location = new URI(endpoint.getLocation());
         hostConfig.setHost(location);
 
-        HttpConnection httpConn = httpClient.getHttpConnectionManager().
-                getConnectionWithTimeout(hostConfig, HTTPCLIENT_POOL_TIMEOUT);
+        LogoutRequestConfiguration config = (LogoutRequestConfiguration) getProfileConfiguration(
+                serviceLogoutInfo.getEntityID(), getProfileId());
+        if (log.isDebugEnabled()) {
+            log.debug("Creating new HTTP connection with the following timeouts:");
+            log.debug("Maximum waiting time for the connection pool is {}",
+                    config.getBackChannelConnectionPoolTimeout());
+            log.debug("Timeout for connection establishment is {}",
+                    config.getBackChannelConnectionTimeout());
+            log.debug("Timeout for soap response is {}",
+                    config.getBackChannelResponseTimeout());
+        }
+        HttpConnection httpConn = null;
+        try {
+            httpConn = httpClient.getHttpConnectionManager().
+                    getConnectionWithTimeout(hostConfig, config.getBackChannelConnectionPoolTimeout());
+        } catch (ConnectionPoolTimeoutException e) {
+            return null;
+        }
 
         HttpConnectionParams params = new HttpConnectionParams();
-        params.setConnectionTimeout(HTTPCLIENT_CONNECT_TIMEOUT);
-        params.setSoTimeout(HTTPCLIENT_SO_TIMEOUT);
+        params.setConnectionTimeout(config.getBackChannelConnectionTimeout());
+        params.setSoTimeout(config.getBackChannelResponseTimeout());
         httpConn.setParams(params);
 
         return httpConn;
@@ -821,7 +835,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 initialRequest.getLocalEntityId(),
                 initialRequest.getInboundSAMLMessageId(),
                 initialRequest.getRelayState(),
-                FRONTCHANNEL_TIMEOUT,
+                initialRequest.getProfileConfiguration(),
                 idpSession);
     }
 
