@@ -78,6 +78,6 @@ public abstract class AbstractLoginHandlerFactoryBean extends AbstractFactoryBea
         if (authenticationMethods != null) {
             handler.getSupportedAuthenticationMethods().addAll(authenticationMethods);
         }
-        handler.setAuthenticationDurection(authenticationDuration * 60 * 1000);
+        handler.setAuthenticationDuration(authenticationDuration * 60 * 1000);
     }
 }

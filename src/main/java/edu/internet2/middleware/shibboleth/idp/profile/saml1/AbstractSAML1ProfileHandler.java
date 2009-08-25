@@ -46,7 +46,6 @@ import org.opensaml.saml1.core.StatusMessage;
 import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml1.core.SubjectConfirmation;
 import org.opensaml.saml1.core.SubjectStatement;
-import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.xml.XMLObjectBuilder;
@@ -603,40 +602,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         log.debug("Determining if SAML assertion to relying party '{}' should be signed", requestContext
                 .getInboundMessageIssuer());
 
-        boolean signAssertion = false;
-
-        RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
-        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
-        AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
-
-        try {
-            if (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.always
-                    || (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.conditional && !encoder
-                            .providesMessageIntegrity(requestContext))) {
-                signAssertion = true;
-                log.debug("IdP relying party configuration '{}' indicates to sign assertions: {}", requestContext
-                        .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
-            }
-        } catch (MessageEncodingException e) {
-            String msg = MessageFormatter.format(
-                    "Unable to determine if outbound encoding '{}' provides message integrity protection", encoder
-                            .getBindingURI());
-            log.error(msg);
-            throw new ProfileException(msg);
-        }
-
-        if (!signAssertion && relyingPartyRole instanceof SPSSODescriptor) {
-            SPSSODescriptor ssoDescriptor = (SPSSODescriptor) relyingPartyRole;
-            if (ssoDescriptor.getWantAssertionsSigned() != null) {
-                signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
-                log.debug("Entity metadata for relying party '{}' indicates to sign assertions: {}", requestContext
-                        .getInboundMessageIssuer(), signAssertion);
-            }
-        }
+        boolean signAssertion = isSignAssertion(requestContext);
 
         if (!signAssertion) {
             return;
         }
+
+        AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
         log.debug("Determining credential to use to sign assertion to relying party '{}'", requestContext
                 .getInboundMessageIssuer());
@@ -681,6 +653,43 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             String msg = "Unable to sign assertion";
             log.error(msg, e);
             throw new ProfileException(msg, e);
+        }
+    }
+    
+    /**
+     * Determine whether issued assertions should be signed.
+     * 
+     * @param requestContext the current request context
+     * @return true if assertions should be signed, false otherwise
+     * @throws ProfileException if there is a problem determining whether assertions should be signed
+     */
+    protected boolean isSignAssertion(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
+        
+        SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
+        AbstractSAML1ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
+        
+        try {
+            boolean signAssertion = profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.always
+                || (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.conditional 
+                    && !encoder.providesMessageIntegrity(requestContext));
+            
+            log.debug("IdP relying party configuration '{}' indicates to sign assertions: {}", requestContext
+                    .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
+            
+            if (!signAssertion && requestContext.getPeerEntityRoleMetadata() instanceof SPSSODescriptor) {
+                SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getPeerEntityRoleMetadata();
+                if (ssoDescriptor.getWantAssertionsSigned() != null) {
+                    signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
+                    log.debug("Entity metadata for relying party '{} 'indicates to sign assertions: {}", requestContext
+                            .getInboundMessageIssuer(), signAssertion);
+                }
+            }
+            
+            return signAssertion;
+        } catch (MessageEncodingException e) {
+            log.error("Unable to determine if outbound encoding '{}' provides message integrity protection",
+                    encoder.getBindingURI());
+            throw new ProfileException("Unable to determine if outbound assertion should be signed");
         }
     }
 
