@@ -30,10 +30,6 @@
             <id>release-repo</id>
             <url>${dist.release.url}</url>
         </repository>
-        <snapshotRepository>
-            <id>snapshot-repo</id>
-            <url>${dist.snapshot.url}</url>
-        </snapshotRepository>
     </distributionManagement>
 
     <dependencies>
@@ -111,6 +107,12 @@
             <artifactId>ant-extensions</artifactId>
             <version>13Apr2008</version>
             <scope>runtime</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk14</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
@@ -148,6 +150,13 @@
     
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -199,7 +208,7 @@
                                 <manifestEntries>
                                     <Implementation-Title>${pom.artifactId}</Implementation-Title>
                                     <Implementation-Version>${pom.version}</Implementation-Version>
-                                    <Implementation-Vendor>www.opensaml.org</Implementation-Vendor>
+                                    <Implementation-Vendor>shibboleth.internet2.edu</Implementation-Vendor>
                                 </manifestEntries>
                             </manifestSection>
                         </manifestSections>
