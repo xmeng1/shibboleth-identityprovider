@@ -42,6 +42,7 @@
         <fileSet>
             <useDefaultExcludes>true</useDefaultExcludes>
             <excludes>
+                <exclude>**/.git/**</exclude>
                 <exclude>**/target/**</exclude>
                 <exclude>**/bin/**</exclude>
             </excludes>

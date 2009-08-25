@@ -166,7 +166,7 @@
                     <debug>true</debug>
                 </configuration>
             </plugin>
-            <!--plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
@@ -192,7 +192,7 @@
                 <configuration>
                   <argLine>-Xmx256m</argLine>
                 </configuration>
-            </plugin-->
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
