@@ -793,8 +793,10 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         initialRequest.setOutboundSAMLMessageId(samlResponse.getID());
         initialRequest.setOutboundSAMLMessageIssueInstant(samlResponse.getIssueInstant());
         Credential signingCredential =
-                getRelyingPartyConfigurationManager().
-                getDefaultRelyingPartyConfiguration().getDefaultSigningCredential();
+                initialRequest.getProfileConfiguration().getSigningCredential();
+        if (signingCredential == null) {
+            initialRequest.getRelyingPartyConfiguration().getDefaultSigningCredential();
+        }
         initialRequest.setOutboundSAMLMessageSigningCredential(signingCredential);
 
         log.debug("Sending response to the original LogoutRequest");
@@ -846,6 +848,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         initialRequest.setLocalEntityId(sloContext.getResponderEntityID());
         initialRequest.setPeerEntityId(sloContext.getRequesterEntityID());
         initialRequest.setSecurityPolicyResolver(getSecurityPolicyResolver());
+        initialRequest.setProfileConfiguration(
+                (LogoutRequestConfiguration) getProfileConfiguration(
+                sloContext.getRequesterEntityID(), getProfileId()));
+        initialRequest.setRelyingPartyConfiguration(
+                getRelyingPartyConfiguration(sloContext.getRequesterEntityID()));
 
         return initialRequest;
     }
