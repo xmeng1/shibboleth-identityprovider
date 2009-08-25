@@ -83,7 +83,7 @@ Boolean sloAttempted = false;
                 }
                 document.getElementById("result").className = className;
                 document.getElementById("result").innerHTML = str;
-                document.getElementById("result").innerHTML += '<form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="finish" /><input type="submit" value="Back to the application" /></form><div class="clear"></div>';
+                document.getElementById("result").innerHTML += '<iframe src="<%= contextPath %>/SLOServlet?finish"></iframe><div class="clear"></div>';
                 clearTimeout(timeout);
             }
 
@@ -168,7 +168,7 @@ Boolean sloAttempted = false;
                         <% if (sloFailed) { %>
                             <div id="result" class="fail">Logout failed. Please exit from your browser to complete the logout process.</div>
                         <% } else { %>
-                            <div id="result" class="success">You have successfully logged out<form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="finish" /><input type="submit" value="Back to the application" /></form><div class="clear"></div></div>
+                            <div id="result" class="success">You have successfully logged out<form action="<%= contextPath %>/SLOServlet" style="padding-top:10px;width:90%;clear:both;"><input type="hidden" name="finish" /><input type="submit" value="Finish logout" /></form><div class="clear"></div></div>
                         <% }
                        } %>
                 </p>
