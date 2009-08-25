@@ -92,6 +92,7 @@ public class SLOServlet extends HttpServlet {
             SingleLogoutContextStorageHelper.unbindSingleLogoutContext(storageService, context, req, resp);
             req.getRequestDispatcher(sloContext.getProfileHandlerURL()).forward(req, resp);
         } else if (req.getParameter("logout") != null) { //respond with SLO Controller
+            sloContext.checkTimeout();
             req.getRequestDispatcher("/sloController.jsp").forward(req, resp);
         } else { //respond with confirmation dialog
             req.getRequestDispatcher("/sloQuestion.jsp").forward(req, resp);
