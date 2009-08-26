@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.profile.saml2;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -94,6 +95,10 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
     private static final Logger log =
             LoggerFactory.getLogger(SLOProfileHandler.class);
+    public static final String IDP_INITIATED_LOGOUT_ATTR =
+            "IDP_INITIATED_LOGOUT";
+    public static final String SKIP_LOGOUT_QUESTION_ATTR =
+            "SKIP_LOGOUT_QUESTION";
     private final SAMLObjectBuilder<SingleLogoutService> sloServiceBuilder;
     private final SAMLObjectBuilder<LogoutResponse> responseBuilder;
     private final SAMLObjectBuilder<NameID> nameIDBuilder;
@@ -193,9 +198,11 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             processLogoutResponse(sloContext, inTransport, outTransport);
         } else if (servletRequest.getParameter("finish") != null) { //Front-channel case only
             //TODO this is just a hack
-            InitialRequestContext initialRequest =
-                    buildRequestContext(sloContext, inTransport, outTransport);
-            respondToInitialRequest(sloContext, initialRequest);
+            if (sloContext.getRequesterEntityID() != null) {
+                InitialRequestContext initialRequest =
+                        buildRequestContext(sloContext, inTransport, outTransport);
+                respondToInitialRequest(sloContext, initialRequest);
+            }
         } else if (servletRequest.getParameter("action") != null) { //Front-channel case only, called by SLOServlet?action
             LogoutInformation nextActive = null;
             //try to retrieve the sp from request parameter
@@ -213,7 +220,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
             initiateFrontChannelLogout(sloContext, nextActive, outTransport);
         } else {
-            log.debug("Processing incoming SAML LogoutRequest");
             processLogoutRequest(inTransport, outTransport);
         }
     }
@@ -282,23 +288,45 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     protected void processLogoutRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
 
-        InitialRequestContext initialRequest = new InitialRequestContext();
-        decodeRequest(initialRequest, inTransport, outTransport);
-
-        checkSamlVersion(initialRequest);
+        HttpServletRequest servletRequest =
+                ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
         Session idpSession = getUserSession(inTransport);
-        if (idpSession == null) {
-            String nameIDValue =
-                    initialRequest.getInboundSAMLMessage().getNameID().getValue();
-            log.info("Session not found in request, trying to resolve session from NameID {}", nameIDValue);
-            idpSession = getSessionManager().getSession(nameIDValue);
+        boolean idpInitiatedLogout =
+                servletRequest.getAttribute(IDP_INITIATED_LOGOUT_ATTR) != null;
+        InitialRequestContext initialRequest = new InitialRequestContext();
+
+        if (idpInitiatedLogout) {
+            //idp initiated logout
+            log.info("Starting the IdP-initiated logout process");
+            initialRequest.setInboundMessageTransport(inTransport);
+            RelyingPartyConfiguration defaultRPC =
+                    getRelyingPartyConfigurationManager().getDefaultRelyingPartyConfiguration();
+            initialRequest.setLocalEntityId(defaultRPC.getProviderId());
+            initialRequest.setProfileConfiguration(
+                    (LogoutRequestConfiguration) defaultRPC.getProfileConfiguration(getProfileId()));
+            servletRequest.setAttribute(SKIP_LOGOUT_QUESTION_ATTR, true);
+        } else {
+            //sp initiated logout
+            log.info("Processing incoming LogoutRequest");
+            decodeRequest(initialRequest, inTransport, outTransport);
+            checkSamlVersion(initialRequest);
+
+            //if session is null, try to find nameid-bound one
+            if (idpSession == null) {
+                String nameIDValue =
+                        initialRequest.getInboundSAMLMessage().getNameID().getValue();
+                log.info("Session not found in request, trying to resolve session from NameID {}", nameIDValue);
+                idpSession = getSessionManager().getSession(nameIDValue);
+            }
         }
         if (idpSession == null) {
             log.warn("Cannot find IdP Session");
             initialRequest.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI, null));
             throw new ProfileException("Cannot find IdP Session for principal");
         }
-        if (!idpSession.getServicesInformation().keySet().
+
+        if (!idpInitiatedLogout &&
+                !idpSession.getServicesInformation().keySet().
                 contains(initialRequest.getInboundMessageIssuer())) {
             String msg = "Requesting entity is not session participant";
             log.warn(msg);
@@ -325,8 +353,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
                 return;
             }
-            HttpServletRequest servletRequest =
-                    ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
             HttpServletResponse servletResponse =
                     ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
             SingleLogoutContextStorageHelper.bindSingleLogoutContext(sloContext, servletRequest);

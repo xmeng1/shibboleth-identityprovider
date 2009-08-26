@@ -18,6 +18,7 @@ package edu.internet2.middleware.shibboleth.idp.slo;
 
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.SLOProfileHandler;
 import edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext.LogoutInformation;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import java.io.IOException;
@@ -91,7 +92,9 @@ public class SLOServlet extends HttpServlet {
         } else if (req.getParameter("finish") != null) { //forward to handler
             SingleLogoutContextStorageHelper.unbindSingleLogoutContext(storageService, context, req, resp);
             req.getRequestDispatcher(sloContext.getProfileHandlerURL()).forward(req, resp);
-        } else if (req.getParameter("logout") != null) { //respond with SLO Controller
+        } else if (req.getParameter("logout") != null || 
+                req.getAttribute(SLOProfileHandler.SKIP_LOGOUT_QUESTION_ATTR) != null) {
+            //respond with SLO Controller
             sloContext.checkTimeout();
             req.getRequestDispatcher("/sloController.jsp").forward(req, resp);
         } else { //respond with confirmation dialog

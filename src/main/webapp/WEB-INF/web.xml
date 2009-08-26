@@ -110,7 +110,22 @@
         <servlet-name>SLOServlet</servlet-name>
         <url-pattern>/SLOServlet</url-pattern>
     </servlet-mapping>
-    <!-- END of SLO Servlet -->
+    
+    <!-- Servlet for IdP - initiated Logout -->
+    <servlet>
+        <servlet-name>LogoutServlet</servlet-name>
+        <servlet-class>edu.internet2.middleware.shibboleth.idp.slo.LogoutServlet</servlet-class>
+        <init-param>
+            <!-- Path for front-channel single logout profile handler -->
+            <param-name>profileHandlerPath</param-name>
+            <param-value>/profile/SAML2/Redirect/SLO</param-value>
+        </init-param>
+        <load-on-startup>3</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LogoutServlet</servlet-name>
+        <url-pattern>/Logout</url-pattern>
+    </servlet-mapping>
 
     <!-- Servlet protected by container user for RemoteUser authentication -->
     <servlet>
