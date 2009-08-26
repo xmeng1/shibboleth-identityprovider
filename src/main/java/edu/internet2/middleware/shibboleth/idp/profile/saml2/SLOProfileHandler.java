@@ -348,10 +348,9 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
             respondToInitialRequest(sloContext, initialRequest);
         } else {
-            if (sloContext.getServiceInformation().size() == 1) {
-                respondToInitialRequest(sloContext, initialRequest);
-
-                return;
+            //skip logout question if the requesting sp is the only session participant
+            if (!idpInitiatedLogout && sloContext.getServiceInformation().size() == 1) {
+                servletRequest.setAttribute(SKIP_LOGOUT_QUESTION_ATTR, true);
             }
             HttpServletResponse servletResponse =
                     ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
