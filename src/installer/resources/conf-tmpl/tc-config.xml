@@ -66,6 +66,10 @@
             </roots>
             <instrumented-classes>
                 <include>
+                    <class-expression>org.opensaml.xml.util.LazyList</class-expression>
+                    <honor-transient>true</honor-transient>
+                </include>
+                <include>
                     <class-expression>edu.vt.middleware.ldap.jaas.LdapPrincipal</class-expression>
                     <honor-transient>true</honor-transient>
                 </include>
