@@ -133,6 +133,22 @@
                     <class-expression>org.opensaml.common.binding.artifact.BasicSAMLArtifactMapEntry</class-expression>
                     <honor-transient>true</honor-transient>
                 </include>
+                <include>
+                    <class-expression>edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContextEntry</class-expression>
+                    <honor-transient>true</honor-transient>
+                </include>
+                <include>
+                    <class-expression>edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext</class-expression>
+                    <honor-transient>true</honor-transient>
+                </include>
+                <include>
+                    <class-expression>edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext$LogoutStatus</class-expression>
+                    <honor-transient>true</honor-transient>
+                </include>
+                <include>
+                    <class-expression>edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext$LogoutInformation</class-expression>
+                    <honor-transient>true</honor-transient>
+                </include>
             </instrumented-classes>
             <locks>
                 <autolock auto-synchronized="false">
@@ -194,6 +210,18 @@
                 <autolock auto-synchronized="false">
                     <method-expression>* edu.internet2.middleware.shibboleth.idp.session.impl.ServiceInformationImpl.get*(..)</method-expression>
                     <lock-level>read</lock-level>
+                </autolock>
+                <autolock auto-synchronized="false">
+                    <method-expression>* edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext.get*(..)</method-expression>
+                    <lock-level>read</lock-level>
+                </autolock>
+                <autolock auto-synchronized="false">
+                    <method-expression>* edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext$LogoutInformation.get*(..)</method-expression>
+                    <lock-level>read</lock-level>
+                </autolock>
+                <autolock auto-synchronized="false">
+                    <method-expression>* edu.internet2.middleware.shibboleth.idp.slo.SingleLogoutContext$LogoutInformation.set*(..)</method-expression>
+                    <lock-level>write</lock-level>
                 </autolock>
             </locks>
         </dso>
