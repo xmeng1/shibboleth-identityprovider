@@ -199,7 +199,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         } else if (servletRequest.getParameter("finish") != null) { //Front-channel case only
             //TODO this is just a hack
             if (sloContext.getRequesterEntityID() != null) {
-                InitialRequestContext initialRequest =
+                InitialLogoutRequestContext initialRequest =
                         buildRequestContext(sloContext, inTransport, outTransport);
                 respondToInitialRequest(sloContext, initialRequest);
             }
@@ -293,7 +293,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         Session idpSession = getUserSession(inTransport);
         boolean idpInitiatedLogout =
                 servletRequest.getAttribute(IDP_INITIATED_LOGOUT_ATTR) != null;
-        InitialRequestContext initialRequest = new InitialRequestContext();
+        InitialLogoutRequestContext initialRequest = new InitialLogoutRequestContext();
 
         if (idpInitiatedLogout) {
             //idp initiated logout
@@ -804,7 +804,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      * @param initialRequest
      * @throws ProfileException
      */
-    protected void respondToInitialRequest(SingleLogoutContext sloContext, InitialRequestContext initialRequest)
+    protected void respondToInitialRequest(SingleLogoutContext sloContext, InitialLogoutRequestContext initialRequest)
             throws ProfileException {
 
         boolean success = true;
@@ -850,17 +850,13 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      * @param idpSession
      * @return
      */
-    private SingleLogoutContext buildSingleLogoutContext(InitialRequestContext initialRequest, Session idpSession) {
+    private SingleLogoutContext buildSingleLogoutContext(InitialLogoutRequestContext initialRequest, Session idpSession) {
         HttpServletRequest servletRequest =
                 ((HttpServletRequestAdapter) initialRequest.getInboundMessageTransport()).getWrappedRequest();
 
-        return new SingleLogoutContext(
+        return SingleLogoutContext.createInstance(
                 HttpHelper.getRequestUriWithoutContext(servletRequest),
-                initialRequest.getPeerEntityId(),
-                initialRequest.getLocalEntityId(),
-                initialRequest.getInboundSAMLMessageId(),
-                initialRequest.getRelayState(),
-                initialRequest.getProfileConfiguration(),
+                initialRequest,
                 idpSession);
     }
 
@@ -870,10 +866,10 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      * @param sloContext
      * @return
      */
-    protected InitialRequestContext buildRequestContext(SingleLogoutContext sloContext,
+    protected InitialLogoutRequestContext buildRequestContext(SingleLogoutContext sloContext,
             HTTPInTransport in, HTTPOutTransport out) throws ProfileException {
 
-        InitialRequestContext initialRequest = new InitialRequestContext();
+        InitialLogoutRequestContext initialRequest = new InitialLogoutRequestContext();
 
         initialRequest.setCommunicationProfileId(getProfileId());
         initialRequest.setMessageDecoder(getMessageDecoders().get(getInboundBinding()));
@@ -927,7 +923,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      *
      * @throws ProfileException throw if there is a problem decoding the request
      */
-    protected void decodeRequest(InitialRequestContext initialRequest,
+    protected void decodeRequest(InitialLogoutRequestContext initialRequest,
             HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
         log.debug("Decoding message with decoder binding '{}'", getInboundBinding());
@@ -976,7 +972,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         }
     }
 
-    public class InitialRequestContext
+    public class InitialLogoutRequestContext
             extends BaseSAML2ProfileRequestContext<LogoutRequest, LogoutResponse, LogoutRequestConfiguration> {
     }
 
