@@ -15,7 +15,7 @@ Boolean sloAttempted = false;
 <html>
     <head>
         <link title="style" href="<%= contextPath %>/css/main.css" type="text/css" rel="stylesheet" />
-        <title>Shibboleth IdP Frontchannel Single Log-out Controller</title>
+        <title>Shibboleth IdP Logout</title>
         <script language="javascript" type="text/javascript">
             <!--
             var timer = 0;

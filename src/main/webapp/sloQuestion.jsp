@@ -12,7 +12,7 @@ String requesterSP = sloContext.getServiceInformation().
 <html>
     <head>
         <link title="style" href="<%= contextPath %>/css/main.css" type="text/css" rel="stylesheet" />
-        <title>Shibboleth IdP Frontchannel Single Log-out Controller</title>
+        <title>Shibboleth IdP Logout</title>
     </head>
     <body>
         <div class="content">
