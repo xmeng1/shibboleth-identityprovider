@@ -879,18 +879,19 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                         if (requiredNameFormat != null) {
                             if (nameIdEncoder.getNameFormat().equals(requiredNameFormat)) {
                                 nameIdAttribute = attribute;
-                                nameIdEncoder = (SAML2NameIDEncoder) encoder;
                                 break;
                             }
                         } else {
                             if (supportedNameFormats.isEmpty()
                                     || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                                 nameIdAttribute = attribute;
-                                nameIdEncoder = (SAML2NameIDEncoder) encoder;
                                 break;
                             }
                         }
                     }
+                }
+                if (nameIdAttribute != null) {
+                    break;
                 }
             }
         }

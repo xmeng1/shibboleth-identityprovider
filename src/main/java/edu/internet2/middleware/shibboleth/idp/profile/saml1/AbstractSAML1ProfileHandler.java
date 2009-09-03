@@ -397,6 +397,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     }
                 }
             }
+            if (nameIdAttribute != null) {
+                break;
+            }
         }
 
         if (nameIdAttribute == null || nameIdEncoder == null) {
