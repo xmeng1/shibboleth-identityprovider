@@ -360,6 +360,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      */
     protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
+        if(requestContext.getAttributes() == null){
+            return null;
+        }
+        
         log.debug("Attemping to build NameIdentifier for principal '{}' in response to request from relying party '{}",
                 requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
 
@@ -493,8 +497,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * Resolved the attributes for the principal.
      * 
      * @param requestContext current request context
-     * 
-     * @throws ProfileException thrown if attributes can not be resolved
      */
     protected void resolveAttributes(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
@@ -507,12 +509,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
             requestContext.setAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error resolving attributes"));
-            String msg = MessageFormatter.format(
-                    "Error resolving attributes for principal '{}' for SAML request from relying party '{}'",
-                    requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-            log.error(msg, e);
-            throw new ProfileException(msg, e);
+            log.warn("Error resolving attributes for principal '{}'.  No name identifier or attribute statement will be included in response",
+                    requestContext.getPrincipalName());
         }
     }
 
@@ -529,6 +527,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     protected AttributeStatement buildAttributeStatement(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext,
             String subjectConfMethod) throws ProfileException {
 
+        if(requestContext.getAttributes() == null){
+            return null;
+        }
+        
         log.debug(
                 "Creating attribute statement about principal '{}'in response to SAML request from relying party '{}'",
                 requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
