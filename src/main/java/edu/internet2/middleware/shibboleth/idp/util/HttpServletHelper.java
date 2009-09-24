@@ -165,7 +165,7 @@ public class HttpServletHelper {
 
         Cookie contextKeyCookie = new Cookie(LOGIN_CTX_KEY_NAME, contextKey);
         contextKeyCookie.setVersion(1);
-        contextKeyCookie.setPath(httpRequest.getContextPath() == "" ? "/" : httpRequest.getContextPath());
+        contextKeyCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
         contextKeyCookie.setSecure(httpRequest.isSecure());
         httpResponse.addCookie(contextKeyCookie);
     }
@@ -531,6 +531,8 @@ public class HttpServletHelper {
 
         httpRequest.setAttribute(LOGIN_CTX_KEY_NAME, null);
         loginContextKeyCookie.setMaxAge(0);
+        loginContextKeyCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
+        loginContextKeyCookie.setVersion(1);
         httpResponse.addCookie(loginContextKeyCookie);
 
         LoginContextEntry entry = (LoginContextEntry) storageService.remove(getContextParam(context,

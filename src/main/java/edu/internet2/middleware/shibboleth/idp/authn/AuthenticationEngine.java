@@ -126,13 +126,10 @@ public class AuthenticationEngine extends HttpServlet {
         } else {
             retainSubjectsPublicCredentials = false;
         }
-
-        handlerManager = HttpServletHelper.getProfileHandlerManager(config.getServletContext());
-        sessionManager = HttpServletHelper.getSessionManager(config.getServletContext());
-        storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(config
-                .getServletContext());
-
         context = config.getServletContext();
+        handlerManager = HttpServletHelper.getProfileHandlerManager(context);
+        sessionManager = HttpServletHelper.getSessionManager(context);
+        storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(context);
     }
 
     /**
@@ -166,6 +163,8 @@ public class AuthenticationEngine extends HttpServlet {
             forwardRequest("/error.jsp", httpRequest, httpResponse);
         }
 
+        // Remove the login context from the replicated store and bind it to the request
+        HttpServletHelper.unbindLoginContext(storageService, context, httpRequest, httpResponse);
         HttpServletHelper.bindLoginContext(loginContext, httpRequest);
         LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
         forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
@@ -453,7 +452,8 @@ public class AuthenticationEngine extends HttpServlet {
             if (actualAuthnMethod != null) {
                 if (!loginContext.getRequestedAuthenticationMethods().isEmpty()
                         && !loginContext.getRequestedAuthenticationMethods().contains(actualAuthnMethod)) {
-                    String msg = MessageFormatter.format(
+                    String msg = MessageFormatter
+                            .format(
                                     "Relying patry required an authentication method of '{}' but the login handler performed '{}'",
                                     loginContext.getRequestedAuthenticationMethods(), actualAuthnMethod);
                     LOG.error(msg);
@@ -704,10 +704,10 @@ public class AuthenticationEngine extends HttpServlet {
         cookieValue.append(Base64.encodeBytes(remoteAddress, Base64.DONT_BREAK_LINES)).append("|");
         cookieValue.append(Base64.encodeBytes(sessionId, Base64.DONT_BREAK_LINES)).append("|");
         cookieValue.append(signature);
-        
+
         Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, HTTPTransportUtils.urlEncode(cookieValue.toString()));
         sessionCookie.setVersion(1);
-        sessionCookie.setPath(httpRequest.getContextPath() == "" ? "/" : httpRequest.getContextPath());
+        sessionCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
         sessionCookie.setSecure(httpRequest.isSecure());
         httpResponse.addCookie(sessionCookie);
     }
