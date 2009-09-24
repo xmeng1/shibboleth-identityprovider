@@ -1,3 +1,8 @@
+Changes in Release 2.1.4
+=============================================
+[SIDP-340] - Default tc-config.xml causes TCNonPortableObjectError
+[SIDP-348] - Remove Terracotta Configuration from IdP Install
+
 Changes in Release 2.1.3
 =============================================
 [SIDP-244] - Error message on invalid ACS could be improved
