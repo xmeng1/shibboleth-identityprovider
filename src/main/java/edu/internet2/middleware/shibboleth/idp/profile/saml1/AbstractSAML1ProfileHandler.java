@@ -385,7 +385,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         BaseAttribute<?> nameIdAttribute = null;
         SAML1NameIdentifierEncoder nameIdEncoder = null;
-        for (BaseAttribute<?> attribute : principalAttributes.values()) {
+        ATTRIBUTESELECT: for (BaseAttribute<?> attribute : principalAttributes.values()) {
             if (attribute == null) {
                 continue;
             }
@@ -397,26 +397,21 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
                     if (supportedNameFormats.isEmpty() || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                         nameIdAttribute = attribute;
-                        break;
+                        break ATTRIBUTESELECT;
                     }
                 }
             }
         }
 
         if (nameIdAttribute == null || nameIdEncoder == null) {
-            log
-                    .debug(
-                            "No attributes for principal '{}' supports encoding into a supported NameIdentifier format for relying party '{}'",
+            log.debug("No attributes for principal '{}' supports encoding into a supported NameIdentifier format for relying party '{}'",
                             requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
             return null;
         }
 
         try {
-            log
-                    .debug(
-                            "Using attribute '{}' supporting name format '{}' to create the NameIdentifier for relying party '{}'",
-                            new Object[] { nameIdAttribute.getId(), nameIdEncoder.getNameFormat(),
-                                    requestContext.getInboundMessageIssuer() });
+            log.debug("Using attribute '{}' supporting name format '{}' to create the NameIdentifier for relying party '{}'",
+                            new Object[] { nameIdAttribute.getId(), nameIdEncoder.getNameFormat(), requestContext.getInboundMessageIssuer(), });
             return nameIdEncoder.encode(nameIdAttribute);
         } catch (AttributeEncodingException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to encode NameIdentifier"));

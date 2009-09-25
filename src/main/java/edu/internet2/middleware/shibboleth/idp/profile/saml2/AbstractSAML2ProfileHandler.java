@@ -867,7 +867,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
         if (principalAttributes != null) {
-            for (BaseAttribute<?> attribute : principalAttributes.values()) {
+            ATTRIBUTESELECT: for (BaseAttribute<?> attribute : principalAttributes.values()) {
                 if (attribute == null) {
                     continue;
                 }
@@ -884,14 +884,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                             if (nameIdEncoder.getNameFormat().equals(requiredNameFormat)) {
                                 nameIdAttribute = attribute;
                                 nameIdEncoder = (SAML2NameIDEncoder) encoder;
-                                break;
+                                break ATTRIBUTESELECT;
                             }
                         } else {
                             if (supportedNameFormats.isEmpty()
                                     || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                                 nameIdAttribute = attribute;
                                 nameIdEncoder = (SAML2NameIDEncoder) encoder;
-                                break;
+                                break ATTRIBUTESELECT;
                             }
                         }
                     }
