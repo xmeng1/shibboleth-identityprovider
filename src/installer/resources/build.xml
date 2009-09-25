@@ -116,6 +116,10 @@
                 </copy>
             </then>
             <else>
+                <propertyfile file="${resources.dir}/install.properties">
+                    <entry key="idp.home" value="${idp.home.input}" />
+                </propertyfile>
+            	
                 <!-- 
                     Even if we're not overwritting the config we should still add new files, for example, files added
                     in a new release.

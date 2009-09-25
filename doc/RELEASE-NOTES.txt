@@ -4,6 +4,7 @@ Changes in Release 2.1.4
 [SIDP-342] - NameIdentifier encoder mix-up when the SP doesn't support the first NameIdentifier format
 [SIDP-348] - Remove Terracotta Configuration from IdP Install
 [SIDP-249] - LoginContext is not removed from StorageService after Authentication Completes
+[SIDP-350] - Installer does not remember installation directory when upgrading
 [SIDP-351] - Attribute resolution errors shouldn't prevent valid authn statement being returned
 
 Changes in Release 2.1.3
