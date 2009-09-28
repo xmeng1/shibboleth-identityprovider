@@ -50,6 +50,7 @@ import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
+import edu.internet2.middleware.shibboleth.idp.authn.provider.PreviousSessionLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
@@ -242,32 +243,9 @@ public class AuthenticationEngine extends HttpServlet {
             if (loginContext.isPassiveAuthRequired()) {
                 filterByPassiveAuthentication(idpSession, loginContext, possibleLoginHandlers);
             }
-
-            // If the user already has a session and its usage is acceptable than use it
-            // otherwise just use the first candidate login handler
             LOG.debug("Possible authentication handlers after filtering: {}", possibleLoginHandlers);
-            LoginHandler loginHandler;
-            if (idpSession != null && possibleLoginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX)) {
-                loginContext.setAttemptedAuthnMethod(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
-                loginHandler = possibleLoginHandlers.get(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
-            } else {
-                possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
-                if (possibleLoginHandlers.isEmpty()) {
-                    LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext
-                            .getRelyingPartyId());
-                    throw new AuthenticationException();
-                }
 
-                if (loginContext.getDefaultAuthenticationMethod() != null
-                        && possibleLoginHandlers.containsKey(loginContext.getDefaultAuthenticationMethod())) {
-                    loginHandler = possibleLoginHandlers.get(loginContext.getDefaultAuthenticationMethod());
-                    loginContext.setAttemptedAuthnMethod(loginContext.getDefaultAuthenticationMethod());
-                } else {
-                    Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
-                    loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
-                    loginHandler = chosenLoginHandler.getValue();
-                }
-            }
+            LoginHandler loginHandler = selectLoginHandler(possibleLoginHandlers, loginContext, idpSession);
 
             LOG.debug("Authenticating user with login handler of type {}", loginHandler.getClass().getName());
             loginContext.setAuthenticationAttempted();
@@ -281,6 +259,62 @@ public class AuthenticationEngine extends HttpServlet {
             loginContext.setAuthenticationFailure(e);
             returnToProfileHandler(httpRequest, httpResponse);
         }
+    }
+
+    /**
+     * Selects a login handler from a list of possible login handlers that could be used for the request.
+     * 
+     * @param possibleLoginHandlers list of possible login handlers that could be used for the request
+     * @param loginContext current login context
+     * @param idpSession current IdP session, if one exists
+     * 
+     * @return the login handler to use for this request
+     * 
+     * @throws AuthenticationException thrown if no handler can be used for this request
+     */
+    protected LoginHandler selectLoginHandler(Map<String, LoginHandler> possibleLoginHandlers,
+            LoginContext loginContext, Session idpSession) throws AuthenticationException {
+        LOG.debug("Selecting appropriate login handler for request");
+        LoginHandler loginHandler;
+        if (idpSession != null && possibleLoginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX)) {
+            LOG.debug("Using previous session login handler");
+            loginHandler = possibleLoginHandlers.get(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
+
+            for (AuthenticationMethodInformation authnMethod : idpSession.getAuthenticationMethods().values()) {
+                if (authnMethod.isExpired()) {
+                    continue;
+                }
+
+                if (loginContext.getRequestedAuthenticationMethods().isEmpty()
+                        || loginContext.getRequestedAuthenticationMethods().contains(
+                                authnMethod.getAuthenticationMethod())) {
+                    LOG.debug("Basing previous session authentication on active authentication method {}", authnMethod
+                            .getAuthenticationMethod());
+                    loginContext.setAttemptedAuthnMethod(authnMethod.getAuthenticationMethod());
+                    loginContext.setAuthenticationMethodInformation(authnMethod);
+                    break;
+                }
+            }
+        } else {
+            possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
+            if (possibleLoginHandlers.isEmpty()) {
+                LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext
+                        .getRelyingPartyId());
+                throw new AuthenticationException();
+            }
+
+            if (loginContext.getDefaultAuthenticationMethod() != null
+                    && possibleLoginHandlers.containsKey(loginContext.getDefaultAuthenticationMethod())) {
+                loginHandler = possibleLoginHandlers.get(loginContext.getDefaultAuthenticationMethod());
+                loginContext.setAttemptedAuthnMethod(loginContext.getDefaultAuthenticationMethod());
+            } else {
+                Entry<String, LoginHandler> chosenLoginHandler = possibleLoginHandlers.entrySet().iterator().next();
+                loginContext.setAttemptedAuthnMethod(chosenLoginHandler.getKey());
+                loginHandler = chosenLoginHandler.getValue();
+            }
+        }
+
+        return loginHandler;
     }
 
     /**
@@ -502,6 +536,11 @@ public class AuthenticationEngine extends HttpServlet {
             String authenticationMethod) throws AuthenticationException {
         LOG.debug("Validating authentication was performed successfully");
 
+        if (authenticationMethod == null) {
+            LOG.error("No authentication method reported by login handler.");
+            throw new AuthenticationException("No authentication method reported by login handler.");
+        }
+
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
         if (errorMessage != null) {
@@ -612,12 +651,16 @@ public class AuthenticationEngine extends HttpServlet {
         // login handler subject
         idpSession.setSubject(mergeSubjects(idpSession.getSubject(), authenticationSubject));
 
-        LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
-                authenticationPrincipal.getName());
-        LoginHandler loginHandler = handlerManager.getLoginHandlers().get(loginContext.getAttemptedAuthnMethod());
-        AuthenticationMethodInformation authnMethodInfo = new AuthenticationMethodInformationImpl(idpSession
-                .getSubject(), authenticationPrincipal, authenticationMethod, new DateTime(), loginHandler
-                .getAuthenticationDuration());
+        // Check if an existing authentication method was used (i.e. SSO occurred), if not record the new information
+        AuthenticationMethodInformation authnMethodInfo = loginContext.getAuthenticationMethodInformation();
+        if(authnMethodInfo == null || !authnMethodInfo.getAuthenticationMethod().equals(authenticationMethod)){
+            LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
+                    authenticationPrincipal.getName());
+            LoginHandler loginHandler = handlerManager.getLoginHandlers().get(loginContext.getAttemptedAuthnMethod());
+            authnMethodInfo = new AuthenticationMethodInformationImpl(idpSession
+                    .getSubject(), authenticationPrincipal, authenticationMethod, new DateTime(), loginHandler
+                    .getAuthenticationDuration());
+        }
 
         loginContext.setAuthenticationMethodInformation(authnMethodInfo);
         idpSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);

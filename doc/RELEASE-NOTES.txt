@@ -2,6 +2,7 @@ Changes in Release 2.1.4
 =============================================
 [SIDP-340] - Default tc-config.xml causes TCNonPortableObjectError
 [SIDP-342] - NameIdentifier encoder mix-up when the SP doesn't support the first NameIdentifier format
+[SIDP-343] - AuthnInstant is updated even when authentication doesn't happen
 [SIDP-348] - Remove Terracotta Configuration from IdP Install
 [SIDP-249] - LoginContext is not removed from StorageService after Authentication Completes
 [SIDP-350] - Installer does not remember installation directory when upgrading
