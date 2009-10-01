@@ -90,6 +90,17 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             } else {
                 checkSamlVersion(requestContext);
 
+                // TODO add proper requested attribute filtering support
+                AttributeQuery query = requestContext.getInboundSAMLMessage();
+                if (query.getAttributes() != null && !query.getAttributes().isEmpty()) {
+                    log.warn("Specific attributes requested in query '{}'. This functionality is not yet supported",
+                            requestContext.getInboundMessageIssuer());
+                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
+                            StatusCode.REQUEST_UNSUPPORTED_URI,
+                            "Request of specific attributes during an attribute query is not supported"));
+                    throw new ProfileException();
+                }
+
                 // Resolve attribute query name id to principal name and place in context
                 resolvePrincipal(requestContext);
 
@@ -140,8 +151,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     protected void decodeRequest(AttributeQueryContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
         if (log.isDebugEnabled()) {
-            log.debug("Decoding message with decoder binding '{}'",
-                    getInboundMessageDecoder(requestContext).getBindingURI());
+            log.debug("Decoding message with decoder binding '{}'", getInboundMessageDecoder(requestContext)
+                    .getBindingURI());
         }
 
         requestContext.setCommunicationProfileId(getProfileId());
