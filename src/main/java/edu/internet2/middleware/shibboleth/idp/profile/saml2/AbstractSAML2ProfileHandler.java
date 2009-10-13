@@ -462,12 +462,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
             requestContext.setAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error resolving attributes"));
-            String msg = MessageFormatter.format(
-                    "Error resolving attributes for principal '{}' for SAML request from relying party '{}'",
-                    requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-            log.error(msg, e);
-            throw new ProfileException(msg, e);
+            log.warn("Error resolving attributes for principal '{}'.  No name identifier or attribute statement will be included in response",
+                    requestContext.getPrincipalName());
         }
     }
 
@@ -482,6 +478,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected AttributeStatement buildAttributeStatement(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
+        if(requestContext.getAttributes() == null){
+            return null;
+        }
+        
         log.debug("Creating attribute statement in response to SAML request '{}' from relying party '{}'",
                 requestContext.getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
 
@@ -826,9 +826,13 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      *             name ID attribute or because there are no supported name formats
      */
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
+        if(requestContext.getAttributes() == null){
+            return null;
+        }
+        
         log.debug("Building assertion NameID for principal/relying party:{}/{}", requestContext.getPrincipalName(),
                 requestContext.getInboundMessageIssuer());
-
+        
         // Check if AuthnRequest includes an explicit NameIDPolicy Format.
         String requiredNameFormat = null;
         if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
@@ -863,7 +867,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
         if (principalAttributes != null) {
-            for (BaseAttribute<?> attribute : principalAttributes.values()) {
+            ATTRIBUTESELECT: for (BaseAttribute<?> attribute : principalAttributes.values()) {
                 if (attribute == null) {
                     continue;
                 }
@@ -874,18 +878,18 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     }
 
                     if (encoder instanceof SAML2NameIDEncoder) {
-                        nameIdEncoder = (SAML2NameIDEncoder)encoder;
-                        
                         if (requiredNameFormat != null) {
                             if (nameIdEncoder.getNameFormat().equals(requiredNameFormat)) {
                                 nameIdAttribute = attribute;
-                                break;
+                                nameIdEncoder = (SAML2NameIDEncoder) encoder;
+                                break ATTRIBUTESELECT;
                             }
                         } else {
                             if (supportedNameFormats.isEmpty()
                                     || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                                 nameIdAttribute = attribute;
-                                break;
+                                nameIdEncoder = (SAML2NameIDEncoder) encoder;
+                                break ATTRIBUTESELECT;
                             }
                         }
                     }

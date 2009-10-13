@@ -360,6 +360,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      */
     protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
+        if(requestContext.getAttributes() == null){
+            return null;
+        }
+        
         log.debug("Attemping to build NameIdentifier for principal '{}' in response to request from relying party '{}",
                 requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
 
@@ -381,7 +385,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
         BaseAttribute<?> nameIdAttribute = null;
         SAML1NameIdentifierEncoder nameIdEncoder = null;
-        for (BaseAttribute<?> attribute : principalAttributes.values()) {
+        ATTRIBUTESELECT: for (BaseAttribute<?> attribute : principalAttributes.values()) {
             if (attribute == null) {
                 continue;
             }
@@ -393,7 +397,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     nameIdEncoder = (SAML1NameIdentifierEncoder) encoder;
                     if (supportedNameFormats.isEmpty() || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
                         nameIdAttribute = attribute;
-                        break;
+                        break ATTRIBUTESELECT;
                     }
                 }
             }
@@ -403,19 +407,14 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         if (nameIdAttribute == null || nameIdEncoder == null) {
-            log
-                    .debug(
-                            "No attributes for principal '{}' supports encoding into a supported NameIdentifier format for relying party '{}'",
+            log.debug("No attributes for principal '{}' supports encoding into a supported NameIdentifier format for relying party '{}'",
                             requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
             return null;
         }
 
         try {
-            log
-                    .debug(
-                            "Using attribute '{}' supporting name format '{}' to create the NameIdentifier for relying party '{}'",
-                            new Object[] { nameIdAttribute.getId(), nameIdEncoder.getNameFormat(),
-                                    requestContext.getInboundMessageIssuer() });
+            log.debug("Using attribute '{}' supporting name format '{}' to create the NameIdentifier for relying party '{}'",
+                            new Object[] { nameIdAttribute.getId(), nameIdEncoder.getNameFormat(), requestContext.getInboundMessageIssuer(), });
             return nameIdEncoder.encode(nameIdAttribute);
         } catch (AttributeEncodingException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to encode NameIdentifier"));
@@ -496,8 +495,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      * Resolved the attributes for the principal.
      * 
      * @param requestContext current request context
-     * 
-     * @throws ProfileException thrown if attributes can not be resolved
      */
     protected void resolveAttributes(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML1ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
@@ -510,12 +507,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
 
             requestContext.setAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
-            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error resolving attributes"));
-            String msg = MessageFormatter.format(
-                    "Error resolving attributes for principal '{}' for SAML request from relying party '{}'",
-                    requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-            log.error(msg, e);
-            throw new ProfileException(msg, e);
+            log.warn("Error resolving attributes for principal '{}'.  No name identifier or attribute statement will be included in response",
+                    requestContext.getPrincipalName());
         }
     }
 
@@ -532,6 +525,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
     protected AttributeStatement buildAttributeStatement(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext,
             String subjectConfMethod) throws ProfileException {
 
+        if(requestContext.getAttributes() == null){
+            return null;
+        }
+        
         log.debug(
                 "Creating attribute statement about principal '{}'in response to SAML request from relying party '{}'",
                 requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());

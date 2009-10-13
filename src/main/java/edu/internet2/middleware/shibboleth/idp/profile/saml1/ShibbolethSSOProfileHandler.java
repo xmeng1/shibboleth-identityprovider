@@ -88,9 +88,6 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
      * Constructor.
      * 
      * @param authnManagerPath path to the authentication manager servlet
-     * 
-     * @throws IllegalArgumentException thrown if either the authentication manager path or encoding binding URI are
-     *             null or empty
      */
     public ShibbolethSSOProfileHandler(String authnManagerPath) {
         if (DatatypeHelper.isEmpty(authnManagerPath)) {
@@ -256,16 +253,16 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             }
 
             resolveAttributes(requestContext);
-
+            
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthenticationStatement(requestContext));
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
-                AttributeStatement attributeStatement = buildAttributeStatement(requestContext,
-                        "urn:oasis:names:tc:SAML:1.0:cm:bearer");
-                if (attributeStatement != null) {
-                    requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
-                    statements.add(attributeStatement);
-                }
+                    AttributeStatement attributeStatement = buildAttributeStatement(requestContext,
+                            "urn:oasis:names:tc:SAML:1.0:cm:bearer");
+                    if (attributeStatement != null) {
+                        requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
+                        statements.add(attributeStatement);
+                    }
             }
 
             samlResponse = buildResponse(requestContext, statements);
