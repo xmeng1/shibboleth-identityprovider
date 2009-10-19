@@ -878,6 +878,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     }
 
                     if (encoder instanceof SAML2NameIDEncoder) {
+                        nameIdEncoder = (SAML2NameIDEncoder)encoder;
+                        
                         if (requiredNameFormat != null) {
                             if (nameIdEncoder.getNameFormat().equals(requiredNameFormat)) {
                                 nameIdAttribute = attribute;
@@ -893,9 +895,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                             }
                         }
                     }
-                }
-                if (nameIdAttribute != null) {
-                    break;
                 }
             }
         }
