@@ -6,10 +6,6 @@
 <%
     LoginContext loginContext = HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application),
                                                                   application, request);
-                                                                  
-    EntityDescriptor entityDescriptor = HttpServletHelper.getRelyingPartyMetadata(loginContext.getRelyingPartyId(),
-                                                   HttpServletHelper.getRelyingPartyConfirmationManager(application)); 
-                                                    
     Session userSession = HttpServletHelper.getUserSession(request);
 %>
 
@@ -21,7 +17,7 @@
 
 	<body>
 		<img src="<%= request.getContextPath() %>/images/logo.jpg" />
-		<h2>Shibboleth Identity Provider Login to Service Provider <%= entityDescriptor.getEntityID() %></h2>
+		<h2>Shibboleth Identity Provider Login to Service Provider <%= loginContext.getRelyingPartyId() %></h2>
 		<p>
         Existing Session: <%= userSession != null %><br/>	
 		Requested Authentication Methods: <%= loginContext.getRequestedAuthenticationMethods() %><br/>

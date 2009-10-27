@@ -1,3 +1,7 @@
+Changes in Release 2.1.5
+=============================================
+[SIDP-353] - Default login.jsp crashes on anonymous RPs
+
 Changes in Release 2.1.4
 =============================================
 [SIDP-340] - Default tc-config.xml causes TCNonPortableObjectError
