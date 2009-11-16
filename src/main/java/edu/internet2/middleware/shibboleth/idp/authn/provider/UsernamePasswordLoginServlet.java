@@ -103,7 +103,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             return;
         }
 
-        if (authenticateUser(request)) {
+        if (authenticateUser(request, username, password)) {
             AuthenticationEngine.returnToAuthenticationEngine(request, response);
         } else {
             List<Pair<String, String>> queryParams = new ArrayList<Pair<String, String>>();
@@ -149,13 +149,12 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      * the username if that is empty, and the subject are placed into the request in their respective attributes.
      * 
      * @param request current authentication request
+     * @param username the principal name of the user to be authenticated
+     * @param password the password of the user to be authenticated
      * 
      * @return true of authentication succeeds, false if not
      */
-    protected boolean authenticateUser(HttpServletRequest request) {
-        String username = DatatypeHelper.safeTrimOrNullString(request.getParameter(usernameAttribute));
-        String password = DatatypeHelper.safeTrimOrNullString(request.getParameter(passwordAttribute));
-
+    protected boolean authenticateUser(HttpServletRequest request, String username, String password) {
         try {
             log.debug("Attempting to authenticate user {}", username);
 
