@@ -96,8 +96,8 @@ public class ServiceInformationImpl implements ServiceInformation {
      * 
      * @param nameIdentifier
      */
-    public void setSAML2NameIdentifier(NameID nameIdentifier) {
-        synchronized (this) {
+    public synchronized void setSAML2NameIdentifier(NameID nameIdentifier) {
+        if (nameIdentifier != null) {
             this.nameIdentifier = nameIdentifier.getValue();
             this.nameIdentifierFormat = nameIdentifier.getFormat();
             this.nameQualifier = nameIdentifier.getNameQualifier();
@@ -110,8 +110,8 @@ public class ServiceInformationImpl implements ServiceInformation {
      * 
      * @param nameIdentifier
      */
-    public void setShibbolethNameIdentifier(NameIdentifier nameIdentifier) {
-        synchronized (this) {
+    public synchronized void setShibbolethNameIdentifier(NameIdentifier nameIdentifier) {
+        if (nameIdentifier != null) {
             this.nameIdentifier = nameIdentifier.getNameIdentifier();
             this.nameIdentifierFormat = nameIdentifier.getFormat();
             this.nameQualifier = nameIdentifier.getNameQualifier();
@@ -119,30 +119,22 @@ public class ServiceInformationImpl implements ServiceInformation {
     }
 
     /** {@inheritDoc} */
-    public String getNameIdentifier() {
-        synchronized (this) {
-            return nameIdentifier;
-        }
+    public synchronized String getNameIdentifier() {
+        return nameIdentifier;
     }
 
     /** {@inheritDoc} */
-    public String getNameIdentifierFormat() {
-        synchronized (this) {
-            return nameIdentifierFormat;
-        }
+    public synchronized String getNameIdentifierFormat() {
+        return nameIdentifierFormat;
     }
 
     /** {@inheritDoc} */
-    public String getNameQualifier() {
-        synchronized (this) {
-            return nameQualifier;
-        }
+    public synchronized String getNameQualifier() {
+        return nameQualifier;
     }
 
     /** {@inheritDoc} */
-    public String getSPNameQualifier() {
-        synchronized (this) {
-            return SPNameQualifier;
-        }
+    public synchronized String getSPNameQualifier() {
+        return SPNameQualifier;
     }
 }
