@@ -58,6 +58,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfigurat
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
+import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
@@ -277,7 +278,11 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
         serviceInfo.setShibbolethNameIdentifier(nameID);
         //index session by nameid
-        getSessionManager().indexSession(session, nameID.getNameIdentifier());
+        SessionManager<Session> sessionManager = getSessionManager();
+        String index = sessionManager.getIndexFromNameID(nameID);
+        if (index != null) {
+            sessionManager.indexSession(session, index);
+        }
 
         requestContext.setOutboundSAMLMessage(samlResponse);
         requestContext.setOutboundSAMLMessageId(samlResponse.getID());

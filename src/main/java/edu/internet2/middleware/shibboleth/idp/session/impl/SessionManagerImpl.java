@@ -19,6 +19,8 @@ package edu.internet2.middleware.shibboleth.idp.session.impl;
 import java.security.SecureRandom;
 
 import org.apache.commons.ssl.util.Hex;
+import org.opensaml.saml1.core.NameIdentifier;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
@@ -100,8 +102,10 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         byte[] sessionSecret = new byte[16];
         prng.nextBytes(sessionSecret);
 
-        Session session = new SessionImpl(sessionID, sessionSecret, sessionLifetime);
-        SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
+        Session session =
+                new SessionImpl(sessionID, sessionSecret, sessionLifetime);
+        SessionManagerEntry sessionEntry =
+                new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
 
         MDC.put("idpSessionId", sessionID);
@@ -120,10 +124,12 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         byte[] sessionSecret = new byte[16];
         prng.nextBytes(sessionSecret);
 
-        Session session = new SessionImpl(sessionID, sessionSecret, sessionLifetime);
-        SessionManagerEntry sessionEntry = new SessionManagerEntry(session, sessionLifetime);
+        Session session =
+                new SessionImpl(sessionID, sessionSecret, sessionLifetime);
+        SessionManagerEntry sessionEntry =
+                new SessionManagerEntry(session, sessionLifetime);
         sessionStore.put(partition, sessionID, sessionEntry);
-        
+
         MDC.put("idpSessionId", sessionID);
         log.trace("Created session {}", sessionID);
         return session;
@@ -219,5 +225,43 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
             rootContext = rootContext.getParent();
         }
         appCtx = rootContext;
+    }
+
+    /** {@inheritDoc} */
+    public String getIndexFromNameID(NameIdentifier nameIdentifier) {
+        if (nameIdentifier == null || nameIdentifier.getNameIdentifier() == null) {
+            return null;
+        }
+        StringBuilder b = new StringBuilder();
+        b.append(nameIdentifier.getNameIdentifier());
+        b.append("|");
+        b.append(nameIdentifier.getFormat());
+        if (nameIdentifier.getNameQualifier() != null) {
+            b.append("|");
+            b.append(nameIdentifier.getNameQualifier());
+        }
+
+        return b.toString();
+    }
+
+    /** {@inheritDoc} */
+    public String getIndexFromNameID(NameID nameIdentifier) {
+        if (nameIdentifier == null || nameIdentifier.getValue() == null) {
+            return null;
+        }
+        StringBuilder b = new StringBuilder();
+        b.append(nameIdentifier.getValue());
+        b.append("|");
+        b.append(nameIdentifier.getFormat());
+        if (nameIdentifier.getNameQualifier() != null || nameIdentifier.getSPNameQualifier() != null) {
+            b.append("|");
+            b.append(nameIdentifier.getNameQualifier());
+        }
+        if (nameIdentifier.getSPNameQualifier() != null) {
+            b.append("|");
+            b.append(nameIdentifier.getSPNameQualifier());
+        }
+
+        return b.toString();
     }
 }

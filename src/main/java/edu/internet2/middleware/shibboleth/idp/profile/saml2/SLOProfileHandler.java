@@ -20,6 +20,7 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration;
+import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.slo.HTTPClientInTransportAdapter;
@@ -313,10 +314,13 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
             //if session is null, try to find nameid-bound one
             if (idpSession == null) {
-                String nameIDValue =
-                        initialRequest.getInboundSAMLMessage().getNameID().getValue();
-                log.info("Session not found in request, trying to resolve session from NameID {}", nameIDValue);
-                idpSession = getSessionManager().getSession(nameIDValue);
+                NameID nameID =
+                        initialRequest.getInboundSAMLMessage().getNameID();
+                SessionManager<Session> sessionManager = getSessionManager();
+                String nameIDIndex = sessionManager.getIndexFromNameID(nameID);
+                log.info("Session not found in request, trying to resolve session from NameID '{}'",
+                        nameIDIndex);
+                idpSession = sessionManager.getSession(nameIDIndex);
             }
         }
         if (idpSession == null) {

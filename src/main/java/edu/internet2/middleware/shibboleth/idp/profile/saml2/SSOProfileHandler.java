@@ -70,6 +70,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfigurat
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration;
+import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
@@ -268,7 +269,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
         serviceInfo.setSAML2NameIdentifier(nameID);
         //index session by nameid
-        getSessionManager().indexSession(session, nameID.getValue());
+        SessionManager<Session> sessionManager = getSessionManager();
+        String index = sessionManager.getIndexFromNameID(nameID);
+        if (index != null) {
+            sessionManager.indexSession(session, index);
+        }
 
         requestContext.setOutboundSAMLMessage(samlResponse);
         requestContext.setOutboundSAMLMessageId(samlResponse.getID());
