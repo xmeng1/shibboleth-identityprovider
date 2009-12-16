@@ -1,3 +1,8 @@
+Changes in Release 2.2.0
+=============================================
+[SIDP-362] - Only log exception message without stack trace for expired SAML messages
+
+
 Changes in Release 2.1.5
 =============================================
 [SIDP-353] - Default login.jsp crashes on anonymous RPs

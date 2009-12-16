@@ -212,8 +212,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             log.warn(msg, e);
             throw new ProfileException(msg, e);
         } catch (SecurityException e) {
-            String msg = "Shibboleth SSO request does not meet security requirements";
-            log.warn(msg, e);
+            String msg = "Shibboleth SSO request does not meet security requirements: " + e.getMessage();
+            log.warn(msg);
             throw new ProfileException("msg", e);
         }
 
