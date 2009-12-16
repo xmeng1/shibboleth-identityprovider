@@ -354,6 +354,33 @@ public class HttpServletHelper {
      * 
      * @return the service or null if there is no such service bound to the context
      */
+    public static RelyingPartyConfigurationManager getRelyingPartyConfigurationManager(ServletContext context) {
+        return getRelyingPartyConfigurationManager(context, getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM,
+                DEFAULT_RP_CONFIG_MNGR_SID));
+    }
+    
+    /**
+     * Gets the {@link RelyingPartyConfigurationManager} bound to the Servlet context.
+     * 
+     * @param context the Servlet context
+     * @param serviceId the ID under which the service bound
+     * 
+     * @return the service or null if there is no such service bound to the context
+     */
+    public static RelyingPartyConfigurationManager getRelyingPartyConfigurationManager(ServletContext context,
+            String serviceId) {
+        return (RelyingPartyConfigurationManager) context.getAttribute(serviceId);
+    }
+    
+    /**
+     * Gets the {@link RelyingPartyConfigurationManager} service bound to the Servlet context.
+     * 
+     * @param context the Servlet context
+     * 
+     * @return the service or null if there is no such service bound to the context
+     * 
+     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext)}
+     */
     public static RelyingPartyConfigurationManager getRelyingPartyConfirmationManager(ServletContext context) {
         return getRelyingPartyConfirmationManager(context, getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM,
                 DEFAULT_RP_CONFIG_MNGR_SID));
@@ -366,6 +393,8 @@ public class HttpServletHelper {
      * @param serviceId the ID under which the service bound
      * 
      * @return the service or null if there is no such service bound to the context
+     * 
+     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext, String)
      */
     public static RelyingPartyConfigurationManager getRelyingPartyConfirmationManager(ServletContext context,
             String serviceId) {
