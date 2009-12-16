@@ -129,8 +129,12 @@
                 <stringFromFile input="${idp.home.path}/credentials/idp.crt" addProperty="idp.cert" />
                     
                 <copy todir="${idp.home.path}/bin" preservelastmodified="true" overwrite="false">
-                    <fileset dir="${tools.dir}/bash" />
-                    <fileset dir="${tools.dir}/bat" />
+                    <fileset dir="${tools.dir}/bash">
+                        <present present="srconly" targetdir="${idp.home.path}/bin"/>
+                	</fileset>
+                    <fileset dir="${tools.dir}/bat">
+                    	<present present="srconly" targetdir="${idp.home.path}/bin"/>
+                	</fileset>
                     <filterset begintoken="$" endtoken="$">
                         <filter token="IDP_HOME" value="${idp.home.path}" />
                         <filter token="IDP_VERSION" value="${version}" />
@@ -138,7 +142,9 @@
                 </copy>
 
                 <copy todir="${idp.home.path}/conf" preservelastmodified="true" overwrite="false">
-                    <fileset dir="${resources.dir}/conf-tmpl" />
+                    <fileset dir="${resources.dir}/conf-tmpl">
+                    	<present present="srconly" targetdir="${idp.home.path}/conf"/>
+                	</fileset>
                     <filterset begintoken="$" endtoken="$">
                         <filter token="IDP_HOME" value="${idp.home.path}" />
                         <filter token="IDP_VERSION" value="${version}" />

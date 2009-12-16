@@ -3,6 +3,7 @@ Changes in Release 2.2.0
 [SIDP-362] - Only log exception message without stack trace for expired SAML messages
 [SIDP-360] - Session isn't being set within the attribute request context during a SAML1 attribute query
 [SIDP-359] - HttpServletHelper.getRelyingPartyConfirmationManager misnamed
+[SIDP-355] - Idp reinstall from source overwrite some config files even when "no overwrite" is specified
 
 Changes in Release 2.1.5
 =============================================
