@@ -267,21 +267,21 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
             }
 
             samlResponse = buildResponse(requestContext, statements);
+
+            NameIdentifier nameID = buildNameId(requestContext);
+            Session session =
+                    getUserSession(requestContext.getInboundMessageTransport());
+            ServiceInformationImpl serviceInfo =
+                    (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
+            serviceInfo.setShibbolethNameIdentifier(nameID);
+            //index session by nameid
+            SessionManager<Session> sessionManager = getSessionManager();
+            String index = sessionManager.getIndexFromNameID(nameID);
+            if (index != null) {
+                sessionManager.indexSession(session, index);
+            }
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
-        }
-
-        NameIdentifier nameID = buildNameId(requestContext);
-        Session session =
-                getUserSession(requestContext.getInboundMessageTransport());
-        ServiceInformationImpl serviceInfo =
-                (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
-        serviceInfo.setShibbolethNameIdentifier(nameID);
-        //index session by nameid
-        SessionManager<Session> sessionManager = getSessionManager();
-        String index = sessionManager.getIndexFromNameID(nameID);
-        if (index != null) {
-            sessionManager.indexSession(session, index);
         }
 
         requestContext.setOutboundSAMLMessage(samlResponse);

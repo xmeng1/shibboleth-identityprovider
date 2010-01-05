@@ -257,22 +257,22 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             }
 
             samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:bearer", statements);
+
+            //bind nameID to session.servicesInformation
+            NameID nameID = buildNameId(requestContext);
+            Session session =
+                    getUserSession(requestContext.getInboundMessageTransport());
+            ServiceInformationImpl serviceInfo =
+                    (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
+            serviceInfo.setSAML2NameIdentifier(nameID);
+            //index session by nameid
+            SessionManager<Session> sessionManager = getSessionManager();
+            String index = sessionManager.getIndexFromNameID(nameID);
+            if (index != null) {
+                sessionManager.indexSession(session, index);
+            }
         } catch (ProfileException e) {
             samlResponse = buildErrorResponse(requestContext);
-        }
-
-        //bind nameID to session.servicesInformation
-        NameID nameID = buildNameId(requestContext);
-        Session session =
-                getUserSession(requestContext.getInboundMessageTransport());
-        ServiceInformationImpl serviceInfo =
-                (ServiceInformationImpl) session.getServicesInformation().get(requestContext.getPeerEntityId());
-        serviceInfo.setSAML2NameIdentifier(nameID);
-        //index session by nameid
-        SessionManager<Session> sessionManager = getSessionManager();
-        String index = sessionManager.getIndexFromNameID(nameID);
-        if (index != null) {
-            sessionManager.indexSession(session, index);
         }
 
         requestContext.setOutboundSAMLMessage(samlResponse);
