@@ -338,7 +338,7 @@
                 </xsd:annotation>
             </xsd:element>
         </xsd:sequence>
-        <xsd:attribute name="authenticationDuration" type="xsd:positiveInteger">
+        <xsd:attribute name="authenticationDuration" type="xsd:string">
             <xsd:annotation>
                 <xsd:documentation>
                     The length of time that an authentication performed by this handler should be
