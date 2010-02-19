@@ -1,4 +1,5 @@
 <%@ page import="edu.internet2.middleware.shibboleth.idp.authn.LoginContext" %>
+<%@ page import="edu.internet2.middleware.shibboleth.idp.authn.LoginHandler" %>
 <%@ page import="edu.internet2.middleware.shibboleth.idp.session.*" %>
 <%@ page import="edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper" %>
 <%@ page import="org.opensaml.saml2.metadata.*" %>
@@ -25,7 +26,7 @@
 		Is Forced Authentication: <%= loginContext.isForceAuthRequired() %><br/>
 		</p>
 		
-		<% if ("true".equals(request.getAttribute("loginFailed"))) { %>
+		<% if (request.getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY) != null) { %>
 		<p><font color="red">Authentication Failed</font></p>
 		<% } %>
 		
