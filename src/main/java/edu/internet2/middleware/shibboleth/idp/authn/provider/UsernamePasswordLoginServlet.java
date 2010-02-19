@@ -105,7 +105,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             authenticateUser(request, username, password);
             AuthenticationEngine.returnToAuthenticationEngine(request, response);
         } catch (LoginException e) {
-            request.setAttribute(failureParam, true);
+            request.setAttribute(failureParam, "true");
             request.setAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY, e);
             redirectToLoginPage(request, response);
         }
