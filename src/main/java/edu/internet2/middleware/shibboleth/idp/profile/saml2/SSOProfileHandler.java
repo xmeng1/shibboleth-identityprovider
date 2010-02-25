@@ -37,17 +37,21 @@ import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthnStatement;
+import org.opensaml.saml2.core.NameIDPolicy;
 import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
 import org.opensaml.saml2.core.SubjectLocality;
+import org.opensaml.saml2.metadata.AffiliateMember;
+import org.opensaml.saml2.metadata.AffiliationDescriptor;
 import org.opensaml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -213,10 +217,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         SSORequestContext requestContext = buildRequestContext(loginContext, inTransport, outTransport);
 
-        checkSamlVersion(requestContext);
-
         Response samlResponse;
         try {
+            checkSamlVersion(requestContext);
+            checkNameIDPolicy(requestContext);
+            
             if (loginContext.getAuthenticationFailure() != null) {
                 if (loginContext.getAuthenticationFailure() instanceof PassiveAuthenticationException) {
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.NO_PASSIVE_URI,
@@ -229,11 +234,14 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             }
 
             if (requestContext.getSubjectNameIdentifier() != null) {
-                log.debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
+                log
+                        .debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
                 resolvePrincipal(requestContext);
                 String requestedPrincipalName = requestContext.getPrincipalName();
                 if (!DatatypeHelper.safeEquals(loginContext.getPrincipalName(), requestedPrincipalName)) {
-                    log.warn("Authentication request identified principal {} but authentication mechanism identified principal {}",
+                    log
+                            .warn(
+                                    "Authentication request identified principal {} but authentication mechanism identified principal {}",
                                     requestedPrincipalName, loginContext.getPrincipalName());
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
                             null));
@@ -242,7 +250,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             }
 
             resolveAttributes(requestContext);
-            
+
             ArrayList<Statement> statements = new ArrayList<Statement>();
             statements.add(buildAuthnStatement(requestContext));
             if (requestContext.getProfileConfiguration().includeAttributeStatement()) {
@@ -315,6 +323,54 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             String msg = "Message did not meet security requirements";
             log.warn(msg, e);
             throw new ProfileException(msg, e);
+        }
+    }
+
+    /**
+     * Checks to see, if present, if the affiliation associated with the SPNameQualifier given in the AuthnRequest
+     * NameIDPolicy lists the inbound message issuer as a member.
+     * 
+     * @param requestContext current request context
+     * 
+     * @throws ProfileException thrown if there the request is not a member of the affiliation or if there was a problem
+     *             determining membership
+     */
+    protected void checkNameIDPolicy(SSORequestContext requestContext) throws ProfileException {
+        AuthnRequest request = requestContext.getInboundSAMLMessage();
+        NameIDPolicy nameIdPolcy = request.getNameIDPolicy();
+        String spNameQualifier = null;
+        if (nameIdPolcy != null) {
+            spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolcy.getSPNameQualifier());
+            if (spNameQualifier == null) {
+                return;
+            }
+        }
+
+        log.debug("Checking if message issuer is a member of affiliation '{}'", spNameQualifier);
+        try {
+            EntityDescriptor affiliation = getMetadataProvider().getEntityDescriptor(spNameQualifier);
+            if (affiliation != null) {
+                AffiliationDescriptor affiliationDescriptor = affiliation.getAffiliationDescriptor();
+                if (affiliationDescriptor != null && affiliationDescriptor.getMembers() != null) {
+                    for (AffiliateMember member : affiliationDescriptor.getMembers()) {
+                        if (DatatypeHelper.safeEquals(member.getID(), requestContext.getInboundMessageIssuer())) {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
+                    "Invalid SPNameQualifier for this request"));
+            throw new ProfileException(MessageFormatter.format(
+                    "Relying party '{}' is not a member of the affiliation '{}'", requestContext
+                            .getInboundMessageIssuer(), spNameQualifier));
+        } catch (MetadataProviderException e) {
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Internal service error"));
+            log.error("Error looking up metadata for affiliation", e);
+            throw new ProfileException(MessageFormatter.format(
+                    "Relying party '{}' is not a member of the affiliation '{}'", requestContext
+                            .getInboundMessageIssuer(), spNameQualifier));
         }
     }
 
