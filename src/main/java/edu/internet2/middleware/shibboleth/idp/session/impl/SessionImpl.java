@@ -16,10 +16,15 @@
 
 package edu.internet2.middleware.shibboleth.idp.session.impl;
 
+import java.security.Principal;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.security.auth.Subject;
+
 import edu.internet2.middleware.shibboleth.common.session.impl.AbstractSession;
+import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -78,5 +83,27 @@ public class SessionImpl extends AbstractSession implements Session {
      */
     public synchronized ServiceInformation getServiceInformation(String entityId) {
         return servicesInformation.get(entityId);
+    }
+
+    /**
+     * This method will return the first, in an unordered list of principal names registered with the {@link Subject} of
+     * the session. If one or more {@link UsernamePrincipal} principals is registered with the subject the returned
+     * value will be the string form of one of those.
+     * 
+     * {@inheritDoc}
+     */
+    public synchronized String getPrincipalName() {
+        Subject subject = getSubject();
+
+        Set<? extends Principal> principals = subject.getPrincipals(UsernamePrincipal.class);
+        if (principals == null || principals.isEmpty()) {
+            principals = subject.getPrincipals();
+        }
+
+        if (principals == null || principals.isEmpty()) {
+            return null;
+        }
+
+        return principals.iterator().next().getName();
     }
 }

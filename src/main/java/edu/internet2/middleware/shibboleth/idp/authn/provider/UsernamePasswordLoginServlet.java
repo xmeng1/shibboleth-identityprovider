@@ -160,9 +160,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             Subject loginSubject = jaasLoginCtx.getSubject();
 
             Set<Principal> principals = loginSubject.getPrincipals();
-            if (principals.isEmpty()) {
-                principals.add(new UsernamePrincipal(username));
-            }
+            principals.add(new UsernamePrincipal(username));
 
             Set<Object> publicCredentials = loginSubject.getPublicCredentials();
 
