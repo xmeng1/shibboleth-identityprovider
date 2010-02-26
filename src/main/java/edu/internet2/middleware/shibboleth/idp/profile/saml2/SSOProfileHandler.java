@@ -37,6 +37,7 @@ import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnContextDeclRef;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.AuthnStatement;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.NameIDPolicy;
 import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml2.core.Response;
@@ -559,6 +560,21 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         subjectLocality.setAddress(transport.getPeerAddress());
 
         return subjectLocality;
+    }
+    
+    /** {@inheritDoc} */
+    protected NameID buildNameId(BaseSAML2ProfileRequestContext requestContext) throws ProfileException {
+        NameID nameId = super.buildNameId(requestContext);
+        
+        AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundMessage();
+        NameIDPolicy nameIdPolicy = authnRequest.getNameIDPolicy();
+        if(nameIdPolicy != null){
+            if(!DatatypeHelper.isEmpty(nameIdPolicy.getSPNameQualifier())){
+                nameId.setSPNameQualifier(nameIdPolicy.getSPNameQualifier());
+            }
+        }
+        
+        return nameId;
     }
 
     /**
