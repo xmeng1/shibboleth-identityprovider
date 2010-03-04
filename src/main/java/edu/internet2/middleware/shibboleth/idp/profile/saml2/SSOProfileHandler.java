@@ -563,20 +563,39 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
     
     /** {@inheritDoc} */
-    protected NameID buildNameId(BaseSAML2ProfileRequestContext requestContext) throws ProfileException {
-        NameID nameId = super.buildNameId(requestContext);
-        
-        AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundMessage();
+    protected String getRequiredNameIDFormat(BaseSAMLProfileRequestContext requestContext) {
+        String requiredNameFormat = null;
+        AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
         NameIDPolicy nameIdPolicy = authnRequest.getNameIDPolicy();
         if(nameIdPolicy != null){
-            if(!DatatypeHelper.isEmpty(nameIdPolicy.getSPNameQualifier())){
-                nameId.setSPNameQualifier(nameIdPolicy.getSPNameQualifier());
+             requiredNameFormat = DatatypeHelper.safeTrimOrNullString(nameIdPolicy.getFormat());
+            // Check for unspec'd or encryption formats, which aren't relevant for this section of code.
+            if (requiredNameFormat != null
+                    && (NameID.ENCRYPTED.equals(requiredNameFormat) || NameID.UNSPECIFIED.equals(requiredNameFormat))) {
+                requiredNameFormat = null;
+            }
+        }
+        
+        return requiredNameFormat;
+    }
+
+    /** {@inheritDoc} */
+    protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
+        NameID nameId = super.buildNameId(requestContext);
+        AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
+        NameIDPolicy nameIdPolicy = authnRequest.getNameIDPolicy();
+        if(nameIdPolicy != null){
+            String spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolicy.getSPNameQualifier());
+            if(spNameQualifier != null){
+                nameId.setSPNameQualifier(spNameQualifier);
+            }else{
+                nameId.setSPNameQualifier(requestContext.getInboundMessageIssuer());
             }
         }
         
         return nameId;
     }
-
+    
     /**
      * Selects the appropriate endpoint for the relying party and stores it in the request context.
      * 

@@ -23,7 +23,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.opensaml.common.IdentifierGenerator;
-import org.opensaml.common.binding.SAMLMessageContext;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.saml1.core.NameIdentifier;
@@ -42,9 +41,14 @@ import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.InTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.xml.security.credential.Credential;
+import org.opensaml.xml.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.MessageFormatter;
 
+import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAMLNameIdentifierEncoder;
 import edu.internet2.middleware.shibboleth.common.log.AuditLogEntry;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
@@ -401,6 +405,87 @@ public abstract class AbstractSAMLProfileHandler extends
     }
 
     /**
+     * Attempts to select the most fitting name identifier attribute, and associated encoder, for a request. If no
+     * attributes for the request subject are available no name identifier is constructed. If a specific name format is
+     * required, as returned by {@link #getRequiredNameIDFormat(BaseSAMLProfileRequestContext)}, then either an
+     * attribute with an encoder supporting that format is selected or an exception is thrown. If no specific format is
+     * required then an attribute supporting a format listed as supported by the relying party is used. If the relying
+     * party does not list any supported formats then any attribute supporting the correct name identifier type is used.
+     * 
+     * @param <T> type of name identifier encoder the attribute must support
+     * @param nameIdEncoderType type of name identifier encoder the attribute must support
+     * @param requestContext the current request context
+     * 
+     * @return the select attribute, and its encoder, to be used to build the name identifier
+     * 
+     * @throws ProfileException thrown if a specific name identifier format was required but not supported
+     */
+    protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoder(
+            Class<T> nameIdEncoderType, BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+        String requiredNameFormat = getRequiredNameIDFormat(requestContext);
+        String requiredNameFormatErr = MessageFormatter.format(
+                "No attribute of principal '{}' can be encoded in to a NameIdentifier of "
+                        + "required format '{}' for relying party '{}'", new Object[] {
+                        requestContext.getPrincipalName(), requiredNameFormat,
+                        requestContext.getInboundMessageIssuer(), });
+
+        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
+        if (principalAttributes == null || principalAttributes.isEmpty()) {
+            log.debug("No attributes for principal '{}', no name identifier will be created for relying party '{}'",
+                    requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
+            if (requiredNameFormat == null) {
+                return null;
+            } else {
+                log.warn(requiredNameFormatErr);
+                throw new ProfileException(requiredNameFormatErr);
+            }
+        }
+
+        List<String> supportedNameFormats = getNameFormats(requestContext);
+        if (!supportedNameFormats.isEmpty()) {
+            log.debug("Relying party '{}' supports the name formats: {}", requestContext.getInboundMessageIssuer(),
+                    supportedNameFormats);
+        } else {
+            log.debug("Relying party '{}' indicated no preferred name formats", requestContext
+                    .getInboundMessageIssuer());
+        }
+
+        Pair<BaseAttribute, T> nameIdAttributeAndEncoder = null;
+        if (requiredNameFormat == null) {
+            nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(nameIdEncoderType, principalAttributes,
+                    supportedNameFormats);
+            if (nameIdAttributeAndEncoder == null) {
+                log.debug("No attributes for principal '{}' supports encoding into a supported NameIdentifier format for relying party '{}'",
+                                requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
+                return null;
+            }
+        } else {
+            nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(nameIdEncoderType, principalAttributes,
+                    requiredNameFormat);
+            if (nameIdAttributeAndEncoder == null) {
+                log.warn(requiredNameFormatErr);
+                throw new ProfileException(requiredNameFormatErr);
+            }
+        }
+
+        return nameIdAttributeAndEncoder;
+    }
+
+    /**
+     * Gets the name identifier format required to be sent back to the relying party.
+     * 
+     * This implementation of this method returns null. Profile handler implementations should override this method if
+     * an incoming request is capable of requiring a specific format.
+     * 
+     * @param requestContext current request context
+     * 
+     * @return the required name ID format or null if no specific format is required
+     */
+    protected String getRequiredNameIDFormat(BaseSAMLProfileRequestContext requestContext) {
+        return null;
+    }
+
+    /**
      * Gets the name identifier formats to use when creating identifiers for the relying party.
      * 
      * @param requestContext current request context
@@ -423,6 +508,14 @@ public abstract class AbstractSAMLProfileHandler extends
         // If metadata contains the unspecified name format this means that any are supported
         if (nameFormats.contains(NameIdentifier.UNSPECIFIED)) {
             nameFormats.clear();
+        }
+
+        if (!nameFormats.isEmpty()) {
+            log.debug("Relying party '{}' supports the name formats: {}", requestContext.getInboundMessageIssuer(),
+                    nameFormats);
+        } else {
+            log.debug("Relying party '{}' indicated no preferred name formats", requestContext
+                    .getInboundMessageIssuer());
         }
 
         return nameFormats;
@@ -456,6 +549,92 @@ public abstract class AbstractSAMLProfileHandler extends
         }
 
         return supportedFormats;
+    }
+
+    /**
+     * Selects an attribute, resolved previously and of the required format, to encode as a NameID.
+     * 
+     * @param <T> type of name identifier encoder the attribute must support
+     * @param nameIdEncoderType type of name identifier encoder the attribute must support
+     * @param principalAttributes resolved attributes
+     * @param requiredNameFormat required NameID format
+     * 
+     * @return the attribute and its associated NameID encoder
+     * 
+     * @throws ProfileException thrown if no attribute can be encoded in to a NameID of the required type
+     */
+    protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoder(
+            Class<T> nameIdEncoderType, Map<String, BaseAttribute> principalAttributes, String requiredNameFormat)
+            throws ProfileException {
+
+        T nameIdEncoder = null;
+
+        if (principalAttributes != null) {
+            for (BaseAttribute<?> attribute : principalAttributes.values()) {
+                if (attribute == null) {
+                    continue;
+                }
+
+                for (AttributeEncoder encoder : attribute.getEncoders()) {
+                    if (encoder == null) {
+                        continue;
+                    }
+
+                    if (nameIdEncoderType.isInstance(encoder)) {
+                        nameIdEncoder = nameIdEncoderType.cast(encoder);
+                        if (nameIdEncoder.getNameFormat().equals(requiredNameFormat)) {
+                            return new Pair<BaseAttribute, T>(attribute, nameIdEncoder);
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Selects an attribute, resolved previously, to encode as a NameID.
+     * 
+     * @param <T> type of name identifier encoder the attribute must support
+     * @param nameIdEncoderType type of name identifier encoder the attribute must support
+     * @param principalAttributes resolved attributes
+     * @param supportedNameFormats NameID formats supported by the relying party or an empty list if all formats are
+     *            acceptable
+     * 
+     * @return the attribute and its associated NameID encoder
+     * 
+     * @throws ProfileException thrown if no attribute can be encoded in to a NameID of the required type
+     */
+    protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoder(
+            Class<T> nameIdEncoderType, Map<String, BaseAttribute> principalAttributes,
+            List<String> supportedNameFormats) throws ProfileException {
+
+        T nameIdEncoder = null;
+
+        if (principalAttributes != null) {
+            for (BaseAttribute<?> attribute : principalAttributes.values()) {
+                if (attribute == null) {
+                    continue;
+                }
+
+                for (AttributeEncoder encoder : attribute.getEncoders()) {
+                    if (encoder == null) {
+                        continue;
+                    }
+
+                    if (nameIdEncoderType.isInstance(encoder)) {
+                        nameIdEncoder = nameIdEncoderType.cast(encoder);
+                        if (supportedNameFormats.isEmpty()
+                                || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
+                            return new Pair<BaseAttribute, T>(attribute, nameIdEncoder);
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -540,17 +719,17 @@ public abstract class AbstractSAMLProfileHandler extends
      * @throws ProfileException if there is a problem determining whether responses should be signed
      */
     protected boolean isSignResponse(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
-        
+
         SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
-        
-        AbstractSAMLProfileConfiguration profileConfig = 
-            (AbstractSAMLProfileConfiguration) requestContext.getProfileConfiguration();
-        
+
+        AbstractSAMLProfileConfiguration profileConfig = (AbstractSAMLProfileConfiguration) requestContext
+                .getProfileConfiguration();
+
         if (profileConfig != null) {
             try {
                 return profileConfig.getSignResponses() == CryptoOperationRequirementLevel.always
-                    || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional 
-                        && !encoder.providesMessageIntegrity(requestContext));
+                        || (profileConfig.getSignResponses() == CryptoOperationRequirementLevel.conditional && !encoder
+                                .providesMessageIntegrity(requestContext));
             } catch (MessageEncodingException e) {
                 log.error("Unable to determine if outbound encoding '{}' provides message integrity protection",
                         encoder.getBindingURI());
@@ -559,21 +738,22 @@ public abstract class AbstractSAMLProfileHandler extends
         } else {
             return false;
         }
-        
+
     }
 
     /**
      * Get the outbound message encoder to use.
      * 
-     * <p>The default implementation uses the binding URI from the 
-     * {@link SAMLMessageContext#getPeerEntityEndpoint()} to lookup
-     * the encoder from the supported message encoders defined in {@link #getMessageEncoders()}.
+     * <p>
+     * The default implementation uses the binding URI from the
+     * {@link org.opensaml.common.binding.SAMLMessageContext#getPeerEntityEndpoint()} to lookup the encoder from the
+     * supported message encoders defined in {@link #getMessageEncoders()}.
      * </p>
      * 
      * <p>
-     * Subclasses may override to implement a different mechanism to determine the 
-     * encoder to use, such as for example cases where an active intermediary actor
-     * sits between this provider and the peer entity endpoint (e.g. the SAML 2 ECP case).
+     * Subclasses may override to implement a different mechanism to determine the encoder to use, such as for example
+     * cases where an active intermediary actor sits between this provider and the peer entity endpoint (e.g. the SAML 2
+     * ECP case).
      * </p>
      * 
      * @param requestContext current request context
@@ -601,18 +781,17 @@ public abstract class AbstractSAMLProfileHandler extends
         }
         return encoder;
     }
-    
+
     /**
      * Get the inbound message decoder to use.
      * 
-     * <p>The default implementation uses the binding URI from
-     * {@link #getInboundBinding()} to lookup the decoder from the supported message decoders
-     * defined in {@link #getMessageDecoders()}.
+     * <p>
+     * The default implementation uses the binding URI from {@link #getInboundBinding()} to lookup the decoder from the
+     * supported message decoders defined in {@link #getMessageDecoders()}.
      * </p>
      * 
      * <p>
-     * Subclasses may override to implement a different mechanism to determine the 
-     * decoder to use.
+     * Subclasses may override to implement a different mechanism to determine the decoder to use.
      * </p>
      * 
      * @param requestContext current request context

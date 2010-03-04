@@ -288,10 +288,10 @@
         sourceAttributeID="jpegPhoto">
         <resolver:Dependency ref="myLDAP" />
 
-        <resolver:AttributeEncoder xsi:type="SAML1Base64" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML1String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:mace:dir:attribute-def:jpegPhoto" />
 
-        <resolver:AttributeEncoder xsi:type="SAML2Base64" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML2String" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             name="urn:oid:0.9.2342.19200300.100.1.60" friendlyName="jpegPhoto" />
     </resolver:AttributeDefinition>
 
