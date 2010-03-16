@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 
@@ -106,7 +107,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             AuthenticationEngine.returnToAuthenticationEngine(request, response);
         } catch (LoginException e) {
             request.setAttribute(failureParam, "true");
-            request.setAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY, e);
+            request.setAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY, new AuthenticationException(e));
             redirectToLoginPage(request, response);
         }
     }
