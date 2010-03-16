@@ -50,7 +50,6 @@ import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
-import edu.internet2.middleware.shibboleth.idp.authn.provider.PreviousSessionLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
@@ -748,8 +747,13 @@ public class AuthenticationEngine extends HttpServlet {
         cookieValue.append(Base64.encodeBytes(sessionId, Base64.DONT_BREAK_LINES)).append("|");
         cookieValue.append(signature);
 
+        String cookieDomain = HttpServletHelper.getCookieDomain(context);
+        
         Cookie sessionCookie = new Cookie(IDP_SESSION_COOKIE_NAME, HTTPTransportUtils.urlEncode(cookieValue.toString()));
         sessionCookie.setVersion(1);
+        if(cookieDomain != null){
+            sessionCookie.setDomain(cookieDomain);
+        }
         sessionCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
         sessionCookie.setSecure(httpRequest.isSecure());
         httpResponse.addCookie(sessionCookie);

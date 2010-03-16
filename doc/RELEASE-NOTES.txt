@@ -3,6 +3,7 @@ Changes in Release 2.2.0
 [SIDP-379] - Usage of general AuthenticationException in UsernamePasswordLoginHandler
 [SIDP-373] - The SLF4J MDC state is not being properly cleared when request processing is done.
 [SIDP-368] - Provide more acurate login error to servlet when Username/Password login authentication has failed.
+[SIDP-369] - Allow to have cookie Domain set for login context cookie
 [SIDP-365] - Expose uptime of IdP web application with status handler
 [SIDP-362] - Only log exception message without stack trace for expired SAML messages
 [SIDP-360] - Session isn't being set within the attribute request context during a SAML1 attribute query

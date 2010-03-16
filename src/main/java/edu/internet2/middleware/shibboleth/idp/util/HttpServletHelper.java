@@ -45,6 +45,9 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 /** A helper class that provides access to internal state from Servlets and hence also JSPs. */
 public class HttpServletHelper {
 
+    /** Name of the context initialization parameter that stores the domain to use for all cookies. */
+    public static final String COOKIE_DOMAIN_PARAM = "cookieDomain";
+    
     /** Name of the cookie containing the IdP session ID: {@value} . */
     public static final String IDP_SESSION_COOKIE = "_idp_session";
 
@@ -126,7 +129,7 @@ public class HttpServletHelper {
         }
         httpRequest.setAttribute(LOGIN_CTX_KEY_NAME, loginContext);
     }
-
+    
     /**
      * Binds a {@link LoginContext} to the issuer of the current request. The binding is done by creating a random UUID,
      * placing that in a cookie in the request, and storing the context in to the storage service under that key.
@@ -163,11 +166,27 @@ public class HttpServletHelper {
         LoginContextEntry entry = new LoginContextEntry(loginContext, 1800000);
         storageService.put(parition, contextKey, entry);
 
+        String cookieDomain = getCookieDomain(context);
+        
         Cookie contextKeyCookie = new Cookie(LOGIN_CTX_KEY_NAME, contextKey);
         contextKeyCookie.setVersion(1);
+        if(cookieDomain != null){
+            contextKeyCookie.setDomain(cookieDomain);
+        }
         contextKeyCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
         contextKeyCookie.setSecure(httpRequest.isSecure());
         httpResponse.addCookie(contextKeyCookie);
+    }
+    
+    /**
+     * Gets the domain to use for all cookies.
+     * 
+     * @param context web application context
+     * 
+     * @return domain to use for all cookies
+     */
+    public static String getCookieDomain(ServletContext context){
+        return context.getInitParameter(COOKIE_DOMAIN_PARAM);
     }
 
     /**
