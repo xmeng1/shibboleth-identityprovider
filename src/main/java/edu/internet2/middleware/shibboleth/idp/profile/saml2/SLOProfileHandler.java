@@ -68,12 +68,14 @@ import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.impl.NameIDImpl;
+import org.opensaml.saml2.metadata.AttributeConsumingService;
 import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.Organization;
 import org.opensaml.saml2.metadata.OrganizationDisplayName;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml2.metadata.ServiceName;
 import org.opensaml.saml2.metadata.SingleLogoutService;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -632,30 +634,85 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         for (LogoutInformation serviceInfo : sloContext.getServiceInformation().values()) {
             EntityDescriptor spMetadata;
             String spEntityID = serviceInfo.getEntityID();
-            Map<String, String> serviceDisplayNames =
-                    new HashMap<String, String>();
             try {
                 spMetadata = mdProvider.getEntityDescriptor(spEntityID);
             } catch (MetadataProviderException ex) {
                 log.warn("Can not get metadata for relying party '{}'", spEntityID);
                 continue;
             }
-            Organization spOrg = spMetadata.getOrganization();
-            if (spOrg == null) {
-                log.debug("Organization is not set for relying party '{}'", spEntityID);
-                continue;
+            Map<String, String> serviceNames = extractServiceNames(spMetadata);
+            if (serviceNames != null && serviceNames.size() > 0) {
+                serviceInfo.setDisplayName(serviceNames);
+            } else {
+                Map<String, String> organizationDNames = extractOrganizationDisplayNames(spMetadata);
+                if (organizationDNames != null && organizationDNames.size() > 0) {
+                    serviceInfo.setDisplayName(organizationDNames);
+                }
             }
-            List<OrganizationDisplayName> dNameList =
-                    spOrg.getDisplayNames();
-            if (dNameList == null) {
-                log.debug("DisplayName is unset for relying party '{}'", spEntityID);
-                continue;
-            }
-            for (OrganizationDisplayName dName : dNameList) {
-                serviceDisplayNames.put(dName.getName().getLanguage(), dName.getName().getLocalString());
-            }
-            serviceInfo.setDisplayName(serviceDisplayNames);
         }
+    }
+
+    /**
+     * Extracts ServiceName information from SP Entity Descriptor.
+     * 
+     * @param spMetadata
+     * @return
+     */
+    private Map<String, String> extractServiceNames(EntityDescriptor spMetadata) {
+        String spEntityID = spMetadata.getEntityID();
+        SPSSODescriptor spDescr = spMetadata.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
+        if (spDescr == null) {
+            log.debug("No SAML SPSSODescriptor found for relying party '{}'", spEntityID);
+            return null;
+        }
+        AttributeConsumingService attrCs = spDescr.getDefaultAttributeConsumingService();
+        if (attrCs == null) {
+            List<AttributeConsumingService> attrCSList = spDescr.getAttributeConsumingServices();
+            if (attrCSList != null && !attrCSList.isEmpty()) {
+                attrCs = attrCSList.get(0);
+            }
+        }
+        if (attrCs == null) {
+            log.debug("No AttributeConsumingService found for relying party '{}'", spEntityID);
+            return null;
+        }
+        List<ServiceName> sNameList = attrCs.getNames();
+        if (sNameList == null) {
+            log.debug("No ServiceName found for relying party '{}'", spEntityID);
+            return null;
+        }
+        Map<String, String> serviceNames =
+                new HashMap<String, String>(sNameList.size());
+        for (ServiceName sName : sNameList) {
+            serviceNames.put(sName.getName().getLanguage(), sName.getName().getLocalString());
+        }
+        return serviceNames;
+    }
+
+    /**
+     * Extracts OrganizationDisplayName information from SP Entity Descriptor.
+     *
+     * @param spMetadata
+     * @return
+     */
+    private Map<String, String> extractOrganizationDisplayNames(EntityDescriptor spMetadata) {
+        String spEntityID = spMetadata.getEntityID();
+        Organization spOrg = spMetadata.getOrganization();
+        if (spOrg == null) {
+            log.debug("Organization is not set for relying party '{}'", spEntityID);
+            return null;
+        }
+        List<OrganizationDisplayName> dNameList =
+                spOrg.getDisplayNames();
+        if (dNameList == null) {
+            log.debug("DisplayName is unset for relying party '{}'", spEntityID);
+            return null;
+        }
+        Map<String, String> oDNames = new HashMap<String, String>(dNameList.size());
+        for (OrganizationDisplayName dName : dNameList) {
+            oDNames.put(dName.getName().getLanguage(), dName.getName().getLocalString());
+        }
+        return oDNames;
     }
 
     /**
