@@ -26,6 +26,7 @@
                 </bean>
             </list>
         </constructor-arg>
+        <property name="parserPool" ref="shibboleth.ParserPool" />
     </bean>
 
     <bean id="shibboleth.IdGenerator" class="org.opensaml.common.impl.SecureRandomIdentifierGenerator" depends-on="shibboleth.LogbackLogging">
@@ -96,7 +97,6 @@
     </bean>
 
     <bean id="shibboleth.ArtifactMap" class="org.opensaml.common.binding.artifact.BasicSAMLArtifactMap" depends-on="shibboleth.LogbackLogging">
-        <constructor-arg ref="shibboleth.ParserPool" />
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg type="long" value="300000" />
     </bean>
