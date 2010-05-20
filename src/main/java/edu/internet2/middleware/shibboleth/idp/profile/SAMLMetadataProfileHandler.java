@@ -60,7 +60,7 @@ public class SAMLMetadataProfileHandler extends AbstractRequestURIMappedProfileH
         try {
             metadataProvider = new FilesystemMetadataProvider(new File(metadataFile));
             metadataProvider.setParserPool(pool);
-            metadataProvider.setMaintainExpiredMetadata(true);
+            metadataProvider.setRequireValidMetadata(false);
             metadataProvider.initialize();
         } catch (Exception e) {
             log.error("Unable to read metadata file " + metadataFile, e);
