@@ -53,7 +53,8 @@
         <constructor-arg ref="shibboleth.VelocityEngine" />
     </bean>
 
-    <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool" depends-on="shibboleth.LogbackLogging">
+    <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.StaticBasicParserPool" 
+          depends-on="shibboleth.LogbackLogging" init-method="initialize">
         <property name="maxPoolSize" value="100" />
         <property name="coalescing" value="true" />
         <property name="ignoreComments" value="true" />
