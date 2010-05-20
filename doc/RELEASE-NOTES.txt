@@ -1,5 +1,6 @@
 Changes in Release 2.2.0
 =============================================
+[SIDP-384] - Incorrect error message set for expired request in Shibboleth SSO Profile Handler
 [SIDP-379] - Usage of general AuthenticationException in UsernamePasswordLoginHandler
 [SIDP-373] - The SLF4J MDC state is not being properly cleared when request processing is done.
 [SIDP-368] - Provide more acurate login error to servlet when Username/Password login authentication has failed.
