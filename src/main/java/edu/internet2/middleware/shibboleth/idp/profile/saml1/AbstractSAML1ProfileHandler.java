@@ -362,7 +362,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             throws ProfileException {
         log.debug("Attemping to build NameIdentifier for principal '{}' in response to request from relying party '{}",
                 requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-        
+
         Pair<BaseAttribute, SAML1NameIdentifierEncoder> nameIdAttributeAndEncoder = null;
         try {
             nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(SAML1NameIdentifierEncoder.class,
@@ -377,7 +377,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         SAML1NameIdentifierEncoder nameIdEncoder = nameIdAttributeAndEncoder.getSecond();
 
         try {
-            log.debug("Using attribute '{}' supporting name format '{}' to create the NameIdentifier for relying party '{}'",
+            log
+                    .debug(
+                            "Using attribute '{}' supporting name format '{}' to create the NameIdentifier for relying party '{}'",
                             new Object[] { nameIdAttribute.getId(), nameIdEncoder.getNameFormat(),
                                     requestContext.getInboundMessageIssuer(), });
             NameIdentifier nameId = nameIdEncoder.encode(nameIdAttribute);
@@ -550,10 +552,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
                     "Error resolving principal"));
-            String msg = MessageFormatter.format(
-                    "Error resolving principal name for SAML request from relying party '{}'", requestContext
-                            .getInboundMessageIssuer());
-            log.warn(msg, e);
+            String msg = MessageFormatter.arrayFormat(
+                    "Error resolving principal name for SAML request from relying party '{}'. Cause: {}", new Object[] {
+                            requestContext.getInboundMessageIssuer(), e.getMessage() });
+            log.warn(msg);
             throw new ProfileException(msg, e);
         }
     }

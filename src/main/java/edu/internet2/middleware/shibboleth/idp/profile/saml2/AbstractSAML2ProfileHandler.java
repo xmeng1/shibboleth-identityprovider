@@ -533,10 +533,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI,
                     "Error resolving principal"));
-            String msg = MessageFormatter.format(
-                    "Error resolving principal name for SAML request '{}' from relying party '{}'", requestContext
-                            .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
-            log.error(msg, e);
+            String msg = MessageFormatter.arrayFormat(
+                    "Error resolving principal name for SAML request '{}' from relying party '{}'. Cause: {}", new Object[]{requestContext
+                            .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer(),e.getMessage()});
+            log.warn(msg);
             throw new ProfileException(msg, e);
         }
     }
