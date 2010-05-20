@@ -3,6 +3,7 @@ Changes in Release 2.2.0
 [SIDP-388] - Add eduPersonAssurance attribute to attribute-resolver.xml config example
 [SIDP-384] - Incorrect error message set for expired request in Shibboleth SSO Profile Handler
 [SIDP-382] - Less verbose logging for failed attribute queries due to missing name-id
+[SIDP-381] - Use duration notation for assertion lifetime in example config files
 [SIDP-379] - Usage of general AuthenticationException in UsernamePasswordLoginHandler
 [SIDP-374] - Switch to use StaticBasicParserPool instead of BasicParserPool
 [SIDP-373] - The SLF4J MDC state is not being properly cleared when request processing is done.

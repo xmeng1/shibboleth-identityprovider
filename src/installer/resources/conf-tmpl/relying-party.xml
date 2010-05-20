@@ -40,12 +40,12 @@
         -->
         <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" 
                               includeAttributeStatement="false"
-                              assertionLifetime="300000"
+                              assertionLifetime="PT5M"
                               signResponses="conditional"
                               signAssertions="never" />
                               
         <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile"
-                              assertionLifetime="300000"
+                              assertionLifetime="PT5M"
                               signResponses="conditional"
                               signAssertions="never" />
         
@@ -55,7 +55,7 @@
         
         <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" 
                               includeAttributeStatement="true"
-                              assertionLifetime="300000"
+                              assertionLifetime="PT5M"
                               assertionProxyCount="0" 
                               signResponses="conditional"
                               signAssertions="never" 
@@ -63,7 +63,7 @@
                               encryptNameIds="never" />
         
         <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
-                              assertionLifetime="300000"
+                              assertionLifetime="PT5M"
                               assertionProxyCount="0" 
                               signResponses="conditional"
                               signAssertions="never"
