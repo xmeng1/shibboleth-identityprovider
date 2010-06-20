@@ -331,11 +331,10 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
         subjectConfirmation.getConfirmationMethods().add(method);
 
-        NameIdentifier nameID = buildNameId(requestContext);
-
         Subject subject = subjectBuilder.buildObject();
         subject.setSubjectConfirmation(subjectConfirmation);
 
+        NameIdentifier nameID = buildNameId(requestContext);
         if (nameID != null) {
             subject.setNameIdentifier(nameID);
             requestContext.setSubjectNameIdentifier(nameID);
@@ -371,6 +370,11 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null,
                     "Required NameIdentifier format not supported"));
             throw e;
+        }
+        
+        if(nameIdAttributeAndEncoder == null){
+            log.debug("No attribute supports encoding as a SAML 1 name identifier");
+            return null;
         }
 
         BaseAttribute<?> nameIdAttribute = nameIdAttributeAndEncoder.getFirst();

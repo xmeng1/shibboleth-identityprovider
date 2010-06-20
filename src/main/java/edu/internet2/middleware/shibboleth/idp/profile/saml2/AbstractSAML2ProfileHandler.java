@@ -833,6 +833,11 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     "Required NameID format not supported"));
             throw e;
         }
+        
+        if(nameIdAttributeAndEncoder == null){
+            log.debug("No attribute supports encoding as a SAML 2 name identifier");
+            return null;
+        }
 
         BaseAttribute<?> nameIdAttribute = nameIdAttributeAndEncoder.getFirst();
         SAML2NameIDEncoder nameIdEncoder = nameIdAttributeAndEncoder.getSecond();
