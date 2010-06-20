@@ -582,14 +582,16 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     /** {@inheritDoc} */
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         NameID nameId = super.buildNameId(requestContext);
-        AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
-        NameIDPolicy nameIdPolicy = authnRequest.getNameIDPolicy();
-        if(nameIdPolicy != null){
-            String spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolicy.getSPNameQualifier());
-            if(spNameQualifier != null){
-                nameId.setSPNameQualifier(spNameQualifier);
-            }else{
-                nameId.setSPNameQualifier(requestContext.getInboundMessageIssuer());
+        if(nameId != null){
+            AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
+            NameIDPolicy nameIdPolicy = authnRequest.getNameIDPolicy();
+            if(nameIdPolicy != null){
+                String spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolicy.getSPNameQualifier());
+                if(spNameQualifier != null){
+                    nameId.setSPNameQualifier(spNameQualifier);
+                }else{
+                    nameId.setSPNameQualifier(requestContext.getInboundMessageIssuer());
+                }
             }
         }
         

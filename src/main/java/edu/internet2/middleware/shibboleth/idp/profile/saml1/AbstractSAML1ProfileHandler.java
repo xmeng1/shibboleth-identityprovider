@@ -359,9 +359,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
      */
     protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
-        log.debug("Attemping to build NameIdentifier for principal '{}' in response to request from relying party '{}",
-                requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-
         Pair<BaseAttribute, SAML1NameIdentifierEncoder> nameIdAttributeAndEncoder = null;
         try {
             nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(SAML1NameIdentifierEncoder.class,
@@ -373,7 +370,6 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
         
         if(nameIdAttributeAndEncoder == null){
-            log.debug("No attribute supports encoding as a SAML 1 name identifier");
             return null;
         }
 

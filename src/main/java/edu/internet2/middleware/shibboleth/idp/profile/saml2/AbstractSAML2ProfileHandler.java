@@ -822,9 +822,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      *             name ID attribute or because there are no supported name formats
      */
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
-        log.debug("Attemping to build NameID for principal '{}' in response to request from relying party '{}",
-                requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-        
         Pair<BaseAttribute, SAML2NameIDEncoder> nameIdAttributeAndEncoder = null;
         try {
             nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(SAML2NameIDEncoder.class, requestContext);
@@ -835,7 +832,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         }
         
         if(nameIdAttributeAndEncoder == null){
-            log.debug("No attribute supports encoding as a SAML 2 name identifier");
             return null;
         }
 
