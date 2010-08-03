@@ -18,6 +18,7 @@ Changes in Release 2.2.0
 [SIDP-359] - HttpServletHelper.getRelyingPartyConfirmationManager misnamed
 [SIDP-355] - Idp reinstall from source overwrite some config files even when "no overwrite" is specified
 [SIDP-301] - Remove use of events in SessionManager so that different StorageService implementations may be more easily used
+[SIDP-288] - Improve consistency of XML configuration defaults/examples
 [SIDP-275] - Using standard JAAS LoginException in UP LoginHandler servlet
 [SC-63] - Use XML Schema duration syntax instead of integers for duration configuration options
 

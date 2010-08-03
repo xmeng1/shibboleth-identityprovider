@@ -8,7 +8,7 @@
     when answering requests to a relying party.
 -->
 
-<RelyingPartyGroup xmlns="urn:mace:shibboleth:2.0:relying-party"
+<rp:RelyingPartyGroup xmlns:rp="urn:mace:shibboleth:2.0:relying-party"
                    xmlns:saml="urn:mace:shibboleth:2.0:relying-party:saml"
                    xmlns:metadata="urn:mace:shibboleth:2.0:metadata"
                    xmlns:resource="urn:mace:shibboleth:2.0:resource"
@@ -27,10 +27,10 @@
     <!-- ========================================== -->
     <!--      Relying Party Configurations          -->
     <!-- ========================================== -->
-    <AnonymousRelyingParty provider="$IDP_ENTITY_ID$"
+    <rp:AnonymousRelyingParty provider="$IDP_ENTITY_ID$"
                            defaultSigningCredentialRef="IdPCredential" />
     
-    <DefaultRelyingParty provider="$IDP_ENTITY_ID$"
+    <rp:DefaultRelyingParty provider="$IDP_ENTITY_ID$"
                          defaultSigningCredentialRef="IdPCredential">
         <!-- 
             Each attribute in these profiles configuration is set to its default value,
@@ -38,22 +38,22 @@
             We list them here so that people are aware of them (since they seem reluctant to 
             read the documentation).
         -->
-        <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" 
+        <rp:ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" 
                               includeAttributeStatement="false"
                               assertionLifetime="PT5M"
                               signResponses="conditional"
                               signAssertions="never" />
                               
-        <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile"
+        <rp:ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile"
                               assertionLifetime="PT5M"
                               signResponses="conditional"
                               signAssertions="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile"
+        <rp:ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile"
                               signResponses="conditional"
                               signAssertions="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" 
+        <rp:ProfileConfiguration xsi:type="saml:SAML2SSOProfile" 
                               includeAttributeStatement="true"
                               assertionLifetime="PT5M"
                               assertionProxyCount="0" 
@@ -62,7 +62,7 @@
                               encryptAssertions="conditional"
                               encryptNameIds="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
+        <rp:ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
                               assertionLifetime="PT5M"
                               assertionProxyCount="0" 
                               signResponses="conditional"
@@ -70,13 +70,13 @@
                               encryptAssertions="conditional"
                               encryptNameIds="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" 
+        <rp:ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" 
                               signResponses="conditional"
                               signAssertions="never"
                               encryptAssertions="conditional"
                               encryptNameIds="never"/>
         
-    </DefaultRelyingParty>
+    </rp:DefaultRelyingParty>
         
     
     <!-- ========================================== -->
@@ -219,4 +219,4 @@
         <security:Rule xsi:type="security:MandatoryMessageAuthentication" />
     </security:SecurityPolicy>
     
-</RelyingPartyGroup>
+</rp:RelyingPartyGroup>
