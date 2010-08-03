@@ -35,6 +35,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /**
  * Unit test for Shibboleth SSO requests.
@@ -56,8 +57,8 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
         HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
-        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) servletRequest
-                .getAttribute(ShibbolethSSOLoginContext.LOGIN_CONTEXT_KEY);
+        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) HttpServletHelper
+                .getLoginContext(servletRequest);
 
         assertNotNull(loginContext);
         assertEquals(false, loginContext.getAuthenticationAttempted());
@@ -78,7 +79,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
         MockHttpServletRequest servletRequest = buildServletRequest();
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
-        servletRequest.setAttribute(ShibbolethSSOLoginContext.LOGIN_CONTEXT_KEY, buildLoginContext());
+        HttpServletHelper.bindLoginContext(buildLoginContext(), servletRequest);
 
         ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
                 "shibboleth.HandlerManager");

@@ -71,8 +71,8 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("samlp:Success"));
-        assertTrue(response.contains("saml:Assertion"));
+        assertTrue(response.contains("saml1p:Success"));
+        assertTrue(response.contains("saml1:Assertion"));
     }
     
     public void testWithoutConfiguration() throws Exception {
@@ -98,8 +98,8 @@ public class SAML1ArtifactResolutionTest extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("samlp:Success"));
-        assertTrue(response.contains("samlp:RequestDenied"));
+        assertTrue(response.contains("saml1p:Success"));
+        assertTrue(response.contains("saml1p:RequestDenied"));
     }
 
     @SuppressWarnings("unchecked")

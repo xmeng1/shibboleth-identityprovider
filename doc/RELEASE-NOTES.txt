@@ -1,5 +1,6 @@
 Changes in Release 2.2.0
 =============================================
+[SIDP-397] - Remove any unit test that won't be fixed in the 2.X branch, fix the rest
 [SIDP-388] - Add eduPersonAssurance attribute to attribute-resolver.xml config example
 [SIDP-384] - Incorrect error message set for expired request in Shibboleth SSO Profile Handler
 [SIDP-382] - Less verbose logging for failed attribute queries due to missing name-id
