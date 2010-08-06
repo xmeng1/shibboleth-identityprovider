@@ -338,15 +338,17 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
      */
     protected void checkNameIDPolicy(SSORequestContext requestContext) throws ProfileException {
         AuthnRequest request = requestContext.getInboundSAMLMessage();
-        NameIDPolicy nameIdPolcy = request.getNameIDPolicy();
-        String spNameQualifier = null;
-        if (nameIdPolcy != null) {
-            spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolcy.getSPNameQualifier());
-            if (spNameQualifier == null) {
-                return;
-            }
-        }
 
+        NameIDPolicy nameIdPolcy = request.getNameIDPolicy();
+        if (nameIdPolcy == null) {
+            return;
+        }
+        
+        String spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolcy.getSPNameQualifier());
+        if (spNameQualifier == null) {
+            return;
+        }
+        
         log.debug("Checking if message issuer is a member of affiliation '{}'", spNameQualifier);
         try {
             EntityDescriptor affiliation = getMetadataProvider().getEntityDescriptor(spNameQualifier);
