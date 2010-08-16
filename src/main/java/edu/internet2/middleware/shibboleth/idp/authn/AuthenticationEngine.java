@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.AuthnContext;
+import org.opensaml.util.URLBuilder;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.ws.transport.http.HTTPTransportUtils;
 import org.opensaml.xml.util.Base64;
@@ -146,6 +147,15 @@ public class AuthenticationEngine extends HttpServlet {
             forwardRequest("/error.jsp", httpRequest, httpResponse);
         } else {
             forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
+//            URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
+//            urlBuilder.setPath(urlBuilder.getPath() + loginContext.getAuthenticationEngineURL());
+//            String authnEngineUrl = urlBuilder.buildURL();
+//            LOG.debug("Redirecting user to authentication engine at {}", authnEngineUrl);
+//            try{
+//                httpResponse.sendRedirect(authnEngineUrl);
+//            }catch(IOException e){
+//                LOG.warn("Error sending user back to authentication engine at " + authnEngineUrl, e);
+//            }
         }
     }
 
@@ -163,11 +173,15 @@ public class AuthenticationEngine extends HttpServlet {
             forwardRequest("/error.jsp", httpRequest, httpResponse);
         }
 
-        // Remove the login context from the replicated store and bind it to the request
-        HttpServletHelper.unbindLoginContext(storageService, context, httpRequest, httpResponse);
-        HttpServletHelper.bindLoginContext(loginContext, httpRequest);
-        LOG.debug("Returning control to profile handler at: {}", loginContext.getProfileHandlerURL());
-        forwardRequest(loginContext.getProfileHandlerURL(), httpRequest, httpResponse);
+        URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
+        urlBuilder.setPath(urlBuilder.getPath() + loginContext.getProfileHandlerURL());
+        String profileUrl = urlBuilder.buildURL();
+        LOG.debug("Redirecting user to profile handler at {}", profileUrl);
+        try{
+            httpResponse.sendRedirect(profileUrl);
+        }catch(IOException e){
+            LOG.warn("Error sending user back to profile handler at " + profileUrl, e);
+        }
     }
 
     /**

@@ -25,6 +25,8 @@ import org.opensaml.util.URLBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
+
 /**
  * Authenticate a username and password against a JAAS source.
  * 
@@ -59,17 +61,13 @@ public class UsernamePasswordLoginHandler extends AbstractLoginHandler {
     public void login(final HttpServletRequest httpRequest, final HttpServletResponse httpResponse) {
         // forward control to the servlet.
         try {
-            StringBuilder pathBuilder = new StringBuilder();
-            pathBuilder.append(httpRequest.getContextPath());
+            URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
+            
+            StringBuilder pathBuilder = new StringBuilder(urlBuilder.getPath());
             if (!authenticationServletURL.startsWith("/")) {
                 pathBuilder.append("/");
             }
             pathBuilder.append(authenticationServletURL);
-
-            URLBuilder urlBuilder = new URLBuilder();
-            urlBuilder.setScheme(httpRequest.getScheme());
-            urlBuilder.setHost(httpRequest.getServerName());
-            urlBuilder.setPort(httpRequest.getServerPort());
             urlBuilder.setPath(pathBuilder.toString());
 
             log.debug("Redirecting to {}", urlBuilder.buildURL());
