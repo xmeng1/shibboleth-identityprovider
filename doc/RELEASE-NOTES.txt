@@ -1,6 +1,7 @@
 Changes in Release 2.2.0
 =============================================
 [SIDP-397] - Remove any unit test that won't be fixed in the 2.X branch, fix the rest
+[SIDP-396] - Previous session LoginHandler used even if authentication method has expired
 [SIDP-392] - NullPointerException in LoginContext when authentication method information is null
 [SIDP-388] - Add eduPersonAssurance attribute to attribute-resolver.xml config example
 [SIDP-386] - Session indexes not cleared when session is destroyed
