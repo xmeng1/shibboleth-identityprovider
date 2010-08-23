@@ -482,12 +482,6 @@ public class AuthenticationEngine extends HttpServlet {
                 }
             }
         }
-        // possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
-        // if (possibleLoginHandlers.isEmpty()) {
-        // LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext
-        // .getRelyingPartyId());
-        // throw new AuthenticationException();
-        // }
 
         if (loginContext.getDefaultAuthenticationMethod() != null
                 && possibleLoginHandlers.containsKey(loginContext.getDefaultAuthenticationMethod())) {
