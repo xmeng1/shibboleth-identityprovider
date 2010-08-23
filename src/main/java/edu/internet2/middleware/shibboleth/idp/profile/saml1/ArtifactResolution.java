@@ -47,7 +47,6 @@ import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
@@ -97,9 +96,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
 
         try {
             if (requestContext.getProfileConfiguration() == null) {
-                String msg = MessageFormatter.format(
-                        "SAML 1 Artifact resolution profile is not configured for relying party '{}'", requestContext
-                                .getInboundMessageIssuer());
+                String msg = "SAML 1 Artifact resolution profile is not configured for relying party "
+                        + requestContext.getInboundMessageIssuer();
                 requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS, StatusCode.REQUEST_DENIED, msg));
                 log.warn(msg);
                 throw new ProfileException(msg);
@@ -135,8 +133,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
     protected void decodeRequest(ArtifactResolutionRequestContext requestContext, HTTPInTransport inTransport,
             HTTPOutTransport outTransport) throws ProfileException {
         if (log.isDebugEnabled()) {
-            log.debug("Decoding message with decoder binding '{}'",
-                    getInboundMessageDecoder(requestContext).getBindingURI());
+            log.debug("Decoding message with decoder binding '{}'", getInboundMessageDecoder(requestContext)
+                    .getBindingURI());
         }
 
         requestContext.setCommunicationProfileId(getProfileId());
@@ -243,8 +241,8 @@ public class ArtifactResolution extends AbstractSAML1ProfileHandler {
         List<AssertionArtifact> assertionArtifacts = request.getAssertionArtifacts();
 
         if (assertionArtifacts == null || assertionArtifacts.size() == 0) {
-            String msg = MessageFormatter.format("No AssertionArtifacts available in request from relying party '{}'",
-                    requestContext.getInboundMessageIssuer());
+            String msg = "No AssertionArtifacts available in request from relying party "
+                    + requestContext.getInboundMessageIssuer();
             log.warn(msg);
             throw new ProfileException(msg);
         }

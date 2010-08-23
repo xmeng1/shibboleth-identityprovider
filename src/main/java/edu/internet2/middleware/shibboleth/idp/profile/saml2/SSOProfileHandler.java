@@ -66,7 +66,6 @@ import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
@@ -177,7 +176,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             throws ProfileException {
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
-        
+
         SSORequestContext requestContext = new SSORequestContext();
 
         try {
@@ -187,8 +186,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(getProfileId());
             if (ssoConfig == null) {
-                String msg = MessageFormatter.format("SAML 2 SSO profile is not configured for relying party '{}'",
-                        requestContext.getInboundMessageIssuer());
+                String msg = "SAML 2 SSO profile is not configured for relying party "
+                        + requestContext.getInboundMessageIssuer();
                 log.warn(msg);
                 throw new ProfileException(msg);
             }
@@ -202,7 +201,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             HttpServletHelper.bindLoginContext(loginContext, getStorageService(), httpRequest.getSession()
                     .getServletContext(), httpRequest, httpResponse);
-            
+
             URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
             urlBuilder.setPath(urlBuilder.getPath() + authenticationManagerPath);
             String authnEngineUrl = urlBuilder.buildURL();
@@ -378,15 +377,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
                     "Invalid SPNameQualifier for this request"));
-            throw new ProfileException(MessageFormatter.format(
-                    "Relying party '{}' is not a member of the affiliation '{}'", requestContext
-                            .getInboundMessageIssuer(), spNameQualifier));
+            throw new ProfileException("Relying party '" + requestContext.getInboundMessageIssuer()
+                    + "' is not a member of the affiliation " + spNameQualifier);
         } catch (MetadataProviderException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Internal service error"));
             log.error("Error looking up metadata for affiliation", e);
-            throw new ProfileException(MessageFormatter.format(
-                    "Relying party '{}' is not a member of the affiliation '{}'", requestContext
-                            .getInboundMessageIssuer(), spNameQualifier));
+            throw new ProfileException("Relying party '" + requestContext.getInboundMessageIssuer()
+                    + "' is not a member of the affiliation " + spNameQualifier);
         }
     }
 

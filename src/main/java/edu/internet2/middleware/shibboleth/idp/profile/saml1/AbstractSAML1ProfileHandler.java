@@ -60,7 +60,6 @@ import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -368,8 +367,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                     "Required NameIdentifier format not supported"));
             throw e;
         }
-        
-        if(nameIdAttributeAndEncoder == null){
+
+        if (nameIdAttributeAndEncoder == null) {
             return null;
         }
 
@@ -387,8 +386,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             return nameId;
         } catch (AttributeEncodingException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to encode NameIdentifier"));
-            String msg = MessageFormatter.format("Unable to encode NameIdentifier for relying party '{}'",
-                    requestContext.getInboundMessageIssuer());
+            String msg = "Unable to encode NameIdentifier for relying party "
+                    + requestContext.getInboundMessageIssuer();
             log.error(msg, e);
             throw new ProfileException(msg, e);
         }
@@ -525,8 +524,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
             return statment;
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Error resolving attributes"));
-            String msg = MessageFormatter.format("Error encoding attributes for principal '{}'", requestContext
-                    .getPrincipalName());
+            String msg = "Error encoding attributes for principal " + requestContext.getPrincipalName();
             log.error(msg, e);
             throw new ProfileException(msg, e);
         }
@@ -552,9 +550,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, StatusCode.REQUEST_DENIED,
                     "Error resolving principal"));
-            String msg = MessageFormatter.arrayFormat(
-                    "Error resolving principal name for SAML request from relying party '{}'. Cause: {}", new Object[] {
-                            requestContext.getInboundMessageIssuer(), e.getMessage() });
+            String msg = "Error resolving principal name for SAML request from relying party '"
+                    + requestContext.getInboundMessageIssuer() + "'. Cause: " + e.getMessage();
             log.warn(msg);
             throw new ProfileException(msg, e);
         }
@@ -591,9 +588,8 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         if (signatureCredential == null) {
-            String msg = MessageFormatter.format(
-                    "No signing credential is specified for relying party configuration '{}'", requestContext
-                            .getRelyingPartyConfiguration().getProviderId());
+            String msg = "No signing credential is specified for relying party configuration "
+                    + requestContext.getRelyingPartyConfiguration().getProviderId();
             log.warn(msg);
             throw new ProfileException(msg);
         }

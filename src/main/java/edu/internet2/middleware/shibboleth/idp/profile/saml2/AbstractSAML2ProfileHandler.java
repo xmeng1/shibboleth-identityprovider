@@ -75,7 +75,6 @@ import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -498,8 +497,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             }
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error resolving attributes"));
-            String msg = MessageFormatter.format("Error encoding attributes for principal '{}'", requestContext
-                    .getPrincipalName());
+            String msg = "Error encoding attributes for principal " + requestContext.getPrincipalName();
             log.error(msg, e);
             throw new ProfileException(msg, e);
         }
@@ -517,9 +515,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         if (profileConfiguration == null) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
                     "Error resolving principal"));
-            String msg = MessageFormatter.format(
-                    "Unable to resolve principal, no SAML 2 profile configuration for relying party '{}'",
-                    requestContext.getInboundMessageIssuer());
+            String msg = "Unable to resolve principal, no SAML 2 profile configuration for relying party "
+                    + requestContext.getInboundMessageIssuer();
             log.warn(msg);
             throw new ProfileException(msg);
         }
@@ -533,9 +530,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI,
                     "Error resolving principal"));
-            String msg = MessageFormatter.arrayFormat(
-                    "Error resolving principal name for SAML request '{}' from relying party '{}'. Cause: {}", new Object[]{requestContext
-                            .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer(),e.getMessage()});
+            String msg = "Error resolving principal name for SAML request '" + requestContext.getInboundSAMLMessageId()
+                    + "' from relying party '" + requestContext.getInboundMessageIssuer() + "'. Cause: "
+                    + e.getMessage();
             log.warn(msg);
             throw new ProfileException(msg, e);
         }
@@ -572,9 +569,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         }
 
         if (signatureCredential == null) {
-            String msg = MessageFormatter.format(
-                    "No signing credential is specified for relying party configuration '{}'", requestContext
-                            .getRelyingPartyConfiguration().getProviderId());
+            String msg = "No signing credential is specified for relying party configuration "
+                    + requestContext.getRelyingPartyConfiguration().getProviderId();
             log.warn(msg);
             throw new ProfileException(msg);
         }
@@ -745,9 +741,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     || (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.conditional && !encoder
                             .providesMessageConfidentiality(requestContext));
         } catch (MessageEncodingException e) {
-            String msg = MessageFormatter.format(
-                    "Unable to determine if outbound encoding '{}' provides message confidentiality protection",
-                    encoder.getBindingURI());
+            String msg = "Unable to determine if outbound encoding '" + encoder.getBindingURI()
+                    + "' provides message confidentiality protection";
             log.error(msg);
             throw new ProfileException(msg);
         }
@@ -830,8 +825,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                     "Required NameID format not supported"));
             throw e;
         }
-        
-        if(nameIdAttributeAndEncoder == null){
+
+        if (nameIdAttributeAndEncoder == null) {
             return null;
         }
 

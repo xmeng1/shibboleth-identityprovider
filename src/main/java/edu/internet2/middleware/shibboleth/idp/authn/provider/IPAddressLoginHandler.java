@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
@@ -91,8 +90,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
                         "Client failed IP address authentication");
             }
         } catch (UnknownHostException e) {
-            String msg = MessageFormatter.format("Unable to resolve {} in to an IP address", httpRequest
-                    .getRemoteAddr());
+            String msg = "Unable to resolve " + httpRequest.getRemoteAddr() + " in to an IP address";
             log.warn(msg);
             httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY, msg);
         }

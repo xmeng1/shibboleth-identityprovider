@@ -40,7 +40,6 @@ import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
@@ -80,9 +79,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             decodeRequest(requestContext, inTransport, outTransport);
 
             if (requestContext.getProfileConfiguration() == null) {
-                String msg = MessageFormatter.format(
-                        "SAML 2 Attribute Query profile is not configured for relying party '{}'", requestContext
-                                .getInboundMessage());
+                String msg = "SAML 2 Attribute Query profile is not configured for relying party "
+                        + requestContext.getInboundMessage();
                 requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
                         msg));
                 log.warn(msg);

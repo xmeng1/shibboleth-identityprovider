@@ -41,7 +41,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
-import org.joda.time.chrono.ISOChronology;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.URLBuilder;
 import org.opensaml.util.storage.StorageService;
@@ -50,7 +49,6 @@ import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
@@ -300,7 +298,9 @@ public class AuthenticationEngine extends HttpServlet {
                 supportedLoginHandlerEntry = supportedLoginHandlerItr.next();
                 if (!supportedLoginHandlerEntry.getKey().equals(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX)
                         && !requestedMethods.contains(supportedLoginHandlerEntry.getKey())) {
-                    LOG.debug("Filtering out login handler for authentication {}, it does not provide a requested authentication method",
+                    LOG
+                            .debug(
+                                    "Filtering out login handler for authentication {}, it does not provide a requested authentication method",
                                     supportedLoginHandlerEntry.getKey());
                     supportedLoginHandlerItr.remove();
                 }
@@ -320,20 +320,20 @@ public class AuthenticationEngine extends HttpServlet {
     }
 
     /**
-     * Filters out the previous session login handler if there is no existing IdP session, no active authentication 
-     * methods, or if at least one of the active authentication methods do not match the requested authentication 
+     * Filters out the previous session login handler if there is no existing IdP session, no active authentication
+     * methods, or if at least one of the active authentication methods do not match the requested authentication
      * methods.
      * 
      * @param supportedLoginHandlers login handlers supported by the authentication engine for this request, never null
      * @param idpSession current IdP session, may be null if no session currently exists
      * @param loginContext current login context, never null
      */
-    protected void filterPreviousSessionLoginHandler(Map<String, LoginHandler> supportedLoginHandlers, 
+    protected void filterPreviousSessionLoginHandler(Map<String, LoginHandler> supportedLoginHandlers,
             Session idpSession, LoginContext loginContext) {
-        if(!supportedLoginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX)){
+        if (!supportedLoginHandlers.containsKey(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX)) {
             return;
         }
-        
+
         if (idpSession == null) {
             LOG.debug("Filtering out previous session login handler because there is no existing IdP session");
             supportedLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
@@ -350,7 +350,8 @@ public class AuthenticationEngine extends HttpServlet {
             }
         }
         if (currentAuthnMethods.isEmpty()) {
-            LOG.debug("Filtering out previous session login handler because there are no active authentication methods");
+            LOG
+                    .debug("Filtering out previous session login handler because there are no active authentication methods");
             supportedLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
             return;
         }
@@ -367,7 +368,8 @@ public class AuthenticationEngine extends HttpServlet {
             }
 
             if (!retainPreviousSession) {
-                LOG.debug("Filtering out previous session login handler, no active authentication methods match required methods");
+                LOG
+                        .debug("Filtering out previous session login handler, no active authentication methods match required methods");
                 supportedLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
                 return;
             }
@@ -402,7 +404,8 @@ public class AuthenticationEngine extends HttpServlet {
             loginHandler = loginHandlers.get(activeMethod.getAuthenticationMethod());
             if (loginHandler != null && !loginHandler.supportsForceAuthentication()) {
                 for (String handlerSupportedMethods : loginHandler.getSupportedAuthenticationMethods()) {
-                    LOG.debug("Removing LoginHandler {}, it does not support forced re-authentication", loginHandler.getClass().getName());
+                    LOG.debug("Removing LoginHandler {}, it does not support forced re-authentication", loginHandler
+                            .getClass().getName());
                     loginHandlers.remove(handlerSupportedMethods);
                 }
             }
@@ -453,7 +456,6 @@ public class AuthenticationEngine extends HttpServlet {
         }
     }
 
-
     /**
      * Selects a login handler from a list of possible login handlers that could be used for the request.
      * 
@@ -489,12 +491,12 @@ public class AuthenticationEngine extends HttpServlet {
                 }
             }
         }
-//            possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
-//            if (possibleLoginHandlers.isEmpty()) {
-//                LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext
-//                        .getRelyingPartyId());
-//                throw new AuthenticationException();
-//            }
+        // possibleLoginHandlers.remove(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX);
+        // if (possibleLoginHandlers.isEmpty()) {
+        // LOG.info("No authentication mechanism available for use with relying party '{}'", loginContext
+        // .getRelyingPartyId());
+        // throw new AuthenticationException();
+        // }
 
         if (loginContext.getDefaultAuthenticationMethod() != null
                 && possibleLoginHandlers.containsKey(loginContext.getDefaultAuthenticationMethod())) {
@@ -535,10 +537,9 @@ public class AuthenticationEngine extends HttpServlet {
             if (actualAuthnMethod != null) {
                 if (!loginContext.getRequestedAuthenticationMethods().isEmpty()
                         && !loginContext.getRequestedAuthenticationMethods().contains(actualAuthnMethod)) {
-                    String msg = MessageFormatter
-                            .format(
-                                    "Relying patry required an authentication method of '{}' but the login handler performed '{}'",
-                                    loginContext.getRequestedAuthenticationMethods(), actualAuthnMethod);
+                    String msg = "Relying patry required an authentication method of "
+                            + loginContext.getRequestedAuthenticationMethods() + " but the login handler performed "
+                            + actualAuthnMethod;
                     LOG.error(msg);
                     throw new AuthenticationException(msg);
                 }

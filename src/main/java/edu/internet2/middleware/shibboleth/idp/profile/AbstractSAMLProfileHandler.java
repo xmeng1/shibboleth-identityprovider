@@ -473,11 +473,9 @@ public abstract class AbstractSAMLProfileHandler extends
     protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoderByRequiredFormat(
             String requiredNameFormat, Class<T> nameIdEncoderType, BaseSAMLProfileRequestContext requestContext)
             throws ProfileException {
-        String requiredNameFormatErr = MessageFormatter.format(
-                "No attribute of principal '{}' can be encoded in to a NameIdentifier of "
-                        + "required format '{}' for relying party '{}'", new Object[] {
-                        requestContext.getPrincipalName(), requiredNameFormat,
-                        requestContext.getInboundMessageIssuer(), });
+        String requiredNameFormatErr = "No attribute of principal '" + requestContext.getPrincipalName()
+                + "' can be encoded in to a NameIdentifier of " + "required format '" + requiredNameFormat
+                + "' for relying party '" + requestContext.getInboundMessageIssuer() + "'";
 
         Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
         if (principalAttributes == null || principalAttributes.isEmpty()) {
@@ -582,7 +580,9 @@ public abstract class AbstractSAMLProfileHandler extends
         nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(nameIdEncoderType, principalAttributes,
                 supportedNameFormats);
         if (nameIdAttributeAndEncoder == null) {
-            log.debug( "No attributes for principal '{}' support encoding into a supported name identifier format for relying party '{}'",
+            log
+                    .debug(
+                            "No attributes for principal '{}' support encoding into a supported name identifier format for relying party '{}'",
                             requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
         }
 
