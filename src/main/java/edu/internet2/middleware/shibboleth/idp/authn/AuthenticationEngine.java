@@ -148,15 +148,6 @@ public class AuthenticationEngine extends HttpServlet {
             forwardRequest("/error.jsp", httpRequest, httpResponse);
         } else {
             forwardRequest(loginContext.getAuthenticationEngineURL(), httpRequest, httpResponse);
-            // URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
-            // urlBuilder.setPath(urlBuilder.getPath() + loginContext.getAuthenticationEngineURL());
-            // String authnEngineUrl = urlBuilder.buildURL();
-            // LOG.debug("Redirecting user to authentication engine at {}", authnEngineUrl);
-            // try{
-            // httpResponse.sendRedirect(authnEngineUrl);
-            // }catch(IOException e){
-            // LOG.warn("Error sending user back to authentication engine at " + authnEngineUrl, e);
-            // }
         }
     }
 
@@ -702,8 +693,8 @@ public class AuthenticationEngine extends HttpServlet {
         idpSession.setSubject(mergeSubjects(idpSession.getSubject(), authenticationSubject));
 
         // Check if an existing authentication method was used (i.e. SSO occurred), if not record the new information
-        AuthenticationMethodInformation authnMethodInfo = loginContext.getAuthenticationMethodInformation();
-        if (authnMethodInfo == null || !authnMethodInfo.getAuthenticationMethod().equals(authenticationMethod)) {
+        AuthenticationMethodInformation authnMethodInfo = idpSession.getAuthenticationMethods().get(authenticationMethod);
+        if (authnMethodInfo == null) {
             LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
                     authenticationPrincipal.getName());
             LoginHandler loginHandler = handlerManager.getLoginHandlers().get(loginContext.getAttemptedAuthnMethod());
