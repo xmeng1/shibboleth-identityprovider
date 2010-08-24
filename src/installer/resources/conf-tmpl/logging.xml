@@ -30,7 +30,6 @@
      -->
     <appender name="IDP_ACCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>$IDP_HOME$/logs/idp-access.log</File>
-        <ImmediateFlush>true</ImmediateFlush>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>$IDP_HOME$/logs/idp-access-%d{yyyy-MM-dd}.log</FileNamePattern>
@@ -44,7 +43,6 @@
 
     <appender name="IDP_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>$IDP_HOME$/logs/idp-audit.log</File>
-        <ImmediateFlush>true</ImmediateFlush>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>$IDP_HOME$/logs/idp-audit-%d{yyyy-MM-dd}.log</FileNamePattern>
@@ -58,10 +56,6 @@
 
     <appender name="IDP_PROCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>$IDP_HOME$/logs/idp-process.log</File>
-        <!-- Uncomment this if application is terminating in such as way that the last few log messages are not written to disk -->
-        <!--
-        <ImmediateFlush>true</ImmediateFlush>
-        -->
         
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>$IDP_HOME$/logs/idp-process-%d{yyyy-MM-dd}.log</FileNamePattern>
