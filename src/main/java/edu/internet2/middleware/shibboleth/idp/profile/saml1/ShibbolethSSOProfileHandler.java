@@ -303,7 +303,7 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setInboundSAMLProtocol(ShibbolethConstants.SHIB_SSO_PROFILE_URI);
 
         requestContext.setOutboundMessageTransport(out);
-        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML20P_NS);
+        requestContext.setOutboundSAMLProtocol(SAMLConstants.SAML11P_NS);
 
         requestContext.setMetadataProvider(getMetadataProvider());
 
