@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.idp.profile;
 import java.io.File;
 import java.io.OutputStreamWriter;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.opensaml.Configuration;
@@ -71,8 +72,15 @@ public class SAMLMetadataProfileHandler extends AbstractRequestURIMappedProfileH
     public void processRequest(InTransport in, OutTransport out) throws ProfileException {
         XMLObject metadata;
 
+        HttpServletRequest httpRequest = ((HttpServletRequestAdapter)in).getWrappedRequest();
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter)out).getWrappedResponse();
-        httpResponse.setContentType("application/samlmetadata+xml");
+        
+        String acceptHeder = DatatypeHelper.safeTrimOrNullString(httpRequest.getHeader("Accept"));
+        if(acceptHeder != null && !acceptHeder.contains("application/samlmetadata+xml")){
+            httpResponse.setContentType("application/xml");
+        }else{
+            httpResponse.setContentType("application/samlmetadata+xml");
+        }
         
         try {
             String requestedEntity = DatatypeHelper.safeTrimOrNullString(((HttpServletRequestAdapter) in)
