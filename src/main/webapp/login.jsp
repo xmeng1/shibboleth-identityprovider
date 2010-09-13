@@ -13,42 +13,52 @@
 <html>
 
     <head>
-        <title>Shibboleth Identity Provider - Login</title>
+        <title>Shibboleth Identity Provider - Example Login Page</title>
     </head>
 
 	<body>
 		<img src="<%= request.getContextPath() %>/images/logo.jpg" />
-		<h2>Shibboleth Identity Provider Login to Service Provider <%= loginContext.getRelyingPartyId() %></h2>
-		<p>
-        Existing Session: <%= userSession != null %><br/>	
-		Requested Authentication Methods: <%= loginContext.getRequestedAuthenticationMethods() %><br/>
-		Attempting Authentication Method: <%= loginContext.getAttemptedAuthnMethod() %> <br/>
-		Is Forced Authentication: <%= loginContext.isForceAuthRequired() %><br/>
+		<h1>Example Login Page</h1>
+		<p>This login page is an example and should be customized.  Refer to the 
+			<a href="https://spaces.internet2.edu/display/SHIB2/IdPAuthUserPass" target="_new"> documentation</a>.
 		</p>
+
+		<% if (loginContext == null) { %>
+		<p><font color="red">Error:</font> Direct access to this page is not supported.</p>
+		<% } else {%>		
 		
-		<% if (request.getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY) != null) { %>
-		<p><font color="red">Authentication Failed</font></p>
-		<% } %>
+			<h2>Shibboleth Identity Provider Login to Service Provider <%= loginContext.getRelyingPartyId() %></h2>
+			<p>
+	        Existing Session: <%= userSession != null %><br/>	
+			Requested Authentication Methods: <%= loginContext.getRequestedAuthenticationMethods() %><br/>
+			Attempting Authentication Method: <%= loginContext.getAttemptedAuthnMethod() %> <br/>
+			Is Forced Authentication: <%= loginContext.isForceAuthRequired() %><br/>
+			</p>
 		
-		<% if(request.getAttribute("actionUrl") != null){ %>
-		    <form action="<%=request.getAttribute("actionUrl")%>" method="post">
-		<% }else{ %>
-		    <form action="j_security_check" method="post">
-		<% } %>
-		<table>
-			<tr>
-				<td>Username:</td>
-				<td><input name="j_username" type="text" tabindex="1" /></td>
-			</tr>
-			<tr>
-				<td>Password:</td>
-				<td><input name="j_password" type="password" tabindex="2" /></td>
-			</tr>
-			<tr>
-				<td colspan="2"><input type="submit" value="Login" tabindex="3" /></td>
-			</tr>
-		</table>
-		</form>
+			<% if (request.getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY) != null) { %>
+			<p><font color="red">Authentication Failed</font></p>
+			<% } %>
+		
+			<% if(request.getAttribute("actionUrl") != null){ %>
+			    <form action="<%=request.getAttribute("actionUrl")%>" method="post">
+			<% }else{ %>
+			    <form action="j_security_check" method="post">
+			<% } %>
+			<table>
+				<tr>
+					<td>Username:</td>
+					<td><input name="j_username" type="text" tabindex="1" /></td>
+				</tr>
+				<tr>
+					<td>Password:</td>
+					<td><input name="j_password" type="password" tabindex="2" /></td>
+				</tr>
+				<tr>
+					<td colspan="2"><input type="submit" value="Login" tabindex="3" /></td>
+				</tr>
+			</table>
+			</form>
+		<%}%>
 	</body>
 	
 </html>

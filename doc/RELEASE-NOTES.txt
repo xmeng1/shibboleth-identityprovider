@@ -1,5 +1,6 @@
 Changes in Release 2.2.0
 =============================================
+[SIDP-411] - Check for loginContext != null at login.jsp
 [SIDP-409] - Pass IdP w/o authenticating
 [SIDP-407] - Shibboleth SSO profile handler sets incorrect protocol string in outbound message context
 [SIDP-402] - Update 3rd party libraries for 2.2 release
