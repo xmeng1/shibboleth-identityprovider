@@ -123,6 +123,9 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
+        }else if(!loginContext.isPrincipalAuthenticated()){
+            log.debug("Incoming request contained a login context but principal was not authenticated, processing as first leg of request");
+            performAuthentication(inTransport, outTransport);            
         } else {
             log.debug("Incoming request contains a login context, processing as second leg of request");
             HttpServletHelper.unbindLoginContext(getStorageService(), servletContext, httpRequest, httpResponse);
