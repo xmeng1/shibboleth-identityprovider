@@ -25,16 +25,10 @@
 
 		<% if (loginContext == null) { %>
 		<p><font color="red">Error:</font> Direct access to this page is not supported.</p>
-		<% } else {%>		
+		<% } else { %>		
 		
 			<h2>Shibboleth Identity Provider Login to Service Provider <%= loginContext.getRelyingPartyId() %></h2>
-			<p>
-	        Existing Session: <%= userSession != null %><br/>	
-			Requested Authentication Methods: <%= loginContext.getRequestedAuthenticationMethods() %><br/>
-			Attempting Authentication Method: <%= loginContext.getAttemptedAuthnMethod() %> <br/>
-			Is Forced Authentication: <%= loginContext.isForceAuthRequired() %><br/>
-			</p>
-		
+					
 			<% if (request.getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY) != null) { %>
 			<p><font color="red">Authentication Failed</font></p>
 			<% } %>
