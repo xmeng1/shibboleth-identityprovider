@@ -346,11 +346,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
         if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
             log.info("Issuing Backchannel logout requests");
-            for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
-                if (serviceLogoutInfo.isLoggedIn()) {
-                    initiateBackChannelLogout(sloContext, serviceLogoutInfo);
-                }
-            }
+            initiateBackChannelLogout(sloContext);
 
             respondToInitialRequest(sloContext, initialRequest);
         } else {
@@ -431,6 +427,26 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     private void destroySession(SingleLogoutContext sloContext) {
         log.info("Invalidating session '{}'.", sloContext.getIdpSessionID());
         getSessionManager().destroySession(sloContext.getIdpSessionID());
+    }
+
+    /**
+     * Issues back channel logout request to every session participant.
+     *
+     * @param sloContext
+     * @throws ProfileException
+     */
+    private void initiateBackChannelLogout(SingleLogoutContext sloContext) throws ProfileException {
+        for (LogoutInformation serviceLogoutInfo : sloContext.getServiceInformation().values()) {
+            if (serviceLogoutInfo.isLoggedIn()) {
+                try {
+                    initiateBackChannelLogout(sloContext, serviceLogoutInfo);
+                } catch (ProfileException ex) {
+                    log.warn("Caught exception while trying to issue LogoutRequest to '{}'",
+                            serviceLogoutInfo.getEntityID(), ex);
+                    serviceLogoutInfo.setLogoutFailed();
+                }
+            }
+        }
     }
 
     /**
