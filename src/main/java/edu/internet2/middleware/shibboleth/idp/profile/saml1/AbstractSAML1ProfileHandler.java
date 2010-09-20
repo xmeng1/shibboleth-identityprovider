@@ -373,6 +373,7 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         }
 
         BaseAttribute<?> nameIdAttribute = nameIdAttributeAndEncoder.getFirst();
+        requestContext.setNameIdentifierAttribute(nameIdAttribute);
         SAML1NameIdentifierEncoder nameIdEncoder = nameIdAttributeAndEncoder.getSecond();
 
         try {
@@ -682,6 +683,13 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         if (context.getReleasedAttributes() != null) {
             auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
         }
+        
+        if (context.getNameIdentifierAttribute() != null) {
+            Object idValue = context.getNameIdentifierAttribute().getValues().iterator().next();
+            if(idValue != null){
+                auditLogEntry.setNameIdValue(idValue.toString());
+            }
+        }
 
         getAduitLog().info(auditLogEntry.toString());
     }
@@ -714,32 +722,17 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
         public String toString() {
             StringBuilder entryString = new StringBuilder(super.toString());
 
-            NameIdentifier nameIdentifier = null;
             StringBuilder assertionIds = new StringBuilder();
             List<Assertion> assertions = samlResponse.getAssertions();
             if (assertions != null && !assertions.isEmpty()) {
                 for (Assertion assertion : assertions) {
                     assertionIds.append(assertion.getID());
                     assertionIds.append(",");
-
-                    if (nameIdentifier == null) {
-                        List<Statement> statements = assertion.getStatements();
-                        if (statements != null && !statements.isEmpty()) {
-                            for (Statement statement : statements) {
-                                if (statement instanceof SubjectStatement) {
-                                    if (((SubjectStatement) statement).getSubject() != null) {
-                                        nameIdentifier = ((SubjectStatement) statement).getSubject()
-                                                .getNameIdentifier();
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
 
-            if (nameIdentifier != null) {
-                entryString.append(nameIdentifier.getNameIdentifier());
+            if (getNameIdValue() != null) {
+                entryString.append(getNameIdValue());
             }
             entryString.append("|");
 

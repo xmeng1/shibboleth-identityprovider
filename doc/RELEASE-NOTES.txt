@@ -1,5 +1,6 @@
 Changes in Release 2.2.0
 =============================================
+[SIDP-415] - SAML name identifier value not logged in audit log
 [SIDP-411] - Check for loginContext != null at login.jsp
 [SIDP-409] - Pass IdP w/o authenticating
 [SIDP-407] - Shibboleth SSO profile handler sets incorrect protocol string in outbound message context
