@@ -372,6 +372,27 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
+     * Issue back-channel logout requests to all session participants.
+     * 
+     * @param idpSession
+     * @return
+     * @throws ProfileException
+     */
+    public SingleLogoutContext administrativeLogout(Session idpSession) throws ProfileException {
+        log.info("Administratively logging out user '{}'", idpSession.getPrincipalName());
+        InitialLogoutRequestContext initialRequest = createInitialLogoutRequestContext();
+        SingleLogoutContext sloContext = SingleLogoutContext.createInstance(null, initialRequest, idpSession);
+        try {
+            initiateBackChannelLogout(sloContext);
+        } catch (ProfileException e) {
+            log.error("Exception was caught while administratively logging out user '{}'",
+                    idpSession.getPrincipalName(), e);
+        }
+        destroySession(sloContext);
+        return sloContext;
+    }
+
+    /**
      * Creates SAML2 LogoutRequest and corresponding context.
      *
      * @param sloContext
