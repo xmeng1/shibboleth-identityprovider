@@ -328,8 +328,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             throw new ProfileException("Cannot find IdP Session for principal");
         }
 
-        if (!idpInitiatedLogout &&
-                !idpSession.getServicesInformation().keySet().
+        if (!idpInitiatedLogout
+                && !idpSession.getServicesInformation().keySet().
                 contains(initialRequest.getInboundMessageIssuer())) {
             String msg = "Requesting entity is not session participant";
             log.warn(msg);
@@ -472,7 +472,6 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
      *
      * @param sloContext
      * @param serviceLogoutInfo
-     * @param idpSession
      * @throws ProfileException
      */
     private void initiateBackChannelLogout(SingleLogoutContext sloContext, LogoutInformation serviceLogoutInfo)
@@ -526,6 +525,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
 
             //encode and sign saml request
             encoder.encode(requestCtx);
+            //TODO: audit log is still missing
 
             log.info("Issuing back-channel logout request to SP '{}'", spEntityID);
             //execute SOAP/HTTP call

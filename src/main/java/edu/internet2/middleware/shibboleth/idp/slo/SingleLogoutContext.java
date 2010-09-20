@@ -111,7 +111,7 @@ public class SingleLogoutContext implements Serializable {
      * @param idpSession IdP session for the principal
      * @return
      */
-    public final static SingleLogoutContext createInstance(
+    public static SingleLogoutContext createInstance(
             String profileHandlerURL,
             InitialLogoutRequestContext initialRequest,
             Session idpSession) {
@@ -197,9 +197,9 @@ public class SingleLogoutContext implements Serializable {
      */
     public synchronized void checkTimeout() {
         for (LogoutInformation serviceLogoutInfo : serviceInformation.values()) {
-            if (serviceLogoutInfo.getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED) &&
-                    serviceLogoutInfo.getElapsedMillis() >
-                    frontChannelResponseTimeout) {
+            if (serviceLogoutInfo.getLogoutStatus().equals(LogoutStatus.LOGOUT_ATTEMPTED)
+                    && serviceLogoutInfo.getElapsedMillis()
+                    > frontChannelResponseTimeout) {
                 serviceLogoutInfo.setLogoutTimedOut();
             }
         }
