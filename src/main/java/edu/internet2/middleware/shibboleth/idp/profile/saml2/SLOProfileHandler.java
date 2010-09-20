@@ -302,7 +302,7 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
             //idp initiated logout
             log.info("Starting the IdP-initiated logout process");
             initialRequest = createInitialLogoutRequestContext();
-            //? initialRequest.setInboundMessageTransport(inTransport);
+            initialRequest.setInboundMessageTransport(inTransport);
             servletRequest.setAttribute(SKIP_LOGOUT_QUESTION_ATTR, true);
         } else {
             //sp initiated logout
