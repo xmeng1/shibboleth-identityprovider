@@ -296,20 +296,17 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
         Session idpSession = getUserSession(inTransport);
         boolean idpInitiatedLogout =
                 servletRequest.getAttribute(IDP_INITIATED_LOGOUT_ATTR) != null;
-        InitialLogoutRequestContext initialRequest = new InitialLogoutRequestContext();
+        InitialLogoutRequestContext initialRequest = null;
 
         if (idpInitiatedLogout) {
             //idp initiated logout
             log.info("Starting the IdP-initiated logout process");
-            initialRequest.setInboundMessageTransport(inTransport);
-            RelyingPartyConfiguration defaultRPC =
-                    getRelyingPartyConfigurationManager().getDefaultRelyingPartyConfiguration();
-            initialRequest.setLocalEntityId(defaultRPC.getProviderId());
-            initialRequest.setProfileConfiguration(
-                    (LogoutRequestConfiguration) defaultRPC.getProfileConfiguration(getProfileId()));
+            initialRequest = createInitialLogoutRequestContext();
+            //? initialRequest.setInboundMessageTransport(inTransport);
             servletRequest.setAttribute(SKIP_LOGOUT_QUESTION_ATTR, true);
         } else {
             //sp initiated logout
+            initialRequest = new InitialLogoutRequestContext();
             log.info("Processing incoming LogoutRequest");
             decodeRequest(initialRequest, inTransport, outTransport);
             checkSamlVersion(initialRequest);
@@ -557,6 +554,17 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 }
             }
         }
+    }
+
+    private InitialLogoutRequestContext createInitialLogoutRequestContext() {
+        InitialLogoutRequestContext initialRequest = new InitialLogoutRequestContext();
+        RelyingPartyConfiguration defaultRPC =
+                getRelyingPartyConfigurationManager().getDefaultRelyingPartyConfiguration();
+        initialRequest.setLocalEntityId(defaultRPC.getProviderId());
+        initialRequest.setProfileConfiguration(
+                (LogoutRequestConfiguration) defaultRPC.getProfileConfiguration(getProfileId()));
+
+        return initialRequest;
     }
 
     /**
