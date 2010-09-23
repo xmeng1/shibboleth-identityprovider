@@ -1,5 +1,6 @@
 Changes in Release 2.2.0
 =============================================
+[SIDP-416] - MetadataProviderObserver leak, new one added on every login
 [SIDP-415] - SAML name identifier value not logged in audit log
 [SIDP-413] - Change link of example login page
 [SIDP-411] - Check for loginContext != null at login.jsp

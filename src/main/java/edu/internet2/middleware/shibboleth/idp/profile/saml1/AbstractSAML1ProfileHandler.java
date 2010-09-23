@@ -45,7 +45,6 @@ import org.opensaml.saml1.core.StatusCode;
 import org.opensaml.saml1.core.StatusMessage;
 import org.opensaml.saml1.core.Subject;
 import org.opensaml.saml1.core.SubjectConfirmation;
-import org.opensaml.saml1.core.SubjectStatement;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.xml.XMLObjectBuilder;

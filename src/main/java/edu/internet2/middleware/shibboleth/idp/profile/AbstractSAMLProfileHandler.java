@@ -36,6 +36,8 @@ import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.security.MetadataCredentialResolver;
+import org.opensaml.security.MetadataCredentialResolverFactory;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.InTransport;
@@ -175,6 +177,17 @@ public abstract class AbstractSAMLProfileHandler extends
         }
 
         return null;
+    }
+
+    /**
+     * A convenience method for obtaining a metadata credential resolver for the current metadata provider.
+     *
+     * @return the metadata credential resolver or null
+     */
+    public MetadataCredentialResolver getMetadataCredentialResolver() {
+        MetadataCredentialResolverFactory mcrFactory = MetadataCredentialResolverFactory.getFactory();
+        MetadataProvider metadataProvider = getMetadataProvider();
+        return mcrFactory.getInstance(metadataProvider);
     }
 
     /**

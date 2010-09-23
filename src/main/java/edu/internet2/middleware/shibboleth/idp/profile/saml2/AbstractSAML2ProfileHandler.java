@@ -907,7 +907,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @throws SecurityException thrown if there is a problem resolving the credential from the peer's metadata
      */
     protected Credential getKeyEncryptionCredential(String peerEntityId) throws SecurityException {
-        MetadataCredentialResolver kekCredentialResolver = new MetadataCredentialResolver(getMetadataProvider());
+        MetadataCredentialResolver kekCredentialResolver = getMetadataCredentialResolver();
 
         CriteriaSet criteriaSet = new CriteriaSet();
         criteriaSet.add(new EntityIDCriteria(peerEntityId));
