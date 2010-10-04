@@ -171,7 +171,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             SAMLMessageDecoder decoder = getInboundMessageDecoder(requestContext);
             requestContext.setMessageDecoder(decoder);
             decoder.decode(requestContext);
-            log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessage());
+            log.debug("Decoded request from relying party '{}'", requestContext.getInboundMessageIssuer());
 
             if (!(requestContext.getInboundSAMLMessage() instanceof AttributeQuery)) {
                 log.warn("Incoming message was not a AttributeQuery, it was a {}", requestContext

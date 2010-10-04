@@ -1,3 +1,7 @@
+Changes in Release 2.2.1
+=============================================
+[SIDP-421] - Error logging SOAP queries
+
 Changes in Release 2.2.0
 =============================================
 [SIDP-416] - MetadataProviderObserver leak, new one added on every login
