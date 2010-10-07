@@ -175,7 +175,7 @@ public class IdPSessionFilter implements Filter {
         if (consistentAddress) {
             String remoteAddress = new String(remoteAddressBytes);
             if (!httpRequest.getRemoteAddr().equals(remoteAddress)) {
-                log.error("Client sent a cookie from addres {} but the cookie was issued to address {}", httpRequest
+                log.error("Client sent a cookie from address {} but the cookie was issued to address {}", httpRequest
                         .getRemoteAddr(), remoteAddress);
                 return false;
             }
