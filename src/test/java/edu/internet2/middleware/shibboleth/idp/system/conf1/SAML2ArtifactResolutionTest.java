@@ -74,9 +74,9 @@ public class SAML2ArtifactResolutionTest extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("samlp:ArtifactResponse"));
+        assertTrue(response.contains("saml2p:ArtifactResponse"));
         assertTrue(response.contains("urn:oasis:names:tc:SAML:2.0:status:Success"));
-        assertTrue(response.contains("saml:Assertion"));
+        assertTrue(response.contains("saml2:Assertion"));
     }
     
     public void testWithoutConfiguration() throws Exception{

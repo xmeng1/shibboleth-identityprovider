@@ -17,6 +17,7 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.Serializable;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -137,6 +138,10 @@ public class LoginContext implements Serializable {
      * @return The duration of authentication, or zero if none was set.
      */
     public synchronized long getAuthenticationDuration() {
+        if(authenticationMethodInformation == null){
+            return 0;
+        }
+
         return authenticationMethodInformation.getAuthenticationDuration();
     }
 
@@ -164,6 +169,10 @@ public class LoginContext implements Serializable {
      * @return The instant of authentication, or <code>null</code> if none was set.
      */
     public synchronized DateTime getAuthenticationInstant() {
+        if(authenticationMethodInformation == null){
+            return null;
+        }
+
         return authenticationMethodInformation.getAuthenticationInstant();
     }
 
@@ -173,6 +182,9 @@ public class LoginContext implements Serializable {
      * @return The method used to authenticate the user.
      */
     public synchronized String getAuthenticationMethod() {
+        if(authenticationMethodInformation == null){
+            return null;
+        }
         return authenticationMethodInformation.getAuthenticationMethod();
     }
 
@@ -200,7 +212,16 @@ public class LoginContext implements Serializable {
      * @return the ID of the user, or <code>null</code> if authentication failed.
      */
     public synchronized String getPrincipalName() {
-        return authenticationMethodInformation.getAuthenticationPrincipal().getName();
+        if(authenticationMethodInformation == null){
+            return null;
+        }
+
+        Principal principal = authenticationMethodInformation.getAuthenticationPrincipal();
+        if(principal == null){
+            return null;
+        }
+        
+        return principal.getName();
     }
 
     /**

@@ -18,8 +18,6 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -28,6 +26,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.LoginException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -35,11 +34,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.opensaml.xml.util.DatatypeHelper;
-import org.opensaml.xml.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 
@@ -99,16 +98,17 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
         String password = request.getParameter(passwordAttribute);
 
         if (username == null || password == null) {
-            redirectToLoginPage(request, response, null);
+            redirectToLoginPage(request, response);
             return;
         }
 
-        if (authenticateUser(request, username, password)) {
+        try {
+            authenticateUser(request, username, password);
             AuthenticationEngine.returnToAuthenticationEngine(request, response);
-        } else {
-            List<Pair<String, String>> queryParams = new ArrayList<Pair<String, String>>();
-            queryParams.add(new Pair<String, String>(failureParam, "true"));
-            redirectToLoginPage(request, response, queryParams);
+        } catch (LoginException e) {
+            request.setAttribute(failureParam, "true");
+            request.setAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY, new AuthenticationException(e));
+            redirectToLoginPage(request, response);
         }
     }
 
@@ -117,22 +117,14 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      * 
      * @param request current request
      * @param response current response
-     * @param queryParams query parameters to pass to the login page
      */
-    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response,
-            List<Pair<String, String>> queryParams) {
+    protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response) {
 
         String requestContext = DatatypeHelper.safeTrimOrNullString(request.getContextPath());
         if (requestContext == null) {
             requestContext = "/";
         }
         request.setAttribute("actionUrl", requestContext + request.getServletPath());
-
-        if (queryParams != null) {
-            for (Pair<String, String> param : queryParams) {
-                request.setAttribute(param.getFirst(), param.getSecond());
-            }
-        }
 
         try {
             request.getRequestDispatcher(loginPage).forward(request, response);
@@ -152,9 +144,9 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      * @param username the principal name of the user to be authenticated
      * @param password the password of the user to be authenticated
      * 
-     * @return true of authentication succeeds, false if not
+     * @throws LoginException thrown if there is a problem authenticating the user
      */
-    protected boolean authenticateUser(HttpServletRequest request, String username, String password) {
+    protected void authenticateUser(HttpServletRequest request, String username, String password) throws LoginException {
         try {
             log.debug("Attempting to authenticate user {}", username);
 
@@ -169,9 +161,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
             Subject loginSubject = jaasLoginCtx.getSubject();
 
             Set<Principal> principals = loginSubject.getPrincipals();
-            if (principals.isEmpty()) {
-                principals.add(new UsernamePrincipal(username));
-            }
+            principals.add(new UsernamePrincipal(username));
 
             Set<Object> publicCredentials = loginSubject.getPublicCredentials();
 
@@ -180,11 +170,12 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             Subject userSubject = new Subject(false, principals, publicCredentials, privateCredentials);
             request.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
-
-            return true;
+        } catch (LoginException e) {
+            log.debug("User authentication for " + username + " failed", e);
+            throw e;
         } catch (Throwable e) {
             log.debug("User authentication for " + username + " failed", e);
-            return false;
+            throw new LoginException("unknown authentication error");
         }
     }
 

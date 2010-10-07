@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.internet2.middleware</groupId>
     <artifactId>shibboleth-identityprovider</artifactId>
-    <version>2.1.5-slo8</version>
+    <version>2.2.0-slo8</version>
     <!-- We bundle as a jar here, the installer creates the WAR -->
     <packaging>jar</packaging>
 
@@ -13,6 +13,12 @@
         The Shibboleth Identity Provider is used by an organization to securely assert information, via SAML, about
         their users.  This information is then read and acted upon by Service Providers.
     </description>
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <xerces.groupId>org.apache.xerces</xerces.groupId>
+        <xerces.version>2.10.0</xerces.version>
+    </properties>
     
     <repositories>
         <repository>
@@ -38,39 +44,40 @@
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
             <artifactId>shibboleth-common</artifactId>
-            <version>1.1.4-slo2</version>
+            <version>1.2.0-slo2</version>
         </dependency>
+        
+        <!-- Provided dependencies -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.4</version>
+            <scope>provided</scope>
         </dependency>
-        
-        <!-- Provided dependencies -->
                 
         <!-- Runtime dependencies -->
         <dependency>
-            <groupId>org.apache.xerces</groupId>
+            <groupId>${xerces.groupId}</groupId>
             <artifactId>xml-apis</artifactId>
-            <version>2.9.1</version>
+            <version>${xerces.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.xerces</groupId>
+            <groupId>${xerces.groupId}</groupId>
             <artifactId>xercesImpl</artifactId>
-            <version>2.9.1</version>
+            <version>${xerces.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.xerces</groupId>
+            <groupId>${xerces.groupId}</groupId>
             <artifactId>resolver</artifactId>
-            <version>2.9.1</version>
+            <version>${xerces.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.xerces</groupId>
+            <groupId>${xerces.groupId}</groupId>
             <artifactId>serializer</artifactId>
-            <version>2.9.1</version>
+            <version>${xerces.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -81,14 +88,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
-            <artifactId>ant</artifactId>
-            <version>1.7.0</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ant</groupId>
             <artifactId>ant-nodeps</artifactId>
-            <version>1.7.0</version>
+            <version>1.7.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -137,8 +138,8 @@
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-mock</artifactId>
-            <version>2.0.8</version>
+            <artifactId>spring-test</artifactId>
+            <version>2.5.6.SEC02</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -173,7 +174,6 @@
                 <configuration>
                     <descriptors>
                         <descriptor>src/main/assembly/bin.xml</descriptor>
-                        <descriptor>src/main/assembly/src.xml</descriptor>
                     </descriptors>
                     <tarLongFileMode>gnu</tarLongFileMode>
                 </configuration>
@@ -250,15 +250,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
-                    <outputDirectory>${project.reporting.outputDirectory}/style</outputDirectory>
-                    <enableRSS>false</enableRSS>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
                 <configuration>
                     <outputDirectory>${project.reporting.outputDirectory}/unitTest</outputDirectory>
@@ -302,21 +293,6 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-checkstyle-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>release-checkstyle</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>checkstyle</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-report-plugin</artifactId>
@@ -361,7 +337,7 @@
     </profiles>
     
     <!-- Project Metadata -->
-    <url>https://shibboleth.internet2.edu/</url>
+    <url>http://shibboleth.internet2.edu/</url>
     
     <inceptionYear>2006</inceptionYear>
     

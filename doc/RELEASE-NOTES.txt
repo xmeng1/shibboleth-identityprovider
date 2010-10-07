@@ -1,3 +1,37 @@
+Changes in Release 2.2.0
+=============================================
+[SIDP-416] - MetadataProviderObserver leak, new one added on every login
+[SIDP-415] - SAML name identifier value not logged in audit log
+[SIDP-413] - Change link of example login page
+[SIDP-411] - Check for loginContext != null at login.jsp
+[SIDP-409] - Pass IdP w/o authenticating
+[SIDP-407] - Shibboleth SSO profile handler sets incorrect protocol string in outbound message context
+[SIDP-403] - Use text/xml as the media type for returned metadata unless user agent request metadata media type
+[SIDP-402] - Update 3rd party libraries for 2.2 release
+[SIDP-397] - Remove any unit test that won't be fixed in the 2.X branch, fix the rest
+[SIDP-396] - Previous session LoginHandler used even if authentication method has expired
+[SIDP-392] - NullPointerException in LoginContext when authentication method information is null
+[SIDP-388] - Add eduPersonAssurance attribute to attribute-resolver.xml config example
+[SIDP-386] - Session indexes not cleared when session is destroyed
+[SIDP-384] - Incorrect error message set for expired request in Shibboleth SSO Profile Handler
+[SIDP-382] - Less verbose logging for failed attribute queries due to missing name-id
+[SIDP-381] - Use duration notation for assertion lifetime in example config files
+[SIDP-380] - Use of forwards between profile handlers and authentication engine causes problems for uApprove
+[SIDP-379] - Usage of general AuthenticationException in UsernamePasswordLoginHandler
+[SIDP-374] - Switch to use StaticBasicParserPool instead of BasicParserPool
+[SIDP-373] - The SLF4J MDC state is not being properly cleared when request processing is done.
+[SIDP-368] - Provide more acurate login error to servlet when Username/Password login authentication has failed.
+[SIDP-369] - Allow to have cookie Domain set for login context cookie
+[SIDP-365] - Expose uptime of IdP web application with status handler
+[SIDP-362] - Only log exception message without stack trace for expired SAML messages
+[SIDP-360] - Session isn't being set within the attribute request context during a SAML1 attribute query
+[SIDP-359] - HttpServletHelper.getRelyingPartyConfirmationManager misnamed
+[SIDP-355] - Idp reinstall from source overwrite some config files even when "no overwrite" is specified
+[SIDP-301] - Remove use of events in SessionManager so that different StorageService implementations may be more easily used
+[SIDP-288] - Improve consistency of XML configuration defaults/examples
+[SIDP-275] - Using standard JAAS LoginException in UP LoginHandler servlet
+[SC-63] - Use XML Schema duration syntax instead of integers for duration configuration options
+
 Changes in Release 2.1.5
 =============================================
 [SIDP-353] - Default login.jsp crashes on anonymous RPs

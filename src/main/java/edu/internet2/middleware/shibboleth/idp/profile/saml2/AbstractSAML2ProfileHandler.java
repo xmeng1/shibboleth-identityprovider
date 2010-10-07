@@ -72,13 +72,12 @@ import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.SignatureException;
 import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.util.DatatypeHelper;
+import org.opensaml.xml.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.MessageFormatter;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
-import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.attribute.encoding.SAML2NameIDEncoder;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
@@ -261,26 +260,26 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             assertion = buildAssertion(requestContext, issueInstant);
             assertion.getStatements().addAll(statements);
             assertion.setSubject(buildSubject(requestContext, subjectConfirmationMethod, issueInstant));
-            
+
             postProcessAssertion(requestContext, assertion);
 
             signAssertion(requestContext, assertion);
 
             if (isEncryptAssertion(requestContext)) {
-                log.debug("Attempting to encrypt assertion to relying party '{}'", requestContext
-                        .getInboundMessageIssuer());
+                log.debug("Attempting to encrypt assertion to relying party '{}'",
+                        requestContext.getInboundMessageIssuer());
                 try {
                     Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
                     samlResponse.getEncryptedAssertions().add(encrypter.encrypt(assertion));
                 } catch (SecurityException e) {
                     log.error("Unable to construct encrypter", e);
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                    "Unable to encrypt assertion"));
+                            "Unable to encrypt assertion"));
                     throw new ProfileException("Unable to construct encrypter", e);
                 } catch (EncryptionException e) {
                     log.error("Unable to encrypt assertion", e);
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                    "Unable to encrypt assertion"));
+                            "Unable to encrypt assertion"));
                     throw new ProfileException("Unable to encrypt assertion", e);
                 }
             } else {
@@ -290,7 +289,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         Status status = buildStatus(StatusCode.SUCCESS_URI, null, null);
         samlResponse.setStatus(status);
-        
+
         postProcessResponse(requestContext, samlResponse);
 
         return samlResponse;
@@ -303,18 +302,18 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @return true if assertions should be encrypted, false otherwise
      * @throws ProfileException if there is a problem determining whether assertions should be encrypted
      */
-    protected boolean isEncryptAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) 
+    protected boolean isEncryptAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
-        
+
         SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
         try {
             return requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.always
-                || (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.conditional
-                    && !encoder.providesMessageConfidentiality(requestContext));
+                    || (requestContext.getProfileConfiguration().getEncryptAssertion() == CryptoOperationRequirementLevel.conditional && !encoder
+                            .providesMessageConfidentiality(requestContext));
         } catch (MessageEncodingException e) {
-            log.error("Unable to determine if outbound encoding '{}' can provide confidentiality", encoder
-                    .getBindingURI());
-            throw new ProfileException("Unable to determine if assertions should be encrypted"); 
+            log.error("Unable to determine if outbound encoding '{}' can provide confidentiality",
+                    encoder.getBindingURI());
+            throw new ProfileException("Unable to determine if assertions should be encrypted");
         }
     }
 
@@ -326,7 +325,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException if there was an error processing the response
      */
-    protected void postProcessResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Response samlResponse) 
+    protected void postProcessResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Response samlResponse)
             throws ProfileException {
     }
 
@@ -338,7 +337,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * 
      * @throws ProfileException if there is an error processing the assertion
      */
-    protected void postProcessAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion) 
+    protected void postProcessAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion)
             throws ProfileException {
     }
 
@@ -462,7 +461,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
             requestContext.setAttributes(principalAttributes);
         } catch (AttributeRequestException e) {
-            log.warn("Error resolving attributes for principal '{}'.  No name identifier or attribute statement will be included in response",
+            log.warn(
+                    "Error resolving attributes for principal '{}'.  No name identifier or attribute statement will be included in response",
                     requestContext.getPrincipalName());
         }
     }
@@ -478,10 +478,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected AttributeStatement buildAttributeStatement(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
             throws ProfileException {
-        if(requestContext.getAttributes() == null){
+        if (requestContext.getAttributes() == null) {
             return null;
         }
-        
+
         log.debug("Creating attribute statement in response to SAML request '{}' from relying party '{}'",
                 requestContext.getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
 
@@ -496,8 +496,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             }
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Error resolving attributes"));
-            String msg = MessageFormatter.format("Error encoding attributes for principal '{}'", requestContext
-                    .getPrincipalName());
+            String msg = "Error encoding attributes for principal " + requestContext.getPrincipalName();
             log.error(msg, e);
             throw new ProfileException(msg, e);
         }
@@ -515,15 +514,14 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         if (profileConfiguration == null) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_DENIED_URI,
                     "Error resolving principal"));
-            String msg = MessageFormatter.format(
-                    "Unable to resolve principal, no SAML 2 profile configuration for relying party '{}'",
-                    requestContext.getInboundMessageIssuer());
+            String msg = "Unable to resolve principal, no SAML 2 profile configuration for relying party "
+                    + requestContext.getInboundMessageIssuer();
             log.warn(msg);
             throw new ProfileException(msg);
         }
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
-        log.debug("Resolving principal name for subject of SAML request '{}' from relying party '{}'", requestContext
-                .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
+        log.debug("Resolving principal name for subject of SAML request '{}' from relying party '{}'",
+                requestContext.getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
 
         try {
             String principal = attributeAuthority.getPrincipal(requestContext);
@@ -531,10 +529,10 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         } catch (AttributeRequestException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI,
                     "Error resolving principal"));
-            String msg = MessageFormatter.format(
-                    "Error resolving principal name for SAML request '{}' from relying party '{}'", requestContext
-                            .getInboundSAMLMessageId(), requestContext.getInboundMessageIssuer());
-            log.error(msg, e);
+            String msg = "Error resolving principal name for SAML request '" + requestContext.getInboundSAMLMessageId()
+                    + "' from relying party '" + requestContext.getInboundMessageIssuer() + "'. Cause: "
+                    + e.getMessage();
+            log.warn(msg);
             throw new ProfileException(msg, e);
         }
     }
@@ -551,28 +549,27 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      */
     protected void signAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion)
             throws ProfileException {
-        log.debug("Determining if SAML assertion to relying party '{}' should be signed", requestContext
-                .getInboundMessageIssuer());
+        log.debug("Determining if SAML assertion to relying party '{}' should be signed",
+                requestContext.getInboundMessageIssuer());
 
         boolean signAssertion = isSignAssertion(requestContext);
 
         if (!signAssertion) {
             return;
         }
-        
+
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
 
-        log.debug("Determining signing credntial for assertion to relying party '{}'", requestContext
-                .getInboundMessageIssuer());
+        log.debug("Determining signing credntial for assertion to relying party '{}'",
+                requestContext.getInboundMessageIssuer());
         Credential signatureCredential = profileConfig.getSigningCredential();
         if (signatureCredential == null) {
             signatureCredential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
         }
 
         if (signatureCredential == null) {
-            String msg = MessageFormatter.format(
-                    "No signing credential is specified for relying party configuration '{}'", requestContext
-                            .getRelyingPartyConfiguration().getProviderId());
+            String msg = "No signing credential is specified for relying party configuration "
+                    + requestContext.getRelyingPartyConfiguration().getProviderId();
             log.warn(msg);
             throw new ProfileException(msg);
         }
@@ -616,31 +613,31 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @throws ProfileException if there is a problem determining whether assertions should be signed
      */
     protected boolean isSignAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
-        
+
         SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
         AbstractSAML2ProfileConfiguration profileConfig = requestContext.getProfileConfiguration();
-        
+
         try {
             boolean signAssertion = profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.always
-                || (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.conditional 
-                    && !encoder.providesMessageIntegrity(requestContext));
-            
+                    || (profileConfig.getSignAssertions() == CryptoOperationRequirementLevel.conditional && !encoder
+                            .providesMessageIntegrity(requestContext));
+
             log.debug("IdP relying party configuration '{}' indicates to sign assertions: {}", requestContext
                     .getRelyingPartyConfiguration().getRelyingPartyId(), signAssertion);
-            
+
             if (!signAssertion && requestContext.getPeerEntityRoleMetadata() instanceof SPSSODescriptor) {
                 SPSSODescriptor ssoDescriptor = (SPSSODescriptor) requestContext.getPeerEntityRoleMetadata();
                 if (ssoDescriptor.getWantAssertionsSigned() != null) {
                     signAssertion = ssoDescriptor.getWantAssertionsSigned().booleanValue();
-                    log.debug("Entity metadata for relying party '{} 'indicates to sign assertions: {}", requestContext
-                            .getInboundMessageIssuer(), signAssertion);
+                    log.debug("Entity metadata for relying party '{} 'indicates to sign assertions: {}",
+                            requestContext.getInboundMessageIssuer(), signAssertion);
                 }
             }
-            
+
             return signAssertion;
         } catch (MessageEncodingException e) {
-            log.error("Unable to determine if outbound encoding '{}' provides message integrity protection", encoder
-                    .getBindingURI());
+            log.error("Unable to determine if outbound encoding '{}' provides message integrity protection",
+                    encoder.getBindingURI());
             throw new ProfileException("Unable to determine if outbound assertion should be signed");
         }
     }
@@ -701,32 +698,29 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         }
 
         requestContext.setSubjectNameIdentifier(nameID);
-        
+
         if (isEncryptNameID(requestContext)) {
-            log.debug("Attempting to encrypt NameID to relying party '{}'", requestContext
-                    .getInboundMessageIssuer());
+            log.debug("Attempting to encrypt NameID to relying party '{}'", requestContext.getInboundMessageIssuer());
             try {
                 Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
                 subject.setEncryptedID(encrypter.encrypt(nameID));
             } catch (SecurityException e) {
                 log.error("Unable to construct encrypter", e);
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                "Unable to encrypt NameID"));
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to encrypt NameID"));
                 throw new ProfileException("Unable to construct encrypter", e);
             } catch (EncryptionException e) {
                 log.error("Unable to encrypt NameID", e);
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null,
-                "Unable to encrypt NameID"));
+                requestContext
+                        .setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to encrypt NameID"));
                 throw new ProfileException("Unable to encrypt NameID", e);
             }
         } else {
             subject.setNameID(nameID);
         }
 
-
         return subject;
     }
-    
 
     /**
      * Determine whether NameID's should be encrypted.
@@ -735,32 +729,28 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @return true if NameID's should be encrypted, false otherwise
      * @throws ProfileException if there is a problem determining whether NameID's should be encrypted
      */
-    protected boolean isEncryptNameID(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) 
-            throws ProfileException {
-        
+    protected boolean isEncryptNameID(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
+
         boolean nameIdEncRequiredByAuthnRequest = isRequestRequiresEncryptNameID(requestContext);
-        
+
         SAMLMessageEncoder encoder = getOutboundMessageEncoder(requestContext);
         boolean nameIdEncRequiredByConfig = false;
         try {
-            nameIdEncRequiredByConfig = 
-                requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
-                    || (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.conditional
-                            && !encoder.providesMessageConfidentiality(requestContext));
+            nameIdEncRequiredByConfig = requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.always
+                    || (requestContext.getProfileConfiguration().getEncryptNameID() == CryptoOperationRequirementLevel.conditional && !encoder
+                            .providesMessageConfidentiality(requestContext));
         } catch (MessageEncodingException e) {
-            String msg = MessageFormatter.format(
-                    "Unable to determine if outbound encoding '{}' provides message confidentiality protection",
-                    encoder.getBindingURI());
+            String msg = "Unable to determine if outbound encoding '" + encoder.getBindingURI()
+                    + "' provides message confidentiality protection";
             log.error(msg);
             throw new ProfileException(msg);
         }
-        
+
         return nameIdEncRequiredByAuthnRequest || nameIdEncRequiredByConfig;
     }
 
     /**
-     * Determine whether information in the SAML request requires the issued NameID to 
-     * be encrypted.
+     * Determine whether information in the SAML request requires the issued NameID to be encrypted.
      * 
      * @param requestContext the current request context
      * @return true if the request indicates NameID encryption is required, false otherwise
@@ -826,100 +816,32 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      *             name ID attribute or because there are no supported name formats
      */
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
-        if(requestContext.getAttributes() == null){
+        Pair<BaseAttribute, SAML2NameIDEncoder> nameIdAttributeAndEncoder = null;
+        try {
+            nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(SAML2NameIDEncoder.class, requestContext);
+        } catch (ProfileException e) {
+            requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
+                    "Required NameID format not supported"));
+            throw e;
+        }
+
+        if (nameIdAttributeAndEncoder == null) {
             return null;
         }
-        
-        log.debug("Building assertion NameID for principal/relying party:{}/{}", requestContext.getPrincipalName(),
-                requestContext.getInboundMessageIssuer());
-        
-        // Check if AuthnRequest includes an explicit NameIDPolicy Format.
-        String requiredNameFormat = null;
-        if (requestContext.getInboundSAMLMessage() instanceof AuthnRequest) {
-            AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
-            if (authnRequest.getNameIDPolicy() != null) {
-                requiredNameFormat = DatatypeHelper.safeTrimOrNullString(authnRequest.getNameIDPolicy().getFormat());
-                // Check for unspec'd or encryption formats, which aren't relevant for this section of code.
-                if (requiredNameFormat != null
-                        && (requiredNameFormat.equals("urn:oasis:names:tc:SAML:2.0:nameid-format:encrypted") || requiredNameFormat
-                                .equals(NameID.UNSPECIFIED))) {
-                    requiredNameFormat = null;
-                }
-            }
-        }
 
-        // Get the SP's list, and filter it down by the AuthnRequest if need be.
-        List<String> supportedNameFormats = getNameFormats(requestContext);
-        if (requiredNameFormat != null) {
-            supportedNameFormats.clear();
-            supportedNameFormats.add(requiredNameFormat);
-        }
-        if (!supportedNameFormats.isEmpty()) {
-            log.debug("Relying party '{}' supports the name formats: {}", requestContext.getInboundMessageIssuer(),
-                    supportedNameFormats);
-        } else {
-            log.debug("Relying party '{}' indicated no preferred name formats", requestContext
-                    .getInboundMessageIssuer());
-        }
+        BaseAttribute<?> nameIdAttribute = nameIdAttributeAndEncoder.getFirst();
+        requestContext.setNameIdentifierAttribute(nameIdAttribute);
+        SAML2NameIDEncoder nameIdEncoder = nameIdAttributeAndEncoder.getSecond();
 
-        BaseAttribute<?> nameIdAttribute = null;
-        SAML2NameIDEncoder nameIdEncoder = null;
-
-        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
-        if (principalAttributes != null) {
-            ATTRIBUTESELECT: for (BaseAttribute<?> attribute : principalAttributes.values()) {
-                if (attribute == null) {
-                    continue;
-                }
-
-                for (AttributeEncoder encoder : attribute.getEncoders()) {
-                    if (encoder == null) {
-                        continue;
-                    }
-
-                    if (encoder instanceof SAML2NameIDEncoder) {
-                        nameIdEncoder = (SAML2NameIDEncoder)encoder;
-                        
-                        if (requiredNameFormat != null) {
-                            if (nameIdEncoder.getNameFormat().equals(requiredNameFormat)) {
-                                nameIdAttribute = attribute;
-                                nameIdEncoder = (SAML2NameIDEncoder) encoder;
-                                break ATTRIBUTESELECT;
-                            }
-                        } else {
-                            if (supportedNameFormats.isEmpty()
-                                    || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                                nameIdAttribute = attribute;
-                                nameIdEncoder = (SAML2NameIDEncoder) encoder;
-                                break ATTRIBUTESELECT;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (nameIdAttribute == null || nameIdEncoder == null) {
-            if (requiredNameFormat != null) {
-                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI,
-                        StatusCode.INVALID_NAMEID_POLICY_URI, "NameID Format not supported: " + requiredNameFormat));
-                String msg = MessageFormatter
-                        .format(
-                                "No attribute of principal '{}' can be encoded in to a NameID of required format '{}' for relying party '{}'",
-                                new Object[] { requestContext.getPrincipalName(), requiredNameFormat,
-                                        requestContext.getInboundMessageIssuer() });
-                log.warn(msg);
-                throw new ProfileException(msg);
-            } else {
-                return null;
-            }
-        }
-
-        log.debug("Using attribute '{}' supporting NameID format '{}' to create the NameID for relying party '{}'",
+        log.debug(
+                "Using attribute '{}' supporting NameID format '{}' to create the NameID for relying party '{}'",
                 new Object[] { nameIdAttribute.getId(), nameIdEncoder.getNameFormat(),
-                        requestContext.getInboundMessageIssuer() });
+                        requestContext.getInboundMessageIssuer(), });
         try {
-            return nameIdEncoder.encode(nameIdAttribute);
+            // build the actual NameID
+            NameID nameId = nameIdEncoder.encode(nameIdAttribute);
+            nameId.setNameQualifier(requestContext.getRelyingPartyConfiguration().getProviderId());
+            return nameId;
         } catch (AttributeEncodingException e) {
             log.error("Unable to encode NameID attribute", e);
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, "Unable to construct NameID"));
@@ -985,7 +907,7 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
      * @throws SecurityException thrown if there is a problem resolving the credential from the peer's metadata
      */
     protected Credential getKeyEncryptionCredential(String peerEntityId) throws SecurityException {
-        MetadataCredentialResolver kekCredentialResolver = new MetadataCredentialResolver(getMetadataProvider());
+        MetadataCredentialResolver kekCredentialResolver = getMetadataCredentialResolver();
 
         CriteriaSet criteriaSet = new CriteriaSet();
         criteriaSet.add(new EntityIDCriteria(peerEntityId));
@@ -1016,6 +938,13 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             auditLogEntry.getReleasedAttributes().addAll(context.getReleasedAttributes());
         }
 
+        if (context.getNameIdentifierAttribute() != null) {
+            Object idValue = context.getNameIdentifierAttribute().getValues().iterator().next();
+            if(idValue != null){
+                auditLogEntry.setNameIdValue(idValue.toString());
+            }
+        }
+
         getAduitLog().info(auditLogEntry.toString());
     }
 
@@ -1024,9 +953,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
 
         /** The response to the SAML request. */
         private StatusResponseType samlResponse;
-
-        /** The unencrypted NameID for the SAML response. */
-        private NameID unencryptedNameId;
 
         /**
          * Gets the response to the SAML request.
@@ -1046,24 +972,6 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             samlResponse = response;
         }
 
-        /**
-         * Gets the unencrypted NameID for the SAML response.
-         * 
-         * @return unencrypted NameID for the SAML response
-         */
-        public NameID getUnencryptedNameId() {
-            return unencryptedNameId;
-        }
-
-        /**
-         * Sets the unencrypted NameID for the SAML response.
-         * 
-         * @param id unencrypted NameID for the SAML response
-         */
-        public void setUnencryptedNameId(NameID id) {
-            unencryptedNameId = id;
-        }
-
         /** {@inheritDoc} */
         public String toString() {
             StringBuilder entryString = new StringBuilder(super.toString());
@@ -1080,8 +988,8 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
                 }
             }
 
-            if (unencryptedNameId != null) {
-                entryString.append(unencryptedNameId.getValue());
+            if (getNameIdValue() != null) {
+                entryString.append(getNameIdValue());
             }
             entryString.append("|");
 

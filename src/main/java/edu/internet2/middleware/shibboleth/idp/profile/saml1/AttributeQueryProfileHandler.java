@@ -91,6 +91,7 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
 
                 Session idpSession = getSessionManager().getSession(requestContext.getPrincipalName());
                 if (idpSession != null) {
+                    requestContext.setUserSession(idpSession);
                     AuthenticationMethodInformation authnInfo = idpSession.getAuthenticationMethods().get(
                             requestContext.getInboundMessageIssuer());
                     if (authnInfo != null) {

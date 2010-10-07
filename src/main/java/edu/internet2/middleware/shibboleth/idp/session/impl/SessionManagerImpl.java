@@ -26,26 +26,15 @@ import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
 
-import edu.internet2.middleware.shibboleth.common.session.LoginEvent;
-import edu.internet2.middleware.shibboleth.common.session.LogoutEvent;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
-import edu.internet2.middleware.shibboleth.common.util.EventingMapBasedStorageService.AddEntryEvent;
-import edu.internet2.middleware.shibboleth.common.util.EventingMapBasedStorageService.RemoveEntryEvent;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** Manager of IdP sessions. */
-public class SessionManagerImpl implements SessionManager<Session>, ApplicationContextAware, ApplicationListener {
+public class SessionManagerImpl implements SessionManager<Session> {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(SessionManagerImpl.class);
-
-    /** Spring context used to publish login and logout events. */
-    private ApplicationContext appCtx;
 
     /** Number of random bits within a session ID. */
     private final int sessionIDSize = 32;
@@ -110,7 +99,6 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
 
         MDC.put("idpSessionId", sessionID);
         log.trace("Created session {}", sessionID);
-        appCtx.publishEvent(new LoginEvent(session));
         return session;
     }
 
@@ -140,14 +128,15 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         if (sessionID == null) {
             return;
         }
-        // remove indexed entries
-        SessionManagerEntry sessionEntry = sessionStore.remove(partition, sessionID);
+
+        SessionManagerEntry sessionEntry = sessionStore.get(partition, sessionID);
         if (sessionEntry == null) {
             return;
         }
-        for (String sessionIndex : sessionEntry.getSessionIndexes()) {
+        for(String sessionIndex : sessionEntry.getSessionIndexes()){
             sessionStore.remove(partition, sessionIndex);
         }
+        sessionStore.remove(partition, sessionID);
     }
 
     /** {@inheritDoc} */
@@ -191,40 +180,12 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
     }
 
     /** {@inheritDoc} */
-    public void onApplicationEvent(ApplicationEvent event) {
-        if (event instanceof AddEntryEvent) {
-            AddEntryEvent addEvent = (AddEntryEvent) event;
-            if (addEvent.getValue() instanceof SessionManagerEntry) {
-                SessionManagerEntry sessionEntry = (SessionManagerEntry) addEvent.getValue();
-                appCtx.publishEvent(new LoginEvent(sessionEntry.getSession()));
-            }
-        }
-
-        if (event instanceof RemoveEntryEvent) {
-            RemoveEntryEvent removeEvent = (RemoveEntryEvent) event;
-            if (removeEvent.getValue() instanceof SessionManagerEntry) {
-                SessionManagerEntry sessionEntry = (SessionManagerEntry) removeEvent.getValue();
-                appCtx.publishEvent(new LogoutEvent(sessionEntry.getSession()));
-            }
-        }
-    }
-
-    /** {@inheritDoc} */
     public void removeSessionIndex(String index) {
         SessionManagerEntry sessionEntry = sessionStore.remove(partition, index);
         if (sessionEntry != null) {
             log.trace("Removing index {} for session {}", index, sessionEntry.getSessionId());
             sessionEntry.getSessionIndexes().remove(index);
         }
-    }
-
-    /** {@inheritDoc} */
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        ApplicationContext rootContext = applicationContext;
-        while (rootContext.getParent() != null) {
-            rootContext = rootContext.getParent();
-        }
-        appCtx = rootContext;
     }
 
     /** {@inheritDoc} */
@@ -265,3 +226,4 @@ public class SessionManagerImpl implements SessionManager<Session>, ApplicationC
         return b.toString();
     }
 }
+

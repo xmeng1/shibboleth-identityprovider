@@ -7,25 +7,17 @@
         Levels: OFF, ERROR, WARN, INFO, DEBUG, TRACE, ALL
     -->
     <!-- Logs IdP, but not OpenSAML, messages -->
-    <logger name="edu.internet2.middleware.shibboleth">
-        <level value="INFO" />
-    </logger>
+    <logger name="edu.internet2.middleware.shibboleth" level="INFO" />
 
     <!-- Logs OpenSAML, but not IdP, messages -->
-    <logger name="org.opensaml">
-        <level value="WARN" />
-    </logger>
+    <logger name="org.opensaml" level="WARN" />
     
     <!-- Logs LDAP related messages -->
-    <logger name="edu.vt.middleware.ldap">
-        <level value="WARN"/>
-    </logger>
+    <logger name="edu.vt.middleware.ldap" level="WARN" />
     
     <!-- Logs inbound and outbound protocols messages at DEBUG level -->
     <!--
-    <logger name="PROTOCOL_MESSAGE">
-        <level value="DEBUG" />
-    </logger>
+    <logger name="PROTOCOL_MESSAGE" level="DEBUG" />
     -->
     
     <!-- 
@@ -38,78 +30,56 @@
      -->
     <appender name="IDP_ACCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>$IDP_HOME$/logs/idp-access.log</File>
-        <ImmediateFlush>true</ImmediateFlush>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>$IDP_HOME$/logs/idp-access-%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
 
-        <layout class="ch.qos.logback.classic.PatternLayout">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <charset>UTF-8</charset>
             <Pattern>%msg%n</Pattern>
-        </layout>
+        </encoder>
     </appender>
 
     <appender name="IDP_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>$IDP_HOME$/logs/idp-audit.log</File>
-        <ImmediateFlush>true</ImmediateFlush>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>$IDP_HOME$/logs/idp-audit-%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
 
-        <layout class="ch.qos.logback.classic.PatternLayout">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <charset>UTF-8</charset>
             <Pattern>%msg%n</Pattern>
-        </layout>
+        </encoder>
     </appender>
 
     <appender name="IDP_PROCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>$IDP_HOME$/logs/idp-process.log</File>
-        <!-- Uncomment this if application is terminating in such as way that the last few log messages are not written to disk -->
-        <!--
-        <ImmediateFlush>true</ImmediateFlush>
-        -->
         
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>$IDP_HOME$/logs/idp-process-%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
 
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <!-- General logging pattern -->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <charset>UTF-8</charset>
             <Pattern>%date{HH:mm:ss.SSS} - %level [%logger:%line] - %msg%n</Pattern>
-            
-            <!-- 
-                Two MDC variables are available for authenticated users: 'idpSessionID' and 'principalName'. 
-                You may include these the data in the logging pattern by means of %mdc{NAME}
-                You may include the thread ID by means of %t
-            -->
-            <!-- Example logging pattern using thread ID and principal name -->
-            <!--
-            <Pattern>%date{HH:mm:ss.SSS} - %level [%logger:%line] - [%t:%mdc{principalName}] - %msg%n</Pattern>
-             -->
-            
-        </layout>
+        </encoder>
     </appender>
   
-    <logger name="Shibboleth-Access">
-        <level value="ALL" />
+    <logger name="Shibboleth-Access" level="ALL">
         <appender-ref ref="IDP_ACCESS" />
     </logger>
     
-    <logger name="Shibboleth-Audit">
-        <level value="ALL" />
+    <logger name="Shibboleth-Audit" level="ALL">
         <appender-ref ref="IDP_AUDIT" />
     </logger>
         
-    <logger name="org.springframework">
-        <level value="OFF" />
-    </logger>
+    <logger name="org.springframework" level="OFF" />
     
-    <logger name="org.apache.catalina">
-        <level value="ERROR" />
-    </logger>    
+    <logger name="org.apache.catalina" level="ERROR" />
 
-    <root>
-        <level value="ERROR" />
+    <root level="ERROR">
         <appender-ref ref="IDP_PROCESS" />
     </root>
 

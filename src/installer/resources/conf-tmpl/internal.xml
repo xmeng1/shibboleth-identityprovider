@@ -5,6 +5,8 @@
      xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
                          http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd" >
 
+    <bean id="shibboleth.CacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" />
+
     <bean id="shibboleth.TaskTimer" class="java.util.Timer" destroy-method="cancel">
         <constructor-arg value="true" type="boolean" />
     </bean>
@@ -24,6 +26,7 @@
                 </bean>
             </list>
         </constructor-arg>
+        <property name="parserPool" ref="shibboleth.ParserPool" />
     </bean>
 
     <bean id="shibboleth.IdGenerator" class="org.opensaml.common.impl.SecureRandomIdentifierGenerator" depends-on="shibboleth.LogbackLogging">
@@ -50,7 +53,8 @@
         <constructor-arg ref="shibboleth.VelocityEngine" />
     </bean>
 
-    <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.BasicParserPool" depends-on="shibboleth.LogbackLogging">
+    <bean id="shibboleth.ParserPool" class="org.opensaml.xml.parse.StaticBasicParserPool" 
+          depends-on="shibboleth.LogbackLogging" init-method="initialize">
         <property name="maxPoolSize" value="100" />
         <property name="coalescing" value="true" />
         <property name="ignoreComments" value="true" />
@@ -94,7 +98,6 @@
     </bean>
 
     <bean id="shibboleth.ArtifactMap" class="org.opensaml.common.binding.artifact.BasicSAMLArtifactMap" depends-on="shibboleth.LogbackLogging">
-        <constructor-arg ref="shibboleth.ParserPool" />
         <constructor-arg ref="shibboleth.StorageService" />
         <constructor-arg type="long" value="300000" />
     </bean>

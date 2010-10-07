@@ -69,7 +69,7 @@ public class SAML1AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("samlp:Success"));
+        assertTrue(response.contains("saml1p:Success"));
         assertTrue(response.contains("AttributeName=\"urn:mace:dir:attribute-def:eduPersonEntitlement\""));
         assertTrue(response.contains("urn:example.org:entitlement:entitlement1"));
     }
@@ -97,8 +97,8 @@ public class SAML1AttributeQueryTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
             
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("samlp:Responder"));
-        assertTrue(response.contains("samlp:RequestDenied"));
+        assertTrue(response.contains("saml1p:Responder"));
+        assertTrue(response.contains("saml1p:RequestDenied"));
     }
 
     /**

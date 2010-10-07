@@ -19,6 +19,7 @@ package edu.internet2.middleware.shibboleth.idp.system.conf1;
 import java.security.Principal;
 
 import javax.security.auth.Subject;
+import javax.servlet.http.HttpServletRequest;
 
 import org.joda.time.DateTime;
 import org.opensaml.common.SAMLObjectBuilder;
@@ -34,15 +35,19 @@ import org.opensaml.xml.util.Base64;
 import org.opensaml.xml.util.XMLHelper;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockServletContext;
 import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandler;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileHandlerManager;
+import edu.internet2.middleware.shibboleth.common.profile.provider.AbstractShibbolethProfileHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 import edu.internet2.middleware.shibboleth.idp.session.AuthenticationMethodInformation;
 import edu.internet2.middleware.shibboleth.idp.session.impl.AuthenticationMethodInformationImpl;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /**
  * 
@@ -51,13 +56,14 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
 
     /** Tests initial leg of the SSO request where request is decoded and sent to the authentication engine. */
     public void testFirstAuthenticationLeg() throws Exception {
+        MockServletContext servletContext = new MockServletContext();
+        
         MockHttpServletRequest servletRequest = buildServletRequest("urn:example.org:sp1");
-        servletRequest.setMethod("POST");
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
         ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
                 "shibboleth.HandlerManager");
-        ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
+        AbstractShibbolethProfileHandler handler = (AbstractShibbolethProfileHandler) handlerManager.getProfileHandler(servletRequest);
         assertNotNull(handler);
 
         // Process request
@@ -65,8 +71,8 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         HTTPOutTransport profileResponse = new HttpServletResponseAdapter(servletResponse, false);
         handler.processRequest(profileRequest, profileResponse);
 
-        Saml2LoginContext loginContext = (Saml2LoginContext) servletRequest
-                .getAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY);
+        servletRequest.setCookies(servletResponse.getCookies());
+        Saml2LoginContext loginContext = (Saml2LoginContext) HttpServletHelper.getLoginContext(handler.getStorageService(), servletContext, servletRequest);
 
         assertNotNull(loginContext);
         assertEquals(false, loginContext.getAuthenticationAttempted());
@@ -77,20 +83,23 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         assertEquals("urn:example.org:sp1", loginContext.getRelyingPartyId());
         assertEquals(0, loginContext.getRequestedAuthenticationMethods().size());
 
-        assertEquals("/AuthnEngine", servletResponse.getForwardedUrl());
+        assertTrue(servletResponse.getRedirectedUrl().endsWith("/AuthnEngine"));
     }
 
     /** Tests second leg of the SSO request where request returns to SSO handler and AuthN statement is generated. */
     public void testSecondAuthenticationLeg() throws Exception {
+        MockServletContext servletContext = new MockServletContext();
         MockHttpServletRequest servletRequest = buildServletRequest("urn:example.org:sp1");
         MockHttpServletResponse servletResponse = new MockHttpServletResponse();
 
-        servletRequest.setAttribute(Saml2LoginContext.LOGIN_CONTEXT_KEY, buildLoginContext("urn:example.org:sp1"));
-
         ProfileHandlerManager handlerManager = (ProfileHandlerManager) getApplicationContext().getBean(
                 "shibboleth.HandlerManager");
-        ProfileHandler handler = handlerManager.getProfileHandler(servletRequest);
+        AbstractShibbolethProfileHandler handler = (AbstractShibbolethProfileHandler) handlerManager.getProfileHandler(servletRequest);
         assertNotNull(handler);
+        
+        HttpServletHelper.bindLoginContext(buildLoginContext("urn:example.org:sp1"), handler.getStorageService(), servletContext,
+                servletRequest, servletResponse);
+        servletRequest.setCookies(servletResponse.getCookies());
 
         // Process request
         HTTPInTransport profileRequest = new HttpServletRequestAdapter(servletRequest);
@@ -129,6 +138,7 @@ public class SAML2SSOTestCase extends BaseConf1TestCase {
         String authnRequestString = getSamlRequestString(authnRequest);
         
         MockHttpServletRequest servletRequest = new MockHttpServletRequest();
+        servletRequest.setMethod("POST");
         servletRequest.setPathInfo("/saml2/POST/SSO");
         servletRequest.setParameter("SAMLRequest", Base64.encodeBytes(authnRequestString.getBytes()));
 
