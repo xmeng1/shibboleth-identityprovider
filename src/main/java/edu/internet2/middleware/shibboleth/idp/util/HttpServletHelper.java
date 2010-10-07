@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
+import org.opensaml.util.URLBuilder;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
@@ -44,6 +45,9 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** A helper class that provides access to internal state from Servlets and hence also JSPs. */
 public class HttpServletHelper {
+
+    /** Name of the context initialization parameter that stores the domain to use for all cookies. */
+    public static final String COOKIE_DOMAIN_PARAM = "cookieDomain";
 
     /** Name of the cookie containing the IdP session ID: {@value} . */
     public static final String IDP_SESSION_COOKIE = "_idp_session";
@@ -119,6 +123,8 @@ public class HttpServletHelper {
      * 
      * @param loginContext login context to be bound
      * @param httpRequest current HTTP request
+     * 
+     * @deprecated
      */
     public static void bindLoginContext(LoginContext loginContext, HttpServletRequest httpRequest) {
         if (httpRequest == null) {
@@ -149,25 +155,38 @@ public class HttpServletHelper {
             return;
         }
 
-        bindLoginContext(loginContext, httpRequest);
-
         String parition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION);
-        log.debug("LoginContext parition: {}", parition);
 
         String contextKey = UUID.randomUUID().toString();
         while (storageService.contains(parition, contextKey)) {
             contextKey = UUID.randomUUID().toString();
         }
-        log.debug("LoginContext key: {}", contextKey);
 
         LoginContextEntry entry = new LoginContextEntry(loginContext, 1800000);
+        log.debug("Storing LoginContext to StorageService partition {}, key {}", parition, contextKey);
         storageService.put(parition, contextKey, entry);
+
+        String cookieDomain = getCookieDomain(context);
 
         Cookie contextKeyCookie = new Cookie(LOGIN_CTX_KEY_NAME, contextKey);
         contextKeyCookie.setVersion(1);
+        if (cookieDomain != null) {
+            contextKeyCookie.setDomain(cookieDomain);
+        }
         contextKeyCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
         contextKeyCookie.setSecure(httpRequest.isSecure());
         httpResponse.addCookie(contextKeyCookie);
+    }
+
+    /**
+     * Gets the domain to use for all cookies.
+     * 
+     * @param context web application context
+     * 
+     * @return domain to use for all cookies
+     */
+    public static String getCookieDomain(ServletContext context) {
+        return context.getInitParameter(COOKIE_DOMAIN_PARAM);
     }
 
     /**
@@ -264,6 +283,7 @@ public class HttpServletHelper {
      * @param httpRequest current HTTP request
      * 
      * @return the login context or null if no login context is bound to the request
+     * @deprecated
      */
     public static LoginContext getLoginContext(HttpServletRequest httpRequest) {
         return (LoginContext) httpRequest.getAttribute(LOGIN_CTX_KEY_NAME);
@@ -291,36 +311,33 @@ public class HttpServletHelper {
             throw new IllegalArgumentException("HTTP request may not be null");
         }
 
-        LoginContext loginContext = getLoginContext(httpRequest);
-        if (loginContext == null) {
-            log.debug("LoginContext not bound to HTTP request, retrieving it from storage service");
-            Cookie loginContextKeyCookie = getCookie(httpRequest, LOGIN_CTX_KEY_NAME);
-            if (loginContextKeyCookie == null) {
-                log.debug("LoginContext key cookie was not present in request");
-                return null;
-            }
-
-            String loginContextKey = DatatypeHelper.safeTrimOrNullString(loginContextKeyCookie.getValue());
-            if (loginContextKey == null) {
-                log.warn("Corrupted LoginContext Key cookie, it did not contain a value");
-            }
-            log.debug("LoginContext key is '{}'", loginContextKey);
-
-            String partition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION);
-            log.debug("parition: {}", partition);
-            LoginContextEntry entry = (LoginContextEntry) storageService.get(partition, loginContextKey);
-            if (entry != null) {
-                if (entry.isExpired()) {
-                    log.debug("LoginContext found but it was expired");
-                } else {
-                    loginContext = entry.getLoginContext();
-                }
-            } else {
-                log.debug("No login context in storage service");
-            }
+        Cookie loginContextKeyCookie = getCookie(httpRequest, LOGIN_CTX_KEY_NAME);
+        if (loginContextKeyCookie == null) {
+            log.debug("LoginContext key cookie was not present in request");
+            return null;
         }
 
-        return loginContext;
+        String loginContextKey = DatatypeHelper.safeTrimOrNullString(loginContextKeyCookie.getValue());
+        if (loginContextKey == null) {
+            log.warn("Corrupted LoginContext Key cookie, it did not contain a value");
+        }
+
+        String partition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION);
+        log.debug("Looking up LoginContext with key {} from StorageService parition: {}", loginContextKey, partition);
+        LoginContextEntry entry = (LoginContextEntry) storageService.get(partition, loginContextKey);
+        if (entry != null) {
+            if (entry.isExpired()) {
+                log.debug("LoginContext found but it was expired");
+            } else {
+                log.debug("Retrieved LoginContext with key {} from StorageService parition: {}", loginContextKey,
+                        partition);
+                return entry.getLoginContext();
+            }
+        } else {
+            log.debug("No login context in storage service");
+        }
+
+        return null;
     }
 
     /**
@@ -354,6 +371,33 @@ public class HttpServletHelper {
      * 
      * @return the service or null if there is no such service bound to the context
      */
+    public static RelyingPartyConfigurationManager getRelyingPartyConfigurationManager(ServletContext context) {
+        return getRelyingPartyConfigurationManager(context, getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM,
+                DEFAULT_RP_CONFIG_MNGR_SID));
+    }
+
+    /**
+     * Gets the {@link RelyingPartyConfigurationManager} bound to the Servlet context.
+     * 
+     * @param context the Servlet context
+     * @param serviceId the ID under which the service bound
+     * 
+     * @return the service or null if there is no such service bound to the context
+     */
+    public static RelyingPartyConfigurationManager getRelyingPartyConfigurationManager(ServletContext context,
+            String serviceId) {
+        return (RelyingPartyConfigurationManager) context.getAttribute(serviceId);
+    }
+
+    /**
+     * Gets the {@link RelyingPartyConfigurationManager} service bound to the Servlet context.
+     * 
+     * @param context the Servlet context
+     * 
+     * @return the service or null if there is no such service bound to the context
+     * 
+     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext)}
+     */
     public static RelyingPartyConfigurationManager getRelyingPartyConfirmationManager(ServletContext context) {
         return getRelyingPartyConfirmationManager(context, getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM,
                 DEFAULT_RP_CONFIG_MNGR_SID));
@@ -366,6 +410,9 @@ public class HttpServletHelper {
      * @param serviceId the ID under which the service bound
      * 
      * @return the service or null if there is no such service bound to the context
+     * 
+     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext, String)
+
      */
     public static RelyingPartyConfigurationManager getRelyingPartyConfirmationManager(ServletContext context,
             String serviceId) {
@@ -515,31 +562,64 @@ public class HttpServletHelper {
      */
     public static LoginContext unbindLoginContext(StorageService storageService, ServletContext context,
             HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-        if (storageService == null || context == null || httpRequest == null || httpResponse == null) {
-            return null;
+        log.debug("Unbinding LoginContext");
+        if (storageService == null) {
+            throw new IllegalArgumentException("Storage service may not be null");
+        }
+        if (context == null) {
+            throw new IllegalArgumentException("Servlet context may not be null");
+        }
+        if (httpRequest == null) {
+            throw new IllegalArgumentException("HTTP request may not be null");
+        }
+        if (httpResponse == null) {
+            throw new IllegalArgumentException("HTTP request may not be null");
         }
 
         Cookie loginContextKeyCookie = getCookie(httpRequest, LOGIN_CTX_KEY_NAME);
         if (loginContextKeyCookie == null) {
+            log.debug("No LoginContext cookie available, no unbinding necessary.");
             return null;
         }
 
         String loginContextKey = DatatypeHelper.safeTrimOrNullString(loginContextKeyCookie.getValue());
         if (loginContextKey == null) {
             log.warn("Corrupted LoginContext Key cookie, it did not contain a value");
+            return null;
         }
 
-        httpRequest.setAttribute(LOGIN_CTX_KEY_NAME, null);
+        log.debug("Expiring LoginContext cookie");
         loginContextKeyCookie.setMaxAge(0);
         loginContextKeyCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
         loginContextKeyCookie.setVersion(1);
         httpResponse.addCookie(loginContextKeyCookie);
 
-        LoginContextEntry entry = (LoginContextEntry) storageService.remove(getContextParam(context,
-                LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION), loginContextKey);
+        String storageServicePartition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM,
+                DEFAULT_LOGIN_CTX_PARITION);
+        
+        log.debug("Removing LoginContext, with key {}, from StorageService partition {}", loginContextKey,
+                storageServicePartition);
+        LoginContextEntry entry = (LoginContextEntry) storageService.remove(storageServicePartition, loginContextKey);
         if (entry != null && !entry.isExpired()) {
             return entry.getLoginContext();
         }
+
         return null;
+    }
+
+    /**
+     * Builds a URL, up to and including the servlet context path. URL does not include a trailing "/".
+     * 
+     * @param httpRequest httpRequest made to the servlet in question
+     * 
+     * @return URL builder containing the scheme, server name, server port, and context path
+     */
+    public static URLBuilder getServletContextUrl(HttpServletRequest httpRequest) {
+        URLBuilder urlBuilder = new URLBuilder();
+        urlBuilder.setScheme(httpRequest.getScheme());
+        urlBuilder.setHost(httpRequest.getServerName());
+        urlBuilder.setPort(httpRequest.getServerPort());
+        urlBuilder.setPath(httpRequest.getContextPath());
+        return urlBuilder;
     }
 }

@@ -338,12 +338,14 @@
                 </xsd:annotation>
             </xsd:element>
         </xsd:sequence>
-        <xsd:attribute name="authenticationDuration" type="xsd:positiveInteger">
+        <xsd:attribute name="authenticationDuration" type="xsd:string">
             <xsd:annotation>
                 <xsd:documentation>
-                    The length of time, in minutes, that an authentication performed by this handler should be
+                    The length of time that an authentication performed by this handler should be
                     considered active. After which time a user, previously authenticated by this handler, must
                     re-authenticate in order to assert the authentication method again.
+                    
+                    This duration should be expressed in ISO8601 format.
                 </xsd:documentation>
             </xsd:annotation>
         </xsd:attribute>

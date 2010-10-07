@@ -48,7 +48,7 @@ import edu.internet2.middleware.shibboleth.common.config.SpringConfigurationUtil
 /**
  * Base unit test case for Spring configuration tests.
  */
-public class BaseTestCase extends XMLTestCase {
+public abstract class TestCaseBase extends XMLTestCase {
 
     /** Parser manager used to parse XML. */
     protected static BasicParserPool parser;
@@ -63,7 +63,7 @@ public class BaseTestCase extends XMLTestCase {
     protected UnmarshallerFactory unmarshallerFactory;
 
     /** Class logger. */
-    private static Logger log = LoggerFactory.getLogger(BaseTestCase.class);
+    private static Logger log = LoggerFactory.getLogger(TestCaseBase.class);
 
     /** Configuration resources to be loaded for all unit tests. */
     private List<Resource> configResources;
@@ -197,7 +197,7 @@ public class BaseTestCase extends XMLTestCase {
      */
     protected XMLObject unmarshallElement(String elementFile) {
         try {
-            Document doc = parser.parse(BaseTestCase.class.getResourceAsStream(elementFile));
+            Document doc = parser.parse(TestCaseBase.class.getResourceAsStream(elementFile));
             Element samlElement = doc.getDocumentElement();
 
             Unmarshaller unmarshaller = Configuration.getUnmarshallerFactory().getUnmarshaller(samlElement);

@@ -27,6 +27,7 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
 import org.w3c.dom.Element;
 
+import edu.internet2.middleware.shibboleth.common.config.SpringConfigurationUtils;
 import edu.internet2.middleware.shibboleth.idp.config.profile.ProfileHandlerNamespaceHandler;
 
 /**
@@ -41,11 +42,12 @@ public abstract class AbstractLoginHandlerBeanDefinitionParser extends AbstractS
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         log.debug("Parsing configuration for {} authentication handler.", XMLHelper.getXSIType(config).getLocalPart());
 
-        int duration = 30;
+        long duration = 30 * 60 * 1000;
         if (config.hasAttributeNS(null, "authenticationDuration")) {
-            duration = Integer.parseInt(config.getAttributeNS(null, "authenticationDuration"));
+            duration = SpringConfigurationUtils.parseDurationToMillis("'authenticationDuration' on LoginHandler of type "
+                    + XMLHelper.getXSIType(config), config.getAttributeNS(null, "authenticationDuration"), 1000 * 60);
         }
-        log.debug("Authentication handler declared duration of {} minutes", duration);
+        log.debug("Authentication duration: {}ms", duration);
         builder.addPropertyValue("authenticationDuration", duration);
 
         String authnMethod;

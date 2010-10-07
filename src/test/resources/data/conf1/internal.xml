@@ -9,11 +9,8 @@
         <constructor-arg value="true" type="boolean" />
     </bean>
     
-    <bean id="shibboleth.LogbackLogging" class="edu.internet2.middleware.shibboleth.common.log.LogbackLoggingService" depends-on="shibboleth.TaskTimer">
-        <constructor-arg ref="shibboleth.TaskTimer" />
-        <constructor-arg value="$IDP_HOME$/conf/logging.xml" />
-        <constructor-arg value="600000" />
-    </bean>
+    <!-- Nothing ever checks the type of this object and the logging config is loaded from the classpath for the test suite. -->
+    <bean id="shibboleth.LogbackLogging" class="java.lang.Object" depends-on="shibboleth.TaskTimer" />
     
     <!-- Spring configuration file that bootstraps OpenSAML -->
     <bean id="shibboleth.OpensamlConfig" class="edu.internet2.middleware.shibboleth.common.config.OpensamlConfigBean" depends-on="shibboleth.LogbackLogging">

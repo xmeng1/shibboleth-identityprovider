@@ -8,7 +8,7 @@
     when answering requests to a relying party.
 -->
 
-<RelyingPartyGroup xmlns="urn:mace:shibboleth:2.0:relying-party"
+<rp:RelyingPartyGroup xmlns:rp="urn:mace:shibboleth:2.0:relying-party"
                    xmlns:saml="urn:mace:shibboleth:2.0:relying-party:saml"
                    xmlns:metadata="urn:mace:shibboleth:2.0:metadata"
                    xmlns:resource="urn:mace:shibboleth:2.0:resource"
@@ -27,10 +27,10 @@
     <!-- ========================================== -->
     <!--      Relying Party Configurations          -->
     <!-- ========================================== -->
-    <AnonymousRelyingParty provider="$IDP_ENTITY_ID$"
+    <rp:AnonymousRelyingParty provider="$IDP_ENTITY_ID$"
                            defaultSigningCredentialRef="IdPCredential" />
     
-    <DefaultRelyingParty provider="$IDP_ENTITY_ID$"
+    <rp:DefaultRelyingParty provider="$IDP_ENTITY_ID$"
                          defaultSigningCredentialRef="IdPCredential">
         <!-- 
             Each attribute in these profiles configuration is set to its default value,
@@ -38,80 +38,80 @@
             We list them here so that people are aware of them (since they seem reluctant to 
             read the documentation).
         -->
-        <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" 
+        <rp:ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" 
                               includeAttributeStatement="false"
-                              assertionLifetime="300000"
+                              assertionLifetime="PT5M"
                               signResponses="conditional"
                               signAssertions="never" />
                               
-        <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile"
-                              assertionLifetime="300000"
+        <rp:ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile"
+                              assertionLifetime="PT5M"
                               signResponses="conditional"
                               signAssertions="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile"
+        <rp:ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile"
                               signResponses="conditional"
                               signAssertions="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" 
+        <rp:ProfileConfiguration xsi:type="saml:SAML2SSOProfile" 
                               includeAttributeStatement="true"
-                              assertionLifetime="300000"
+                              assertionLifetime="PT5M"
                               assertionProxyCount="0" 
                               signResponses="conditional"
                               signAssertions="never" 
                               encryptAssertions="conditional"
                               encryptNameIds="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
-                              assertionLifetime="300000"
+        <rp:ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
+                              assertionLifetime="PT5M"
                               assertionProxyCount="0" 
                               signResponses="conditional"
                               signAssertions="never"
                               encryptAssertions="conditional"
                               encryptNameIds="never" />
         
-        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" 
+        <rp:ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" 
                               signResponses="conditional"
                               signAssertions="never"
                               encryptAssertions="conditional"
                               encryptNameIds="never"/>
         
-    </DefaultRelyingParty>
+    </rp:DefaultRelyingParty>
         
     
     <!-- ========================================== -->
     <!--      Metadata Configuration                -->
     <!-- ========================================== -->
     <!-- MetadataProvider the combining other MetadataProviders -->
-    <MetadataProvider id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata">
+    <metadata:MetadataProvider id="ShibbolethMetadata" xsi:type="metadata:ChainingMetadataProvider">
     
     	<!-- Load the IdP's own metadata.  This is necessary for artifact support. -->
-        <MetadataProvider id="IdPMD" xsi:type="ResourceBackedMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata" >
-            <MetadataResource xsi:type="resource:FilesystemResource" file="$IDP_HOME$/metadata/idp-metadata.xml" />
-        </MetadataProvider>
+        <metadata:MetadataProvider id="IdPMD" xsi:type="metadata:ResourceBackedMetadataProvider">
+            <metadata:MetadataResource xsi:type="resource:FilesystemResource" file="$IDP_HOME$/metadata/idp-metadata.xml" />
+        </metadata:MetadataProvider>
         
         <!-- Example metadata provider. -->
         <!-- Reads metadata from a URL and store a backup copy on the file system. -->
         <!-- Validates the signature of the metadata and filters out all by SP entities in order to save memory -->
         <!-- To use: fill in 'metadataURL' and 'backingFile' properties on MetadataResource element -->
         <!--
-        <MetadataProvider id="URLMD" xsi:type="FileBackedHTTPMetadataProvider" xmlns="urn:mace:shibboleth:2.0:metadata" 
+        <metadata:MetadataProvider id="URLMD" xsi:type="metadata:FileBackedHTTPMetadataProvider"
                           metadataURL="http://example.org/metadata.xml"
                           backingFile="$IDP_HOME$/metadata/some-metadata.xml">
-            <MetadataFilter xsi:type="ChainingFilter" xmlns="urn:mace:shibboleth:2.0:metadata">
-                <MetadataFilter xsi:type="RequiredValidUntil" xmlns="urn:mace:shibboleth:2.0:metadata" 
-                                maxValidityInterval="604800" />
-                <MetadataFilter xsi:type="SignatureValidation" xmlns="urn:mace:shibboleth:2.0:metadata"
+            <metadata:MetadataFilter xsi:type="metadata:ChainingFilter">
+                <metadata:MetadataFilter xsi:type="metadata:RequiredValidUntil" 
+                                maxValidityInterval="P7D" />
+                <metadata:MetadataFilter xsi:type="metadata:SignatureValidation"
                                 trustEngineRef="shibboleth.MetadataTrustEngine"
                                 requireSignedMetadata="true" />
-	            <MetadataFilter xsi:type="EntityRoleWhiteList" xmlns="urn:mace:shibboleth:2.0:metadata">
-                    <RetainedRole>samlmd:SPSSODescriptor</RetainedRole>
-                </MetadataFilter>
-            </MetadataFilter>
-        </MetadataProvider>
+	            <metadata:MetadataFilter xsi:type="metadata:EntityRoleWhiteList">
+                    <metadata:RetainedRole>samlmd:SPSSODescriptor</metadata:RetainedRole>
+                </metadata:MetadataFilter>
+            </metadata:MetadataFilter>
+        </metadata:MetadataProvider>
         -->
         
-    </MetadataProvider>
+    </metadata:MetadataProvider>
 
     
     <!-- ========================================== -->
@@ -219,4 +219,4 @@
         <security:Rule xsi:type="security:MandatoryMessageAuthentication" />
     </security:SecurityPolicy>
     
-</RelyingPartyGroup>
+</rp:RelyingPartyGroup>

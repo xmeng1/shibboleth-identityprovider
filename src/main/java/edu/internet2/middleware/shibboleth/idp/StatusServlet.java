@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.chrono.ISOChronology;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -141,6 +142,7 @@ public class StatusServlet extends HttpServlet {
      */
     protected void printOperatingEnvironmentInformation(PrintWriter out) {
         Runtime runtime = Runtime.getRuntime();
+        DateTime now = new DateTime(ISOChronology.getInstanceUTC());
 
         out.println("### Operating Environment Information");
         out.println("operating_system: " + System.getProperty("os.name"));
@@ -150,7 +152,9 @@ public class StatusServlet extends HttpServlet {
         out.println("available_cores: " + runtime.availableProcessors());
         out.println("used_memory: " + runtime.totalMemory() / 1048576 + "MB");
         out.println("maximum_memory: " + runtime.maxMemory() / 1048576 + "MB");
-        out.println("current_time: " + new DateTime(ISOChronology.getInstanceUTC()).toString(dateFormat));
+        out.println("start_time: " + startTime.toString(dateFormat));
+        out.println("current_time: " + now.toString(dateFormat));
+        out.println("uptime: " + (now.getMillis() - startTime.getMillis()) + "ms");
     }
 
     /**

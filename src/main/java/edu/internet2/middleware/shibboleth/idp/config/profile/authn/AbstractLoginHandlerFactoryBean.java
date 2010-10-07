@@ -31,23 +31,23 @@ public abstract class AbstractLoginHandlerFactoryBean extends AbstractFactoryBea
     private List<String> authenticationMethods;
 
     /** Duration of the authentication, in minutes. */
-    private int authenticationDuration;
+    private long authenticationDuration;
 
     /**
-     * Gets the duration of the authentication, in minutes.
+     * Gets the duration of the authentication, in milliseconds.
      * 
-     * @return duration of the authentication, in minutes
+     * @return duration of the authentication, in milliseconds
      */
-    public int getAuthenticationDuration() {
+    public long getAuthenticationDuration() {
         return authenticationDuration;
     }
 
     /**
-     * Sets the duration of the authentication, in minutes.
+     * Sets the duration of the authentication, in milliseconds.
      * 
-     * @param duration duration of the authentication, in minutes
+     * @param duration duration of the authentication, in milliseconds
      */
-    public void setAuthenticationDuration(int duration) {
+    public void setAuthenticationDuration(long duration) {
         this.authenticationDuration = duration;
     }
 
@@ -78,6 +78,6 @@ public abstract class AbstractLoginHandlerFactoryBean extends AbstractFactoryBea
         if (authenticationMethods != null) {
             handler.getSupportedAuthenticationMethods().addAll(authenticationMethods);
         }
-        handler.setAuthenticationDuration(authenticationDuration * 60 * 1000);
+        handler.setAuthenticationDuration(authenticationDuration);
     }
 }
