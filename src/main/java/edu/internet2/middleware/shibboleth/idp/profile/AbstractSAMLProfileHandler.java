@@ -91,6 +91,9 @@ public abstract class AbstractSAMLProfileHandler extends
 
     /** Resolver used to determine active security policy for an incoming request. */
     private SecurityPolicyResolver securityPolicyResolver;
+    
+    /** Credential resolver for resolving keys from metadata. */
+    private MetadataCredentialResolver metadataCredentialResolver;
 
     /** Constructor. */
     protected AbstractSAMLProfileHandler() {
@@ -184,9 +187,16 @@ public abstract class AbstractSAMLProfileHandler extends
      * @return the metadata credential resolver or null
      */
     public MetadataCredentialResolver getMetadataCredentialResolver() {
-        MetadataCredentialResolverFactory mcrFactory = MetadataCredentialResolverFactory.getFactory();
-        MetadataProvider metadataProvider = getMetadataProvider();
-        return mcrFactory.getInstance(metadataProvider);
+        // It's advisable to cache the metadata cred resolver instance from the factory
+        // for the life of the profile handler.  See SIDP-428.
+        synchronized(this) {
+            if (metadataCredentialResolver == null) {
+                MetadataCredentialResolverFactory mcrFactory = MetadataCredentialResolverFactory.getFactory();
+                MetadataProvider metadataProvider = getMetadataProvider();
+                metadataCredentialResolver = mcrFactory.getInstance(metadataProvider);
+            }
+        }
+        return metadataCredentialResolver;
     }
 
     /**
