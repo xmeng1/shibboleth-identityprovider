@@ -2,6 +2,7 @@ Changes in Release 2.2.1
 =============================================
 [SIDP-421] - Error logging SOAP queries
 [SIDP-428] - Address lifecycle issues around use of MetadataCredentialResolverFactory
+[SIDP-431] - Typo in default attribute-resolver.xml
 
 Changes in Release 2.2.0
 =============================================

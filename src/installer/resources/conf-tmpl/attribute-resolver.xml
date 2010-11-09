@@ -43,7 +43,7 @@
     <resolver:AttributeDefinition xsi:type="ad:Simple" id="homePhone" sourceAttributeID="homePhone">
         <resolver:Dependency ref="myLDAP" />
         <resolver:AttributeEncoder xsi:type="enc:SAML1String" name="urn:mace:dir:attribute-def:homePhone" />
-        <resolver:AttributeEncoder xsi:type="enc:SAML2String"name="urn:oid:0.9.2342.19200300.100.1.20" friendlyName="homePhone" />
+        <resolver:AttributeEncoder xsi:type="enc:SAML2String" name="urn:oid:0.9.2342.19200300.100.1.20" friendlyName="homePhone" />
     </resolver:AttributeDefinition>
 
     <resolver:AttributeDefinition xsi:type="ad:Simple" id="homePostalAddress" sourceAttributeID="homePostalAddress">
