@@ -120,11 +120,13 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
      */
     protected void redirectToLoginPage(HttpServletRequest request, HttpServletResponse response) {
 
-        String requestContext = DatatypeHelper.safeTrimOrNullString(request.getContextPath());
-        if (requestContext == null) {
-            requestContext = "/";
+        StringBuilder actionUrlBuilder = new StringBuilder();
+        if(!"".equals(request.getContextPath())){
+            actionUrlBuilder.append(request.getContextPath());
         }
-        request.setAttribute("actionUrl", requestContext + request.getServletPath());
+        actionUrlBuilder.append(request.getServletPath());
+        
+        request.setAttribute("actionUrl", actionUrlBuilder.toString());
 
         try {
             request.getRequestDispatcher(loginPage).forward(request, response);

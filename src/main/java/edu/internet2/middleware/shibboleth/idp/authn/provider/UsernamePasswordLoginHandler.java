@@ -21,7 +21,6 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.opensaml.util.URLBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,46 +31,39 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
  * 
  * This login handler creates a {@link javax.security.auth.Subject} and binds it to the request as described in the
  * {@link edu.internet2.middleware.shibboleth.idp.authn.LoginHandler} documentation. If the JAAS module does not create
- * a principal for the user a {@link edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal} is created, using the
- * entered username. If the <code>storeCredentialsInSubject</code> init parameter of the authentication servlet is set
- * to true a {@link UsernamePasswordCredential} is created, based on the entered username and password, and stored in
- * the Subject's private credentials.
+ * a principal for the user a {@link edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal} is created, using
+ * the entered username. If the <code>storeCredentialsInSubject</code> init parameter of the authentication servlet is
+ * set to true a {@link UsernamePasswordCredential} is created, based on the entered username and password, and stored
+ * in the Subject's private credentials.
  */
 public class UsernamePasswordLoginHandler extends AbstractLoginHandler {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginHandler.class);
 
-    /** The URL of the servlet used to perform authentication. */
-    private String authenticationServletURL;
+    /** The context-relative path of the servlet used to perform authentication. */
+    private String authenticationServletPath;
 
     /**
      * Constructor.
      * 
-     * @param servletURL URL to the authentication servlet
+     * @param servletPath context-relative path to the authentication servlet, may start with "/"
      */
-    public UsernamePasswordLoginHandler(String servletURL) {
+    public UsernamePasswordLoginHandler(String servletPath) {
         super();
         setSupportsPassive(false);
         setSupportsForceAuthentication(true);
-        authenticationServletURL = servletURL;
+        authenticationServletPath = servletPath;
     }
 
     /** {@inheritDoc} */
     public void login(final HttpServletRequest httpRequest, final HttpServletResponse httpResponse) {
         // forward control to the servlet.
         try {
-            URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
-            
-            StringBuilder pathBuilder = new StringBuilder(urlBuilder.getPath());
-            if (!authenticationServletURL.startsWith("/")) {
-                pathBuilder.append("/");
-            }
-            pathBuilder.append(authenticationServletURL);
-            urlBuilder.setPath(pathBuilder.toString());
-
-            log.debug("Redirecting to {}", urlBuilder.buildURL());
-            httpResponse.sendRedirect(urlBuilder.buildURL());
+            String authnServletUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, authenticationServletPath)
+                    .buildURL();
+            log.debug("Redirecting to {}", authnServletUrl);
+            httpResponse.sendRedirect(authnServletUrl);
             return;
         } catch (IOException ex) {
             log.error("Unable to redirect to authentication servlet.", ex);

@@ -123,13 +123,13 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
-        }else if(loginContext.isPrincipalAuthenticated() || loginContext.getAuthenticationFailure() != null){
+        } else if (loginContext.isPrincipalAuthenticated() || loginContext.getAuthenticationFailure() != null) {
             log.debug("Incoming request contains a login context, processing as second leg of request");
             HttpServletHelper.unbindLoginContext(getStorageService(), servletContext, httpRequest, httpResponse);
             completeAuthenticationRequest(loginContext, inTransport, outTransport);
-        }else {
+        } else {
             log.debug("Incoming request contained a login context but principal was not authenticated, processing as first leg of request");
-            performAuthentication(inTransport, outTransport);            
+            performAuthentication(inTransport, outTransport);
         }
     }
 
@@ -167,9 +167,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
                 .getServletContext(), httpRequest, httpResponse);
 
         try {
-            URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
-            urlBuilder.setPath(urlBuilder.getPath() + authenticationManagerPath);
-            String authnEngineUrl = urlBuilder.buildURL();
+            String authnEngineUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, authenticationManagerPath)
+                    .buildURL();
             log.debug("Redirecting user to authentication engine at {}", authnEngineUrl);
             httpResponse.sendRedirect(authnEngineUrl);
         } catch (IOException e) {
@@ -214,8 +213,8 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         requestContext.setMessageDecoder(decoder);
         try {
             decoder.decode(requestContext);
-            log.debug("Decoded Shibboleth SSO request from relying party '{}'", requestContext
-                    .getInboundMessageIssuer());
+            log.debug("Decoded Shibboleth SSO request from relying party '{}'",
+                    requestContext.getInboundMessageIssuer());
         } catch (MessageDecodingException e) {
             String msg = "Error decoding Shibboleth SSO request";
             log.warn(msg, e);

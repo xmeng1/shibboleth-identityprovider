@@ -155,13 +155,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (loginContext == null) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
-        }else if(loginContext.isPrincipalAuthenticated() || loginContext.getAuthenticationFailure() != null){
+        } else if (loginContext.isPrincipalAuthenticated() || loginContext.getAuthenticationFailure() != null) {
             log.debug("Incoming request contains a login context, processing as second leg of request");
             HttpServletHelper.unbindLoginContext(getStorageService(), servletContext, httpRequest, httpResponse);
             completeAuthenticationRequest(loginContext, inTransport, outTransport);
-        }else {
+        } else {
             log.debug("Incoming request contained a login context but principal was not authenticated, processing as first leg of request");
-            performAuthentication(inTransport, outTransport);            
+            performAuthentication(inTransport, outTransport);
         }
     }
 
@@ -205,9 +205,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             HttpServletHelper.bindLoginContext(loginContext, getStorageService(), httpRequest.getSession()
                     .getServletContext(), httpRequest, httpResponse);
 
-            URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
-            urlBuilder.setPath(urlBuilder.getPath() + authenticationManagerPath);
-            String authnEngineUrl = urlBuilder.buildURL();
+            String authnEngineUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, authenticationManagerPath)
+                    .buildURL();
             log.debug("Redirecting user to authentication engine at {}", authnEngineUrl);
             httpResponse.sendRedirect(authnEngineUrl);
         } catch (MarshallingException e) {
@@ -250,15 +249,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             }
 
             if (requestContext.getSubjectNameIdentifier() != null) {
-                log
-                        .debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
+                log.debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
                 resolvePrincipal(requestContext);
                 String requestedPrincipalName = requestContext.getPrincipalName();
                 if (!DatatypeHelper.safeEquals(loginContext.getPrincipalName(), requestedPrincipalName)) {
-                    log
-                            .warn(
-                                    "Authentication request identified principal {} but authentication mechanism identified principal {}",
-                                    requestedPrincipalName, loginContext.getPrincipalName());
+                    log.warn(
+                            "Authentication request identified principal {} but authentication mechanism identified principal {}",
+                            requestedPrincipalName, loginContext.getPrincipalName());
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
                             null));
                     throw new ProfileException("User failed authentication");
@@ -633,11 +630,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 } else {
                     endpoint.setBinding(getSupportedOutboundBindings().get(0));
                 }
-                log
-                        .warn(
-                                "Generating endpoint for anonymous relying party self-identified as '{}', ACS url '{}' and binding '{}'",
-                                new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
-                                        endpoint.getBinding(), });
+                log.warn(
+                        "Generating endpoint for anonymous relying party self-identified as '{}', ACS url '{}' and binding '{}'",
+                        new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
+                                endpoint.getBinding(), });
             } else {
                 log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
             }
