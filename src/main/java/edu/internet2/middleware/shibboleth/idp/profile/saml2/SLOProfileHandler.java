@@ -137,6 +137,8 @@ public class SLOProfileHandler extends AbstractSAML2ProfileHandler {
                 requestContext.setInboundSAMLMessageId(request.getID());
                 if (request.getNameID() != null) {
                     requestContext.setSubjectNameIdentifier(request.getNameID());
+                } else if (request.getEncryptedID() != null) {
+                    requestContext.setSubjectNameIdentifier(request.getEncryptedID());
                 } else {
                     throw new ProfileException("Incoming Logout Request did not contain SAML2 NameID.");
                 }
