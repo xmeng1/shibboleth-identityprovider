@@ -76,7 +76,7 @@
                               encryptAssertions="conditional"
                               encryptNameIds="never"/>
 
-         <ProfileConfiguration xsi:type="saml:SAML2LogoutRequestProfile"
+        <rp:ProfileConfiguration xsi:type="saml:SAML2LogoutRequestProfile"
                               signResponses="always"
                               signAssertions="never"
                               encryptAssertions="never"
