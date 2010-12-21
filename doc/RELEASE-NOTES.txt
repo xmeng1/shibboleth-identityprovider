@@ -10,6 +10,7 @@ Changes in Release 2.2.1
 [SIDP-432] - Set explicit caching headers on redirects
 [SIDP-436] - Null AuthnContextClassRef causes NPE
 [SIDP-447] - Fix for SIDP-417 missed RemoteUserLoginHandler
+[SIDP-450] - NPE with AttributeQueryProfile when there are errors resolving attributes
 
 Changes in Release 2.2.0
 =============================================

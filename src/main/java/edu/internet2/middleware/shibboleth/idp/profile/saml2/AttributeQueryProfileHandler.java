@@ -113,12 +113,12 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
                 }
 
                 resolveAttributes(requestContext);
-                requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
 
                 // Lookup principal name and attributes, create attribute statement from information
                 ArrayList<Statement> statements = new ArrayList<Statement>();
                 AttributeStatement attributeStatement = buildAttributeStatement(requestContext);
                 if (attributeStatement != null) {
+                    requestContext.setReleasedAttributes(requestContext.getAttributes().keySet());
                     statements.add(attributeStatement);
                 }
 
