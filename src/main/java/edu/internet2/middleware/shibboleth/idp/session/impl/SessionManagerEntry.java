@@ -42,7 +42,7 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 
 /** Session store entry. */
 public class SessionManagerEntry extends AbstractExpiringObject {
-    
+
     /** Serial version UID. */
     private static final long serialVersionUID = -9160494097986587739L;
 
@@ -90,5 +90,10 @@ public class SessionManagerEntry extends AbstractExpiringObject {
      */
     public List<String> getSessionIndexes() {
         return indexes;
+    }
+
+    /** {@inheritDoc} */
+    public DateTime getExpirationTime() {
+        return userSession.getLastActivityInstant().plus(userSession.getInactivityTimeout());
     }
 }
