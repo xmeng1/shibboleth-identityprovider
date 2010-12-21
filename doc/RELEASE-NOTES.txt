@@ -6,6 +6,7 @@ Changes in Release 2.2.1
 [SIDP-428] - Address lifecycle issues around use of MetadataCredentialResolverFactory
 [SIDP-431] - Typo in default attribute-resolver.xml
 [SIDP-434] - More Typos in Default attribute-resolver.xml
+[SIDP-447] - Fix for SIDP-417 missed RemoteUserLoginHandler
 
 Changes in Release 2.2.0
 =============================================
