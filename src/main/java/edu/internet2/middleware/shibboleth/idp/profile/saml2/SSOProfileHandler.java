@@ -53,7 +53,6 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
-import org.opensaml.util.URLBuilder;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -533,7 +532,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (requestedAuthnContext != null) {
             if (requestedAuthnContext.getAuthnContextClassRefs() != null) {
                 for (AuthnContextClassRef classRef : requestedAuthnContext.getAuthnContextClassRefs()) {
-                    if (classRef.getAuthnContextClassRef().equals(loginContext.getAuthenticationMethod())) {
+                    if (DatatypeHelper.safeEquals(classRef.getAuthnContextClassRef(),
+                            loginContext.getAuthenticationMethod())) {
                         AuthnContextClassRef ref = authnContextClassRefBuilder.buildObject();
                         ref.setAuthnContextClassRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextClassRef(ref);
@@ -541,7 +541,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 }
             } else if (requestedAuthnContext.getAuthnContextDeclRefs() != null) {
                 for (AuthnContextDeclRef declRef : requestedAuthnContext.getAuthnContextDeclRefs()) {
-                    if (declRef.getAuthnContextDeclRef().equals(loginContext.getAuthenticationMethod())) {
+                    if (DatatypeHelper.safeEquals(declRef.getAuthnContextDeclRef(),
+                            loginContext.getAuthenticationMethod())) {
                         AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
                         ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextDeclRef(ref);
