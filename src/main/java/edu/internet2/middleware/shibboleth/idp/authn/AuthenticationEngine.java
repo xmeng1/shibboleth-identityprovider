@@ -134,8 +134,7 @@ public class AuthenticationEngine extends HttpServlet {
         storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(context);
     }
 
-    /**
-     * Returns control back to the authentication engine.
+    /* Returns control back to the authentication engine.
      * 
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
@@ -527,19 +526,27 @@ public class AuthenticationEngine extends HttpServlet {
             } else {
                 actualAuthnMethod = loginContext.getAttemptedAuthnMethod();
             }
-
+            
             // Check to make sure the login handler did the right thing
             validateSuccessfulAuthentication(loginContext, httpRequest, actualAuthnMethod);
+
+            // Check for an overridden authn instant.
+            DateTime actualAuthnInstant = (DateTime) httpRequest.getAttribute(LoginHandler.AUTHENTICATION_INSTANT_KEY);
 
             // Get the Subject from the request. If force authentication was required then make sure the
             // Subject identifies the same user that authenticated before
             Subject subject = getLoginHandlerSubject(httpRequest);
             if (loginContext.isForceAuthRequired()) {
                 validateForcedReauthentication(idpSession, actualAuthnMethod, subject);
+                
+                // Reset the authn instant.
+                if (actualAuthnInstant == null) {
+                    actualAuthnInstant = new DateTime();
+                }
             }
 
             loginContext.setPrincipalAuthenticated(true);
-            updateUserSession(loginContext, subject, actualAuthnMethod, httpRequest, httpResponse);
+            updateUserSession(loginContext, subject, actualAuthnMethod, actualAuthnInstant, httpRequest, httpResponse);
             LOG.debug("User {} authenticated with method {}", loginContext.getPrincipalName(),
                     loginContext.getAuthenticationMethod());
         } catch (AuthenticationException e) {
@@ -662,11 +669,13 @@ public class AuthenticationEngine extends HttpServlet {
      * @param loginContext current login context
      * @param authenticationSubject subject created from the authentication method
      * @param authenticationMethod the method used to authenticate the subject
+     * @param authenticationInstant the time of authentication
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
      */
     protected void updateUserSession(LoginContext loginContext, Subject authenticationSubject,
-            String authenticationMethod, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+            String authenticationMethod, DateTime authenticationInstant,
+            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         Principal authenticationPrincipal = authenticationSubject.getPrincipals().iterator().next();
         LOG.debug("Updating session information for principal {}", authenticationPrincipal.getName());
 
@@ -682,15 +691,21 @@ public class AuthenticationEngine extends HttpServlet {
         // login handler subject
         idpSession.setSubject(mergeSubjects(idpSession.getSubject(), authenticationSubject));
 
-        // Check if an existing authentication method was used (i.e. SSO occurred), if not record the new information
+        // Check if an existing authentication method with no updated timestamp was used (i.e. SSO occurred);
+        // if not record the new information
         AuthenticationMethodInformation authnMethodInfo = idpSession.getAuthenticationMethods().get(
                 authenticationMethod);
-        if (authnMethodInfo == null) {
+        if (authnMethodInfo == null || authenticationInstant != null) {
             LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
                     authenticationPrincipal.getName());
             LoginHandler loginHandler = handlerManager.getLoginHandlers().get(loginContext.getAttemptedAuthnMethod());
-            authnMethodInfo = new AuthenticationMethodInformationImpl(idpSession.getSubject(), authenticationPrincipal,
-                    authenticationMethod, new DateTime(), loginHandler.getAuthenticationDuration());
+            authnMethodInfo = new AuthenticationMethodInformationImpl(
+                    idpSession.getSubject(),
+                    authenticationPrincipal,
+                    authenticationMethod,
+                    (authenticationInstant != null ? authenticationInstant : new DateTime()),
+                    loginHandler.getAuthenticationDuration()
+                    );
         }
 
         loginContext.setAuthenticationMethodInformation(authnMethodInfo);
