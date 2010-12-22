@@ -10,6 +10,7 @@ Changes in Release 2.2.1
 [SIDP-434] - More Typos in Default attribute-resolver.xml
 [SIDP-432] - Set explicit caching headers on redirects
 [SIDP-436] - Null AuthnContextClassRef causes NPE
+[SIDP-443] - Profile handlers override encoder nameQualifier setting
 [SIDP-447] - Fix for SIDP-417 missed RemoteUserLoginHandler
 [SIDP-450] - NPE with AttributeQueryProfile when there are errors resolving attributes
 [SIDP-453] - Session inactivity timeout being treated as a hard expiration time

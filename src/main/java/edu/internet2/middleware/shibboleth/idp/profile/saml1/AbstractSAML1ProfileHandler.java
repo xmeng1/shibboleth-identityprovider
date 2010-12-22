@@ -382,7 +382,9 @@ public abstract class AbstractSAML1ProfileHandler extends AbstractSAMLProfileHan
                             new Object[] { nameIdAttribute.getId(), nameIdEncoder.getNameFormat(),
                                     requestContext.getInboundMessageIssuer(), });
             NameIdentifier nameId = nameIdEncoder.encode(nameIdAttribute);
-            nameId.setNameQualifier(requestContext.getRelyingPartyConfiguration().getProviderId());
+            if (nameId.getNameQualifier() == null) {
+                nameId.setNameQualifier(requestContext.getRelyingPartyConfiguration().getProviderId());
+            }
             return nameId;
         } catch (AttributeEncodingException e) {
             requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER, null, "Unable to encode NameIdentifier"));
