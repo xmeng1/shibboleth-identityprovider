@@ -14,6 +14,7 @@ Changes in Release 2.2.1
 [SIDP-447] - Fix for SIDP-417 missed RemoteUserLoginHandler
 [SIDP-450] - NPE with AttributeQueryProfile when there are errors resolving attributes
 [SIDP-453] - Session inactivity timeout being treated as a hard expiration time
+[SIDP-457] - would be nice to include displayName in default attribute resolver
 
 Changes in Release 2.2.0
 =============================================
