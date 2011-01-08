@@ -86,8 +86,11 @@ public class IdPProfileHandlerManager extends BaseReloadableService implements P
 
         Lock readLock = getReadWriteLock().readLock();
         readLock.lock();
-        handler = profileHandlers.get(requestPath);
-        readLock.unlock();
+        try{
+            handler = profileHandlers.get(requestPath);
+        }finally{
+            readLock.unlock();
+        }
 
         if (handler != null) {
             log.debug("{}: Located profile handler of the following type for the request path: {}", getId(), handler
