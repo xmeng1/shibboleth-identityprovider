@@ -7,6 +7,7 @@ Changes in Release 2.2.1
 [SIDP-427] - Incorrect handling of returned authn error in SSO profile handlers
 [SIDP-428] - Address lifecycle issues around use of MetadataCredentialResolverFactory
 [SIDP-431] - Typo in default attribute-resolver.xml
+[SIDP-433] - Update libs for 2.2.1
 [SIDP-434] - More Typos in Default attribute-resolver.xml
 [SIDP-432] - Set explicit caching headers on redirects
 [SIDP-435] - Different principal used for index into session storage and transient ID
