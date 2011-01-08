@@ -27,8 +27,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
@@ -42,7 +42,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.AuthnContext;
-import org.opensaml.util.URLBuilder;
 import org.opensaml.util.storage.StorageService;
 import org.opensaml.ws.transport.http.HTTPTransportUtils;
 import org.opensaml.xml.util.Base64;
@@ -134,7 +133,8 @@ public class AuthenticationEngine extends HttpServlet {
         storageService = (StorageService<String, LoginContextEntry>) HttpServletHelper.getStorageService(context);
     }
 
-    /* Returns control back to the authentication engine.
+    /**
+     * Returns control back to the authentication engine.
      * 
      * @param httpRequest current HTTP request
      * @param httpResponse current HTTP response
@@ -526,7 +526,7 @@ public class AuthenticationEngine extends HttpServlet {
             } else {
                 actualAuthnMethod = loginContext.getAttemptedAuthnMethod();
             }
-            
+
             // Check to make sure the login handler did the right thing
             validateSuccessfulAuthentication(loginContext, httpRequest, actualAuthnMethod);
 
@@ -538,7 +538,7 @@ public class AuthenticationEngine extends HttpServlet {
             Subject subject = getLoginHandlerSubject(httpRequest);
             if (loginContext.isForceAuthRequired()) {
                 validateForcedReauthentication(idpSession, actualAuthnMethod, subject);
-                
+
                 // Reset the authn instant.
                 if (actualAuthnInstant == null) {
                     actualAuthnInstant = new DateTime();
@@ -674,8 +674,8 @@ public class AuthenticationEngine extends HttpServlet {
      * @param httpResponse current HTTP response
      */
     protected void updateUserSession(LoginContext loginContext, Subject authenticationSubject,
-            String authenticationMethod, DateTime authenticationInstant,
-            HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+            String authenticationMethod, DateTime authenticationInstant, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
         Principal authenticationPrincipal = authenticationSubject.getPrincipals().iterator().next();
         LOG.debug("Updating session information for principal {}", authenticationPrincipal.getName());
 
@@ -699,18 +699,17 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.debug("Recording authentication and service information in Shibboleth session for principal: {}",
                     authenticationPrincipal.getName());
             LoginHandler loginHandler = handlerManager.getLoginHandlers().get(loginContext.getAttemptedAuthnMethod());
-            authnMethodInfo = new AuthenticationMethodInformationImpl(
-                    idpSession.getSubject(),
-                    authenticationPrincipal,
-                    authenticationMethod,
-                    (authenticationInstant != null ? authenticationInstant : new DateTime()),
-                    loginHandler.getAuthenticationDuration()
-                    );
+            DateTime authnInstant = authenticationInstant;
+            if (authnInstant == null) {
+                authnInstant = new DateTime();
+            }
+            authnMethodInfo = new AuthenticationMethodInformationImpl(idpSession.getSubject(), authenticationPrincipal,
+                    authenticationMethod, authnInstant, loginHandler.getAuthenticationDuration());
         }
 
         loginContext.setAuthenticationMethodInformation(authnMethodInfo);
         idpSession.getAuthenticationMethods().put(authnMethodInfo.getAuthenticationMethod(), authnMethodInfo);
-        sessionManager.indexSession(idpSession, authnMethodInfo.getAuthenticationPrincipal().getName());
+        sessionManager.indexSession(idpSession, idpSession.getPrincipalName());
 
         ServiceInformation serviceInfo = new ServiceInformationImpl(loginContext.getRelyingPartyId(), new DateTime(),
                 authnMethodInfo);

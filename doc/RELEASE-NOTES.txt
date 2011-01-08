@@ -9,6 +9,7 @@ Changes in Release 2.2.1
 [SIDP-431] - Typo in default attribute-resolver.xml
 [SIDP-434] - More Typos in Default attribute-resolver.xml
 [SIDP-432] - Set explicit caching headers on redirects
+[SIDP-435] - Different principal used for index into session storage and transient ID
 [SIDP-436] - Null AuthnContextClassRef causes NPE
 [SIDP-443] - Profile handlers override encoder nameQualifier setting
 [SIDP-447] - Fix for SIDP-417 missed RemoteUserLoginHandler
