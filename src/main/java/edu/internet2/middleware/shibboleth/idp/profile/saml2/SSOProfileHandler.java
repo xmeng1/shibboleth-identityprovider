@@ -76,6 +76,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SS
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
@@ -149,15 +150,15 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
         ServletContext servletContext = httpRequest.getSession().getServletContext();
 
-        Saml2LoginContext loginContext = (Saml2LoginContext) HttpServletHelper.getLoginContext(getStorageService(),
+        LoginContext loginContext = HttpServletHelper.getLoginContext(getStorageService(),
                 servletContext, httpRequest);
-        if (loginContext == null) {
+        if (loginContext == null || !(loginContext instanceof Saml2LoginContext)) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else if (loginContext.isPrincipalAuthenticated() || loginContext.getAuthenticationFailure() != null) {
             log.debug("Incoming request contains a login context, processing as second leg of request");
             HttpServletHelper.unbindLoginContext(getStorageService(), servletContext, httpRequest, httpResponse);
-            completeAuthenticationRequest(loginContext, inTransport, outTransport);
+            completeAuthenticationRequest((Saml2LoginContext)loginContext, inTransport, outTransport);
         } else {
             log.debug("Incoming request contained a login context but principal was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);

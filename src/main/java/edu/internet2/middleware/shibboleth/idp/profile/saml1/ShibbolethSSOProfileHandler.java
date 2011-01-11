@@ -59,6 +59,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRe
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.ShibbolethSSOConfiguration;
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.ShibbolethSSOLoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /** Shibboleth SSO request profile handler. */
@@ -117,16 +118,16 @@ public class ShibbolethSSOProfileHandler extends AbstractSAML1ProfileHandler {
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
         ServletContext servletContext = httpRequest.getSession().getServletContext();
 
-        ShibbolethSSOLoginContext loginContext = (ShibbolethSSOLoginContext) HttpServletHelper.getLoginContext(
+	LoginContext loginContext = HttpServletHelper.getLoginContext(
                 getStorageService(), servletContext, httpRequest);
 
-        if (loginContext == null) {
+        if (loginContext == null || !(loginContext instanceof ShibbolethSSOLoginContext)) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
         } else if (loginContext.isPrincipalAuthenticated() || loginContext.getAuthenticationFailure() != null) {
             log.debug("Incoming request contains a login context, processing as second leg of request");
             HttpServletHelper.unbindLoginContext(getStorageService(), servletContext, httpRequest, httpResponse);
-            completeAuthenticationRequest(loginContext, inTransport, outTransport);
+            completeAuthenticationRequest((ShibbolethSSOLoginContext)loginContext, inTransport, outTransport);
         } else {
             log.debug("Incoming request contained a login context but principal was not authenticated, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
