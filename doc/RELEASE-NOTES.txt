@@ -1,5 +1,6 @@
 Changes in Release 2.2.1
 =============================================
+[SIDP-286] - Configurable validity period for self signed certificate
 [SIDP-417] - Shib deployed to root web context, SSOProfileHandler forwards to "/null/AuthnEngine"
 [SIDP-421] - Error logging SOAP queries
 [SIDP-422] - aacli.sh Exception in thread "main" 

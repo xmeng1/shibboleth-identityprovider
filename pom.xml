@@ -108,7 +108,7 @@
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
             <artifactId>ant-extensions</artifactId>
-            <version>13Apr2008</version>
+            <version>11Jan2011</version>
             <scope>runtime</scope>
             <exclusions>
                 <exclusion>
