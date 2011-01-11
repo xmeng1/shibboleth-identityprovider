@@ -24,6 +24,7 @@ import org.opensaml.saml1.binding.decoding.BaseSAML1MessageDecoder;
 import org.opensaml.ws.message.MessageContext;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
+import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,6 +92,13 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
         if (timeStr != null) {
             long time = Long.parseLong(timeStr) * 1000;
             requestContext.setInboundSAMLMessageIssueInstant(new DateTime(time, ISOChronology.getInstanceUTC()));
+            
+            // If a timestamp is provided, construct a pseudo message ID by combining the timestamp
+            // and a client-specific ID (the Java session ID).
+            String sessionID = ((HttpServletRequestAdapter) transport).getWrappedRequest().getRequestedSessionId();
+            if (sessionID != null) {
+                requestContext.setInboundSAMLMessageId(sessionID + '!' + timeStr);
+            }
         }
         
         populateRelyingPartyMetadata(requestContext);

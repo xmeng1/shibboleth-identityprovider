@@ -154,6 +154,7 @@
     </security:TrustEngine>
      
     <security:SecurityPolicy id="shibboleth.ShibbolethSSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay" required="false" />
         <security:Rule xsi:type="samlsec:IssueInstant" required="false"/>
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
     </security:SecurityPolicy>
