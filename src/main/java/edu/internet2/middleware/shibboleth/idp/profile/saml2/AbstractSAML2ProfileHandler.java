@@ -840,7 +840,9 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
         try {
             // build the actual NameID
             NameID nameId = nameIdEncoder.encode(nameIdAttribute);
-            nameId.setNameQualifier(requestContext.getRelyingPartyConfiguration().getProviderId());
+            if (nameId.getNameQualifier() == null) {
+                nameId.setNameQualifier(requestContext.getRelyingPartyConfiguration().getProviderId());
+            }
             return nameId;
         } catch (AttributeEncodingException e) {
             log.error("Unable to encode NameID attribute", e);

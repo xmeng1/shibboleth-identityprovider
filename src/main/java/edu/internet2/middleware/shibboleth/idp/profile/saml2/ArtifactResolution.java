@@ -97,7 +97,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
             if (requestContext.getProfileConfiguration() == null) {
                 String msg = MessageFormat.format(
-                        "SAML 2 Artifact Resolve profile is not configured for relying party '{}'", requestContext
+                        "SAML 2 Artifact Resolve profile is not configured for relying party ''{0}''", requestContext
                                 .getInboundMessageIssuer());
                 requestContext
                         .setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, StatusCode.REQUEST_DENIED_URI, msg));
@@ -109,7 +109,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
             SAMLArtifactMapEntry artifactEntry = artifactMap.get(requestContext.getArtifact());
             if (artifactEntry == null || artifactEntry.isExpired()) {
-                String msg = MessageFormat.format("Unknown artifact '{}' from relying party '{}'", requestContext
+                String msg = MessageFormat.format("Unknown artifact ''{0}'' from relying party ''{1}''", requestContext
                         .getArtifact(), requestContext.getInboundMessageIssuer());
                 log.error(msg);
                 requestContext
@@ -118,7 +118,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
 
             if (!artifactEntry.getIssuerId().equals(requestContext.getLocalEntityId())) {
                 String msg = MessageFormat.format(
-                        "Artifact issuer mismatch.  Artifact issued by '{}' but IdP has entity ID of '{}'",
+                        "Artifact issuer mismatch.  Artifact issued by ''{0}'' but IdP has entity ID of ''{1}''",
                         artifactEntry.getIssuerId(), requestContext.getLocalEntityId());
                 log.warn(msg);
                 requestContext
@@ -129,7 +129,7 @@ public class ArtifactResolution extends AbstractSAML2ProfileHandler {
             if (!artifactEntry.getRelyingPartyId().equals(requestContext.getInboundMessageIssuer())) {
                 String msg = MessageFormat
                         .format(
-                                "Artifact requester mismatch. Artifact was issued to '{}' but the resolve request came from '{}'",
+                                "Artifact requester mismatch. Artifact was issued to ''{0}'' but the resolve request came from ''{1}''",
                                 artifactEntry.getRelyingPartyId(), requestContext.getInboundMessageIssuer());
                 log.warn(msg);
                 requestContext

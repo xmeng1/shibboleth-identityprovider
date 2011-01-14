@@ -57,8 +57,8 @@
                               includeAttributeStatement="true"
                               assertionLifetime="PT5M"
                               assertionProxyCount="0" 
-                              signResponses="conditional"
-                              signAssertions="never" 
+                              signResponses="never"
+                              signAssertions="always" 
                               encryptAssertions="conditional"
                               encryptNameIds="never" />
         
@@ -71,8 +71,8 @@
                               encryptNameIds="never" />
         
         <rp:ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" 
-                              signResponses="conditional"
-                              signAssertions="never"
+                              signResponses="never"
+                              signAssertions="always"
                               encryptAssertions="conditional"
                               encryptNameIds="never"/>
 
@@ -160,6 +160,7 @@
     </security:TrustEngine>
      
     <security:SecurityPolicy id="shibboleth.ShibbolethSSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay" required="false" />
         <security:Rule xsi:type="samlsec:IssueInstant" required="false"/>
         <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
     </security:SecurityPolicy>

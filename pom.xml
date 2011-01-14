@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.internet2.middleware</groupId>
     <artifactId>shibboleth-identityprovider</artifactId>
-    <version>2.2.0-slo10</version>
+    <version>2.2.1-slo10</version>
     <!-- We bundle as a jar here, the installer creates the WAR -->
     <packaging>jar</packaging>
 
@@ -44,7 +44,11 @@
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
             <artifactId>shibboleth-common</artifactId>
+<<<<<<< HEAD
             <version>1.2.0-slo2</version>
+=======
+            <version>1.2.1</version>
+>>>>>>> master
         </dependency>
         
         <!-- Provided dependencies -->
@@ -52,7 +56,6 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.4</version>
-            <scope>provided</scope>
         </dependency>
                 
         <!-- Runtime dependencies -->
@@ -107,7 +110,7 @@
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
             <artifactId>ant-extensions</artifactId>
-            <version>13Apr2008</version>
+            <version>11Jan2011</version>
             <scope>runtime</scope>
             <exclusions>
                 <exclusion>

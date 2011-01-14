@@ -1,3 +1,26 @@
+Changes in Release 2.2.1
+=============================================
+[SIDP-286] - Configurable validity period for self signed certificate
+[SIDP-417] - Shib deployed to root web context, SSOProfileHandler forwards to "/null/AuthnEngine"
+[SIDP-421] - Error logging SOAP queries
+[SIDP-422] - aacli.sh Exception in thread "main" 
+[SIDP-426] - Forced authentication does not reset the AuthnInstant 
+[SIDP-427] - Incorrect handling of returned authn error in SSO profile handlers
+[SIDP-428] - Address lifecycle issues around use of MetadataCredentialResolverFactory
+[SIDP-431] - Typo in default attribute-resolver.xml
+[SIDP-433] - Update libs for 2.2.1
+[SIDP-434] - More Typos in Default attribute-resolver.xml
+[SIDP-432] - Set explicit caching headers on redirects
+[SIDP-435] - Different principal used for index into session storage and transient ID
+[SIDP-436] - Null AuthnContextClassRef causes NPE
+[SIDP-438] - Improve user experience when switching versions of SAML
+[SIDP-443] - Profile handlers override encoder nameQualifier setting
+[SIDP-447] - Fix for SIDP-417 missed RemoteUserLoginHandler
+[SIDP-450] - NPE with AttributeQueryProfile when there are errors resolving attributes
+[SIDP-452] - Facilitate replay detection to Shibboleth SSO
+[SIDP-453] - Session inactivity timeout being treated as a hard expiration time
+[SIDP-457] - would be nice to include displayName in default attribute resolver
+
 Changes in Release 2.2.0
 =============================================
 [SIDP-416] - MetadataProviderObserver leak, new one added on every login
