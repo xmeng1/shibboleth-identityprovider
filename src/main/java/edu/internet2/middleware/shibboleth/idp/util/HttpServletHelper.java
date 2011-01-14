@@ -622,4 +622,31 @@ public class HttpServletHelper {
         urlBuilder.setPath(httpRequest.getContextPath());
         return urlBuilder;
     }
+    
+    /**
+     * Builds a URL to a path that is meant to be relative to the Servlet context.
+     * 
+     * @param httpRequest current HTTP request
+     * @param path path relative to the context, may start with a "/"
+     * 
+     * @return URL builder containing the scheme, server name, server port, and full path
+     */
+    public static URLBuilder getContextRelativeUrl(HttpServletRequest httpRequest, String path){
+        URLBuilder urlBuilder = new URLBuilder();
+        urlBuilder.setScheme(httpRequest.getScheme());
+        urlBuilder.setHost(httpRequest.getServerName());
+        urlBuilder.setPort(httpRequest.getServerPort());
+        
+        StringBuilder pathBuilder = new StringBuilder();
+        if(!"".equals(httpRequest.getContextPath())){
+            pathBuilder.append(httpRequest.getContextPath());
+        }
+        if(!path.startsWith("/")){
+            pathBuilder.append("/");
+        }
+        pathBuilder.append(DatatypeHelper.safeTrim(path));
+        urlBuilder.setPath(pathBuilder.toString());
+        
+        return urlBuilder;
+    }
 }

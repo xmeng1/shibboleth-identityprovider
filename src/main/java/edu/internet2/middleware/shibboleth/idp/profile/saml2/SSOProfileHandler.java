@@ -53,7 +53,6 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
-import org.opensaml.util.URLBuilder;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -77,6 +76,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SS
 import edu.internet2.middleware.shibboleth.common.util.HttpHelper;
 import edu.internet2.middleware.shibboleth.idp.authn.PassiveAuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
@@ -150,18 +150,18 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
         ServletContext servletContext = httpRequest.getSession().getServletContext();
 
-        Saml2LoginContext loginContext = (Saml2LoginContext) HttpServletHelper.getLoginContext(getStorageService(),
+        LoginContext loginContext = HttpServletHelper.getLoginContext(getStorageService(),
                 servletContext, httpRequest);
-        if (loginContext == null) {
+        if (loginContext == null || !(loginContext instanceof Saml2LoginContext)) {
             log.debug("Incoming request does not contain a login context, processing as first leg of request");
             performAuthentication(inTransport, outTransport);
-        }else if(!loginContext.isPrincipalAuthenticated()){
-            log.debug("Incoming request contained a login context but principal was not authenticated, processing as first leg of request");
-            performAuthentication(inTransport, outTransport);            
-        } else {
+        } else if (loginContext.isPrincipalAuthenticated() || loginContext.getAuthenticationFailure() != null) {
             log.debug("Incoming request contains a login context, processing as second leg of request");
             HttpServletHelper.unbindLoginContext(getStorageService(), servletContext, httpRequest, httpResponse);
-            completeAuthenticationRequest(loginContext, inTransport, outTransport);
+            completeAuthenticationRequest((Saml2LoginContext)loginContext, inTransport, outTransport);
+        } else {
+            log.debug("Incoming request contained a login context but principal was not authenticated, processing as first leg of request");
+            performAuthentication(inTransport, outTransport);
         }
     }
 
@@ -205,9 +205,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             HttpServletHelper.bindLoginContext(loginContext, getStorageService(), httpRequest.getSession()
                     .getServletContext(), httpRequest, httpResponse);
 
-            URLBuilder urlBuilder = HttpServletHelper.getServletContextUrl(httpRequest);
-            urlBuilder.setPath(urlBuilder.getPath() + authenticationManagerPath);
-            String authnEngineUrl = urlBuilder.buildURL();
+            String authnEngineUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, authenticationManagerPath)
+                    .buildURL();
             log.debug("Redirecting user to authentication engine at {}", authnEngineUrl);
             httpResponse.sendRedirect(authnEngineUrl);
         } catch (MarshallingException e) {
@@ -250,15 +249,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             }
 
             if (requestContext.getSubjectNameIdentifier() != null) {
-                log
-                        .debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
+                log.debug("Authentication request contained a subject with a name identifier, resolving principal from NameID");
                 resolvePrincipal(requestContext);
                 String requestedPrincipalName = requestContext.getPrincipalName();
                 if (!DatatypeHelper.safeEquals(loginContext.getPrincipalName(), requestedPrincipalName)) {
-                    log
-                            .warn(
-                                    "Authentication request identified principal {} but authentication mechanism identified principal {}",
-                                    requestedPrincipalName, loginContext.getPrincipalName());
+                    log.warn(
+                            "Authentication request identified principal {} but authentication mechanism identified principal {}",
+                            requestedPrincipalName, loginContext.getPrincipalName());
                     requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.AUTHN_FAILED_URI,
                             null));
                     throw new ProfileException("User failed authentication");
@@ -536,7 +533,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (requestedAuthnContext != null) {
             if (requestedAuthnContext.getAuthnContextClassRefs() != null) {
                 for (AuthnContextClassRef classRef : requestedAuthnContext.getAuthnContextClassRefs()) {
-                    if (classRef.getAuthnContextClassRef().equals(loginContext.getAuthenticationMethod())) {
+                    if (DatatypeHelper.safeEquals(classRef.getAuthnContextClassRef(),
+                            loginContext.getAuthenticationMethod())) {
                         AuthnContextClassRef ref = authnContextClassRefBuilder.buildObject();
                         ref.setAuthnContextClassRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextClassRef(ref);
@@ -544,7 +542,8 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 }
             } else if (requestedAuthnContext.getAuthnContextDeclRefs() != null) {
                 for (AuthnContextDeclRef declRef : requestedAuthnContext.getAuthnContextDeclRefs()) {
-                    if (declRef.getAuthnContextDeclRef().equals(loginContext.getAuthenticationMethod())) {
+                    if (DatatypeHelper.safeEquals(declRef.getAuthnContextDeclRef(),
+                            loginContext.getAuthenticationMethod())) {
                         AuthnContextDeclRef ref = authnContextDeclRefBuilder.buildObject();
                         ref.setAuthnContextDeclRef(loginContext.getAuthenticationMethod());
                         authnContext.setAuthnContextDeclRef(ref);
@@ -633,11 +632,10 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                 } else {
                     endpoint.setBinding(getSupportedOutboundBindings().get(0));
                 }
-                log
-                        .warn(
-                                "Generating endpoint for anonymous relying party self-identified as '{}', ACS url '{}' and binding '{}'",
-                                new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
-                                        endpoint.getBinding(), });
+                log.warn(
+                        "Generating endpoint for anonymous relying party self-identified as '{}', ACS url '{}' and binding '{}'",
+                        new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
+                                endpoint.getBinding(), });
             } else {
                 log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
             }

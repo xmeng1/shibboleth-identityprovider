@@ -21,9 +21,10 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.opensaml.util.URLBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
 /**
  * Authentication Handler that redirects to servlet protected by a Web Single-Sign-On system.
@@ -59,21 +60,10 @@ public class RemoteUserLoginHandler extends AbstractLoginHandler {
 
         // forward control to the servlet.
         try {
-            StringBuilder pathBuilder = new StringBuilder();
-            pathBuilder.append(httpRequest.getContextPath());
-            if (!servletURL.startsWith("/")) {
-                pathBuilder.append("/");
-            }
-            pathBuilder.append(servletURL);
+            String profileUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, servletURL).buildURL();
 
-            URLBuilder urlBuilder = new URLBuilder();
-            urlBuilder.setScheme(httpRequest.getScheme());
-            urlBuilder.setHost(httpRequest.getServerName());
-            urlBuilder.setPort(httpRequest.getServerPort());
-            urlBuilder.setPath(pathBuilder.toString());
-
-            log.debug("Redirecting to {}", urlBuilder.buildURL());
-            httpResponse.sendRedirect(urlBuilder.buildURL());
+            log.debug("Redirecting to {}", profileUrl);
+            httpResponse.sendRedirect(profileUrl);
             return;
         } catch (IOException ex) {
             log.error("Unable to redirect to remote user authentication servlet.", ex);

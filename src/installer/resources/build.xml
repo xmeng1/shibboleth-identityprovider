@@ -5,10 +5,13 @@
     <property name="tools.dir" value="${basedir}/src/tools" />
     <property name="webapp.dir" value="${basedir}/src/main/webapp" />
     <property name="war.name" value="idp" />
+	
+    <!-- Load property from the environment -->
+    <property environment="env" />
 
     <!-- Installation specific property file -->
     <property file="${resources.dir}/install.properties" />
-
+	
     <!-- Load ant-contrib tasks -->
     <taskdef resource="net/sf/antcontrib/antlib.xml" />
 
@@ -73,12 +76,24 @@
                 <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
 
                 <echo message="Generating signing and encryption key, certificate, and keystore. " />
+            	
+            	<if>
+            	    <isset property="env.IdPCertLifetime" />
+            		<then>
+            			<var name="idp.cert.lifetime" value="${env.IdPCertLifetime}" />
+            		</then>
+            		<else>
+            			<var name="idp.cert.lifetime" value="20" />
+            		</else>
+            	</if>
+            		
                 <selfSignedCert hostname="${idp.hostname}"
                                 privateKeyFile="${idp.home.path}/credentials/idp.key"
                                 certificateFile="${idp.home.path}/credentials/idp.crt"
                                 keystoreFile="${idp.home.path}/credentials/idp.jks"
                                 keystorePassword="${idp.keystore.pass}"
-                                uriSubjectAltNames="${idp.entity.id}" />
+                                uriSubjectAltNames="${idp.entity.id}" 
+                                certificateLifetime="${idp.cert.lifetime}" />
 
                 <copy todir="${idp.home.path}/bin" preservelastmodified="true" overwrite="true">
                     <fileset dir="${tools.dir}/bash" />

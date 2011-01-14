@@ -79,6 +79,9 @@ public interface LoginHandler {
     /** Request attribute to which an authentication method URI may be bound. */
     public static final String AUTHENTICATION_METHOD_KEY = "authnMethod";
 
+    /** Request attribute to which an authentication timestamp may be bound. */
+    public static final String AUTHENTICATION_INSTANT_KEY = "authnInstant";
+    
     /** Request attribute to which an error message may be bound. */
     public static final String AUTHENTICATION_ERROR_KEY = "authnError";
 
