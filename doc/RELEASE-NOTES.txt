@@ -1,3 +1,7 @@
+Changes in Release 2.3.0
+=============================================
+[SIDP-429] - Limit metadata SP credential resolution for encryption to RSA keys only
+
 Changes in Release 2.2.1
 =============================================
 [SIDP-286] - Configurable validity period for self signed certificate
