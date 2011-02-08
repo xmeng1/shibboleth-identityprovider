@@ -2,6 +2,7 @@ Changes in Release 2.3.0
 =============================================
 [SIDP-429] - Limit metadata SP credential resolution for encryption to RSA keys only
 [SIDP-272] - Regenerate self-signed certificate with installer task
+[SIDP-404] - Add an install-time setting for the path to web.xml
 
 Changes in Release 2.2.1
 =============================================
