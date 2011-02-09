@@ -169,6 +169,15 @@
                 class="edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSODecoder">
             </bean>
         </entry>
+        <entry>
+            <key>
+                <value>urn:mace:shibboleth:2.0:profiles:AuthnRequest</value>
+            </key>
+            <bean id="shibboleth.UnsolicitedSSODecoder"
+                class="edu.internet2.middleware.shibboleth.idp.profile.saml2.UnsolicitedSSODecoder">
+                <constructor-arg ref="shibboleth.IdGenerator" />
+            </bean>
+        </entry>
     </util:map>
 
     <util:map id="shibboleth.MessageEncoders">
