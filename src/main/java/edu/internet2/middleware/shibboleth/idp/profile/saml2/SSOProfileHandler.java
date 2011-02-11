@@ -617,7 +617,21 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (nameIdPolicy != null) {
                 String spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolicy.getSPNameQualifier());
                 if (spNameQualifier != null) {
-                    nameId.setSPNameQualifier(spNameQualifier);
+                    // Right now the resolver/encoder layer doesn't support forcing the SPNameQualifier
+                    // to be set, but if it ever does, this should detect a mismatch with NameIDPolicy.
+                    if (nameId.getSPNameQualifier() != null) {
+                        if (!nameId.getSPNameQualifier().equals(spNameQualifier)) {
+                            // Requester specified a different qualifier than we produced.
+                            requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
+                                "Invalid SPNameQualifier for this request"));
+                            throw new ProfileException("Requested SPNameQualifier '{" + spNameQualifier
+                                    + "}' conflicts with generated value '{" + nameId.getSPNameQualifier() + "}'");
+                        }
+                    }
+                    else {
+                        // Set to the requester's preference.
+                        nameId.setSPNameQualifier(spNameQualifier);
+                    }
                 } else {
                     nameId.setSPNameQualifier(requestContext.getInboundMessageIssuer());
                 }
