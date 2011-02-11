@@ -369,7 +369,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (spNameQualifier == null) {
             return;
         }
-
+        
+        if (DatatypeHelper.safeEquals(spNameQualifier, requestContext.getInboundMessageIssuer())) {
+            log.debug("SPNameQualifier '{}' matches message issuer.", spNameQualifier);
+            return;
+        }
+        
         log.debug("Checking if message issuer is a member of affiliation '{}'", spNameQualifier);
         try {
             EntityDescriptor affiliation = getMetadataProvider().getEntityDescriptor(spNameQualifier);
