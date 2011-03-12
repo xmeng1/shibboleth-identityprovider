@@ -5,6 +5,7 @@ Changes in Release 2.3.0
 [SIDP-429] - Limit metadata SP credential resolution for encryption to RSA keys only
 [SIDP-461] - Add legacy Shib SSO protocol as binding for IdP-initiated SSO for SAML 2.0
 [SIDP-464] - An SPNameQualifier in NameIDPolicy always treated as an affiliation
+[SIDP-468] - Add taglib to simplify rendering login pages. 
 
 Changes in Release 2.2.1
 =============================================
