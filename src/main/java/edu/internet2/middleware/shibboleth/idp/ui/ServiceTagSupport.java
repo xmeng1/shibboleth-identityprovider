@@ -47,8 +47,6 @@ public class ServiceTagSupport extends BodyTagSupport{
      * checkstyle requires this serialization info.
      */
     private static final long serialVersionUID = 7988646597267865255L;
-    /** The actual entity for the SP. */ 
-    private EntityDescriptor spEntity;
 
     /** Bean storage. class reference*/
     private String cssClass;
@@ -57,11 +55,6 @@ public class ServiceTagSupport extends BodyTagSupport{
     /** Bean storage. style reference*/
     private String cssStyle;
 
-    /** The uiInfo (if present) for the SP. */
-    private UIInfo spUIInfo;
-    /** Whether we have tried to populate the above two. */
-    private boolean populated;
-    
     /** Bean setter.
      * @param value what to set
      */
@@ -112,16 +105,17 @@ public class ServiceTagSupport extends BodyTagSupport{
         return sb.toString();
     }
     
-    /** Populate spEntity and spUIInfo.  */
-    private void initialize() {
+    /**
+     * Get the EntityDescriptor for the relying party.
+     * @return the SPs EntityDescriptor
+     */
+    protected EntityDescriptor getSPEntityDescriptor() {
         LoginContext loginContext;
         HttpServletRequest request;
         ServletContext application;
         RelyingPartyConfigurationManager rpConfigMngr;
-
-        if (populated) {
-            return;
-        }
+        EntityDescriptor spEntity;
+        
         //
         // Populate up those things that jsp gives us.
         //
@@ -136,34 +130,6 @@ public class ServiceTagSupport extends BodyTagSupport{
         rpConfigMngr = HttpServletHelper.getRelyingPartyConfigurationManager(application);       
         spEntity = HttpServletHelper.getRelyingPartyMetadata(loginContext.getRelyingPartyId(), rpConfigMngr);
 
-        Extensions exts;
-
-        populated = true;
-        if (null == spEntity) {
-            //
-            // all done
-            //
-            return;
-        }
-        for (RoleDescriptor role:spEntity.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME)) {
-            exts = role.getExtensions();
-            for (XMLObject object:exts.getOrderedChildren()) {
-                if (object instanceof UIInfo) {
-                    spUIInfo = (UIInfo) object;
-                    //
-                    // found it
-                    //
-                    return;
-                }
-            }
-        }
-    }
-    /**
-     * Get the EntityDescriptor for the relying party.
-     * @return the SPs EntityDescriptor
-     */
-    protected EntityDescriptor getSPEntityDescriptor() {
-        initialize();
         return spEntity;
     }
     /**
@@ -171,8 +137,25 @@ public class ServiceTagSupport extends BodyTagSupport{
      * @return the first UIInfo for the SP.
      */
     protected UIInfo getSPUIInfo() {
-        initialize();
-        return spUIInfo;
+        EntityDescriptor spEntity = getSPEntityDescriptor();
+        Extensions exts;
+        
+        if (null == spEntity) {
+            //
+            // all done
+            //
+            return null;
+        }
+
+        for (RoleDescriptor role:spEntity.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME)) {
+            exts = role.getExtensions();
+            for (XMLObject object:exts.getOrderedChildren()) {
+                if (object instanceof UIInfo) {
+                    return (UIInfo) object;
+                }
+            }
+        }
+        return null;
     }
             
     /**

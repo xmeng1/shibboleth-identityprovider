@@ -8,6 +8,7 @@ Changes in Release 2.3.0
 [SIDP-464] - An SPNameQualifier in NameIDPolicy always treated as an affiliation
 [SIDP-468] - Add taglib to simplify rendering login pages.
 [SIDP-469] - eduPersonTargetedID Could Be Separately Commented
+[SIDP-471] - Taglibs appear to be caching SP information
 
 Changes in Release 2.2.1
 =============================================

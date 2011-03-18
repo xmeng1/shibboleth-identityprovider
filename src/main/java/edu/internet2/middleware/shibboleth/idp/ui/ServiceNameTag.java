@@ -174,7 +174,6 @@ public class ServiceNameTag extends ServiceTagSupport {
     @Override
     public int doStartTag() throws JspException {
        
-        log.debug("StartTag");
         try {
             pageContext.getOut().print(getServiceName());
         } catch (IOException e) {
