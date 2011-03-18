@@ -149,9 +149,11 @@ public class ServiceTagSupport extends BodyTagSupport{
 
         for (RoleDescriptor role:spEntity.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME)) {
             exts = role.getExtensions();
-            for (XMLObject object:exts.getOrderedChildren()) {
-                if (object instanceof UIInfo) {
-                    return (UIInfo) object;
+            if (exts != null) {
+                for (XMLObject object:exts.getOrderedChildren()) {
+                    if (object instanceof UIInfo) {
+                        return (UIInfo) object;
+                    }
                 }
             }
         }
