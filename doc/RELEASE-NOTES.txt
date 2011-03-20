@@ -4,6 +4,8 @@ Changes in Release 2.3.0
 [SIDP-404] - Add an install-time setting for the path to web.xml
 [SIDP-429] - Limit metadata SP credential resolution for encryption to RSA keys only
 [SIDP-442] - Add JSESSIONID and ClientIP to MDC
+[SIDP-448] - Create a login handler that provides authn "state" data to an external authentication 
+             system and has that system authenticate the user.
 [SIDP-461] - Add legacy Shib SSO protocol as binding for IdP-initiated SSO for SAML 2.0
 [SIDP-464] - An SPNameQualifier in NameIDPolicy always treated as an affiliation
 [SIDP-468] - Add taglib to simplify rendering login pages.
