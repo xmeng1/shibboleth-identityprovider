@@ -13,6 +13,7 @@ Changes in Release 2.3.0
 [SIDP-471] - Taglibs appear to be caching SP information
 [SIDP-401] - Quick installer no longer does special things to the Tomcat installation for the "administrator" login
 [SIDP-474] - NPE in taglib processing (bug never released).
+[SIDP-475] - Better login page for IdP
 
 Changes in Release 2.2.1
 =============================================

@@ -1,4 +1,5 @@
 <%@page import="edu.internet2.middleware.shibboleth.common.profile.AbstractErrorHandler"%>
+<%@ taglib uri="/mdui" prefix="mdui" %>
 
 <html>
 
@@ -17,12 +18,17 @@
 	   Use of your browser's back button may cause specific errors that can be resolved by
 	   going back to your desired resource and trying to login again.
 	</p>
+        <p>
+           If you think you were went here in error please contact <mdui:serviceContact>technical support</mdui:serviceContact>
+        </p>       
 	<% 
        Throwable error = (Throwable) request.getAttribute(AbstractErrorHandler.ERROR_KEY);
 	   if(error != null){
 	%>
 	<strong>Error Message: <%= error.getMessage() %></strong>
 	<% } %>
+
+
 	
 </body>
 
