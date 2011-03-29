@@ -22,8 +22,11 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.BodyContent;
 
 import org.opensaml.saml2.metadata.AttributeConsumingService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.LocalizedString;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
@@ -49,13 +52,23 @@ public class ServiceNameTag extends ServiceTagSupport {
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(ServiceNameTag.class);
     
+    /** what to emit if the jsp has nothing. */
+    private static final String DEFAULT_VALUE = "Unspecified Service Provider";
+
     /**
      * If the entityId can look like a host return that otherwise the string.
      * @return either the host or the entityId.
      */
     private String getNameFromEntityId() {
+        EntityDescriptor sp = getSPEntityDescriptor();
+        
+        if (null == sp) {
+            log.debug("No relying party, nothing to display");
+            return null;
+        }
+
         try {
-            URI entityId = new URI(getSPEntityDescriptor().getEntityID());
+            URI entityId = new URI(sp.getEntityID());
             String scheme = entityId.getScheme();
 
             if ("http".equals(scheme) || "https".equals(scheme)) {
@@ -65,12 +78,12 @@ public class ServiceNameTag extends ServiceTagSupport {
             // 
             // It wasn't an URI.  return full entityId.
             //
-            return getSPEntityDescriptor().getEntityID();
+            return sp.getEntityID();
         }
         //
         // not a URL return full entityID
         //
-        return getSPEntityDescriptor().getEntityID();
+        return sp.getEntityID();
     }
     
     /** 
@@ -110,8 +123,14 @@ public class ServiceNameTag extends ServiceTagSupport {
         String lang = getBrowserLanguage();
         List<RoleDescriptor> roles;
         AttributeConsumingService acs = null;
+        EntityDescriptor sp = getSPEntityDescriptor();
+        
+        if (null == sp) {
+            log.warn("No relying party, nothing to display");
+            return null;
+        }
 
-        roles = getSPEntityDescriptor().getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+        roles = sp.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
         if (!roles.isEmpty()) {
             SPSSODescriptor spssod = (SPSSODescriptor) roles.get(0);
             acs = spssod.getDefaultAttributeConsumingService();
@@ -146,8 +165,8 @@ public class ServiceNameTag extends ServiceTagSupport {
         // First look for MDUI
         //
         if (getSPEntityDescriptor() == null) {
-            log.warn("No relying party, nothing to display");
-            return "";
+            log.debug("No relying party, nothing to display");
+            return null;
         }
         //
         // Look at <UIInfo>
@@ -175,7 +194,24 @@ public class ServiceNameTag extends ServiceTagSupport {
     public int doStartTag() throws JspException {
        
         try {
-            pageContext.getOut().print(getServiceName());
+            String serviceName = getServiceName();
+            
+            if (null == serviceName) {
+                BodyContent bc = getBodyContent();
+                boolean written = false;
+                if (null != bc) {
+                    JspWriter ew= bc.getEnclosingWriter();
+                    if (ew != null) {
+                        bc.writeOut(ew);
+                        written = true;
+                    }
+                }
+                if (!written) {
+                    pageContext.getOut().print(DEFAULT_VALUE);
+                }
+            } else {
+                pageContext.getOut().print(serviceName);
+            }
         } catch (IOException e) {
             log.warn("Error generating name");
             throw new JspException("StartTag", e);

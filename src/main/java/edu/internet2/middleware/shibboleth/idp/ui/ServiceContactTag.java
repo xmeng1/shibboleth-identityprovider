@@ -26,6 +26,7 @@ import javax.servlet.jsp.tagext.BodyContent;
 import org.opensaml.saml2.metadata.ContactPerson;
 import org.opensaml.saml2.metadata.ContactPersonTypeEnumeration;
 import org.opensaml.saml2.metadata.EmailAddress;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.GivenName;
 import org.opensaml.saml2.metadata.SurName;
 import org.slf4j.Logger;
@@ -160,7 +161,14 @@ public class ServiceContactTag extends ServiceTagSupport {
      * @return either an hyperlink or straight text or null.
      */
     protected String getContactFromEntity() {
-        List<ContactPerson> contacts = getSPEntityDescriptor().getContactPersons();
+        
+        EntityDescriptor sp = getSPEntityDescriptor();
+        if (null == sp) {
+            log.debug("No relying party, nothing to display");
+            return null;
+        }
+
+        List<ContactPerson> contacts = sp.getContactPersons();
         if (null == contacts) {
             return null;
         }

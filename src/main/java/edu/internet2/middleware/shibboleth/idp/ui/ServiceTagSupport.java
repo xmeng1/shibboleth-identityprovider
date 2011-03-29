@@ -122,12 +122,18 @@ public class ServiceTagSupport extends BodyTagSupport{
         request = (HttpServletRequest) pageContext.getRequest();
         application = pageContext.getServletContext();
         
+        if (request == null || application == null) {
+           return null;
+        }
         //
         // grab the login context and the RP config mgr.
         //
         loginContext = HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application),
                 application, request);
-        rpConfigMngr = HttpServletHelper.getRelyingPartyConfigurationManager(application);       
+        rpConfigMngr = HttpServletHelper.getRelyingPartyConfigurationManager(application);
+        if (loginContext == null || rpConfigMngr == null) {
+            return null;
+        }
         spEntity = HttpServletHelper.getRelyingPartyMetadata(loginContext.getRelyingPartyId(), rpConfigMngr);
 
         return spEntity;

@@ -24,6 +24,7 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.BodyContent;
 
 import org.opensaml.saml2.metadata.AttributeConsumingService;
+import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.LocalizedString;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
@@ -80,8 +81,14 @@ public class ServiceDescriptionTag extends ServiceTagSupport {
         String lang = getBrowserLanguage();
         List<RoleDescriptor> roles;
         AttributeConsumingService acs = null;
+        EntityDescriptor sp = getSPEntityDescriptor();
+        
+        if (null == sp) {
+            log.debug("No relying party, nothing to display");
+            return null;
+        }
 
-        roles = getSPEntityDescriptor().getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+        roles = sp.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
         if (!roles.isEmpty()) {
             SPSSODescriptor spssod = (SPSSODescriptor) roles.get(0);
             acs = spssod.getDefaultAttributeConsumingService();
