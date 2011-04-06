@@ -9,7 +9,7 @@
     <img src="<%= request.getContextPath()%>/images/logo.jpg" />
     <h1>Example Login Page</h1>
     <p>This login page is an example and should be customized.  Refer to the 
-       <a href="https://spaces.internet2.edu/display/SHIB2/IdPAuthUserPassLoginPage" target="_blank"> documentation</a>.
+       <a href="https://wiki.shibboleth.net/confluence/display/SHIB2/IdPAuthUserPassLoginPage" target="_blank"> documentation</a>.
     </p>
 
     <div class="loginbox">
