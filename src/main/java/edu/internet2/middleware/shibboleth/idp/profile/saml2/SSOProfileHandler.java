@@ -513,7 +513,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         AuthnStatement statement = authnStatementBuilder.buildObject();
         statement.setAuthnContext(authnContext);
-        statement.setAuthnInstant(loginContext.getAuthenticationInstant());
+        statement.setAuthnInstant(loginContext != null ? loginContext.getAuthenticationInstant() : null);
 
         Session session = getUserSession(requestContext.getInboundMessageTransport());
         if (session != null) {
@@ -622,13 +622,13 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                     if (nameId.getSPNameQualifier() != null) {
                         if (!nameId.getSPNameQualifier().equals(spNameQualifier)) {
                             // Requester specified a different qualifier than we produced.
-                            requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI, StatusCode.INVALID_NAMEID_POLICY_URI,
-                                "Invalid SPNameQualifier for this request"));
+                            requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI,
+                                    StatusCode.INVALID_NAMEID_POLICY_URI,
+                                    "Invalid SPNameQualifier for this request"));
                             throw new ProfileException("Requested SPNameQualifier '{" + spNameQualifier
                                     + "}' conflicts with generated value '{" + nameId.getSPNameQualifier() + "}'");
                         }
-                    }
-                    else {
+                    } else {
                         // Set to the requester's preference.
                         nameId.setSPNameQualifier(spNameQualifier);
                     }
@@ -666,7 +666,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                         new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
                                 endpoint.getBinding(), });
             } else {
-                log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
+                log.warn("Unable to generate endpoint for anonymous party.  No ACS URL provided.");
             }
         } else {
             AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
@@ -683,7 +683,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Deserailizes an authentication request from a string.
+     * Deserializes an authentication request from a string.
      * 
      * @param request request to deserialize
      * 

@@ -71,6 +71,12 @@
         <ph:RequestPath>/SAML2/Unsolicited/SSO</ph:RequestPath>
     </ph:ProfileHandler>
 
+    <ph:ProfileHandler xsi:type="ph:SAML2ECP"
+          inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
+          outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
+        <ph:RequestPath>/SAML2/SOAP/ECP</ph:RequestPath>
+    </ph:ProfileHandler>
+
     <ph:ProfileHandler xsi:type="ph:SAML2AttributeQuery"
                     inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
                     outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
