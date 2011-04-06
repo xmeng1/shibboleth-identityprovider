@@ -198,7 +198,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                   <argLine>-Xmx256m</argLine>
-                  <skipTests>true</skipTests>
                 </configuration>
             </plugin>
             <plugin>
