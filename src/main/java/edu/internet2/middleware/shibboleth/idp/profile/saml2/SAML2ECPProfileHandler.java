@@ -90,6 +90,7 @@ public class SAML2ECPProfileHandler extends SSOProfileHandler {
     /** Static pre-security inbound handler chain resolver. */
     private StaticHandlerChainResolver inboundPreSecurityHandlerChainResolver;
 
+    /** Static post-security inbound handler chain resolver. */
     private StaticHandlerChainResolver inboundPostSecurityHandlerChainResolver;
     
     /** Static outbound handler chain resolver. */
@@ -179,23 +180,6 @@ public class SAML2ECPProfileHandler extends SSOProfileHandler {
 
         try {
             decodeRequest(requestContext, inTransport, outTransport);
-        } catch (ProfileException e) {
-            // TBD: send a soap fault for now, should try and make this more fine-grained
-            log.debug("Returning SOAP fault", e);
-            try {
-               outTransport.setCharacterEncoding("UTF-8");
-               outTransport.setHeader("Content-Type", "application/soap+xml");
-               // outTransport.setStatusCode(500);  // seem to lose the message when we report an error.
-               Writer out = new OutputStreamWriter(outTransport.getOutgoingStream(), "UTF-8");
-               out.write(soapFaultResponseMessage);
-               out.flush();
-            } catch (Exception we) {
-               log.error("Error returning SOAP fault", we);
-            }
-            return;
-        }
-        
-        try {
             checkSamlVersion(requestContext);
             checkNameIDPolicy(requestContext);
 
@@ -225,6 +209,8 @@ public class SAML2ECPProfileHandler extends SSOProfileHandler {
             ProfileConfiguration ecpConfig = rpConfig.getProfileConfiguration(getProfileId());
             if (ecpConfig == null) {
                 log.warn("SAML2ECP profile is not configured for relying party '{}'", requestContext.getInboundMessageIssuer());
+                requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, StatusCode.REQUEST_UNSUPPORTED_URI,
+                        null));
                 throw new ProfileException("SAML2ECP profile is not configured for relying party");
             }
 
@@ -244,7 +230,22 @@ public class SAML2ECPProfileHandler extends SSOProfileHandler {
             samlResponse.setDestination(requestContext.getPeerEntityEndpoint().getLocation());
 
         } catch (ProfileException e) {
-            samlResponse = buildErrorResponse(requestContext);
+            if (requestContext.getPeerEntityEndpoint() != null) {
+                samlResponse = buildErrorResponse(requestContext);
+            } else {
+                log.debug("Returning SOAP fault", e);
+                try {
+                   outTransport.setCharacterEncoding("UTF-8");
+                   outTransport.setHeader("Content-Type", "application/soap+xml");
+                   outTransport.setStatusCode(500);  // seem to lose the message when we report an error.
+                   Writer out = new OutputStreamWriter(outTransport.getOutgoingStream(), "UTF-8");
+                   out.write(soapFaultResponseMessage);
+                   out.flush();
+                } catch (Exception we) {
+                   log.error("Error returning SOAP fault", we);
+                }
+                return;
+            }
         }
 
         requestContext.setOutboundSAMLMessage(samlResponse);
