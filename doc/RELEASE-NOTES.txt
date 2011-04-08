@@ -15,6 +15,7 @@ Changes in Release 2.3.0
 [SIDP-474] - NPE in taglib processing (bug never released).
 [SIDP-475] - Better login page for IdP
 [SIDP-478] - ECP profile support
+[SIDP-480] - Update POM to add plugin versions, use / publish to Shib.net Repo, and attach generated source and Javadocs
 
 Changes in Release 2.2.1
 =============================================
