@@ -6,7 +6,7 @@ div.loginbox {
 }
 
 div.loginbox div.leftpane {
-    border: 2px #344B83 solid;
+    border: 2px #A40000 solid;
     position: absolute;
     top: 10px;
     left: 10px;
@@ -15,7 +15,7 @@ div.loginbox div.leftpane {
 }
 
 div.loginbox div.rightpane {
-    border: 2px #344B83 solid;
+	border: 2px #A40000 solid;
     position: absolute;
     top: 10px;
     right: 10px;
@@ -30,17 +30,18 @@ div.loginbox div.content{
     padding-left: 7px;
     padding-right: 7px;
     margin:auto;
-    width:100%;
 }
 
 div.loginbox #splogo{
-    max-width: 95%;
-    max-height: 80%;
 }
 
-div.loginbox #clippedsplogo{
-    max-width: 95%;
-    max-height: 160px;
+
+div.loginbox #clippedsplogoX {
+    width: 350px;
+}
+
+div.loginbox #clippedsplogoY {
+    height: 147px;
 }
 
 div.loginbox #spName{

@@ -9,7 +9,7 @@
     <img src="<%= request.getContextPath()%>/images/logo.jpg" />
     <h1>Example Login Page</h1>
     <p>This login page is an example and should be customized.  Refer to the 
-       <a href="https://wiki.shibboleth.net/confluence/display/SHIB2/IdPAuthUserPassLoginPage" target="_blank"> documentation</a>.
+       <a href="https://spaces.internet2.edu/display/SHIB2/IdPAuthUserPassLoginPage" target="_blank"> documentation</a>.
     </p>
 
     <div class="loginbox">
@@ -34,8 +34,15 @@
        <div class="rightpane">
          <div class="content">
            <div id="spName"><mdui:serviceName/></div>
-           <mdui:serviceLogo  minWidth="50" minHeight="160" cssId="clippedsplogo">
-             <mdui:serviceLogo maxWidth="338" minWidth="50" cssId="splogo"/>
+           <!-- pick the logo.  If its between 64 & max width/height display it
+                If its too high but OK wide clip by height
+                If its too wide clip by width.
+                We should not clip by height and width since that skews the image.  Too high an image will just show the top.
+            -->
+           <mdui:serviceLogo  minWidth="64" minHeight="64" maxWidth="350" maxHeight="147" cssId="splogo">
+              <mdui:serviceLogo  minWidth="64" minHeight="64" maxWidth="350" cssId="clippedsplogoY">
+                  <mdui:serviceLogo  minWidth="64" minHeight="64" cssId="clippedsplogoX"/>
+              </mdui:serviceLogo>
            </mdui:serviceLogo>
            <div id="spDescription">
              <mdui:serviceDescription>You have asked to login to <mdui:serviceName/></mdui:serviceDescription>
