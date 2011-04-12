@@ -40,8 +40,8 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
  * A login handler meant to bridge between the IdP and an external, web-based, authentication service.
  * 
  * This login handler will redirect the user-agent to a context-relative path and include the following query
- * parameters: {@link #FORCE_AUTHN_PARAM}, {@link #PASSIVE_AUTHN_PARAM}, {@link #AUTHN_METHOD_PARAM},
- * {@link #RETURN_URL_PARAM}, {@link #RELYING_PARTY_PARAM}.
+ * parameters: {@link #FORCE_AUTHN_PARAM}, {@link #PASSIVE_AUTHN_PARAM}, {@link #AUTHN_METHOD_PARAM}, and
+ * {@link #RELYING_PARTY_PARAM}.
  * 
  * The external authentication service must be configured to protect the page to which the user-agent is authenticated.
  * This external service must populate the REMOTE_USER header with the principal name of the authenticated user. The

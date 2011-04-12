@@ -213,8 +213,8 @@
                             <manifestSection>
                                 <name>edu/internet2/middleware/shibboleth/idp/</name>
                                 <manifestEntries>
-                                    <Implementation-Title>${pom.artifactId}</Implementation-Title>
-                                    <Implementation-Version>${pom.version}</Implementation-Version>
+                                    <Implementation-Title>${project.artifactId}</Implementation-Title>
+                                    <Implementation-Version>${project.version}</Implementation-Version>
                                     <Implementation-Vendor>shibboleth.internet2.edu</Implementation-Vendor>
                                 </manifestEntries>
                             </manifestSection>

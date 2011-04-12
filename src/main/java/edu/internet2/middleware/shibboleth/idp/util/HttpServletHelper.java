@@ -417,7 +417,7 @@ public class HttpServletHelper {
      * 
      * @return the service or null if there is no such service bound to the context
      * 
-     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext, String)
+     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext, String)}
 
      */
     public static RelyingPartyConfigurationManager getRelyingPartyConfirmationManager(ServletContext context,
