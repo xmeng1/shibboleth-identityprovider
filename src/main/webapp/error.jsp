@@ -2,7 +2,6 @@
 <%@ taglib uri="/mdui" prefix="mdui" %>
 
 <html>
-
 <body>
 	<img src="<%= request.getContextPath() %>/images/logo.jpg" />
 	<h3>ERROR</h3>
@@ -19,17 +18,16 @@
 	   going back to your desired resource and trying to login again.
 	</p>
         <p>
-           If you think you were went here in error please contact <mdui:serviceContact>technical support</mdui:serviceContact>
+           If you think you were sent here in error,
+           please contact <mdui:serviceContact>technical support</mdui:serviceContact>
         </p>       
 	<% 
        Throwable error = (Throwable) request.getAttribute(AbstractErrorHandler.ERROR_KEY);
 	   if(error != null){
+	       org.owasp.esapi.Encoder esapiEncoder = org.owasp.esapi.ESAPI.encoder();
 	%>
-	<strong>Error Message: <%= error.getMessage() %></strong>
+	<strong>Error Message: <%= esapiEncoder.encodeForHTML(error.getMessage()) %></strong>
 	<% } %>
 
-
-	
 </body>
-
 </html>

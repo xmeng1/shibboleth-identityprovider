@@ -9,8 +9,11 @@
 <body>
 	<img src="<%= request.getContextPath() %>/images/logo.jpg" />
 	<h3>ERROR</h3>
-	<% if (error != null){%>
-	Error Message: <%= error.getMessage() %>
+	<%
+	if (error != null) {
+	    org.owasp.esapi.Encoder esapiEncoder = org.owasp.esapi.ESAPI.encoder();
+	%>
+	Error Message: <%= esapiEncoder.encodeForHTML(error.getMessage()) %>
 	<% } %>
 </body>
 
