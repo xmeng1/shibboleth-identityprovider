@@ -16,6 +16,7 @@ Changes in Release 2.3.0
 [SIDP-475] - Better login page for IdP
 [SIDP-478] - ECP profile support
 [SIDP-480] - Update POM to add plugin versions, use / publish to Shib.net Repo, and attach generated source and Javadocs
+[SIDP-482] - JSP pages should HTML-encode any strings they handle
 
 Changes in Release 2.2.1
 =============================================
