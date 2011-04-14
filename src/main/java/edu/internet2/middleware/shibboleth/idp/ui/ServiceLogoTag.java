@@ -17,12 +17,17 @@
 package edu.internet2.middleware.shibboleth.idp.ui;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.BodyContent;
 
 import org.opensaml.samlext.saml2mdui.Logo;
+import org.owasp.esapi.ESAPI;
+import org.owasp.esapi.Encoder;
+import org.owasp.esapi.errors.EncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,13 +132,35 @@ public class ServiceLogoTag extends ServiceTagSupport {
      */
     private String getHyperlink() {
         String url = getLogoFromUIInfo();
+        String encodedURL;
         StringBuilder sb;
+        Encoder esapiEncoder = ESAPI.encoder();
         
         if (null == url) {
             return null;
         }
+        
+        try {
+            URI theUrl = new URI(url);
+            String scheme = theUrl.getScheme();
+    
+            if (!"http".equals(scheme) && !"https".equals(scheme) && !"mailto".equals(scheme)) {
+                log.warn("The logo URL " + url + " contained an invalid scheme");
+                return null;
+            }
+        } catch (URISyntaxException e) {
+            //
+            // Could not encode
+            //
+            log.warn("The logo URL " + url + " was not a URL " + e.toString());
+            return null;
+        }
+        
+        
+        encodedURL = esapiEncoder.encodeForHTMLAttribute(url);
+
         sb = new StringBuilder("<img src=\"");
-        sb.append(url).append('"');
+        sb.append(encodedURL).append('"');
         addClassAndId(sb);
         sb.append("/>");
         return sb.toString();

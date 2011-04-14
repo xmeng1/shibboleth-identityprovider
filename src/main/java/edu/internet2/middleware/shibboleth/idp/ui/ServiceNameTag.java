@@ -32,6 +32,8 @@ import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.ServiceName;
 import org.opensaml.samlext.saml2mdui.DisplayName;
+import org.owasp.esapi.ESAPI;
+import org.owasp.esapi.Encoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -194,7 +196,11 @@ public class ServiceNameTag extends ServiceTagSupport {
     public int doStartTag() throws JspException {
        
         try {
-            String serviceName = getServiceName();
+            String rawServiceName = getServiceName();
+            
+            Encoder esapiEncoder = ESAPI.encoder();
+            
+            String serviceName = esapiEncoder.encodeForHTML(rawServiceName);
             
             if (null == serviceName) {
                 BodyContent bc = getBodyContent();

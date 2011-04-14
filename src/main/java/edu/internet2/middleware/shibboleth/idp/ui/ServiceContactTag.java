@@ -29,6 +29,8 @@ import org.opensaml.saml2.metadata.EmailAddress;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.GivenName;
 import org.opensaml.saml2.metadata.SurName;
+import org.owasp.esapi.ESAPI;
+import org.owasp.esapi.Encoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,13 +101,20 @@ public class ServiceContactTag extends ServiceTagSupport {
             }
             return buildHyperLink(email, name);
         } else {
+            Encoder esapiEncoder = ESAPI.encoder();
+
             //
             // No mail, no href
             //
             if (log.isDebugEnabled()) {
                 log.debug("no email found, using name \"" + name + "\" with no hyperlink");
             }
-            return name.toString();
+
+            if (null == name) {
+                return name;
+            } else {
+                return esapiEncoder.encodeForHTML(name);
+            }
         }
         
     }

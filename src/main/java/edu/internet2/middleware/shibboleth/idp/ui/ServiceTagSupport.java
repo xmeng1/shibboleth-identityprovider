@@ -16,6 +16,9 @@
 
 package edu.internet2.middleware.shibboleth.idp.ui;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.tagext.BodyTagSupport;
@@ -26,6 +29,11 @@ import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.samlext.saml2mdui.UIInfo;
 import org.opensaml.xml.XMLObject;
+import org.owasp.esapi.ESAPI;
+import org.owasp.esapi.Encoder;
+import org.owasp.esapi.errors.EncodingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
@@ -47,6 +55,9 @@ public class ServiceTagSupport extends BodyTagSupport{
      * checkstyle requires this serialization info.
      */
     private static final long serialVersionUID = 7988646597267865255L;
+    
+    /** Class logger. */
+    private static Logger log = LoggerFactory.getLogger(ServiceTagSupport.class);
 
     /** Bean storage. class reference*/
     private String cssClass;
@@ -98,8 +109,28 @@ public class ServiceTagSupport extends BodyTagSupport{
      * @return the hyperlink.
      */
     protected String buildHyperLink(String url, String text) {
+        String encodedUrl;
+        Encoder esapiEncoder = ESAPI.encoder();
+       
+        try {
+            URI theUrl = new URI(url);
+            String scheme = theUrl.getScheme();
+
+            if (!"http".equals(scheme) && !"https".equals(scheme) && !"mailto".equals(scheme)) {
+                log.warn("The URL " + url + " contained an invalid scheme");
+                return "";
+            }
+            encodedUrl = esapiEncoder.encodeForHTMLAttribute(url);
+        } catch (URISyntaxException e) {
+            // 
+            // It wasn't an URI.
+            //
+            log.warn("The URL " + url + " was invalid: " + e.toString());
+            return "";
+        }
+        
         StringBuilder sb = new StringBuilder("<a href=\"");
-        sb.append(url).append('"');
+        sb.append(encodedUrl).append('"');
         addClassAndId(sb);
         sb.append(">").append(text).append("</a>");
         return sb.toString();

@@ -30,6 +30,8 @@ import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.ServiceDescription;
 import org.opensaml.samlext.saml2mdui.Description;
+import org.owasp.esapi.ESAPI;
+import org.owasp.esapi.Encoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,6 +119,7 @@ public class ServiceDescriptionTag extends ServiceTagSupport {
     @Override
     public int doEndTag() throws JspException {
        
+        Encoder esapiEncoder = ESAPI.encoder();
         String result;
         //
         // UIInfoirst
@@ -140,6 +143,7 @@ public class ServiceDescriptionTag extends ServiceTagSupport {
                     }
                 }
             } else {
+                result = esapiEncoder.encodeForHTML(result);
                 pageContext.getOut().print(result);
             }
         } catch (IOException e) {
