@@ -17,6 +17,7 @@ Changes in Release 2.3.0
 [SIDP-478] - ECP profile support
 [SIDP-480] - Update POM to add plugin versions, use / publish to Shib.net Repo, and attach generated source and Javadocs
 [SIDP-482] - JSP pages should HTML-encode any strings they handle
+[SIDP-483] - Log Completed, Unencrypted SAML Assertion
 
 Changes in Release 2.2.1
 =============================================

@@ -74,8 +74,10 @@ import org.opensaml.xml.signature.SignatureException;
 import org.opensaml.xml.signature.Signer;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.Pair;
+import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -265,10 +267,20 @@ public abstract class AbstractSAML2ProfileHandler extends AbstractSAMLProfileHan
             postProcessAssertion(requestContext, assertion);
 
             signAssertion(requestContext, assertion);
-
+            
             if (isEncryptAssertion(requestContext)) {
-                log.debug("Attempting to encrypt assertion to relying party '{}'",
-                        requestContext.getInboundMessageIssuer());
+                if (log.isDebugEnabled()) {
+                    log.debug("Attempting to encrypt assertion to relying party '{}'",
+                            requestContext.getInboundMessageIssuer());
+                    try {
+                        Element assertionDOM = 
+                            Configuration.getMarshallerFactory().getMarshaller(assertion).marshall(assertion);
+                        log.debug("Assertion to be encrypted is:\n{}", XMLHelper.prettyPrintXML(assertionDOM)); 
+                    } catch (MarshallingException e) {
+                        log.warn("Error attempting to marshall Assertion for debug log", e);
+                    }
+                }
+
                 try {
                     Encrypter encrypter = getEncrypter(requestContext.getInboundMessageIssuer());
                     samlResponse.getEncryptedAssertions().add(encrypter.encrypt(assertion));
