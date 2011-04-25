@@ -17,6 +17,9 @@
 package edu.internet2.middleware.shibboleth.idp.profile;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -446,36 +449,30 @@ public abstract class AbstractSAMLProfileHandler extends
     protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoder(
             Class<T> nameIdEncoderType, BaseSAMLProfileRequestContext requestContext) throws ProfileException {
 
+        Collection<BaseAttribute<?>> principalAttributes = new ArrayList<BaseAttribute<?>>(requestContext
+                .getAttributes().values());
+
+        filterNameIDAttributesByProtocol(principalAttributes, nameIdEncoderType);
+
         String requiredNameFormat = DatatypeHelper.safeTrimOrNullString(getRequiredNameIDFormat(requestContext));
         if (requiredNameFormat != null) {
-            log.debug("Attempting to select name identifier attribute for relying party'{}' that requires format '{}'",
-                    requestContext.getInboundMessageIssuer(), requiredNameFormat);
-            return selectNameIDAttributeAndEncoderByRequiredFormat(requiredNameFormat, nameIdEncoderType,
-                    requestContext);
-        }
-
-        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
-        if (principalAttributes == null || principalAttributes.isEmpty()) {
-            log.debug("No attributes for principal '{}', no name identifier will be created for relying party '{}'",
-                    requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-            return null;
-        }
-
-        Pair<BaseAttribute, T> nameIdAttributeAndEncoder = null;
-        List<String> supportedNameFormats = getNameFormats(requestContext);
-        if (supportedNameFormats.isEmpty()) {
-            log.debug("Attempting to select name identifier attribute for relying party '{}' that supports any format",
-                    requestContext.getInboundMessageIssuer());
-            nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoderByFormat(nameIdEncoderType, principalAttributes,
-                    null);
-        } else {
             log.debug(
-                    "Attempting to select name identifier attribute for relying party '{}' that supports the formats: {}",
-                    requestContext.getInboundMessageIssuer(), supportedNameFormats);
-            nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoderBySupportedFormats(supportedNameFormats,
-                    nameIdEncoderType, requestContext);
+                    "Attempting to select name identifier attribute for relying party '{}' that requires format '{}'",
+                    requestContext.getInboundMessageIssuer(), requiredNameFormat);
+            filterNameIDAttributesByFormats(principalAttributes, Collections.singleton(requiredNameFormat));
+            if (principalAttributes.isEmpty()) {
+                String requiredNameFormatErr = "No attribute of principal '" + requestContext.getPrincipalName()
+                        + "' can be encoded in to a NameIdentifier of " + "required format '" + requiredNameFormat
+                        + "' for relying party '" + requestContext.getInboundMessageIssuer() + "'";
+                log.warn(requiredNameFormatErr);
+                throw new ProfileException(requiredNameFormatErr);
+            }
+        } else {
+            filterNameIDAttributesByFormats(principalAttributes, getSupportedNameFormats(requestContext));
         }
 
+        Pair<BaseAttribute, T> nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoder(principalAttributes,
+                nameIdEncoderType, requestContext.getRelyingPartyConfiguration().getNameIdFormatPrecedence());
         if (nameIdAttributeAndEncoder != null) {
             log.debug("Name identifier for relying party '{}' will be built from attribute '{}'",
                     requestContext.getInboundMessageIssuer(), nameIdAttributeAndEncoder.getFirst().getId());
@@ -485,6 +482,88 @@ public abstract class AbstractSAMLProfileHandler extends
                     requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
         }
         return nameIdAttributeAndEncoder;
+    }
+
+    /**
+     * Filters a collection of attributes removing those attributes which do not have an associated encoder of a given
+     * type.
+     * 
+     * @param <T> the type of the encoder
+     * @param attributes the attributes to be filtered, may not contain null values
+     * @param nameIdEncoderType the type of the encoder, may not be null
+     * 
+     * @throws ProfileException
+     */
+    protected <T extends SAMLNameIdentifierEncoder> void filterNameIDAttributesByProtocol(
+            Collection<BaseAttribute<?>> attributes, Class<T> nameIdEncoderType) {
+        log.debug("Filtering out potential name identifier attributes which can not be encoded by {}",
+                nameIdEncoderType.getName());
+
+        BaseAttribute<?> attribute;
+
+        Iterator<BaseAttribute<?>> attributeItr = attributes.iterator();
+        ATTRIBS: while (attributeItr.hasNext()) {
+            attribute = attributeItr.next();
+            for (AttributeEncoder encoder : attribute.getEncoders()) {
+                if (encoder == null) {
+                    continue;
+                }
+
+                if (nameIdEncoderType.isInstance(encoder)) {
+                    log.debug("Retaining attribute {} which may be encoded to via {}", attribute.getId(),
+                            nameIdEncoderType.getName());
+                    continue ATTRIBS;
+                }
+            }
+            log.debug("Removing attribute {}, it can not be encoded via {}", attribute.getId(),
+                    nameIdEncoderType.getName());
+            attributeItr.remove();
+        }
+    }
+
+    /**
+     * Filters a collection of attributes removing those attributes that can not be encoded in to a name identifier of
+     * an acceptable format.
+     * 
+     * @param attributes the attributes to be filtered, may not contain null values
+     * @param acceptableFormats name identifier formats which are acceptable, a null or empty collection means any
+     *            format is acceptable
+     */
+    protected void filterNameIDAttributesByFormats(Collection<BaseAttribute<?>> attributes,
+            Collection<String> acceptableFormats) {
+        if (acceptableFormats == null || acceptableFormats.isEmpty()) {
+            return;
+        }
+
+        log.debug(
+                "Filtering out potential name identifier attributes which do not support one of the following formats: {}",
+                acceptableFormats);
+
+        BaseAttribute<?> attribute;
+        SAMLNameIdentifierEncoder nameIdEncoder;
+
+        Iterator<BaseAttribute<?>> attributeItr = attributes.iterator();
+        ATTRIBS: while (attributeItr.hasNext()) {
+            attribute = attributeItr.next();
+            for (AttributeEncoder encoder : attribute.getEncoders()) {
+                if (encoder == null) {
+                    continue;
+                }
+
+                if (encoder instanceof SAMLNameIdentifierEncoder) {
+                    nameIdEncoder = (SAMLNameIdentifierEncoder) encoder;
+                    if (acceptableFormats.contains(nameIdEncoder.getNameFormat())) {
+
+                        log.debug("Retaining attribute {} which may be encoded as a name identifier of format {}",
+                                attribute.getId(), nameIdEncoder.getNameFormat());
+                        continue ATTRIBS;
+                    }
+                }
+            }
+            log.debug("Removing attribute {}, it can not be encoded in to a name identifier of an acceptable format",
+                    attribute.getId());
+            attributeItr.remove();
+        }
     }
 
     /**
@@ -511,7 +590,8 @@ public abstract class AbstractSAMLProfileHandler extends
      * 
      * @throws ProfileException thrown if there is a problem determining the name identifier format to use
      */
-    protected List<String> getNameFormats(BaseSAMLProfileRequestContext requestContext) throws ProfileException {
+    protected List<String> getSupportedNameFormats(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
         ArrayList<String> nameFormats = new ArrayList<String>();
 
         RoleDescriptor relyingPartyRole = requestContext.getPeerEntityRoleMetadata();
@@ -522,21 +602,9 @@ public abstract class AbstractSAMLProfileHandler extends
             }
         }
 
-        // If metadata contains the unspecified name format this means that any are supported
+        // If metadata contains the unspecified name format this means that any format is acceptable
         if (nameFormats.contains(NameIdentifier.UNSPECIFIED)) {
             nameFormats.clear();
-            return nameFormats;
-        }
-
-        String[] formatPrecedence = requestContext.getRelyingPartyConfiguration().getNameIdFormatPrecedence();
-        if (!nameFormats.isEmpty() && formatPrecedence != null) {
-            for (int i = 0, j = 0; i < formatPrecedence.length; i++) {
-                if (nameFormats.contains(formatPrecedence[i])) {
-                    nameFormats.remove(formatPrecedence[i]);
-                    nameFormats.add(j, formatPrecedence[i]);
-                    j++;
-                }
-            }
         }
 
         return nameFormats;
@@ -573,151 +641,60 @@ public abstract class AbstractSAMLProfileHandler extends
     }
 
     /**
-     * Selects the principal attribute that can be encoded in to the required name identifier format.
+     * Selects a name identifier attribute from a collection of attributes. If an ordered precedence of name identifier
+     * formats is given then the attribute that produces a name identifier with the highest precedence is selected. If
+     * no precedence is given, or no attribute support a format listed in the precedence list then the first attribute
+     * which can be encoded in to name identifier is chosen.
      * 
-     * @param <T> type of name identifier encoder the attribute must support
-     * @param requiredNameFormat required name identifier format type
-     * @param nameIdEncoderType type of name identifier encoder the attribute must support
-     * @param requestContext the current request context
+     * @param <T> type name identifier
+     * @param attributes attributes from which the identifier is selected, may not contain null values
+     * @param nameIdEncoderType encoder to be used to encode the selected attribute
+     * @param formatPrecedence precedence of name identifier formats, may not contain null values
      * 
-     * @return the select attribute, and its encoder, to be used to build the name identifier
-     * 
-     * @throws ProfileException thrown if a specific name identifier format was required but not supported
-     */
-    protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoderByRequiredFormat(
-            String requiredNameFormat, Class<T> nameIdEncoderType, BaseSAMLProfileRequestContext requestContext)
-            throws ProfileException {
-        String requiredNameFormatErr = "No attribute of principal '" + requestContext.getPrincipalName()
-                + "' can be encoded in to a NameIdentifier of " + "required format '" + requiredNameFormat
-                + "' for relying party '" + requestContext.getInboundMessageIssuer() + "'";
-
-        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
-        if (principalAttributes == null || principalAttributes.isEmpty()) {
-            log.debug("No attributes for principal '{}', no name identifier will be created for relying party '{}'",
-                    requestContext.getPrincipalName(), requestContext.getInboundMessageIssuer());
-            log.warn(requiredNameFormatErr);
-            throw new ProfileException(requiredNameFormatErr);
-        }
-
-        Pair<BaseAttribute, T> nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoderByFormat(nameIdEncoderType,
-                principalAttributes, requiredNameFormat);
-        if (nameIdAttributeAndEncoder == null) {
-            log.warn(requiredNameFormatErr);
-            throw new ProfileException(requiredNameFormatErr);
-        }
-
-        return nameIdAttributeAndEncoder;
-    }
-
-    /**
-     * Selects the principal attribute that can be encoded in to one of the supported name identifier formats.
-     * 
-     * @param <T> type of name identifier encoder the attribute must support
-     * @param supportedNameFormats name identifier formats, in preference order, supported by the relaying part, or an
-     *            empty list if all formats are supported
-     * @param nameIdEncoderType type of name identifier encoder the attribute must support
-     * @param requestContext the current request context
-     * 
-     * @return the select attribute, and its encoder, to be used to build the name identifier
-     * 
-     * @throws ProfileException thrown if there is a problem selecting the attribute
-     */
-    protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoderBySupportedFormats(
-            List<String> supportedNameFormats, Class<T> nameIdEncoderType, BaseSAMLProfileRequestContext requestContext)
-            throws ProfileException {
-        Map<String, BaseAttribute> principalAttributes = requestContext.getAttributes();
-
-        Pair<BaseAttribute, T> nameIdAttributeAndEncoder = null;
-        for (String nameFormat : supportedNameFormats) {
-            nameIdAttributeAndEncoder = selectNameIDAttributeAndEncoderByFormat(nameIdEncoderType, principalAttributes,
-                    nameFormat);
-            if (nameIdAttributeAndEncoder != null) {
-                return nameIdAttributeAndEncoder;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Selects an attribute, resolved previously, to encode as a NameID.
-     * 
-     * @param <T> type of name identifier encoder the attribute must support
-     * @param nameIdEncoderType type of name identifier encoder the attribute must support, must not be null
-     * @param principalAttributes resolved attributes, must not be null
-     * @param nameFormat format of the NameID that needs to be supported by the selected attribute, may be null if any
-     *            format is acceptable
-     * 
-     * @return the attribute and its associated NameID encoder or null if no attribute can be encoded to the given
-     *         format
-     */
-    protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoderByFormat(
-            Class<T> nameIdEncoderType, Map<String, BaseAttribute> principalAttributes, String nameFormat) {
-
-        T nameIdEncoder = null;
-
-        for (BaseAttribute<?> attribute : principalAttributes.values()) {
-            if (attribute == null) {
-                continue;
-            }
-
-            for (AttributeEncoder encoder : attribute.getEncoders()) {
-                if (encoder == null) {
-                    continue;
-                }
-
-                if (nameIdEncoderType.isInstance(encoder)) {
-                    nameIdEncoder = nameIdEncoderType.cast(encoder);
-                    if (nameFormat == null || nameFormat.equals(nameIdEncoder.getNameFormat())) {
-                        return new Pair<BaseAttribute, T>(attribute, nameIdEncoder);
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Selects an attribute, resolved previously, to encode as a NameID.
-     * 
-     * @param <T> type of name identifier encoder the attribute must support
-     * @param nameIdEncoderType type of name identifier encoder the attribute must support
-     * @param principalAttributes resolved attributes
-     * @param supportedNameFormats NameID formats, in order of preference, supported by the relying party or an empty
-     *            list if all formats are acceptable
-     * 
-     * @return the attribute and its associated NameID encoder
-     * 
-     * @throws ProfileException thrown if no attribute can be encoded in to a NameID of the required type
-     * 
-     * @deprecated
+     * @return the attribute to be encoded and the encoder to use
      */
     protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoder(
-            Class<T> nameIdEncoderType, Map<String, BaseAttribute> principalAttributes,
-            List<String> supportedNameFormats) throws ProfileException {
+            Collection<BaseAttribute<?>> attributes, Class<T> nameIdEncoderType, String[] formatPrecedence) {
+        log.debug("Selecting attribute to be encoded as a name identifier by encoder of type {}",
+                nameIdEncoderType.getName());
+        if (attributes.isEmpty()) {
+            return null;
+        }
 
-        T nameIdEncoder = null;
+        T nameIdEncoder;
 
-        if (principalAttributes != null) {
-            for (BaseAttribute<?> attribute : principalAttributes.values()) {
-                if (attribute == null) {
-                    continue;
-                }
+        if (formatPrecedence != null) {
+            log.debug("Attempting to select name identifier with highest precedence");
+            for (String format : formatPrecedence) {
+                for (BaseAttribute<?> attribute : attributes) {
+                    for (AttributeEncoder encoder : attribute.getEncoders()) {
+                        if (encoder == null) {
+                            continue;
+                        }
 
-                for (AttributeEncoder encoder : attribute.getEncoders()) {
-                    if (encoder == null) {
-                        continue;
-                    }
-
-                    if (nameIdEncoderType.isInstance(encoder)) {
-                        nameIdEncoder = nameIdEncoderType.cast(encoder);
-                        if (supportedNameFormats.isEmpty()
-                                || supportedNameFormats.contains(nameIdEncoder.getNameFormat())) {
-                            return new Pair<BaseAttribute, T>(attribute, nameIdEncoder);
+                        if (nameIdEncoderType.isInstance(encoder)) {
+                            nameIdEncoder = (T) encoder;
+                            if (DatatypeHelper.safeEquals(format, nameIdEncoder.getNameFormat())) {
+                                return new Pair<BaseAttribute, T>(attribute, nameIdEncoder);
+                            }
                         }
                     }
                 }
+                log.debug("No attribute can be encoded as a name identifier with format {}", format);
+            }
+            log.debug("No attribute can be encoded in to a name identifer with a format given in the precdence list.");
+        }
+
+        log.debug("Selecting the first attribute that can be encoded in to a name identifier");
+        BaseAttribute<?> attribute = attributes.iterator().next();
+        for (AttributeEncoder encoder : attribute.getEncoders()) {
+            if (encoder == null) {
+                continue;
+            }
+
+            if (nameIdEncoderType.isInstance(encoder)) {
+                nameIdEncoder = (T) encoder;
+                return new Pair<BaseAttribute, T>(attribute, nameIdEncoder);
             }
         }
 
