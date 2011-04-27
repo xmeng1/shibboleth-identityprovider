@@ -449,8 +449,12 @@ public abstract class AbstractSAMLProfileHandler extends
     protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoder(
             Class<T> nameIdEncoderType, BaseSAMLProfileRequestContext requestContext) throws ProfileException {
 
-        Collection<BaseAttribute<?>> principalAttributes = new ArrayList<BaseAttribute<?>>(requestContext
-                .getAttributes().values());
+        Collection<BaseAttribute<?>> principalAttributes;
+        if (requestContext.getAttributes() == null) {
+            principalAttributes = Collections.emptyList();
+        } else {
+            principalAttributes = new ArrayList<BaseAttribute<?>>(requestContext.getAttributes().values());
+        }
 
         filterNameIDAttributesByProtocol(principalAttributes, nameIdEncoderType);
 
@@ -496,6 +500,10 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     protected <T extends SAMLNameIdentifierEncoder> void filterNameIDAttributesByProtocol(
             Collection<BaseAttribute<?>> attributes, Class<T> nameIdEncoderType) {
+        if(attributes.isEmpty()){
+            return;
+        }
+        
         log.debug("Filtering out potential name identifier attributes which can not be encoded by {}",
                 nameIdEncoderType.getName());
 
@@ -531,7 +539,7 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     protected void filterNameIDAttributesByFormats(Collection<BaseAttribute<?>> attributes,
             Collection<String> acceptableFormats) {
-        if (acceptableFormats == null || acceptableFormats.isEmpty()) {
+        if (attributes.isEmpty() || acceptableFormats == null || acceptableFormats.isEmpty()) {
             return;
         }
 
