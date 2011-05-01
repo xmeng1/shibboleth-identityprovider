@@ -21,6 +21,7 @@ import javax.xml.namespace.QName;
 import edu.internet2.middleware.shibboleth.common.config.BaseSpringNamespaceHandler;
 import edu.internet2.middleware.shibboleth.common.config.profile.JSPErrorHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.common.config.profile.VelocityErrorHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.authn.ExternalAuthnSystemLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.IPAddressLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.PreviousSessionLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.RemoteUserLoginHandlerBeanDefinitionParser;
@@ -87,6 +88,9 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
 
         registerBeanDefinitionParser(RemoteUserLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new RemoteUserLoginHandlerBeanDefinitionParser());
+        
+        registerBeanDefinitionParser(ExternalAuthnSystemLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new ExternalAuthnSystemLoginHandlerBeanDefinitionParser());
 
         registerBeanDefinitionParser(UsernamePasswordLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new UsernamePasswordLoginHandlerBeanDefinitionParser());

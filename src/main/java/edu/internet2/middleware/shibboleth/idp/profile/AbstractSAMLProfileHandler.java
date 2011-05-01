@@ -663,11 +663,12 @@ public abstract class AbstractSAMLProfileHandler extends
      */
     protected <T extends SAMLNameIdentifierEncoder> Pair<BaseAttribute, T> selectNameIDAttributeAndEncoder(
             Collection<BaseAttribute<?>> attributes, Class<T> nameIdEncoderType, String[] formatPrecedence) {
-        log.debug("Selecting attribute to be encoded as a name identifier by encoder of type {}",
-                nameIdEncoderType.getName());
         if (attributes.isEmpty()) {
             return null;
         }
+        
+        log.debug("Selecting attribute to be encoded as a name identifier by encoder of type {}",
+                nameIdEncoderType.getName());
 
         T nameIdEncoder;
 

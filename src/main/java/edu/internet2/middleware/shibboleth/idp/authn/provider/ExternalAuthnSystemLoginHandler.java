@@ -133,6 +133,10 @@ public class ExternalAuthnSystemLoginHandler extends AbstractLoginHandler {
      * @param params query parameters that will be sent to the SSO-protected Servlet, maybe null
      */
     public void setQueryParameters(Map<String, String> params) {
+        if(params == null || params.isEmpty()){
+            queryParameters = Collections.emptyMap();
+        }
+        
         HashMap<String, String> newParams = new HashMap<String, String>();
 
         String trimmedKeyName;
@@ -151,7 +155,7 @@ public class ExternalAuthnSystemLoginHandler extends AbstractLoginHandler {
 
         // forward control to the servlet.
         try {
-            String profileUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, protectedPath).buildURL();
+            String profileUrl = buildRedirectUrl(httpRequest);
 
             log.debug("Redirecting to {}", profileUrl);
             httpResponse.sendRedirect(profileUrl);

@@ -1,4 +1,4 @@
-<%@ taglib uri="/mdui" prefix="mdui" %>
+<%@ taglib uri="urn:mace:shibboleth:2.0:idp:mdui" prefix="mdui" %>
 <html>
   <link rel="stylesheet" type="text/css" href="<%= request.getContextPath()%>/login.css"/>
   <head>

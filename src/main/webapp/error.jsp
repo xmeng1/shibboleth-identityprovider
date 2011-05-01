@@ -1,5 +1,5 @@
 <%@page import="edu.internet2.middleware.shibboleth.common.profile.AbstractErrorHandler"%>
-<%@ taglib uri="/mdui" prefix="mdui" %>
+<%@ taglib uri="urn:mace:shibboleth:2.0:idp:mdui" prefix="mdui" %>
 
 <html>
 <body>
