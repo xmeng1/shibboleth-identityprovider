@@ -1,5 +1,5 @@
 /*
- * Copyright [2007] [University Corporation for Advanced Internet Development, Inc.]
+ * Copyright 2011 University Corporation for Advanced Internet Development, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 
-import java.util.Map;
-
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 
 /**
@@ -25,11 +23,8 @@ import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSyste
  */
 public class ExternalAuthnSystemLoginHandlerFactoryBean extends AbstractLoginHandlerFactoryBean {
 
-    /** Path to protected servlet. */
-    private String protectedServletPath;
-
-    /** Static query parameters added to the request to the external authentication system invocation. */
-    private Map<String, String> queryParams;
+    /** The context-relative path to the Filter, Servlet, or JSP that triggers the external authentication system. */
+    private String externalAuthnPath;
 
     /** {@inheritDoc} */
     public Class getObjectType() {
@@ -37,46 +32,28 @@ public class ExternalAuthnSystemLoginHandlerFactoryBean extends AbstractLoginHan
     }
 
     /**
-     * Gets the path to protected Servlet.
+     * Get context-relative path to the Filter, Servlet, or JSP that triggers the external authentication system.
      * 
-     * @return path to protected servlet
+     * @return context-relative path to the Filter, Servlet, or JSP that triggers the external authentication system
      */
-    public String getProtectedServletPath() {
-        return protectedServletPath;
+    public String getExternalAuthnPath() {
+        return externalAuthnPath;
     }
 
     /**
-     * Sets the path to protected servlet.
+     * Set context-relative path to the Filter, Servlet, or JSP that triggers the external authentication system.
      * 
-     * @param path path to protected servlet
+     * @param path context-relative path to the Filter, Servlet, or JSP that triggers the external authentication
+     *            system, may not be null or empty
      */
-    public void setProtectedServletPath(String path) {
-        protectedServletPath = path;
-    }
-
-    /**
-     * Gets the static query parameters added to the request to the external authentication system invocation.
-     * 
-     * @return static query parameters added to the request to the external authentication system invocation
-     */
-    public Map<String, String> getQueryParams() {
-        return queryParams;
-    }
-
-    /**
-     * Sets the static query parameters added to the request to the external authentication system invocation.
-     * 
-     * @param params static query parameters added to the request to the external authentication system invocation
-     */
-    public void setQueryParams(Map<String, String> params) {
-        queryParams = params;
+    public void setExternalAuthnPath(String path) {
+        externalAuthnPath = path;
     }
 
     /** {@inheritDoc} */
     protected Object createInstance() throws Exception {
         ExternalAuthnSystemLoginHandler handler = new ExternalAuthnSystemLoginHandler();
-        handler.setProtectedPath(getProtectedServletPath());
-        handler.setQueryParameters(queryParams);
+        handler.setExternalAuthnPath(getExternalAuthnPath());
         populateHandler(handler);
         return handler;
     }

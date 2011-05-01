@@ -269,15 +269,7 @@
     <xsd:complexType name="ExternalAuthn">
         <xsd:complexContent>
             <xsd:extension base="LoginHandlerType">
-                <xsd:sequence>
-                    <xsd:element name="QueryParam" minOccurs="0" maxOccurs="unbounded">
-                        <xsd:complexType>
-                            <xsd:attribute name="name" type="xsd:string" use="required" />
-                            <xsd:attribute name="value" type="xsd:string" use="required" />
-                        </xsd:complexType>                    
-                    </xsd:element>
-                </xsd:sequence>
-                <xsd:attribute name="protectedServletPath" type="xsd:string">
+                <xsd:attribute name="externalAuthnPath" type="xsd:string" use="required">
                     <xsd:annotation>
                         <xsd:documentation>
                             The servlet context path to the
