@@ -1,4 +1,4 @@
-<%@ taglib uri="urn:mace:shibboleth:2.0:idp:mdui" prefix="mdui" %>
+<%@ taglib uri="urn:mace:shibboleth:2.0:idp:ui" prefix="idpui" %>
 <html>
   <link rel="stylesheet" type="text/css" href="<%= request.getContextPath()%>/login.css"/>
   <head>
@@ -33,19 +33,19 @@
        </div>
        <div class="rightpane">
          <div class="content">
-           <div id="spName"><mdui:serviceName/></div>
+           <div id="spName"><idpui:serviceName/></div>
            <!-- pick the logo.  If its between 64 & max width/height display it
                 If its too high but OK wide clip by height
                 If its too wide clip by width.
                 We should not clip by height and width since that skews the image.  Too high an image will just show the top.
             -->
-           <mdui:serviceLogo  minWidth="64" minHeight="64" maxWidth="350" maxHeight="147" cssId="splogo">
-              <mdui:serviceLogo  minWidth="64" minHeight="64" maxWidth="350" cssId="clippedsplogoY">
-                  <mdui:serviceLogo  minWidth="64" minHeight="64" cssId="clippedsplogoX"/>
-              </mdui:serviceLogo>
-           </mdui:serviceLogo>
+           <idpui:serviceLogo  minWidth="64" minHeight="64" maxWidth="350" maxHeight="147" cssId="splogo">
+              <idpui:serviceLogo  minWidth="64" minHeight="64" maxWidth="350" cssId="clippedsplogoY">
+                  <idpui:serviceLogo  minWidth="64" minHeight="64" cssId="clippedsplogoX"/>
+              </idpui:serviceLogo>
+           </idpui:serviceLogo>
            <div id="spDescription">
-             <mdui:serviceDescription>You have asked to login to <mdui:serviceName/></mdui:serviceDescription>
+             <idpui:serviceDescription>You have asked to login to <idpui:serviceName/></idpui:serviceDescription>
            </div>
          </div>
       </div>

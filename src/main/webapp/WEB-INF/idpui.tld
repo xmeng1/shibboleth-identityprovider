@@ -4,8 +4,8 @@
     version="2.0">
     
   <tlib-version>1.0</tlib-version>
-  <short-name>mdui</short-name>
-  <uri>urn:mace:shibboleth:2.0:idp:mdui</uri>
+  <short-name>idpui</short-name>
+  <uri>urn:mace:shibboleth:2.0:idp:ui</uri>
   
   <tag>
     <description>Service Name - some user friendly descriptionrmation about the relying party</description>

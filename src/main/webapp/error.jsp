@@ -1,5 +1,5 @@
 <%@page import="edu.internet2.middleware.shibboleth.common.profile.AbstractErrorHandler"%>
-<%@ taglib uri="urn:mace:shibboleth:2.0:idp:mdui" prefix="mdui" %>
+<%@ taglib uri="urn:mace:shibboleth:2.0:idp:ui" prefix="idpui" %>
 
 <html>
 <body>
@@ -19,7 +19,7 @@
 	</p>
         <p>
            If you think you were sent here in error,
-           please contact <mdui:serviceContact>technical support</mdui:serviceContact>
+           please contact <idpui:serviceContact>technical support</idpui:serviceContact>
         </p>       
 	<% 
        Throwable error = (Throwable) request.getAttribute(AbstractErrorHandler.ERROR_KEY);

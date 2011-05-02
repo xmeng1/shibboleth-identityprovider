@@ -329,13 +329,13 @@ public class HttpServletHelper {
         }
 
         String partition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION);
-        log.debug("Looking up LoginContext with key {} from StorageService parition: {}", loginContextKey, partition);
+        log.trace("Looking up LoginContext with key {} from StorageService parition: {}", loginContextKey, partition);
         LoginContextEntry entry = (LoginContextEntry) storageService.get(partition, loginContextKey);
         if (entry != null) {
             if (entry.isExpired()) {
                 log.debug("LoginContext found but it was expired");
             } else {
-                log.debug("Retrieved LoginContext with key {} from StorageService parition: {}", loginContextKey,
+                log.trace("Retrieved LoginContext with key {} from StorageService parition: {}", loginContextKey,
                         partition);
                 return entry.getLoginContext();
             }
