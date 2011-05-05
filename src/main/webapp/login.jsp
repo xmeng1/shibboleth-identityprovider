@@ -15,7 +15,7 @@
     <div class="loginbox">
        <div class="leftpane">
          <div class="content">
-           <p>The web site described to the right has asked you to log in and you have chosen &lt;FILL IN YOUR SITE&gt; as your home institution</p>
+           <p>The web site described to the right has asked you to log in and you have chosen &lt;FILL IN YOUR SITE&gt; as your home institution.</p>
            <% if ("true".equals(request.getAttribute("loginFailed"))) { %>
               <p><font color="red"> Credentials not recognized. </font> </p>
            <% } %>
