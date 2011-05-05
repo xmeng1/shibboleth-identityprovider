@@ -19,6 +19,7 @@ Changes in Release 2.3.0
 [SIDP-482] - JSP pages should HTML-encode any strings they handle
 [SIDP-483] - Log Completed, Unencrypted SAML Assertion
 [SIDP-486] - login.jsp page contains old wiki link
+[SIDP-485] - <img> inside HTML pages must have alt attribute.
 
 Changes in Release 2.2.1
 =============================================

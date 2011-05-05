@@ -27,7 +27,6 @@ import javax.servlet.jsp.tagext.BodyContent;
 import org.opensaml.samlext.saml2mdui.Logo;
 import org.owasp.esapi.ESAPI;
 import org.owasp.esapi.Encoder;
-import org.owasp.esapi.errors.EncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +34,15 @@ import org.slf4j.LoggerFactory;
 public class ServiceLogoTag extends ServiceTagSupport {
 
     /**
-     * checkstype control.
+     * checkstyle control.
      */
     private static final long serialVersionUID = 6451849117572923712L;
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(ServiceLogoTag.class);
     /** what to emit if the jsp has nothing. */
     private static final String DEFAULT_VALUE = "";
+    /** what to emit as alt txt if all else fails. */
+    private static final String DEFAULT_ALT_TXT = "SP Logo";
 
     /** Bean storage. Size constraint X */
     private int minWidth;
@@ -51,6 +52,8 @@ public class ServiceLogoTag extends ServiceTagSupport {
     private int minHeight;
     /** Bean storage.  Size constraint Y */
     private int maxHeight = Integer.MAX_VALUE;
+    /** Bean storage.  alt text */
+    private String altTxt;
 
     /** Bean setter.
      * @param value what to set
@@ -75,6 +78,13 @@ public class ServiceLogoTag extends ServiceTagSupport {
      */
     public void setMaxHeight(Integer value) {
         maxHeight = value.intValue();
+    }
+
+    /** Bean setter.
+     * @param value what to set
+     */
+    public void setAlt(String value) {
+        altTxt = value;
     }
 
     /**
@@ -125,6 +135,30 @@ public class ServiceLogoTag extends ServiceTagSupport {
         }
         return null;
     }
+    
+    /** Find what the user specified for alt txt.
+     * @return the text required
+     */
+    private String getAltText() {
+        
+        //
+        // First see what the user tried
+        //
+        String value = altTxt;
+        if (null != value && 0 != value.length()) {
+            return value;
+        }
+        
+        //
+        // Try the request
+        //
+        value = getServiceName();
+        if (null != value && 0 != value.length()) {
+            return value;
+        }
+        
+        return DEFAULT_ALT_TXT;
+    }
 
     /**
      * Given the url build an appropriate &lta href=...
@@ -161,6 +195,7 @@ public class ServiceLogoTag extends ServiceTagSupport {
 
         sb = new StringBuilder("<img src=\"");
         sb.append(encodedURL).append('"');
+        sb.append("alt=").append(getAltText()).append('"');
         addClassAndId(sb);
         sb.append("/>");
         return sb.toString();

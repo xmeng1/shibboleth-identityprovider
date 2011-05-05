@@ -82,9 +82,9 @@
   </tag>
   
   <tag>
-    <description>Service descriptionrmationURL - directly from the metadata if present</description>
-    <name>servicedescriptionrmationURL</name>
-    <tag-class>edu.internet2.middleware.shibboleth.idp.ui.ServicedescriptionrmationURLTag</tag-class>
+    <description>Service Information URL - directly from the metadata if present</description>
+    <name>serviceInformationURL</name>
+    <tag-class>edu.internet2.middleware.shibboleth.idp.ui.ServiceInformationURLTag</tag-class>
     <body-content>scriptless</body-content>
     <attribute>
       <name>linkText</name>
@@ -113,6 +113,11 @@
     <name>serviceLogo</name>
     <tag-class>edu.internet2.middleware.shibboleth.idp.ui.ServiceLogoTag</tag-class>
     <body-content>scriptless</body-content>
+    <attribute>
+      <name>alt</name>
+      <required>false</required>
+      <rtexprvalue>true</rtexprvalue>
+    </attribute>
     <attribute>
       <name>minHeight</name>
       <required>false</required>

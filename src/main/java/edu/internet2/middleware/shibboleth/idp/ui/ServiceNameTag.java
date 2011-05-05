@@ -17,21 +17,11 @@
 package edu.internet2.middleware.shibboleth.idp.ui;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.BodyContent;
 
-import org.opensaml.saml2.metadata.AttributeConsumingService;
-import org.opensaml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml2.metadata.LocalizedString;
-import org.opensaml.saml2.metadata.RoleDescriptor;
-import org.opensaml.saml2.metadata.SPSSODescriptor;
-import org.opensaml.saml2.metadata.ServiceName;
-import org.opensaml.samlext.saml2mdui.DisplayName;
 import org.owasp.esapi.ESAPI;
 import org.owasp.esapi.Encoder;
 import org.slf4j.Logger;
@@ -57,141 +47,6 @@ public class ServiceNameTag extends ServiceTagSupport {
     /** what to emit if the jsp has nothing. */
     private static final String DEFAULT_VALUE = "Unspecified Service Provider";
 
-    /**
-     * If the entityId can look like a host return that otherwise the string.
-     * @return either the host or the entityId.
-     */
-    private String getNameFromEntityId() {
-        EntityDescriptor sp = getSPEntityDescriptor();
-        
-        if (null == sp) {
-            log.debug("No relying party, nothing to display");
-            return null;
-        }
-
-        try {
-            URI entityId = new URI(sp.getEntityID());
-            String scheme = entityId.getScheme();
-
-            if ("http".equals(scheme) || "https".equals(scheme)) {
-                return entityId.getHost(); 
-            }
-        } catch (URISyntaxException e) {
-            // 
-            // It wasn't an URI.  return full entityId.
-            //
-            return sp.getEntityID();
-        }
-        //
-        // not a URL return full entityID
-        //
-        return sp.getEntityID();
-    }
-    
-    /** 
-     * look at &lt;Uiinfo&gt; if there and if so look for appropriate name.
-     * @return null or an appropriate name
-     */
-    private String getNameFromUIInfo() {
-        String lang = getBrowserLanguage();
-
-        if (getSPUIInfo() != null) {
-            for (DisplayName name:getSPUIInfo().getDisplayNames()) {
-                if (log.isDebugEnabled()){
-                    log.debug("Found name in UIInfo, language=" + name.getXMLLang());
-                }
-                if (name.getXMLLang().equals(lang)) {
-                    //
-                    // Found it
-                    //
-                    if (log.isDebugEnabled()){
-                        log.debug("returning name from UIInfo " + name.getName().getLocalString());
-                    }
-                    return name.getName().getLocalString();
-                }
-            }
-            if (log.isDebugEnabled()){
-                log.debug("No name in UIInfo");
-            }            
-        }
-        return null;
-    }
-
-    /**
-     * look for an &ltAttributeConsumeService&gt and if its there look for an appropriate name.
-     * @return null or an appropriate name
-     */
-    private String getNameFromAttributeConsumingService(){
-        String lang = getBrowserLanguage();
-        List<RoleDescriptor> roles;
-        AttributeConsumingService acs = null;
-        EntityDescriptor sp = getSPEntityDescriptor();
-        
-        if (null == sp) {
-            log.warn("No relying party, nothing to display");
-            return null;
-        }
-
-        roles = sp.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
-        if (!roles.isEmpty()) {
-            SPSSODescriptor spssod = (SPSSODescriptor) roles.get(0);
-            acs = spssod.getDefaultAttributeConsumingService();
-        }
-        if (acs != null) {
-            for (ServiceName name:acs.getNames()) {
-                LocalizedString localName = name.getName();
-                if (log.isDebugEnabled()){
-                    log.debug("Found name in AttributeConsumingService, language=" + localName.getLanguage());
-                }
-                if (localName.getLanguage().equals(lang)) {
-                    if (log.isDebugEnabled()){
-                        log.debug("returning name from AttributeConsumingService " + name.getName().getLocalString());
-                    }
-                    return localName.getLocalString();
-                }
-            }
-            if (log.isDebugEnabled()){
-                log.debug("No name in AttributeConsumingService");
-            }            
-        }        
-        return null;
-    }
-    
-    /**
-     * Get the identifier for the service name as per the rules above.
-     * @return something sensible for display.
-     */
-    private String getServiceName() {
-        String result;
-        //
-        // First look for MDUI
-        //
-        if (getSPEntityDescriptor() == null) {
-            log.debug("No relying party, nothing to display");
-            return null;
-        }
-        //
-        // Look at <UIInfo>
-        //
-        result = getNameFromUIInfo();
-        if (result != null) {
-            return result;
-        }
-        
-        //
-        // Otherwise <AttributeConsumingService>
-        //
-        result = getNameFromAttributeConsumingService();
-        if (result != null) {
-            return result;
-        }
-        
-        //
-        // Or look at the entityName
-        //
-        return getNameFromEntityId();
-    }
-    
     @Override
     public int doStartTag() throws JspException {
        
