@@ -34,8 +34,12 @@
     </bean>
 
     <bean id="shibboleth.VelocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean" depends-on="shibboleth.LogbackLogging">
+        <property name="overrideLogging" value="false"/>
         <property name="velocityProperties">
             <props>
+                <prop key="runtime.log.logsystem.class">
+                    edu.internet2.middleware.shibboleth.common.util.Slf4JLogChute
+                </prop>
                 <prop key="resource.loader">classpath, string</prop>
                 <prop key="classpath.resource.loader.class">
                     org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
