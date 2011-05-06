@@ -189,6 +189,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             decodeRequest(requestContext, inTransport, outTransport);
 
             String relyingPartyId = requestContext.getInboundMessageIssuer();
+            requestContext.setPeerEntityId(relyingPartyId);
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(getProfileId());
             if (ssoConfig == null) {

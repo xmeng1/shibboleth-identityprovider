@@ -318,10 +318,10 @@ public abstract class AbstractSAMLProfileHandler extends
     /**
      * Populates the request context with information about the relying party.
      * 
-     * This method requires the the following request context properties to be populated: peer entity ID
+     * This method requires the the following request context properties to be populated: inbound message issuer
      * 
-     * This methods populates the following request context properties: peer entity metadata, relying party
-     * configuration
+     * This methods populates the following request context properties: peer entityID, peer entity metadata,
+     * relying party configuration
      * 
      * @param requestContext current request context
      * @throws ProfileException thrown if there is a problem looking up the relying party's metadata
@@ -330,6 +330,7 @@ public abstract class AbstractSAMLProfileHandler extends
             throws ProfileException {
         MetadataProvider metadataProvider = requestContext.getMetadataProvider();
         String relyingPartyId = requestContext.getInboundMessageIssuer();
+        requestContext.setPeerEntityId(relyingPartyId);
 
         EntityDescriptor relyingPartyMetadata;
         try {

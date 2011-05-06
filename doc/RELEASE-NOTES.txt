@@ -20,6 +20,7 @@ Changes in Release 2.3.0
 [SIDP-483] - Log Completed, Unencrypted SAML Assertion
 [SIDP-485] - <img> inside HTML pages must have alt attribute.[SIDP-486] - login.jsp page contains old wiki link
 [SIDP-487] - More login.jsp changes (CR/LF issues, missing period)
+[SIDP-488] - PeerEntityId property not set on SAML queries
 
 Changes in Release 2.2.1
 =============================================
