@@ -8,7 +8,7 @@
   <uri>urn:mace:shibboleth:2.0:idp:ui</uri>
   
   <tag>
-    <description>Service Name - some user friendly descriptionrmation about the relying party</description>
+    <description>Service Name - some user friendly description about the relying party</description>
     <name>serviceName</name>
     <tag-class>edu.internet2.middleware.shibboleth.idp.ui.ServiceNameTag</tag-class>
     <body-content>empty</body-content>
@@ -23,7 +23,7 @@
   </tag>
   
   <tag>
-    <description>Service Contact - descriptionrmation about contact description on the SP</description>
+    <description>Service Contact - information about the contact at the SP</description>
     <name>serviceContact</name>
     <tag-class>edu.internet2.middleware.shibboleth.idp.ui.ServiceContactTag</tag-class>
     <body-content>scriptless</body-content>
