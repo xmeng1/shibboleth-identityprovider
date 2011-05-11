@@ -18,6 +18,7 @@ Changes in Release 2.3.0
 [SIDP-480] - Update POM to add plugin versions, use / publish to Shib.net Repo, and attach generated source and Javadocs
 [SIDP-482] - JSP pages should HTML-encode any strings they handle
 [SIDP-483] - Log Completed, Unencrypted SAML Assertion
+[SIDP-484] - Login stops at AuthnEngine with an empty page
 [SIDP-485] - <img> inside HTML pages must have alt attribute.[SIDP-486] - login.jsp page contains old wiki link
 [SIDP-487] - More login.jsp changes (CR/LF issues, missing period)
 [SIDP-488] - PeerEntityId property not set on SAML queries
