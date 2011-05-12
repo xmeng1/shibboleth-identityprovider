@@ -208,6 +208,7 @@ public class AuthenticationEngine extends HttpServlet {
         if (loginContext == null) {
             LOG.warn("No login context available, unable to proceed with authentication");
             forwardRequest("/error.jsp", httpRequest, httpResponse);
+            return;
         }
 
         if (!loginContext.getAuthenticationAttempted()) {
