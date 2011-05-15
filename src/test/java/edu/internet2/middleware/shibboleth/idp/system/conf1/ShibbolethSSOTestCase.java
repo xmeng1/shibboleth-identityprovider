@@ -102,7 +102,7 @@ public class ShibbolethSSOTestCase extends BaseConf1TestCase {
         handler.processRequest(profileRequest, profileResponse);
 
         String response = servletResponse.getContentAsString();
-        assertTrue(response.contains("action=\"https://example.org/mySP\" method=\"post\""));
+        assertTrue(response.contains("action=\"https&#x3a;&#x2f;&#x2f;example.org&#x2f;mySP\" method=\"post\""));
         assertTrue(response.contains("name=\"TARGET\" value=\"https&#x3a;&#x2f;&#x2f;example.org&#x2f;mySP\""));
         assertTrue(response.contains("SAMLResponse"));
     }
