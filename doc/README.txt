@@ -10,7 +10,7 @@ Shibboleth Project Site:
 http://shibboleth.internet2.edu/
 
 Shibboleth Documentation Site:
-https://spaces.internet2.edu/display/SHIB2/Home
+https://wiki.shibboleth.net/confluence/display/SHIB2
 
 Source and binary distributions
 http://shibboleth.internet2.edu/downloads

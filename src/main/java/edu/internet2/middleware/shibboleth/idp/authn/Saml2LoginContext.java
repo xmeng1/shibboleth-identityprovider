@@ -52,6 +52,9 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
 
     /** Serialized authentication request. */
     private String serialAuthnRequest;
+    
+    /** Unsolicited SSO indicator.  */
+    private boolean unsolicited;
 
     /**
      * Creates a new instance of Saml2LoginContext.
@@ -97,6 +100,24 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         return relayState;
     }
 
+    /**
+     * Returns the unsolicited SSO indicator.
+     * 
+     * @return the unsolicited SSO indicator
+     */
+    public boolean isUnsolicited() {
+        return unsolicited;
+    }
+
+    /**
+     * Sets the unsolicited SSO indicator.
+     * 
+     * @param unsolicited unsolicited SSO indicator to set
+     */
+    public void setUnsolicited(boolean unsolicited) {
+        this.unsolicited = unsolicited;
+    }        
+    
     /**
      * Serializes an authentication request into a string.
      * 

@@ -72,6 +72,7 @@
                 <mkdir dir="${idp.home.path}/war" />
 
                 <var name="idp.entity.id" value="https://${idp.hostname}/idp/shibboleth" />
+                <var name="idp.web.xml.name" value="${webapp.dir}/WEB-INF/web.xml" />
 
                 <regexSplit input="${idp.hostname}" regex="^.*\.(.*\..*$)" addproperty="idp.scope" />
 
@@ -135,6 +136,17 @@
                     <entry key="idp.home" value="${idp.home.input}" />
                 </propertyfile>
             	
+                <if> 
+                    <available file="${idp.home.path}/conf/web.xml" property="idp.web.xml.exists"/>
+                    <then>
+                        <echo message="Using ${idp.home.path}/conf/web.xml rather than default web.xml"/>
+                        <var name="idp.web.xml.name" value="${idp.home.path}/conf/web.xml" />
+                    </then>
+                    <else>
+                        <var name="idp.web.xml.name" value="${webapp.dir}/WEB-INF/web.xml" />
+                    </else>
+                </if>
+
                 <!-- 
                     Even if we're not overwritting the config we should still add new files, for example, files added
                     in a new release.
@@ -185,7 +197,7 @@
         </copy>
 
         <!-- create web.xml -->
-        <copy file="${webapp.dir}/WEB-INF/web.xml"
+        <copy file="${idp.web.xml.name}"
               todir="${installer.dir}"
               preservelastmodified="true"
               overwrite="true">
@@ -196,7 +208,7 @@
 
         <!-- build the war file -->
         <war warfile="${installer.dir}/${war.name}.war" webxml="${installer.dir}/web.xml">
-            <lib dir="${basedir}/lib" excludes="servlet-api*.jar"/>
+            <lib dir="${basedir}/lib" excludes="servlet-api*.jar,jsp-api*.jar"/>
             <webinf dir="${webapp.dir}/WEB-INF" excludes="web.xml" />
             <fileset dir="${webapp.dir}" excludes="WEB-INF/**" />
         </war>
@@ -208,4 +220,53 @@
     	
     </target>
 
+    <target name="renew-cert" description="Create a new certificate/key pair."> 
+        <input message="This will create a new set of credentials for your IdP, overwriting existing credentials.  Do you really wish to proceed?" addproperty="renew.cert.do" validargs="yes,no" defaultvalue="no" /> 
+        <if> <equals arg1="${renew.cert.do}" arg2="yes" /> 
+            <then> 
+
+                <input message="Where is the Shibboleth Identity Provider installed?"
+                       addproperty="idp.home.input"
+                       defaultvalue="${idp.home}" />
+                <var name="idp.home" value="${idp.home.input}" />
+              
+                <pathToAbsolutePath path="${idp.home}" addproperty="idp.home.path" /> 
+            
+                <input message="What is the fully qualified hostname of the Shibboleth Identity Provider server?" 
+                       addproperty="idp.hostname.input" 
+                       defaultvalue="${idp.hostname}" /> 
+                <var name="idp.hostname" value="${idp.hostname.input}" /> 
+                <var name="idp.entity.id" value="https://${idp.hostname}/idp/shibboleth" /> 
+
+                <echo message="Backing up old credentials" /> 
+                <buildnumber file="${resources.dir}/credentials.buildno"/>
+                <copy todir="${idp.home.path}/credentials" overwrite="true">
+                    <fileset dir="${idp.home.path}/credentials" excludes="*bak*,buildno"/>
+                    <globmapper from="idp.*" to="idp.*.bak.${build.number}"/>
+                </copy>
+
+                <input message="A keystore is about to be generated for you. Please enter a password that will be used to protect it." 
+                       addproperty="idp.keystore.pass" /> 
+
+                <if>
+                    <isset property="env.IdPCertLifetime" />
+                    <then>
+                        <var name="idp.cert.lifetime" value="${env.IdPCertLifetime}" />
+                    </then>
+                    <else>
+                        <var name="idp.cert.lifetime" value="20" />
+                    </else>
+                </if>
+        
+                <echo message="Generating signing and encryption key, certificate, and keystore. " /> 
+                <selfSignedCert hostname="${idp.hostname}" 
+                                privateKeyFile="${idp.home.path}/credentials/idp.key" 
+                                certificateFile="${idp.home.path}/credentials/idp.crt" 
+                                keystoreFile="${idp.home.path}/credentials/idp.jks" 
+                                keystorePassword="${idp.keystore.pass}" 
+                                uriSubjectAltNames="${idp.entity.id}" 
+                                certificateLifetime="${idp.cert.lifetime}"/> 
+            </then>
+        </if> 
+    </target> 
 </project>

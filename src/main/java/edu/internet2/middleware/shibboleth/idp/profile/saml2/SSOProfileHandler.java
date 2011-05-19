@@ -31,6 +31,7 @@ import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.binding.AuthnResponseEndpointSelector;
+import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.AttributeStatement;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
@@ -44,6 +45,8 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.Subject;
+import org.opensaml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml2.core.SubjectConfirmationData;
 import org.opensaml.saml2.core.SubjectLocality;
 import org.opensaml.saml2.metadata.AffiliateMember;
 import org.opensaml.saml2.metadata.AffiliationDescriptor;
@@ -186,6 +189,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             decodeRequest(requestContext, inTransport, outTransport);
 
             String relyingPartyId = requestContext.getInboundMessageIssuer();
+            requestContext.setPeerEntityId(relyingPartyId);
             RelyingPartyConfiguration rpConfig = getRelyingPartyConfiguration(relyingPartyId);
             ProfileConfiguration ssoConfig = rpConfig.getProfileConfiguration(getProfileId());
             if (ssoConfig == null) {
@@ -198,6 +202,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             log.debug("Creating login context and transferring control to authentication engine");
             Saml2LoginContext loginContext = new Saml2LoginContext(relyingPartyId, requestContext.getRelayState(),
                     requestContext.getInboundSAMLMessage());
+            loginContext.setUnsolicited(requestContext.isUnsolicited());
             loginContext.setAuthenticationEngineURL(authenticationManagerPath);
             loginContext.setProfileHandlerURL(HttpHelper.getRequestUriWithoutContext(httpRequest));
             loginContext.setDefaultAuthenticationMethod(rpConfig.getDefaultAuthenticationMethod());
@@ -276,6 +281,11 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
             samlResponse = buildResponse(requestContext, "urn:oasis:names:tc:SAML:2.0:cm:bearer", statements);
         } catch (ProfileException e) {
+            if (requestContext.isUnsolicited()) {
+                // Just delegate to the IdP's global error handler
+                log.warn("Unsolicited response generation failed: {}", e.getMessage());
+                throw e;
+            }
             samlResponse = buildErrorResponse(requestContext);
         }
 
@@ -285,7 +295,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         encodeResponse(requestContext);
         writeAuditLogEntry(requestContext);
     }
-
+    
     /**
      * Decodes an incoming request and stores the information in a created request context.
      * 
@@ -360,7 +370,12 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         if (spNameQualifier == null) {
             return;
         }
-
+        
+        if (DatatypeHelper.safeEquals(spNameQualifier, requestContext.getInboundMessageIssuer())) {
+            log.debug("SPNameQualifier '{}' matches message issuer.", spNameQualifier);
+            return;
+        }
+        
         log.debug("Checking if message issuer is a member of affiliation '{}'", spNameQualifier);
         try {
             EntityDescriptor affiliation = getMetadataProvider().getEntityDescriptor(spNameQualifier);
@@ -406,6 +421,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         requestContext.setMessageDecoder(getInboundMessageDecoder(requestContext));
 
         requestContext.setLoginContext(loginContext);
+        requestContext.setUnsolicited(loginContext.isUnsolicited());
 
         requestContext.setInboundMessageTransport(in);
         requestContext.setInboundSAMLProtocol(SAMLConstants.SAML20P_NS);
@@ -418,7 +434,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         String relyingPartyId = loginContext.getRelyingPartyId();
         requestContext.setPeerEntityId(relyingPartyId);
         requestContext.setInboundMessageIssuer(relyingPartyId);
-
+        
         populateRequestContext(requestContext);
 
         return requestContext;
@@ -498,7 +514,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
 
         AuthnStatement statement = authnStatementBuilder.buildObject();
         statement.setAuthnContext(authnContext);
-        statement.setAuthnInstant(loginContext.getAuthenticationInstant());
+        statement.setAuthnInstant(loginContext != null ? loginContext.getAuthenticationInstant() : null);
 
         Session session = getUserSession(requestContext.getInboundMessageTransport());
         if (session != null) {
@@ -602,7 +618,21 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
             if (nameIdPolicy != null) {
                 String spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolicy.getSPNameQualifier());
                 if (spNameQualifier != null) {
-                    nameId.setSPNameQualifier(spNameQualifier);
+                    // Right now the resolver/encoder layer doesn't support forcing the SPNameQualifier
+                    // to be set, but if it ever does, this should detect a mismatch with NameIDPolicy.
+                    if (nameId.getSPNameQualifier() != null) {
+                        if (!nameId.getSPNameQualifier().equals(spNameQualifier)) {
+                            // Requester specified a different qualifier than we produced.
+                            requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI,
+                                    StatusCode.INVALID_NAMEID_POLICY_URI,
+                                    "Invalid SPNameQualifier for this request"));
+                            throw new ProfileException("Requested SPNameQualifier '{" + spNameQualifier
+                                    + "}' conflicts with generated value '{" + nameId.getSPNameQualifier() + "}'");
+                        }
+                    } else {
+                        // Set to the requester's preference.
+                        nameId.setSPNameQualifier(spNameQualifier);
+                    }
                 } else {
                     nameId.setSPNameQualifier(requestContext.getInboundMessageIssuer());
                 }
@@ -637,7 +667,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
                         new Object[] { requestContext.getInboundMessageIssuer(), endpoint.getLocation(),
                                 endpoint.getBinding(), });
             } else {
-                log.warn("Unable to generate endpoint for anonymous party.  No ACS url provided.");
+                log.warn("Unable to generate endpoint for anonymous party.  No ACS URL provided.");
             }
         } else {
             AuthnResponseEndpointSelector endpointSelector = new AuthnResponseEndpointSelector();
@@ -654,7 +684,7 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
     }
 
     /**
-     * Deserailizes an authentication request from a string.
+     * Deserializes an authentication request from a string.
      * 
      * @param request request to deserialize
      * 
@@ -672,12 +702,52 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         }
     }
 
+    /** {@inheritDoc} */
+    protected void postProcessAssertion(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Assertion assertion)
+            throws ProfileException {
+        SSORequestContext ctx = (SSORequestContext) requestContext;
+        if (ctx.isUnsolicited()) {
+            Subject subject = assertion.getSubject();
+            if (subject != null) {
+                for (SubjectConfirmation sc : subject.getSubjectConfirmations()) {
+                    if (sc != null) {
+                        SubjectConfirmationData scd = sc.getSubjectConfirmationData();
+                        if (scd != null) {
+                            scd.setInResponseTo(null);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    protected void postProcessResponse(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext, Response samlResponse)
+            throws ProfileException {
+        SSORequestContext ctx = (SSORequestContext) requestContext;
+        if (ctx.isUnsolicited()) {
+            samlResponse.setInResponseTo(null);
+        }
+    }    
+
     /** Represents the internal state of a SAML 2.0 SSO Request while it's being processed by the IdP. */
     protected class SSORequestContext extends BaseSAML2ProfileRequestContext<AuthnRequest, Response, SSOConfiguration> {
+
+        /** Unsolicited SSO indicator. */
+        private boolean unsolicited;
 
         /** Current login context. */
         private Saml2LoginContext loginContext;
 
+        /**
+         * Returns the unsolicited SSO indicator.
+         * 
+         * @return the unsolicited SSO indicator
+         */
+        public boolean isUnsolicited() {
+            return unsolicited;
+        }
+        
         /**
          * Gets the current login context.
          * 
@@ -686,6 +756,15 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         public Saml2LoginContext getLoginContext() {
             return loginContext;
         }
+        
+        /**
+         * Sets the unsolicited SSO indicator.
+         * 
+         * @param unsolicited unsolicited SSO indicator to set
+         */
+        public void setUnsolicited(boolean unsolicited) {
+            this.unsolicited = unsolicited;
+        }        
 
         /**
          * Sets the current login context.
@@ -695,5 +774,6 @@ public class SSOProfileHandler extends AbstractSAML2ProfileHandler {
         public void setLoginContext(Saml2LoginContext context) {
             loginContext = context;
         }
+
     }
 }

@@ -6,7 +6,7 @@ Shibboleth Implementation Team
    Internet2
    
    Chad La Joie
-   SWITCH
+   Itumi, LLC
 
  Programming
 
@@ -17,10 +17,10 @@ Shibboleth Implementation Team
    University of Washington
    
    Chad La Joie
-   SWITCH
+   Itumi, LLC
       
    Will Norris
-   University of Southern California
+   Google, Inc.
    
    Rod Widdowson
    University of Edinburgh
