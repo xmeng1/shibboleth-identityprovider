@@ -31,6 +31,8 @@ import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import sun.security.action.GetLongAction;
+
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringEngine;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
@@ -176,6 +178,8 @@ public class HttpServletHelper {
         contextKeyCookie.setPath("".equals(httpRequest.getContextPath()) ? "/" : httpRequest.getContextPath());
         contextKeyCookie.setSecure(httpRequest.isSecure());
         httpResponse.addCookie(contextKeyCookie);
+        
+        httpRequest.setAttribute(LOGIN_CTX_KEY_NAME, loginContext);
     }
 
     /**
@@ -197,8 +201,8 @@ public class HttpServletHelper {
      * @return the service or null if there is no such service bound to the context
      */
     public static AttributeFilteringEngine<?> getAttributeFilterEnginer(ServletContext context) {
-        return getAttributeFilterEnginer(context, getContextParam(context, ATTRIBUTE_FILTER_ENGINE_SID_CTX_PARAM,
-                DEFAULT_ATTRIBUTE_FILTER_ENGINE_SID));
+        return getAttributeFilterEnginer(context,
+                getContextParam(context, ATTRIBUTE_FILTER_ENGINE_SID_CTX_PARAM, DEFAULT_ATTRIBUTE_FILTER_ENGINE_SID));
     }
 
     /**
@@ -221,8 +225,8 @@ public class HttpServletHelper {
      * @return the service or null if there is no such service bound to the context
      */
     public static AttributeResolver<?> getAttributeResolver(ServletContext context) {
-        return getAttributeResolver(context, getContextParam(context, ATTRIBUTE_RESOLVER_SID_CTX_PARAM,
-                DEFAULT_ATTRIBUTE_RESOLVER_SID));
+        return getAttributeResolver(context,
+                getContextParam(context, ATTRIBUTE_RESOLVER_SID_CTX_PARAM, DEFAULT_ATTRIBUTE_RESOLVER_SID));
     }
 
     /**
@@ -280,10 +284,12 @@ public class HttpServletHelper {
      * Gets the login context from the current request. The login context is only in this location while the request is
      * being transferred from the authentication engine back to the profile handler.
      * 
+     * This method only works during the first hand-off from the authentication engine to the login handler. Afterwords
+     * you must use {@link #getLoginContext(StorageService, ServletContext, HttpServletRequest)}.
+     * 
      * @param httpRequest current HTTP request
      * 
      * @return the login context or null if no login context is bound to the request
-     * @deprecated
      */
     public static LoginContext getLoginContext(HttpServletRequest httpRequest) {
         return (LoginContext) httpRequest.getAttribute(LOGIN_CTX_KEY_NAME);
@@ -323,13 +329,13 @@ public class HttpServletHelper {
         }
 
         String partition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM, DEFAULT_LOGIN_CTX_PARITION);
-        log.debug("Looking up LoginContext with key {} from StorageService parition: {}", loginContextKey, partition);
+        log.trace("Looking up LoginContext with key {} from StorageService parition: {}", loginContextKey, partition);
         LoginContextEntry entry = (LoginContextEntry) storageService.get(partition, loginContextKey);
         if (entry != null) {
             if (entry.isExpired()) {
                 log.debug("LoginContext found but it was expired");
             } else {
-                log.debug("Retrieved LoginContext with key {} from StorageService parition: {}", loginContextKey,
+                log.trace("Retrieved LoginContext with key {} from StorageService parition: {}", loginContextKey,
                         partition);
                 return entry.getLoginContext();
             }
@@ -348,8 +354,8 @@ public class HttpServletHelper {
      * @return the service or null if there is no such service bound to the context
      */
     public static IdPProfileHandlerManager getProfileHandlerManager(ServletContext context) {
-        return getProfileHandlerManager(context, getContextParam(context, PROFILE_HANDLER_MNGR_SID_CTX_PARAM,
-                DEFAULT_PROFILE_HANDLER_MNGR_SID));
+        return getProfileHandlerManager(context,
+                getContextParam(context, PROFILE_HANDLER_MNGR_SID_CTX_PARAM, DEFAULT_PROFILE_HANDLER_MNGR_SID));
     }
 
     /**
@@ -372,8 +378,8 @@ public class HttpServletHelper {
      * @return the service or null if there is no such service bound to the context
      */
     public static RelyingPartyConfigurationManager getRelyingPartyConfigurationManager(ServletContext context) {
-        return getRelyingPartyConfigurationManager(context, getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM,
-                DEFAULT_RP_CONFIG_MNGR_SID));
+        return getRelyingPartyConfigurationManager(context,
+                getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM, DEFAULT_RP_CONFIG_MNGR_SID));
     }
 
     /**
@@ -399,8 +405,8 @@ public class HttpServletHelper {
      * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext)}
      */
     public static RelyingPartyConfigurationManager getRelyingPartyConfirmationManager(ServletContext context) {
-        return getRelyingPartyConfirmationManager(context, getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM,
-                DEFAULT_RP_CONFIG_MNGR_SID));
+        return getRelyingPartyConfirmationManager(context,
+                getContextParam(context, RP_CONFIG_MNGR_SID_CTX_PARAM, DEFAULT_RP_CONFIG_MNGR_SID));
     }
 
     /**
@@ -411,7 +417,7 @@ public class HttpServletHelper {
      * 
      * @return the service or null if there is no such service bound to the context
      * 
-     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext, String)
+     * @deprecated use {@link #getRelyingPartyConfigurationManager(ServletContext, String)}
 
      */
     public static RelyingPartyConfigurationManager getRelyingPartyConfirmationManager(ServletContext context,
@@ -449,8 +455,8 @@ public class HttpServletHelper {
      * @return the service or null if there is no such service bound to the context
      */
     public static SAML1AttributeAuthority getSAML1AttributeAuthority(ServletContext context) {
-        return getSAML1AttributeAuthority(context, getContextParam(context, SAML1_AA_SID_CTX_PARAM,
-                DEFAULT_SAML1_AA_SID));
+        return getSAML1AttributeAuthority(context,
+                getContextParam(context, SAML1_AA_SID_CTX_PARAM, DEFAULT_SAML1_AA_SID));
     }
 
     /**
@@ -473,8 +479,8 @@ public class HttpServletHelper {
      * @return the service or null if there is no such service bound to the context
      */
     public static SAML2AttributeAuthority getSAML2AttributeAuthority(ServletContext context) {
-        return getSAML2AttributeAuthority(context, getContextParam(context, SAML2_AA_SID_CTX_PARAM,
-                DEFAULT_SAML2_AA_SID));
+        return getSAML2AttributeAuthority(context,
+                getContextParam(context, SAML2_AA_SID_CTX_PARAM, DEFAULT_SAML2_AA_SID));
     }
 
     /**
@@ -521,8 +527,8 @@ public class HttpServletHelper {
      * @return the service or null if there is no such service bound to the context
      */
     public static StorageService<?, ?> getStorageService(ServletContext context) {
-        return getStorageService(context, getContextParam(context, STORAGE_SERVICE_SID_CTX_PARAM,
-                DEFAULT_STORAGE_SERVICE_SID));
+        return getStorageService(context,
+                getContextParam(context, STORAGE_SERVICE_SID_CTX_PARAM, DEFAULT_STORAGE_SERVICE_SID));
     }
 
     /**
@@ -596,7 +602,7 @@ public class HttpServletHelper {
 
         String storageServicePartition = getContextParam(context, LOGIN_CTX_PARTITION_CTX_PARAM,
                 DEFAULT_LOGIN_CTX_PARITION);
-        
+
         log.debug("Removing LoginContext, with key {}, from StorageService partition {}", loginContextKey,
                 storageServicePartition);
         LoginContextEntry entry = (LoginContextEntry) storageService.remove(storageServicePartition, loginContextKey);
@@ -622,7 +628,7 @@ public class HttpServletHelper {
         urlBuilder.setPath(httpRequest.getContextPath());
         return urlBuilder;
     }
-    
+
     /**
      * Builds a URL to a path that is meant to be relative to the Servlet context.
      * 
@@ -631,22 +637,22 @@ public class HttpServletHelper {
      * 
      * @return URL builder containing the scheme, server name, server port, and full path
      */
-    public static URLBuilder getContextRelativeUrl(HttpServletRequest httpRequest, String path){
+    public static URLBuilder getContextRelativeUrl(HttpServletRequest httpRequest, String path) {
         URLBuilder urlBuilder = new URLBuilder();
         urlBuilder.setScheme(httpRequest.getScheme());
         urlBuilder.setHost(httpRequest.getServerName());
         urlBuilder.setPort(httpRequest.getServerPort());
-        
+
         StringBuilder pathBuilder = new StringBuilder();
-        if(!"".equals(httpRequest.getContextPath())){
+        if (!"".equals(httpRequest.getContextPath())) {
             pathBuilder.append(httpRequest.getContextPath());
         }
-        if(!path.startsWith("/")){
+        if (!path.startsWith("/")) {
             pathBuilder.append("/");
         }
         pathBuilder.append(DatatypeHelper.safeTrim(path));
         urlBuilder.setPath(pathBuilder.toString());
-        
+
         return urlBuilder;
     }
 }

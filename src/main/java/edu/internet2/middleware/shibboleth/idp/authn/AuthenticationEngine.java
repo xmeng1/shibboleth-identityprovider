@@ -206,8 +206,9 @@ public class AuthenticationEngine extends HttpServlet {
 
         LoginContext loginContext = HttpServletHelper.getLoginContext(storageService, getServletContext(), httpRequest);
         if (loginContext == null) {
-            LOG.error("Incoming request does not have attached login context");
-            throw new ServletException("Incoming request does not have attached login context");
+            LOG.warn("No login context available, unable to proceed with authentication");
+            forwardRequest("/error.jsp", httpRequest, httpResponse);
+            return;
         }
 
         if (!loginContext.getAuthenticationAttempted()) {

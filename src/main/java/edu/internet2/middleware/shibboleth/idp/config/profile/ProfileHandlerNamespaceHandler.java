@@ -21,6 +21,7 @@ import javax.xml.namespace.QName;
 import edu.internet2.middleware.shibboleth.common.config.BaseSpringNamespaceHandler;
 import edu.internet2.middleware.shibboleth.common.config.profile.JSPErrorHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.common.config.profile.VelocityErrorHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.authn.ExternalAuthnSystemLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.IPAddressLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.PreviousSessionLoginHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.authn.RemoteUserLoginHandlerBeanDefinitionParser;
@@ -31,6 +32,7 @@ import edu.internet2.middleware.shibboleth.idp.config.profile.saml1.ShibbolethSS
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2ArtifactResolutionProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2AttributeQueryProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2SLOProfileHandlerBeanDefinitionParser;
+import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2ECPProfileHandlerBeanDefinitionParser;
 import edu.internet2.middleware.shibboleth.idp.config.profile.saml2.SAML2SSOProfileHandlerBeanDefinitionParser;
 
 /**
@@ -73,8 +75,13 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
         registerBeanDefinitionParser(SAML2SSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SSOProfileHandlerBeanDefinitionParser());
 
+<<<<<<< HEAD
         registerBeanDefinitionParser(SAML2SLOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SLOProfileHandlerBeanDefinitionParser());
+=======
+        registerBeanDefinitionParser(SAML2ECPProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new SAML2ECPProfileHandlerBeanDefinitionParser());
+>>>>>>> master
 
         registerBeanDefinitionParser(SAML2AttributeQueryProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2AttributeQueryProfileHandlerBeanDefinitionParser());
@@ -87,6 +94,9 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
 
         registerBeanDefinitionParser(RemoteUserLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new RemoteUserLoginHandlerBeanDefinitionParser());
+        
+        registerBeanDefinitionParser(ExternalAuthnSystemLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new ExternalAuthnSystemLoginHandlerBeanDefinitionParser());
 
         registerBeanDefinitionParser(UsernamePasswordLoginHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new UsernamePasswordLoginHandlerBeanDefinitionParser());

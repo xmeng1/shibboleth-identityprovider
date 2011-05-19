@@ -61,7 +61,16 @@
                               signAssertions="always" 
                               encryptAssertions="conditional"
                               encryptNameIds="never" />
-        
+
+        <rp:ProfileConfiguration xsi:type="saml:SAML2ECPProfile"
+                              includeAttributeStatement="true"
+                              assertionLifetime="PT5M"
+                              assertionProxyCount="0"
+                              signResponses="never"
+                              signAssertions="always"
+                              encryptAssertions="conditional"
+                              encryptNameIds="never" />
+
         <rp:ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" 
                               assertionLifetime="PT5M"
                               assertionProxyCount="0" 

@@ -37,6 +37,9 @@ public class UsernamePrincipal implements Principal, Serializable {
      */
     public UsernamePrincipal(String principalName) {
         name = DatatypeHelper.safeTrimOrNullString(principalName);
+        if(name == null){
+            throw new IllegalArgumentException("principal name may not be null or empty");
+        }
     }
 
     /** {@inheritDoc} */

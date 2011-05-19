@@ -34,8 +34,12 @@
     </bean>
 
     <bean id="shibboleth.VelocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean" depends-on="shibboleth.LogbackLogging">
+        <property name="overrideLogging" value="false"/>
         <property name="velocityProperties">
             <props>
+                <prop key="runtime.log.logsystem.class">
+                    edu.internet2.middleware.shibboleth.common.util.Slf4JLogChute
+                </prop>
                 <prop key="resource.loader">classpath, string</prop>
                 <prop key="classpath.resource.loader.class">
                     org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
@@ -167,6 +171,15 @@
             </key>
             <bean id="shibboleth.ShibbolethSSODecoder"
                 class="edu.internet2.middleware.shibboleth.idp.profile.saml1.ShibbolethSSODecoder">
+            </bean>
+        </entry>
+        <entry>
+            <key>
+                <value>urn:mace:shibboleth:2.0:profiles:AuthnRequest</value>
+            </key>
+            <bean id="shibboleth.UnsolicitedSSODecoder"
+                class="edu.internet2.middleware.shibboleth.idp.profile.saml2.UnsolicitedSSODecoder">
+                <constructor-arg ref="shibboleth.IdGenerator" />
             </bean>
         </entry>
     </util:map>

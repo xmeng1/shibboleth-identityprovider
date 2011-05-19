@@ -64,6 +64,9 @@ public class IdPSessionFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException,
             ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
+        
+        MDC.put("JSESSIONID", httpRequest.getSession().getId());
+        MDC.put("clientIP", httpRequest.getRemoteAddr());
 
         Cookie sessionCookie = getIdPSessionCookie(httpRequest);
         Session idpSession = getUserSession(sessionCookie, httpRequest);

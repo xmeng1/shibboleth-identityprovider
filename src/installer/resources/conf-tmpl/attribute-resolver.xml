@@ -249,17 +249,23 @@
         <resolver:AttributeEncoder xsi:type="enc:SAML1String" name="urn:mace:dir:attribute-def:eduPersonAssurance" />
         <resolver:AttributeEncoder xsi:type="enc:SAML2String" name="urn:oid:1.3.6.1.4.1.5923.1.1.1.11" friendlyName="eduPersonAssurance" />
     </resolver:AttributeDefinition>
+    -->
         
-    <resolver:AttributeDefinition xsi:type="ad:Scoped" id="eduPersonTargetedID.old" scope="$IDP_SCOPE$" sourceAttributeID="computedID">
-        <resolver:Dependency ref="computedID" />
-        <resolver:AttributeEncoder xsi:type="enc:SAML1ScopedString" name="urn:mace:dir:attribute-def:eduPersonTargetedID" />
-    </resolver:AttributeDefinition>
-
+    <!--
     <resolver:AttributeDefinition xsi:type="ad:SAML2NameID" id="eduPersonTargetedID" 
                                   nameIdFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent" sourceAttributeID="computedID">
         <resolver:Dependency ref="computedID" />
         <resolver:AttributeEncoder xsi:type="enc:SAML1XMLObject" name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" />
         <resolver:AttributeEncoder xsi:type="enc:SAML2XMLObject" name="urn:oid:1.3.6.1.4.1.5923.1.1.1.10" friendlyName="eduPersonTargetedID" />
+    </resolver:AttributeDefinition>
+    -->
+    
+    <!-- Do NOT use the version of eduPersonTargetedID defined below unless you understand 
+         why it was deprecated and know that this reason does not apply to you. -->
+    <!--
+    <resolver:AttributeDefinition xsi:type="ad:Scoped" id="eduPersonTargetedID.old" scope="$IDP_SCOPE$" sourceAttributeID="computedID">
+        <resolver:Dependency ref="computedID" />
+        <resolver:AttributeEncoder xsi:type="enc:SAML1ScopedString" name="urn:mace:dir:attribute-def:eduPersonTargetedID" />
     </resolver:AttributeDefinition>
     -->
 

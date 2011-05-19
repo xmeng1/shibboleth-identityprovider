@@ -137,7 +137,7 @@
         <url-pattern>/Logout</url-pattern>
     </servlet-mapping>
 
-    <!-- Servlet protected by container user for RemoteUser authentication -->
+    <!-- Servlet protected by container used for RemoteUser authentication -->
     <servlet>
         <servlet-name>RemoteUserAuthHandler</servlet-name>
         <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.provider.RemoteUserAuthServlet</servlet-class>
@@ -153,7 +153,7 @@
     <servlet>
         <servlet-name>UsernamePasswordAuthHandler</servlet-name>
         <servlet-class>edu.internet2.middleware.shibboleth.idp.authn.provider.UsernamePasswordLoginServlet</servlet-class>
-        <load-on-startup>4</load-on-startup>
+        <load-on-startup>3</load-on-startup>
     </servlet>
 
     <servlet-mapping>

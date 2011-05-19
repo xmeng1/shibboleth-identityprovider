@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>edu.internet2.middleware</groupId>
     <artifactId>shibboleth-identityprovider</artifactId>
-    <version>2.2.1-slo10</version>
+    <version>2.3.0</version>
     <!-- We bundle as a jar here, the installer creates the WAR -->
     <packaging>jar</packaging>
 
@@ -13,47 +13,54 @@
         The Shibboleth Identity Provider is used by an organization to securely assert information, via SAML, about
         their users.  This information is then read and acted upon by Service Providers.
     </description>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <xerces.groupId>org.apache.xerces</xerces.groupId>
         <xerces.version>2.10.0</xerces.version>
     </properties>
-    
+
     <repositories>
         <repository>
-            <id>shibboleth.internet2.edu</id>
-            <name>Internet2</name>
-            <layout>default</layout>
-            <url>http://shibboleth.internet2.edu/downloads/maven2</url>
+            <id>shib-release</id>
+            <url>https://shibboleth.net/nexus/content/groups/public</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-    </repositories>
-    
-    <distributionManagement>
         <repository>
-            <id>release-repo</id>
-            <url>${dist.release.url}</url>
+            <id>shib-snapshot</id>
+            <url>https://shibboleth.net/nexus/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
         </repository>
-    </distributionManagement>
+    </repositories>
 
     <dependencies>
         <!-- Compile dependencies -->
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
             <artifactId>shibboleth-common</artifactId>
+<<<<<<< HEAD
             <version>1.2.1-slo2</version>
+=======
+            <version>1.3.0</version>
+>>>>>>> master
         </dependency>
-        
+
         <!-- Provided dependencies -->
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.4</version>
         </dependency>
-                
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <version>2.0</version>
+        </dependency>
+
         <!-- Runtime dependencies -->
         <dependency>
             <groupId>${xerces.groupId}</groupId>
@@ -68,19 +75,13 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>${xerces.groupId}</groupId>
-            <artifactId>resolver</artifactId>
-            <version>${xerces.version}</version>
+            <groupId>xml-resolver</groupId>
+            <artifactId>xml-resolver</artifactId>
+            <version>1.2</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>${xerces.groupId}</groupId>
-            <artifactId>serializer</artifactId>
-            <version>${xerces.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.xalan</groupId>
+            <groupId>xalan</groupId>
             <artifactId>xalan</artifactId>
             <version>2.7.1</version>
             <scope>runtime</scope>
@@ -121,7 +122,7 @@
             <version>1.1.0</version>
             <scope>runtime</scope>
         </dependency>
-        
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>junit</groupId>
@@ -148,19 +149,24 @@
             </exclusions>
         </dependency>
     </dependencies>
-    
+
+    <distributionManagement>
+        <repository>
+            <id>release</id>
+            <url>https://shibboleth.net/nexus/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshot</id>
+            <url>https://shibboleth.net/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
@@ -170,6 +176,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2.1</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/main/assembly/bin.xml</descriptor>
@@ -189,13 +196,15 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.8</version>
                 <configuration>
-                  <argLine>-Xmx256m</argLine>
+                    <argLine>-Xmx256m</argLine>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.1</version>
                 <configuration>
                     <archive>
                         <index>true</index>
@@ -206,13 +215,41 @@
                             <manifestSection>
                                 <name>edu/internet2/middleware/shibboleth/idp/</name>
                                 <manifestEntries>
-                                    <Implementation-Title>${pom.artifactId}</Implementation-Title>
-                                    <Implementation-Version>${pom.version}</Implementation-Version>
+                                    <Implementation-Title>${project.artifactId}</Implementation-Title>
+                                    <Implementation-Version>${project.version}</Implementation-Version>
                                     <Implementation-Vendor>shibboleth.internet2.edu</Implementation-Vendor>
                                 </manifestEntries>
                             </manifestSection>
                         </manifestSections>
                     </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1.2</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <quiet>true</quiet>
                 </configuration>
             </plugin>
         </plugins>
@@ -223,11 +260,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8</version>
                 <configuration>
                     <links>
                         <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
                         <link>http://joda-time.sourceforge.net/apidocs/</link>
-                        <link>http://static.springsource.org/spring/docs/2.0.x/api/</link> 
+                        <link>http://static.springsource.org/spring/docs/2.0.x/api/</link>
                     </links>
                     <quiet>true</quiet>
                     <author>false</author>
@@ -240,16 +278,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.2</version>
                 <configuration>
                     <outputDirectory>${project.reporting.outputDirectory}/xref</outputDirectory>
                     <doctitle>${project.name} ${project.version} Code Cross-Reference</doctitle>
                     <windowtitle>${project.name} ${project.version} Java API.</windowtitle>
-                    <javadocDir>${project.reporting.outputDirectory}/apidocs</javadocDir>                    
+                    <javadocDir>${project.reporting.outputDirectory}/apidocs</javadocDir>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.8.1</version>
                 <configuration>
                     <outputDirectory>${project.reporting.outputDirectory}/unitTest</outputDirectory>
                     <xrefLocation>${project.reporting.outputDirectory}/xref</xrefLocation>
@@ -257,15 +297,12 @@
             </plugin>
         </plugins>
     </reporting>
-    
+
     <profiles>
         <profile>
             <id>release</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
@@ -330,16 +367,16 @@
                             </execution>
                         </executions>
                     </plugin>
-                </plugins>    
-            </build>            
+                </plugins>
+            </build>
         </profile>
     </profiles>
-    
+
     <!-- Project Metadata -->
     <url>http://shibboleth.internet2.edu/</url>
-    
+
     <inceptionYear>2006</inceptionYear>
-    
+
     <licenses>
         <license>
             <name>Apache 2</name>
@@ -347,17 +384,17 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    
+
     <organization>
         <name>Internet2</name>
         <url>http://www.internet2.edu/</url>
     </organization>
-    
+
     <issueManagement>
         <system>JIRA</system>
         <url>http://bugs.internet2.edu/</url>
     </issueManagement>
-    
+
     <mailingLists>
         <mailingList>
             <name>Shibboleth Announce</name>
@@ -381,20 +418,20 @@
             <archive>https://mail.internet2.edu/wws/arc/shibboleth-dev</archive>
         </mailingList>
     </mailingLists>
-    
+
     <scm>
         <connection>scm:svn:https://svn.middleware.georgetown.edu/java-idp/</connection>
         <developerConnection>scm:svn:https://svn.middleware.georgetown.edu/java-idp/</developerConnection>
         <tag>HEAD</tag>
         <url>http://svn.middleware.georgetown.edu/view/?root=java-idp</url>
     </scm>
-    
+
     <developers>
         <developer>
             <id>cantor</id>
             <name>Scott Cantor</name>
             <organization>The Ohio State University</organization>
-            <organizationUrl>http://www.ohio-state.edu/</organizationUrl>
+            <organizationUrl>http://www.osu.edu/</organizationUrl>
             <roles>
                 <role>developer</role>
             </roles>
@@ -413,19 +450,19 @@
         <developer>
             <id>lajoie</id>
             <name>Chad La Joie</name>
-            <organization>SWITCH</organization>
-            <organizationUrl>http://www.switch.ch/</organizationUrl>
+            <organization>Itumi, LLC</organization>
+            <organizationUrl>http://www.itumi.biz/</organizationUrl>
             <roles>
                 <role>developer</role>
                 <role>documentation</role>
             </roles>
-            <timezone>+1</timezone>
+            <timezone>-5</timezone>
         </developer>
         <developer>
             <id>wnorris</id>
             <name>Will Norris</name>
-            <organization>University of Southern California</organization>
-            <organizationUrl>http://www.usc.edu/</organizationUrl>
+            <organization>Google, Inc.</organization>
+            <organizationUrl>http://www.google.com/</organizationUrl>
             <roles>
                 <role>developer</role>
             </roles>
@@ -442,5 +479,10 @@
             <timezone>0</timezone>
         </developer>
     </developers>
+<<<<<<< HEAD
     
 </project>
+=======
+
+</project>
+>>>>>>> tags/2.3.0

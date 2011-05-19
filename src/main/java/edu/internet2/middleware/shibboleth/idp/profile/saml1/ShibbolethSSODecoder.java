@@ -73,6 +73,7 @@ public class ShibbolethSSODecoder extends BaseSAML1MessageDecoder implements SAM
                     "No providerId parameter given in Shibboleth SSO authentication request.");
         }
         requestContext.setInboundMessageIssuer(providerId);
+        requestContext.setPeerEntityId(providerId);
 
         String shire = DatatypeHelper.safeTrimOrNullString(transport.getParameterValue("shire"));
         if (shire == null) {
