@@ -44,11 +44,7 @@
         <dependency>
             <groupId>edu.internet2.middleware</groupId>
             <artifactId>shibboleth-common</artifactId>
-<<<<<<< HEAD
-            <version>1.2.0-slo2</version>
-=======
-            <version>1.2.1</version>
->>>>>>> master
+            <version>1.2.1-slo2</version>
         </dependency>
         
         <!-- Provided dependencies -->
