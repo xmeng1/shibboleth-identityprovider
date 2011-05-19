@@ -75,13 +75,10 @@ public class ProfileHandlerNamespaceHandler extends BaseSpringNamespaceHandler {
         registerBeanDefinitionParser(SAML2SSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SSOProfileHandlerBeanDefinitionParser());
 
-<<<<<<< HEAD
         registerBeanDefinitionParser(SAML2SLOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2SLOProfileHandlerBeanDefinitionParser());
-=======
         registerBeanDefinitionParser(SAML2ECPProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2ECPProfileHandlerBeanDefinitionParser());
->>>>>>> master
 
         registerBeanDefinitionParser(SAML2AttributeQueryProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SAML2AttributeQueryProfileHandlerBeanDefinitionParser());
