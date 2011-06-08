@@ -25,6 +25,7 @@ import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.AttributeStatement;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
@@ -54,6 +55,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(AttributeQueryProfileHandler.class);
 
+    /** Builder of NameID objects. */
+    private SAMLObjectBuilder<NameID> nameIDBuilder;
+
     /** Builder of assertion consumer service endpoints. */
     private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
@@ -61,6 +65,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     public AttributeQueryProfileHandler() {
         super();
 
+        nameIDBuilder = (SAMLObjectBuilder<NameID>) getBuilderFactory().getBuilder(
+                NameID.DEFAULT_ELEMENT_NAME);
         acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
                 AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
@@ -275,6 +281,25 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         return endpoint;
     }
 
+    /** {@inheritDoc} */
+    protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
+        throws ProfileException {
+        
+        log.debug("Reusing NameID supplied in query");
+        NameID src = requestContext.getSubjectNameIdentifier();
+        if (src != null) {
+            NameID dest = nameIDBuilder.buildObject();
+            dest.setValue(src.getValue());
+            dest.setNameQualifier(src.getNameQualifier());
+            dest.setSPNameQualifier(src.getSPNameQualifier());
+            dest.setFormat(src.getFormat());
+            dest.setSPProvidedID(src.getSPProvidedID());
+            return dest;
+        }
+        return null;
+    }
+
+    
     /** Basic data structure used to accumulate information as a request is being processed. */
     protected class AttributeQueryContext extends
             BaseSAML2ProfileRequestContext<AttributeQuery, Response, AttributeQueryConfiguration> {
