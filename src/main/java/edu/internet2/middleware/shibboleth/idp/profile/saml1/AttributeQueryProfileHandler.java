@@ -25,6 +25,7 @@ import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.AttributeStatement;
+import org.opensaml.saml1.core.NameIdentifier;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
@@ -57,13 +58,18 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(AttributeQueryProfileHandler.class);
 
+    /** Builder of NameIdentifier objects. */
+    private SAMLObjectBuilder<NameIdentifier> nameIdentifierBuilder;
+
     /** Builder of assertion consumer service endpoints. */
     private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
     /** Constructor. */
     public AttributeQueryProfileHandler() {
         super();
-
+        
+        nameIdentifierBuilder = (SAMLObjectBuilder<NameIdentifier>) getBuilderFactory().getBuilder(
+                NameIdentifier.DEFAULT_ELEMENT_NAME);
         acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
                 AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
@@ -261,6 +267,22 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         }
 
         return endpoint;
+    }
+    
+    /** {@inheritDoc} */
+    protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
+        throws ProfileException {
+        
+        log.debug("Reusing NameIdentifier supplied in query");
+        NameIdentifier src = requestContext.getSubjectNameIdentifier();
+        if (src != null) {
+            NameIdentifier dest = nameIdentifierBuilder.buildObject();
+            dest.setNameIdentifier(src.getNameIdentifier());
+            dest.setNameQualifier(src.getNameQualifier());
+            dest.setFormat(src.getFormat());
+            return dest;
+        }
+        return null;
     }
 
     /** Basic data structure used to accumulate information as a request is being processed. */
