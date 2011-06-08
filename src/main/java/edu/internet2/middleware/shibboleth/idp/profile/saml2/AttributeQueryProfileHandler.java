@@ -43,6 +43,7 @@ import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.internet2.middleware.shibboleth.common.attribute.provider.BasicAttribute;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
@@ -294,6 +295,16 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
             dest.setSPNameQualifier(src.getSPNameQualifier());
             dest.setFormat(src.getFormat());
             dest.setSPProvidedID(src.getSPProvidedID());
+
+            if (dest.getValue() != null) {
+                // TODO: this is a hack to satisfy the audit log, but we should fix the
+                // context API to handle the NameID value directly
+                BasicAttribute<String> attribute = new BasicAttribute<String>();
+                attribute.setId("outboundQueryNameID");
+                attribute.getValues().add(dest.getValue());
+                requestContext.setNameIdentifierAttribute(attribute);
+            }
+
             return dest;
         }
         return null;
