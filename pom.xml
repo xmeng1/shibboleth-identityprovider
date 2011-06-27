@@ -149,11 +149,11 @@
     <distributionManagement>
         <repository>
             <id>release</id>
-            <url>https://shibboleth.net/nexus/content/repositories/releases</url>
+            <url>http://software.niif.hu/maven2/</url>
         </repository>
         <snapshotRepository>
             <id>snapshot</id>
-            <url>https://shibboleth.net/nexus/content/repositories/snapshots</url>
+            <url>http://software.niif.hu/maven2/</url>
         </snapshotRepository>
     </distributionManagement>
 
