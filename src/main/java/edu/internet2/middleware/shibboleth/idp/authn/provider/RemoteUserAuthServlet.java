@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,10 +44,14 @@ public class RemoteUserAuthServlet extends HttpServlet {
     /** {@inheritDoc} */
     protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
-        String principalName = httpRequest.getRemoteUser();
+        String principalName = DatatypeHelper.safeTrimOrNullString(httpRequest.getRemoteUser());
+        if(principalName != null){
+            log.debug("Remote user identified as {} returning control back to authentication engine", principalName);
+            httpRequest.setAttribute(LoginHandler.PRINCIPAL_KEY, new UsernamePrincipal(principalName));
+        }else{
+            log.debug("No remote user information was present in the request");
+        }
 
-        log.debug("Remote user identified as {} returning control back to authentication engine", principalName);
-        httpRequest.setAttribute(LoginHandler.PRINCIPAL_KEY, new UsernamePrincipal(principalName));
         AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }
 }
