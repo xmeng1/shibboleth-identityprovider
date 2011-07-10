@@ -1,6 +1,7 @@
 Changes in Release 2.3.1
 =============================================
 [SIDP-491] - Stylesheet link in login.jsp is not inside the head tag
+[SIDP-494] - login.config sample needs updating
 [SIDP-497] - Queries should return the same NameID supplied by the caller
 
 Changes in Release 2.3.0
