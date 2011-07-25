@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:service="urn:mace:shibboleth:2.0:services" targetNamespace="urn:mace:shibboleth:2.0:idp:profile-handler" elementFormDefault="qualified">
 
-<xsd:schema targetNamespace="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    xmlns="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:service="urn:mace:shibboleth:2.0:services"
-    elementFormDefault="qualified">
+    <xsd:include schemaLocation="classpath:/schema/shibboleth-2.0-profile-handler.xsd"/>
 
-    <xsd:include schemaLocation="classpath:/schema/shibboleth-2.0-profile-handler.xsd" />
-
-    <xsd:import namespace="urn:mace:shibboleth:2.0:services"
-        schemaLocation="classpath:/schema/shibboleth-2.0-services.xsd" />
+    <xsd:import namespace="urn:mace:shibboleth:2.0:services" schemaLocation="classpath:/schema/shibboleth-2.0-services.xsd"/>
 
     <xsd:annotation>
         <xsd:documentation>
@@ -20,7 +16,7 @@
             <xsd:documentation>Definition for the basic Shibboleth profile handler manager service.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="service:ReloadableServiceType" />
+            <xsd:extension base="service:ReloadableServiceType"/>
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -30,9 +26,9 @@
         </xsd:annotation>
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element name="ErrorHandler" type="ErrorHandlerType" />
-                <xsd:element name="ProfileHandler" type="RequestHandlerType" minOccurs="0" maxOccurs="unbounded" />
-                <xsd:element name="LoginHandler" type="LoginHandlerType" minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="ErrorHandler" type="ErrorHandlerType"/>
+                <xsd:element name="ProfileHandler" type="RequestHandlerType" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="LoginHandler" type="LoginHandlerType" minOccurs="0" maxOccurs="unbounded"/>
             </xsd:sequence>
         </xsd:complexType>
     </xsd:element>
@@ -42,7 +38,7 @@
             <xsd:documentation>Basic handler that returns a general status of the IdP.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="RequestURIMappedProfileHandlerType" />
+            <xsd:extension base="RequestURIMappedProfileHandlerType"/>
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -115,7 +111,7 @@
             <xsd:documentation>Configuration type for SAML 2 Attribute Query profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="SAML2ProfileHandler" />
+            <xsd:extension base="SAML2ProfileHandler"/>
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -142,7 +138,7 @@
             <xsd:documentation>Base type for SAML 2 profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="SAMLProfileHandler" />
+            <xsd:extension base="SAMLProfileHandler"/>
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -169,7 +165,7 @@
             <xsd:documentation>Configuration type for SAML 1 Attribute Query profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="SAML1ProfileHandler" />
+            <xsd:extension base="SAML1ProfileHandler"/>
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -196,7 +192,7 @@
             <xsd:documentation>Base type for SAML 1 profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="SAMLProfileHandler" />
+            <xsd:extension base="SAMLProfileHandler"/>
         </xsd:complexContent>
     </xsd:complexType>
 
@@ -230,7 +226,7 @@
                         </xsd:documentation>
                     </xsd:annotation>
                     <xsd:simpleType>
-                        <xsd:list itemType="xsd:anyURI" />
+                        <xsd:list itemType="xsd:anyURI"/>
                     </xsd:simpleType>
                 </xsd:attribute>
             </xsd:extension>
@@ -242,7 +238,7 @@
             <xsd:documentation>Base type for IdP profile handlers.</xsd:documentation>
         </xsd:annotation>
         <xsd:complexContent>
-            <xsd:extension base="ShibbolethProfileHandlerType" />
+            <xsd:extension base="ShibbolethProfileHandlerType"/>
         </xsd:complexContent>
     </xsd:complexType>
 

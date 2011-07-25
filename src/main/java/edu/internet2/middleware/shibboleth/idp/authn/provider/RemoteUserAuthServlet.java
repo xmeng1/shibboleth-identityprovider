@@ -1,11 +1,12 @@
 /*
- * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
+ * Licensed to the University Corporation for Advanced Internet Development, 
+ * Inc. (UCAID) under one or more contributor license agreements.  See the 
+ * NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The UCAID licenses this file to You under the Apache 
+ * License, Version 2.0 (the "License"); you may not use this file except in 
+ * compliance with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +24,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +44,14 @@ public class RemoteUserAuthServlet extends HttpServlet {
     /** {@inheritDoc} */
     protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
-        String principalName = httpRequest.getRemoteUser();
+        String principalName = DatatypeHelper.safeTrimOrNullString(httpRequest.getRemoteUser());
+        if(principalName != null){
+            log.debug("Remote user identified as {} returning control back to authentication engine", principalName);
+            httpRequest.setAttribute(LoginHandler.PRINCIPAL_KEY, new UsernamePrincipal(principalName));
+        }else{
+            log.debug("No remote user information was present in the request");
+        }
 
-        log.debug("Remote user identified as {} returning control back to authentication engine", principalName);
-        httpRequest.setAttribute(LoginHandler.PRINCIPAL_KEY, new UsernamePrincipal(principalName));
         AuthenticationEngine.returnToAuthenticationEngine(httpRequest, httpResponse);
     }
 }

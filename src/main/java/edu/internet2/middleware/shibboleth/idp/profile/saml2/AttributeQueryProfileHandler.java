@@ -1,11 +1,12 @@
 /*
- * Copyright 2006 University Corporation for Advanced Internet Development, Inc.
+ * Licensed to the University Corporation for Advanced Internet Development, 
+ * Inc. (UCAID) under one or more contributor license agreements.  See the 
+ * NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The UCAID licenses this file to You under the Apache 
+ * License, Version 2.0 (the "License"); you may not use this file except in 
+ * compliance with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +25,7 @@ import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml2.core.AttributeQuery;
 import org.opensaml.saml2.core.AttributeStatement;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.saml2.core.Statement;
 import org.opensaml.saml2.core.StatusCode;
@@ -41,6 +43,7 @@ import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.internet2.middleware.shibboleth.common.attribute.provider.BasicAttribute;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration;
@@ -53,6 +56,9 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(AttributeQueryProfileHandler.class);
 
+    /** Builder of NameID objects. */
+    private SAMLObjectBuilder<NameID> nameIDBuilder;
+
     /** Builder of assertion consumer service endpoints. */
     private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
@@ -60,6 +66,8 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
     public AttributeQueryProfileHandler() {
         super();
 
+        nameIDBuilder = (SAMLObjectBuilder<NameID>) getBuilderFactory().getBuilder(
+                NameID.DEFAULT_ELEMENT_NAME);
         acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
                 AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
@@ -274,6 +282,35 @@ public class AttributeQueryProfileHandler extends AbstractSAML2ProfileHandler {
         return endpoint;
     }
 
+    /** {@inheritDoc} */
+    protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext)
+        throws ProfileException {
+        
+        log.debug("Reusing NameID supplied in query");
+        NameID src = requestContext.getSubjectNameIdentifier();
+        if (src != null) {
+            NameID dest = nameIDBuilder.buildObject();
+            dest.setValue(src.getValue());
+            dest.setNameQualifier(src.getNameQualifier());
+            dest.setSPNameQualifier(src.getSPNameQualifier());
+            dest.setFormat(src.getFormat());
+            dest.setSPProvidedID(src.getSPProvidedID());
+
+            if (dest.getValue() != null) {
+                // TODO: this is a hack to satisfy the audit log, but we should fix the
+                // context API to handle the NameID value directly
+                BasicAttribute<String> attribute = new BasicAttribute<String>();
+                attribute.setId("outboundQueryNameID");
+                attribute.getValues().add(dest.getValue());
+                requestContext.setNameIdentifierAttribute(attribute);
+            }
+
+            return dest;
+        }
+        return null;
+    }
+
+    
     /** Basic data structure used to accumulate information as a request is being processed. */
     protected class AttributeQueryContext extends
             BaseSAML2ProfileRequestContext<AttributeQuery, Response, AttributeQueryConfiguration> {

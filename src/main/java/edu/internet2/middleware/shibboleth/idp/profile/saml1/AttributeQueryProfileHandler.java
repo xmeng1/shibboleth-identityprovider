@@ -1,11 +1,12 @@
 /*
- * Copyright [2006] [University Corporation for Advanced Internet Development, Inc.]
+ * Licensed to the University Corporation for Advanced Internet Development, 
+ * Inc. (UCAID) under one or more contributor license agreements.  See the 
+ * NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The UCAID licenses this file to You under the Apache 
+ * License, Version 2.0 (the "License"); you may not use this file except in 
+ * compliance with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +25,7 @@ import org.opensaml.common.binding.decoding.SAMLMessageDecoder;
 import org.opensaml.common.xml.SAMLConstants;
 import org.opensaml.saml1.core.AttributeQuery;
 import org.opensaml.saml1.core.AttributeStatement;
+import org.opensaml.saml1.core.NameIdentifier;
 import org.opensaml.saml1.core.Request;
 import org.opensaml.saml1.core.Response;
 import org.opensaml.saml1.core.Statement;
@@ -42,6 +44,7 @@ import org.opensaml.xml.security.SecurityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.internet2.middleware.shibboleth.common.attribute.provider.BasicAttribute;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml1.AttributeQueryConfiguration;
@@ -56,13 +59,18 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(AttributeQueryProfileHandler.class);
 
+    /** Builder of NameIdentifier objects. */
+    private SAMLObjectBuilder<NameIdentifier> nameIdentifierBuilder;
+
     /** Builder of assertion consumer service endpoints. */
     private SAMLObjectBuilder<AssertionConsumerService> acsEndpointBuilder;
 
     /** Constructor. */
     public AttributeQueryProfileHandler() {
         super();
-
+        
+        nameIdentifierBuilder = (SAMLObjectBuilder<NameIdentifier>) getBuilderFactory().getBuilder(
+                NameIdentifier.DEFAULT_ELEMENT_NAME);
         acsEndpointBuilder = (SAMLObjectBuilder<AssertionConsumerService>) getBuilderFactory().getBuilder(
                 AssertionConsumerService.DEFAULT_ELEMENT_NAME);
     }
@@ -260,6 +268,32 @@ public class AttributeQueryProfileHandler extends AbstractSAML1ProfileHandler {
         }
 
         return endpoint;
+    }
+    
+    /** {@inheritDoc} */
+    protected NameIdentifier buildNameId(BaseSAML1ProfileRequestContext<?, ?, ?> requestContext)
+        throws ProfileException {
+        
+        log.debug("Reusing NameIdentifier supplied in query");
+        NameIdentifier src = requestContext.getSubjectNameIdentifier();
+        if (src != null) {
+            NameIdentifier dest = nameIdentifierBuilder.buildObject();
+            dest.setNameIdentifier(src.getNameIdentifier());
+            dest.setNameQualifier(src.getNameQualifier());
+            dest.setFormat(src.getFormat());
+
+            if (dest.getNameIdentifier() != null) {
+                // TODO: this is a hack to satisfy the audit log, but we should fix the
+                // context API to handle the NameID value directly
+                BasicAttribute<String> attribute = new BasicAttribute<String>();
+                attribute.setId("outboundQueryNameIdentifier");
+                attribute.getValues().add(dest.getNameIdentifier());
+                requestContext.setNameIdentifierAttribute(attribute);
+            }
+            
+            return dest;
+        }
+        return null;
     }
 
     /** Basic data structure used to accumulate information as a request is being processed. */

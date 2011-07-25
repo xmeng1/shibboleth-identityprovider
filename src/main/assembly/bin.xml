@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Binary distribution, along with dependency jar files -->
 <assembly>
     <id>bin</id>
@@ -45,7 +46,7 @@
         <!-- Copy up our installer srcipts into the root of the package -->
         <fileSet>
             <directory>src/installer/bash</directory>
-            <outputDirectory></outputDirectory>
+            <outputDirectory/>
             <includes>
                 <include>*.sh</include>
             </includes>
@@ -54,7 +55,7 @@
         </fileSet>
         <fileSet>
             <directory>src/installer/bat</directory>
-            <outputDirectory></outputDirectory>
+            <outputDirectory/>
             <includes>
                 <include>*.bat</include>
             </includes>
