@@ -1,8 +1,8 @@
 <%@ taglib uri="urn:mace:shibboleth:2.0:idp:ui" prefix="idpui" %>
 <html>
-  <link rel="stylesheet" type="text/css" href="<%= request.getContextPath()%>/login.css"/>
   <head>
     <title>Shibboleth Identity Provider - Example Login Page</title>
+    <link rel="stylesheet" type="text/css" href="<%= request.getContextPath()%>/login.css"/>
   </head>
 
   <body id="homepage">
