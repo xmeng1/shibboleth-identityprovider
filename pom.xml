@@ -149,11 +149,11 @@
     <distributionManagement>
         <repository>
             <id>release</id>
-            <url>http://software.niif.hu/maven2/</url>
+            <url>file:///Users/sitya/development/software.niif.hu/www/maven2/</url>
         </repository>
         <snapshotRepository>
             <id>snapshot</id>
-            <url>http://software.niif.hu/maven2/</url>
+            <url>file:///Users/sitya/development/software.niif.hu/www/maven2/</url>
         </snapshotRepository>
     </distributionManagement>
 
