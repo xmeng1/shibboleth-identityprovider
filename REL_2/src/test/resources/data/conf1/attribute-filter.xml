@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AttributeFilterPolicyGroup xmlns="urn:mace:shibboleth:2.0:afp" xmlns:basic="urn:mace:shibboleth:2.0:afp:mf:basic" xmlns:saml="urn:mace:shibboleth:2.0:afp:mf:saml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="ShibbolethFilterPolicy" xsi:schemaLocation="urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd                                                 urn:mace:shibboleth:2.0:afp:mf:basic classpath:/schema/shibboleth-2.0-afp-mf-basic.xsd                                                 urn:mace:shibboleth:2.0:afp:mf:saml classpath:/schema/shibboleth-2.0-afp-mf-saml.xsd">
+
+    <AttributeFilterPolicy id="releaseToAnyone">
+        <PolicyRequirementRule xsi:type="basic:ANY"/>
+        
+        <AttributeRule attributeID="principalName">
+            <PermitValueRule xsi:type="basic:ANY"/>
+        </AttributeRule>
+        
+        <AttributeRule attributeID="eduPersonEntitlement">
+            <PermitValueRule xsi:type="basic:ANY"/>
+        </AttributeRule>
+        
+    </AttributeFilterPolicy>
+    
+</AttributeFilterPolicyGroup>

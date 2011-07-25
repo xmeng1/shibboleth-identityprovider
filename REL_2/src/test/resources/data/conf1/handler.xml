@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ProfileHandlerGroup xmlns="urn:mace:shibboleth:2.0:idp:profile-handler" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:2.0:idp:profile-handler classpath:/schema/shibboleth-2.0-idp-profile-handler.xsd">
+
+    <ErrorHandler xsi:type="JSPErrorHandler" jspPagePath="/error.jsp"/>
+
+    <ProfileHandler xsi:type="Status">
+        <RequestPath>/status</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="ShibbolethSSO" inboundBinding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:profiles:browser-post                                                  urn:oasis:names:tc:SAML:1.0:profiles:artifact-01">
+        <RequestPath>/shibboleth/SSO</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML1AttributeQuery" inboundBinding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding">
+        <RequestPath>/saml1/SOAP/AttributeQuery</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML1ArtifactResolution" inboundBinding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding">
+        <RequestPath>/saml1/SOAP/ArtifactResolution</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML2SSO" inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST                                                  urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact">
+        <RequestPath>/saml2/POST/SSO</RequestPath>
+    </ProfileHandler>
+
+    <ProfileHandler xsi:type="SAML2SSO" inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST                                                  urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact">
+        <RequestPath>/saml2/Redirect/SSO</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML2AttributeQuery" inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
+        <RequestPath>/saml2/SOAP/AttributeQuery</RequestPath>
+    </ProfileHandler>
+    
+    <ProfileHandler xsi:type="SAML2ArtifactResolution" inboundBinding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" outboundBindingEnumeration="urn:oasis:names:tc:SAML:2.0:bindings:SOAP">
+        <RequestPath>/saml2/SOAP/ArtifactResolution</RequestPath>
+    </ProfileHandler>
+    
+    <LoginHandler xsi:type="RemoteUser">
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:unspecified</AuthenticationMethod>
+    </LoginHandler>
+    
+    <LoginHandler xsi:type="UsernamePassword" jaasConfigurationLocation="file://$IDP_HOME$/conf/login.config">
+        <AuthenticationMethod>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</AuthenticationMethod>
+    </LoginHandler>
+
+</ProfileHandlerGroup>

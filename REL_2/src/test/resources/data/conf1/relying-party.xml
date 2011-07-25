@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    This file is an EXAMPLE configuration file.
+
+    This file specifies relying party dependent configurations for the IdP, for example, whether SAML assertions to a 
+    particular relying party should be signed.  It also includes metadata provider and credential definitions used 
+    when answering requests to a relying party.
+-->
+<RelyingPartyGroup xmlns="urn:mace:shibboleth:2.0:relying-party" xmlns:saml="urn:mace:shibboleth:2.0:relying-party:saml" xmlns:metadata="urn:mace:shibboleth:2.0:metadata" xmlns:resource="urn:mace:shibboleth:2.0:resource" xmlns:security="urn:mace:shibboleth:2.0:security" xmlns:samlsec="urn:mace:shibboleth:2.0:security:saml" xmlns:samlmd="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:mace:shibboleth:2.0:relying-party classpath:/schema/shibboleth-2.0-relying-party.xsd                                        urn:mace:shibboleth:2.0:relying-party:saml classpath:/schema/shibboleth-2.0-relying-party-saml.xsd                                        urn:mace:shibboleth:2.0:metadata classpath:/schema/shibboleth-2.0-metadata.xsd                                        urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd                                        urn:mace:shibboleth:2.0:security classpath:/schema/shibboleth-2.0-security.xsd                                        urn:mace:shibboleth:2.0:security:saml classpath:/schema/shibboleth-2.0-security-policy-saml.xsd                                        urn:oasis:names:tc:SAML:2.0:metadata classpath:/schema/saml-schema-metadata-2.0.xsd">
+                                       
+    <!-- ========================================== -->
+    <!--      Relying Party Configurations          -->
+    <!-- ========================================== -->
+    <AnonymousRelyingParty provider="urn:example.org:idp1"/>
+    
+    <DefaultRelyingParty provider="urn:example.org:idp1" defaultSigningCredentialRef="IdPCredential">
+        <!-- 
+            Each attribute in these profiles configuration is set to its default value,
+            that is, the values that would be in effect if those attributes were not present.
+            We list them here so that people are aware of them (since they seem reluctant to 
+            read the documentation).
+        -->
+        <ProfileConfiguration xsi:type="saml:ShibbolethSSOProfile" includeAttributeStatement="false" assertionLifetime="300000" signResponses="conditional" signAssertions="never"/>
+                              
+        <ProfileConfiguration xsi:type="saml:SAML1AttributeQueryProfile" assertionLifetime="300000" signResponses="conditional" signAssertions="never"/>
+        
+        <ProfileConfiguration xsi:type="saml:SAML1ArtifactResolutionProfile" signResponses="conditional" signAssertions="never"/>
+        
+        <ProfileConfiguration xsi:type="saml:SAML2SSOProfile" includeAttributeStatement="true" assertionLifetime="300000" assertionProxyCount="0" signResponses="conditional" signAssertions="never" encryptAssertions="never" encryptNameIds="never"/>
+        
+        <ProfileConfiguration xsi:type="saml:SAML2AttributeQueryProfile" assertionLifetime="300000" assertionProxyCount="0" signResponses="conditional" signAssertions="never" encryptAssertions="never" encryptNameIds="never"/>
+        
+        <ProfileConfiguration xsi:type="saml:SAML2ArtifactResolutionProfile" signResponses="conditional" signAssertions="never" encryptAssertions="never" encryptNameIds="never"/>
+        
+    </DefaultRelyingParty>
+        
+    
+    <!-- ========================================== -->
+    <!--      Metadata Configuration                -->
+    <!-- ========================================== -->
+    <!-- MetadataProvider the combining other MetadataProviders -->
+    <MetadataProvider xmlns="urn:mace:shibboleth:2.0:metadata" id="ShibbolethMetadata" xsi:type="ChainingMetadataProvider">
+    
+        <MetadataProvider id="InlineMD" xsi:type="InlineMetadataProvider">
+            <EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" Name="urn:example.org">
+                <EntityDescriptor entityID="urn:example.org:idp1">
+                    <IDPSSODescriptor protocolSupportEnumeration="urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+                        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+                        <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" Location="https://example.org/myIdP"/>
+                        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/myIdP"/>
+                    </IDPSSODescriptor>
+                    <AttributeAuthorityDescriptor protocolSupportEnumeration="urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+                        <AttributeService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://example.org/myIdP"/>
+                        <AttributeService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://example.org/myIdP"/>
+                        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+                    </AttributeAuthorityDescriptor>
+                </EntityDescriptor>
+                <EntityDescriptor entityID="urn:example.org:sp1">
+                    <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+                        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post" Location="https://example.org/mySP" index="0"/>
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" Location="https://example.org/mySP" index="0"/>
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://example.org/mySP" index="0"/>
+                        <AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://example.org/mySP" index="0"/>
+                    </SPSSODescriptor>
+                </EntityDescriptor>
+            </EntitiesDescriptor>
+        </MetadataProvider>
+        
+    </MetadataProvider>
+
+    
+    <!-- ========================================== -->
+    <!--     Security Configurations                -->
+    <!-- ========================================== -->
+    <security:Credential id="IdPCredential" xsi:type="security:X509Inline">
+        <security:PrivateKey>
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA2PZh/Ut00c+kdKZlts+mcH8dMfrICXaHJnI4h9+1YS7Fwk6M
+XWQ9LsbTyUvY5HZVQqK6o4bYLHYICCQE6rAjxJ1h7KGJrys+jDIFghGj9Kt6rsTH
+QT3qr9JP6NilWgC5BFyH72C613ZsnwlITaRTGXX6s3eaKvraM9IVvIen2UMpylDM
+JKMPcKCwhdwyGfA2leaTZByoDwihcG8NZAeSVKkY2y1PO2JFB75tYdM1tmXcMbkR
+yW6CbLvBwaHnf81h2s/Rz+58CILucQnJvUZFMJB5+E7gim2iPn/dWz9usPKWKf/0
+dXyCdzDhlK9y2H2WSEaK7Xq9CiG46g59ffriTwIDAQABAoIBAE/dAdz3NZ01zdeS
+mMZeUWn/oIORSKkTFFS2ntCFLIMFcI5B07FdAJiDX9otLT2LwX6x3/np3REgsXwt
+phGtnLz3IeC05bWxOWjp0NU8IRojNRm4HZCKdiUaSYfwl401zuUoGnGnLZ+6W+l+
+xTqvTleE8i+1yu4fQMrqfk3TsZlrTcoIWWt7FRICSgFiSIJsaJzafFG3xjyBqPnN
+TrNDv7823wrjDfCxeh/EfXb7vyCGxH6u8LSC1QC6iVXwqZ+ZxdcOPzJr+TYFIc4W
+3Txk5eJHddEALbEXiHxI2Qgarf406t22pw/jzfhw3cnVRmxIJxM9lW1MYcWYftgL
+JbhSLwECgYEA+6TbRm+ZTd6nO8QQEzQu2f/UnSzKopMiPT5ZMW9EEfAfB38cmea5
+FssaA00V8MmH72EzfkziNn/wuGtJ8vFD9JFtgsPSkmLdi/sOQpxrpeIdspI2QVJF
+yDAsZUwRIesLTpo0g5ZnBJ9y7pt8pM2Erl30pqxyFv4yrPe3CsqjeOECgYEA3LfW
+WbvIK0uExKV7XaCOb2CC2/tBoyFnPu69WeQu52GKTG19JwzC37IxlMnkTGSiGxv0
+7AmbAn7m3CsRii5QqNTdd5PScLGBpVLfGGQcQ6D+g7ubPxAHqPJBE0d4F/WKem2b
+w6jDa8zNi8w21aq3gFmm/dG3thz5OrfJGnVI0S8CgYEAp5HC9qdv5bvDjvfjYHZa
+UI6cjUF7ekESBshS6qlWIb/NWdeaOx252OTMYLBfUOVSoOQQPyWBaZtOt++x4ZYp
+k12YGADAYvx03TcD6vVwdZkZ/4R/noXjtAfoOFgr/HMhJ2lmWM25sglfpmZh3PiC
+Rv6H4Mlqe8cwBaA7AnOn4eECgYA2PFZHpoUBXoU5bRBraVCWvbhqJctzMnoUVMXi
+mNeNs8IwFZdzSQd5wGe+j/2xZ+kNkEkW1yVn75b68vpUYh0f326sO36ygmvBHCQF
+8lOfqqff5vG3BVFcimrDOgSgno1wmA52fbnHe4Pmnj+7MT/2IhGOvUHPVj9H1nFs
+NvW1sQKBgQCLZqpS3zNFoPY/88+272vryoNrUAFvGnuh2vgwOI1dI1eUGE5hKi9L
+u3cVdaF15sxp+4sEkN0O4hhvyREOJcat4F+jQpSV8Jnrrp3AonxD/2GM/bZGf5GP
+EFhslOxviejazr6GPxnB3J4AWKeaTV8tdhnI1/19r1Wt9o7RKbt2kg==
+-----BEGIN RSA PRIVATE KEY-----
+        </security:PrivateKey>
+        <security:Certificate>
+-----BEGIN CERTIFICATE-----
+MIIDJzCCAg+gAwIBAgIUYosClYcAZSjMjq/BaLYDH95LKyYwDQYJKoZIhvcNAQEF
+BQAwGjEYMBYGA1UEAxMPaWRwLmV4YW1wbGUub3JnMB4XDTA4MTAyMzEyMzkwM1oX
+DTI4MTAyMzEyMzkwM1owGjEYMBYGA1UEAxMPaWRwLmV4YW1wbGUub3JnMIIBIjAN
+BgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2PZh/Ut00c+kdKZlts+mcH8dMfrI
+CXaHJnI4h9+1YS7Fwk6MXWQ9LsbTyUvY5HZVQqK6o4bYLHYICCQE6rAjxJ1h7KGJ
+rys+jDIFghGj9Kt6rsTHQT3qr9JP6NilWgC5BFyH72C613ZsnwlITaRTGXX6s3ea
+KvraM9IVvIen2UMpylDMJKMPcKCwhdwyGfA2leaTZByoDwihcG8NZAeSVKkY2y1P
+O2JFB75tYdM1tmXcMbkRyW6CbLvBwaHnf81h2s/Rz+58CILucQnJvUZFMJB5+E7g
+im2iPn/dWz9usPKWKf/0dXyCdzDhlK9y2H2WSEaK7Xq9CiG46g59ffriTwIDAQAB
+o2UwYzBCBgNVHREEOzA5gg9pZHAuZXhhbXBsZS5vcmeGJmh0dHBzOi8vaWRwLmV4
+YW1wbGUub3JnL2lkcC9zaGliYm9sZXRoMB0GA1UdDgQWBBSgZLRz5F7FpZhmiQlR
+DKtFkcUS1jANBgkqhkiG9w0BAQUFAAOCAQEAmfVctNE3MtmqLK+c9ccM4wIiazwM
+KkWlVY7u64Y5Huv4SSS1v8Oc6mPl48V7zXN4R8TY4dgWL45vKfk3LcFuSIPyrPRp
+y531v9+qyOAt761dV6vruHn6Ir+ooVCKcwQfVvpCA4v70GtaB0jDHnYqF2j77BF5
+ZdwqkMrwre71EzFEIq13wmOvj9cI/ajCW3ftqRP+LxdJ2SnFkxvalTwy4dUktSuc
+Q3hMoKLU6hlB6Jwu3bp/+Q2HMUwl8++hgMY1CiYc3hz/LaWBmfNnF9xil9usI+xY
+XgzhuIUs3/APMhrOA5PehradspPhnYA0TZKxHISiyp2gFMQkPunm+tUfRw==
+-----END CERTIFICATE-----
+        </security:Certificate>
+    </security:Credential>
+    
+    <!-- Trust engine used to evaluate the signature on loaded metadata. -->
+    <!--
+    <security:TrustEngine id="shibboleth.MetadataTrustEngine" xsi:type="security:StaticExplicitKeySignature">
+        <security:Credential id="MyFederation1Credentials" xsi:type="security:X509Filesystem">
+            <security:Certificate>$IDP_HOME$/credentials/federation1.crt</security:Certificate>
+        </security:Credential>
+    </security:TrustEngine>
+     -->
+     
+    <!-- DO NOT EDIT BELOW THIS POINT -->
+    <!-- 
+        The following trust engines and rules control every aspect of security related to incoming messages. 
+        Trust engines evaluate various tokens (like digital signatures) for trust worthiness while the 
+        security policies establish a set of checks that an incoming message must pass in order to be considered
+        secure.  Naturally some of these checks require the validation of the tokens evaluated by the trust 
+        engines and so you'll see some rules that reference the declared trust engines.
+    -->
+    <security:TrustEngine id="shibboleth.SignatureTrustEngine" xsi:type="security:SignatureChaining">
+        <security:TrustEngine id="shibboleth.SignatureMetadataExplicitKeyTrustEngine" xsi:type="security:MetadataExplicitKeySignature" metadataProviderRef="ShibbolethMetadata"/>                              
+        <security:TrustEngine id="shibboleth.SignatureMetadataPKIXTrustEngine" xsi:type="security:MetadataPKIXSignature" metadataProviderRef="ShibbolethMetadata"/>
+    </security:TrustEngine>
+    
+    <security:TrustEngine id="shibboleth.CredentialTrustEngine" xsi:type="security:Chaining">
+        <security:TrustEngine id="shibboleth.CredentialMetadataExplictKeyTrustEngine" xsi:type="security:MetadataExplicitKey" metadataProviderRef="ShibbolethMetadata"/>
+        <security:TrustEngine id="shibboleth.CredentialMetadataPKIXTrustEngine" xsi:type="security:MetadataPKIXX509Credential" metadataProviderRef="ShibbolethMetadata"/>
+    </security:TrustEngine>
+     
+    <security:SecurityPolicy id="shibboleth.ShibbolethSSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:IssueInstant" required="false"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML1AttributeQuerySecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML1ArtifactResolutionSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+
+    <security:SecurityPolicy id="shibboleth.SAML2SSOSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:SAML2AuthnRequestsSigned"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+
+    <security:SecurityPolicy id="shibboleth.SAML2AttributeQuerySecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML2ArtifactResolutionSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+    
+    <security:SecurityPolicy id="shibboleth.SAML2SLOSecurityPolicy" xsi:type="security:SecurityPolicyType">
+        <security:Rule xsi:type="samlsec:Replay"/>
+        <security:Rule xsi:type="samlsec:IssueInstant"/>
+        <security:Rule xsi:type="samlsec:ProtocolWithXMLSignature" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPRedirectSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign" trustEngineRef="shibboleth.SignatureTrustEngine"/>
+        <security:Rule xsi:type="security:ClientCertAuth" trustEngineRef="shibboleth.CredentialTrustEngine"/>
+        <security:Rule xsi:type="samlsec:MandatoryIssuer"/>
+    </security:SecurityPolicy>
+    
+</RelyingPartyGroup>
