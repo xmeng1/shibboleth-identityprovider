@@ -196,7 +196,7 @@ public class ServiceLogoTag extends ServiceTagSupport {
 
         sb = new StringBuilder("<img src=\"");
         sb.append(encodedURL).append('"');
-        sb.append("alt=").append(getAltText()).append('"');
+        sb.append("alt= \"").append(getAltText()).append('"');
         addClassAndId(sb);
         sb.append("/>");
         return sb.toString();

@@ -1,3 +1,5 @@
+[SIDP-504] - Alt text generate for logo has mismatched quoting
+
 Changes in Release 2.3.2
 =============================================
 [SIDP-500] - shibboleth-identityprovider-2.3.1 installer broken on Windows 7 (64-bit) and Windows XP
