@@ -1,3 +1,5 @@
+Changes in Release 2.3.3
+=============================================
 [SIDP-504] - Alt text generate for logo has mismatched quoting
 
 Changes in Release 2.3.2
