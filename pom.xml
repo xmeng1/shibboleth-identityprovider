@@ -151,11 +151,11 @@
     <distributionManagement>
         <repository>
             <id>release</id>
-            <url>file:///Users/sitya/development/software.niif.hu/www/maven2/</url>
+            <url>${dist.release.url}</url>
         </repository>
         <snapshotRepository>
             <id>snapshot</id>
-            <url>file:///Users/sitya/development/software.niif.hu/www/maven2/</url>
+            <url>${dist.release.url}</url>
         </snapshotRepository>
     </distributionManagement>
 
