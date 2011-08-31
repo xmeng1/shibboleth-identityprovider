@@ -1,3 +1,8 @@
+Changes in Release 2.3.4
+=============================================
+[SIDP-513] idpui taglib could look for more languages matches
+[SIDP-514] Alt text for IdP Logos is not esapiEncoder.encodeForHTMLAttribute
+
 Changes in Release 2.3.3
 =============================================
 [SIDP-504] - Alt text generate for logo has mismatched quoting

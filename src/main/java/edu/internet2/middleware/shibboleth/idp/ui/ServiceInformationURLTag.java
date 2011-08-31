@@ -27,63 +27,68 @@ import org.opensaml.samlext.saml2mdui.InformationURL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**Service InformationURL - directly from the metadata if present.*/
+/** Service InformationURL - directly from the metadata if present. */
 public class ServiceInformationURLTag extends ServiceTagSupport {
-    
-    /** check style requires the serialVersionUID.*/
+
+    /** check style requires the serialVersionUID. */
     private static final long serialVersionUID = 5601822745575892676L;
+
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(ServiceInformationURLTag.class);
 
     /** Bean storage for the link text attribute. */
     private static String linkText;
 
-    /** Bean setter  for the link text attribute.
+    /**
+     * Bean setter for the link text attribute.
+     * 
      * @param text the link text to put in
      */
     public void setLinkText(String text) {
         linkText = text;
     }
-    
+
     /**
      * look for the &lt;InformationURL&gt; in the &lt;UIInfo&gt;.
+     * 
      * @return null or an appropriate string.
      */
     private String getInformationURLFromUIIinfo() {
-        String lang = getBrowserLanguage();
-
         if (getSPUIInfo() != null && getSPUIInfo().getInformationURLs() != null) {
-            for (InformationURL infoURL:getSPUIInfo().getInformationURLs()) {
-                if (log.isDebugEnabled()){
-                    log.debug("Found InformationURL in UIInfo, language=" + infoURL.getXMLLang());
-                }
-                if (infoURL.getXMLLang().equals(lang)) {
-                    //
-                    // Found it
-                    //
-                    if (log.isDebugEnabled()){
-                        log.debug("returning URL from UIInfo " + infoURL.getURI().getLocalString());
+            for (String lang : getBrowserLanguages()) {
+
+                for (InformationURL infoURL : getSPUIInfo().getInformationURLs()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Found InformationURL in UIInfo, language=" + infoURL.getXMLLang());
                     }
-                    return infoURL.getURI().getLocalString();
+                    if (infoURL.getXMLLang().equals(lang)) {
+                        //
+                        // Found it
+                        //
+                        if (log.isDebugEnabled()) {
+                            log.debug("returning URL from UIInfo " + infoURL.getURI().getLocalString());
+                        }
+                        return infoURL.getURI().getLocalString();
+                    }
                 }
             }
-            if (log.isDebugEnabled()){
+            if (log.isDebugEnabled()) {
                 log.debug("No relevant InformationURL in UIInfo");
-            }                       
+            }
         }
         return null;
     }
-    @Override
 
+    @Override
     public int doEndTag() throws JspException {
-       
+
         String infoURL = getInformationURLFromUIIinfo();
-        
+
         try {
             if (null == infoURL) {
                 BodyContent bc = getBodyContent();
                 if (null != bc) {
-                    JspWriter ew= bc.getEnclosingWriter();
+                    JspWriter ew = bc.getEnclosingWriter();
                     if (ew != null) {
                         bc.writeOut(ew);
                     }
@@ -97,6 +102,5 @@ public class ServiceInformationURLTag extends ServiceTagSupport {
         }
         return super.doEndTag();
     }
-
 
 }
