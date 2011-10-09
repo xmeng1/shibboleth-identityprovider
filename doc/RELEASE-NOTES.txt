@@ -1,8 +1,9 @@
 Changes in Release 2.3.4
 =============================================
-[SIDP-516] Example login.jsp / Usage of label tag
-[SIDP-513] idpui taglib could look for more languages matches
-[SIDP-514] Alt text for IdP Logos is not esapiEncoder.encodeForHTMLAttribute
+[SIDP-516] - Example login.jsp / Usage of label tag
+[SIDP-513] - idpui taglib could look for more languages matches
+[SIDP-514] - Alt text for IdP Logos is not esapiEncoder.encodeForHTMLAttribute
+[SIDP-522] - supplied examples shouldn't promote federation URIs as relying parties
 
 Changes in Release 2.3.3
 =============================================
