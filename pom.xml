@@ -7,7 +7,7 @@
     <parent>
         <groupId>net.shibboleth</groupId>
         <artifactId>parent</artifactId>
-        <version>1</version>
+        <version>2</version>
     </parent>
 
     <groupId>edu.internet2.middleware</groupId>
@@ -53,12 +53,6 @@
         </dependency>
 
         <!-- Provided dependencies -->
-        <dependency>
-            <groupId>javax.servlet.jsp</groupId>
-            <artifactId>jsp-api</artifactId>
-            <version>2.0</version>
-            <scope>provided</scope>
-        </dependency>
 
         <!-- Runtime dependencies -->
         <dependency>
@@ -116,6 +110,10 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
         </dependency>
         <dependency>
             <groupId>${xerces.groupId}</groupId>
