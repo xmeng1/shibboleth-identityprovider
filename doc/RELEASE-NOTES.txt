@@ -1,5 +1,6 @@
 Changes in Release 2.3.4
 =============================================
+[SIDP-508] - NullPointerException in AuthenticationEngine
 [SIDP-510] - Error with stack trace when passive cannot be honored
 [SIDP-511] - ExternalAuthnSystemLoginHandler does not support forceAuthn/isPassive
 [SIDP-513] - idpui taglib could look for more languages matches

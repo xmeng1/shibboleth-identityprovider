@@ -164,6 +164,11 @@ public class AuthenticationEngine extends HttpServlet {
             LOG.warn("No login context available, unable to return to profile handler");
             forwardRequest("/error.jsp", httpRequest, httpResponse);
         }
+        
+        if (loginContext.getProfileHandlerURL() == null) {
+            LOG.warn("Login context did not contain a profile handler path, unable to return to profile handler");
+            forwardRequest("/error.jsp", httpRequest, httpResponse);
+        }
 
         String profileUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, loginContext.getProfileHandlerURL())
                 .buildURL();
