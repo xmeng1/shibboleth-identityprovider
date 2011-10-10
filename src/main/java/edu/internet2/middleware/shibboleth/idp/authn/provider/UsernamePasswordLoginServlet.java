@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,6 +174,11 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             Subject userSubject = new Subject(false, principals, publicCredentials, privateCredentials);
             request.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
+            if(request.isSecure()){
+                request.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, AuthnContext.PPT_AUTHN_CTX);
+            }else{
+                request.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, AuthnContext.PASSWORD_AUTHN_CTX);
+            }
         } catch (LoginException e) {
             log.debug("User authentication for " + username + " failed", e);
             throw e;

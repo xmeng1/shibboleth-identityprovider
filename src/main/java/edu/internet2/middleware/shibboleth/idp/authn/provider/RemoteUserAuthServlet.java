@@ -19,11 +19,13 @@ package edu.internet2.middleware.shibboleth.idp.authn.provider;
 
 import java.io.IOException;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,23 +34,46 @@ import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 
-/** Extracts the REMOTE_USER and places it in a request attribute to be used by the authentication engine. */
+/**
+ * Extracts the REMOTE_USER and places it in a request attribute to be used by the authentication engine.
+ * 
+ * By default, this Servlet assumes that the authentication method {@value AuthnContext#PPT_AUTHN_CTX} to be returned to
+ * the authentication engine. This can be override by setting the servlet configuration parameter
+ * {@value LoginHandler#AUTHENTICATION_METHOD_KEY}.
+ */
 public class RemoteUserAuthServlet extends HttpServlet {
 
     /** Serial version UID. */
-    private static final long serialVersionUID = -6153665874235557534L;    
+    private static final long serialVersionUID = -6153665874235557534L;
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(RemoteUserAuthServlet.class);
+
+    /** The authentication method returned to the authentication engine. */
+    private String authenticationMethod;
+
+    /** {@inheritDoc} */
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+
+        String method =
+                DatatypeHelper.safeTrimOrNullString(config.getInitParameter(LoginHandler.AUTHENTICATION_METHOD_KEY));
+        if (method != null) {
+            authenticationMethod = method;
+        } else {
+            authenticationMethod = AuthnContext.PPT_AUTHN_CTX;
+        }
+    }
 
     /** {@inheritDoc} */
     protected void service(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws ServletException,
             IOException {
         String principalName = DatatypeHelper.safeTrimOrNullString(httpRequest.getRemoteUser());
-        if(principalName != null){
+        if (principalName != null) {
             log.debug("Remote user identified as {} returning control back to authentication engine", principalName);
             httpRequest.setAttribute(LoginHandler.PRINCIPAL_KEY, new UsernamePrincipal(principalName));
-        }else{
+            httpRequest.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, authenticationMethod);
+        } else {
             log.debug("No remote user information was present in the request");
         }
 
