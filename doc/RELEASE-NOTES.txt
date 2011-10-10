@@ -5,6 +5,7 @@ Changes in Release 2.3.4
 [SIDP-514] - Alt text for IdP Logos is not esapiEncoder.encodeForHTMLAttribute
 [SIDP-520] - Ipad/iOS devices will auto capitalize text entered into the IdP login screen, which can cause errors. Adding an HTML element will prevent that
 [SIDP-522] - supplied examples shouldn't promote federation URIs as relying parties
+[SIDP-523] - Add access to inbound AuthnRequest
 
 Changes in Release 2.3.3
 =============================================
