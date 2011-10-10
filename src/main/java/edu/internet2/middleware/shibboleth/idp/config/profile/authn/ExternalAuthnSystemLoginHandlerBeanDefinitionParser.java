@@ -20,6 +20,7 @@ package edu.internet2.middleware.shibboleth.idp.config.profile.authn;
 import javax.xml.namespace.QName;
 
 import org.opensaml.xml.util.DatatypeHelper;
+import org.opensaml.xml.util.XMLHelper;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.w3c.dom.Element;
 
@@ -41,8 +42,22 @@ public class ExternalAuthnSystemLoginHandlerBeanDefinitionParser extends Abstrac
     /** {@inheritDoc} */
     protected void doParse(Element config, BeanDefinitionBuilder builder) {
         super.doParse(config, builder);
-
+        
         builder.addPropertyValue("externalAuthnPath",
                 DatatypeHelper.safeTrimOrNullString(config.getAttributeNS(null, "externalAuthnPath")));
+        
+        if (config.hasAttributeNS(null, "supportsForcedAuthentication")) {
+            builder.addPropertyValue("supportsForcedAuthentication", XMLHelper.getAttributeValueAsBoolean(config
+                    .getAttributeNodeNS(null, "supportsForcedAuthentication")));
+        } else {
+            builder.addPropertyValue("supportsForcedAuthentication", false);
+        }
+        
+        if (config.hasAttributeNS(null, "supportsPassiveAuthentication")) {
+            builder.addPropertyValue("supportsPassiveAuthentication", XMLHelper.getAttributeValueAsBoolean(config
+                    .getAttributeNodeNS(null, "supportsPassiveAuthentication")));
+        } else {
+            builder.addPropertyValue("supportsPassiveAuthentication", false);
+        }
     }
 }

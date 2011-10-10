@@ -23,9 +23,7 @@ import org.opensaml.xml.util.LazyList;
 
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 
-/**
- * Base class for authentication handlers.
- */
+/** Base class for authentication handlers. */
 public abstract class AbstractLoginHandler implements LoginHandler {
     
     /** Authentication methods this handler supports. */
@@ -34,7 +32,7 @@ public abstract class AbstractLoginHandler implements LoginHandler {
     /** Length of time, in milliseconds, after which a user should be re-authenticated. */
     private long authenticationDuration;
 
-    /** Whether this handler supports foreced re-authentication. */
+    /** Whether this handler supports forced re-authentication. */
     private boolean supportsForceAuthentication;
 
     /** Whether this handler supports passive authentication. */
