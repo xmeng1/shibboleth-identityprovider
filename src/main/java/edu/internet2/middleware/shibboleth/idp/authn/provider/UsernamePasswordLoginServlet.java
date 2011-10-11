@@ -47,6 +47,10 @@ import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 /**
  * This Servlet authenticates a user via JAAS. The user's credential is always added to the returned {@link Subject} as
  * a {@link UsernamePasswordCredential} within the subject's private credentials.
+ * 
+ * By default, this Servlet assumes that the authentication method {@value AuthnContext#PPT_AUTHN_CTX} to be returned to
+ * the authentication engine. This can be override by setting the servlet configuration parameter
+ * {@value LoginHandler#AUTHENTICATION_METHOD_KEY}.
  */
 public class UsernamePasswordLoginServlet extends HttpServlet {
 
@@ -55,6 +59,9 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
     /** Class logger. */
     private final Logger log = LoggerFactory.getLogger(UsernamePasswordLoginServlet.class);
+    
+    /** The authentication method returned to the authentication engine. */
+    private String authenticationMethod;
 
     /** Name of JAAS configuration used to authenticate users. */
     private String jaasConfigName = "ShibUserPassAuth";
@@ -90,6 +97,14 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
         }
         if (!loginPage.startsWith("/")) {
             loginPage = "/" + loginPage;
+        }
+        
+        String method =
+                DatatypeHelper.safeTrimOrNullString(config.getInitParameter(LoginHandler.AUTHENTICATION_METHOD_KEY));
+        if (method != null) {
+            authenticationMethod = method;
+        } else {
+            authenticationMethod = AuthnContext.PPT_AUTHN_CTX;
         }
     }
 
@@ -174,11 +189,7 @@ public class UsernamePasswordLoginServlet extends HttpServlet {
 
             Subject userSubject = new Subject(false, principals, publicCredentials, privateCredentials);
             request.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
-            if(request.isSecure()){
-                request.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, AuthnContext.PPT_AUTHN_CTX);
-            }else{
-                request.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, AuthnContext.PASSWORD_AUTHN_CTX);
-            }
+            request.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, authenticationMethod);
         } catch (LoginException e) {
             log.debug("User authentication for " + username + " failed", e);
             throw e;
