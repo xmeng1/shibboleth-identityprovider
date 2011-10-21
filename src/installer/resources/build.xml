@@ -236,7 +236,9 @@
                 </if>
         
                 <echo message="Generating signing and encryption key, certificate, and keystore. "/> 
-                <selfSignedCert hostname="${idp.hostname}" privateKeyFile="${idp.home.path}/credentials/idp.key" certificateFile="${idp.home.path}/credentials/idp.crt" keystoreFile="${idp.home.path}/credentials/idp.jks" keystorePassword="${idp.keystore.pass}" uriSubjectAltNames="${idp.entity.id}" certificateLifetime="${idp.cert.lifetime}"/> 
+                <selfSignedCert hostname="${idp.hostname}" certificateLifetime="${idp.cert.lifetime}" uriSubjectAltNames="${idp.entity.id}"
+                	            privateKeyFile="${idp.home.path}/credentials/idp.key.new" certificateFile="${idp.home.path}/credentials/idp.crt.new"  
+                	            keystoreFile="${idp.home.path}/credentials/idp.jks.new"  keystorePassword="${idp.keystore.pass}" /> 
             </then>
         </if> 
     </target> 
