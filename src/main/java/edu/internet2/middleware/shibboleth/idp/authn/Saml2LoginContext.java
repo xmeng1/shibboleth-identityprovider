@@ -18,10 +18,10 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.List;
 
-import org.apache.tools.ant.filters.StringInputStream;
 import org.opensaml.Configuration;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.core.AuthnContextClassRef;
@@ -102,7 +102,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         if (authnRequest == null) {
             try {
                 ParserPool parser = Configuration.getParserPool();
-                Document requestDoc = parser.parse(new StringInputStream(serialAuthnRequest));
+                Document requestDoc = parser.parse(new StringReader(serialAuthnRequest));
                 Unmarshaller requestUnmarshaller =
                         Configuration.getUnmarshallerFactory().getUnmarshaller(AuthnRequest.TYPE_NAME);
                 authnRequest = (AuthnRequest) requestUnmarshaller.unmarshall(requestDoc.getDocumentElement());
