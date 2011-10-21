@@ -80,7 +80,7 @@ public class ExternalAuthnSystemLoginHandlerFactoryBean extends AbstractLoginHan
      * 
      * @return whether this handler supports passive authentication
      */
-    public boolean supportsPassive() {
+    public boolean supportsPassiveAuthentication() {
         return supportsPassive;
     }
 
@@ -89,7 +89,7 @@ public class ExternalAuthnSystemLoginHandlerFactoryBean extends AbstractLoginHan
      * 
      * @param supported whether this handler supports passive authentication.
      */
-    public void setSupportsPassive(boolean supported) {
+    public void setSupportsPassiveAuthentication(boolean supported) {
         supportsPassive = supported;
     }
 
