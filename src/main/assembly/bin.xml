@@ -14,6 +14,10 @@
             <directoryMode>774</directoryMode>
             <fileMode>444</fileMode>
             <scope>compile</scope>
+            <excludes>
+                <exclude>javax.servlet:*</exclude>
+                <exclude>javax.servlet.jsp:*</exclude>
+            </excludes>
             <includes>
                 <include>*:jar:*</include>
             </includes>
