@@ -81,7 +81,9 @@
             		</else>
             	</if>
             		
-                <selfSignedCert hostname="${idp.hostname}" privateKeyFile="${idp.home.path}/credentials/idp.key" certificateFile="${idp.home.path}/credentials/idp.crt" keystoreFile="${idp.home.path}/credentials/idp.jks" keystorePassword="${idp.keystore.pass}" uriSubjectAltNames="${idp.entity.id}" certificateLifetime="${idp.cert.lifetime}"/>
+                <selfSignedCert hostname="${idp.hostname}" uriSubjectAltNames="${idp.entity.id}" certificateLifetime="${idp.cert.lifetime}"
+                	            privateKeyFile="${idp.home.path}/credentials/idp.key" certificateFile="${idp.home.path}/credentials/idp.crt" 
+                	            keystoreFile="${idp.home.path}/credentials/idp.jks" keystorePassword="${idp.keystore.pass}" />
 
                 <copy todir="${idp.home.path}/bin" preservelastmodified="true" overwrite="true">
                     <fileset dir="${tools.dir}/bash"/>
@@ -203,10 +205,12 @@
     </target>
 
     <target name="renew-cert" description="Create a new certificate/key pair."> 
-        <input message="This will create a new set of credentials for your IdP, overwriting existing credentials.  Do you really wish to proceed?" addproperty="renew.cert.do" validargs="yes,no" defaultvalue="no"/> 
-        <if> <equals arg1="${renew.cert.do}" arg2="yes"/> 
+        <input message="This will create a new set of credentials for your IdP.  If you ran this command previously and still have '*.new' files, they will be overwritten.  Do you wish to proceed?" 
+        	   addproperty="renew.cert.do" validargs="yes,no" defaultvalue="no"/> 
+        <if> 
+        	<equals arg1="${renew.cert.do}" arg2="yes"/> 
             <then> 
-
+            	
                 <input message="Where is the Shibboleth Identity Provider installed?" addproperty="idp.home.input" defaultvalue="${idp.home}"/>
                 <var name="idp.home" value="${idp.home.input}"/>
               
@@ -215,13 +219,6 @@
                 <input message="What is the fully qualified hostname of the Shibboleth Identity Provider server?" addproperty="idp.hostname.input" defaultvalue="${idp.hostname}"/> 
                 <var name="idp.hostname" value="${idp.hostname.input}"/> 
                 <var name="idp.entity.id" value="https://${idp.hostname}/idp/shibboleth"/> 
-
-                <echo message="Backing up old credentials"/> 
-                <buildnumber file="${resources.dir}/credentials.buildno"/>
-                <copy todir="${idp.home.path}/credentials" overwrite="true">
-                    <fileset dir="${idp.home.path}/credentials" excludes="*bak*,buildno"/>
-                    <globmapper from="idp.*" to="idp.*.bak.${build.number}"/>
-                </copy>
 
                 <input message="A keystore is about to be generated for you. Please enter a password that will be used to protect it." addproperty="idp.keystore.pass"/> 
 
@@ -235,11 +232,11 @@
                     </else>
                 </if>
         
-                <echo message="Generating signing and encryption key, certificate, and keystore. "/> 
+                <echo message="Generating new signing and encryption key, certificate, and keystore. "/> 
                 <selfSignedCert hostname="${idp.hostname}" certificateLifetime="${idp.cert.lifetime}" uriSubjectAltNames="${idp.entity.id}"
                 	            privateKeyFile="${idp.home.path}/credentials/idp.key.new" certificateFile="${idp.home.path}/credentials/idp.crt.new"  
                 	            keystoreFile="${idp.home.path}/credentials/idp.jks.new"  keystorePassword="${idp.keystore.pass}" /> 
             </then>
-        </if> 
-    </target> 
+        </if>
+    </target>
 </project>
