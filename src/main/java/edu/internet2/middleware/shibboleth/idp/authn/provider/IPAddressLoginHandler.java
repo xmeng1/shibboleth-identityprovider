@@ -25,6 +25,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,15 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
     /** Whether a user is "authenticated" if their IP address is within a configured IP range. */
     private boolean ipInRangeIsAuthenticated;
 
-    public IPAddressLoginHandler(String user, List<IPRange> ranges, boolean ipInRangeIsAuthenticated) {
+    /**
+     * Constructor.
+     * 
+     * @param user username to return upon successful "authentication"
+     * @param ranges range of IP addresses specified
+     * @param isIpInRangeAuthenticated whether the specified IP address range represent those that are authenticated or
+     *            those that are not
+     */
+    public IPAddressLoginHandler(String user, List<IPRange> ranges, boolean isIpInRangeAuthenticated) {
         authenticatedUser = DatatypeHelper.safeTrimOrNullString(user);
         if (authenticatedUser == null) {
             throw new IllegalArgumentException("The authenticated user ID may not be null or empty");
@@ -64,7 +73,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
         }
         ipRanges = new ArrayList<IPRange>(ranges);
 
-        this.ipInRangeIsAuthenticated = ipInRangeIsAuthenticated;
+        this.ipInRangeIsAuthenticated = isIpInRangeAuthenticated;
     }
 
     /** {@inheritDoc} */
@@ -85,6 +94,7 @@ public class IPAddressLoginHandler extends AbstractLoginHandler {
             if (authenticate(clientAddress)) {
                 log.debug("Authenticated user by IP address");
                 httpRequest.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, authenticatedUser);
+                httpRequest.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, AuthnContext.IP_AUTHN_CTX);
             } else {
                 log.debug("Client IP address {} failed authentication.", httpRequest.getRemoteAddr());
                 httpRequest.setAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY,

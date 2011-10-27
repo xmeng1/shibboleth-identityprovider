@@ -20,6 +20,7 @@ package edu.internet2.middleware.shibboleth.idp.ui;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
@@ -31,57 +32,77 @@ import org.owasp.esapi.Encoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**Logo for the SP.*/
+/** Logo for the SP. */
 public class ServiceLogoTag extends ServiceTagSupport {
 
     /**
      * checkstyle control.
      */
     private static final long serialVersionUID = 6451849117572923712L;
+
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(ServiceLogoTag.class);
+
     /** what to emit if the jsp has nothing. */
     private static final String DEFAULT_VALUE = "";
+
     /** what to emit as alt txt if all else fails. */
     private static final String DEFAULT_ALT_TXT = "SP Logo";
 
     /** Bean storage. Size constraint X */
     private int minWidth;
+
     /** Bean storage. Size constraint X */
     private int maxWidth = Integer.MAX_VALUE;
+
     /** Bean storage. Size constraint Y */
     private int minHeight;
-    /** Bean storage.  Size constraint Y */
+
+    /** Bean storage. Size constraint Y */
     private int maxHeight = Integer.MAX_VALUE;
-    /** Bean storage.  alt text */
+
+    /** Bean storage. alt text */
     private String altTxt;
 
-    /** Bean setter.
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setMaxWidth(Integer value) {
         maxWidth = value.intValue();
     }
-    /** Bean setter.
+
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setMinWidth(Integer value) {
         minWidth = value.intValue();
     }
-    /** Bean setter.
+
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setMinHeight(Integer value) {
         minHeight = value.intValue();
     }
-    /** Bean setter.
+
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setMaxHeight(Integer value) {
         maxHeight = value.intValue();
     }
 
-    /** Bean setter.
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setAlt(String value) {
@@ -90,58 +111,75 @@ public class ServiceLogoTag extends ServiceTagSupport {
 
     /**
      * Whether the provided logo fits inside the constraints.
+     * 
      * @param logo the logo
      * @return whether it fits the provided max and mins
      */
     private boolean logoFits(Logo logo) {
-        return logo.getHeight() <= maxHeight && logo.getHeight() >= minHeight &&
-               logo.getWidth() <= maxWidth && logo.getWidth() >= minWidth;
+        return logo.getHeight() <= maxHeight && logo.getHeight() >= minHeight && logo.getWidth() <= maxWidth
+                && logo.getWidth() >= minWidth;
     }
     
     /**
-     * get an appropriate Logo from UIInfo.
-     * @return the URL for a logo
+     * get an appropriate logo by lanaguage from the UIInfo.
+     * @param logos what to look through
+     * @return an appropriate logo.
      */
-    private String getLogoFromUIInfo() {
-        String lang = getBrowserLanguage();
-
-        if (getSPUIInfo() != null && getSPUIInfo().getDescriptions() != null) {
-            for (Logo logo:getSPUIInfo().getLogos()) {
-                if (log.isDebugEnabled()){
-                    log.debug("Found logo in UIInfo, language=" + logo.getXMLLang() + 
-                            " width=" + logo.getWidth() + " height=" +logo.getHeight());
-                }
-                if (null != logo.getXMLLang() && !logo.getXMLLang().equals(lang)) {
-                    //
-                    // there is a language and its now what we want
+    private String getLogoFromUIInfo(List<Logo> logos) {
+        for (String lang : getBrowserLanguages()) {
+            // By language first
+            for (Logo logo : logos) {
+                log.debug("Found logo in UIInfo, language=" + logo.getXMLLang() + " width=" + logo.getWidth()
+                        + " height=" + logo.getHeight());
+                if (null == logo.getXMLLang() || !logo.getXMLLang().equals(lang) || !logoFits(logo)) {
+                    // No language, language mismatch or not fitting
                     continue;
                 }
-                if (!logoFits(logo)) {
-                    //
-                    // size out of range
-                    //
-                    continue;
-                }
-                //
                 // Found it
-                //
-                if (log.isDebugEnabled()) {
-                    log.debug("returning logo from UIInfo " + logo.getURL());
-                }
+                log.debug("returning logo from UIInfo " + logo.getURL());
                 return logo.getURL();
             }
-            if (log.isDebugEnabled()){
-                log.debug("No appropriate logo in UIInfo");
-            }            
+        }
+        // Then by no language
+        for (Logo logo : getSPUIInfo().getLogos()) {
+            log.debug("Found logo in UIInfo, language=" + logo.getXMLLang() + " width=" + logo.getWidth()
+                    + " height=" + logo.getHeight());
+            if (null == logo.getXMLLang() && logoFits(logo)) {
+                // null language and it fits
+                log.debug("returning logo from UIInfo " + logo.getURL());
+                return logo.getURL();
+            }
         }
         return null;
     }
-    
-    /** Find what the user specified for alt txt.
+
+    /**
+     * get an appropriate Logo from UIInfo.
+     * 
+     * @return the URL for a logo
+     * 
+     */
+    private String getLogoFromUIInfo() {
+
+        if (getSPUIInfo() != null && getSPUIInfo().getLogos() != null) {
+            
+            String result = getLogoFromUIInfo(getSPUIInfo().getLogos());
+            
+            if (null != result) {
+                return result;
+            }
+            log.debug("No appropriate logo in UIInfo");
+        }
+        return null;
+    }
+
+    /**
+     * Find what the user specified for alt txt.
+     * 
      * @return the text required
      */
     private String getAltText() {
-        
+
         //
         // First see what the user tried
         //
@@ -149,7 +187,7 @@ public class ServiceLogoTag extends ServiceTagSupport {
         if (null != value && 0 != value.length()) {
             return value;
         }
-        
+
         //
         // Try the request
         //
@@ -157,28 +195,28 @@ public class ServiceLogoTag extends ServiceTagSupport {
         if (null != value && 0 != value.length()) {
             return value;
         }
-        
+
         return DEFAULT_ALT_TXT;
     }
 
     /**
      * Given the url build an appropriate &lta href=...
+     * 
      * @return the contrcuted hyperlink or null
      */
     private String getHyperlink() {
         String url = getLogoFromUIInfo();
-        String encodedURL;
         StringBuilder sb;
         Encoder esapiEncoder = ESAPI.encoder();
-        
+
         if (null == url) {
             return null;
         }
-        
+
         try {
             URI theUrl = new URI(url);
             String scheme = theUrl.getScheme();
-    
+
             if (!"http".equals(scheme) && !"https".equals(scheme) && !"mailto".equals(scheme)) {
                 log.warn("The logo URL " + url + " contained an invalid scheme");
                 return null;
@@ -190,29 +228,29 @@ public class ServiceLogoTag extends ServiceTagSupport {
             log.warn("The logo URL " + url + " was not a URL " + e.toString());
             return null;
         }
-        
-        
-        encodedURL = esapiEncoder.encodeForHTMLAttribute(url);
+
+        String encodedURL = esapiEncoder.encodeForHTMLAttribute(url);
+        String encodedAltTxt = esapiEncoder.encodeForHTMLAttribute(getAltText());
 
         sb = new StringBuilder("<img src=\"");
         sb.append(encodedURL).append('"');
-        sb.append(" alt=\"").append(getAltText()).append('"');
+        sb.append(" alt=\"").append(encodedAltTxt).append('"');
         addClassAndId(sb);
         sb.append("/>");
         return sb.toString();
     }
-    
+
     @Override
     public int doEndTag() throws JspException {
-       
+
         String result = getHyperlink();
-        
+
         try {
             if (null == result) {
                 BodyContent bc = getBodyContent();
                 boolean written = false;
                 if (null != bc) {
-                    JspWriter ew= bc.getEnclosingWriter();
+                    JspWriter ew = bc.getEnclosingWriter();
                     if (ew != null) {
                         bc.writeOut(ew);
                         written = true;

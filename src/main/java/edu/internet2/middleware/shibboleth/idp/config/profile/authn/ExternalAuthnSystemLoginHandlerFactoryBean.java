@@ -26,6 +26,12 @@ public class ExternalAuthnSystemLoginHandlerFactoryBean extends AbstractLoginHan
 
     /** The context-relative path to the Filter, Servlet, or JSP that triggers the external authentication system. */
     private String externalAuthnPath;
+    
+    /** Whether this handler supports forced re-authentication. */
+    private boolean supportsForcedAuthentication;
+
+    /** Whether this handler supports passive authentication. */
+    private boolean supportsPassive;
 
     /** {@inheritDoc} */
     public Class getObjectType() {
@@ -50,11 +56,49 @@ public class ExternalAuthnSystemLoginHandlerFactoryBean extends AbstractLoginHan
     public void setExternalAuthnPath(String path) {
         externalAuthnPath = path;
     }
+    
+    /**
+     * Gets whether this handler supposed forced re-authentication.
+     * 
+     * @return whether this handler supposed forced re-authentication
+     */
+    public boolean supportsForcedAuthentication() {
+        return supportsForcedAuthentication;
+    }
+
+    /**
+     * Sets whether this handler supports forced re-authentication.
+     * 
+     * @param supported whether this handler supports forced re-authentication
+     */
+    public void setSupportsForcedAuthentication(boolean supported) {
+        supportsForcedAuthentication = supported;
+    }
+
+    /**
+     * Gets whether this handler supports passive authentication.
+     * 
+     * @return whether this handler supports passive authentication
+     */
+    public boolean supportsPassiveAuthentication() {
+        return supportsPassive;
+    }
+
+    /**
+     * Sets whether this handler supports passive authentication.
+     * 
+     * @param supported whether this handler supports passive authentication.
+     */
+    public void setSupportsPassiveAuthentication(boolean supported) {
+        supportsPassive = supported;
+    }
 
     /** {@inheritDoc} */
     protected Object createInstance() throws Exception {
         ExternalAuthnSystemLoginHandler handler = new ExternalAuthnSystemLoginHandler();
         handler.setExternalAuthnPath(getExternalAuthnPath());
+        handler.setSupportsForceAuthentication(supportsForcedAuthentication);
+        handler.setSupportsPassive(supportsPassive);
         populateHandler(handler);
         return handler;
     }

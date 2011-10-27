@@ -18,6 +18,7 @@
 package edu.internet2.middleware.shibboleth.idp.authn;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.List;
 
@@ -30,12 +31,16 @@ import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.xml.parse.ParserPool;
+import org.opensaml.xml.parse.XMLParserException;
 import org.opensaml.xml.util.DatatypeHelper;
 import org.opensaml.xml.util.LazyList;
 import org.opensaml.xml.util.XMLHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
@@ -51,10 +56,13 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
     /** Relay state from authentication request. */
     private String relayState;
 
+    /** The authentication request. */
+    private transient AuthnRequest authnRequest;
+
     /** Serialized authentication request. */
     private String serialAuthnRequest;
-    
-    /** Unsolicited SSO indicator.  */
+
+    /** Unsolicited SSO indicator. */
     private boolean unsolicited;
 
     /**
@@ -68,17 +76,42 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      */
     public Saml2LoginContext(String relyingParty, String state, AuthnRequest request) throws MarshallingException {
         super();
-        
+
         if (relyingParty == null || request == null) {
             throw new IllegalArgumentException("SAML 2 authentication request and relying party ID may not be null");
         }
+        
         setRelyingParty(relyingParty);
         relayState = state;
+        authnRequest = request;
         serialAuthnRequest = serializeRequest(request);
-        
+
         setForceAuthRequired(request.isForceAuthn());
         setPassiveAuthRequired(request.isPassive());
         getRequestedAuthenticationMethods().addAll(extractRequestedAuthenticationMethods(request));
+    }
+
+    /**
+     * Gets the authentication request object.
+     * 
+     * @return the authentication request object
+     * 
+     * @throws UnmarshallingException thrown if there is a problem unmarshalling the serialized form of the request
+     */
+    public synchronized AuthnRequest getAuthenticiationRequestXmlObject() throws UnmarshallingException {
+        if (authnRequest == null) {
+            try {
+                ParserPool parser = Configuration.getParserPool();
+                Document requestDoc = parser.parse(new StringReader(serialAuthnRequest));
+                Unmarshaller requestUnmarshaller =
+                        Configuration.getUnmarshallerFactory().getUnmarshaller(AuthnRequest.TYPE_NAME);
+                authnRequest = (AuthnRequest) requestUnmarshaller.unmarshall(requestDoc.getDocumentElement());
+            } catch (XMLParserException e) {
+                throw new UnmarshallingException("Unable to unmarshall serialized authentication request", e);
+            }
+        }
+
+        return authnRequest;
     }
 
     /**
@@ -88,16 +121,16 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      * 
      * @throws UnmarshallingException thrown if the serialized form on the authentication request can be unmarshalled
      */
-    public synchronized String getAuthenticationRequest() throws UnmarshallingException {
+    public String getAuthenticationRequest() throws UnmarshallingException {
         return serialAuthnRequest;
     }
-    
+
     /**
      * Gets the relay state from the originating authentication request.
      * 
      * @return relay state from the originating authentication request
      */
-    public synchronized String getRelayState(){
+    public synchronized String getRelayState() {
         return relayState;
     }
 
@@ -113,12 +146,12 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
     /**
      * Sets the unsolicited SSO indicator.
      * 
-     * @param unsolicited unsolicited SSO indicator to set
+     * @param isUnsolicited unsolicited SSO indicator to set
      */
-    public void setUnsolicited(boolean unsolicited) {
-        this.unsolicited = unsolicited;
-    }        
-    
+    public void setUnsolicited(boolean isUnsolicited) {
+        unsolicited = isUnsolicited;
+    }
+
     /**
      * Serializes an authentication request into a string.
      * 
@@ -136,7 +169,6 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         return writer.toString();
     }
 
-    
     /**
      * Extracts the authentication methods requested within the request.
      * 
@@ -144,7 +176,7 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
      * 
      * @return requested authentication methods, or an empty list if no preference
      */
-    protected List<String> extractRequestedAuthenticationMethods(AuthnRequest request){
+    protected List<String> extractRequestedAuthenticationMethods(AuthnRequest request) {
         LazyList<String> requestedMethods = new LazyList<String>();
 
         RequestedAuthnContext authnContext = request.getRequestedAuthnContext();
@@ -174,13 +206,13 @@ public class Saml2LoginContext extends LoginContext implements Serializable {
         List<AuthnContextDeclRef> authnDeclRefs = authnContext.getAuthnContextDeclRefs();
         if (authnDeclRefs != null) {
             for (AuthnContextDeclRef declRef : authnDeclRefs) {
-                if (declRef != null&& !DatatypeHelper.isEmpty(declRef.getAuthnContextDeclRef())) {
+                if (declRef != null && !DatatypeHelper.isEmpty(declRef.getAuthnContextDeclRef())) {
                     requestedMethods.add(declRef.getAuthnContextDeclRef());
                 }
             }
         }
-        
-        if(requestedMethods.contains(AuthnContext.UNSPECIFIED_AUTHN_CTX)){
+
+        if (requestedMethods.contains(AuthnContext.UNSPECIFIED_AUTHN_CTX)) {
             requestedMethods.clear();
         }
 

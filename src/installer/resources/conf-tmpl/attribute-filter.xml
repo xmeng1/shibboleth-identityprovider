@@ -6,7 +6,12 @@
     Deployers should refer to the Shibboleth 2 documentation for a complete list of components 
     and their options.
 -->
-<afp:AttributeFilterPolicyGroup xmlns:afp="urn:mace:shibboleth:2.0:afp" xmlns:basic="urn:mace:shibboleth:2.0:afp:mf:basic" xmlns:saml="urn:mace:shibboleth:2.0:afp:mf:saml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="ShibbolethFilterPolicy" xsi:schemaLocation="urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd                                                 urn:mace:shibboleth:2.0:afp:mf:basic classpath:/schema/shibboleth-2.0-afp-mf-basic.xsd                                                 urn:mace:shibboleth:2.0:afp:mf:saml classpath:/schema/shibboleth-2.0-afp-mf-saml.xsd">
+<afp:AttributeFilterPolicyGroup id="ShibbolethFilterPolicy"
+                                xmlns:afp="urn:mace:shibboleth:2.0:afp" xmlns:basic="urn:mace:shibboleth:2.0:afp:mf:basic" 
+                                xmlns:saml="urn:mace:shibboleth:2.0:afp:mf:saml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                                xsi:schemaLocation="urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd
+                                                    urn:mace:shibboleth:2.0:afp:mf:basic classpath:/schema/shibboleth-2.0-afp-mf-basic.xsd
+                                                    urn:mace:shibboleth:2.0:afp:mf:saml classpath:/schema/shibboleth-2.0-afp-mf-saml.xsd">
 
     <!--  Release the transient ID to anyone -->
     <afp:AttributeFilterPolicy id="releaseTransientIdToAnyone">
@@ -21,14 +26,14 @@
 
     <!-- 
         Release eduPersonEntitlement and the permissible values of eduPersonAffiliation
-        to any SP that is a member of InCommon, UK federation, or SWITCHaai
+        to three specific SPs
     -->
     <!--
     <afp:AttributeFilterPolicy>
         <afp:PolicyRequirementRule xsi:type="basic:OR">
-            <basic:Rule xsi:type="saml:AttributeRequesterInEntityGroup" groupID="urn:mace:incommon" />
-            <basic:Rule xsi:type="saml:AttributeRequesterInEntityGroup" groupID="http://ukfederation.org.uk" />
-            <basic:Rule xsi:type="saml:AttributeRequesterInEntityGroup" groupID="urn:mace:switch.ch:SWITCHaai" />
+            <basic:Rule xsi:type="basic:AttributeRequesterString" value="urn:example.org:sp:Portal" />
+            <basic:Rule xsi:type="basic:AttributeRequesterString" value="urn:example.org:sp:SIS" />
+            <basic:Rule xsi:type="basic:AttributeRequesterString" value="urn:example.org:sp:LMS" />
         </afp:PolicyRequirementRule>
 
         <afp:AttributeRule attributeID="eduPersonAffiliation">

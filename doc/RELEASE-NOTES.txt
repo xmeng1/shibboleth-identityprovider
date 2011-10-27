@@ -1,3 +1,18 @@
+Changes in Release 2.3.4
+=============================================
+[SIDP-508] - NullPointerException in AuthenticationEngine
+[SIDP-510] - Error with stack trace when passive cannot be honored
+[SIDP-511] - ExternalAuthnSystemLoginHandler does not support forceAuthn/isPassive
+[SIDP-512] - idpui taglib should iterate over all browser aproved languages
+[SIDP-513] - idpui taglib could look for more languages matches
+[SIDP-514] - Alt text for IdP Logos is not esapiEncoder.encodeForHTMLAttribute
+[SIDP-516] - Example login.jsp / Usage of label tag
+[SIDP-519] - Switching between multiple login handlers cause first context to be sticky in Shib-Authentication-Method
+[SIDP-520] - Ipad/iOS devices will auto capitalize text entered into the IdP login screen, which can cause errors. Adding an HTML element will prevent that
+[SIDP-521] - Allow specificying file location of renewed key and certificate
+[SIDP-522] - supplied examples shouldn't promote federation URIs as relying parties
+[SIDP-523] - Add access to inbound AuthnRequest
+
 Changes in Release 2.3.3
 =============================================
 [SIDP-504] - Alt text generate for logo has mismatched quoting

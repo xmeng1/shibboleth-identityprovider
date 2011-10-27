@@ -47,11 +47,16 @@ import javax.servlet.http.HttpServletResponse;
  * {@link javax.security.auth.Subject} within the {@link edu.internet2.middleware.shibboleth.idp.session.Session}.</li>
  * </ul>
  * 
- * The handler <strong>MAY</strong> also:
+ * The handler <strong>SHOULD</strong> also:
  * <ul>
  * <li>Bind a URI string, representing the authentication method actually used, to a request attribute identified by
- * {@link #AUTHENTICATION_METHOD_KEY}. This may be used if a handler is capable of performing multiple types of
- * authentication.</li>
+ * {@link #AUTHENTICATION_METHOD_KEY}. Failure to do so may lead to a situation where one authentication method is 
+ * started but a user switches to a weaker one in mid-process.  Without the login handler explicitly setting the 
+ * method, the first method that is started is what will be reported to the relying party.</li>
+ * </ul>
+ * 
+ * The handler <strong>MAY</strong> also:
+ * <ul>
  * <li>Bind an error message, if an error occurred during authentication to the request attribute identified by
  * {@link LoginHandler#AUTHENTICATION_ERROR_KEY}.</li>
  * <li>Bind a {@link AuthenticationException}, if an exception occurred during authentication to the request attribute

@@ -284,6 +284,20 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
+                <xsd:attribute name="supportsForcedAuthentication" type="xsd:boolean">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Indicates whether the external authentication supports force re-authentication.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="supportsPassiveAuthentication" type="xsd:boolean">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Indicates whether the external authentication supports passive authentication.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>

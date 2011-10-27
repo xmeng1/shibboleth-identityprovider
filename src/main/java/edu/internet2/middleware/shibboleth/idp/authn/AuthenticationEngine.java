@@ -163,6 +163,13 @@ public class AuthenticationEngine extends HttpServlet {
         if (loginContext == null) {
             LOG.warn("No login context available, unable to return to profile handler");
             forwardRequest("/error.jsp", httpRequest, httpResponse);
+            return;
+        }
+        
+        if (loginContext.getProfileHandlerURL() == null) {
+            LOG.warn("Login context did not contain a profile handler path, unable to return to profile handler");
+            forwardRequest("/error.jsp", httpRequest, httpResponse);
+            return;
         }
 
         String profileUrl = HttpServletHelper.getContextRelativeUrl(httpRequest, loginContext.getProfileHandlerURL())
@@ -531,6 +538,9 @@ public class AuthenticationEngine extends HttpServlet {
 
             // Check to make sure the login handler did the right thing
             validateSuccessfulAuthentication(loginContext, httpRequest, actualAuthnMethod);
+            if(loginContext.getAuthenticationFailure() != null){
+                returnToProfileHandler(httpRequest, httpResponse);
+            }
 
             // Check for an overridden authn instant.
             DateTime actualAuthnInstant = (DateTime) httpRequest.getAttribute(LoginHandler.AUTHENTICATION_INSTANT_KEY);
@@ -584,15 +594,21 @@ public class AuthenticationEngine extends HttpServlet {
         String errorMessage = DatatypeHelper.safeTrimOrNullString((String) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_ERROR_KEY));
         if (errorMessage != null) {
-            LOG.error("Error returned from login handler for authentication method {}:\n{}",
+            LOG.debug("Error returned from login handler for authentication method {}:\n{}",
                     loginContext.getAttemptedAuthnMethod(), errorMessage);
-            throw new AuthenticationException(errorMessage);
+            loginContext.setAuthenticationFailure(new AuthenticationException(errorMessage));
+            loginContext.setPrincipalAuthenticated(false);
+            return;
         }
 
         AuthenticationException authnException = (AuthenticationException) httpRequest
                 .getAttribute(LoginHandler.AUTHENTICATION_EXCEPTION_KEY);
         if (authnException != null) {
-            throw authnException;
+            LOG.debug("Exception returned from login handler for authentication method {}:\n{}",
+                    loginContext.getAttemptedAuthnMethod(), authnException);
+            loginContext.setAuthenticationFailure(authnException);
+            loginContext.setPrincipalAuthenticated(false);
+            return;
         }
 
         Subject subject = (Subject) httpRequest.getAttribute(LoginHandler.SUBJECT_KEY);

@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Binary distribution, along with dependency jar files -->
-<assembly>
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+    
     <id>bin</id>
     <formats>
         <format>tar.gz</format>
         <format>zip</format>
     </formats>
-    
+
     <dependencySets>
         <dependencySet>
             <outputDirectory>/lib</outputDirectory>
+            <directoryMode>774</directoryMode>
+            <fileMode>444</fileMode>
+            <scope>compile</scope>
             <excludes>
-                <exclude>org.apache.xerces:*</exclude>
-                <exclude>xalan:*</exclude>
-                <exclude>xml-resolver:*</exclude>
-                <exclude>xml-apis:</exclude>
-                <exclude>org.apache.ant:*</exclude>
-                <exclude>ant-contrib:*</exclude>
-                <exclude>edu.internet2.middleware:ant-extensions:*</exclude>
+                <exclude>javax.servlet:*</exclude>
+                <exclude>javax.servlet.jsp:*</exclude>
             </excludes>
             <includes>
                 <include>*:jar:*</include>
@@ -25,6 +24,9 @@
         </dependencySet>
         <dependencySet>
             <outputDirectory>src/installer/lib</outputDirectory>
+            <directoryMode>774</directoryMode>
+            <fileMode>444</fileMode>
+            <scope>runtime</scope>
             <includes>
                 <include>org.apache.ant:*</include>
                 <include>ant-contrib:*</include>
@@ -34,6 +36,9 @@
         </dependencySet>
         <dependencySet>
             <outputDirectory>/endorsed</outputDirectory>
+            <directoryMode>774</directoryMode>
+            <fileMode>444</fileMode>
+            <scope>runtime</scope>
             <includes>
                 <include>org.apache.xerces:*</include>
                 <include>xalan:*</include>
@@ -41,12 +46,12 @@
             </includes>
         </dependencySet>
     </dependencySets>
-    
-    <fileSets>    
+
+    <fileSets>
         <!-- Copy up our installer srcipts into the root of the package -->
         <fileSet>
             <directory>src/installer/bash</directory>
-            <outputDirectory/>
+            <outputDirectory />
             <includes>
                 <include>*.sh</include>
             </includes>
@@ -55,12 +60,12 @@
         </fileSet>
         <fileSet>
             <directory>src/installer/bat</directory>
-            <outputDirectory/>
+            <outputDirectory />
             <includes>
                 <include>*.bat</include>
             </includes>
         </fileSet>
-        
+
         <!-- Keep our various resource files in the package -->
         <fileSet>
             <directory>src/installer/resources</directory>
@@ -74,7 +79,7 @@
             <directory>src/tools</directory>
             <outputDirectory>src/tools</outputDirectory>
         </fileSet>
-        
+
         <!-- Documentation -->
         <fileSet>
             <includes>
@@ -103,5 +108,5 @@
             <outputDirectory>/doc/src-xref</outputDirectory>
         </fileSet>
     </fileSets>
-    
+
 </assembly>

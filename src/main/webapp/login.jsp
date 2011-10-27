@@ -25,8 +25,8 @@
              <form action="j_security_check" method="post">
            <% } %>
            <table>
-             <tr><td width="40%"><label for="username">Username:</label></td><td><input name="j_username" type="text" /></td></tr>
-             <tr><td><label for="password">Password:</label></td><td><input name="j_password" type="password" /></td></tr>
+             <tr><td width="40%"><label for="username">Username:</label></td><td><input name="j_username" type="text" id="username" autocapitalize="off" /></td></tr>
+             <tr><td><label for="password">Password:</label></td><td><input name="j_password" type="password" id="password" /></td></tr>
              <tr><td></td><td><button type="submit" value="Login" >Continue</button></td></tr>
            </table></form>
          </div>

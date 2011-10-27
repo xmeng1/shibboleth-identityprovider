@@ -19,7 +19,10 @@ package edu.internet2.middleware.shibboleth.idp.ui;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -44,47 +47,51 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 
-
 /**
  * Display the serviceName.
  * 
- * This is taken in order
- *  1) From the mdui
- *  2) AttributeConsumeService
- *  3) HostName from the EntityId
- *  4) EntityId.
+ * This is taken in order 1) From the mdui 2) AttributeConsumeService 3) HostName from the EntityId 4) EntityId.
  */
-public class ServiceTagSupport extends BodyTagSupport{
+public class ServiceTagSupport extends BodyTagSupport {
 
     /**
      * checkstyle requires this serialization info.
      */
     private static final long serialVersionUID = 7988646597267865255L;
-    
+
     /** Class logger. */
     private static Logger log = LoggerFactory.getLogger(ServiceTagSupport.class);
 
-    /** Bean storage. class reference*/
+    /** Bean storage. class reference */
     private String cssClass;
-    /** Bean storage. id reference*/
+
+    /** Bean storage. id reference */
     private String cssId;
-    /** Bean storage. style reference*/
+
+    /** Bean storage. style reference */
     private String cssStyle;
 
-    /** Bean setter.
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setCssClass(String value) {
         cssClass = value;
     }
-    /** Bean setter.
+
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setCssId(String value) {
         cssId = value;
     }
 
-    /** Bean setter.
+    /**
+     * Bean setter.
+     * 
      * @param value what to set
      */
     public void setCssStyle(String value) {
@@ -93,6 +100,7 @@ public class ServiceTagSupport extends BodyTagSupport{
 
     /**
      * Add the class and Id if present.
+     * 
      * @param sb the stringbuilder to asdd to.
      */
     protected void addClassAndId(StringBuilder sb) {
@@ -106,9 +114,10 @@ public class ServiceTagSupport extends BodyTagSupport{
             sb.append(" style=\"").append(cssStyle).append('"');
         }
     }
-    
+
     /**
      * build a hyperlink from the parameters.
+     * 
      * @param url the URL
      * @param text what to embed
      * @return the hyperlink.
@@ -116,7 +125,7 @@ public class ServiceTagSupport extends BodyTagSupport{
     protected String buildHyperLink(String url, String text) {
         String encodedUrl;
         Encoder esapiEncoder = ESAPI.encoder();
-       
+
         try {
             URI theUrl = new URI(url);
             String scheme = theUrl.getScheme();
@@ -127,22 +136,23 @@ public class ServiceTagSupport extends BodyTagSupport{
             }
             encodedUrl = esapiEncoder.encodeForHTMLAttribute(url);
         } catch (URISyntaxException e) {
-            // 
+            //
             // It wasn't an URI.
             //
             log.warn("The URL " + url + " was invalid: " + e.toString());
             return "";
         }
-        
+
         StringBuilder sb = new StringBuilder("<a href=\"");
         sb.append(encodedUrl).append('"');
         addClassAndId(sb);
-        sb.append(">").append(text).append("</a>");
+        sb.append(">").append(esapiEncoder.encodeForHTML(text)).append("</a>");
         return sb.toString();
     }
-    
+
     /**
      * Get the EntityDescriptor for the relying party.
+     * 
      * @return the SPs EntityDescriptor
      */
     protected EntityDescriptor getSPEntityDescriptor() {
@@ -151,21 +161,22 @@ public class ServiceTagSupport extends BodyTagSupport{
         ServletContext application;
         RelyingPartyConfigurationManager rpConfigMngr;
         EntityDescriptor spEntity;
-        
+
         //
         // Populate up those things that jsp gives us.
         //
         request = (HttpServletRequest) pageContext.getRequest();
         application = pageContext.getServletContext();
-        
+
         if (request == null || application == null) {
-           return null;
+            return null;
         }
         //
         // grab the login context and the RP config mgr.
         //
-        loginContext = HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application),
-                application, request);
+        loginContext =
+                HttpServletHelper.getLoginContext(HttpServletHelper.getStorageService(application), application,
+                        request);
         rpConfigMngr = HttpServletHelper.getRelyingPartyConfigurationManager(application);
         if (loginContext == null || rpConfigMngr == null) {
             return null;
@@ -174,14 +185,16 @@ public class ServiceTagSupport extends BodyTagSupport{
 
         return spEntity;
     }
+
     /**
      * Traverse the SP's EntityDescriptor and pick out the UIInfo.
+     * 
      * @return the first UIInfo for the SP.
      */
     protected UIInfo getSPUIInfo() {
         EntityDescriptor spEntity = getSPEntityDescriptor();
         Extensions exts;
-        
+
         if (null == spEntity) {
             //
             // all done
@@ -189,10 +202,10 @@ public class ServiceTagSupport extends BodyTagSupport{
             return null;
         }
 
-        for (RoleDescriptor role:spEntity.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME)) {
+        for (RoleDescriptor role : spEntity.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME)) {
             exts = role.getExtensions();
             if (exts != null) {
-                for (XMLObject object:exts.getOrderedChildren()) {
+                for (XMLObject object : exts.getOrderedChildren()) {
                     if (object instanceof UIInfo) {
                         return (UIInfo) object;
                     }
@@ -201,24 +214,35 @@ public class ServiceTagSupport extends BodyTagSupport{
         }
         return null;
     }
-            
+
     /**
      * Pluck the language from the browser.
+     * 
      * @return the two letter language
      */
-    protected String getBrowserLanguage() {
+    protected List<String> getBrowserLanguages() {
         HttpServletRequest request;
         request = (HttpServletRequest) pageContext.getRequest();
-        
-        return request.getLocale().getLanguage();
+
+        Enumeration<Locale> locales = request.getLocales();
+
+        List<String> languages = new ArrayList<String>();
+
+        while (locales.hasMoreElements()) {
+            Locale locale = locales.nextElement();
+            languages.add(locale.getLanguage());
+        }
+        return languages;
     }
+
     /**
      * If the entityId can look like a host return that otherwise the string.
+     * 
      * @return either the host or the entityId.
      */
     private String getNameFromEntityId() {
         EntityDescriptor sp = getSPEntityDescriptor();
-        
+
         if (null == sp) {
             log.debug("No relying party, nothing to display");
             return null;
@@ -229,11 +253,11 @@ public class ServiceTagSupport extends BodyTagSupport{
             String scheme = entityId.getScheme();
 
             if ("http".equals(scheme) || "https".equals(scheme)) {
-                return entityId.getHost(); 
+                return entityId.getHost();
             }
         } catch (URISyntaxException e) {
-            // 
-            // It wasn't an URI.  return full entityId.
+            //
+            // It wasn't an URI. return full entityId.
             //
             return sp.getEntityID();
         }
@@ -242,82 +266,81 @@ public class ServiceTagSupport extends BodyTagSupport{
         //
         return sp.getEntityID();
     }
-    
-    /** 
+
+    /**
      * look at &lt;Uiinfo&gt; if there and if so look for appropriate name.
+     * 
+     * @param lang - which language to look up
      * @return null or an appropriate name
      */
-    private String getNameFromUIInfo() {
-        String lang = getBrowserLanguage();
+    private String getNameFromUIInfo(String lang) {
 
         if (getSPUIInfo() != null) {
-            for (DisplayName name:getSPUIInfo().getDisplayNames()) {
-                if (log.isDebugEnabled()){
+            for (DisplayName name : getSPUIInfo().getDisplayNames()) {
+                if (log.isDebugEnabled()) {
                     log.debug("Found name in UIInfo, language=" + name.getXMLLang());
                 }
                 if (name.getXMLLang().equals(lang)) {
                     //
                     // Found it
                     //
-                    if (log.isDebugEnabled()){
+                    if (log.isDebugEnabled()) {
                         log.debug("returning name from UIInfo " + name.getName().getLocalString());
                     }
                     return name.getName().getLocalString();
                 }
             }
-            if (log.isDebugEnabled()){
-                log.debug("No name in UIInfo");
-            }            
+            if (log.isDebugEnabled()) {
+                log.debug("No name in MDUI for " + lang);
+            }
         }
         return null;
     }
 
     /**
      * look for an &ltAttributeConsumeService&gt and if its there look for an appropriate name.
+     * 
+     * @param lang - which language to look up
      * @return null or an appropriate name
      */
-    private String getNameFromAttributeConsumingService(){
-        String lang = getBrowserLanguage();
-        List<RoleDescriptor> roles;
-        AttributeConsumingService acs = null;
+    private String getNameFromAttributeConsumingService(String lang) {
         EntityDescriptor sp = getSPEntityDescriptor();
-        
         if (null == sp) {
             log.warn("No relying party, nothing to display");
             return null;
         }
 
-        roles = sp.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
+        AttributeConsumingService acs = null;
+
+        List<RoleDescriptor> roles = sp.getRoleDescriptors(SPSSODescriptor.DEFAULT_ELEMENT_NAME);
         if (!roles.isEmpty()) {
             SPSSODescriptor spssod = (SPSSODescriptor) roles.get(0);
             acs = spssod.getDefaultAttributeConsumingService();
         }
         if (acs != null) {
-            for (ServiceName name:acs.getNames()) {
+            for (ServiceName name : acs.getNames()) {
                 LocalizedString localName = name.getName();
-                if (log.isDebugEnabled()){
+                if (log.isDebugEnabled()) {
                     log.debug("Found name in AttributeConsumingService, language=" + localName.getLanguage());
                 }
                 if (localName.getLanguage().equals(lang)) {
-                    if (log.isDebugEnabled()){
+                    if (log.isDebugEnabled()) {
                         log.debug("returning name from AttributeConsumingService " + name.getName().getLocalString());
                     }
                     return localName.getLocalString();
                 }
             }
-            if (log.isDebugEnabled()){
-                log.debug("No name in AttributeConsumingService");
-            }            
-        }        
+        }
         return null;
     }
-    
+
     /**
      * Get the identifier for the service name as per the rules above.
+     * 
      * @return something sensible for display.
      */
     protected String getServiceName() {
-        String result;
+        String result = null;
         //
         // First look for MDUI
         //
@@ -325,27 +348,32 @@ public class ServiceTagSupport extends BodyTagSupport{
             log.debug("No relying party, nothing to display");
             return null;
         }
-        //
-        // Look at <UIInfo>
-        //
-        result = getNameFromUIInfo();
-        if (result != null) {
-            return result;
-        }
         
         //
-        // Otherwise <AttributeConsumingService>
+        // For each Language
         //
-        result = getNameFromAttributeConsumingService();
-        if (result != null) {
-            return result;
+        List<String> languages = getBrowserLanguages();
+        for (String lang : languages) {
+            //
+            // Look at <UIInfo>
+            //
+            result = getNameFromUIInfo(lang);
+            if (result != null) {
+                return result;
+            }
+
+            //
+            // Otherwise <AttributeConsumingService>
+            //
+            result = getNameFromAttributeConsumingService(lang);
+            if (result != null) {
+                return result;
+            }
         }
-        
         //
         // Or look at the entityName
         //
         return getNameFromEntityId();
     }
-    
 
 }
